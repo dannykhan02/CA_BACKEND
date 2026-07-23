@@ -2,24 +2,23 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
      * Seed the application's database.
+     *
+     * UserSeeder creates dev-only test accounts with known passwords for
+     * exercising authenticated endpoints locally. DocumentSeeder creates
+     * its own three fixture "author" accounts internally (unusable
+     * passwords, FK-target only — see that file).
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $this->call([
+            UserSeeder::class,
+            DocumentSeeder::class,
         ]);
     }
 }

@@ -21,19 +21,22 @@ class Document extends Model
         'insights' => 'array',
     ];
 
+    // Ordering by id (not sort_order — column doesn't exist) preserves
+    // insertion order since id is an auto-increment PK and rows are
+    // always seeded/created in display order.
     public function kpis()
     {
-        return $this->hasMany(DocumentKpi::class);
+        return $this->hasMany(DocumentKpi::class)->orderBy('id');
     }
 
     public function charts()
     {
-        return $this->hasMany(DocumentChart::class);
+        return $this->hasMany(DocumentChart::class)->orderBy('id');
     }
 
     public function pageFlags()
     {
-        return $this->hasMany(DocumentPageFlag::class);
+        return $this->hasMany(DocumentPageFlag::class)->orderBy('page');
     }
 
     public function uploader()

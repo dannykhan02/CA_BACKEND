@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -10,16 +11,15 @@ use App\Notifications\ResetPasswordNotification;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasUuids, Notifiable;
+    use HasApiTokens, HasFactory, HasUuids, Notifiable;
 
     public function sendPasswordResetNotification($token): void
     {
         $frontendUrl = rtrim(env('FRONTEND_URL', 'http://localhost:5173'), '/');
-        $url = "{$frontendUrl}/reset-password?token={$token}&email=" . urlencode($this->email);
+        $url = "{$frontendUrl}/#/reset?token={$token}&email=" . urlencode($this->email);
 
         $this->notify(new ResetPasswordNotification($url));
     }
-
 
     protected $fillable = [
         'email', 'password', 'full_name', 'role', 'active',

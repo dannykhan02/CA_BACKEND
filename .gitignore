@@ -25,3 +25,67 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+
+
+
+
+
+
+
+
+dan@Wu-Tang:~/Development/code/Wu-Tang/flask/January/CA/backend$ # 1. Signup — triggers a verification code, logged since MAIL_MAILER=log
+curl -s -X POST http://localhost:8000/api/auth/signup \
+  -H "Content-Type: application/json" \
+  -d '{"full_name":"Verify Test","email":"verify123@ca.go.ke","password":"password123","password_confirmation":"password123"}' | jq
+
+# pull the code straight from the log
+tail -5 storage/logs/laravel.log | grep -oE "Verification code for verify@ca.go.ke: [0-9]{6}"
+{
+  "message": "Account created successfully.",
+  "data": {
+    "user": {
+      "id": "019f8863-6269-7241-bb4a-015f8eed96d5",
+      "email": "verify123@ca.go.ke",
+      "full_name": "Verify Test",
+      "role": "Viewer",
+      "email_verified_at": null,
+      "active": true
+    },
+    "token": "7|7RUYTMjv9Vu4PBsiWJTF4CBghXC1sfln7rsVOU1id115e4cf"
+  }
+}
+dan@Wu-Tang:~/Development/code/Wu-Tang/flask/January/CA/backend$ 
+
+
+
+dan@Wu-Tang:~/Development/code/Wu-Tang/flask/January/CA/backend$ # 2. Verify with the WRONG code — expect 422
+curl -s -X POST http://localhost:8000/api/auth/verify-email \
+  -H "Content-Type: application/json" \
+  -d '{"email":"verify123@ca.go.ke","code":"000000"}' | jq
+{
+  "message": "Invalid verification code."
+}
+dan@Wu-Tang:~/Development/code/Wu-Tang/flask/January/CA/backend$ 
+
+
+# 3. Verify with the CORRECT code (paste the real code from step 1's log output) — expect 200
+curl -s -X POST http://localhost:8000/api/auth/verify-email \
+  -H "Content-Type: application/json" \
+  -d '{"email":"verify123@ca.go.ke","code":"PASTE_REAL_CODE_HERE"}' | jq
+
+
+  
+
+
+
+  # 5. Resend verification for a DIFFERENT, unverified user — expect a new code in the log
+curl -s -X POST http://localhost:8000/api/auth/signup \
+  -H "Content-Type: application/json" \
+  -d '{"full_name":"Resend Test","email":"resend123@ca.go.ke","password":"password123","password_confirmation":"password123"}' | jq
+
+curl -s -X POST http://localhost:8000/api/auth/resend-verification \
+  -H "Content-Type: application/json" \
+  -d '{"email":"resend123@ca.go.ke"}' | jq
+
+tail -5 storage/logs/laravel.log | grep -oE "Verification code for resend@ca.go.ke: [0-9]{6}"

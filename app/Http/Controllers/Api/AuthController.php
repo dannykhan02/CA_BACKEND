@@ -30,17 +30,24 @@ class AuthController extends Controller
     {
         $validated = $request->validated();
 
+        // Interim default: new signups receive 'Viewer' role pending explicit client
+        // confirmation (per roadmap Section 8). This is now set explicitly rather than
+        // relying on the migration default, so it cannot silently change if the DB
+        // schema is altered in the future.
         $user = User::create([
             'full_name' => $validated['full_name'],
             'email' => $validated['email'],
             'password' => $validated['password'],
+            'role' => 'Viewer',
         ]);
 
         $user->refresh(); // pull DB-assigned defaults (role, active) back into the model
 
         $verification = VerificationCode::generateFor($user);
         Log::info("Verification code for {$user->email}: {$verification->code}");
-        // TODO: swap for Mail::to($user)->send(new VerificationCodeMail($verification->code)) once mail transport is configured
+        // Surfaced directly to the client for now — no mail transport / ca.go.ke DNS in place yet.
+        // Gate this off (or remove) once real delivery is configured.
+        $devCode = app()->environment(['local', 'staging']) ? $verification->code : null;
 
         $token = $user->createToken('auth-token', ['*'], now()->addHours(self::DEFAULT_TOKEN_HOURS))->plainTextToken;
 
@@ -49,6 +56,7 @@ class AuthController extends Controller
             'data' => [
                 'user' => $this->userPayload($user),
                 'token' => $token,
+                'verification_code' => $devCode,
             ],
         ], 201);
     }
@@ -155,24 +163,34 @@ class AuthController extends Controller
         $validated = $request->validated();
         $user = User::where('email', $validated['email'])->first();
 
+        $devCode = null;
         if ($user && ! $user->email_verified_at) {
             $verification = VerificationCode::generateFor($user);
             Log::info("Verification code for {$user->email}: {$verification->code}");
+            $devCode = app()->environment(['local', 'staging']) ? $verification->code : null;
         }
 
         return response()->json([
             'message' => 'If an account with that email exists and is unverified, a new code has been sent.',
+            'verification_code' => $devCode,
         ]);
     }
 
     public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
     {
         $validated = $request->validated();
+        $user = User::where('email', $validated['email'])->first();
 
-        Password::sendResetLink(['email' => $validated['email']]);
+        $devToken = null;
+        if ($user) {
+            $token = Password::broker()->createToken($user);
+            Log::info("Password reset token for {$user->email}: {$token}");
+            $devToken = app()->environment(['local', 'staging']) ? $token : null;
+        }
 
         return response()->json([
             'message' => 'If an account with that email exists, a password reset link has been sent.',
+            'reset_token' => $devToken,
         ]);
     }
 
@@ -209,6 +227,7 @@ class AuthController extends Controller
             'role' => $user->role,
             'email_verified_at' => $user->email_verified_at,
             'active' => $user->active,
+            'created_at' => $user->created_at?->toIso8601String(),
         ];
     }
 }
