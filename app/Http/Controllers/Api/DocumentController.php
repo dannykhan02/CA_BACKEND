@@ -7,6 +7,8 @@ use App\Http\Requests\Document\IndexDocumentsRequest;
 use App\Http\Resources\DocumentListResource;
 use App\Http\Resources\DocumentResource;
 use App\Models\Document;
+use App\Policies\DocumentPolicy;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class DocumentController extends Controller
@@ -14,9 +16,6 @@ class DocumentController extends Controller
     private const DEFAULT_PER_PAGE = 20;
     private const MAX_PER_PAGE = 100;
 
-    // Public API sort keys stay stable even though the underlying
-    // columns are created_at/updated_at rather than dedicated
-    // uploaded_at/last_updated_at columns.
     private const SORT_COLUMN_MAP = [
         'uploaded_at' => 'created_at',
         'name' => 'name',
@@ -33,6 +32,9 @@ class DocumentController extends Controller
         $query = Document::query()
             ->with(['uploader:id,full_name', 'lastUpdater:id,full_name']);
 
+        $allowedClassifications = DocumentPolicy::allowedClassificationsFor($request->user());
+        $query->whereIn('classification', $allowedClassifications);
+
         if (! empty($validated['q'])) {
             $query->whereRaw('LOWER(name) LIKE ?', ['%' . mb_strtolower($validated['q']) . '%']);
         }
@@ -42,7 +44,8 @@ class DocumentController extends Controller
         }
 
         if (! empty($validated['classification'])) {
-            $query->whereIn('classification', $validated['classification']);
+            $requestedAllowed = array_intersect($validated['classification'], $allowedClassifications);
+            $query->whereIn('classification', $requestedAllowed ?: ['__none__']);
         }
 
         if (! empty($validated['year'])) {
@@ -68,8 +71,10 @@ class DocumentController extends Controller
         return DocumentListResource::collection($documents);
     }
 
-    public function show(Document $document): DocumentResource
+    public function show(Request $request, Document $document): DocumentResource
     {
+        $this->authorize('view', $document);
+
         $document->load(['kpis', 'charts', 'pageFlags', 'uploader:id,full_name', 'lastUpdater:id,full_name']);
 
         return new DocumentResource($document);

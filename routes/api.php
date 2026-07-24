@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DocumentController;
+use App\Http\Controllers\Api\DocumentDownloadController;
+use App\Http\Controllers\Api\DocumentReprocessController;
 use App\Http\Controllers\Api\DocumentUploadController;
 use App\Http\Controllers\Api\DashboardController;
 use Illuminate\Http\Request;
@@ -37,4 +39,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/documents', [DocumentUploadController::class, 'store'])
         ->middleware('throttle:document-uploads')
         ->name('documents.store');
+
+    // Day 5 — Document retrieval and manual reprocessing.
+    Route::get('/documents/{document}/download', [DocumentDownloadController::class, 'show'])
+        ->name('documents.download');
+
+    Route::post('/documents/{document}/reprocess', [DocumentReprocessController::class, 'store'])
+        ->name('documents.reprocess');
 });

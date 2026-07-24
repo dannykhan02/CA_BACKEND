@@ -223,7 +223,17 @@ return [
 
         'local' => [
             'supervisor-1' => [
+                'queue' => ['default'],
                 'maxProcesses' => 3,
+            ],
+            'supervisor-extraction' => [
+                'connection' => 'redis',
+                'queue' => ['extraction'],
+                'balance' => 'simple',
+                // Caps concurrent Anthropic calls independently of default-queue
+                // throughput — this is the actual enforcement point, more reliable
+                // than AnthropicClient's in-code throttle counter alone.
+                'maxProcesses' => 2,
             ],
         ],
     ],
