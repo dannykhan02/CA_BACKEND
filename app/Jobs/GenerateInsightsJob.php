@@ -120,6 +120,8 @@ class GenerateInsightsJob implements ShouldQueue
         // Clear any prior KPIs/charts before inserting fresh ones — otherwise
         // a reprocessed document (via DocumentReprocessController) accumulates
         // duplicate rows on every retry rather than replacing stale data.
+        // Note: deleting a chart row cascades to its document_chart_points
+        // rows automatically via the DB foreign key — no extra cleanup needed.
         $document->kpis()->delete();
         $document->charts()->delete();
 
@@ -127,21 +129,55 @@ class GenerateInsightsJob implements ShouldQueue
             $document->kpis()->create([
                 'label' => $kpi['label'],
                 'value' => $kpi['value'],
+                'value_numeric' => $this->parseNumericValue((string) $kpi['value']),
                 'unit' => $kpi['unit'] ?? null,
                 'trend' => $kpi['trend'] ?? null,
                 'trend_value' => $kpi['trendValue'] ?? null,
             ]);
         }
+
         foreach ($result['charts'] as $chart) {
-            $document->charts()->create([
+            $chartModel = $document->charts()->create([
                 'type' => $chart['type'],
                 'title' => $chart['title'],
                 'description' => $chart['description'],
                 'data' => $chart['data'],
             ]);
+
+            foreach ($chart['data'] as $index => $point) {
+                $chartModel->points()->create([
+                    'label' => $point['label'],
+                    'value' => $point['value'],
+                    'sort_order' => $index,
+                ]);
+            }
         }
 
         Cache::forget("document:{$document->id}:extracted_text");
+    }
+
+    /**
+     * Parses a human/AI-written value string into a real number for BI/reporting
+     * consumers. Handles suffixes (K/M/B), currency prefixes, and units glued
+     * onto the number (e.g. "4.2 days" -> 4.2, "KES 312" -> 312, "64.2M" -> 64200000).
+     * Returns null when no numeric value can reasonably be extracted — callers
+     * must treat null as "not chartable", never coerce to zero.
+     */
+    private function parseNumericValue(string $value): ?float
+    {
+        if (! preg_match('/(-?[\d,]+\.?\d*)\s*([KMB])?/i', $value, $matches)) {
+            return null;
+        }
+
+        $number = (float) str_replace(',', '', $matches[1]);
+        $suffix = strtoupper($matches[2] ?? '');
+
+        return match ($suffix) {
+            'K' => $number * 1_000,
+            'M' => $number * 1_000_000,
+            'B' => $number * 1_000_000_000,
+            default => $number,
+        };
     }
 
     public function failed(\Throwable $e): void
