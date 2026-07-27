@@ -24,6 +24,17 @@ class DocumentPolicy
         return in_array($user->role, $allowedRoles, true);
     }
 
+    public function approve(User $user, Document $document): bool
+    {
+        return $this->view($user, $document)
+            && in_array($user->role, ['Administrator', 'Reviewer'], true);
+    }
+
+    public function reject(User $user, Document $document): bool
+    {
+        return $this->approve($user, $document);
+    }
+
     /**
      * Which classifications this user's role is permitted to see at all —
      * used to constrain the index() listing query, not just single-document

@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\DocumentApproveController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\DocumentDownloadController;
+use App\Http\Controllers\Api\DocumentRejectController;
 use App\Http\Controllers\Api\DocumentReprocessController;
 use App\Http\Controllers\Api\DocumentUploadController;
 use App\Http\Controllers\Api\DashboardController;
@@ -46,4 +48,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/documents/{document}/reprocess', [DocumentReprocessController::class, 'store'])
         ->name('documents.reprocess');
+
+    Route::post('/documents/{document}/approve', [DocumentApproveController::class, 'store'])
+        ->name('documents.approve');
+
+    Route::post('/documents/{document}/reject', [DocumentRejectController::class, 'store'])
+        ->name('documents.reject');
 });
