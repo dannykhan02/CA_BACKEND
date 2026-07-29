@@ -16,15 +16,15 @@ class AuthApiTest extends TestCase
     {
         $response = $this->postJson('/api/auth/signup', [
             'full_name' => 'Test User',
-            'email' => 'test@example.com',
-            'password' => 'Password123',
-            'password_confirmation' => 'Password123',
+            'email' => 'test@gmail.com',
+            'password' => 'Password123!',
+            'password_confirmation' => 'Password123!',
         ]);
 
         $response->assertStatus(201);
         
         // Verify the user was created with Viewer role in the database
-        $user = User::where('email', 'test@example.com')->firstOrFail();
+        $user = User::where('email', 'test@gmail.com')->firstOrFail();
         $this->assertSame('Viewer', $user->role);
         
         // Verify the API response also reflects the Viewer role

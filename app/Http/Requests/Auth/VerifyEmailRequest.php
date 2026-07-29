@@ -2,20 +2,21 @@
 
 namespace App\Http\Requests\Auth;
 
-use Illuminate\Foundation\Http\FormRequest;
-
-class VerifyEmailRequest extends FormRequest
+class VerifyEmailRequest extends BaseAuthRequest
 {
-    public function authorize(): bool
-    {
-        return true;
-    }
-
     public function rules(): array
     {
         return [
-            'email' => ['required', 'email'],
-            'code' => ['required', 'digits:6'],
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+            ],
+
+            'code' => [
+                'required',
+                'digits:6',
+            ],
         ];
     }
 }

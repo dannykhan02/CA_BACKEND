@@ -2,21 +2,26 @@
 
 namespace App\Http\Requests\Auth;
 
-use Illuminate\Foundation\Http\FormRequest;
-
-class SigninRequest extends FormRequest
+class SigninRequest extends BaseAuthRequest
 {
-    public function authorize(): bool
-    {
-        return true;
-    }
-
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string'],
-            'remember_me' => ['sometimes', 'boolean'],
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+            ],
+
+            'password' => [
+                'required',
+                'string',
+            ],
+
+            'remember_me' => [
+                'sometimes',
+                'boolean',
+            ],
         ];
     }
 }

@@ -20,7 +20,7 @@ class UserSeeder extends Seeder
             ['email' => 'test.admin@ca.go.ke'],
             [
                 'full_name' => 'Test Administrator',
-                'password' => Hash::make('password123'),
+                'password' => Hash::make('password123!'),
                 'role' => 'Administrator',
                 'active' => true,
                 'email_verified_at' => now(),
@@ -31,7 +31,7 @@ class UserSeeder extends Seeder
             ['email' => 'test.reviewer@ca.go.ke'],
             [
                 'full_name' => 'Test Reviewer',
-                'password' => Hash::make('password123'),
+                'password' => Hash::make('password123!'),
                 'role' => 'Reviewer',
                 'active' => true,
                 'email_verified_at' => now(),
@@ -42,7 +42,7 @@ class UserSeeder extends Seeder
             ['email' => 'test.viewer@ca.go.ke'],
             [
                 'full_name' => 'Test Viewer',
-                'password' => Hash::make('password123'),
+                'password' => Hash::make('password123!'),
                 'role' => 'Viewer',
                 'active' => true,
                 'email_verified_at' => now(),

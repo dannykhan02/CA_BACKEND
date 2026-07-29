@@ -23,10 +23,12 @@ class VerificationCodeNotification extends Notification
     {
         return (new MailMessage)
             ->subject('Verify Your Email')
+            ->greeting('Hello!')
             ->line('Use the code below to verify your email address.')
             ->line(new \Illuminate\Support\HtmlString(
-                '<div style="font-size: 28px; font-weight: bold; letter-spacing: 4px; text-align: center;">' . $this->code . '</div>'
+                '<div style="font-size: 32px; font-weight: 700; letter-spacing: 6px; text-align: center; background: #eff6ff; color: #2563eb; border-radius: 8px; padding: 18px; margin: 20px 0;">' . $this->code . '</div>'
             ))
-            ->line('This code will expire shortly. If you did not request this, no further action is required.');
+            ->line('This code will expire shortly.')
+            ->line('If you did not request this, no further action is required.');
     }
 }

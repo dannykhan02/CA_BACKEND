@@ -8,6 +8,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -17,12 +18,26 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'role' => \App\Http\Middleware\EnsureUserHasRole::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*'),
         );
+
+        // Consolidation refactor — standardises every error response onto
+        // the {success, message, errors} envelope required by the sprint spec.
+        $exceptions->render(function (ValidationException $e, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The given data was invalid.',
+                    'errors' => $e->errors(),
+                ], 422);
+            }
+        });
 
         // Laravel converts ModelNotFoundException into NotFoundHttpException
         // internally before custom render() callbacks run, so this must be
@@ -31,13 +46,21 @@ return Application::configure(basePath: dirname(__DIR__))
         // genuine "route doesn't exist" 404s, which is a reasonable bonus.
         $exceptions->render(function (NotFoundHttpException $e, Request $request) {
             if ($request->is('api/*')) {
-                return response()->json(['message' => 'Resource not found.'], 404);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Resource not found.',
+                    'errors' => [],
+                ], 404);
             }
         });
 
         $exceptions->render(function (AuthenticationException $e, Request $request) {
             if ($request->is('api/*')) {
-                return response()->json(['message' => 'Unauthenticated.'], 401);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthenticated.',
+                    'errors' => [],
+                ], 401);
             }
         });
 
@@ -46,7 +69,24 @@ return Application::configure(basePath: dirname(__DIR__))
         // default 403 view, which isn't valid JSON for the frontend to parse.
         $exceptions->render(function (AuthorizationException $e, Request $request) {
             if ($request->is('api/*')) {
-                return response()->json(['message' => 'This action is unauthorized.'], 403);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This action is unauthorized.',
+                    'errors' => [],
+                ], 403);
+            }
+        });
+
+        // Consolidation refactor — catches Laravel's built-in throttle
+        // middleware responses (e.g. throttle:signup, throttle:document-uploads)
+        // and wraps them in the same envelope as our manual RateLimiter checks.
+        $exceptions->render(function (TooManyRequestsHttpException $e, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Too many requests. Please try again later.',
+                    'errors' => [],
+                ], 429);
             }
         });
     })->create();

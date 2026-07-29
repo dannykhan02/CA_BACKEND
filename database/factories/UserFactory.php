@@ -20,7 +20,7 @@ class UserFactory extends Factory
         return [
             'email' => fake()->unique()->safeEmail(),
             'full_name' => fake()->name(),
-            'password' => bcrypt('password'),
+            'password' => bcrypt('password!'),
             'role' => 'Viewer',
             'active' => true,
             'email_verified_at' => now(),

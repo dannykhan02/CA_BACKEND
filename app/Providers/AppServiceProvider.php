@@ -28,5 +28,11 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('document-uploads', function ($request) {
             return Limit::perHour(20)->by($request->user()?->id ?: $request->ip());
         });
+
+        // Consolidation refactor — protects signup against automated
+        // account-creation spam, keyed by IP since there's no user yet.
+        RateLimiter::for('signup', function ($request) {
+            return Limit::perMinute(5)->by($request->ip());
+        });
     }
 }

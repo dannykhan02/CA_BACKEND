@@ -14,9 +14,6 @@ return [
     |
     */
 
-    'postmark' => [
-        'key' => env('POSTMARK_API_KEY'),
-    ],
 
     'resend' => [
         'key' => env('RESEND_API_KEY'),
@@ -40,6 +37,12 @@ return [
         'model' => env('ANTHROPIC_MODEL', 'claude-haiku-4-5-20251001'),
         'max_tokens' => (int) env('ANTHROPIC_MAX_TOKENS', 4096),
         'timeout' => (int) env('ANTHROPIC_TIMEOUT', 60),
+    ],
+
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
     ],
 
 ];

@@ -114,4 +114,28 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Developer Authentication Helpers
+    |--------------------------------------------------------------------------
+    |
+    | These options are ONLY for local development.
+    | Never enable them in production.
+    |
+    */
+
+    'developer' => [
+
+        'expose_verification_code' => env(
+            'EXPOSE_DEV_VERIFICATION_CODE',
+            false
+        ),
+
+        'expose_password_reset_token' => env(
+            'EXPOSE_DEV_PASSWORD_RESET_TOKEN',
+            false
+        ),
+
+    ],
+
 ];

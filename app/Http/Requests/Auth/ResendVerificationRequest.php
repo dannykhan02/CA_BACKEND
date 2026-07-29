@@ -2,19 +2,16 @@
 
 namespace App\Http\Requests\Auth;
 
-use Illuminate\Foundation\Http\FormRequest;
-
-class ResendVerificationRequest extends FormRequest
+class ResendVerificationRequest extends BaseAuthRequest
 {
-    public function authorize(): bool
-    {
-        return true;
-    }
-
     public function rules(): array
     {
         return [
-            'email' => ['required', 'email'],
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+            ],
         ];
     }
 }
