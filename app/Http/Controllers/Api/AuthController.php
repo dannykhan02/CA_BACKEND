@@ -10,18 +10,23 @@ use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Http\Requests\Auth\SigninRequest;
 use App\Http\Requests\Auth\SignupRequest;
 use App\Http\Requests\Auth\VerifyEmailRequest;
+use App\Http\Requests\Auth\ChangeEmailRequest;
+use App\Http\Requests\Auth\ConfirmEmailChangeRequest;
 use App\Models\User;
 use App\Models\VerificationCode;
 use App\Notifications\PasswordChangedNotification;
 use App\Notifications\PasswordResetNotification;
 use App\Notifications\VerificationCodeNotification;
 use App\Notifications\WelcomeNotification;
+use App\Notifications\EmailChangeVerificationNotification;
+use App\Notifications\EmailChangedNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -202,6 +207,70 @@ class AuthController extends Controller
         return $this->success('Signed out successfully.');
     }
 
+    public function requestEmailChange(ChangeEmailRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
+        $user = $request->user();
+
+        if (! Hash::check($validated['current_password'], $user->password)) {
+            return $this->error('Current password is incorrect.', [], 401);
+        }
+
+        $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+        $user->forceFill([
+            'pending_email' => mb_strtolower(trim($validated['new_email'])),
+            'pending_email_code' => $code,
+            'pending_email_expires_at' => now()->addMinutes(15),
+        ])->save();
+
+        $user->notify(new EmailChangeVerificationNotification($code));
+
+        if (! app()->environment('production')) {
+            Log::info("Email change code for {$user->pending_email}: {$code}");
+        }
+
+        return $this->success('Verification code sent to your new email address.', [
+            'verification_code' => app()->environment(['local', 'staging']) ? $code : null,
+        ]);
+    }
+
+    public function confirmEmailChange(ConfirmEmailChangeRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
+        $user = $request->user();
+
+        if (! $user->pending_email || ! $user->pending_email_code) {
+            return $this->error('No pending email change request found.', [], 404);
+        }
+
+        if ($user->pending_email_expires_at->isPast()) {
+            return $this->error('This code has expired. Please request the change again.', [], 410);
+        }
+
+        if (! hash_equals($user->pending_email_code, $validated['code'])) {
+            return $this->error('Invalid verification code.', [], 422);
+        }
+
+        $oldEmail = $user->email;
+        $newEmail = $user->pending_email;
+
+        $user->forceFill([
+            'email' => $newEmail,
+            'email_verified_at' => now(),
+            'pending_email' => null,
+            'pending_email_code' => null,
+            'pending_email_expires_at' => null,
+        ])->save();
+
+        Notification::route('mail', $oldEmail)
+            ->notify(new EmailChangedNotification($newEmail));
+
+        return $this->success('Email address updated successfully.', [
+            'user' => $this->userPayload($user),
+        ]);
+    }
+
     public function verifyEmail(VerifyEmailRequest $request): JsonResponse
     {
         $validated = $request->validated();
@@ -290,18 +359,24 @@ class AuthController extends Controller
             return $this->error("Too many requests. Try again in {$seconds} seconds.", ['retry_after' => $seconds], 429);
         }
 
+        // Hit the limiter unconditionally, BEFORE the user lookup, so real
+        // and non-existent emails accumulate attempts identically. If this
+        // only ran inside the `if ($user)` branch, an attacker could tell
+        // real accounts from fake ones by watching which emails eventually
+        // trigger a 429 and which never do.
+        RateLimiter::hit($throttleKey, self::FORGOT_PASSWORD_LOCKOUT_SECONDS);
+
         $user = User::where('email', $validated['email'])->first();
         $devToken = null;
 
         if ($user) {
-            RateLimiter::hit($throttleKey, self::FORGOT_PASSWORD_LOCKOUT_SECONDS);
-
             $token = Password::broker()->createToken($user);
             $user->notify(new PasswordResetNotification($token, $user->email));
 
             if (! app()->environment('production')) {
                 Log::info("Password reset token for {$user->email}: {$token}");
             }
+
             $devToken = config('auth.developer.expose_password_reset_token') ? $token : null;
         }
 

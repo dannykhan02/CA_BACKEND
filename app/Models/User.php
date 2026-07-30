@@ -23,6 +23,9 @@ class User extends Authenticatable
         'full_name',
         'role',
         'active',
+        'pending_email',
+        'pending_email_code',
+        'pending_email_expires_at',
     ];
 
     protected $hidden = [
@@ -33,6 +36,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'last_active_at' => 'datetime',
+        'pending_email_expires_at' => 'datetime',
         'active' => 'boolean',
         'password' => 'hashed',
     ];

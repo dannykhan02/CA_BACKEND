@@ -41,6 +41,10 @@ Route::prefix('auth')->name('auth.')->group(function () {
 
         Route::post('/signout', [AuthController::class, 'signout'])
             ->name('signout');
+        Route::post('/change-email/request', [AuthController::class, 'requestEmailChange'])
+            ->name('change-email.request');
+        Route::post('/change-email/confirm', [AuthController::class, 'confirmEmailChange'])
+            ->name('change-email.confirm');
     });
 });
 
