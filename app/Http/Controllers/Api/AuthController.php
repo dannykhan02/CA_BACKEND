@@ -69,19 +69,16 @@ class AuthController extends Controller
         $devCode = config('auth.developer.expose_verification_code') ? $verification->code : null;
         $token = $user->createToken('auth-token', ['*'], now()->addHours(self::DEFAULT_TOKEN_HOURS))->plainTextToken;
 
-        $response = [
-            'message' => 'Account created successfully.',
-            'data' => [
-                'user' => $this->userPayload($user),
-                'token' => $token,
-            ],
+        $data = [
+            'user' => $this->userPayload($user),
+            'token' => $token,
         ];
 
         if ($devCode !== null) {
-            $response['data']['verification_code'] = $devCode;
+            $data['verification_code'] = $devCode;
         }
 
-        return response()->json($response, 201);
+        return $this->success('Account created successfully.', $data, 201);
     }
 
     public function signin(SigninRequest $request): JsonResponse
@@ -161,6 +158,11 @@ class AuthController extends Controller
         $user = User::where('email', $email)->first();
         $isNewUser = ! $user;
 
+        // Google's own `email_verified` claim (checked above) is treated as
+        // equivalent to completing our own OTP flow — so unlike signup(),
+        // there is no VerificationCode generated and no verification email
+        // sent here. Do not add one; it would ask the user to re-verify an
+        // address Google has already verified.
         if ($isNewUser) {
             $user = User::create([
                 'full_name' => $name,
@@ -230,8 +232,13 @@ class AuthController extends Controller
             Log::info("Email change code for {$user->pending_email}: {$code}");
         }
 
+        // Uses the same config-driven flag as signup/resend/forgot-password,
+        // rather than a hardcoded environment() check, so this stays in sync
+        // if that flag is ever toggled off without a redeploy.
+        $devCode = config('auth.developer.expose_verification_code') ? $code : null;
+
         return $this->success('Verification code sent to your new email address.', [
-            'verification_code' => app()->environment(['local', 'staging']) ? $code : null,
+            'verification_code' => $devCode,
         ]);
     }
 
@@ -263,6 +270,9 @@ class AuthController extends Controller
             'pending_email_expires_at' => null,
         ])->save();
 
+        // Notify the OLD address, not the new one — this is the security
+        // alert ("did you mean to do this?"), so it must reach whoever
+        // controlled the account before the change, not the new inbox.
         Notification::route('mail', $oldEmail)
             ->notify(new EmailChangedNotification($newEmail));
 
@@ -338,15 +348,20 @@ class AuthController extends Controller
             $devCode = config('auth.developer.expose_verification_code') ? $verification->code : null;
         }
 
-        $response = [
-            'message' => 'If an account with that email exists and is unverified, a new code has been sent.',
-        ];
-
+        // Was previously response()->json(...) directly, bypassing the
+        // success/error envelope every other endpoint uses. Switched to
+        // $this->success() so this response carries the same "success"
+        // field the frontend's error/response handling expects everywhere
+        // else in the API.
+        $data = [];
         if ($devCode !== null) {
-            $response['verification_code'] = $devCode;
+            $data['verification_code'] = $devCode;
         }
 
-        return response()->json($response, 200);
+        return $this->success(
+            'If an account with that email exists and is unverified, a new code has been sent.',
+            $data
+        );
     }
 
     public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
@@ -380,15 +395,17 @@ class AuthController extends Controller
             $devToken = config('auth.developer.expose_password_reset_token') ? $token : null;
         }
 
-        $response = [
-            'message' => 'If an account with that email exists, a password reset link has been sent.',
-        ];
-
+        // Same envelope fix as resendVerification() above — was bypassing
+        // $this->success() previously.
+        $data = [];
         if ($devToken !== null) {
-            $response['reset_token'] = $devToken;
+            $data['reset_token'] = $devToken;
         }
 
-        return response()->json($response, 200);
+        return $this->success(
+            'If an account with that email exists, a password reset link has been sent.',
+            $data
+        );
     }
 
     public function resetPassword(ResetPasswordRequest $request): JsonResponse

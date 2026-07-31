@@ -12,10 +12,12 @@ class UserController extends Controller
 {
     private const VALID_ROLES = ['Administrator', 'Reviewer', 'Analyst', 'Viewer'];
 
+    private const SAFE_FIELDS = ['id', 'full_name', 'email', 'role', 'active', 'email_verified_at'];
+
     public function index(): JsonResponse
     {
         return response()->json([
-            'data' => User::select('id', 'full_name', 'email', 'role', 'active', 'email_verified_at')->get(),
+            'data' => User::select(self::SAFE_FIELDS)->get(),
         ]);
     }
 
@@ -27,6 +29,8 @@ class UserController extends Controller
 
         $user->update(['role' => $validated['role']]);
 
-        return response()->json(['data' => $user->fresh()]);
+        return response()->json([
+            'data' => $user->fresh()->only(self::SAFE_FIELDS),
+        ]);
     }
 }

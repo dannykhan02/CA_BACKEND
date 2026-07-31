@@ -22,6 +22,8 @@ class EmailChangedNotification extends Notification
         return (new MailMessage)
             ->subject('Your Account Email Was Changed')
             ->line("This is a confirmation that your account email was changed to {$this->newEmail}.")
-            ->line('If you did NOT make this change, contact support immediately — your account may be compromised.');
+            ->line(new \Illuminate\Support\HtmlString(
+                '<div style="background: #FBEAEA; color: #9E2A2B; border-left: 4px solid #9E2A2B; border-radius: 6px; padding: 14px 16px; margin: 16px 0; font-size: 14px;">If you did NOT make this change, contact support immediately — your account may be compromised.</div>'
+            ));
     }
 }

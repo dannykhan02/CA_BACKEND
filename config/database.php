@@ -96,7 +96,10 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
-            'sslmode' => env('DB_SSLMODE', 'prefer'),
+            // Neon (and most managed Postgres hosts) require SSL. Default
+            // changed from 'prefer' to 'require' since this connection now
+            // points at Neon for local development, not a local socket.
+            'sslmode' => env('DB_SSLMODE', 'require'),
         ],
 
         'sqlsrv' => [

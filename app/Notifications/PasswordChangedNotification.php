@@ -21,6 +21,8 @@ class PasswordChangedNotification extends Notification
             ->subject('Your Password Was Changed')
             ->line('This is a confirmation that your password was just changed.')
             ->line('If you made this change, no action is needed.')
-            ->line('If you did NOT make this change, contact support immediately — your account may be compromised.');
+            ->line(new \Illuminate\Support\HtmlString(
+                '<div style="background: #FBEAEA; color: #9E2A2B; border-left: 4px solid #9E2A2B; border-radius: 6px; padding: 14px 16px; margin: 16px 0; font-size: 14px;">If you did NOT make this change, contact support immediately — your account may be compromised.</div>'
+            ));
     }
 }
