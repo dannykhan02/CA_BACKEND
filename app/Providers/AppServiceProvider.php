@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Services\Ocr\ClaudeVisionOcrProvider;
+use App\Services\Ocr\OcrEngineResolver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -13,7 +15,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // OCR provider list, in resolution order — the single place that
+        // knows which providers exist and which one wins for a given
+        // document. Adding a Tesseract or Azure Document Intelligence
+        // provider later means adding one line here, not touching
+        // ExtractDocumentTextJob or anything else that consumes OCR.
+        $this->app->singleton(OcrEngineResolver::class, function ($app) {
+            return new OcrEngineResolver([
+                $app->make(ClaudeVisionOcrProvider::class),
+            ]);
+        });
     }
 
     /**

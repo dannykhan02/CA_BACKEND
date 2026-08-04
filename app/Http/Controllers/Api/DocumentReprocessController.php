@@ -13,9 +13,10 @@ class DocumentReprocessController extends Controller
 {
     public function store(Request $request, Document $document): JsonResponse
     {
-        if (! in_array($request->user()->role, ['Administrator', 'Reviewer'], true)) {
-            abort(403, 'Only Administrators and Reviewers can trigger reprocessing.');
-        }
+        // Was an inline in_array(...) role check via abort(403, ...) — see
+        // DocumentPolicy::reprocess() for why that bypassed the
+        // classification-aware view() gate (audit F-High-3).
+        $this->authorize('reprocess', $document);
 
         if ($document->status !== 'Needs Review') {
             return response()->json([
@@ -34,6 +35,7 @@ class DocumentReprocessController extends Controller
             'status' => 'Processing',
             'progress' => 60,
             'error_message' => null, // Clear stale error from previous failures
+            'last_updated_by' => $request->user()->id,
         ])->save();
 
         GenerateInsightsJob::dispatch($document->id)->onQueue('extraction');

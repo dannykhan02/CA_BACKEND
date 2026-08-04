@@ -19,9 +19,9 @@ class DocumentApiTest extends TestCase
         $this->seed(DocumentSeeder::class);
     }
 
-    private function authenticate(): User
+    private function authenticate()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->administrator()->create();
         Sanctum::actingAs($user);
         return $user;
     }

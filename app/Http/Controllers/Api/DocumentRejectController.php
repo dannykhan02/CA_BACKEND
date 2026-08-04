@@ -6,11 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Document\RejectDocumentRequest;
 use App\Http\Resources\DocumentResource;
 use App\Models\Document;
+use App\Services\AuditLogger;
 use Illuminate\Http\JsonResponse;
 
 class DocumentRejectController extends Controller
 {
-    public function store(RejectDocumentRequest $request, Document $document): JsonResponse
+    public function store(RejectDocumentRequest $request, Document $document, AuditLogger $audit): JsonResponse
     {
         $this->authorize('reject', $document);
 
@@ -30,6 +31,11 @@ class DocumentRejectController extends Controller
                 : 'Document rejected during review.',
             'progress' => null,
         ])->save();
+
+        $audit->log($request->user(), 'document.reject', $document, [
+            'classification' => $document->classification,
+            'has_note' => $note !== '',
+        ]);
 
         $document->load(['kpis', 'charts', 'pageFlags', 'uploader:id,full_name', 'lastUpdater:id,full_name']);
 

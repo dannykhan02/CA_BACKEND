@@ -2,15 +2,12 @@
 
 namespace App\Policies;
 
+use App\Enums\WorkspaceType;
 use App\Models\Document;
 use App\Models\User;
 
 class DocumentPolicy
 {
-    /**
-     * Classification read-access matrix — business decision, confirmed
-     * with Dan 2026-07-24. See docs/DECISIONS.md.
-     */
     private const MIN_ROLE_FOR_CLASSIFICATION = [
         'Public' => ['Viewer', 'Analyst', 'Reviewer', 'Administrator'],
         'Internal' => ['Viewer', 'Analyst', 'Reviewer', 'Administrator'],
@@ -20,12 +17,20 @@ class DocumentPolicy
 
     public function view(User $user, Document $document): bool
     {
+        if ($document->workspace?->type === WorkspaceType::Personal) {
+            return $document->uploaded_by === $user->id;
+        }
+
         $allowedRoles = self::MIN_ROLE_FOR_CLASSIFICATION[$document->classification] ?? [];
         return in_array($user->role, $allowedRoles, true);
     }
 
     public function approve(User $user, Document $document): bool
     {
+        if ($document->workspace?->type === WorkspaceType::Personal) {
+            return $document->uploaded_by === $user->id;
+        }
+
         return $this->view($user, $document)
             && in_array($user->role, ['Administrator', 'Reviewer'], true);
     }
@@ -35,12 +40,20 @@ class DocumentPolicy
         return $this->approve($user, $document);
     }
 
+    public function reprocess(User $user, Document $document): bool
+    {
+        if ($document->workspace?->type === WorkspaceType::Personal) {
+            return $document->uploaded_by === $user->id;
+        }
+
+        return $this->approve($user, $document);
+    }
+
     /**
-     * Which classifications this user's role is permitted to see at all —
-     * used to constrain the index() listing query, not just single-document
-     * access. Without this, a Viewer could never open a Restricted document
-     * directly, but could still see it exists in the list and read its name,
-     * size, and metadata — a real information leak for a regulator's system.
+     * Organization-only concept — Personal workspaces scope by ownership,
+     * not classification, so this must not be called for a Personal user's
+     * listing query. DocumentController::index() needs a workspace-aware
+     * branch here too — flagged as the next file to fix (see note above).
      */
     public static function allowedClassificationsFor(User $user): array
     {

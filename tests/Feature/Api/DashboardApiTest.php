@@ -25,7 +25,7 @@ class DashboardApiTest extends TestCase
 
     public function test_summary_returns_correct_counts_per_status(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->administrator()->create();
         Sanctum::actingAs($user);
 
         $response = $this->getJson('/api/dashboard/summary');
@@ -46,7 +46,7 @@ class DashboardApiTest extends TestCase
     {
         // No seeding this time — confirms the grouped-count query doesn't
         // choke on an empty table (a common off-by-null bug with pluck()).
-        $user = User::factory()->create();
+        $user = User::factory()->administrator()->create();
         Sanctum::actingAs($user);
 
         \App\Models\Document::query()->delete();

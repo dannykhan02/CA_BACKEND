@@ -6,6 +6,7 @@ use App\Exceptions\AnthropicRateLimitException;
 use App\Models\Document;
 use App\Services\AnthropicClient;
 use App\Services\DocumentTextExtractor;
+use App\Services\Pipeline\PipelineStageRecorder;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -25,7 +26,7 @@ class GenerateInsightsJob implements ShouldQueue
 
     public function __construct(public string $documentId) {}
 
-    public function handle(AnthropicClient $client, DocumentTextExtractor $extractor): void
+    public function handle(AnthropicClient $client, DocumentTextExtractor $extractor, PipelineStageRecorder $recorder): void
     {
         $document = Document::find($this->documentId);
         if (! $document || $document->status === 'Failed') {
@@ -36,6 +37,7 @@ class GenerateInsightsJob implements ShouldQueue
         // allow-list) never gets its content sent to Anthropic automatically.
         $allowed = config('document_processing.auto_extract_classifications');
         if (! in_array($document->classification, $allowed, true)) {
+            $recorder->skip($document, 'ai_analysis', 'classification not in auto-extract allow-list');
             $document->forceFill([
                 'status' => 'Needs Review',
                 'progress' => 100,
@@ -83,9 +85,16 @@ class GenerateInsightsJob implements ShouldQueue
 
         $document->forceFill(['progress' => 75, 'extraction_started_at' => now()])->save();
 
+        $aiStage = $recorder->start($document, 'ai_analysis');
+
         try {
             $result = $client->extractDocumentInsights($text, $document->name);
         } catch (AnthropicRateLimitException $e) {
+            // Not a stage failure — the job itself retries via ->release(),
+            // so no processing_jobs row is finalized here. A fresh 'ai_analysis'
+            // row will be started on the next attempt instead of leaving this
+            // one dangling in 'processing'.
+            $recorder->fail($aiStage, 'Rate limited, releasing for retry.');
             $this->release(30);
             return;
         } catch (\Throwable $e) {
@@ -96,6 +105,7 @@ class GenerateInsightsJob implements ShouldQueue
             // actually gets a chance to run, rather than this catch silently
             // swallowing every attempt and making $tries meaningless.
             if ($this->attempts() >= $this->tries) {
+                $recorder->fail($aiStage, $e->getMessage());
                 $document->forceFill([
                     'status' => 'Needs Review',
                     'error_message' => 'AI insight generation failed. Contact support if this persists.',
@@ -103,8 +113,14 @@ class GenerateInsightsJob implements ShouldQueue
                 return;
             }
 
+            $recorder->fail($aiStage, $e->getMessage() . ' (will retry)');
             throw $e;
         }
+
+        $recorder->complete($aiStage, [
+            'input_tokens' => $result['input_tokens'],
+            'output_tokens' => $result['output_tokens'],
+        ]);
 
         $document->forceFill([
             'status' => 'Ready',
@@ -122,8 +138,8 @@ class GenerateInsightsJob implements ShouldQueue
         // duplicate rows on every retry rather than replacing stale data.
         // Note: deleting a chart row cascades to its document_chart_points
         // rows automatically via the DB foreign key — no extra cleanup needed.
+        $kpiStage = $recorder->start($document, 'kpis');
         $document->kpis()->delete();
-        $document->charts()->delete();
 
         foreach ($result['kpis'] as $kpi) {
             $document->kpis()->create([
@@ -135,6 +151,10 @@ class GenerateInsightsJob implements ShouldQueue
                 'trend_value' => $kpi['trendValue'] ?? null,
             ]);
         }
+        $recorder->complete($kpiStage, ['count' => count($result['kpis'])]);
+
+        $chartStage = $recorder->start($document, 'charts');
+        $document->charts()->delete();
 
         foreach ($result['charts'] as $chart) {
             $chartModel = $document->charts()->create([
@@ -152,6 +172,7 @@ class GenerateInsightsJob implements ShouldQueue
                 ]);
             }
         }
+        $recorder->complete($chartStage, ['count' => count($result['charts'])]);
 
         Cache::forget("document:{$document->id}:extracted_text");
     }

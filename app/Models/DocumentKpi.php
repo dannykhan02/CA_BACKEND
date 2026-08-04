@@ -7,19 +7,27 @@ use Illuminate\Database\Eloquent\Model;
 class DocumentKpi extends Model
 {
     protected $fillable = [
-        'document_id', 
-        'label', 
-        'value', 
-        'value_numeric', // Added this line to fix mass-assignment issue
-        'unit', 
-        'trend', 
-        'trend_value'
+        'document_id',
+        'workspace_id',
+        'label',
+        'value',
+        'value_numeric',
+        'unit',
+        'trend',
+        'trend_value',
+    ];
+
+    protected $casts = [
+        'value_numeric' => 'decimal:4',
     ];
 
     public function document()
     {
         return $this->belongsTo(Document::class);
     }
+
+    public function workspace()
+    {
+        return $this->belongsTo(Workspace::class);
+    }
 }
-
-

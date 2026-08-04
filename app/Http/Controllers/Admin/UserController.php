@@ -27,6 +27,25 @@ class UserController extends Controller
             'role' => ['required', 'string', Rule::in(self::VALID_ROLES)],
         ]);
 
+        // Audit F-Medium-4: nothing previously stopped the last active
+        // Administrator from demoting themselves (or another admin demoting
+        // the only other one), which locks the whole org out of the admin
+        // panel with no way back in short of a direct DB edit.
+        $isDemotingAdmin = $user->role === 'Administrator' && $validated['role'] !== 'Administrator';
+
+        if ($isDemotingAdmin) {
+            $remainingAdmins = User::where('role', 'Administrator')
+                ->where('active', true)
+                ->where('id', '!=', $user->id)
+                ->count();
+
+            if ($remainingAdmins === 0) {
+                return response()->json([
+                    'message' => 'Cannot change this role — at least one active Administrator must remain.',
+                ], 422);
+            }
+        }
+
         $user->update(['role' => $validated['role']]);
 
         return response()->json([

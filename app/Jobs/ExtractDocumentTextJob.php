@@ -3,7 +3,11 @@
 namespace App\Jobs;
 
 use App\Models\Document;
+use App\Models\OcrResult;
 use App\Services\DocumentTextExtractor;
+use App\Services\Ocr\OcrEngineResolver;
+use App\Services\Ocr\PdfRasterizer;
+use App\Services\Pipeline\PipelineStageRecorder;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -21,13 +25,18 @@ class ExtractDocumentTextJob implements ShouldQueue
 
     public function __construct(public string $documentId) {}
 
-    public function handle(DocumentTextExtractor $extractor): void
-    {
+    public function handle(
+        DocumentTextExtractor $extractor,
+        PipelineStageRecorder $recorder,
+        OcrEngineResolver $ocrResolver,
+        PdfRasterizer $rasterizer,
+    ): void {
         $document = Document::find($this->documentId);
         if (! $document || $document->status === 'Failed') {
             return;
         }
 
+        $extractStage = $recorder->start($document, 'extract');
         $document->forceFill(['progress' => 25])->save();
 
         $absolutePath = Storage::disk('documents')->path($document->file_path);
@@ -37,26 +46,95 @@ class ExtractDocumentTextJob implements ShouldQueue
                 ? $extractor->extractPdfText($absolutePath)
                 : $extractor->extractDocxText($absolutePath);
         } catch (\Throwable $e) {
+            $recorder->fail($extractStage, $e->getMessage());
             $document->forceFill([
                 'status' => 'Failed',
-                'error_message' => 'Could not extract text: the file may be corrupted, password-protected, or scanned without a text layer.',
+                'error_message' => 'Could not extract text: the file may be corrupted or password-protected.',
             ])->save();
             $this->fail($e);
             return;
         }
 
         if (trim($text) === '') {
-            $document->forceFill([
-                'status' => 'Failed',
-                'error_message' => 'No extractable text found — the document may be a scanned image without OCR.',
-            ])->save();
-            $this->fail(new \RuntimeException('Empty extracted text.'));
-            return;
+            $recorder->complete($extractStage, ['native_text_found' => false]);
+            $text = $this->fallbackToOcr($document, $ocrResolver, $rasterizer, $recorder, $absolutePath);
+            if ($text === null) {
+                return; // fallbackToOcr already set status + returned
+            }
+        } else {
+            $recorder->complete($extractStage, ['native_text_found' => true]);
         }
 
         Cache::put("document:{$document->id}:extracted_text", $text, now()->addHours(2));
-
         $document->forceFill(['progress' => 50])->save();
+    }
+
+    /** Returns extracted OCR text, or null if it already terminated the document's status. */
+    private function fallbackToOcr(
+        Document $document,
+        OcrEngineResolver $resolver,
+        PdfRasterizer $rasterizer,
+        PipelineStageRecorder $recorder,
+        string $absolutePath,
+    ): ?string {
+        $ocrEnabled = $document->workspace?->settings?->ocr_enabled ?? false;
+
+        if ($document->type !== 'PDF' || ! $ocrEnabled) {
+            $recorder->skip($document, 'ocr_check', $ocrEnabled ? 'not a scanned PDF' : 'ocr disabled for workspace');
+            $document->forceFill([
+                'status' => 'Failed',
+                'error_message' => $document->type === 'PDF'
+                    ? 'No extractable text found and OCR is disabled for this workspace.'
+                    : 'No extractable text found in this document.',
+            ])->save();
+            $this->fail(new \RuntimeException('Empty extracted text, OCR unavailable.'));
+            return null;
+        }
+
+        $ocrStage = $recorder->start($document, 'ocr_check');
+
+        try {
+            $provider = $resolver->resolve($document);
+            $imagePaths = $rasterizer->toPageImages($absolutePath);
+
+            $pages = [];
+            foreach ($imagePaths as $index => $imagePath) {
+                $result = $provider->extractPage($imagePath, $document);
+
+                OcrResult::create([
+                    'workspace_id' => $document->workspace_id,
+                    'document_id' => $document->id,
+                    'page_number' => $index + 1,
+                    'engine' => $provider->engine(),
+                    'raw_text' => $result->text,
+                    'confidence' => $result->confidence,
+                    'metadata' => $result->metadata,
+                ]);
+
+                $pages[] = $result->text;
+            }
+
+            $text = implode("\f", $pages);
+        } catch (\Throwable $e) {
+            $recorder->fail($ocrStage, $e->getMessage());
+            $document->forceFill([
+                'status' => 'Needs Review',
+                'error_message' => 'OCR could not process this scanned document.',
+            ])->save();
+            return null;
+        }
+
+        if (trim($text) === '') {
+            $recorder->complete($ocrStage, ['pages_processed' => count($imagePaths)]);
+            $document->forceFill([
+                'status' => 'Needs Review',
+                'error_message' => 'OCR ran but found no readable text — needs manual review.',
+            ])->save();
+            return null;
+        }
+
+        $recorder->complete($ocrStage, ['pages_processed' => count($imagePaths)]);
+        return $text;
     }
 
     public function failed(\Throwable $e): void

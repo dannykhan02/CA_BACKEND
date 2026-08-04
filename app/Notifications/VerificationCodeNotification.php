@@ -3,10 +3,22 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class VerificationCodeNotification extends Notification
+/**
+ * Additional hardening (found on re-review, not in original audit): every
+ * notification class in this app `use Queueable` but none previously
+ * `implements ShouldQueue`. The trait alone does nothing — it only supplies
+ * queue-configuration methods (onQueue(), delay(), etc.); without the
+ * interface, Laravel dispatches the notification's mail SYNCHRONOUSLY
+ * inside the current request/job. That means signup(), resendVerification(),
+ * forgotPassword(), etc. all block on an outbound SMTP/API call to the mail
+ * provider before returning a response — and a slow or down mail provider
+ * degrades or fails an otherwise-successful auth action.
+ */
+class VerificationCodeNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 

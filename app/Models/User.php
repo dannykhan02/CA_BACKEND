@@ -23,6 +23,7 @@ class User extends Authenticatable
         'full_name',
         'role',
         'active',
+        'current_workspace_id',
         'pending_email',
         'pending_email_code',
         'pending_email_expires_at',
@@ -61,6 +62,17 @@ class User extends Authenticatable
         );
     }
 
+    /**
+     * Framework hook: fires only if something triggers Laravel's built-in
+     * password-broker flow directly (Password::sendResetLink(), etc.)
+     * independently of AuthController::forgotPassword(), which instead
+     * calls Password::broker()->createToken() and sends
+     * App\Notifications\PasswordResetNotification itself. Both paths build
+     * an identical reset URL, so behavior is consistent either way — this
+     * is intentional duplication, not drift. Audit F-Low-4: don't
+     * "consolidate" these into one without confirming which paths are
+     * actually reachable in this app.
+     */
     public function sendPasswordResetNotification($token): void
     {
         $frontendUrl = rtrim(
@@ -81,5 +93,22 @@ class User extends Authenticatable
     public function uploadedDocuments()
     {
         return $this->hasMany(Document::class, 'uploaded_by');
+    }
+
+    public function currentWorkspace()
+    {
+        return $this->belongsTo(Workspace::class, 'current_workspace_id');
+    }
+
+    public function workspaceMemberships()
+    {
+        return $this->hasMany(WorkspaceMember::class);
+    }
+
+    public function workspaces()
+    {
+        return $this->belongsToMany(Workspace::class, 'workspace_members')
+            ->withPivot(['role', 'joined_at'])
+            ->withTimestamps();
     }
 }

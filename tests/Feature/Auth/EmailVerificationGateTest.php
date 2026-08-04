@@ -26,7 +26,7 @@ class EmailVerificationGateTest extends TestCase
         ])->assertStatus(200);
     }
 
-    public function test_unverified_user_is_blocked_with_403(): void
+    public function test_unverified_user_is_blocked_with_a_generic_auth_failure(): void
     {
         User::factory()->create([
             'email' => 'unverified@gmail.com',
@@ -35,10 +35,20 @@ class EmailVerificationGateTest extends TestCase
             'active' => true,
         ]);
 
-        $this->postJson('/api/auth/signin', [
+        // AuthController::signin() deliberately collapses bad‑credentials,
+        // deactivated, and unverified into one identical response – see
+        // audit F‑High‑1 – so this must no longer expect a distinguishable
+        // 403 for the unverified case specifically.
+        $response = $this->postJson('/api/auth/signin', [
             'email' => 'unverified@gmail.com',
             'password' => 'Password123!',
-        ])->assertStatus(403);
+        ]);
+
+        $response->assertStatus(401)
+            ->assertJson([
+                'success' => false,
+                'message' => 'These credentials do not match our records.',
+            ]);
     }
 
     public function test_wrong_password_returns_401_not_verification_error(): void

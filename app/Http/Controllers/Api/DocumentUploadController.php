@@ -10,6 +10,7 @@ use App\Jobs\GenerateInsightsJob;
 use App\Jobs\ScanUploadedFileJob;
 use App\Models\Document;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 
 class DocumentUploadController extends Controller
@@ -19,8 +20,20 @@ class DocumentUploadController extends Controller
         $file = $request->file('file');
         $hash = hash_file('sha256', $file->getRealPath());
 
-        $existing = Document::where('file_hash', $hash)->first();
+        // Workspace-scoped dedup: an identical file hash in a different workspace
+        // is not a duplicate of *your* document, it's a coincidence (common form, template).
+        $existing = Document::where('file_hash', $hash)
+            ->where('workspace_id', $request->user()->current_workspace_id)
+            ->first();
+
         if ($existing) {
+            // Gate check to avoid leaking existence/metadata for documents the user cannot view.
+            if (Gate::forUser($request->user())->denies('view', $existing)) {
+                return response()->json([
+                    'message' => 'This file cannot be uploaded.',
+                ], 409);
+            }
+
             return response()->json([
                 'message' => 'This exact file has already been uploaded.',
                 'data' => new DocumentResource($existing),
@@ -40,6 +53,7 @@ class DocumentUploadController extends Controller
             'classification' => $request->validated('classification'),
             'year' => (int) now()->year,
             'uploaded_by' => $request->user()->id,
+            'workspace_id' => $request->user()->current_workspace_id, // now set
             'pages' => 0,
             'has_structured_data' => false,
             'power_bi_status' => 'not-synced',

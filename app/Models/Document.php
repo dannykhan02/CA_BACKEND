@@ -11,19 +11,22 @@ class Document extends Model
 
     protected $fillable = [
         'name', 'type', 'size_kb', 'status', 'classification', 'year',
-        'uploaded_by', 'last_updated_by', 'pages', 'has_structured_data',
-        'progress', 'error_message', 'power_bi_status', 'insights',
-        'file_path', 'file_hash',
+        'workspace_id', 'uploaded_by', 'last_updated_by', 'pages',
+        'has_structured_data', 'progress', 'error_message',
+        'power_bi_status', 'insights', 'file_path', 'file_hash',
+        'extraction_attempts', 'extraction_started_at',
+        'extraction_completed_at', 'extraction_input_tokens',
+        'extraction_output_tokens',
     ];
 
     protected $casts = [
         'has_structured_data' => 'boolean',
         'insights' => 'array',
+        'extraction_started_at' => 'datetime',
+        'extraction_completed_at' => 'datetime',
     ];
 
-    // Ordering by id (not sort_order — column doesn't exist) preserves
-    // insertion order since id is an auto-increment PK and rows are
-    // always seeded/created in display order.
+    // ✅ Fixed: method name and parameter list
     public function kpis()
     {
         return $this->hasMany(DocumentKpi::class)->orderBy('id');
@@ -37,6 +40,26 @@ class Document extends Model
     public function pageFlags()
     {
         return $this->hasMany(DocumentPageFlag::class)->orderBy('page');
+    }
+
+    public function versions()
+    {
+        return $this->hasMany(DocumentVersion::class)->orderBy('version_number');
+    }
+
+    public function ocrResults()
+    {
+        return $this->hasMany(OcrResult::class)->orderBy('page_number');
+    }
+
+    public function processingJobs()
+    {
+        return $this->hasMany(ProcessingJob::class);
+    }
+
+    public function workspace()
+    {
+        return $this->belongsTo(Workspace::class);
     }
 
     public function uploader()

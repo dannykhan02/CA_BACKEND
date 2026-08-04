@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class DocumentChart extends Model
 {
-    protected $fillable = ['document_id', 'type', 'title', 'description', 'data'];
+    protected $fillable = ['document_id', 'workspace_id', 'type', 'title', 'description', 'data'];
 
     protected $casts = [
         'data' => 'array',
@@ -15,6 +15,11 @@ class DocumentChart extends Model
     public function document()
     {
         return $this->belongsTo(Document::class);
+    }
+
+    public function workspace()
+    {
+        return $this->belongsTo(Workspace::class);
     }
 
     // Normalized rows for the Power BI reporting layer — kept alongside the

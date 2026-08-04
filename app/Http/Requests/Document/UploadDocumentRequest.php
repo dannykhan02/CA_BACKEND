@@ -2,19 +2,32 @@
 
 namespace App\Http\Requests\Document;
 
+use App\Enums\WorkspaceType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UploadDocumentRequest extends FormRequest
 {
+    /**
+     * Determine if the user is authorized to make this request.
+     */
     public function authorize(): bool
     {
-        // Matches confirmed roles: Administrator, Reviewer, Analyst, Viewer.
-        // Only Administrator/Reviewer can upload — Analyst/Viewer are read-only
-        // for now; Day 6's policy layer can refine this further if needed.
+        $workspace = $this->user()->currentWorkspace;
+
+        if ($workspace?->type === WorkspaceType::Personal) {
+            // Sole member of their own workspace — no reviewer/administrator
+            // concept exists to gate against.
+            return true;
+        }
+
+        // Organization workspace: unchanged Administrator/Reviewer-only rule.
         return in_array($this->user()->role, ['Administrator', 'Reviewer'], true);
     }
 
+    /**
+     * Get the validation rules that apply to the request.
+     */
     public function rules(): array
     {
         $maxKb = config('document_processing.max_upload_size_kb');
@@ -32,6 +45,9 @@ class UploadDocumentRequest extends FormRequest
         ];
     }
 
+    /**
+     * Get the custom error messages for validation failures.
+     */
     public function messages(): array
     {
         return [

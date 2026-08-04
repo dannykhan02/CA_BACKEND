@@ -3,10 +3,18 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class EmailChangedNotification extends Notification
+/**
+ * Note: this is a security alert (unexpected-change notification), so queue
+ * worker health/latency directly affects how fast the account owner finds
+ * out about a change they didn't make. If this app doesn't already monitor
+ * queue depth/latency, consider putting security-alert notifications like
+ * this one on a dedicated, closely-watched queue rather than the default.
+ */
+class EmailChangedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 

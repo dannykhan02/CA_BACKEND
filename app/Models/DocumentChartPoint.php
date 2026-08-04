@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class DocumentChartPoint extends Model
 {
-    protected $fillable = ['document_chart_id', 'label', 'value', 'sort_order'];
+    protected $fillable = ['document_chart_id', 'workspace_id', 'label', 'value', 'sort_order'];
 
     protected $casts = [
         'value' => 'decimal:4',
@@ -15,5 +15,10 @@ class DocumentChartPoint extends Model
     public function chart()
     {
         return $this->belongsTo(DocumentChart::class, 'document_chart_id');
+    }
+
+    public function workspace()
+    {
+        return $this->belongsTo(Workspace::class);
     }
 }

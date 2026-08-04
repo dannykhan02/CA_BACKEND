@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Exceptions\MalwareScannerUnavailableException;
 use App\Models\Document;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -54,7 +55,14 @@ class ScanUploadedFileJob implements ShouldQueue
         $sock = @stream_socket_client("unix://{$socket}", $errno, $errstr, 5);
         if (! $sock) {
             Log::error("Could not connect to clamd at {$socket}: {$errstr}");
-            throw new \RuntimeException('Malware scanner unavailable.');
+
+            // Audit F-Low-2: previously both "scanner unreachable" and
+            // "malware found" collapsed into the same generic Failed state
+            // with no way for ops to tell them apart without reading logs.
+            // A dedicated exception lets failed()/monitoring distinguish
+            // "we have an infra problem" (page ops) from "this file is bad"
+            // (no action needed beyond the existing user-facing message).
+            throw new MalwareScannerUnavailableException('Malware scanner unavailable.');
         }
 
         fwrite($sock, "SCAN {$path}\n");
@@ -67,6 +75,15 @@ class ScanUploadedFileJob implements ShouldQueue
     public function failed(\Throwable $e): void
     {
         $document = Document::find($this->documentId);
+
+        if ($e instanceof MalwareScannerUnavailableException) {
+            // critical, not error: this needs a human, distinctly from a
+            // routine "this document failed" outcome.
+            Log::critical('Malware scanner was unreachable for the full retry budget — uploads are effectively blocked.', [
+                'document_id' => $this->documentId,
+            ]);
+        }
+
         $document?->forceFill([
             'status' => 'Failed',
             'error_message' => $document->error_message ?? 'File scan failed: ' . $e->getMessage(),

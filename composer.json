@@ -7,6 +7,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "firebase/php-jwt": "^7.1",
         "laravel/framework": "^13.8",
         "laravel/horizon": "^5.48",
         "laravel/sanctum": "^4.0",
@@ -19,6 +20,7 @@
         "symfony/postmark-mailer": "^7.4"
     },
     "require-dev": {
+        "doctrine/dbal": "^4.4",
         "fakerphp/faker": "^1.23",
         "laravel/pail": "^1.2.5",
         "laravel/pao": "^1.0.6",

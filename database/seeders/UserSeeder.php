@@ -25,13 +25,19 @@ class UserSeeder extends Seeder
      * Roles mirror UserController::VALID_ROLES exactly. If that list ever
      * changes, update it here too — there's no shared enum/constant on the
      * User model to keep these in sync automatically.
+     *
+     * Domain is example.com (IANA-reserved for documentation/testing),
+     * NOT ca.go.ke — these accounts trigger real outbound email (signup
+     * verification, and now email-change security alerts), and ca.go.ke is
+     * a real government domain we don't control. Using a real-but-fake
+     * mailbox there risks bounces against CA's actual mail infrastructure.
      */
     private const TEST_PASSWORD = 'Password123!';
 
     public function run(): void
     {
         User::updateOrCreate(
-            ['email' => 'test.admin@ca.go.ke'],
+            ['email' => 'test.admin@example.com'],
             [
                 'full_name' => 'Test Administrator',
                 'password' => self::TEST_PASSWORD,
@@ -42,7 +48,7 @@ class UserSeeder extends Seeder
         );
 
         User::updateOrCreate(
-            ['email' => 'test.reviewer@ca.go.ke'],
+            ['email' => 'test.reviewer@example.com'],
             [
                 'full_name' => 'Test Reviewer',
                 'password' => self::TEST_PASSWORD,
@@ -53,7 +59,7 @@ class UserSeeder extends Seeder
         );
 
         User::updateOrCreate(
-            ['email' => 'test.analyst@ca.go.ke'],
+            ['email' => 'test.analyst@example.com'],
             [
                 'full_name' => 'Test Analyst',
                 'password' => self::TEST_PASSWORD,
@@ -64,7 +70,7 @@ class UserSeeder extends Seeder
         );
 
         User::updateOrCreate(
-            ['email' => 'test.viewer@ca.go.ke'],
+            ['email' => 'test.viewer@example.com'],
             [
                 'full_name' => 'Test Viewer',
                 'password' => self::TEST_PASSWORD,
