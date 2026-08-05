@@ -9,9 +9,9 @@ use App\Jobs\ExtractDocumentTextJob;
 use App\Jobs\GenerateInsightsJob;
 use App\Jobs\ScanUploadedFileJob;
 use App\Models\Document;
+use App\Services\Documents\DocumentStorageService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Str;
 
 class DocumentUploadController extends Controller
 {
@@ -41,9 +41,11 @@ class DocumentUploadController extends Controller
         }
 
         // Never trust the client-supplied filename for the actual disk path.
+        // Routed through DocumentStorageService (not Storage::disk() here
+        // directly) so swapping local storage for S3 later is a change in
+        // one service class, not every controller that touches files.
         $extension = strtolower($file->getClientOriginalExtension());
-        $storedName = Str::uuid() . '.' . $extension;
-        $path = $file->storeAs('', $storedName, 'documents');
+        $path = app(DocumentStorageService::class)->store($file, $request->user()->current_workspace_id);
 
         $document = Document::create([
             'name' => $file->getClientOriginalName(),

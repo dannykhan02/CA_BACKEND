@@ -8,12 +8,45 @@ use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\DocumentDownloadController;
 use App\Http\Controllers\Api\DocumentRejectController;
 use App\Http\Controllers\Api\DocumentReprocessController;
-use App\Http\Controllers\Api\DocumentSearchController; // <-- ensure this import exists
+use App\Http\Controllers\Api\DocumentSearchController; // <-- added for search
 use App\Http\Controllers\Api\DocumentUploadController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->name('auth.')->group(function () {
-    // ... (unchanged)
+    Route::post('/signup', [AuthController::class, 'signup'])
+        ->middleware('throttle:signup')
+        ->name('signup');
+
+    Route::post('/signin', [AuthController::class, 'signin'])
+        ->name('signin');
+
+    // Token-based Google Sign-In
+    Route::post('/google', [AuthController::class, 'google'])
+        ->name('google');
+
+    Route::post('/verify-email', [AuthController::class, 'verifyEmail'])
+        ->name('verify-email');
+
+    Route::post('/resend-verification', [AuthController::class, 'resendVerification'])
+        ->name('resend-verification');
+
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])
+        ->name('forgot-password');
+
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])
+        ->name('reset-password');
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/me', [AuthController::class, 'me'])
+            ->name('me');
+
+        Route::post('/signout', [AuthController::class, 'signout'])
+            ->name('signout');
+        Route::post('/change-email/request', [AuthController::class, 'requestEmailChange'])
+            ->name('change-email.request');
+        Route::post('/change-email/confirm', [AuthController::class, 'confirmEmailChange'])
+            ->name('change-email.confirm');
+    });
 });
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -44,14 +77,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/documents/{document}/reject', [DocumentRejectController::class, 'store'])
         ->name('documents.reject');
 
+    // ✅ NEW: Document search endpoint (added to close the classification allow‑list gap)
     Route::get('/documents/search', [DocumentSearchController::class, 'search'])
         ->name('documents.search');
 });
 
-// Administrator-only routes (unchanged)
+// Administrator-only routes
 Route::middleware(['auth:sanctum', 'role:Administrator'])
     ->prefix('admin')
     ->group(function () {
+
         Route::get('/users', [UserController::class, 'index']);
+
         Route::patch('/users/{user}/role', [UserController::class, 'updateRole']);
     });
