@@ -62,6 +62,10 @@ class ScanUploadedFileJob implements ShouldQueue
 
     private function scanWithClamd(string $path, string $socket): string
     {
+        if (! file_exists($path) || ! is_readable($path)) {
+            throw new \RuntimeException("File not found or unreadable for scanning: {$path}");
+        }
+
         $sock = @stream_socket_client("unix://{$socket}", $errno, $errstr, 5);
         if (! $sock) {
             Log::error("Could not connect to clamd at {$socket}: {$errstr}");
@@ -70,6 +74,12 @@ class ScanUploadedFileJob implements ShouldQueue
         fwrite($sock, "SCAN {$path}\n");
         $response = fread($sock, 4096);
         fclose($sock);
+
+        if (str_contains($response, 'ERROR')) {
+            Log::error("Clamd scan error for {$path}: {$response}");
+            throw new \RuntimeException("Clamd scan error: {$response}");
+        }
+
         return str_contains($response, 'FOUND') ? 'FOUND' : 'OK';
     }
 

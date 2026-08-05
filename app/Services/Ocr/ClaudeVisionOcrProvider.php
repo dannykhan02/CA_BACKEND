@@ -31,6 +31,7 @@ class ClaudeVisionOcrProvider implements OcrProviderInterface
         $result = $this->client->extractTextFromImage(
             base64_encode(file_get_contents($imagePath)),
             $mediaType,
+            $document,
         );
 
         return new OcrPageResult(

@@ -103,6 +103,12 @@ class DocumentController extends Controller
     {
         $this->authorize('view', $document);
 
+        app(\App\Services\AuditLogger::class)->log(
+            $request->user(),
+            'document.viewed',
+            $document,
+        );
+
         $document->load(['kpis', 'charts', 'pageFlags', 'uploader:id,full_name', 'lastUpdater:id,full_name']);
 
         return new DocumentResource($document);

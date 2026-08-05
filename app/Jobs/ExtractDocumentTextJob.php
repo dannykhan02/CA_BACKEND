@@ -42,9 +42,13 @@ class ExtractDocumentTextJob implements ShouldQueue
         $absolutePath = Storage::disk('documents')->path($document->file_path);
 
         try {
-            $text = $document->type === 'PDF'
-                ? $extractor->extractPdfText($absolutePath)
-                : $extractor->extractDocxText($absolutePath);
+            $text = match ($document->type) {
+                'PDF' => $extractor->extractPdfText($absolutePath),
+                'DOCX' => $extractor->extractDocxText($absolutePath),
+                'XLSX' => app(\App\Services\Extraction\SpreadsheetTextExtractor::class)->extract($absolutePath),
+                'JPG', 'PNG' => '', // no native text layer — forces straight to OCR fallback below
+                default => throw new \RuntimeException("Unsupported document type: {$document->type}"),
+            };
         } catch (\Throwable $e) {
             $recorder->fail($extractStage, $e->getMessage());
             $document->forceFill([
@@ -78,12 +82,14 @@ class ExtractDocumentTextJob implements ShouldQueue
         string $absolutePath,
     ): ?string {
         $ocrEnabled = $document->workspace?->settings?->ocr_enabled ?? false;
+        $ocrEligibleTypes = ['PDF', 'JPG', 'PNG'];
+        $isOcrEligibleType = in_array($document->type, $ocrEligibleTypes, true);
 
-        if ($document->type !== 'PDF' || ! $ocrEnabled) {
-            $recorder->skip($document, 'ocr_check', $ocrEnabled ? 'not a scanned PDF' : 'ocr disabled for workspace');
+        if (! $isOcrEligibleType || ! $ocrEnabled) {
+            $recorder->skip($document, 'ocr_check', $ocrEnabled ? 'document type not eligible for OCR' : 'ocr disabled for workspace');
             $document->forceFill([
                 'status' => 'Failed',
-                'error_message' => $document->type === 'PDF'
+                'error_message' => $isOcrEligibleType
                     ? 'No extractable text found and OCR is disabled for this workspace.'
                     : 'No extractable text found in this document.',
             ])->save();
@@ -95,7 +101,11 @@ class ExtractDocumentTextJob implements ShouldQueue
 
         try {
             $provider = $resolver->resolve($document);
-            $imagePaths = $rasterizer->toPageImages($absolutePath);
+            // A scanned PDF needs rasterizing into one image per page; a
+            // bare JPG/PNG upload already IS the single page image.
+            $imagePaths = $document->type === 'PDF'
+                ? $rasterizer->toPageImages($absolutePath)
+                : [$absolutePath];
 
             $pages = [];
             foreach ($imagePaths as $index => $imagePath) {

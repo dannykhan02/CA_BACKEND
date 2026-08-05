@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Exceptions\AnthropicRateLimitException;
+use App\Models\Document;
+use App\Models\DocumentAiRun;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -12,7 +14,7 @@ class AnthropicClient
     private const RATE_LIMIT_KEY = 'anthropic:requests_this_minute';
     private const MAX_REQUESTS_PER_MINUTE = 40;
 
-    public function extractDocumentInsights(string $documentText, string $documentName): array
+    public function extractDocumentInsights(string $documentText, string $documentName, ?Document $document = null): array
     {
         $this->throttle();
 
@@ -21,6 +23,8 @@ class AnthropicClient
         $response = $this->callWithRetry([
             ['role' => 'user', 'content' => $prompt],
         ]);
+
+        $this->recordAiRun($document, 'insights', $response);
 
         return $this->parseInsightsResponse($response);
     }
@@ -35,7 +39,7 @@ class AnthropicClient
      * @param string $mediaType one of image/png, image/jpeg, image/webp, image/gif
      * @return array{text: string, confidence: float|null}
      */
-    public function extractTextFromImage(string $base64Image, string $mediaType = 'image/png'): array
+    public function extractTextFromImage(string $base64Image, string $mediaType = 'image/png', ?Document $document = null): array
     {
         $this->throttle();
 
@@ -59,6 +63,8 @@ class AnthropicClient
             ],
         ]);
 
+        $this->recordAiRun($document, 'ocr', $response);
+
         return $this->parseOcrResponse($response);
     }
 
@@ -72,6 +78,33 @@ class AnthropicClient
         if ($count > self::MAX_REQUESTS_PER_MINUTE) {
             throw new AnthropicRateLimitException('Local rate limit reached, retry shortly.');
         }
+    }
+
+    /**
+     * Records which model/prompt produced a given AI/OCR output — a
+     * document_ai_runs row, separate from document_versions (file
+     * re-uploads) and processing_jobs (pipeline stage state). $document
+     * is optional so this stays backward-compatible with any call site
+     * that hasn't been updated to pass it yet — tracking simply doesn't
+     * record for those calls until they are.
+     */
+    private function recordAiRun(?Document $document, string $purpose, array $response): void
+    {
+        if (! $document) {
+            return;
+        }
+
+        DocumentAiRun::create([
+            'workspace_id' => $document->workspace_id,
+            'document_id' => $document->id,
+            'purpose' => $purpose,
+            'provider' => 'anthropic',
+            'model' => config('services.anthropic.model'),
+            'prompt_version' => null,
+            'input_tokens' => $response['usage']['input_tokens'] ?? null,
+            'output_tokens' => $response['usage']['output_tokens'] ?? null,
+            'created_at' => now(),
+        ]);
     }
 
     /**

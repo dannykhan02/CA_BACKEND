@@ -66,6 +66,7 @@ class DocumentUploadController extends Controller
         ScanUploadedFileJob::withChain([
             new ExtractDocumentTextJob($document->id),
             (new GenerateInsightsJob($document->id))->onQueue('extraction'),
+            (new \App\Jobs\GenerateEmbeddingsJob($document->id))->onQueue('extraction'),
         ])->onQueue('default')->dispatch($document->id);
 
         return response()->json([

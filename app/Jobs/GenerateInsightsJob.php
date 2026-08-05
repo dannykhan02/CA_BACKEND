@@ -88,7 +88,7 @@ class GenerateInsightsJob implements ShouldQueue
         $aiStage = $recorder->start($document, 'ai_analysis');
 
         try {
-            $result = $client->extractDocumentInsights($text, $document->name);
+            $result = $client->extractDocumentInsights($text, $document->name, $document);
         } catch (AnthropicRateLimitException $e) {
             // Not a stage failure — the job itself retries via ->release(),
             // so no processing_jobs row is finalized here. A fresh 'ai_analysis'
