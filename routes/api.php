@@ -8,7 +8,7 @@ use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\DocumentDownloadController;
 use App\Http\Controllers\Api\DocumentRejectController;
 use App\Http\Controllers\Api\DocumentReprocessController;
-use App\Http\Controllers\Api\DocumentSearchController; // <-- added for search
+use App\Http\Controllers\Api\DocumentSearchController;
 use App\Http\Controllers\Api\DocumentUploadController;
 use Illuminate\Support\Facades\Route;
 
@@ -55,6 +55,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/documents', [DocumentController::class, 'index'])
         ->name('documents.index');
 
+    // ✅ IMPORTANT: The search route MUST come before /documents/{document}
+    // to prevent "search" from being interpreted as a document ID.
+    Route::get('/documents/search', [DocumentSearchController::class, 'search'])
+        ->name('documents.search');
+
     Route::get('/documents/{document}', [DocumentController::class, 'show'])
         ->name('documents.show');
 
@@ -76,10 +81,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/documents/{document}/reject', [DocumentRejectController::class, 'store'])
         ->name('documents.reject');
-
-    // ✅ NEW: Document search endpoint (added to close the classification allow‑list gap)
-    Route::get('/documents/search', [DocumentSearchController::class, 'search'])
-        ->name('documents.search');
 });
 
 // Administrator-only routes

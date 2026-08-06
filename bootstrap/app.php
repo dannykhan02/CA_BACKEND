@@ -92,4 +92,24 @@ return Application::configure(basePath: dirname(__DIR__))
                 ], 429);
             }
         });
+
+        // Permanent safety net — clients that omit/misconfigure the Accept
+        // header (misbehaving mobile clients, raw fetch() calls, webhook
+        // callers) would otherwise fall through Laravel's default rendering
+        // and get a non-JSON 500 on auth failures. This runs after all
+        // render() callbacks and guarantees every api/* AuthenticationException
+        // gets a clean JSON 401, regardless of what the client sent.
+        $exceptions->respond(function ($response, \Throwable $exception, $request) {
+            if ($request->is('api/*') && $exception instanceof AuthenticationException) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthenticated.',
+                    'errors' => [],
+                ], 401);
+            }
+
+            return $response;
+        });
     })->create();
+
+

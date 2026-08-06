@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Document;
 
 use App\Enums\WorkspaceType;
+use App\Services\Documents\SupportedDocumentTypes;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -31,14 +32,19 @@ class UploadDocumentRequest extends FormRequest
     public function rules(): array
     {
         $maxKb = config('document_processing.max_upload_size_kb');
+        $supportedTypes = app(SupportedDocumentTypes::class);
 
         return [
             'file' => [
                 'required',
                 'file',
                 'max:' . $maxKb,
-                'mimes:pdf,docx',
-                'mimetypes:' . implode(',', config('document_processing.allowed_mimes')),
+                // Single source of truth now — extensions and MIME types both
+                // come from config/document_types.php via SupportedDocumentTypes,
+                // not a hardcoded list here plus a separate document_processing
+                // config key. Only currently-enabled types are accepted.
+                'extensions:' . implode(',', $supportedTypes->enabledExtensions()),
+                'mimetypes:' . implode(',', $supportedTypes->enabledMimeTypes()),
             ],
             // Matches the exact documents_classification_check DB constraint.
             'classification' => ['required', Rule::in(['Public', 'Internal', 'Confidential', 'Restricted'])],

@@ -69,6 +69,13 @@ class ExtractDocumentTextJob implements ShouldQueue
             $recorder->complete($extractStage, ['native_text_found' => true]);
         }
 
+        // Persistent source of truth — previously this only went to cache,
+        // which expires in 2 hours and silently starved every downstream
+        // job (embeddings, and likely AI insights) that ran after that.
+        $document->forceFill(['extracted_text' => $text])->save();
+
+        // Cache retained as a short-lived read-through optimisation only —
+        // nothing downstream should treat it as authoritative anymore.
         Cache::put("document:{$document->id}:extracted_text", $text, now()->addHours(2));
         $document->forceFill(['progress' => 50])->save();
     }

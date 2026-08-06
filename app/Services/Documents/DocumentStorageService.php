@@ -37,7 +37,7 @@ class DocumentStorageService
 
     public function download(string $path): string
     {
-        return Storage::disk(self::D)->path($path);
+        return Storage::disk(self::DISK)->path($path);
     }
 
     public function exists(string $path): bool

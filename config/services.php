@@ -39,6 +39,17 @@ return [
         'timeout' => (int) env('ANTHROPIC_TIMEOUT', 60),
     ],
 
+    // Was missing entirely — VoyageEmbeddingClient::embed() called
+    // config('services.voyage.model')/.api_key against a nonexistent key,
+    // which resolves to null with no error. That sent Voyage a request
+    // body with "model": null, which their API correctly rejected with a
+    // 400 ("Value 'None' supplied for argument 'model' is not a valid
+    // string"), causing every embeddings job to fail at the chunk stage.
+    'voyage' => [
+        'api_key' => env('VOYAGE_API_KEY'),
+        'model' => env('VOYAGE_MODEL', 'voyage-3'),
+    ],
+
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),

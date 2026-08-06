@@ -45,6 +45,14 @@ class DocumentSearchController extends Controller
             LIMIT ?
         ', [$queryVector, $user->current_workspace_id, $queryVector, $limit]);
 
+        app(\App\Services\AuditLogger::class)->log(
+            $user,
+            'document.searched',
+            null,
+            ['query' => $validated['q'], 'result_count' => count($rows)],
+            $user->current_workspace_id
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Search completed.',

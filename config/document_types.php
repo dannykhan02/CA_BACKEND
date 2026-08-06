@@ -1,82 +1,73 @@
 <?php
 
 /**
- * Single source of truth for supported document types. Extending support
- * means flipping 'enabled' here — no controller or job code changes,
- * as long as the corresponding extractor branch exists in
- * ExtractDocumentTextJob (see routing table below for what maps where).
+ * Single source of truth for supported document types — extensions, MIME
+ * types, whether OCR fallback applies, and whether uploads are currently
+ * accepted. Nothing else in the codebase should hardcode a type list;
+ * everything reads through App\Services\Documents\SupportedDocumentTypes.
+ *
+ * `enabled` is the application-level kill switch, independent of the DB
+ * check constraint (which only says the schema CAN store the value).
+ * Flip a type to true only after it has been proven end-to-end with real
+ * execution — per the Version 1 testing principle, not before.
  */
 return [
-    'PDF' => [
-        'enabled' => true,
-        'mime_types' => ['application/pdf'],
-        'extensions' => ['pdf'],
-        'route' => 'native_then_ocr', // try native text, fall back to OCR if empty
-    ],
-    'DOCX' => [
-        'enabled' => true,
-        'mime_types' => ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-        'extensions' => ['docx'],
-        'route' => 'native_only',
-    ],
-    'DOC' => [
-        'enabled' => false,
-        'mime_types' => ['application/msword'],
-        'extensions' => ['doc'],
-        'route' => 'native_only',
-    ],
-    'XLSX' => [
-        'enabled' => true, // extractor exists (SpreadsheetTextExtractor) — routing not yet wired
-        'mime_types' => ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
-        'extensions' => ['xlsx'],
-        'route' => 'spreadsheet',
-    ],
-    'XLS' => [
-        'enabled' => false,
-        'mime_types' => ['application/vnd.ms-excel'],
-        'extensions' => ['xls'],
-        'route' => 'spreadsheet',
-    ],
-    'CSV' => [
-        'enabled' => false,
-        'mime_types' => ['text/csv'],
-        'extensions' => ['csv'],
-        'route' => 'spreadsheet',
-    ],
-    'PNG' => [
-        'enabled' => false, // OcrEngineResolver/providers exist, routing not wired
-        'mime_types' => ['image/png'],
-        'extensions' => ['png'],
-        'route' => 'ocr_only',
-    ],
-    'JPG' => [
-        'enabled' => false,
-        'mime_types' => ['image/jpeg'],
-        'extensions' => ['jpg', 'jpeg'],
-        'route' => 'ocr_only',
-    ],
-    'WEBP' => [
-        'enabled' => false,
-        'mime_types' => ['image/webp'],
-        'extensions' => ['webp'],
-        'route' => 'ocr_only',
-    ],
-    'BMP' => [
-        'enabled' => false,
-        'mime_types' => ['image/bmp'],
-        'extensions' => ['bmp'],
-        'route' => 'ocr_only',
-    ],
-    'TIFF' => [
-        'enabled' => false,
-        'mime_types' => ['image/tiff'],
-        'extensions' => ['tiff', 'tif'],
-        'route' => 'ocr_only',
-    ],
-    'HEIC' => [
-        'enabled' => false,
-        'mime_types' => ['image/heic'],
-        'extensions' => ['heic'],
-        'route' => 'ocr_only', // needs conversion step first, not just a provider
+    'types' => [
+        'PDF' => [
+            'label' => 'PDF Document',
+            'extensions' => ['pdf'],
+            'mime_types' => ['application/pdf'],
+            'enabled' => true,
+            'ocr_eligible' => true,
+        ],
+        'DOCX' => [
+            'label' => 'Word Document',
+            'extensions' => ['docx'],
+            'mime_types' => ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+            'enabled' => true,
+            'ocr_eligible' => false,
+        ],
+        'XLSX' => [
+            'label' => 'Excel Spreadsheet',
+            'extensions' => ['xlsx'],
+            'mime_types' => ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+            'enabled' => true,
+            'ocr_eligible' => false,
+        ],
+        'JPG' => [
+            'label' => 'JPEG Image',
+            'extensions' => ['jpg', 'jpeg'],
+            'mime_types' => ['image/jpeg'],
+            'enabled' => false, // pipeline exists — enable after today's E2E test passes
+            'ocr_eligible' => true,
+        ],
+        'PNG' => [
+            'label' => 'PNG Image',
+            'extensions' => ['png'],
+            'mime_types' => ['image/png'],
+            'enabled' => false, // pipeline exists — enable after today's E2E test passes
+            'ocr_eligible' => true,
+        ],
+        'TIFF' => [
+            'label' => 'TIFF Image',
+            'extensions' => ['tif', 'tiff'],
+            'mime_types' => ['image/tiff'],
+            'enabled' => false, // no pipeline support yet — extraction job needs a branch first
+            'ocr_eligible' => true,
+        ],
+        'CSV' => [
+            'label' => 'CSV File',
+            'extensions' => ['csv'],
+            'mime_types' => ['text/csv'],
+            'enabled' => false, // no pipeline support yet
+            'ocr_eligible' => false,
+        ],
+        'DOC' => [
+            'label' => 'Legacy Word Document',
+            'extensions' => ['doc'],
+            'mime_types' => ['application/msword'],
+            'enabled' => false, // no pipeline support yet — legacy binary format, different parser needed
+            'ocr_eligible' => false,
+        ],
     ],
 ];

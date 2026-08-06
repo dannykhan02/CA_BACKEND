@@ -65,6 +65,16 @@ return [
             'root' => storage_path('app/private/documents'),
             'visibility' => 'private',
             'throw' => true,
+            'permissions' => [
+                'file' => [
+                    'public' => 0644,
+                    'private' => 0640,
+                ],
+                'dir' => [
+                    'public' => 0755,
+                    'private' => 0750,
+                ],
+            ],
         ],
 
     ],

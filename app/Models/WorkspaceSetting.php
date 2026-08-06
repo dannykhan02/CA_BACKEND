@@ -18,6 +18,7 @@ class WorkspaceSetting extends Model
         'timezone',
         'powerbi_enabled',
         'ocr_enabled',
+        'ocr_provider',
         'handwriting_enabled',
         'default_classification',
     ];

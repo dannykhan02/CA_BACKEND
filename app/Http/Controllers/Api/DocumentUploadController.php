@@ -10,6 +10,7 @@ use App\Jobs\GenerateInsightsJob;
 use App\Jobs\ScanUploadedFileJob;
 use App\Models\Document;
 use App\Services\Documents\DocumentStorageService;
+use App\Services\Documents\SupportedDocumentTypes;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
 
@@ -45,11 +46,28 @@ class DocumentUploadController extends Controller
         // directly) so swapping local storage for S3 later is a change in
         // one service class, not every controller that touches files.
         $extension = strtolower($file->getClientOriginalExtension());
+
+        $supportedTypes = app(SupportedDocumentTypes::class);
+        $documentType = $supportedTypes->typeForExtension($extension);
+
+        // Belt-and-suspenders: UploadDocumentRequest's `extensions:`/
+        // `mimetypes:` rules should already reject this before store() ever
+        // runs — this exists so the controller stays safe even if that
+        // request-level rule is ever changed, bypassed, or this endpoint
+        // gets called from somewhere that skips FormRequest validation.
+        if (! $documentType || ! $supportedTypes->isEnabled($documentType)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This file type is not currently supported.',
+                'errors' => [],
+            ], 422);
+        }
+
         $path = app(DocumentStorageService::class)->store($file, $request->user()->current_workspace_id);
 
         $document = Document::create([
             'name' => $file->getClientOriginalName(),
-            'type' => strtoupper($extension), // matches documents_type_check: PDF|DOCX
+            'type' => $documentType, // resolved via SupportedDocumentTypes, matches documents_type_check
             'size_kb' => (int) ceil($file->getSize() / 1024),
             'status' => 'Processing',
             'classification' => $request->validated('classification'),
@@ -64,6 +82,13 @@ class DocumentUploadController extends Controller
             'file_hash' => $hash,
             'progress' => 0,
         ]);
+
+        app(\App\Services\AuditLogger::class)->log(
+            $request->user(),
+            'document.uploaded',
+            $document,
+            ['name' => $document->name, 'type' => $document->type, 'size_kb' => $document->size_kb]
+        );
 
         ScanUploadedFileJob::withChain([
             new ExtractDocumentTextJob($document->id),

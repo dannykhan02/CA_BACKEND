@@ -15,15 +15,14 @@ class AuditLogger
      * @param  array<string, mixed>  $metadata  small, non-sensitive context only
      *         — never log full document contents, insights, or credentials here.
      */
-    public function log(?User $user, string $action, ?Model $subject, array $metadata = [], ?string $workspaceId = null): void
+    public function log(?User $user, string $action, Model $subject, array $metadata = []): void
     {
         AuditLog::create([
             'id' => (string) Str::uuid(),
             'user_id' => $user?->id,
-            'workspace_id' => $workspaceId ?? $subject?->workspace_id ?? null,
             'action' => $action,
-            'auditable_type' => $subject ? $subject::class : null,
-            'auditable_id' => $subject?->getKey(),
+            'auditable_type' => $subject::class,
+            'auditable_id' => $subject->getKey(),
             'metadata' => $metadata,
             'ip_address' => Request::ip(),
             'created_at' => now(),
