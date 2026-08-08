@@ -16,7 +16,7 @@ class Document extends Model
         'power_bi_status', 'insights', 'file_path', 'file_hash',
         'extraction_attempts', 'extraction_started_at',
         'extraction_completed_at', 'extraction_input_tokens',
-        'extraction_output_tokens',
+        'extraction_output_tokens', 'extracted_text',
     ];
 
     protected $casts = [
@@ -55,6 +55,18 @@ class Document extends Model
     public function processingJobs()
     {
         return $this->hasMany(ProcessingJob::class);
+    }
+
+    /**
+     * AI-derived document TYPE (compliance_report, financial_report, etc.) —
+     * distinct from the 'classification' attribute above, which is an
+     * unrelated security/access-control field (Public/Internal/Confidential/
+     * Restricted). Deliberately named documentTypeClassification(), not
+     * classification(), to avoid any collision with that existing attribute.
+     */
+    public function documentTypeClassification()
+    {
+        return $this->hasOne(DocumentTypeClassification::class);
     }
 
     public function workspace()
