@@ -19,31 +19,46 @@ class AnthropicClient
     public function extractDocumentInsights(string $documentText, string $documentName, ?Document $document = null): array
     {
         $this->throttle();
-
         $prompt = $this->buildInsightsPrompt($documentText, $documentName);
-
-        $response = $this->callWithRetry([
-            ['role' => 'user', 'content' => $prompt],
-        ]);
-
+        $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]]);
         $this->recordAiRun($document, 'insights', $response);
-
         return $this->parseInsightsResponse($response);
     }
 
     public function classifyDocumentType(string $documentText, string $documentName, ?Document $document = null): array
     {
         $this->throttle();
-
         $prompt = $this->buildDocumentTypePrompt($documentText, $documentName);
-
-        $response = $this->callWithRetry([
-            ['role' => 'user', 'content' => $prompt],
-        ]);
-
+        $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]]);
         $this->recordAiRun($document, 'document_type', $response);
-
         return $this->parseDocumentTypeResponse($response);
+    }
+
+    public function extractDocumentEntities(string $documentText, string $documentName, ?Document $document = null): array
+    {
+        $this->throttle();
+        $prompt = $this->buildEntitiesPrompt($documentText, $documentName);
+        $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]]);
+        $this->recordAiRun($document, 'entities', $response);
+        return $this->parseEntitiesResponse($response);
+    }
+
+    public function detectDocumentRisks(string $documentText, string $documentName, ?Document $document = null): array
+    {
+        $this->throttle();
+        $prompt = $this->buildRisksPrompt($documentText, $documentName);
+        $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]]);
+        $this->recordAiRun($document, 'risks', $response);
+        return $this->parseRisksResponse($response);
+    }
+
+    public function detectDocumentDeadlines(string $documentText, string $documentName, ?Document $document = null): array
+    {
+        $this->throttle();
+        $prompt = $this->buildDeadlinesPrompt($documentText, $documentName);
+        $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]]);
+        $this->recordAiRun($document, 'deadlines', $response);
+        return $this->parseDeadlinesResponse($response);
     }
 
     public function extractTextFromImage(string $base64Image, string $mediaType = 'image/png', ?Document $document = null): array
@@ -92,7 +107,8 @@ class AnthropicClient
             return;
         }
 
-        $promptVersion = (in_array($purpose, ['insights', 'document_type'], true) && $this->lastResolvedPromptVersion !== null)
+        $versionedPurposes = ['insights', 'document_type', 'entities', 'risks', 'deadlines'];
+        $promptVersion = (in_array($purpose, $versionedPurposes, true) && $this->lastResolvedPromptVersion !== null)
             ? (string) $this->lastResolvedPromptVersion
             : null;
 
@@ -146,31 +162,46 @@ class AnthropicClient
     private function buildInsightsPrompt(string $documentText, string $documentName): string
     {
         $truncated = mb_substr($documentText, 0, config('document_processing.max_extraction_chars'));
-
         $manager = app(\App\Services\AI\PromptManager::class);
         $prompt = $manager->resolve('document_insights');
-
         $this->lastResolvedPromptVersion = $prompt->version;
-
-        return $manager->render($prompt, [
-            '{{document_name}}' => $documentName,
-            '{{document_text}}' => $truncated,
-        ]);
+        return $manager->render($prompt, ['{{document_name}}' => $documentName, '{{document_text}}' => $truncated]);
     }
 
     private function buildDocumentTypePrompt(string $documentText, string $documentName): string
     {
         $truncated = mb_substr($documentText, 0, config('document_processing.max_extraction_chars'));
-
         $manager = app(\App\Services\AI\PromptManager::class);
         $prompt = $manager->resolve('document_type');
-
         $this->lastResolvedPromptVersion = $prompt->version;
+        return $manager->render($prompt, ['{{document_name}}' => $documentName, '{{document_text}}' => $truncated]);
+    }
 
-        return $manager->render($prompt, [
-            '{{document_name}}' => $documentName,
-            '{{document_text}}' => $truncated,
-        ]);
+    private function buildEntitiesPrompt(string $documentText, string $documentName): string
+    {
+        $truncated = mb_substr($documentText, 0, config('document_processing.max_extraction_chars'));
+        $manager = app(\App\Services\AI\PromptManager::class);
+        $prompt = $manager->resolve('document_entities');
+        $this->lastResolvedPromptVersion = $prompt->version;
+        return $manager->render($prompt, ['{{document_name}}' => $documentName, '{{document_text}}' => $truncated]);
+    }
+
+    private function buildRisksPrompt(string $documentText, string $documentName): string
+    {
+        $truncated = mb_substr($documentText, 0, config('document_processing.max_extraction_chars'));
+        $manager = app(\App\Services\AI\PromptManager::class);
+        $prompt = $manager->resolve('document_risks');
+        $this->lastResolvedPromptVersion = $prompt->version;
+        return $manager->render($prompt, ['{{document_name}}' => $documentName, '{{document_text}}' => $truncated]);
+    }
+
+    private function buildDeadlinesPrompt(string $documentText, string $documentName): string
+    {
+        $truncated = mb_substr($documentText, 0, config('document_processing.max_extraction_chars'));
+        $manager = app(\App\Services\AI\PromptManager::class);
+        $prompt = $manager->resolve('document_deadlines');
+        $this->lastResolvedPromptVersion = $prompt->version;
+        return $manager->render($prompt, ['{{document_name}}' => $documentName, '{{document_text}}' => $truncated]);
     }
 
     private function buildOcrPrompt(): string
@@ -194,13 +225,9 @@ PROMPT;
     private function parseInsightsResponse(array $response): array
     {
         $decoded = $this->decodeJsonContent($response);
-
         $decoded = app(\App\Services\AI\ResponseValidator::class)->validate($decoded, [
-            'kpis' => 'array',
-            'charts' => 'array',
-            'insights' => 'array',
+            'kpis' => 'array', 'charts' => 'array', 'insights' => 'array',
         ]);
-
         return [
             'kpis' => $decoded['kpis'] ?? [],
             'charts' => $decoded['charts'] ?? [],
@@ -213,9 +240,7 @@ PROMPT;
     private function parseDocumentTypeResponse(array $response): array
     {
         $decoded = $this->decodeJsonContent($response);
-
         $decoded = app(\App\Services\AI\ResponseValidator::class)->validateDocumentType($decoded);
-
         return [
             'document_type' => $decoded['document_type'],
             'confidence' => (float) $decoded['confidence'],
@@ -226,10 +251,45 @@ PROMPT;
         ];
     }
 
+    private function parseEntitiesResponse(array $response): array
+    {
+        $decoded = $this->decodeJsonContent($response);
+        $decoded = app(\App\Services\AI\ResponseValidator::class)->validateEntities($decoded);
+        return [
+            'entities' => $decoded['entities'],
+            'prompt_version' => $this->lastResolvedPromptVersion,
+            'input_tokens' => $response['usage']['input_tokens'] ?? null,
+            'output_tokens' => $response['usage']['output_tokens'] ?? null,
+        ];
+    }
+
+    private function parseRisksResponse(array $response): array
+    {
+        $decoded = $this->decodeJsonContent($response);
+        $decoded = app(\App\Services\AI\ResponseValidator::class)->validateRisks($decoded);
+        return [
+            'risks' => $decoded['risks'],
+            'prompt_version' => $this->lastResolvedPromptVersion,
+            'input_tokens' => $response['usage']['input_tokens'] ?? null,
+            'output_tokens' => $response['usage']['output_tokens'] ?? null,
+        ];
+    }
+
+    private function parseDeadlinesResponse(array $response): array
+    {
+        $decoded = $this->decodeJsonContent($response);
+        $decoded = app(\App\Services\AI\ResponseValidator::class)->validateDeadlines($decoded);
+        return [
+            'deadlines' => $decoded['deadlines'],
+            'prompt_version' => $this->lastResolvedPromptVersion,
+            'input_tokens' => $response['usage']['input_tokens'] ?? null,
+            'output_tokens' => $response['usage']['output_tokens'] ?? null,
+        ];
+    }
+
     private function parseOcrResponse(array $response): array
     {
         $decoded = $this->decodeJsonContent($response);
-
         return [
             'text' => $decoded['text'] ?? '',
             'confidence' => isset($decoded['confidence']) ? (float) $decoded['confidence'] : null,
@@ -239,15 +299,11 @@ PROMPT;
     private function decodeJsonContent(array $response): array
     {
         $text = $response['content'][0]['text'] ?? '';
-
         $cleaned = preg_replace('/^```json\s*|\s*```$/m', '', trim($text));
-
         $decoded = json_decode($cleaned, true);
-
         if (json_last_error() !== JSON_ERROR_NONE || ! is_array($decoded)) {
             throw new \RuntimeException('Anthropic response was not valid JSON: ' . json_last_error_msg());
         }
-
         return $decoded;
     }
 }

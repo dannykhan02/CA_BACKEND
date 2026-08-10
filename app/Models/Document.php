@@ -69,6 +69,21 @@ class Document extends Model
         return $this->hasOne(DocumentTypeClassification::class);
     }
 
+    public function entities()
+    {
+        return $this->hasMany(DocumentEntity::class);
+    }
+
+    public function risks()
+    {
+        return $this->hasMany(DocumentRisk::class);
+    }
+
+    public function deadlines()
+    {
+        return $this->hasMany(DocumentDeadline::class);
+    }
+
     public function workspace()
     {
         return $this->belongsTo(Workspace::class);
