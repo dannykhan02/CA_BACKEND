@@ -12,7 +12,7 @@ class DocumentAiRun extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'workspace_id', 'document_id', 'purpose', 'provider',
+        'workspace_id', 'document_id', 'file_hash', 'purpose', 'provider',
         'model', 'prompt_version', 'input_tokens', 'output_tokens', 'created_at',
     ];
 

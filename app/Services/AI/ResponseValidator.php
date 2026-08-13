@@ -190,4 +190,78 @@ class ResponseValidator
 
         return $decoded;
     }
+
+    /**
+     * Validates the grounded document-summary response. Each array field
+     * defaults to empty (not required) since an extraction with zero
+     * risks/deadlines/etc. should legitimately produce empty arrays here
+     * too — only executive_summary and key_findings are treated as
+     * required, since a summary with no findings and no summary text
+     * would indicate the model didn't actually process the extracted data.
+     */
+    public function validateSummary(array $decoded): array
+    {
+        if (! isset($decoded['executive_summary']) || ! is_string($decoded['executive_summary']) || trim($decoded['executive_summary']) === '') {
+            throw new \RuntimeException('AI response missing required non-empty string field: executive_summary');
+        }
+
+        foreach (['key_findings', 'critical_risks', 'upcoming_deadlines', 'important_entities', 'recommended_attention'] as $field) {
+            if (! isset($decoded[$field]) || ! is_array($decoded[$field])) {
+                throw new \RuntimeException("AI response missing required array field: {$field}");
+            }
+            foreach ($decoded[$field] as $i => $item) {
+                if (! is_string($item)) {
+                    throw new \RuntimeException("AI response {$field}[{$i}] is not a string.");
+                }
+            }
+        }
+
+        return $decoded;
+    }
+
+    /**
+     * Day 9 Batch 5/6 — validates the {answer, confidence, cited_document_ids}
+     * envelope AND enforces the hallucination guard in code, not just via
+     * prompt instruction: any cited document ID that is not in the set
+     * actually retrieved for this query is rejected outright, forcing a
+     * clean failure rather than persisting an answer that cites content
+     * the model was never shown.
+     */
+    public function validateQaResponse(array $decoded, array $availableDocumentIds): array
+    {
+        $allowedConfidence = ['strong', 'weak', 'none'];
+
+        if (! isset($decoded['answer']) || ! is_string($decoded['answer']) || trim($decoded['answer']) === '') {
+            throw new \RuntimeException('AI response missing required non-empty string field: answer');
+        }
+
+        if (! isset($decoded['confidence']) || ! in_array($decoded['confidence'], $allowedConfidence, true)) {
+            throw new \RuntimeException(
+                "AI response confidence '" . ($decoded['confidence'] ?? 'null') . "' is not in the controlled vocabulary."
+            );
+        }
+
+        if (! isset($decoded['cited_document_ids']) || ! is_array($decoded['cited_document_ids'])) {
+            throw new \RuntimeException('AI response missing required array field: cited_document_ids');
+        }
+
+        foreach ($decoded['cited_document_ids'] as $i => $documentId) {
+            if (! is_string($documentId)) {
+                throw new \RuntimeException("AI response cited_document_ids[{$i}] is not a string.");
+            }
+            if (! in_array($documentId, $availableDocumentIds, true)) {
+                throw new \RuntimeException(
+                    "AI response cited document ID '{$documentId}' was not present in the retrieved context — hallucinated citation rejected."
+                );
+            }
+        }
+
+        if ($decoded['confidence'] === 'none' && ! empty($decoded['cited_document_ids'])) {
+            throw new \RuntimeException(
+                "AI response confidence is 'none' but cited_document_ids is non-empty — a no-answer response must not cite documents."
+            );
+        }
+
+        return $decoded;
+    }
 }

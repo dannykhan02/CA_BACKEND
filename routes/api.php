@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\DocumentApproveController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\DocumentDownloadController;
 use App\Http\Controllers\Api\DocumentRejectController;
+use App\Http\Controllers\Api\DocumentQaController;
 use App\Http\Controllers\Api\DocumentReprocessController;
 use App\Http\Controllers\Api\DocumentSearchController;
 use App\Http\Controllers\Api\DocumentUploadController;
@@ -60,8 +61,31 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/documents/search', [DocumentSearchController::class, 'search'])
         ->name('documents.search');
 
+    // Day 9 — Document Q&A. Sits alongside search (not scoped to a single
+    // document, no {document} route-model-binding param) — placement here
+    // is arbitrary relative to /documents/{document} since 'query' isn't
+    // 'search' and won't collide the same way, but kept next to search for
+    // readability since both are read-only retrieval endpoints.
+    Route::post('/documents/query', [DocumentQaController::class, 'ask'])
+        ->name('documents.query');
+
     Route::get('/documents/{document}', [DocumentController::class, 'show'])
         ->name('documents.show');
+
+    Route::get('/documents/{document}/intelligence', [\App\Http\Controllers\Api\DocumentIntelligenceController::class, 'show'])
+        ->name('documents.intelligence');
+
+    Route::get('/documents/{document}/entities', [\App\Http\Controllers\Api\DocumentIntelligenceController::class, 'entities'])
+        ->name('documents.entities');
+
+    Route::get('/documents/{document}/risks', [\App\Http\Controllers\Api\DocumentIntelligenceController::class, 'risks'])
+        ->name('documents.risks');
+
+    Route::get('/documents/{document}/deadlines', [\App\Http\Controllers\Api\DocumentIntelligenceController::class, 'deadlines'])
+        ->name('documents.deadlines');
+
+    Route::get('/documents/{document}/summary', [\App\Http\Controllers\Api\DocumentIntelligenceController::class, 'summary'])
+        ->name('documents.summary');
 
     Route::get('/dashboard/summary', [DashboardController::class, 'summary'])
         ->name('dashboard.summary');

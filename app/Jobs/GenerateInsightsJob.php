@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Jobs\Concerns\SkipsUnchangedDocuments;
 use App\Models\Document;
 use App\Models\DocumentChart;
 use App\Models\DocumentKpi;
@@ -17,12 +18,12 @@ use Illuminate\Support\Facades\Log;
 
 class GenerateInsightsJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments;
 
     public int $tries = 2;
     public int $timeout = 120;
 
-    public function __construct(public string $documentId) {}
+    public function __construct(public string $documentId, public bool $forceReprocess = false) {}
 
     public function handle(AnthropicClient $client, PipelineStageRecorder $recorder): void
     {
@@ -39,6 +40,13 @@ class GenerateInsightsJob implements ShouldQueue
         // DocumentReprocessController) against a document that isn't
         // mid-pipeline.
         if (! $document || $document->status !== 'Processing') {
+            return;
+        }
+
+        // Unlike the other intelligence jobs, this one owns the document's
+        // terminal status transition — a skip must still finalize the
+        // document as Ready, or it would be stuck at 'Processing' forever.
+        if ($this->skipIfUnchanged($document, 'insights', 'ai_analysis', $recorder, ['status' => 'Ready', 'progress' => 100])) {
             return;
         }
 

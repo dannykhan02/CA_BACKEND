@@ -70,7 +70,19 @@ return Application::configure(basePath: dirname(__DIR__))
         // Day 5 — UploadDocumentRequest::authorize() returning false throws
         // this. Without an explicit handler it would fall through to Laravel's
         // default 403 view, which isn't valid JSON for the frontend to parse.
-        $exceptions->render(function (AuthorizationException $e, Request $request) {
+        //
+        // Audit finding (HIGH) — this render() alone never actually fired.
+        // Same conversion trap as ModelNotFoundException below: Laravel's
+        // internal handler converts AuthorizationException into
+        // Symfony's AccessDeniedHttpException before custom render()
+        // callbacks are matched, so registering only against
+        // AuthorizationException left every real 403 falling through to
+        // Laravel's default (debug-mode) renderer — leaking full stack
+        // traces, server file paths, and framework internals on every
+        // authorization failure. Registering against the converted class
+        // fixes it; the AuthorizationException handler above is kept as
+        // defense in depth in case that conversion behavior ever changes.
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException $e, Request $request) {
             if ($request->is('api/*')) {
                 return response()->json([
                     'success' => false,

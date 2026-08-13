@@ -2,10 +2,12 @@
 
 namespace App\Jobs;
 
+use App\Jobs\Concerns\SkipsUnchangedDocuments;
 use App\Models\Document;
 use App\Models\DocumentEntity;
 use App\Services\AnthropicClient;
 use App\Services\Pipeline\PipelineStageRecorder;
+use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -16,18 +18,26 @@ use Illuminate\Support\Facades\Log;
 
 class ExtractDocumentEntitiesJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments;
 
     public int $tries = 2;
     public int $timeout = 60;
 
-    public function __construct(public string $documentId) {}
+    public function __construct(public string $documentId, public bool $forceReprocess = false) {}
 
     public function handle(AnthropicClient $client, PipelineStageRecorder $recorder): void
     {
+        if ($this->batch()?->cancelled()) {
+            return;
+        }
+
         $document = Document::find($this->documentId);
 
         if (! $document || ! $document->extracted_text) {
+            return;
+        }
+
+        if ($this->skipIfUnchanged($document, 'entities', 'entities', $recorder)) {
             return;
         }
 

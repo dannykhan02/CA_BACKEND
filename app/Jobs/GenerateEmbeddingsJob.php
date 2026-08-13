@@ -12,7 +12,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -39,9 +38,15 @@ class GenerateEmbeddingsJob implements ShouldQueue
             return;
         }
 
-        $text = Cache::get("document:{$document->id}:extracted_text");
-        if (! $text) {
-            Log::info("Embeddings skipped — extracted text cache expired for document {$document->id}, not re-extracting for a non-critical stage.");
+        // Read from the persisted column, not the 2hr cache — same fix
+        // ExtractDocumentTextJob already applied for every other downstream
+        // consumer (see its own comment: the cache silently starved any
+        // job that ran after it expired). This job was missed when that
+        // fix went in, so embeddings would silently fail to generate for
+        // any document processed >2hrs after upload.
+        $text = $document->extracted_text;
+        if (! $text || trim($text) === '') {
+            Log::info("Embeddings skipped — no extracted_text available for document {$document->id}, not re-extracting for a non-critical stage.");
             return;
         }
 

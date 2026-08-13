@@ -84,6 +84,11 @@ class Document extends Model
         return $this->hasMany(DocumentDeadline::class);
     }
 
+    public function intelligenceSummary()
+    {
+        return $this->hasOne(DocumentIntelligenceSummary::class);
+    }
+
     public function workspace()
     {
         return $this->belongsTo(Workspace::class);

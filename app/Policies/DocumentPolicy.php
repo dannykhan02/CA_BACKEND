@@ -21,6 +21,17 @@ class DocumentPolicy
             return $document->uploaded_by === $user->id;
         }
 
+        // Outer tenant boundary — was missing entirely. A document
+        // belongs to exactly one workspace; a user operates within
+        // their current workspace. Without this check, any
+        // Organization-workspace user with a sufficient role could view
+        // ANY Organization document in ANY workspace, not just their
+        // own. The classification/role check below is the INNER
+        // boundary and must never substitute for this outer one.
+        if ($document->workspace_id !== $user->current_workspace_id) {
+            return false;
+        }
+
         $allowedRoles = self::MIN_ROLE_FOR_CLASSIFICATION[$document->classification] ?? [];
         return in_array($user->role, $allowedRoles, true);
     }

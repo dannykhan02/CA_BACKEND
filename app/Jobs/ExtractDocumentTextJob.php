@@ -13,7 +13,9 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class ExtractDocumentTextJob implements ShouldQueue
@@ -78,6 +80,47 @@ class ExtractDocumentTextJob implements ShouldQueue
         // nothing downstream should treat it as authoritative anymore.
         Cache::put("document:{$document->id}:extracted_text", $text, now()->addHours(2));
         $document->forceFill(['progress' => 50])->save();
+        $this->dispatchIntelligenceChain($document);
+    }
+
+    /**
+     * Was a chain (SomeJob::withChain([...])) with ->allowFailures() bolted
+     * on — allowFailures() only exists on PendingBatch (Bus::batch()), not
+     * PendingChain, so this fatally errored on every document. Switched to
+     * a real batch so one stage failing (e.g. risks) doesn't cancel the
+     * others (entities, deadlines), matching the intended
+     * "classification ✓, entities ✓, risks ✗, deadlines pending" partial
+     * state.
+     *
+     * GenerateDocumentSummaryJob is deliberately NOT in the batch array.
+     * It reads the document_type/entities/risks/deadlines relations
+     * written by these four jobs, and a batch gives no ordering guarantee
+     * between its jobs — running it inside the batch risks a worker
+     * picking it up before its siblings have written anything, silently
+     * producing an incomplete summary instead of erroring. finally() runs
+     * once, after every job in the batch has settled (success, failure,
+     * or skip) — unlike then(), which only fires if nothing failed, which
+     * would drop the summary entirely in the "risks ✗" partial-failure
+     * case this pipeline is meant to support.
+     */
+    private function dispatchIntelligenceChain($document): void
+    {
+        $documentId = $document->id;
+
+        Bus::batch([
+            new \App\Jobs\ClassifyDocumentTypeJob($documentId),
+            new \App\Jobs\ExtractDocumentEntitiesJob($documentId),
+            new \App\Jobs\DetectDocumentRisksJob($documentId),
+            new \App\Jobs\DetectDocumentDeadlinesJob($documentId),
+        ])
+            ->name("document-intelligence:{$documentId}")
+            ->onQueue('extraction')
+            ->allowFailures()
+            ->finally(function () use ($documentId) {
+                \App\Jobs\GenerateDocumentSummaryJob::dispatch($documentId)
+                    ->onQueue('extraction');
+            })
+            ->dispatch();
     }
 
     /** Returns extracted OCR text, or null if it already terminated the document's status. */
@@ -156,10 +199,20 @@ class ExtractDocumentTextJob implements ShouldQueue
 
     public function failed(\Throwable $e): void
     {
+        // Previously fell back to a generic 'Text extraction failed.'
+        // string, which masked real errors that happened after extraction
+        // had already succeeded (e.g. this allowFailures() bug) and made
+        // them look like extraction problems in the UI/logs.
+        Log::error('ExtractDocumentTextJob failed', [
+            'document_id' => $this->documentId,
+            'exception' => get_class($e),
+            'message' => $e->getMessage(),
+        ]);
+
         $document = Document::find($this->documentId);
         $document?->forceFill([
             'status' => 'Failed',
-            'error_message' => $document->error_message ?? 'Text extraction failed.',
+            'error_message' => $document->error_message ?? ($e->getMessage() ?: get_class($e)),
         ])->save();
     }
 }
