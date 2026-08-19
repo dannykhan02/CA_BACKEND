@@ -2,6 +2,7 @@
 
 namespace App\Services\Embeddings;
 
+use App\Exceptions\EmbeddingProviderException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -31,8 +32,15 @@ class VoyageEmbeddingClient
             ]);
 
         if ($response->failed()) {
+            // Full status/body logged here for internal debugging only —
+            // this must never reach the client. The thrown exception below
+            // carries a generic message on purpose; bootstrap/app.php maps
+            // EmbeddingProviderException to a clean 503 so upstream status
+            // codes, URLs, and response bodies never leak into the API
+            // response (audit finding — previously this exact status/body
+            // was reaching clients verbatim via the default error renderer).
             Log::error('Voyage embeddings API error', ['status' => $response->status(), 'body' => $response->body()]);
-            throw new \RuntimeException("Voyage API request failed with status {$response->status()}.");
+            throw new EmbeddingProviderException();
         }
 
         $data = $response->json();

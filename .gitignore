@@ -37,3 +37,9 @@ Thumbs.db
 
 
 
+
+# Local test fixtures - not for version control
+*.pdf
+*.docx
+*.xlsx
+!docs/**/*.pdf

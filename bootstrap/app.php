@@ -2,6 +2,7 @@
 
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
+use App\Exceptions\EmbeddingProviderException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -92,6 +93,26 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         });
 
+        // Audit finding — same class of leak as AccessDeniedHttpException
+        // above, different trigger. Nothing in this file previously caught
+        // a bare RuntimeException, so a Voyage 401/429/500 (or any other
+        // embedding-provider failure) fell straight through to Laravel's
+        // default renderer, exposing the upstream status code, response
+        // body, and internal exception trace directly in the API response.
+        // VoyageEmbeddingClient now throws this typed exception instead of
+        // a bare RuntimeException specifically so it can be caught here and
+        // mapped to a clean, generic 503 — upstream details are logged
+        // internally in VoyageEmbeddingClient, never surfaced to the client.
+        $exceptions->render(function (EmbeddingProviderException $e, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Service temporarily unavailable.',
+                    'errors' => [],
+                ], 503);
+            }
+        });
+
         // Consolidation refactor — catches Laravel's built-in throttle
         // middleware responses (e.g. throttle:signup, throttle:document-uploads)
         // and wraps them in the same envelope as our manual RateLimiter checks.
@@ -123,5 +144,3 @@ return Application::configure(basePath: dirname(__DIR__))
             return $response;
         });
     })->create();
-
-

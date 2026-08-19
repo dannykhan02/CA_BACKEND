@@ -11,7 +11,12 @@ use App\Http\Controllers\Api\DocumentQaController;
 use App\Http\Controllers\Api\DocumentReprocessController;
 use App\Http\Controllers\Api\DocumentSearchController;
 use App\Http\Controllers\Api\DocumentUploadController;
+use App\Http\Controllers\Api\HealthController;
 use Illuminate\Support\Facades\Route;
+
+// Unauthenticated — must be reachable by load balancers/uptime monitors/
+// deployment scripts without a Sanctum token.
+Route::get('/health', [HealthController::class, 'index'])->name('health');
 
 Route::prefix('auth')->name('auth.')->group(function () {
     Route::post('/signup', [AuthController::class, 'signup'])
