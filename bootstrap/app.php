@@ -126,6 +126,22 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         });
 
+        // Final safety net — anything not caught by a more specific handler
+        // above still must not leak internals on api/*, regardless of
+        // APP_DEBUG. Registered last among render() calls so it never
+        // shadows the specific handlers above it.
+        $exceptions->render(function (\Throwable $e, Request $request) {
+            if ($request->is('api/*')) {
+                report($e);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'An unexpected error occurred.',
+                    'errors' => [],
+                ], 500);
+            }
+        });
+
         // Permanent safety net — clients that omit/misconfigure the Accept
         // header (misbehaving mobile clients, raw fetch() calls, webhook
         // callers) would otherwise fall through Laravel's default rendering
