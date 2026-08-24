@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Jobs\Concerns\SkipsUnchangedDocuments;
 use App\Models\Document;
 use App\Models\DocumentChart;
+use App\Models\DocumentChartPoint;
 use App\Models\DocumentKpi;
 use App\Services\AnthropicClient;
 use App\Services\Pipeline\PipelineStageRecorder;
@@ -104,7 +105,7 @@ class GenerateInsightsJob implements ShouldQueue
             }
 
             foreach ($charts as $chart) {
-                DocumentChart::create([
+                $documentChart = DocumentChart::create([
                     'workspace_id' => $document->workspace_id,
                     'document_id' => $document->id,
                     'type' => $chart['type'] ?? 'bar',
@@ -112,6 +113,21 @@ class GenerateInsightsJob implements ShouldQueue
                     'description' => $chart['description'] ?? '',
                     'data' => $chart['data'] ?? [],
                 ]);
+
+                foreach ($chart['data'] ?? [] as $sortOrder => $point) {
+                    $value = $point['value'] ?? null;
+                    if (! is_numeric($value)) {
+                        continue;
+                    }
+
+                    DocumentChartPoint::create([
+                        'document_chart_id' => $documentChart->id,
+                        'workspace_id' => $document->workspace_id,
+                        'label' => (string) ($point['label'] ?? ''),
+                        'value' => (float) $value,
+                        'sort_order' => $sortOrder,
+                    ]);
+                }
             }
 
             $document->forceFill([
