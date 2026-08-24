@@ -39,7 +39,7 @@ class GenerateInsightsJob implements ShouldQueue
         // which correctly cancels the chain — but we guard here anyway in
         // case this job is ever dispatched standalone (see
         // DocumentReprocessController) against a document that isn't
-        // mid-pipeline.
+        // mid-pipeline
         if (! $document || $document->status !== 'Processing') {
             return;
         }
@@ -50,6 +50,7 @@ class GenerateInsightsJob implements ShouldQueue
         if ($this->skipIfUnchanged($document, 'insights', 'ai_analysis', $recorder, ['status' => 'Ready', 'progress' => 100])) {
             return;
         }
+        
 
         $text = $document->extracted_text;
         if (! $text || trim($text) === '') {

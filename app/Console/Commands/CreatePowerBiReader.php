@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
 /**
  * Provisions one Postgres LOGIN role per Power BI reporting consumer,
  * scoped to exactly one workspace via RLS (see
- * 2026_08_19_100002_add_workspace_rls_to_powerbi_tables.php).
+ * 2026_08_19_081447_add_rls_to_powerbi_views.php).
  *
  * Deliberately NOT a migration — creating a new client's credential is an
  * operational action taken on demand, not a one-time schema change, and

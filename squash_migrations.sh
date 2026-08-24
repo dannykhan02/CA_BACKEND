@@ -766,6 +766,269 @@ return new class extends Migration
 };
 EOF
 
+# ---------------------------------------------------------------------
+# 2026_08_04_130000_add_workspace_id_to_document_children.php
+# ---------------------------------------------------------------------
+cat > "$MIGDIR/2026_08_04_130000_add_workspace_id_to_document_children.php" << 'EOF'
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    protected array $tables = [
+        'document_kpis',
+        'document_charts',
+        'document_chart_points',
+        'document_page_flags',
+    ];
+
+    public function up(): void
+    {
+        foreach ($this->tables as $table) {
+            Schema::table($table, function (Blueprint $blueprint) {
+                $blueprint->foreignUuid('workspace_id')
+                    ->nullable()
+                    ->after('id')
+                    ->constrained('workspaces')
+                    ->nullOnDelete();
+
+                $blueprint->index('workspace_id');
+            });
+        }
+    }
+
+    public function down(): void
+    {
+        foreach ($this->tables as $table) {
+            Schema::table($table, function (Blueprint $blueprint) {
+                $blueprint->dropConstrainedForeignId('workspace_id');
+            });
+        }
+    }
+};
+EOF
+
+# ---------------------------------------------------------------------
+# 2026_08_04_130001_backfill_workspace_id_on_document_children.php
+# ---------------------------------------------------------------------
+cat > "$MIGDIR/2026_08_04_130001_backfill_workspace_id_on_document_children.php" << 'EOF'
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        foreach (['document_kpis', 'document_charts', 'document_page_flags'] as $table) {
+            DB::statement("
+                UPDATE {$table} t
+                SET workspace_id = d.workspace_id
+                FROM documents d
+                WHERE t.document_id = d.id
+                  AND t.workspace_id IS NULL
+            ");
+        }
+
+        DB::statement("
+            UPDATE document_chart_points p
+            SET workspace_id = d.workspace_id
+            FROM document_charts c
+            JOIN documents d ON d.id = c.document_id
+            WHERE p.document_chart_id = c.id
+              AND p.workspace_id IS NULL
+        ");
+    }
+
+    public function down(): void
+    {
+        // Deliberately irreversible.
+    }
+};
+EOF
+
+# ---------------------------------------------------------------------
+# 2026_08_06_090317_create_powerbi_reader_base_role.php
+# ---------------------------------------------------------------------
+cat > "$MIGDIR/2026_08_06_090317_create_powerbi_reader_base_role.php" << 'EOF'
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
+
+/**
+ * Idempotent creation of the NOLOGIN group role that per-workspace Power BI
+ * LOGIN roles inherit via GRANT powerbi_reader TO powerbi_reader_<slug>.
+ * Required before restrict_powerbi_reader_grants and add_rls migrations.
+ */
+return new class extends Migration
+{
+    public function up(): void
+    {
+        if (DB::connection()->getDriverName() !== 'pgsql') {
+            return;
+        }
+
+        DB::statement("
+            DO \$\$
+            BEGIN
+                CREATE ROLE powerbi_reader NOLOGIN;
+            EXCEPTION
+                WHEN duplicate_object THEN NULL;
+            END
+            \$\$
+        ");
+    }
+
+    public function down(): void
+    {
+        if (DB::connection()->getDriverName() !== 'pgsql') {
+            return;
+        }
+
+        DB::statement('DROP ROLE IF EXISTS powerbi_reader');
+    }
+};
+EOF
+
+# ---------------------------------------------------------------------
+# 2026_08_06_090318_restrict_powerbi_reader_grants.php
+# ---------------------------------------------------------------------
+cat > "$MIGDIR/2026_08_06_090318_restrict_powerbi_reader_grants.php" << 'EOF'
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        DB::statement('REVOKE ALL ON ALL TABLES IN SCHEMA public FROM powerbi_reader');
+        DB::statement('REVOKE ALL PRIVILEGES ON SCHEMA public FROM powerbi_reader');
+
+        DB::statement('GRANT USAGE ON SCHEMA public TO powerbi_reader');
+        DB::statement('GRANT SELECT ON power_bi_kpis TO powerbi_reader');
+        DB::statement('GRANT SELECT ON power_bi_chart_points TO powerbi_reader');
+
+        DB::statement('ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE SELECT ON TABLES FROM powerbi_reader');
+    }
+
+    public function down(): void
+    {
+        // Deliberately not restoring the broad grant.
+    }
+};
+EOF
+
+# ---------------------------------------------------------------------
+# 2026_08_19_081445_create_powerbi_credentials_table.php
+# ---------------------------------------------------------------------
+cat > "$MIGDIR/2026_08_19_081445_create_powerbi_credentials_table.php" << 'EOF'
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('powerbi_credentials', function (Blueprint $table) {
+            $table->id();
+            $table->string('db_role')->unique();
+            $table->foreignUuid('workspace_id')->constrained('workspaces')->cascadeOnDelete();
+            $table->string('label')->nullable();
+            $table->timestamp('revoked_at')->nullable();
+            $table->timestamps();
+
+            $table->index('workspace_id');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('powerbi_credentials');
+    }
+};
+EOF
+
+# ---------------------------------------------------------------------
+# 2026_08_19_081447_add_rls_to_powerbi_views.php
+# ---------------------------------------------------------------------
+cat > "$MIGDIR/2026_08_19_081447_add_rls_to_powerbi_views.php" << 'EOF'
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
+
+return new class extends Migration
+{
+    private array $rlsTables = [
+        'documents',
+        'document_kpis',
+        'document_charts',
+        'document_chart_points',
+    ];
+
+    public function up(): void
+    {
+        foreach ($this->rlsTables as $table) {
+            DB::statement("ALTER TABLE {$table} ENABLE ROW LEVEL SECURITY");
+        }
+
+        foreach ($this->rlsTables as $table) {
+            DB::statement("
+                CREATE POLICY powerbi_workspace_scope ON {$table}
+                FOR SELECT TO public
+                USING (
+                    workspace_id = (
+                        SELECT workspace_id FROM powerbi_credentials
+                        WHERE db_role = current_user AND revoked_at IS NULL
+                    )
+                )
+            ");
+        }
+
+        foreach ($this->rlsTables as $table) {
+            DB::statement("GRANT SELECT ON {$table} TO powerbi_reader");
+        }
+
+        DB::statement("ALTER TABLE powerbi_credentials ENABLE ROW LEVEL SECURITY");
+        DB::statement("
+            CREATE POLICY powerbi_credentials_self ON powerbi_credentials
+            FOR SELECT TO public
+            USING (db_role = current_user)
+        ");
+        DB::statement("GRANT SELECT ON powerbi_credentials TO powerbi_reader");
+
+        DB::statement('ALTER VIEW power_bi_kpis SET (security_invoker = true)');
+        DB::statement('ALTER VIEW power_bi_chart_points SET (security_invoker = true)');
+    }
+
+    public function down(): void
+    {
+        DB::statement('ALTER VIEW power_bi_kpis SET (security_invoker = false)');
+        DB::statement('ALTER VIEW power_bi_chart_points SET (security_invoker = false)');
+
+        DB::statement("REVOKE SELECT ON powerbi_credentials FROM powerbi_reader");
+        DB::statement("DROP POLICY IF EXISTS powerbi_credentials_self ON powerbi_credentials");
+        DB::statement("ALTER TABLE powerbi_credentials DISABLE ROW LEVEL SECURITY");
+
+        foreach ($this->rlsTables as $table) {
+            DB::statement("REVOKE SELECT ON {$table} FROM powerbi_reader");
+            DB::statement("DROP POLICY IF EXISTS powerbi_workspace_scope ON {$table}");
+            DB::statement("ALTER TABLE {$table} DISABLE ROW LEVEL SECURITY");
+        }
+    }
+};
+EOF
+
 echo
 echo "Done. New migrations written to $MIGDIR:"
 ls -1 "$MIGDIR"
