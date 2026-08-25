@@ -219,6 +219,14 @@ return [
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
             ],
+        
+            'supervisor-extraction' => [
+                'connection' => 'redis',
+                'queue' => ['extraction'],
+                'balance' => 'simple',
+                'maxProcesses' => 5,
+                'tries' => 3,
+            ],
         ],
 
         'local' => [

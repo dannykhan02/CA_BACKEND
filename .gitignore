@@ -43,3 +43,5 @@ Thumbs.db
 *.docx
 *.xlsx
 !docs/**/*.pdf
+.env.bak
+.config_backups/

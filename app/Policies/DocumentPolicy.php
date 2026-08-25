@@ -63,8 +63,8 @@ class DocumentPolicy
     /**
      * Organization-only concept — Personal workspaces scope by ownership,
      * not classification, so this must not be called for a Personal user's
-     * listing query. DocumentController::index() needs a workspace-aware
-     * branch here too — flagged as the next file to fix (see note above).
+     * listing query. DocumentController::index() already branches on
+     * workspace type and applies an ownership filter for Personal.
      */
     public static function allowedClassificationsFor(User $user): array
     {

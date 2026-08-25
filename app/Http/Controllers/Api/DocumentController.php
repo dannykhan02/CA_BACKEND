@@ -46,6 +46,14 @@ class DocumentController extends Controller
             ->where('workspace_id', $user->current_workspace_id);
 
         $isPersonal = $user->currentWorkspace?->type === WorkspaceType::Personal;
+
+        if ($isPersonal) {
+            // Mirrors DocumentPolicy::view()'s ownership check for Personal
+            // workspaces — workspace_id alone assumes exactly one member per
+            // Personal workspace, which is an application convention, not a
+            // DB constraint. Explicit ownership check closes that gap.
+            $query->where('uploaded_by', $user->id);
+        }
         $allowedClassifications = $isPersonal ? null : DocumentPolicy::allowedClassificationsFor($user);
 
         if (! $isPersonal) {

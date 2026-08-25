@@ -114,6 +114,7 @@ class PowerBiRlsTest extends TestCase
                 'document_id' => $document->id,
                 'type' => 'bar',
                 'title' => 'Chart',
+                'description' => 'Test chart description',
                 'data' => [['label' => $chartPointLabel, 'value' => 42]],
             ]);
 

@@ -3,11 +3,6 @@
 return [
     'max_upload_size_kb' => (int) env('DOC_MAX_UPLOAD_KB', 20480), // 20MB
 
-    'allowed_mimes' => [
-        'application/pdf',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    ],
-
     // Classification gate: which classifications are allowed to have their
     // full text sent to the Anthropic API automatically. Restricted is
     // always blocked regardless of this list — see docs/DECISIONS.md.
