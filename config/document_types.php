@@ -38,14 +38,14 @@ return [
             'label' => 'JPEG Image',
             'extensions' => ['jpg', 'jpeg'],
             'mime_types' => ['image/jpeg'],
-            'enabled' => false, // pipeline exists — enable after today's E2E test passes
+            'enabled' => true, // TEMPORARY — Day 10 real-document E2E test in progress, see chat log
             'ocr_eligible' => true,
         ],
         'PNG' => [
             'label' => 'PNG Image',
             'extensions' => ['png'],
             'mime_types' => ['image/png'],
-            'enabled' => false, // pipeline exists — enable after today's E2E test passes
+            'enabled' => true, // TEMPORARY — Day 10 real-document E2E test in progress, see chat log
             'ocr_eligible' => true,
         ],
         'TIFF' => [

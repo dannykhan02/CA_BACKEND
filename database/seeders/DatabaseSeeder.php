@@ -19,7 +19,13 @@ class DatabaseSeeder extends Seeder
         $this->call([
             UserSeeder::class,
             DocumentSeeder::class,
+            AiPromptSeeder::class,
             DocumentQaPromptSeeder::class,
+            DocumentDeadlinesPromptSeeder::class,
+            DocumentEntitiesPromptSeeder::class,
+            DocumentRisksPromptSeeder::class,
+            DocumentSummaryPromptSeeder::class,
+            DocumentTypePromptSeeder::class,
         ]);
     }
 }

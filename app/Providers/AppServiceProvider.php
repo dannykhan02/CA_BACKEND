@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Workspace;
+use App\Observers\WorkspaceObserver;
 use App\Services\Ocr\OcrEngineResolver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
@@ -32,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         \App\Models\Document::observe(\App\Observers\DocumentObserver::class);
+        Workspace::observe(WorkspaceObserver::class);
 
         // Day 5 — protects against a single account (or compromised token)
         // hammering the upload endpoint and running up Anthropic API costs.

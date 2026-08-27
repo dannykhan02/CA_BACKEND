@@ -121,4 +121,13 @@ class DocumentController extends Controller
 
         return new DocumentResource($document);
     }
+
+    public function destroy(Request $request, Document $document): \Illuminate\Http\JsonResponse
+    {
+        $this->authorize('delete', $document);
+
+        $document->delete();
+
+        return response()->json(['message' => 'Document deleted.'], 200);
+    }
 }

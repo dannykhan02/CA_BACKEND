@@ -47,3 +47,4 @@ Thumbs.db
 .env.bak
 .config_backups/
 *.bak
+.env.local-testing

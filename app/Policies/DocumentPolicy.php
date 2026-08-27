@@ -73,4 +73,13 @@ class DocumentPolicy
             fn (array $roles) => in_array($user->role, $roles, true)
         ));
     }
+
+public function delete(User $user, Document $document): bool
+    {
+        if ($document->workspace?->type === WorkspaceType::Personal) {
+            return $document->uploaded_by === $user->id;
+        }
+
+        return $this->approve($user, $document);
+    }
 }

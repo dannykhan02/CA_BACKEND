@@ -226,6 +226,7 @@ return [
                 'balance' => 'simple',
                 'maxProcesses' => 5,
                 'tries' => 3,
+                'timeout' => 150, // must exceed the longest job on this queue (120s), with headroom
             ],
         ],
 
@@ -242,6 +243,7 @@ return [
                 // throughput — this is the actual enforcement point, more reliable
                 // than AnthropicClient's in-code throttle counter alone.
                 'maxProcesses' => 2,
+                'timeout' => 150, // must exceed the longest job on this queue (120s), with headroom
             ],
         ],
     ],

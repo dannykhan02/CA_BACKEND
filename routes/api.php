@@ -104,6 +104,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/documents/{document}/reprocess', [DocumentReprocessController::class, 'store'])
         ->name('documents.reprocess');
+Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])
+        ->name('documents.destroy');
 
     Route::post('/documents/{document}/approve', [DocumentApproveController::class, 'store'])
         ->name('documents.approve');
