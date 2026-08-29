@@ -13,7 +13,7 @@ use App\Http\Controllers\Api\DocumentSearchController;
 use App\Http\Controllers\Api\DocumentUploadController;
 use App\Http\Controllers\Api\HealthController;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\Api\DocumentReportController;
 // Unauthenticated — must be reachable by load balancers/uptime monitors/
 // deployment scripts without a Sanctum token.
 Route::get('/health', [HealthController::class, 'index'])->name('health');
@@ -52,6 +52,8 @@ Route::prefix('auth')->name('auth.')->group(function () {
             ->name('change-email.request');
         Route::post('/change-email/confirm', [AuthController::class, 'confirmEmailChange'])
             ->name('change-email.confirm');
+        
+        
     });
 });
 
@@ -112,6 +114,9 @@ Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])
 
     Route::post('/documents/{document}/reject', [DocumentRejectController::class, 'store'])
         ->name('documents.reject');
+
+    Route::post('/documents/{document}/report-generated', [DocumentReportController::class, 'store'])
+            ->name('documents.report-generated');
 });
 
 // Administrator-only routes
