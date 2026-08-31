@@ -26,7 +26,6 @@ trait FakesGoogleTokens
             ]);
             openssl_pkey_export($res, self::$googlePrivateKey);
             $details = openssl_pkey_get_details($res);
-
             self::$googlePublicKeyJwk = [
                 'kty' => 'RSA',
                 'kid' => self::GOOGLE_TEST_KID,
@@ -38,7 +37,7 @@ trait FakesGoogleTokens
         }
 
         Http::fake([
-            'www.googleapis.com/oauth2/v3/certs' => Http::response([
+            'https://www.googleapis.com/oauth2/v3/certs' => Http::response([
                 'keys' => [self::$googlePublicKeyJwk],
             ], 200),
         ]);
