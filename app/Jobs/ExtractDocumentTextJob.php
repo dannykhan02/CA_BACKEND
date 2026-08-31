@@ -2,8 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Jobs\Concerns\DispatchesIntelligenceChain;
 use App\Models\Document;
-use App\Models\OcrResult;
 use App\Services\DocumentTextExtractor;
 use App\Services\Ocr\OcrEngineResolver;
 use App\Services\Ocr\PdfRasterizer;
@@ -13,14 +13,13 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class ExtractDocumentTextJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, DispatchesIntelligenceChain;
 
     public int $tries = 2;
     public int $timeout = 120;
@@ -65,7 +64,14 @@ class ExtractDocumentTextJob implements ShouldQueue
             $recorder->complete($extractStage, ['native_text_found' => false]);
             $text = $this->fallbackToOcr($document, $ocrResolver, $rasterizer, $recorder, $absolutePath);
             if ($text === null) {
-                return; // fallbackToOcr already set status + returned
+                // fallbackToOcr either set a terminal status itself (no
+                // provider available, OCR disabled, rasterization
+                // failure), or queued OcrPageBatchJob batches via
+                // appendToChain() — the last of which sets
+                // extracted_text and continues the chain once OCR
+                // actually completes. Either way, nothing more to do in
+                // this job invocation.
+                return;
             }
         } else {
             $recorder->complete($extractStage, ['native_text_found' => true]);
@@ -84,46 +90,20 @@ class ExtractDocumentTextJob implements ShouldQueue
     }
 
     /**
-     * Was a chain (SomeJob::withChain([...])) with ->allowFailures() bolted
-     * on — allowFailures() only exists on PendingBatch (Bus::batch()), not
-     * PendingChain, so this fatally errored on every document. Switched to
-     * a real batch so one stage failing (e.g. risks) doesn't cancel the
-     * others (entities, deadlines), matching the intended
-     * "classification ✓, entities ✓, risks ✗, deadlines pending" partial
-     * state.
+     * Returns null in every case: either a terminal document status was
+     * already set (no OCR provider available, OCR disabled, rasterization
+     * failure), or OcrPageBatchJob batches were successfully appended to
+     * this job's chain via appendToChain() — the last of which finishes
+     * extraction (sets extracted_text, progress) and calls
+     * dispatchIntelligenceChain() once OCR actually completes.
      *
-     * GenerateDocumentSummaryJob is deliberately NOT in the batch array.
-     * It reads the document_type/entities/risks/deadlines relations
-     * written by these four jobs, and a batch gives no ordering guarantee
-     * between its jobs — running it inside the batch risks a worker
-     * picking it up before its siblings have written anything, silently
-     * producing an incomplete summary instead of erroring. finally() runs
-     * once, after every job in the batch has settled (success, failure,
-     * or skip) — unlike then(), which only fires if nothing failed, which
-     * would drop the summary entirely in the "risks ✗" partial-failure
-     * case this pipeline is meant to support.
+     * The OCR loop itself no longer runs here — it used to run
+     * synchronously inside this single job (one Anthropic call per page,
+     * sequentially, no checkpointing), which meant this job's 120s
+     * timeout was effectively a per-document OCR budget rather than a
+     * per-call one, and fired mid-loop on any real multi-page scanned
+     * document. See docs/REGRESSION_SCENARIO.md, 2026-08-30 entry.
      */
-    private function dispatchIntelligenceChain($document): void
-    {
-        $documentId = $document->id;
-
-        Bus::batch([
-            new \App\Jobs\ClassifyDocumentTypeJob($documentId),
-            new \App\Jobs\ExtractDocumentEntitiesJob($documentId),
-            new \App\Jobs\DetectDocumentRisksJob($documentId),
-            new \App\Jobs\DetectDocumentDeadlinesJob($documentId),
-        ])
-            ->name("document-intelligence:{$documentId}")
-            ->onQueue('extraction')
-            ->allowFailures()
-            ->finally(function () use ($documentId) {
-                \App\Jobs\GenerateDocumentSummaryJob::dispatch($documentId)
-                    ->onQueue('extraction');
-            })
-            ->dispatch();
-    }
-
-    /** Returns extracted OCR text, or null if it already terminated the document's status. */
     private function fallbackToOcr(
         Document $document,
         OcrEngineResolver $resolver,
@@ -147,36 +127,14 @@ class ExtractDocumentTextJob implements ShouldQueue
             return null;
         }
 
-        $ocrStage = $recorder->start($document, 'ocr_check');
-
+        // Confirm a provider is actually configured/available before
+        // queuing any batch jobs — fail fast here, once, rather than have
+        // every batch job independently discover "no provider" and each
+        // write its own failed ProcessingJob row for the same root cause.
         try {
-            $provider = $resolver->resolve($document);
-            // A scanned PDF needs rasterizing into one image per page; a
-            // bare JPG/PNG upload already IS the single page image.
-            $imagePaths = $document->type === 'PDF'
-                ? $rasterizer->toPageImages($absolutePath)
-                : [$absolutePath];
-
-            $pages = [];
-            foreach ($imagePaths as $index => $imagePath) {
-                $result = $provider->extractPage($imagePath, $document);
-
-                OcrResult::create([
-                    'workspace_id' => $document->workspace_id,
-                    'document_id' => $document->id,
-                    'page_number' => $index + 1,
-                    'engine' => $provider->engine(),
-                    'raw_text' => $result->text,
-                    'confidence' => $result->confidence,
-                    'metadata' => $result->metadata,
-                ]);
-
-                $pages[] = $result->text;
-            }
-
-            $text = implode("\f", $pages);
+            $resolver->resolve($document);
         } catch (\Throwable $e) {
-            $recorder->fail($ocrStage, $e->getMessage());
+            $recorder->fail($recorder->start($document, 'ocr_check'), $e->getMessage());
             $document->forceFill([
                 'status' => 'Needs Review',
                 'error_message' => 'OCR could not process this scanned document.',
@@ -184,17 +142,52 @@ class ExtractDocumentTextJob implements ShouldQueue
             return null;
         }
 
-        if (trim($text) === '') {
-            $recorder->complete($ocrStage, ['pages_processed' => count($imagePaths)]);
+        try {
+            // A scanned PDF needs rasterizing into one image per page; a
+            // bare JPG/PNG upload already IS the single page image.
+            $imagePaths = $document->type === 'PDF'
+                ? $rasterizer->toPageImages($absolutePath)
+                : [$absolutePath];
+        } catch (\Throwable $e) {
+            $recorder->fail($recorder->start($document, 'ocr_check'), $e->getMessage());
             $document->forceFill([
                 'status' => 'Needs Review',
-                'error_message' => 'OCR ran but found no readable text — needs manual review.',
+                'error_message' => 'OCR could not process this scanned document.',
             ])->save();
             return null;
         }
 
-        $recorder->complete($ocrStage, ['pages_processed' => count($imagePaths)]);
-        return $text;
+        // Batched into chained jobs rather than looped in-process here —
+        // this job's single 120s timeout was sized for one AI call, not a
+        // page-count-dependent loop (see docs/REGRESSION_SCENARIO.md,
+        // 2026-08-30 entry). 3 pages/batch is sized off real measured
+        // per-page OCR latency (5-11s/page observed on an 18-page
+        // reference document), leaving comfortable headroom under
+        // OcrPageBatchJob's own 90s timeout even in the worst observed
+        // case, with an extra safety margin after observing one real batch exceed 90s at 4 pages/batch during testing.
+        $batches = array_chunk($imagePaths, 3);
+        // Only a real PDF rasterization produces a disposable temp
+        // directory — a bare JPG/PNG upload's "image path" IS the
+        // original stored file, which must never be cleaned up here.
+        $tempDir = $document->type === 'PDF' ? dirname($imagePaths[0]) : null;
+        $startingPage = 1;
+        $batchJobs = [];
+
+        foreach ($batches as $index => $batchPaths) {
+            $isLastBatch = $index === array_key_last($batches);
+            $batchJobs[] = (new OcrPageBatchJob(
+                documentId: $document->id,
+                pageImagePaths: $batchPaths,
+                startingPageNumber: $startingPage,
+                isLastBatch: $isLastBatch,
+                tempDir: $isLastBatch ? $tempDir : null,
+            ))->onQueue('extraction');
+            $startingPage += count($batchPaths);
+        }
+
+        $this->prependToChain($batchJobs);
+
+        return null;
     }
 
     public function failed(\Throwable $e): void
