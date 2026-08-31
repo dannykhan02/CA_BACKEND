@@ -1,38 +1,83 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BASE_URL="${SMOKE_TEST_BASE_URL:-http://localhost:8000}"
-TOKEN="${SMOKE_TEST_TOKEN:-}"
+echo "==> Environment diagnostic"
+php artisan env:info
+echo ""
 
-pass=0
-fail=0
+BASE_URL="${SMOKE_TEST_URL:-http://127.0.0.1:8000}"
+FAILURES=0
 
 check() {
-  local name="$1" method="$2" path="$3" expected="$4" auth="${5:-yes}"
-  local headers=(-H "Accept: application/json")
-
-  if [[ "$auth" == "yes" ]]; then
-    if [[ -z "$TOKEN" ]]; then
-      echo "SKIP  $name (no SMOKE_TEST_TOKEN set)"
-      return
+    local desc="$1"
+    local result="$2"
+    if [ "$result" = "0" ]; then
+        echo "  [PASS] ${desc}"
+    else
+        echo "  [FAIL] ${desc}"
+        FAILURES=$((FAILURES + 1))
     fi
-    headers+=(-H "Authorization: Bearer $TOKEN")
-  fi
-
-  status=$(curl -s -o /dev/null -w "%{http_code}" -X "$method" "${headers[@]}" "$BASE_URL$path")
-  if [[ "$status" == "$expected" ]]; then
-    echo "PASS  $name ($status)"
-    pass=$((pass + 1))
-  else
-    echo "FAIL  $name (expected $expected, got $status)"
-    fail=$((fail + 1))
-  fi
 }
 
-check "Health endpoint"    GET  "/api/health"           200 no
-check "Documents index"    GET  "/api/documents"         200
-check "Dashboard summary"  GET  "/api/dashboard/summary" 200
+echo "==> Smoke test against ${BASE_URL}"
+echo ""
 
-echo
-echo "Passed: $pass  Failed: $fail"
-[[ $fail -eq 0 ]]
+echo "-- Health endpoint --"
+HEALTH_RESPONSE=$(curl -sf "${BASE_URL}/api/health" 2>/dev/null) && HEALTH_OK=0 || HEALTH_OK=1
+check "GET /api/health responds" "$HEALTH_OK"
+if [ "$HEALTH_OK" = "0" ]; then
+    echo "    Response: ${HEALTH_RESPONSE}"
+fi
+
+echo ""
+echo "-- Database --"
+php artisan migrate:status > /tmp/migrate_status.txt 2>&1
+if grep -q "Pending" /tmp/migrate_status.txt; then
+    check "No pending migrations" 1
+    grep "Pending" /tmp/migrate_status.txt
+else
+    check "No pending migrations" 0
+fi
+
+echo ""
+echo "-- Queue infrastructure --"
+php artisan tinker --execute="
+try {
+    \Illuminate\Support\Facades\Redis::connection()->ping();
+    echo 'REDIS_OK';
+} catch (\Throwable \$e) {
+    echo 'REDIS_FAILED: '.\$e->getMessage();
+}
+" > /tmp/redis_test.txt 2>&1
+grep -q "REDIS_OK" /tmp/redis_test.txt && check "Redis reachable" 0 || check "Redis reachable" 1
+
+HORIZON_STATUS=$(php artisan horizon:status 2>&1)
+echo "$HORIZON_STATUS" | grep -qi "running" && check "Horizon running" 0 || check "Horizon running" 1
+
+echo ""
+echo "-- Real queue dispatch (not a direct ->handle() call) --"
+php artisan tinker --execute="
+dispatch(function () { logger()->info('smoke-test job executed'); })->onQueue('smoke-test');
+sleep(2);
+echo 'dispatched';
+" > /tmp/dispatch_test.txt 2>&1
+grep -q "dispatched" /tmp/dispatch_test.txt && check "Job dispatch does not error" 0 || check "Job dispatch does not error" 1
+echo "    NOTE: this only proves dispatch doesn't throw — inspect Horizon dashboard to confirm the smoke-test queue actually drains."
+
+echo ""
+echo "-- Power BI views --"
+php artisan tinker --execute="
+try {
+    DB::select('SELECT 1 FROM power_bi_kpis LIMIT 1');
+    DB::select('SELECT 1 FROM power_bi_chart_points LIMIT 1');
+    echo 'views queryable';
+} catch (\Throwable \$e) {
+    echo 'FAILED: '.\$e->getMessage();
+    exit(1);
+}
+" > /tmp/pbi_test.txt 2>&1
+grep -q "views queryable" /tmp/pbi_test.txt && check "Power BI views queryable" 0 || check "Power BI views queryable" 1
+
+echo ""
+echo "==> Smoke test complete: ${FAILURES} failure(s)"
+[ "$FAILURES" -eq 0 ] && exit 0 || exit 1

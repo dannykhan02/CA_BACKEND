@@ -1,55 +1,67 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "$ROOT"
+echo "==> CA Document Intelligence Platform — Provisioning"
+echo "    Environment: ${APP_ENV:-not set}"
+echo ""
 
-if [[ ! -f artisan ]]; then
-  echo "Run from CA_BACKEND (artisan not found)."
-  exit 1
-fi
+php artisan env:info
+echo ""
 
-require_cmd() {
-  if ! command -v "$1" >/dev/null 2>&1; then
-    echo "Missing required command: $1"
+if [ ! -f .env ]; then
+    echo "ERROR: .env not found. Copy .env.example first and configure it." >&2
     exit 1
-  fi
-}
-
-echo "==> Checking prerequisites..."
-require_cmd php
-require_cmd composer
-
-php -v
-composer --version
-
-echo "==> Installing PHP dependencies..."
-composer install --optimize-autoloader
-
-if [[ ! -f .env ]]; then
-  echo "==> Creating .env from .env.example..."
-  cp .env.example .env
-  php artisan key:generate --force
-  echo "Edit .env with production values before continuing (DB, Redis, API keys)."
-else
-  echo "==> .env already exists — skipping key generation."
 fi
 
-echo "==> Clearing caches..."
-php artisan optimize:clear
+REQUIRED_VARS=(DB_CONNECTION DB_HOST DB_PORT DB_DATABASE DB_USERNAME REDIS_HOST QUEUE_CONNECTION)
+for var in "${REQUIRED_VARS[@]}"; do
+    if ! grep -q "^${var}=" .env; then
+        echo "ERROR: ${var} is not set in .env" >&2
+        exit 1
+    fi
+done
+echo "==> .env has required variables present"
 
-echo "==> Running migrations..."
+echo "==> Installing composer dependencies"
+composer install --no-interaction --prefer-dist
+
+if ! grep -q "^APP_KEY=base64" .env; then
+    echo "==> Generating APP_KEY"
+    php artisan key:generate
+else
+    echo "==> APP_KEY already set, skipping"
+fi
+
+echo "==> Linking storage"
+php artisan storage:link || echo "    (already linked, continuing)"
+
+echo "==> Running migrations"
 php artisan migrate --force
 
-if [[ ! -L public/storage ]]; then
-  echo "==> Linking storage..."
-  php artisan storage:link
+if [ "${PROVISION_SEED:-false}" = "true" ]; then
+    echo "==> Seeding database (PROVISION_SEED=true)"
+    php artisan db:seed --force
+else
+    echo "==> Skipping seed (set PROVISION_SEED=true to seed dev/test data)"
 fi
 
-echo
-echo "Provision complete. Next steps:"
-echo "  1. Configure Redis + ClamAV (see docs/start-dev-services.sh for local dev)"
-echo "  2. Set HORIZON_AUTHORIZED_EMAILS in .env for Horizon dashboard access"
-echo "  3. Run: php artisan horizon   (or configure a process supervisor)"
-echo "  4. Create Power BI reader credentials: see docs/POWERBI_SETUP.md"
-echo "  5. Verify: ./bin/health-check.sh"
+echo "==> Verifying Redis connectivity"
+php artisan tinker --execute="try { \Illuminate\Support\Facades\Redis::connection()->ping(); echo 'Redis OK'; } catch (\Throwable \$e) { echo 'Redis FAILED: '.\$e->getMessage(); exit(1); }"
+
+echo "==> Verifying pgvector extension"
+php artisan tinker --execute="
+\$v = DB::selectOne(\"SELECT extversion FROM pg_extension WHERE extname='vector'\");
+if (!\$v) { echo 'pgvector NOT installed'; exit(1); }
+echo 'pgvector '.\$v->extversion.' present';
+"
+
+if [ -n "${PROVISION_POWERBI_WORKSPACE:-}" ]; then
+    echo "==> Provisioning Power BI reader for workspace ${PROVISION_POWERBI_WORKSPACE}"
+    php artisan powerbi:create-reader "${PROVISION_POWERBI_WORKSPACE}" --label="provisioned-by-script"
+else
+    echo "==> Skipping Power BI reader provisioning (set PROVISION_POWERBI_WORKSPACE=<uuid> to provision one)"
+fi
+
+echo ""
+echo "==> Provisioning complete."
+echo "    Next: start Horizon (php artisan horizon) and run bin/smoke-test.sh"

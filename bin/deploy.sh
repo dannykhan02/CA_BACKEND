@@ -1,32 +1,37 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "$ROOT"
+echo "==> CA Document Intelligence Platform — Deploy"
 
-if [[ ! -f artisan ]]; then
-  echo "Run from CA_BACKEND (artisan not found)."
-  exit 1
-fi
+echo "==> Installing production dependencies"
+composer install --no-dev --optimize-autoloader --no-interaction
 
-echo "==> Installing PHP dependencies (production)..."
-composer install --no-dev --optimize-autoloader
-
-echo "==> Running migrations..."
+echo "==> Running migrations"
 php artisan migrate --force
 
-echo "==> Clearing stale caches..."
+echo "==> Clearing cached config/routes/views"
 php artisan optimize:clear
 
-echo "==> Caching configuration..."
+echo "==> Caching config/routes/views for production"
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-echo "==> Restarting Horizon workers..."
-php artisan horizon:terminate
+if [ -d public/storage ] || [ -L public/storage ]; then
+    echo "==> Storage already linked"
+else
+    php artisan storage:link
+fi
 
-echo "==> Post-deploy health check..."
-"$ROOT/bin/health-check.sh"
+echo "==> Signaling queue workers to restart"
+php artisan horizon:terminate || echo "    (Horizon was not running, continuing)"
+# NOTE: this only signals a graceful stop. The production process
+# supervisor (systemd/Supervisor, per runbook §12 — tracked as 4-Item7,
+# not yet built) is what actually restarts `php artisan horizon`
+# afterward. This script deliberately does not start Horizon itself.
 
-echo "Deploy complete."
+echo "==> Running post-deploy health check"
+./bin/health-check.sh
+
+echo ""
+echo "==> Deploy complete."
