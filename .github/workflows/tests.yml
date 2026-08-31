@@ -49,6 +49,7 @@ jobs:
       SESSION_DRIVER: array
       REDIS_HOST: 127.0.0.1
       REDIS_PORT: 6379
+      GOOGLE_CLIENT_ID: test-client-id.apps.googleusercontent.com
       APP_ENV: testing
 
     steps:
