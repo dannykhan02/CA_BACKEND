@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\DocumentResource;
+use App\Jobs\ExtractDocumentTextJob;
+use App\Jobs\GenerateEmbeddingsJob;
 use App\Jobs\GenerateInsightsJob;
+use App\Jobs\ScanUploadedFileJob;
 use App\Models\Document;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,45 +17,50 @@ class DocumentReprocessController extends Controller
 {
     public function store(Request $request, Document $document): JsonResponse
     {
-        // Was an inline in_array(...) role check via abort(403, ...) — see
-        // DocumentPolicy::reprocess() for why that bypassed the
-        // classification-aware view() gate (audit F-High-3).
         $this->authorize('reprocess', $document);
 
-        if ($document->status !== 'Needs Review') {
+        if ($document->status === 'Failed' && empty($document->extracted_text)) {
+            // Full pipeline re-run: scan/extract never produced usable text,
+            // so re-running only the AI batch (like the Needs-Review path
+            // below) would run against nothing. Mirrors the exact chain
+            // DocumentUploadController::store() dispatches on first upload.
+            $document->forceFill([
+                'status' => 'Processing',
+                'progress' => 0,
+                'error_message' => null,
+                'last_updated_by' => $request->user()->id,
+            ])->save();
+
+            ScanUploadedFileJob::withChain([
+                (new ExtractDocumentTextJob($document->id))->onQueue('extraction'),
+                (new GenerateInsightsJob($document->id))->onQueue('extraction'),
+                (new GenerateEmbeddingsJob($document->id))->onQueue('extraction'),
+            ])->onQueue('default')->dispatch($document->id);
+
             return response()->json([
-                'message' => 'Only documents with status "Needs Review" can be reprocessed.',
+                'message' => 'Reprocessing started.',
+                'data' => new DocumentResource($document->fresh()),
+            ], 202);
+        }
+
+        if ($document->status !== 'Needs Review' && $document->status !== 'Failed') {
+            return response()->json([
+                'message' => 'Only documents with status "Needs Review" or "Failed" (with existing extracted text) can be reprocessed.',
             ], 422);
         }
 
-        // Re-running GenerateInsightsJob directly (not the full chain) since
-        // scan + extract already succeeded — re-running those would be
-        // wasted work and risks re-scanning/re-parsing an unchanged file.
-        // Note: this assumes the extracted-text cache (2hr TTL) is still
-        // present. If it's expired, the job's own "text unavailable" check
-        // will correctly fail it rather than silently proceeding with stale
-        // or missing data — worth telling the user to re-upload in that case.
+        // Existing Needs-Review-style AI-only batch path — also now covers a
+        // Failed document that already has extracted_text (no need to
+        // re-scan/re-extract; text is there, only the AI stages need a retry).
         $document->forceFill([
             'status' => 'Processing',
             'progress' => 60,
-            'error_message' => null, // Clear stale error from previous failures
+            'error_message' => null,
             'last_updated_by' => $request->user()->id,
         ])->save();
 
         GenerateInsightsJob::dispatch($document->id, true)->onQueue('extraction');
 
-        // Was a chain with ->allowFailures() bolted on — that method only
-        // exists on Bus::batch()'s PendingBatch, not on PendingChain, so
-        // every reprocess call fatally errored here too (same root cause as
-        // ExtractDocumentTextJob::dispatchIntelligenceChain()). Switched to
-        // a batch so one stage failing doesn't cancel the rest.
-        //
-        // GenerateDocumentSummaryJob is deliberately excluded from the
-        // batch array and dispatched in finally() instead — it reads the
-        // entities/risks/deadlines relations written by its siblings, and
-        // a batch gives no ordering guarantee, so running it inside the
-        // batch risks it firing before those siblings have written
-        // anything. finally() only fires once every batch job has settled.
         $documentId = $document->id;
 
         Bus::batch([
