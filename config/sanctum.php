@@ -12,9 +12,18 @@ return [
     | Stateful Domains
     |--------------------------------------------------------------------------
     |
-    | Requests from the following domains / hosts will receive stateful API
-    | authentication cookies. Typically, these should include your local
-    | and production domains which access your API via a frontend SPA.
+    | NOT CURRENTLY ACTIVE (confirmed 2026-08-31, P3 config-consistency
+    | audit): Sanctum's EnsureFrontendRequestsAreStateful middleware is
+    | never registered via statefulApi() in bootstrap/app.php, so this
+    | 'stateful' list is never consulted by any request. This app
+    | authenticates exclusively via bearer tokens — AuthController issues
+    | a Sanctum personal access token (createToken()) on every auth path
+    | (signin/signup/google/reset), with no cookie-setting code anywhere.
+    | cors.php's supports_credentials is correspondingly set to false.
+    | Left here rather than deleted so a future engineer intentionally
+    | adding a cookie-based first-party SPA has a documented starting
+    | point — but as of this date, treat this array as dead config, not
+    | as evidence of how auth actually works.
     |
     */
 
