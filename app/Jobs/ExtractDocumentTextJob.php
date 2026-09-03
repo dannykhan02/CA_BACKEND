@@ -40,7 +40,16 @@ class ExtractDocumentTextJob implements ShouldQueue
         $extractStage = $recorder->start($document, 'extract');
         $document->forceFill(['progress' => 25])->save();
 
-        $absolutePath = Storage::disk('documents')->path($document->file_path);
+        // The 'documents' disk may be a remote driver (e.g. S3/R2) — text
+        // extractors and the PDF rasterizer need a real local filesystem
+        // path, so the remote file is pulled to a local temp copy first.
+        // $cleanupAbsolutePath tracks whether *this* job invocation still
+        // owns that temp file: true until/unless fallbackToOcr() hands
+        // ownership off for the JPG/PNG async-OCR case (see its comments).
+        $absolutePath = tempnam(sys_get_temp_dir(), 'extract_');
+        file_put_contents($absolutePath, Storage::disk('documents')->get($document->file_path));
+        chmod($absolutePath, 0644);
+        $cleanupAbsolutePath = true;
 
         try {
             $text = match ($document->type) {
@@ -51,6 +60,7 @@ class ExtractDocumentTextJob implements ShouldQueue
                 default => throw new \RuntimeException("Unsupported document type: {$document->type}"),
             };
         } catch (\Throwable $e) {
+            @unlink($absolutePath);
             $recorder->fail($extractStage, $e->getMessage());
             $document->forceFill([
                 'status' => 'Failed',
@@ -75,6 +85,10 @@ class ExtractDocumentTextJob implements ShouldQueue
             }
         } else {
             $recorder->complete($extractStage, ['native_text_found' => true]);
+        }
+
+        if ($cleanupAbsolutePath) {
+            @unlink($absolutePath);
         }
 
         // Persistent source of truth — previously this only went to cache,
@@ -124,6 +138,7 @@ class ExtractDocumentTextJob implements ShouldQueue
                     : 'No extractable text found in this document.',
             ])->save();
             $this->fail(new \RuntimeException('Empty extracted text, OCR unavailable.'));
+            @unlink($absolutePath);
             return null;
         }
 
@@ -134,6 +149,7 @@ class ExtractDocumentTextJob implements ShouldQueue
         try {
             $resolver->resolve($document);
         } catch (\Throwable $e) {
+            @unlink($absolutePath);
             $recorder->fail($recorder->start($document, 'ocr_check'), $e->getMessage());
             $document->forceFill([
                 'status' => 'Needs Review',
@@ -144,11 +160,19 @@ class ExtractDocumentTextJob implements ShouldQueue
 
         try {
             // A scanned PDF needs rasterizing into one image per page; a
-            // bare JPG/PNG upload already IS the single page image.
+            // bare JPG/PNG upload already IS the single page image. Either
+            // way our downloaded temp copy is discarded right after — for
+            // JPG/PNG specifically, OcrPageBatchJob no longer trusts a raw
+            // local path across the queue boundary (nothing guaranteed
+            // this temp file would survive until that job actually ran);
+            // instead it re-fetches its own fresh copy from R2 when it
+            // executes. See OcrPageBatchJob's $fetchPageFromSourceDisk.
             $imagePaths = $document->type === 'PDF'
                 ? $rasterizer->toPageImages($absolutePath)
                 : [$absolutePath];
+            @unlink($absolutePath);
         } catch (\Throwable $e) {
+            @unlink($absolutePath);
             $recorder->fail($recorder->start($document, 'ocr_check'), $e->getMessage());
             $document->forceFill([
                 'status' => 'Needs Review',
@@ -170,6 +194,11 @@ class ExtractDocumentTextJob implements ShouldQueue
         // directory — a bare JPG/PNG upload's "image path" IS the
         // original stored file, which must never be cleaned up here.
         $tempDir = $document->type === 'PDF' ? dirname($imagePaths[0]) : null;
+        // JPG/PNG is always exactly one page, so exactly one batch below —
+        // that batch re-fetches its own fresh copy from R2 at execution
+        // time rather than trusting the (already-deleted) local path
+        // above. See OcrPageBatchJob's $fetchPageFromSourceDisk.
+        $fetchFromSourceDisk = $document->type !== 'PDF';
         $startingPage = 1;
         $batchJobs = [];
 
@@ -181,6 +210,7 @@ class ExtractDocumentTextJob implements ShouldQueue
                 startingPageNumber: $startingPage,
                 isLastBatch: $isLastBatch,
                 tempDir: $isLastBatch ? $tempDir : null,
+                fetchPageFromSourceDisk: $fetchFromSourceDisk,
             ))->onQueue('extraction');
             $startingPage += count($batchPaths);
         }

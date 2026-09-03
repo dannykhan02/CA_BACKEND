@@ -8,6 +8,9 @@ use App\Models\DocumentAiRun;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Sentry\State\Scope;
+use function Sentry\withScope;
+use function Sentry\captureException;
 
 class AnthropicClient
 {
@@ -16,8 +19,25 @@ class AnthropicClient
 
     private ?int $lastResolvedPromptVersion = null;
 
+    // Tracks which capability (insights/ocr/document_qa/etc.) is currently
+    // in flight, set at the top of each public method below, so the three
+    // actual failure points (throttle, callWithRetry, decodeJsonContent)
+    // can tag Sentry events with real operation context without every
+    // public method needing its own try/catch wrapper.
+    private ?string $currentOperation = null;
+
+    private function tagAndCapture(\Throwable $e): void
+    {
+        withScope(function (Scope $scope) use ($e) {
+            $scope->setTag('provider', 'anthropic');
+            $scope->setTag('operation', $this->currentOperation ?? 'unknown');
+            captureException($e);
+        });
+    }
+
     public function extractDocumentInsights(string $documentText, string $documentName, ?Document $document = null): array
     {
+        $this->currentOperation = 'insights';
         $this->throttle();
         $prompt = $this->buildInsightsPrompt($documentText, $documentName);
         $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]]);
@@ -27,6 +47,7 @@ class AnthropicClient
 
     public function classifyDocumentType(string $documentText, string $documentName, ?Document $document = null): array
     {
+        $this->currentOperation = 'document_type';
         $this->throttle();
         $prompt = $this->buildDocumentTypePrompt($documentText, $documentName);
         $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]]);
@@ -36,6 +57,7 @@ class AnthropicClient
 
     public function extractDocumentEntities(string $documentText, string $documentName, ?Document $document = null): array
     {
+        $this->currentOperation = 'entities';
         $this->throttle();
         $prompt = $this->buildEntitiesPrompt($documentText, $documentName);
         $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]]);
@@ -45,6 +67,7 @@ class AnthropicClient
 
     public function detectDocumentRisks(string $documentText, string $documentName, ?Document $document = null): array
     {
+        $this->currentOperation = 'risks';
         $this->throttle();
         $prompt = $this->buildRisksPrompt($documentText, $documentName);
         $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]]);
@@ -54,6 +77,7 @@ class AnthropicClient
 
     public function detectDocumentDeadlines(string $documentText, string $documentName, ?Document $document = null): array
     {
+        $this->currentOperation = 'deadlines';
         $this->throttle();
         $prompt = $this->buildDeadlinesPrompt($documentText, $documentName);
         $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]]);
@@ -63,6 +87,7 @@ class AnthropicClient
 
     public function extractTextFromImage(string $base64Image, string $mediaType = 'image/png', ?Document $document = null): array
     {
+        $this->currentOperation = 'ocr';
         $this->throttle();
 
         $response = $this->callWithRetry([
@@ -98,13 +123,10 @@ class AnthropicClient
         }
 
         if ($count > self::MAX_REQUESTS_PER_MINUTE) {
-            // Self-imposed local cap, not an Anthropic-side error — this
-            // must never permanently fail a job the way a real 404/auth
-            // error should. Wait briefly and recheck rather than throwing,
-            // bounded so we don't outlive the job's own timeout (shortest
-            // intelligence-job timeout is 60s; 3 * 10s leaves headroom).
             if ($attempt >= 3) {
-                throw new AnthropicRateLimitException('Local rate limit reached and did not clear in time.');
+                $e = new AnthropicRateLimitException('Local rate limit reached and did not clear in time.');
+                $this->tagAndCapture($e);
+                throw $e;
             }
             sleep(10);
             $this->throttle($attempt + 1);
@@ -139,10 +161,6 @@ class AnthropicClient
     private function callWithRetry(array $messages, int $attempt = 1): array
     {
         $maxAttempts = 4;
-        // 429/529 = rate-limited/overloaded; 500/502/503 = transient
-        // server-side errors. All are worth retrying. Anything else
-        // (400/401/403/404/422...) is a config, auth, or malformed-request
-        // error that will fail identically on retry — fail fast instead.
         $retryableStatuses = [429, 500, 502, 503, 529];
 
         try {
@@ -158,14 +176,12 @@ class AnthropicClient
                     'messages' => $messages,
                 ]);
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            // Network-level failure (timeout, DNS, connection refused) —
-            // always transient, always retryable, same backoff as 429/529.
-            // Previously uncaught here, so it fell through to the job's
-            // catch(\Throwable) and permanently failed on the first blip.
             if ($attempt >= $maxAttempts) {
-                throw new \RuntimeException(
+                $final = new \RuntimeException(
                     "Anthropic API connection failed after {$maxAttempts} attempts: {$e->getMessage()}"
                 );
+                $this->tagAndCapture($final);
+                throw $final;
             }
             sleep(2 ** $attempt);
             return $this->callWithRetry($messages, $attempt + 1);
@@ -173,9 +189,11 @@ class AnthropicClient
 
         if (in_array($response->status(), $retryableStatuses, true)) {
             if ($attempt >= $maxAttempts) {
-                throw new \RuntimeException(
+                $final = new \RuntimeException(
                     "Anthropic API request failed with status {$response->status()} after {$maxAttempts} attempts."
                 );
+                $this->tagAndCapture($final);
+                throw $final;
             }
             $retryAfter = (int) $response->header('Retry-After', 0);
             $sleepSeconds = $retryAfter > 0 ? $retryAfter : (2 ** $attempt);
@@ -185,7 +203,9 @@ class AnthropicClient
 
         if ($response->failed()) {
             Log::error('Anthropic API error', ['status' => $response->status(), 'body' => $response->body()]);
-            throw new \RuntimeException("Anthropic API request failed with status {$response->status()}.");
+            $e = new \RuntimeException("Anthropic API request failed with status {$response->status()}.");
+            $this->tagAndCapture($e);
+            throw $e;
         }
 
         return $response->json();
@@ -334,13 +354,20 @@ PROMPT;
         $cleaned = preg_replace('/^```json\s*|\s*```$/m', '', trim($text));
         $decoded = json_decode($cleaned, true);
         if (json_last_error() !== JSON_ERROR_NONE || ! is_array($decoded)) {
-            throw new \RuntimeException('Anthropic response was not valid JSON: ' . json_last_error_msg());
+            \Illuminate\Support\Facades\Log::warning('Anthropic response failed JSON decode', [
+                'json_error' => json_last_error_msg(),
+                'raw_text' => $text,
+            ]);
+            $e = new \RuntimeException('Anthropic response was not valid JSON: ' . json_last_error_msg());
+            $this->tagAndCapture($e);
+            throw $e;
         }
         return $decoded;
     }
 
     public function generateDocumentSummary(string $extractedDataJson, string $documentName, ?Document $document = null): array
     {
+        $this->currentOperation = 'document_summary';
         $this->throttle();
         $prompt = $this->buildSummaryPrompt($extractedDataJson, $documentName);
         $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]]);
@@ -348,34 +375,8 @@ PROMPT;
         return $this->parseSummaryResponse($response);
     }
 
-    /**
-     * Day 9 Batch 5 — follows the exact shape of every other capability
-     * method in this class: throttle -> build prompt via PromptManager ->
-     * callWithRetry -> recordAiRun(purpose='document_qa') -> parse+validate.
-     * $availableDocumentIds is passed through to the hallucination guard in
-     * ResponseValidator::validateQaResponse() — never trust the response
-     * alone to have only cited what it was actually shown.
-     */
-    public function answerDocumentQuestion(
-        string $question,
-        string $contextJson,
-        array $availableDocumentIds,
-        ?Document $document = null,
-    ): array {
-        $this->throttle();
-        $prompt = $this->buildDocumentQaPrompt($question, $contextJson);
-        $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]]);
-        $this->recordAiRun($document, 'document_qa', $response);
-        return $this->parseQaResponse($response, $availableDocumentIds);
-    }
-
     private function buildSummaryPrompt(string $extractedDataJson, string $documentName): string
     {
-        // Same truncation discipline as every other prompt builder in this
-        // class (Day 8 Batch 4). This payload is already-validated
-        // structured data, not raw document text, so it's lower risk than
-        // the others — but an unusually entity/risk/deadline-heavy document
-        // could still produce an unbounded JSON blob without this cap.
         $truncated = mb_substr($extractedDataJson, 0, config('document_processing.max_extraction_chars'));
         $manager = app(\App\Services\AI\PromptManager::class);
         $prompt = $manager->resolve('document_summary');
@@ -398,18 +399,26 @@ PROMPT;
         ];
     }
 
+    public function answerDocumentQuestion(
+        string $question,
+        string $contextJson,
+        array $availableDocumentIds,
+        ?Document $document = null,
+    ): array {
+        $this->currentOperation = 'document_qa';
+        $this->throttle();
+        $prompt = $this->buildDocumentQaPrompt($question, $contextJson);
+        $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]]);
+        $this->recordAiRun($document, 'document_qa', $response);
+        return $this->parseQaResponse($response, $availableDocumentIds);
+    }
+
     private function buildDocumentQaPrompt(string $question, string $contextJson): string
     {
-        // Reuses max_extraction_chars as the cap for retrieved context too
-        // — same cost-bounding rationale as every other prompt builder.
         $truncated = mb_substr($contextJson, 0, config('document_processing.max_extraction_chars'));
         $manager = app(\App\Services\AI\PromptManager::class);
         $prompt = $manager->resolve('document_qa');
         $this->lastResolvedPromptVersion = $prompt->version;
-        // document_qa's template reuses the {{document_name}} placeholder to
-        // carry the user's question and {{document_text}} to carry the
-        // retrieved context — same two-placeholder convention as every
-        // other prompt, just repurposed for this capability's inputs.
         return $manager->render($prompt, ['{{document_name}}' => $question, '{{document_text}}' => $truncated]);
     }
 

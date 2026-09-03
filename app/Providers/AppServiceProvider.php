@@ -6,6 +6,7 @@ use App\Models\Workspace;
 use App\Observers\WorkspaceObserver;
 use App\Services\Ocr\OcrEngineResolver;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -48,6 +49,20 @@ class AppServiceProvider extends ServiceProvider
         // account-creation spam, keyed by IP since there's no user yet.
         RateLimiter::for('signup', function ($request) {
             return Limit::perMinute(5)->by($request->ip());
+        });
+
+        // Production monitoring (Item 8) -- Pulse's own default gate
+        // restricts the dashboard to the local environment only. Reusing
+        // HORIZON_AUTHORIZED_EMAILS rather than a separate Pulse-specific
+        // env var: same ops audience already maintains that list for
+        // Horizon, and Pulse is the same category of internal
+        // operational dashboard, not end-user-facing.
+        Gate::define('viewPulse', function ($user = null) {
+            $authorized = array_filter(array_map(
+                'trim',
+                explode(',', (string) env('HORIZON_AUTHORIZED_EMAILS', ''))
+            ));
+            return in_array(optional($user)->email, $authorized, true);
         });
     }
 }

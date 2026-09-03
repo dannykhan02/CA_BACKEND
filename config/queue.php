@@ -68,7 +68,16 @@ return [
             'driver' => 'redis',
             'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
             'queue' => env('REDIS_QUEUE', 'default'),
-            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 90),
+            // Must stay safely above the timeout of the longest-running job
+            // dispatched on this connection (ExtractDocumentTextJob and
+            // GenerateInsightsJob are both 120s as of writing) — a shorter
+            // retry_after causes Redis to assume a still-running worker
+            // died and release the job to a second worker, both of which
+            // eventually try to write a failure row for the same job UUID,
+            // hitting failed_jobs' unique constraint. Confirmed as the
+            // real root cause of a duplicate-uuid insert observed
+            // 2026-08-30 (see docs/REGRESSION_SCENARIO.md).
+            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 150),
             'block_for' => null,
             'after_commit' => false,
         ],

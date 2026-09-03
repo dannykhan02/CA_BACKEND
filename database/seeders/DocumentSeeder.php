@@ -2,8 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Enums\WorkspaceType;
 use App\Models\Document;
 use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -12,7 +14,12 @@ class DocumentSeeder extends Seeder
 {
     public function run(): void
     {
-        $userIdByName = $this->ensureDocumentAuthors();
+        $workspace = Workspace::firstOrCreate(
+            ['name' => 'Communications Authority Demo'],
+            ['type' => WorkspaceType::Organization->value]
+        );
+
+        $userIdByName = $this->ensureDocumentAuthors($workspace->id);
 
         $documents = [
             [
@@ -137,6 +144,7 @@ class DocumentSeeder extends Seeder
                 'status' => $doc['status'],
                 'classification' => $doc['classification'],
                 'year' => $doc['year'],
+                'workspace_id' => $workspace->id,
                 'uploaded_by' => $userIdByName[$doc['uploaded_by']],
                 'last_updated_by' => $doc['last_updated_by'] ? $userIdByName[$doc['last_updated_by']] : null,
                 'pages' => $doc['pages'],
@@ -155,13 +163,13 @@ class DocumentSeeder extends Seeder
             $document->timestamps = true;
 
             foreach ($doc['page_flags'] as $flag) {
-                $document->pageFlags()->create($flag);
+                $document->pageFlags()->create($flag + ['workspace_id' => $workspace->id]);
             }
             foreach ($doc['kpis'] as $kpi) {
-                $document->kpis()->create($kpi);
+                $document->kpis()->create($kpi + ['workspace_id' => $workspace->id]);
             }
             foreach ($doc['charts'] as $chart) {
-                $document->charts()->create($chart);
+                $document->charts()->create($chart + ['workspace_id' => $workspace->id]);
             }
         }
     }
@@ -179,7 +187,7 @@ class DocumentSeeder extends Seeder
      * would overwrite that account's password/role on next run. Low risk
      * since these are internal demo addresses, but worth knowing.
      */
-    private function ensureDocumentAuthors(): \Illuminate\Support\Collection
+    private function ensureDocumentAuthors(string $workspaceId): \Illuminate\Support\Collection
     {
         $authors = [
             ['email' => 'amani.otieno@ca.go.ke', 'full_name' => 'Amani Otieno', 'role' => 'Reviewer'],
@@ -196,6 +204,7 @@ class DocumentSeeder extends Seeder
                     'role' => $a['role'],
                     'active' => true,
                     'email_verified_at' => now(),
+                    'current_workspace_id' => $workspaceId,
                 ]
             );
         }

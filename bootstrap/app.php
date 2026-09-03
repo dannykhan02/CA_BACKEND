@@ -9,6 +9,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Sentry\Laravel\Integration;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -25,8 +26,23 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // ✅ Appended globally – this adds security headers to every response
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+
+        // Fix: API-only app has no 'login' route at all (confirmed via
+        // `php artisan route:list | grep login` -> zero matches), so
+        // Authenticate::unauthenticated()'s login-route redirect always
+        // crashed with a raw 500 (Route [login] not defined) before any
+        // exception render() handler ran -- including for plain requests
+        // with no Accept header, since expectsJson() is false for those
+        // (no X-Requested-With, no */json Accept), so a first attempt at
+        // this fix that branched on expectsJson() still hit the same
+        // crash for exactly that case. Always returning null means no
+        // redirect is ever attempted, for any guest request, letting
+        // Laravel fall through to its normal JSON 401 response.
+        $middleware->redirectGuestsTo(fn (Request $request) => null);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        Integration::handles($exceptions);
+
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*'),
         );

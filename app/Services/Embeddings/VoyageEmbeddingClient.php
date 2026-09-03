@@ -5,15 +5,12 @@ namespace App\Services\Embeddings;
 use App\Exceptions\EmbeddingProviderException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Sentry\State\Scope;
+use function Sentry\withScope;
+use function Sentry\captureException;
 
 class VoyageEmbeddingClient
 {
-    /**
-     * @param string[] $texts batched in a single request — Voyage bills and
-     *   rate-limits per request, so batching chunks from one document into
-     *   one call is meaningfully cheaper than one call per chunk.
-     * @return array{embeddings: float[][], model: string}
-     */
     public function embed(array $texts, string $inputType = 'document'): array
     {
         if (empty($texts)) {
@@ -28,19 +25,18 @@ class VoyageEmbeddingClient
             ->post('https://api.voyageai.com/v1/embeddings', [
                 'input' => $texts,
                 'model' => config('services.voyage.model'),
-                'input_type' => $inputType, // 'document' when indexing, 'query' when searching
+                'input_type' => $inputType,
             ]);
 
         if ($response->failed()) {
-            // Full status/body logged here for internal debugging only —
-            // this must never reach the client. The thrown exception below
-            // carries a generic message on purpose; bootstrap/app.php maps
-            // EmbeddingProviderException to a clean 503 so upstream status
-            // codes, URLs, and response bodies never leak into the API
-            // response (audit finding — previously this exact status/body
-            // was reaching clients verbatim via the default error renderer).
             Log::error('Voyage embeddings API error', ['status' => $response->status(), 'body' => $response->body()]);
-            throw new EmbeddingProviderException();
+            $e = new EmbeddingProviderException();
+            withScope(function (Scope $scope) use ($e) {
+                $scope->setTag('provider', 'voyage');
+                $scope->setTag('operation', 'embeddings');
+                captureException($e);
+            });
+            throw $e;
         }
 
         $data = $response->json();

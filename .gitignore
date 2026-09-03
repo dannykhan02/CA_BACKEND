@@ -48,3 +48,8 @@ Thumbs.db
 .config_backups/
 *.bak
 .env.local-testing
+.env.*.bak*
+.env.*.good
+storage/backups/
+storage/monitor/
+resources/views/vendor/pulse/

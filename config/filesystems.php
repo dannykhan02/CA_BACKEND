@@ -61,20 +61,19 @@ return [
         ],
 
         'documents' => [
-            'driver' => 'local',
-            'root' => storage_path('app/private/documents'),
+            // Migrated from local disk to Cloudflare R2 (S3-compatible) —
+            // see docs/day-10-remaining-work.md. DocumentStorageService's
+            // own abstraction meant this was the only file that needed to
+            // change; no caller of that service was touched.
+            'driver' => 's3',
+            'key' => env('R2_ACCESS_KEY_ID'),
+            'secret' => env('R2_SECRET_ACCESS_KEY'),
+            'region' => 'auto',
+            'bucket' => env('R2_BUCKET'),
+            'endpoint' => env('R2_ENDPOINT'),
+            'use_path_style_endpoint' => true,
             'visibility' => 'private',
             'throw' => true,
-            'permissions' => [
-                'file' => [
-                    'public' => 0644,
-                    'private' => 0640,
-                ],
-                'dir' => [
-                    'public' => 0755,
-                    'private' => 0750,
-                ],
-            ],
         ],
 
     ],

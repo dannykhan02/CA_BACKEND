@@ -14,6 +14,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Processes one slice of a document's rasterized pages through the OCR
@@ -50,6 +51,11 @@ class OcrPageBatchJob implements ShouldQueue
      * @param string|null $tempDir Rasterization temp dir to clean up — only set (and only ever
      *        cleaned up) on the last batch, and only when rasterization actually created one.
      *        Never set for a bare JPG/PNG upload, whose "page image" is the original stored file.
+     * @param bool $fetchPageFromSourceDisk When true (JPG/PNG source only, always a single-page,
+     *        single-batch job), $pageImagePaths is ignored for extraction — instead a fresh copy
+     *        is re-downloaded from the 'documents' disk (R2) right here at execution time and
+     *        deleted again once this batch finishes, rather than trusting a raw local path handed
+     *        across the queue boundary to still exist whenever this job happens to run.
      */
     public function __construct(
         public string $documentId,
@@ -57,6 +63,7 @@ class OcrPageBatchJob implements ShouldQueue
         public int $startingPageNumber,
         public bool $isLastBatch,
         public ?string $tempDir = null,
+        public bool $fetchPageFromSourceDisk = false,
     ) {}
 
     public function handle(OcrEngineResolver $resolver, PipelineStageRecorder $recorder): void
@@ -85,11 +92,24 @@ class OcrPageBatchJob implements ShouldQueue
             ])
             ->delete();
 
+        // For the JPG/PNG single-image case, $pageImagePaths[0] points at
+        // a temp file ExtractDocumentTextJob already deleted — nothing
+        // guaranteed it would survive the gap between being queued and
+        // this job actually running. Re-fetch a fresh copy straight from
+        // the 'documents' disk (R2) right here instead, and clean it up
+        // ourselves once we're done with it, regardless of outcome.
+        $fetchedSourcePath = null;
+        if ($this->fetchPageFromSourceDisk) {
+            $fetchedSourcePath = tempnam(sys_get_temp_dir(), 'ocr_src_');
+            file_put_contents($fetchedSourcePath, Storage::disk('documents')->get($document->file_path));
+            chmod($fetchedSourcePath, 0644);
+        }
+
         try {
             $provider = $resolver->resolve($document);
 
             foreach ($this->pageImagePaths as $offset => $imagePath) {
-                $result = $provider->extractPage($imagePath, $document);
+                $result = $provider->extractPage($fetchedSourcePath ?? $imagePath, $document);
 
                 OcrResult::create([
                     'workspace_id' => $document->workspace_id,
@@ -102,6 +122,9 @@ class OcrPageBatchJob implements ShouldQueue
                 ]);
             }
         } catch (\Throwable $e) {
+            if ($fetchedSourcePath) {
+                @unlink($fetchedSourcePath);
+            }
             $recorder->fail($batchStage, $e->getMessage());
             $document->forceFill([
                 'status' => 'Needs Review',
@@ -116,6 +139,10 @@ class OcrPageBatchJob implements ShouldQueue
             // themselves and simply no-op for a document that isn't
             // 'Processing'/'Ready' respectively.
             return;
+        }
+
+        if ($fetchedSourcePath) {
+            @unlink($fetchedSourcePath);
         }
 
         $recorder->complete($batchStage, [
