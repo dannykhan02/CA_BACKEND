@@ -3,7 +3,10 @@
     "name": "laravel/laravel",
     "type": "project",
     "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "keywords": [
+        "laravel",
+        "framework"
+    ],
     "license": "MIT",
     "require": {
         "php": "^8.3",
@@ -21,7 +24,9 @@
         "sentry/sentry-laravel": "^4.27",
         "smalot/pdfparser": "^2.12",
         "symfony/http-client": "^7.4",
-        "symfony/postmark-mailer": "^7.4"
+        "symfony/postmark-mailer": "^7.4",
+        "ext-gd": "*",
+        "ext-pcntl": "*"
     },
     "require-dev": {
         "doctrine/dbal": "^4.4",
