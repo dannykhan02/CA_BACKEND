@@ -53,3 +53,4 @@ Thumbs.db
 storage/backups/
 storage/monitor/
 resources/views/vendor/pulse/
+.last-deploy-commit
