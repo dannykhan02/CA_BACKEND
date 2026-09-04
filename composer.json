@@ -26,7 +26,8 @@
         "symfony/http-client": "^7.4",
         "symfony/postmark-mailer": "^7.4",
         "ext-gd": "*",
-        "ext-pcntl": "*"
+        "ext-pcntl": "*",
+        "ext-zip": "*"
     },
     "require-dev": {
         "doctrine/dbal": "^4.4",
