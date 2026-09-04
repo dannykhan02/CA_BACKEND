@@ -16,4 +16,6 @@ return [
 
     'clamav_enabled' => filter_var(env('CLAMAV_ENABLED', false), FILTER_VALIDATE_BOOL),
     'clamav_socket' => env('CLAMAV_SOCKET', '/var/run/clamav/clamd.ctl'),
+    'clamav_host' => env('CLAMAV_HOST', '127.0.0.1'),
+    'clamav_port' => env('CLAMAV_PORT', 3310),
 ];
