@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\User;
+use App\Models\Workspace;
 use Database\Seeders\DocumentSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -25,7 +26,10 @@ class DashboardApiTest extends TestCase
 
     public function test_summary_returns_correct_counts_per_status(): void
     {
-        $user = User::factory()->administrator()->create();
+        $workspace = Workspace::where('name', 'Communications Authority Demo')->firstOrFail();
+        $user = User::factory()->administrator()->create([
+            'current_workspace_id' => $workspace->id,
+        ]);
         Sanctum::actingAs($user);
 
         $response = $this->getJson('/api/dashboard/summary');

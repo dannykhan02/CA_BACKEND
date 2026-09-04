@@ -4,6 +4,7 @@ namespace Tests\Feature\Api;
 
 use App\Models\Document;
 use App\Models\User;
+use App\Models\Workspace;
 use Database\Seeders\DocumentSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -21,7 +22,10 @@ class DocumentApiTest extends TestCase
 
     private function authenticate()
     {
-        $user = User::factory()->administrator()->create();
+        $workspace = Workspace::where('name', 'Communications Authority Demo')->firstOrFail();
+        $user = User::factory()->administrator()->create([
+            'current_workspace_id' => $workspace->id,
+        ]);
         Sanctum::actingAs($user);
         return $user;
     }
