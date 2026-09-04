@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 BASE_URL="http://127.0.0.1:8000"
 TEST_EMAIL="dannykhan614@gmail.com"
-TOKEN="6|CpGHzsSwpxSsTLX4kZ7nIAvLHlqhNrAWV1NiUQki89b1f9ed"
+TOKEN="PASTE_TOKEN_HERE"
 
 echo "=== Verifying email ==="
 curl -s -X POST "$BASE_URL/api/auth/verify-email" \

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 BASE_URL="http://127.0.0.1:8000"
-TOKEN="6|CpGHzsSwpxSsTLX4kZ7nIAvLHlqhNrAWV1NiUQki89b1f9ed"
+TOKEN="PASTE_TOKEN_HERE"
 DOC_ID="01a060e2-8ed9-73bd-8589-d56a2df293f2"
 
 echo "=== Polling document status (up to 12 tries, 5s apart = 60s max) ==="

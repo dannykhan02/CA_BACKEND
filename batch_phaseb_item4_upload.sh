@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 BASE_URL="http://127.0.0.1:8000"
-TOKEN="6|CpGHzsSwpxSsTLX4kZ7nIAvLHlqhNrAWV1NiUQki89b1f9ed"
+TOKEN="PASTE_TOKEN_HERE"
 
 echo "=== full /api/documents route list (need the GET-by-id route for polling) ==="
 php artisan route:list --path=documents
