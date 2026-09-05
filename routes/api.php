@@ -63,6 +63,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::patch('/user/password', [AuthController::class, 'updatePassword'])
         ->name('user.update-password');
+    Route::patch('/user/notification-preferences', [AuthController::class, 'updateNotificationPreferences'])
+        ->name('user.update-notification-preferences');
 });
 
 Route::middleware('auth:sanctum')->group(function () {

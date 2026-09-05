@@ -18,6 +18,7 @@ class User extends Authenticatable
     use Notifiable;
 
     protected $fillable = [
+        'notification_preferences',
         'email',
         'password',
         'full_name',
@@ -35,6 +36,7 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
+        'notification_preferences' => 'array',
         'email_verified_at' => 'datetime',
         'last_active_at' => 'datetime',
         'pending_email_expires_at' => 'datetime',

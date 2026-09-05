@@ -556,10 +556,25 @@ class AuthController extends Controller
                 'id' => $user->currentWorkspace->id,
                 'type' => $user->currentWorkspace->type->value,
             ] : null,
+            'notification_preferences' => $user->notification_preferences,
         ];
     }
+
+    public function updateNotificationPreferences(\App\Http\Requests\UpdateNotificationPreferencesRequest $request)
+    {
+        $user = $request->user();
+
+        $user->notification_preferences = [
+            'processing_complete' => $request->boolean('processing_complete'),
+            'review_requested' => $request->boolean('review_requested'),
+            'power_bi_sync' => $request->boolean('power_bi_sync'),
+        ];
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notification preferences updated.',
+            'data' => ['user' => $this->userPayload($user)],
+        ]);
+    }
 }
-
-
-
-
