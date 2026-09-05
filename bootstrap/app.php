@@ -11,6 +11,7 @@ use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Sentry\Laravel\Integration;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -139,6 +140,33 @@ return Application::configure(basePath: dirname(__DIR__))
                     'message' => 'Too many requests. Please try again later.',
                     'errors' => [],
                 ], 429);
+            }
+        });
+
+        // Item 1 (Backend-Frontend Integration Guide) — a bare abort($status,
+        // $message) call (e.g. DocumentDownloadController's abort(409, ...))
+        // throws this generic Symfony HttpException, which matches none of
+        // the specific handlers above and previously fell through to the
+        // \Throwable catch-all below, masking the real status code as a
+        // hardcoded 500 and discarding the actionable message.
+        //
+        // Registered here — after every specific HttpException subclass
+        // handler above (NotFoundHttpException, AccessDeniedHttpException,
+        // and TooManyRequestsHttpException all extend HttpException) and
+        // before the \Throwable catch-all — so it only ever catches a
+        // generic/bare HttpException that none of those more specific
+        // handlers already matched. Handler::renderViaCallbacks() runs
+        // render() callbacks in registration order and stops at the first
+        // match, so this ordering is load-bearing, not cosmetic — moving
+        // this block above the three handlers named above would silently
+        // swallow all of them.
+        $exceptions->render(function (HttpException $e, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage() !== '' ? $e->getMessage() : 'An error occurred.',
+                    'errors' => [],
+                ], $e->getStatusCode());
             }
         });
 

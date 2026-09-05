@@ -58,6 +58,14 @@ Route::prefix('auth')->name('auth.')->group(function () {
 });
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::patch('/user', [AuthController::class, 'updateProfile'])
+        ->name('user.update');
+
+    Route::patch('/user/password', [AuthController::class, 'updatePassword'])
+        ->name('user.update-password');
+});
+
+Route::middleware('auth:sanctum')->group(function () {
 
     // Documents
     Route::get('/documents', [DocumentController::class, 'index'])

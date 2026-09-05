@@ -12,6 +12,8 @@ use App\Http\Requests\Auth\SignupRequest;
 use App\Http\Requests\Auth\VerifyEmailRequest;
 use App\Http\Requests\Auth\ChangeEmailRequest;
 use App\Http\Requests\Auth\ConfirmEmailChangeRequest;
+use App\Http\Requests\User\UpdateProfileRequest;
+use App\Http\Requests\User\ChangePasswordRequest;
 use App\Models\User;
 use App\Models\VerificationCode;
 use App\Notifications\PasswordChangedNotification;
@@ -237,6 +239,52 @@ class AuthController extends Controller
     {
         return $this->success('Current user retrieved.', [
             'user' => $this->userPayload($request->user()),
+        ]);
+    }
+
+    public function updateProfile(UpdateProfileRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
+        $user = $request->user();
+
+        if (empty($validated)) {
+            return $this->success('No changes to apply.', [
+                'user' => $this->userPayload($user),
+            ]);
+        }
+
+        $user->forceFill($validated)->save();
+
+        return $this->success('Profile updated successfully.', [
+            'user' => $this->userPayload($user),
+        ]);
+    }
+
+    public function updatePassword(ChangePasswordRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
+        $user = $request->user();
+
+        if (! Hash::check($validated['current_password'], $user->password)) {
+            return $this->error('Current password is incorrect.', [], 401);
+        }
+
+        $user->forceFill(['password' => Hash::make($validated['password'])])->save();
+
+        // Revoke every other active session but keep the token that made
+        // this request alive — unlike resetPassword() (forgot-password flow,
+        // no existing session worth preserving), this is a self-service
+        // change from within an active session, so we log out other devices
+        // without logging the user out of the tab they're using right now.
+        $currentTokenId = $user->currentAccessToken()?->id;
+        $user->tokens()
+            ->when($currentTokenId, fn ($query) => $query->where('id', '!=', $currentTokenId))
+            ->delete();
+
+        $user->notify(new PasswordChangedNotification());
+
+        return $this->success('Password updated successfully.', [
+            'user' => $this->userPayload($user),
         ]);
     }
 
