@@ -560,21 +560,20 @@ class AuthController extends Controller
         ];
     }
 
-    public function updateNotificationPreferences(\App\Http\Requests\UpdateNotificationPreferencesRequest $request)
+    public function updateNotificationPreferences(\App\Http\Requests\UpdateNotificationPreferencesRequest $request): JsonResponse
     {
         $user = $request->user();
 
-        $user->notification_preferences = [
-            'processing_complete' => $request->boolean('processing_complete'),
-            'review_requested' => $request->boolean('review_requested'),
-            'power_bi_sync' => $request->boolean('power_bi_sync'),
-        ];
-        $user->save();
+        $user->forceFill([
+            'notification_preferences' => [
+                'processing_complete' => $request->boolean('processing_complete'),
+                'review_requested' => $request->boolean('review_requested'),
+                'power_bi_sync' => $request->boolean('power_bi_sync'),
+            ],
+        ])->save();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Notification preferences updated.',
-            'data' => ['user' => $this->userPayload($user)],
+        return $this->success('Notification preferences updated.', [
+            'user' => $this->userPayload($user),
         ]);
     }
 }
