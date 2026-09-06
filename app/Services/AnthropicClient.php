@@ -39,7 +39,7 @@ class AnthropicClient
     {
         $this->currentOperation = 'insights';
         $this->throttle();
-        $prompt = $this->buildInsightsPrompt($documentText, $documentName);
+        $prompt = $this->buildInsightsPrompt($documentText, $documentName, $document?->classification);
         $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]]);
         $this->recordAiRun($document, 'insights', $response);
         return $this->parseInsightsResponse($response);
@@ -211,13 +211,17 @@ class AnthropicClient
         return $response->json();
     }
 
-    private function buildInsightsPrompt(string $documentText, string $documentName): string
+    private function buildInsightsPrompt(string $documentText, string $documentName, ?string $classification = null): string
     {
         $truncated = mb_substr($documentText, 0, config('document_processing.max_extraction_chars'));
         $manager = app(\App\Services\AI\PromptManager::class);
         $prompt = $manager->resolve('document_insights');
         $this->lastResolvedPromptVersion = $prompt->version;
-        return $manager->render($prompt, ['{{document_name}}' => $documentName, '{{document_text}}' => $truncated]);
+        return $manager->render($prompt, [
+            '{{document_name}}' => $documentName,
+            '{{document_text}}' => $truncated,
+            '{{document_classification}}' => $classification ?? 'Unknown',
+        ]);
     }
 
     private function buildDocumentTypePrompt(string $documentText, string $documentName): string
