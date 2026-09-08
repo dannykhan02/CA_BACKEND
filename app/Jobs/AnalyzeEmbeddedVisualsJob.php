@@ -16,6 +16,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -73,20 +74,42 @@ class AnalyzeEmbeddedVisualsJob implements ShouldQueue
             $extractedCharts = [];
 
             foreach ($refs as $ref) {
-                [$base64, $mediaType] = $this->resolveImageBytes($ref, $document, $absolutePath, $rasterizer, $rasterCache);
-                if ($base64 === null) {
-                    continue;
-                }
+                try {
+                    [$base64, $mediaType] = $this->resolveImageBytes($ref, $document, $absolutePath, $rasterizer, $rasterCache);
+                    if ($base64 === null) {
+                        continue;
+                    }
 
-                $result = $client->extractChartDataFromImage($base64, $mediaType, $document);
-                foreach ($result['charts'] ?? [] as $chart) {
-                    $extractedCharts[] = $chart;
+                    $result = $client->extractChartDataFromImage($base64, $mediaType, $document);
+                    foreach ($result['charts'] ?? [] as $chart) {
+                        $extractedCharts[] = $chart;
+                    }
+                } catch (\Throwable $e) {
+                    // A single unreadable visual (bad rasterization, one
+                    // corrupt page image) must not sink every other visual
+                    // in this document, and must never touch document
+                    // status — this job's output is strictly additive.
+                    Log::warning('AnalyzeEmbeddedVisualsJob: failed to process one visual reference', [
+                        'document_id' => $document->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                    continue;
                 }
             }
 
             if (! empty($extractedCharts)) {
                 $this->mergeCharts($document, $extractedCharts);
             }
+        } catch (\Throwable $e) {
+            // Whole-detector-level failure (e.g. pdftoppm missing entirely,
+            // corrupt source file). This job is a bonus enrichment step —
+            // GenerateInsightsJob already committed the document's real
+            // KPIs/charts/status before this job ever ran. Log and exit
+            // clean; never fail the job, never touch document status.
+            Log::error('AnalyzeEmbeddedVisualsJob failed for document', [
+                'document_id' => $document->id,
+                'error' => $e->getMessage(),
+            ]);
         } finally {
             @unlink($absolutePath);
         }
