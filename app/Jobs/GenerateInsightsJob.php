@@ -98,7 +98,7 @@ class GenerateInsightsJob implements ShouldQueue
                     'document_id' => $document->id,
                     'label' => $kpi['label'] ?? '',
                     'value' => $kpi['value'] ?? '',
-                    'value_numeric' => is_numeric($kpi['value'] ?? null) ? (float) $kpi['value'] : null,
+                    'value_numeric' => $this->parseNumericValue($kpi['value'] ?? null),
                     'unit' => $kpi['unit'] ?? null,
                     'trend' => $kpi['trend'] ?? null,
                     'trend_value' => $kpi['trendValue'] ?? null,
@@ -146,6 +146,24 @@ class GenerateInsightsJob implements ShouldQueue
         ]);
     }
 
+    /**
+     * The model sometimes bakes a unit directly into `value` (e.g. "79.8%",
+     * "1,234") instead of using the separate `unit` field. is_numeric() fails
+     * on both, which silently null'd value_numeric for every percentage KPI.
+     * Strip trailing '%' and thousands separators before testing numericness
+     * so these still get a usable value_numeric.
+     */
+    private function parseNumericValue(?string $value): ?float
+    {
+        if ($value === null || trim($value) === '') {
+            return null;
+        }
+
+        $stripped = rtrim(str_replace(',', '', trim($value)), '%');
+
+        return is_numeric($stripped) ? (float) $stripped : null;
+    }
+
     public function failed(\Throwable $e): void
     {
         $document = Document::find($this->documentId);
@@ -160,7 +178,3 @@ class GenerateInsightsJob implements ShouldQueue
         ]);
     }
 }
-
-
-
-

@@ -115,6 +115,30 @@ class AnthropicClient
         return $this->parseOcrResponse($response);
     }
 
+    /**
+     * Extract chart data directly from an image using Claude's vision capabilities.
+     * This is used when a digital PDF contains embedded rasterized charts that
+     * weren't captured during text extraction.
+     */
+    public function extractChartDataFromImage(string $base64Image, string $mediaType, ?Document $document = null): array
+    {
+        $this->currentOperation = 'chart_vision';
+        $this->throttle();
+
+        $response = $this->callWithRetry([[
+            'role' => 'user',
+            'content' => [
+                ['type' => 'image', 'source' => ['type' => 'base64', 'media_type' => $mediaType, 'data' => $base64Image]],
+                ['type' => 'text', 'text' => $this->buildChartVisionPrompt()],
+            ],
+        ]]);
+
+        $this->recordAiRun($document, 'chart_vision', $response);
+
+        $decoded = $this->decodeJsonContent($response);
+        return app(\App\Services\AI\ResponseValidator::class)->validate($decoded, ['charts' => 'array']);
+    }
+
     private function throttle(int $attempt = 1): void
     {
         $count = Cache::increment(self::RATE_LIMIT_KEY);
@@ -139,7 +163,7 @@ class AnthropicClient
             return;
         }
 
-        $versionedPurposes = ['insights', 'document_type', 'entities', 'risks', 'deadlines', 'document_summary'];
+        $versionedPurposes = ['insights', 'document_type', 'entities', 'risks', 'deadlines', 'document_summary', 'chart_vision'];
         $promptVersion = (in_array($purpose, $versionedPurposes, true) && $this->lastResolvedPromptVersion !== null)
             ? (string) $this->lastResolvedPromptVersion
             : null;
@@ -275,6 +299,28 @@ Respond with ONLY valid JSON, no other text, no markdown code fences:
 }
 
 "text" is the full transcription. "confidence" is your own estimate from 0.0 to 1.0 of how confident you are in the transcription's accuracy (lower for blurry scans, unclear handwriting, or low-contrast images). If the image contains no legible text, return "text": "" and "confidence": 0.0.
+PROMPT;
+    }
+
+    /**
+     * Builds the prompt for extracting chart data from images using Claude's vision capabilities.
+     * This is separate from OCR because chart extraction requires understanding visual
+     * structure, not just transcribing text.
+     */
+    private function buildChartVisionPrompt(): string
+    {
+        return <<<PROMPT
+This image is one page or figure from a document. It may contain a chart (bar, line, or pie), or it may contain no chart at all — for example a photo, a logo, or a page with no visual data.
+
+If it contains no chart, or the chart's underlying values are not legibly readable, respond with {"charts": []}.
+
+If it contains one or more genuinely readable charts, extract each as accurately as possible. Never fabricate a value you cannot actually read off the image — if a value is ambiguous or illegible, omit that data point rather than guessing. Do NOT include a target, threshold, or goal line as a data point — only actual measured/plotted values belong in "data".
+
+Respond with ONLY valid JSON, no other text, no markdown code fences:
+
+{
+  "charts": [{"type": "bar"|"line"|"pie", "title": string, "description": string, "data": [{"label": string, "value": number}]}]
+}
 PROMPT;
     }
 
