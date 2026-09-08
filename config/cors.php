@@ -19,7 +19,18 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [env('FRONTEND_URL', 'http://localhost:5173')],
+    // FRONTEND_URL is the single canonical URL — also used to build
+    // password-reset/email-change links (see User::sendPasswordResetNotification()),
+    // so it must stay one clean URL, never a comma-joined list.
+    // ADDITIONAL_CORS_ORIGINS is a comma-separated list of any other origins
+    // (e.g. localhost during local dev) that should also be allowed to make
+    // cross-origin requests, without touching what email links point to.
+    // array_filter() drops empty entries so an unset ADDITIONAL_CORS_ORIGINS
+    // in production doesn't add a blank origin to the list.
+    'allowed_origins' => array_values(array_filter(array_merge(
+        [env('FRONTEND_URL', 'http://localhost:5173')],
+        array_map('trim', explode(',', env('ADDITIONAL_CORS_ORIGINS', '')))
+    ))),
 
     'allowed_origins_patterns' => [],
 
