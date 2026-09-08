@@ -1,0 +1,72 @@
+[1mdiff --git a/Dockerfile b/Dockerfile[m
+[1mindex 4ce37b5..110c554 100644[m
+[1m--- a/Dockerfile[m
+[1m+++ b/Dockerfile[m
+[36m@@ -1,19 +1,63 @@[m
+ FROM dunglas/frankenphp:php8.3.33-trixie[m
+ [m
+[32m+[m[32m# Install system dependencies required for document processing[m
+[32m+[m[32m# - poppler-utils: Provides pdftoppm for PDF rasterization (needed for AnalyzeEmbeddedVisualsJob)[m
+[32m+[m[32m# - ghostscript: For PDF processing fallback[m
+[32m+[m[32m# - imagemagick: For image manipulation fallback[m
+[32m+[m[32m# - libzip-dev: For zip file support[m
+[32m+[m[32m# - unzip: For extracting DOCX files[m
+ RUN apt-get update && apt-get install -y --no-install-recommends \[m
+     poppler-utils \[m
+[32m+[m[32m    ghostscript \[m
+[32m+[m[32m    imagemagick \[m
+[32m+[m[32m    libzip-dev \[m
+[32m+[m[32m    unzip \[m
+     && rm -rf /var/lib/apt/lists/*[m
+ [m
+[32m+[m[32m# Configure ImageMagick policy to allow PDF processing (needed for some document types)[m
+[32m+[m[32m# This creates a policy.xml that allows PDF reading/writing[m
+[32m+[m[32mRUN mkdir -p /etc/ImageMagick-6 \[m
+[32m+[m[32m    && echo '<?xml version="1.0" encoding="UTF-8"?>' > /etc/ImageMagick-6/policy.xml \[m
+[32m+[m[32m    && echo '<policymap>' >> /etc/ImageMagick-6/policy.xml \[m
+[32m+[m[32m    && echo '  <policy domain="coder" rights="read|write" pattern="PDF" />' >> /etc/ImageMagick-6/policy.xml \[m
+[32m+[m[32m    && echo '  <policy domain="coder" rights="read" pattern="PNG" />' >> /etc/ImageMagick-6/policy.xml \[m
+[32m+[m[32m    && echo '  <policy domain="coder" rights="read" pattern="JPEG" />' >> /etc/ImageMagick-6/policy.xml \[m
+[32m+[m[32m    && echo '</policymap>' >> /etc/ImageMagick-6/policy.xml[m
+[32m+[m
+ WORKDIR /app[m
+ COPY . .[m
+ [m
+[32m+[m[32m# Install PHP extensions[m
+[32m+[m[32m# - gd: Image processing[m
+[32m+[m[32m# - zip: Archive handling[m
+[32m+[m[32m# - pcntl: Process control (needed for queue workers)[m
+[32m+[m[32m# - ctype, curl, dom, fileinfo, filter, hash, mbstring, openssl, pcre, pdo, session, tokenizer, xml: Core PHP extensions[m
+[32m+[m[32m# - pdo_pgsql: PostgreSQL driver[m
+[32m+[m[32m# - redis: Redis caching and queue driver[m
+ RUN install-php-extensions gd zip pcntl ctype curl dom fileinfo filter hash mbstring openssl pcre pdo session tokenizer xml pdo_pgsql redis[m
+ [m
+[32m+[m[32m# Install Composer dependencies with production optimization[m
+[32m+[m[32m# --optimize-autoloader: Classmap optimization for faster autoloading[m
+[32m+[m[32m# --no-dev: Skip development dependencies[m
+[32m+[m[32m# --no-interaction: Prevent prompts during installation[m
+ RUN composer install --optimize-autoloader --no-dev --no-interaction[m
+ [m
+[31m-RUN mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache storage/framework/testing storage/logs bootstrap/cache \[m
+[31m-    && chmod -R a+rw storage[m
+[32m+[m[32m# Create necessary Laravel directories with proper permissions[m
+[32m+[m[32mRUN mkdir -p storage/framework/sessions \[m
+[32m+[m[32m    storage/framework/views \[m
+[32m+[m[32m    storage/framework/cache \[m
+[32m+[m[32m    storage/framework/testing \[m
+[32m+[m[32m    storage/logs \[m
+[32m+[m[32m    bootstrap/cache \[m
+[32m+[m[32m    && chmod -R a+rw storage \[m
+[32m+[m[32m    && chmod -R a+rw bootstrap/cache[m
+ [m
+[32m+[m[32m# Pre-cache Laravel configuration, routes, and views for production performance[m
+ RUN php artisan config:cache && php artisan route:cache && php artisan view:cache[m
+ [m
+[31m-CMD ["php", "artisan", "horizon"][m
+[32m+[m[32m# Healthcheck to monitor container health[m
+[32m+[m[32mHEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \[m
+[32m+[m[32m    CMD php artisan horizon:status || exit 1[m
+[32m+[m
+[32m+[m[32m# Start Horizon queue worker by default[m
+[32m+[m[32mCMD ["php", "artisan", "horizon"][m
+\ No newline at end of file[m
