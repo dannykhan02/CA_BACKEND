@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["php83", "phpPackages.composer"]
+nixPkgs = ["php83", "phpPackages.composer", "poppler_utils"]
 
 [phases.install]
 cmds = ["composer install --no-dev --optimize-autoloader"]
