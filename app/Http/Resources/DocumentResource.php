@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Gate;
 
 class DocumentResource extends JsonResource
 {
@@ -30,6 +31,14 @@ class DocumentResource extends JsonResource
             'insights' => $this->insights ?? [],
             'progress' => $this->progress,
             'errorMessage' => $this->error_message,
+            // Single source of truth for these four actions — mirrors
+            // DocumentPolicy exactly, including its Personal-workspace
+            // ownership bypass, so the frontend never has to reconstruct
+            // that rule (or risk it drifting out of sync) itself.
+            'canApprove' => $request->user() ? Gate::forUser($request->user())->allows('approve', $this->resource) : false,
+            'canReject' => $request->user() ? Gate::forUser($request->user())->allows('reject', $this->resource) : false,
+            'canReprocess' => $request->user() ? Gate::forUser($request->user())->allows('reprocess', $this->resource) : false,
+            'canDelete' => $request->user() ? Gate::forUser($request->user())->allows('delete', $this->resource) : false,
         ];
     }
 }
