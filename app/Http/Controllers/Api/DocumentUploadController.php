@@ -90,9 +90,16 @@ class DocumentUploadController extends Controller
             ['name' => $document->name, 'type' => $document->type, 'size_kb' => $document->size_kb]
         );
 
+        // Chain jobs in order:
+        // 1. Scan for malware/viruses
+        // 2. Extract text from the document
+        // 3. Generate insights from extracted text
+        // 4. Analyze embedded visual content (charts, images) not captured in text extraction
+        // 5. Generate embeddings for vector search
         ScanUploadedFileJob::withChain([
             (new ExtractDocumentTextJob($document->id))->onQueue('extraction'),
             (new GenerateInsightsJob($document->id))->onQueue('extraction'),
+            (new \App\Jobs\AnalyzeEmbeddedVisualsJob($document->id))->onQueue('extraction'),
             (new \App\Jobs\GenerateEmbeddingsJob($document->id))->onQueue('extraction'),
         ])->onQueue('default')->dispatch($document->id);
 
