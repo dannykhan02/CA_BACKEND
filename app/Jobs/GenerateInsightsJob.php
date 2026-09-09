@@ -115,19 +115,34 @@ class GenerateInsightsJob implements ShouldQueue
                     'data' => $chart['data'] ?? [],
                 ]);
 
-                foreach ($chart['data'] ?? [] as $sortOrder => $point) {
+                $sortOrder = 0;
+                foreach ($chart['data'] ?? [] as $point) {
                     $value = $point['value'] ?? null;
                     if (! is_numeric($value)) {
+                        continue;
+                    }
+
+                    $label = (string) ($point['label'] ?? '');
+                    if ($this->looksLikeTargetOrThreshold($label)) {
+                        // Prompt v3 already instructs the model not to plot
+                        // a mandated target/threshold as a series value, but
+                        // the model does not reliably follow this — verified
+                        // against a real document where "Target" still
+                        // appeared as a plotted point despite the rule.
+                        // Enforced here in code instead, since chart-point
+                        // labels are a controlled-enough vocabulary that a
+                        // keyword filter is a safe backstop, not a guess.
                         continue;
                     }
 
                     DocumentChartPoint::create([
                         'document_chart_id' => $documentChart->id,
                         'workspace_id' => $document->workspace_id,
-                        'label' => (string) ($point['label'] ?? ''),
+                        'label' => $label,
                         'value' => (float) $value,
                         'sort_order' => $sortOrder,
                     ]);
+                    $sortOrder++;
                 }
             }
 
@@ -144,6 +159,46 @@ class GenerateInsightsJob implements ShouldQueue
             'chart_count' => count($charts),
             'insight_count' => count($insights),
         ]);
+    }
+
+    /**
+     * The model sometimes bakes a unit directly into `value` (e.g. "79.8%",
+     * "1,234") instead of using the separate `unit` field. is_numeric() fails
+     * on both, which silently null'd value_numeric for every percentage KPI.
+     * Strip trailing '%' and thousands separators before testing numericness
+     * so these still get a usable value_numeric.
+     */
+    /**
+     * Case-insensitive match against common ways a model labels a
+     * mandated target/threshold rather than a measured value — e.g.
+     * "Target", "90% Target", "Mandated Target", "Threshold". Deliberately
+     * conservative: matches only when the label is short and clearly a
+     * target marker, not a real data-series label that happens to contain
+     * one of these words as part of a longer phrase (e.g. a regional
+     * centre literally named "Target Zone" would not match, since the
+     * check requires the label to be dominated by target-language, not
+     * merely contain it).
+     */
+    private function looksLikeTargetOrThreshold(string $label): bool
+    {
+        $normalized = strtolower(trim($label));
+        if ($normalized === '') {
+            return false;
+        }
+
+        $targetWords = ['target', 'threshold', 'mandated', 'goal', 'benchmark'];
+        foreach ($targetWords as $word) {
+            if (str_contains($normalized, $word)) {
+                // Only treat it as a target marker if target-language makes
+                // up a large share of the label — avoids over-matching a
+                // longer, legitimate data-series label.
+                if (strlen($normalized) <= strlen($word) + 15) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**

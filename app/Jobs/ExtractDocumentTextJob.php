@@ -59,6 +59,14 @@ class ExtractDocumentTextJob implements ShouldQueue
                 'JPG', 'PNG' => '', // no native text layer — forces straight to OCR fallback below
                 default => throw new \RuntimeException("Unsupported document type: {$document->type}"),
             };
+
+            // Page count only has a reliable, well-defined answer for PDF —
+            // DOCX reflows dynamically with no fixed page count until
+            // rendered, and XLSX has sheets, not pages. Deliberately scoped
+            // to PDF only rather than guessing a number for the other types.
+            if ($document->type === 'PDF') {
+                $document->forceFill(['pages' => $extractor->countPdfPages($absolutePath)])->save();
+            }
         } catch (\Throwable $e) {
             @unlink($absolutePath);
             $recorder->fail($extractStage, $e->getMessage());

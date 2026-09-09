@@ -21,6 +21,19 @@ class DocumentTextExtractor
     }
 
     /**
+     * Page count has never been populated anywhere in the pipeline —
+     * `pages` is set to 0 at upload (DocumentUploadController) and never
+     * touched again. Scoped to PDF only, where smalot/pdfparser already
+     * gives a reliable answer via getPages() — the same accessor already
+     * used for embedded-image detection (PdfImageDetector).
+     */
+    public function countPdfPages(string $path): int
+    {
+        $parser = new PdfParser();
+        return count($parser->parseFile($path)->getPages());
+    }
+
+    /**
      * Extracts text from a DOCX file with recursive table support.
      *
      * Critical fix: PhpOffice\PhpWord\Element\Table does NOT implement getText(),
