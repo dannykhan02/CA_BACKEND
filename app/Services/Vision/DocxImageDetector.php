@@ -30,8 +30,13 @@ class DocxImageDetector implements EmbeddedVisualDetector
     {
         foreach ($elements as $element) {
             if ($element instanceof WordImage) {
+                // getImageStringData(true) already returns base64-encoded
+                // data per PhpWord's own convention — wrapping it in a
+                // second base64_encode() (the original code) silently
+                // corrupted every embedded image, causing Anthropic's API
+                // to reject it with "Could not process image" (400).
                 $refs[] = new VisualReference(
-                    imageBase64: base64_encode($element->getImageStringData(true)), // true = actual binary, then we b64 it ourselves
+                    imageBase64: $element->getImageStringData(true),
                     mediaType: 'image/' . ($element->getImageExtension() ?: 'png'),
                 );
                 continue;
