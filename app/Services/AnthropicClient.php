@@ -41,8 +41,9 @@ class AnthropicClient
         $this->throttle();
         $prompt = $this->buildInsightsPrompt($documentText, $documentName, $document?->classification);
         $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]]);
+        $parsed = $this->parseInsightsResponse($response); // validate BEFORE recording
         $this->recordAiRun($document, 'insights', $response);
-        return $this->parseInsightsResponse($response);
+        return $parsed;
     }
 
     public function classifyDocumentType(string $documentText, string $documentName, ?Document $document = null): array
