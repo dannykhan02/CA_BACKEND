@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\ChangeEmailRequest;
+use App\Http\Requests\Auth\ConfirmEmailChangeRequest;
 use App\Http\Requests\Auth\ForgotPasswordRequest;
 use App\Http\Requests\Auth\GoogleSigninRequest;
 use App\Http\Requests\Auth\ResendVerificationRequest;
@@ -10,20 +12,20 @@ use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Http\Requests\Auth\SigninRequest;
 use App\Http\Requests\Auth\SignupRequest;
 use App\Http\Requests\Auth\VerifyEmailRequest;
-use App\Http\Requests\Auth\ChangeEmailRequest;
-use App\Http\Requests\Auth\ConfirmEmailChangeRequest;
-use App\Http\Requests\User\UpdateProfileRequest;
+use App\Http\Requests\UpdateNotificationPreferencesRequest;
 use App\Http\Requests\User\ChangePasswordRequest;
+use App\Http\Requests\User\UpdateProfileRequest;
 use App\Models\User;
 use App\Models\VerificationCode;
+use App\Notifications\EmailChangedNotification;
+use App\Notifications\EmailChangeVerificationNotification;
 use App\Notifications\PasswordChangedNotification;
 use App\Notifications\PasswordResetNotification;
 use App\Notifications\VerificationCodeNotification;
 use App\Notifications\WelcomeNotification;
-use App\Notifications\EmailChangeVerificationNotification;
-use App\Notifications\EmailChangedNotification;
 use App\Services\GoogleTokenVerifier;
 use App\Services\WorkspaceService;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -38,22 +40,30 @@ use Illuminate\Support\Str;
 class AuthController extends Controller
 {
     private const MAX_ATTEMPTS = 5;
+
     private const LOCKOUT_SECONDS = 60;
+
     private const DEFAULT_TOKEN_HOURS = 2;
+
     private const REMEMBER_ME_DAYS = 30;
 
     // Secondary, IP-only signin limiter — the existing per-(email,IP) limiter
     // never trips for an attacker rotating IPs against one email, or hammering
     // many emails from one IP. This is a coarser backstop on top of it.
     private const IP_MAX_ATTEMPTS = 30;
+
     private const IP_LOCKOUT_SECONDS = 300;
 
     private const RESEND_MAX_ATTEMPTS = 3;
+
     private const RESEND_LOCKOUT_SECONDS = 600;
+
     private const FORGOT_PASSWORD_MAX_ATTEMPTS = 3;
+
     private const FORGOT_PASSWORD_LOCKOUT_SECONDS = 600;
 
     private const VERIFY_MAX_ATTEMPTS = 5;
+
     private const VERIFY_LOCKOUT_SECONDS = 300;
 
     public function signup(SignupRequest $request): JsonResponse
@@ -64,7 +74,7 @@ class AuthController extends Controller
         // unit — a user must never exist without a workspace to belong to
         // (would leave current_workspace_id null and no workspace_members
         // row, breaking every workspace-scoped query for that account).
-        $user = DB::transaction(function () use ($validated) {
+        $user = DB::transaction(function () use ($validated, $request) {
             $user = User::create([
                 'full_name' => $validated['full_name'],
                 'email' => $validated['email'],
@@ -72,7 +82,7 @@ class AuthController extends Controller
                 'role' => 'Viewer',
             ]);
 
-            app(WorkspaceService::class)->createPersonalWorkspaceFor($user);
+            app(WorkspaceService::class)->createPersonalWorkspaceFor($user, $request->ip(), $validated['fingerprint'] ?? null);
 
             return $user;
         });
@@ -105,7 +115,7 @@ class AuthController extends Controller
     {
         $validated = $request->validated();
         $throttleKey = $this->loginThrottleKey($validated['email'], $request->ip());
-        $ipThrottleKey = 'login-ip:' . $request->ip();
+        $ipThrottleKey = 'login-ip:'.$request->ip();
 
         if (RateLimiter::tooManyAttempts($throttleKey, self::MAX_ATTEMPTS)
             || RateLimiter::tooManyAttempts($ipThrottleKey, self::IP_MAX_ATTEMPTS)
@@ -114,6 +124,7 @@ class AuthController extends Controller
                 RateLimiter::availableIn($throttleKey),
                 RateLimiter::availableIn($ipThrottleKey)
             );
+
             return $this->error("Too many failed login attempts. Try again in {$seconds} seconds.", ['retry_after' => $seconds], 429);
         }
 
@@ -129,6 +140,7 @@ class AuthController extends Controller
         if (! $user || ! Hash::check($validated['password'], $user->password)) {
             RateLimiter::hit($throttleKey, self::LOCKOUT_SECONDS);
             RateLimiter::hit($ipThrottleKey, self::IP_LOCKOUT_SECONDS);
+
             return $genericAuthFailure();
         }
 
@@ -136,12 +148,14 @@ class AuthController extends Controller
             RateLimiter::hit($throttleKey, self::LOCKOUT_SECONDS);
             RateLimiter::hit($ipThrottleKey, self::IP_LOCKOUT_SECONDS);
             Log::info('Signin attempt on deactivated account.', ['user_id' => $user->id]);
+
             return $genericAuthFailure();
         }
 
         if (! $user->email_verified_at) {
             RateLimiter::hit($ipThrottleKey, self::IP_LOCKOUT_SECONDS);
             Log::info('Signin attempt on unverified account.', ['user_id' => $user->id]);
+
             return $genericAuthFailure();
         }
 
@@ -174,6 +188,7 @@ class AuthController extends Controller
             $claims = $verifier->verify($idToken, config('services.google.client_id'));
         } catch (\Throwable $e) {
             Log::warning('Google sign-in token verification failed.', ['error' => $e->getMessage()]);
+
             return $this->error('Invalid or expired Google token.', [], 401);
         }
 
@@ -199,7 +214,7 @@ class AuthController extends Controller
         if ($isNewUser) {
             // Same atomicity requirement as signup(): a user must never be
             // created without a personal workspace.
-            $user = DB::transaction(function () use ($name, $email) {
+            $user = DB::transaction(function () use ($name, $email, $request) {
                 $user = User::create([
                     'full_name' => $name,
                     'email' => $email,
@@ -207,7 +222,7 @@ class AuthController extends Controller
                     'role' => 'Viewer',
                 ]);
 
-                app(WorkspaceService::class)->createPersonalWorkspaceFor($user);
+                app(WorkspaceService::class)->createPersonalWorkspaceFor($user, $request->ip(), $request->validated('fingerprint'));
 
                 return $user;
             });
@@ -226,7 +241,7 @@ class AuthController extends Controller
         $user->forceFill(['last_active_at' => now()])->save();
 
         if ($isNewUser) {
-            $user->notify(new WelcomeNotification());
+            $user->notify(new WelcomeNotification);
         }
 
         return $this->success('Signed in successfully.', [
@@ -281,7 +296,7 @@ class AuthController extends Controller
             ->when($currentTokenId, fn ($query) => $query->where('id', '!=', $currentTokenId))
             ->delete();
 
-        $user->notify(new PasswordChangedNotification());
+        $user->notify(new PasswordChangedNotification);
 
         return $this->success('Password updated successfully.', [
             'user' => $this->userPayload($user),
@@ -372,7 +387,7 @@ class AuthController extends Controller
                     'pending_email_expires_at' => null,
                 ])->save();
             });
-        } catch (\Illuminate\Database\QueryException $e) {
+        } catch (QueryException $e) {
             if ((string) $e->getCode() === '23000') {
                 return $this->error('That email address was just taken by another account. Please choose a different one.', [], 409);
             }
@@ -404,10 +419,11 @@ class AuthController extends Controller
     public function verifyEmail(VerifyEmailRequest $request): JsonResponse
     {
         $validated = $request->validated();
-        $attemptKey = 'verify-attempts:' . Str::lower($validated['email']);
+        $attemptKey = 'verify-attempts:'.Str::lower($validated['email']);
 
         if (RateLimiter::tooManyAttempts($attemptKey, self::VERIFY_MAX_ATTEMPTS)) {
             $seconds = RateLimiter::availableIn($attemptKey);
+
             return $this->error("Too many incorrect attempts. Try again in {$seconds} seconds.", ['retry_after' => $seconds], 429);
         }
 
@@ -415,6 +431,7 @@ class AuthController extends Controller
 
         if (! $user) {
             RateLimiter::hit($attemptKey, self::VERIFY_LOCKOUT_SECONDS);
+
             return $this->error('Invalid verification request.', [], 404);
         }
 
@@ -429,6 +446,7 @@ class AuthController extends Controller
 
         if (! $verification || ! Hash::check($validated['code'], $verification->code)) {
             RateLimiter::hit($attemptKey, self::VERIFY_LOCKOUT_SECONDS);
+
             return $this->error('Invalid verification code.', [], 422);
         }
 
@@ -439,7 +457,7 @@ class AuthController extends Controller
         RateLimiter::clear($attemptKey);
         $user->forceFill(['email_verified_at' => now()])->save();
         $verification->delete();
-        $user->notify(new WelcomeNotification());
+        $user->notify(new WelcomeNotification);
 
         return $this->success('Email verified successfully.');
     }
@@ -447,10 +465,11 @@ class AuthController extends Controller
     public function resendVerification(ResendVerificationRequest $request): JsonResponse
     {
         $validated = $request->validated();
-        $throttleKey = 'resend-verification:' . Str::lower($validated['email']);
+        $throttleKey = 'resend-verification:'.Str::lower($validated['email']);
 
         if (RateLimiter::tooManyAttempts($throttleKey, self::RESEND_MAX_ATTEMPTS)) {
             $seconds = RateLimiter::availableIn($throttleKey);
+
             return $this->error("Too many requests. Try again in {$seconds} seconds.", ['retry_after' => $seconds], 429);
         }
 
@@ -483,10 +502,11 @@ class AuthController extends Controller
     public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
     {
         $validated = $request->validated();
-        $throttleKey = 'forgot-password:' . Str::lower($validated['email']);
+        $throttleKey = 'forgot-password:'.Str::lower($validated['email']);
 
         if (RateLimiter::tooManyAttempts($throttleKey, self::FORGOT_PASSWORD_MAX_ATTEMPTS)) {
             $seconds = RateLimiter::availableIn($throttleKey);
+
             return $this->error("Too many requests. Try again in {$seconds} seconds.", ['retry_after' => $seconds], 429);
         }
 
@@ -526,7 +546,7 @@ class AuthController extends Controller
             function (User $user, string $password) {
                 $user->forceFill(['password' => Hash::make($password)])->save();
                 $user->tokens()->delete();
-                $user->notify(new PasswordChangedNotification());
+                $user->notify(new PasswordChangedNotification);
             }
         );
 
@@ -539,7 +559,7 @@ class AuthController extends Controller
 
     private function loginThrottleKey(string $email, string $ip): string
     {
-        return 'login:' . Str::lower($email) . '|' . $ip;
+        return 'login:'.Str::lower($email).'|'.$ip;
     }
 
     private function userPayload(User $user): array
@@ -560,7 +580,7 @@ class AuthController extends Controller
         ];
     }
 
-    public function updateNotificationPreferences(\App\Http\Requests\UpdateNotificationPreferencesRequest $request): JsonResponse
+    public function updateNotificationPreferences(UpdateNotificationPreferencesRequest $request): JsonResponse
     {
         $user = $request->user();
 

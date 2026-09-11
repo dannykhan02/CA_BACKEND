@@ -9,6 +9,7 @@ class SignupRequest extends BaseAuthRequest
     public function rules(): array
     {
         return [
+            'fingerprint' => ['nullable', 'string', 'max:255'],
             'full_name' => [
                 'required',
                 'string',

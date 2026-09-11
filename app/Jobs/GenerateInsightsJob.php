@@ -9,6 +9,7 @@ use App\Models\DocumentChartPoint;
 use App\Models\DocumentKpi;
 use App\Services\AnthropicClient;
 use App\Services\Pipeline\PipelineStageRecorder;
+use App\Services\WorkspaceCreditService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -22,6 +23,7 @@ class GenerateInsightsJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments;
 
     public int $tries = 2;
+
     public int $timeout = 120;
 
     public function __construct(public string $documentId, public bool $forceReprocess = false) {}
@@ -47,10 +49,18 @@ class GenerateInsightsJob implements ShouldQueue
         // Unlike the other intelligence jobs, this one owns the document's
         // terminal status transition — a skip must still finalize the
         // document as Ready, or it would be stuck at 'Processing' forever.
-        if ($this->skipIfUnchanged($document, 'insights', 'ai_analysis', $recorder, ['status' => 'Ready', 'progress' => 100])) {
+        if ($this->skipIfUnchanged($document, 'insights', 'ai_analysis', $recorder)) {
+            DB::transaction(function () use ($document) {
+                $document = Document::whereKey($document->id)->lockForUpdate()->first();
+                if (! $document || $document->status !== 'Processing') {
+                    return;
+                }
+                app(WorkspaceCreditService::class)->accountForReadyDocument($document);
+                $document->forceFill(['status' => 'Ready', 'progress' => 100])->save();
+            });
+
             return;
         }
-        
 
         $text = $document->extracted_text;
         if (! $text || trim($text) === '') {
@@ -63,6 +73,7 @@ class GenerateInsightsJob implements ShouldQueue
                 'error_message' => 'No extracted text available for AI analysis.',
             ])->save();
             $this->fail(new \RuntimeException('Empty extracted_text at insights stage.'));
+
             return;
         }
 
@@ -74,9 +85,10 @@ class GenerateInsightsJob implements ShouldQueue
             $recorder->fail($insightsStage, $e->getMessage());
             $document->forceFill([
                 'status' => 'Failed',
-                'error_message' => 'AI analysis failed: ' . $e->getMessage(),
+                'error_message' => 'AI analysis failed: '.$e->getMessage(),
             ])->save();
             $this->fail($e);
+
             return;
         }
 
@@ -85,6 +97,10 @@ class GenerateInsightsJob implements ShouldQueue
         $insights = $result['insights'] ?? [];
 
         DB::transaction(function () use ($document, $kpis, $charts, $insights) {
+            $document = Document::whereKey($document->id)->lockForUpdate()->first();
+            if (! $document || $document->status !== 'Processing') {
+                return;
+            }
             // Delete-before-insert — a reprocessed document must not leave
             // stale kpis/charts from a prior version sitting alongside the
             // current ones. Same reasoning as GenerateEmbeddingsJob's
@@ -146,6 +162,7 @@ class GenerateInsightsJob implements ShouldQueue
                 }
             }
 
+            app(WorkspaceCreditService::class)->accountForReadyDocument($document);
             $document->forceFill([
                 'insights' => $insights,
                 'has_structured_data' => ! empty($kpis) || ! empty($charts),

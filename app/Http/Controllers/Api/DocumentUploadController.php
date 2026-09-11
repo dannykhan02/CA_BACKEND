@@ -5,10 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Document\UploadDocumentRequest;
 use App\Http\Resources\DocumentResource;
+use App\Jobs\AnalyzeEmbeddedVisualsJob;
 use App\Jobs\ExtractDocumentTextJob;
+use App\Jobs\GenerateEmbeddingsJob;
 use App\Jobs\GenerateInsightsJob;
 use App\Jobs\ScanUploadedFileJob;
 use App\Models\Document;
+use App\Services\AuditLogger;
 use App\Services\Documents\DocumentStorageService;
 use App\Services\Documents\SupportedDocumentTypes;
 use Illuminate\Http\JsonResponse;
@@ -18,6 +21,11 @@ class DocumentUploadController extends Controller
 {
     public function store(UploadDocumentRequest $request): JsonResponse
     {
+        $remaining = $request->user()->currentWorkspace?->credits?->documents_remaining ?? 0;
+        if ($remaining <= 0) {
+            return $this->error('Your workspace has no document credits remaining. Purchase more to continue.', [], 402);
+        }
+
         $file = $request->file('file');
         $hash = hash_file('sha256', $file->getRealPath());
 
@@ -83,7 +91,7 @@ class DocumentUploadController extends Controller
             'progress' => 0,
         ]);
 
-        app(\App\Services\AuditLogger::class)->log(
+        app(AuditLogger::class)->log(
             $request->user(),
             'document.uploaded',
             $document,
@@ -99,8 +107,8 @@ class DocumentUploadController extends Controller
         ScanUploadedFileJob::withChain([
             (new ExtractDocumentTextJob($document->id))->onQueue('extraction'),
             (new GenerateInsightsJob($document->id))->onQueue('extraction'),
-            (new \App\Jobs\AnalyzeEmbeddedVisualsJob($document->id))->onQueue('extraction'),
-            (new \App\Jobs\GenerateEmbeddingsJob($document->id))->onQueue('extraction'),
+            (new AnalyzeEmbeddedVisualsJob($document->id))->onQueue('extraction'),
+            (new GenerateEmbeddingsJob($document->id))->onQueue('extraction'),
         ])->onQueue('default')->dispatch($document->id);
 
         return response()->json([

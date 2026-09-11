@@ -2,6 +2,11 @@
 
 return [
 
+    'paystack' => [
+        'secret_key' => env('PAYSTACK_SECRET_KEY'),
+        'public_key' => env('PAYSTACK_PUBLIC_KEY'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Third Party Services
@@ -13,7 +18,6 @@ return [
     | a conventional file to locate the various service credentials.
     |
     */
-
 
     'resend' => [
         'key' => env('RESEND_API_KEY'),

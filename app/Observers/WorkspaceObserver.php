@@ -21,6 +21,8 @@ class WorkspaceObserver
      */
     public function created(Workspace $workspace): void
     {
+        $workspace->credits()->create([]);
+
         WorkspaceSetting::firstOrCreate(
             ['workspace_id' => $workspace->id],
             [

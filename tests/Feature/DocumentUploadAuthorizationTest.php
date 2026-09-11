@@ -41,6 +41,7 @@ class DocumentUploadAuthorizationTest extends TestCase
     {
         $user = User::factory()->create(['role' => $role]);
         app(WorkspaceService::class)->createPersonalWorkspaceFor($user);
+        $user->fresh()->currentWorkspace->credits()->update(['documents_remaining' => 10]);
 
         return $user->fresh();
     }
@@ -52,7 +53,7 @@ class DocumentUploadAuthorizationTest extends TestCase
 
         $workspace = Workspace::create([
             'type' => WorkspaceType::Organization,
-            'name' => 'Org ' . $user->id,
+            'name' => 'Org '.$user->id,
         ]);
 
         WorkspaceMember::create([
@@ -63,6 +64,7 @@ class DocumentUploadAuthorizationTest extends TestCase
         ]);
 
         $user->forceFill(['current_workspace_id' => $workspace->id])->save();
+        $workspace->credits()->update(['documents_remaining' => 10]);
 
         return [$user, $workspace];
     }
@@ -207,7 +209,7 @@ class DocumentUploadAuthorizationTest extends TestCase
         $docA = $this->createDocInWorkspace($userA->current_workspace_id, $userA->id, 'User A Confidential Report.pdf');
 
         $vector = array_fill(0, 1024, 0.001);
-        $vectorLiteral = '[' . implode(',', $vector) . ']';
+        $vectorLiteral = '['.implode(',', $vector).']';
 
         DB::statement(
             'INSERT INTO document_embeddings
@@ -244,7 +246,7 @@ class DocumentUploadAuthorizationTest extends TestCase
         $docA = $this->createDocInWorkspace($userA->current_workspace_id, $userA->id, 'User A Secret Plan.pdf');
 
         $vector = array_fill(0, 1024, 0.001);
-        $vectorLiteral = '[' . implode(',', $vector) . ']';
+        $vectorLiteral = '['.implode(',', $vector).']';
 
         DB::statement(
             'INSERT INTO document_embeddings

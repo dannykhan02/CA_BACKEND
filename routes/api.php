@@ -2,21 +2,28 @@
 
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CreditPurchaseController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DocumentApproveController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\DocumentDownloadController;
-use App\Http\Controllers\Api\DocumentRejectController;
+use App\Http\Controllers\Api\DocumentIntelligenceController;
 use App\Http\Controllers\Api\DocumentQaController;
+use App\Http\Controllers\Api\DocumentRejectController;
+use App\Http\Controllers\Api\DocumentReportController;
 use App\Http\Controllers\Api\DocumentReprocessController;
 use App\Http\Controllers\Api\DocumentSearchController;
 use App\Http\Controllers\Api\DocumentUploadController;
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\WorkspaceCreditController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\DocumentReportController;
+
 // Unauthenticated — must be reachable by load balancers/uptime monitors/
 // deployment scripts without a Sanctum token.
 Route::get('/health', [HealthController::class, 'index'])->name('health');
+
+// Paystack authenticates with HMAC-SHA512, not a Sanctum bearer token.
+Route::post('/paystack/webhook', [CreditPurchaseController::class, 'webhook'])->name('paystack.webhook');
 
 Route::prefix('auth')->name('auth.')->group(function () {
     Route::post('/signup', [AuthController::class, 'signup'])
@@ -52,8 +59,7 @@ Route::prefix('auth')->name('auth.')->group(function () {
             ->name('change-email.request');
         Route::post('/change-email/confirm', [AuthController::class, 'confirmEmailChange'])
             ->name('change-email.confirm');
-        
-        
+
     });
 });
 
@@ -70,6 +76,11 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
 
     // Documents
+    Route::get('/workspace/credits', [WorkspaceCreditController::class, 'show'])
+        ->name('workspace.credits');
+    Route::post('/workspace/credits/purchases', [CreditPurchaseController::class, 'store'])
+        ->name('workspace.credits.purchases');
+
     Route::get('/documents', [DocumentController::class, 'index'])
         ->name('documents.index');
 
@@ -89,19 +100,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/documents/{document}', [DocumentController::class, 'show'])
         ->name('documents.show');
 
-    Route::get('/documents/{document}/intelligence', [\App\Http\Controllers\Api\DocumentIntelligenceController::class, 'show'])
+    Route::get('/documents/{document}/intelligence', [DocumentIntelligenceController::class, 'show'])
         ->name('documents.intelligence');
 
-    Route::get('/documents/{document}/entities', [\App\Http\Controllers\Api\DocumentIntelligenceController::class, 'entities'])
+    Route::get('/documents/{document}/entities', [DocumentIntelligenceController::class, 'entities'])
         ->name('documents.entities');
 
-    Route::get('/documents/{document}/risks', [\App\Http\Controllers\Api\DocumentIntelligenceController::class, 'risks'])
+    Route::get('/documents/{document}/risks', [DocumentIntelligenceController::class, 'risks'])
         ->name('documents.risks');
 
-    Route::get('/documents/{document}/deadlines', [\App\Http\Controllers\Api\DocumentIntelligenceController::class, 'deadlines'])
+    Route::get('/documents/{document}/deadlines', [DocumentIntelligenceController::class, 'deadlines'])
         ->name('documents.deadlines');
 
-    Route::get('/documents/{document}/summary', [\App\Http\Controllers\Api\DocumentIntelligenceController::class, 'summary'])
+    Route::get('/documents/{document}/summary', [DocumentIntelligenceController::class, 'summary'])
         ->name('documents.summary');
 
     Route::get('/dashboard/summary', [DashboardController::class, 'summary'])
@@ -116,7 +127,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/documents/{document}/reprocess', [DocumentReprocessController::class, 'store'])
         ->name('documents.reprocess');
-Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])
+    Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])
         ->name('documents.destroy');
 
     Route::post('/documents/{document}/approve', [DocumentApproveController::class, 'store'])
@@ -126,7 +137,7 @@ Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])
         ->name('documents.reject');
 
     Route::post('/documents/{document}/report-generated', [DocumentReportController::class, 'store'])
-            ->name('documents.report-generated');
+        ->name('documents.report-generated');
 });
 
 // Administrator-only routes

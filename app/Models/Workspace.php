@@ -34,6 +34,16 @@ class Workspace extends Model
         return $this->hasOne(WorkspaceSetting::class);
     }
 
+    public function credits()
+    {
+        return $this->hasOne(WorkspaceCredit::class);
+    }
+
+    public function purchases()
+    {
+        return $this->hasMany(CreditPurchase::class);
+    }
+
     public function aiConfig()
     {
         return $this->hasOne(WorkspaceAiConfig::class);
