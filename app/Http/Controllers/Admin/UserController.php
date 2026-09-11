@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\WorkspaceMember;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -14,10 +15,28 @@ class UserController extends Controller
 
     private const SAFE_FIELDS = ['id', 'full_name', 'email', 'role', 'active', 'email_verified_at'];
 
-    public function index(): JsonResponse
+    /**
+     * Track 2 F1-P1: previously User::select(...)->get() with no
+     * workspace filter at all — any Administrator saw every user on the
+     * entire platform, including accounts that only ever exist in their
+     * own unrelated Personal workspace. Scoped to users who share a
+     * workspace_members row with the acting admin's current workspace.
+     *
+     * NOTE: role itself (users.role) remains a global column in this
+     * path — only the LISTING is scoped. updateRole() below still
+     * writes the same global column it always did. This is a deliberate
+     * partial fix — see Track 2 handoff report for why the full
+     * per-workspace role model (Path 2) was not applied here.
+     */
+    public function index(Request $request): JsonResponse
     {
+        $workspaceId = $request->user()->current_workspace_id;
+
+        $userIds = WorkspaceMember::where('workspace_id', $workspaceId)
+            ->pluck('user_id');
+
         return response()->json([
-            'data' => User::select(self::SAFE_FIELDS)->get(),
+            'data' => User::whereIn('id', $userIds)->select(self::SAFE_FIELDS)->get(),
         ]);
     }
 

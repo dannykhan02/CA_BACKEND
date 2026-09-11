@@ -2,8 +2,9 @@
 
 namespace App\Services;
 
-use Firebase\JWT\JWT;
 use Firebase\JWT\JWK;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
@@ -21,6 +22,12 @@ class GoogleTokenVerifier
     private const CACHE_KEY = 'google:jwks';
     private const ISSUERS = ['accounts.google.com', 'https://accounts.google.com'];
 
+    // Audit VAL-3: firebase/php-jwt ^6.0's Key objects already carry their
+    // own algorithm restriction, so this loop is a no-op on that version —
+    // but it closes the gap outright on any older 5.x install where a bare
+    // key array could be alg-confused. Cheap, explicit, version-independent.
+    private const ALLOWED_ALGS = ['RS256'];
+
     /**
      * @return array<string, mixed> the decoded claims
      * @throws \RuntimeException on any signature, expiry, issuer, or
@@ -34,6 +41,16 @@ class GoogleTokenVerifier
         }
 
         $keys = JWK::parseKeySet($this->fetchJwks());
+
+        foreach ($keys as $kid => $key) {
+            if ($key instanceof Key && ! in_array($key->getAlgorithm(), self::ALLOWED_ALGS, true)) {
+                unset($keys[$kid]);
+            }
+        }
+
+        if (empty($keys)) {
+            throw new \RuntimeException('No usable signing keys after algorithm filtering.');
+        }
 
         // firebase/php-jwt validates signature + exp/nbf/iat automatically.
         $decoded = (array) JWT::decode($idToken, $keys);

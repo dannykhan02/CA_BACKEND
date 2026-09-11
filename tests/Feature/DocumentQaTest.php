@@ -254,4 +254,25 @@ class DocumentQaTest extends TestCase
         $this->assertStringNotContainsString('529', $body);
         $this->assertStringNotContainsString('RuntimeException', $body);
     }
+
+    public function test_qa_prompt_uses_question_placeholder_not_document_name(): void
+    {
+        // No seeder runs in tests (confirmed: no seeding config in
+        // TestCase.php or phpunit.xml) and every other test in this file
+        // mocks AnthropicClient entirely, so this is the only test here
+        // that touches AiPrompt::active() for real — it must create its
+        // own row rather than assume seeder or fixture state.
+        \App\Models\AiPrompt::create([
+            'name' => 'document_qa',
+            'version' => 99,
+            'provider' => 'anthropic',
+            'model' => 'test-model',
+            'active' => true,
+            'template' => 'Question: {{question}} Context: {{document_text}}',
+        ]);
+
+        $prompt = \App\Models\AiPrompt::active('document_qa');
+        $this->assertStringContainsString('{{question}}', $prompt->template);
+        $this->assertStringNotContainsString('{{document_name}}', $prompt->template);
+    }
 }

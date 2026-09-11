@@ -12,8 +12,10 @@ use App\Http\Controllers\Api\DocumentReprocessController;
 use App\Http\Controllers\Api\DocumentSearchController;
 use App\Http\Controllers\Api\DocumentUploadController;
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Middleware\EnsureEmailIsVerified;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\DocumentReportController;
+
 // Unauthenticated — must be reachable by load balancers/uptime monitors/
 // deployment scripts without a Sanctum token.
 Route::get('/health', [HealthController::class, 'index'])->name('health');
@@ -42,6 +44,10 @@ Route::prefix('auth')->name('auth.')->group(function () {
     Route::post('/reset-password', [AuthController::class, 'resetPassword'])
         ->name('reset-password');
 
+    // Deliberately left on plain auth:sanctum (no EnsureEmailIsVerified):
+    // an unverified user still needs /me and /signout to function, and
+    // change-email gives them a path to fix a mistyped address even
+    // pre-verification.
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me', [AuthController::class, 'me'])
             ->name('me');
@@ -52,12 +58,11 @@ Route::prefix('auth')->name('auth.')->group(function () {
             ->name('change-email.request');
         Route::post('/change-email/confirm', [AuthController::class, 'confirmEmailChange'])
             ->name('change-email.confirm');
-        
-        
     });
 });
 
-Route::middleware('auth:sanctum')->group(function () {
+// Audit AUTH-1: was plain 'auth:sanctum'.
+Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(function () {
     Route::patch('/user', [AuthController::class, 'updateProfile'])
         ->name('user.update');
 
@@ -67,7 +72,8 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('user.update-notification-preferences');
 });
 
-Route::middleware('auth:sanctum')->group(function () {
+// Audit AUTH-1: was plain 'auth:sanctum'.
+Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(function () {
 
     // Documents
     Route::get('/documents', [DocumentController::class, 'index'])
@@ -116,7 +122,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/documents/{document}/reprocess', [DocumentReprocessController::class, 'store'])
         ->name('documents.reprocess');
-Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])
+
+    Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])
         ->name('documents.destroy');
 
     Route::post('/documents/{document}/approve', [DocumentApproveController::class, 'store'])
@@ -126,7 +133,7 @@ Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])
         ->name('documents.reject');
 
     Route::post('/documents/{document}/report-generated', [DocumentReportController::class, 'store'])
-            ->name('documents.report-generated');
+        ->name('documents.report-generated');
 });
 
 // Administrator-only routes

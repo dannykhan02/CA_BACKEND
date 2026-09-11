@@ -11,8 +11,10 @@ use App\Jobs\ScanUploadedFileJob;
 use App\Models\Document;
 use App\Services\Documents\DocumentStorageService;
 use App\Services\Documents\SupportedDocumentTypes;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 
 class DocumentUploadController extends Controller
 {
@@ -23,6 +25,11 @@ class DocumentUploadController extends Controller
 
         // Workspace-scoped dedup: an identical file hash in a different workspace
         // is not a duplicate of *your* document, it's a coincidence (common form, template).
+        // Track A / FU-4: this remains a fast-path convenience check, not the
+        // enforcement mechanism — the DB-level partial unique index
+        // (documents_workspace_file_hash_unique) added in
+        // add_type_enum_and_hash_uniqueness_to_documents is what actually
+        // prevents two concurrent uploads of the same file from both landing.
         $existing = Document::where('file_hash', $hash)
             ->where('workspace_id', $request->user()->current_workspace_id)
             ->first();
@@ -41,11 +48,10 @@ class DocumentUploadController extends Controller
             ], 409);
         }
 
-        // Never trust the client-supplied filename for the actual disk path.
-        // Routed through DocumentStorageService (not Storage::disk() here
-        // directly) so swapping local storage for S3 later is a change in
-        // one service class, not every controller that touches files.
-        $extension = strtolower($file->getClientOriginalExtension());
+        // Track A / FU-1: sanitize the client-reported extension the same
+        // way DocumentStorageService now does, so the belt-and-suspenders
+        // type check here is consistent with what actually gets stored.
+        $extension = preg_replace('/[^a-z0-9]/', '', strtolower($file->getClientOriginalExtension()));
 
         $supportedTypes = app(SupportedDocumentTypes::class);
         $documentType = $supportedTypes->typeForExtension($extension);
@@ -63,25 +69,67 @@ class DocumentUploadController extends Controller
             ], 422);
         }
 
-        $path = app(DocumentStorageService::class)->store($file, $request->user()->current_workspace_id);
+        $storage = app(DocumentStorageService::class);
+        $path = $storage->store($file, $request->user()->current_workspace_id);
 
-        $document = Document::create([
-            'name' => $file->getClientOriginalName(),
-            'type' => $documentType, // resolved via SupportedDocumentTypes, matches documents_type_check
-            'size_kb' => (int) ceil($file->getSize() / 1024),
-            'status' => 'Processing',
-            'classification' => $request->validated('classification'),
-            'year' => (int) now()->year,
-            'uploaded_by' => $request->user()->id,
-            'workspace_id' => $request->user()->current_workspace_id, // now set
-            'pages' => 0,
-            'has_structured_data' => false,
-            'power_bi_status' => 'not-synced',
-            'insights' => [],
-            'file_path' => $path,
-            'file_hash' => $hash,
-            'progress' => 0,
-        ]);
+        // Track A / FU-3 + FU-4: the physical file now exists in R2 before
+        // any DB row references it. If Document::create() throws for any
+        // reason — including the FU-4 unique-constraint violation on a
+        // genuine race with another concurrent upload — clean up the orphan
+        // instead of leaving an unowned object behind. A unique-violation
+        // specifically is translated into the same 409 the pre-check above
+        // would have returned, so a losing concurrent request gets a clean
+        // response instead of a raw 500.
+        try {
+            $document = Document::create([
+                'name' => $file->getClientOriginalName(),
+                'type' => $documentType, // resolved via SupportedDocumentTypes, matches documents_type_check
+                'size_kb' => (int) ceil($file->getSize() / 1024),
+                'status' => 'Processing',
+                'classification' => $request->validated('classification'),
+                'year' => (int) now()->year,
+                'uploaded_by' => $request->user()->id,
+                'workspace_id' => $request->user()->current_workspace_id,
+                'pages' => 0,
+                'has_structured_data' => false,
+                'power_bi_status' => 'not-synced',
+                'insights' => [],
+                'file_path' => $path,
+                'file_hash' => $hash,
+                'progress' => 0,
+            ]);
+        } catch (QueryException $e) {
+            $storage->delete($path);
+
+            if (($e->errorInfo[0] ?? null) === '23505') {
+                // Lost the race against a concurrent identical upload —
+                // documents_workspace_file_hash_unique fired. Same response
+                // shape as the pre-check branch above.
+                $winner = Document::where('file_hash', $hash)
+                    ->where('workspace_id', $request->user()->current_workspace_id)
+                    ->first();
+
+                return response()->json([
+                    'message' => 'This exact file has already been uploaded.',
+                    'data' => $winner ? new DocumentResource($winner) : null,
+                ], 409);
+            }
+
+            Log::error('Document row creation failed after physical upload succeeded — cleaning up orphaned storage object.', [
+                'path' => $path,
+                'workspace_id' => $request->user()->current_workspace_id,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        } catch (\Throwable $e) {
+            Log::error('Document row creation failed after physical upload succeeded — cleaning up orphaned storage object.', [
+                'path' => $path,
+                'workspace_id' => $request->user()->current_workspace_id,
+                'error' => $e->getMessage(),
+            ]);
+            $storage->delete($path);
+            throw $e;
+        }
 
         app(\App\Services\AuditLogger::class)->log(
             $request->user(),

@@ -11,6 +11,20 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DocumentDownloadController extends Controller
 {
+    /**
+     * Audit VAL-2: previously `$document->type === 'PDF' ? 'pdf' : 'docx'`,
+     * which mislabels any other enabled type (e.g. XLSX) with a wrong
+     * download extension. Not a security issue — a functional/content-type
+     * bug — fixed alongside the Track 1 pass since it lives in this
+     * controller. Extend this map whenever a new document type is enabled
+     * in config/document_types.php / SupportedDocumentTypes.
+     */
+    private const TYPE_EXTENSIONS = [
+        'PDF' => 'pdf',
+        'DOCX' => 'docx',
+        'XLSX' => 'xlsx',
+    ];
+
     public function show(Request $request, Document $document, AuditLogger $audit): StreamedResponse
     {
         // Same classification-aware gate as DocumentController::show() — this
@@ -35,7 +49,7 @@ class DocumentDownloadController extends Controller
 
         // Use the stored display name — never the UUID-on-disk name — for
         // the Content-Disposition header the client/browser sees.
-        $extension = strtolower($document->type === 'PDF' ? 'pdf' : 'docx');
+        $extension = self::TYPE_EXTENSIONS[$document->type] ?? strtolower($document->type);
         $downloadName = str_ends_with(strtolower($document->name), ".{$extension}")
             ? $document->name
             : "{$document->name}.{$extension}";

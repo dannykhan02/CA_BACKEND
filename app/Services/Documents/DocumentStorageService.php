@@ -18,8 +18,24 @@ class DocumentStorageService
 
     public function store(UploadedFile $file, string $workspaceId): string
     {
-        $extension = strtolower($file->getClientOriginalExtension());
-        $path = "{$workspaceId}/" . (string) Str::uuid() . ".{$extension}";
+        // Track A / FU-1: defense-in-depth. getClientOriginalExtension() is
+        // attacker-influenced. Laravel's pathinfo()-based extraction makes a
+        // slash-based traversal unlikely, but nothing server-side previously
+        // filtered this before it landed in a storage key. Strip to a plain
+        // alnum extension; if nothing usable survives, store without one
+        // rather than trusting an unvalidated fragment.
+        $extension = preg_replace('/[^a-z0-9]/', '', strtolower($file->getClientOriginalExtension()));
+
+        // Track A / FU-1: workspaceId originates server-side from the
+        // authenticated user's current_workspace_id, but this class has no
+        // other caller-independent way to know that — validate the shape
+        // here so a malformed value can never become part of a storage key.
+        if (! preg_match('/^[0-9a-f-]{36}$/i', $workspaceId)) {
+            throw new \InvalidArgumentException('Invalid workspace id supplied to storage service.');
+        }
+
+        $suffix = $extension !== '' ? ".{$extension}" : '';
+        $path = "{$workspaceId}/" . (string) Str::uuid() . $suffix;
 
         Storage::disk(self::DISK)->putFileAs(
             dirname($path),
