@@ -48,6 +48,12 @@ class AuthController extends Controller
     private const IP_MAX_ATTEMPTS = 30;
     private const IP_LOCKOUT_SECONDS = 300;
 
+    // Audit AUTH-5: neither of the two limiters above trips for a
+    // distributed attacker rotating source IPs against ONE target account.
+    // This third limiter is keyed purely on email, independent of IP.
+    private const EMAIL_MAX_ATTEMPTS = 10;
+    private const EMAIL_LOCKOUT_SECONDS = 600;
+
     private const RESEND_MAX_ATTEMPTS = 3;
     private const RESEND_LOCKOUT_SECONDS = 600;
     private const FORGOT_PASSWORD_MAX_ATTEMPTS = 3;
@@ -55,6 +61,10 @@ class AuthController extends Controller
 
     private const VERIFY_MAX_ATTEMPTS = 5;
     private const VERIFY_LOCKOUT_SECONDS = 300;
+
+    // Audit AUTH-3: resetPassword() previously had no rate limiting at all.
+    private const RESET_PASSWORD_MAX_ATTEMPTS = 5;
+    private const RESET_PASSWORD_LOCKOUT_SECONDS = 300;
 
     public function signup(SignupRequest $request): JsonResponse
     {
@@ -82,7 +92,7 @@ class AuthController extends Controller
         $verification = VerificationCode::generateFor($user);
         $user->notify(new VerificationCodeNotification($verification->plainCode));
 
-        if (! app()->environment('production')) {
+        if (config('auth.developer.expose_verification_code')) {
             Log::info("Verification code for {$user->email}: {$verification->plainCode}");
         }
 
@@ -106,13 +116,16 @@ class AuthController extends Controller
         $validated = $request->validated();
         $throttleKey = $this->loginThrottleKey($validated['email'], $request->ip());
         $ipThrottleKey = 'login-ip:' . $request->ip();
+        $emailThrottleKey = 'login-email:' . Str::lower($validated['email']);
 
         if (RateLimiter::tooManyAttempts($throttleKey, self::MAX_ATTEMPTS)
             || RateLimiter::tooManyAttempts($ipThrottleKey, self::IP_MAX_ATTEMPTS)
+            || RateLimiter::tooManyAttempts($emailThrottleKey, self::EMAIL_MAX_ATTEMPTS)
         ) {
             $seconds = max(
                 RateLimiter::availableIn($throttleKey),
-                RateLimiter::availableIn($ipThrottleKey)
+                RateLimiter::availableIn($ipThrottleKey),
+                RateLimiter::availableIn($emailThrottleKey)
             );
             return $this->error("Too many failed login attempts. Try again in {$seconds} seconds.", ['retry_after' => $seconds], 429);
         }
@@ -129,24 +142,28 @@ class AuthController extends Controller
         if (! $user || ! Hash::check($validated['password'], $user->password)) {
             RateLimiter::hit($throttleKey, self::LOCKOUT_SECONDS);
             RateLimiter::hit($ipThrottleKey, self::IP_LOCKOUT_SECONDS);
+            RateLimiter::hit($emailThrottleKey, self::EMAIL_LOCKOUT_SECONDS);
             return $genericAuthFailure();
         }
 
         if (! $user->active) {
             RateLimiter::hit($throttleKey, self::LOCKOUT_SECONDS);
             RateLimiter::hit($ipThrottleKey, self::IP_LOCKOUT_SECONDS);
+            RateLimiter::hit($emailThrottleKey, self::EMAIL_LOCKOUT_SECONDS);
             Log::info('Signin attempt on deactivated account.', ['user_id' => $user->id]);
             return $genericAuthFailure();
         }
 
         if (! $user->email_verified_at) {
             RateLimiter::hit($ipThrottleKey, self::IP_LOCKOUT_SECONDS);
+            RateLimiter::hit($emailThrottleKey, self::EMAIL_LOCKOUT_SECONDS);
             Log::info('Signin attempt on unverified account.', ['user_id' => $user->id]);
             return $genericAuthFailure();
         }
 
         RateLimiter::clear($throttleKey);
         RateLimiter::clear($ipThrottleKey);
+        RateLimiter::clear($emailThrottleKey);
 
         $rememberMe = $validated['remember_me'] ?? false;
         $expiresAt = $rememberMe
@@ -215,7 +232,20 @@ class AuthController extends Controller
             $user->refresh(); // pull DB-assigned defaults (role, active) back into the model
             $user->forceFill(['email_verified_at' => now()])->save();
         } elseif (! $user->email_verified_at) {
-            $user->forceFill(['email_verified_at' => now()])->save();
+            // Audit AUTH-2: an unverified row may have been created by an
+            // attacker who doesn't own this email (password-auth signup
+            // never required proving mailbox ownership). Google's own
+            // email_verified=true is the FIRST real proof of ownership this
+            // account has ever had — treat it as a takeover-recovery event:
+            // invalidate whatever password was set before that proof
+            // existed, and kill every outstanding token issued under it, so
+            // an attacker who registered this email first is locked out the
+            // moment the real owner proves ownership via Google.
+            $user->forceFill([
+                'email_verified_at' => now(),
+                'password' => Str::random(32),
+            ])->save();
+            $user->tokens()->delete();
         }
 
         if (! $user->active) {
@@ -325,7 +355,7 @@ class AuthController extends Controller
         Notification::route('mail', $user->pending_email)
             ->notify(new EmailChangeVerificationNotification($code));
 
-        if (! app()->environment('production')) {
+        if (config('auth.developer.expose_verification_code')) {
             Log::info("Email change code requested for user {$user->id}");
         }
 
@@ -413,13 +443,15 @@ class AuthController extends Controller
 
         $user = User::where('email', $validated['email'])->first();
 
-        if (! $user) {
-            RateLimiter::hit($attemptKey, self::VERIFY_LOCKOUT_SECONDS);
-            return $this->error('Invalid verification request.', [], 404);
-        }
+        // Audit AUTH-4: user-not-found, already-verified, and bad-code
+        // previously returned distinguishable status codes (404 / 409 /
+        // 422), letting an attacker enumerate account existence/state. All
+        // failure paths below now return the exact same response.
+        $genericFailure = fn () => $this->error('Invalid or expired verification code.', [], 422);
 
-        if ($user->email_verified_at) {
-            return $this->error('This account is already verified.', [], 409);
+        if (! $user || $user->email_verified_at) {
+            RateLimiter::hit($attemptKey, self::VERIFY_LOCKOUT_SECONDS);
+            return $genericFailure();
         }
 
         // Codes are hashed at rest now, so we can no longer look the row up
@@ -429,11 +461,11 @@ class AuthController extends Controller
 
         if (! $verification || ! Hash::check($validated['code'], $verification->code)) {
             RateLimiter::hit($attemptKey, self::VERIFY_LOCKOUT_SECONDS);
-            return $this->error('Invalid verification code.', [], 422);
+            return $genericFailure();
         }
 
         if ($verification->isExpired()) {
-            return $this->error('This verification code has expired. Request a new one.', [], 410);
+            return $genericFailure();
         }
 
         RateLimiter::clear($attemptKey);
@@ -463,7 +495,7 @@ class AuthController extends Controller
             $verification = VerificationCode::generateFor($user);
             $user->notify(new VerificationCodeNotification($verification->plainCode));
 
-            if (! app()->environment('production')) {
+            if (config('auth.developer.expose_verification_code')) {
                 Log::info("Verification code for {$user->email}: {$verification->plainCode}");
             }
             $devCode = config('auth.developer.expose_verification_code') ? $verification->plainCode : null;
@@ -499,7 +531,7 @@ class AuthController extends Controller
             $token = Password::broker()->createToken($user);
             $user->notify(new PasswordResetNotification($token, $user->email));
 
-            if (! app()->environment('production')) {
+            if (config('auth.developer.expose_password_reset_token')) {
                 Log::info("Password reset requested for user {$user->id}");
             }
 
@@ -521,6 +553,19 @@ class AuthController extends Controller
     {
         $validated = $request->validated();
 
+        // Audit AUTH-3: previously zero rate limiting on this endpoint,
+        // unlike every sibling auth endpoint. Hit unconditionally at the
+        // top (mirrors forgotPassword()'s pattern) — the limiter must not
+        // itself reveal anything by only firing on one branch.
+        $throttleKey = 'reset-password:' . Str::lower($validated['email']);
+
+        if (RateLimiter::tooManyAttempts($throttleKey, self::RESET_PASSWORD_MAX_ATTEMPTS)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            return $this->error("Too many attempts. Try again in {$seconds} seconds.", ['retry_after' => $seconds], 429);
+        }
+
+        RateLimiter::hit($throttleKey, self::RESET_PASSWORD_LOCKOUT_SECONDS);
+
         $status = Password::reset(
             $validated,
             function (User $user, string $password) {
@@ -530,9 +575,16 @@ class AuthController extends Controller
             }
         );
 
+        // Audit AUTH-3: Laravel's broker returns distinguishable statuses
+        // (passwords.user vs passwords.token) that were previously
+        // surfaced verbatim via __($status) — an attacker could tell
+        // "no such account" apart from "bad/expired token" and enumerate
+        // accounts. Both failure cases now return one generic message.
         if ($status !== Password::PASSWORD_RESET) {
-            return $this->error(__($status), [], 422);
+            return $this->error('This password reset link is invalid or has expired.', [], 422);
         }
+
+        RateLimiter::clear($throttleKey);
 
         return $this->success('Password reset successfully.');
     }
