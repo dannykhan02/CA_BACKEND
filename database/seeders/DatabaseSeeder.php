@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             DocumentSeeder::class,
             AiPromptSeeder::class,
             DocumentQaPromptSeeder::class,
+            DocumentQaPromptSeederV2::class,
             DocumentDeadlinesPromptSeeder::class,
             DocumentEntitiesPromptSeeder::class,
             DocumentRisksPromptSeeder::class,

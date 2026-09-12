@@ -470,7 +470,7 @@ PROMPT;
         $manager = app(\App\Services\AI\PromptManager::class);
         $prompt = $manager->resolve('document_qa');
         $this->lastResolvedPromptVersion = $prompt->version;
-        return $manager->render($prompt, ['{{document_name}}' => $question, '{{document_text}}' => $truncated]);
+        return $manager->render($prompt, ['{{question}}' => $question, '{{document_text}}' => $truncated]);
     }
 
     private function parseQaResponse(array $response, array $availableDocumentIds): array

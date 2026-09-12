@@ -3,6 +3,9 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\User;
+use App\Models\Workspace;
+use App\Models\WorkspaceMember;
+use App\Enums\WorkspaceType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -21,8 +24,16 @@ class RoleManagementTest extends TestCase
 
     public function test_admin_can_list_users(): void
     {
+        // F1-P1: listing is workspace-scoped, so admin + targets must share
+        // a workspace_members row for the admin to see them.
+        $workspace = Workspace::create(['type' => WorkspaceType::Organization, 'name' => 'Admin List Test WS']);
         $admin = User::factory()->create(['role' => 'Administrator']);
-        User::factory()->count(3)->create(['role' => 'Viewer']);
+        $targets = User::factory()->count(3)->create(['role' => 'Viewer']);
+
+        foreach ($targets->push($admin) as $user) {
+            WorkspaceMember::create(['workspace_id' => $workspace->id, 'user_id' => $user->id, 'joined_at' => now()]);
+            $user->update(['current_workspace_id' => $workspace->id]);
+        }
 
         $this->actingAs($admin, 'sanctum')
             ->getJson('/api/admin/users')

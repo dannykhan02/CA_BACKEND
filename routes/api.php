@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\DocumentSearchController;
 use App\Http\Controllers\Api\DocumentUploadController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\WorkspaceCreditController;
+use App\Http\Middleware\EnsureEmailIsVerified;
 use Illuminate\Support\Facades\Route;
 
 // Unauthenticated — must be reachable by load balancers/uptime monitors/
@@ -49,6 +50,10 @@ Route::prefix('auth')->name('auth.')->group(function () {
     Route::post('/reset-password', [AuthController::class, 'resetPassword'])
         ->name('reset-password');
 
+    // Deliberately left on plain auth:sanctum (no EnsureEmailIsVerified):
+    // an unverified user still needs /me and /signout to function, and
+    // change-email gives them a path to fix a mistyped address even
+    // pre-verification.
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me', [AuthController::class, 'me'])
             ->name('me');
@@ -59,11 +64,11 @@ Route::prefix('auth')->name('auth.')->group(function () {
             ->name('change-email.request');
         Route::post('/change-email/confirm', [AuthController::class, 'confirmEmailChange'])
             ->name('change-email.confirm');
-
     });
 });
 
-Route::middleware('auth:sanctum')->group(function () {
+// Audit AUTH-1: was plain 'auth:sanctum'.
+Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(function () {
     Route::patch('/user', [AuthController::class, 'updateProfile'])
         ->name('user.update');
 
@@ -73,7 +78,8 @@ Route::middleware('auth:sanctum')->group(function () {
         ->name('user.update-notification-preferences');
 });
 
-Route::middleware('auth:sanctum')->group(function () {
+// Audit AUTH-1: was plain 'auth:sanctum'.
+Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(function () {
 
     // Documents
     Route::get('/workspace/credits', [WorkspaceCreditController::class, 'show'])

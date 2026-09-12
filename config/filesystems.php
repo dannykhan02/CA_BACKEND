@@ -33,7 +33,20 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            // Audit INFRA-1: 'serve' => true auto-registers UNAUTHENTICATED
+            // GET/PUT routes at storage/{path} (Laravel's local-disk
+            // "servable" convenience feature — see
+            // vendor/laravel/framework/.../FilesystemServiceProvider.php,
+            // lines 111 and 119). This app's actual document storage lives
+            // entirely on the 'documents' disk below (R2/S3, private
+            // visibility, gated through DocumentDownloadController +
+            // DocumentPolicy) — nothing reviewed in this codebase
+            // intentionally serves files off the local disk. Left enabled,
+            // this was anonymous read+write access into storage/app/private
+            // with zero authorization. Disabled here; re-enable only for
+            // local development if a specific feature is later built to
+            // depend on it, and never in production.
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],

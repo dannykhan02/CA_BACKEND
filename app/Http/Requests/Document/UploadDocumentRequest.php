@@ -45,6 +45,17 @@ class UploadDocumentRequest extends FormRequest
                 // config key. Only currently-enabled types are accepted.
                 'extensions:' . implode(',', $supportedTypes->enabledExtensions()),
                 'mimetypes:' . implode(',', $supportedTypes->enabledMimeTypes()),
+                // Track A / FU-5: documents.name is varchar(255) at the DB
+                // layer with nothing previously enforcing that server-side.
+                // getClientOriginalName() can exceed this, which previously
+                // surfaced as a raw DB exception on insert instead of a
+                // clean 422. Validate the filename length explicitly here.
+                function ($attribute, $value, $fail) {
+                    if ($value instanceof \Illuminate\Http\UploadedFile
+                        && strlen($value->getClientOriginalName()) > 255) {
+                        $fail('The file name is too long (maximum 255 characters).');
+                    }
+                },
             ],
             // Matches the exact documents_classification_check DB constraint.
             'classification' => ['required', Rule::in(['Public', 'Internal', 'Confidential', 'Restricted'])],
