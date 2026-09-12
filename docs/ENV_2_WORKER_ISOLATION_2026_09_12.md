@@ -1,22 +1,28 @@
 # ENV-2 — owner-run worker isolation recovery
 
-Prepared from local source at 2026-09-12 18:38 UTC and the owner's 2026-09-12 variable observations. This is a continuation of Tier 1 item 1 on `audit/tier1-evidence-20260912`. All live actions are performed by the owner. **Isolation remains blocked.**
+Prepared from local source at 2026-09-12 18:38 UTC and the owner's 2026-09-12 variable observations. This is a continuation of Tier 1 item 1 on `audit/tier1-evidence-20260912`. All live actions are performed by the owner. **End-to-end worker isolation remains blocked.**
 
-## 1. Direct Neon endpoint mapping — run this first
+**Evidence update incorporated at 18:52 UTC:** the owner confirms `neonctl branches get ... --output json` establishes staging branch `br-hidden-wildflower-axoalt7m` as a genuine copy-on-write fork of production branch `br-divine-lab-axjoi7y0`, created at **2026-09-11T12:03:03Z**. Neon architecture is **CONFIRMED ISOLATED** and staging web routing is **CONFIRMED CORRECT**. Staging worker saved variables are **CORRECTED**; worker runtime and end-to-end worker isolation are **NOT YET VERIFIED**. These are owner-supplied verification results; raw CLI JSON is not archived in this repository.
+
+The next required action is the explicitly approved staging-worker deployment in step 2. ENV-2 is a Railway worker configuration issue, not a Neon branch/aliasing issue. Historical worker-backed staging tests may have modified production; preserve their records and the contamination finding.
+
+## 1. Neon evidence — confirmation recorded; original collection command retained
+
+The following command and field list preserve the earlier request and can be used to archive direct endpoint metadata. They do not reopen the owner's newly confirmed branch architecture or web routing, and repeating the branch check is not the next recovery gate.
 
 ```sh
 date -u +%Y-%m-%dT%H:%M:%SZ
 neonctl endpoints list --project-id fragrant-cherry-99998400
 ```
 
-Paste the UTC timestamp, the table's column headings, and the complete rows for these two endpoint IDs. Required fields are **endpoint ID (`id`) and associated branch ID (`branch_id`)**. Include `host`, endpoint `type` (read/write versus read replica), `current_state`, and `pending_state` if shown. If the default listing omits the associated branch ID, paste what it does show; do not infer the mapping from the branch name or hostname. The associated branch ID from endpoint details will then be required.
+For the evidence archive, retain the UTC timestamp, column headings, and rows for these two endpoints, with **endpoint ID (`id`) and associated branch ID (`branch_id`)**. Include host, endpoint type, current state, and pending state if shown. Do not describe the raw endpoint listing as already archived: the new confirmation supplied here was the owner's branch-get result and routing conclusion.
 
 | Endpoint ID | Required associated branch ID | Expected host |
 | --- | --- | --- |
 | `ep-cold-cake-axtm6s8c` | `br-hidden-wildflower-axoalt7m` | `ep-cold-cake-axtm6s8c.c-4.us-east-2.aws.neon.tech` |
 | `ep-shy-paper-axsw5ecr` | `br-divine-lab-axjoi7y0` | `ep-shy-paper-axsw5ecr.c-4.us-east-2.aws.neon.tech` |
 
-Expected values are hypotheses until this output agrees. Pause on a mismatch. Branch listing alone and identical/different `neondb` names do not settle the mapping.
+At the original request these values were hypotheses. The later owner confirmation establishes the genuine branch architecture and correct staging web routing recorded above. Preserve the chronology; identical/different `neondb` names were not the basis for confirmation. Any subsequently observed mismatch would need investigation rather than being silently discarded.
 
 ## 2. Proposed deployment — held for explicit confirmation
 
@@ -33,7 +39,7 @@ Use the Railway dashboard so service scope is explicit and does not depend on th
 5. If the corrected configuration has already been applied and only a new deployment is needed, open that service's **Deployments**, use the intended deployment's **⋮ → Redeploy**, and confirm the selected environment/service **only after explicit approval**. Do not use a restart of an old configuration as evidence that pending variable edits were applied.
 6. Capture the resulting deployment ID, source SHA, creation/completion times, and status. Confirm the previous staging-worker deployment has stopped, including old replicas; no old production-connected Horizon process should remain alongside the replacement. Do not clear queues, retry old jobs, or delete old failures/test records as part of redeployment.
 
-Before requesting approval, return step 1's endpoint output and the staging worker's deployment/start-command details. Then the intended action can be approved against a concrete target. A successful dashboard deployment alone is not isolation proof; proceed to the runtime check below after actual completion.
+The branch/web-routing prerequisite is now recorded as confirmed. The staging worker's deployment/start-command details and explicit deployment approval remain pending. A successful dashboard deployment alone is not isolation proof; proceed to the runtime check below after actual completion.
 
 ## 3. Read-only post-deployment runtime check
 
@@ -124,7 +130,7 @@ This queue identity check supports ENV-2 canary attribution; it does not start t
 
 ## 4. Worker-backed canary — not yet executable
 
-Per the required sequence, prepare and submit the minimal canary **only after** endpoint metadata, approved worker redeployment, and post-deployment diagnostics have succeeded and their pasted output has been reviewed. No canary success is recorded now.
+Per the required sequence, prepare and submit the minimal canary **only after** the now-confirmed branch/web routing is followed by an approved worker redeployment and successful post-deployment diagnostics, with the actual outputs reviewed. No canary success is recorded now.
 
 The next evidence packet must include a unique disposable fixture and its SHA-256, a dedicated disposable staging account/workspace, exact staging upload action, document/workspace/job identifiers, worker execution evidence, branch-labeled read-only SQL proving the generated/updated records are present on staging and absent on production, and precise cleanup instructions. Cleanup must preserve historical ENV-2 evidence and wait until the canary's actual branch identity is proven. Do not rerun old audit documents to produce this evidence.
 
@@ -132,9 +138,11 @@ The next evidence packet must include a unique disposable fixture and its SHA-25
 
 | Step | Status | Evidence still required |
 | --- | --- | --- |
-| Endpoint → branch mapping | Blocked | Two endpoint rows including associated branch IDs |
+| Neon branch architecture | Confirmed isolated | Owner's branch-get confirmation; fork `2026-09-11T12:03:03Z` |
+| Staging web DB routing | Confirmed correct | Owner-confirmed staging endpoint routing |
+| Staging worker saved Railway variables | Corrected | Owner's 2026-09-12 variable correction; not a runtime change |
 | Worker-only redeployment | Blocked | Explicit approval, exact command configuration, new deployment record and old deployment stopped |
-| Effective worker/container connection | Blocked | New deployment's allowlisted output and queue attribution |
-| Worker-backed branch canary | Not started | Design after preceding steps succeed; then actual owner-run output |
+| Staging worker runtime connection | Not yet verified | New deployment's allowlisted output and queue attribution |
+| End-to-end worker isolation | Not yet verified | Worker-backed canary after preceding steps succeed; actual staging/production record comparisons |
 
 Tier 1 item 1 remains blocked. No Tier 2 work, deployment, runtime query, upload, or cleanup has been executed by the agent.

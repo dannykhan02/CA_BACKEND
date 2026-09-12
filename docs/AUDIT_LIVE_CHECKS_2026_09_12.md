@@ -4,6 +4,8 @@ These steps collect evidence; they do not authorize deployment, migrations, prom
 
 **2026-09-12 update:** the owner reports staging web was configured for the staging endpoint while staging Horizon was configured for the production endpoint. Staging worker variables have been corrected, but its running process has not been restarted/verified. Start with the ordered [ENV-2 recovery checks](ENV_2_WORKER_ISOLATION_2026_09_12.md). This original checklist remains evidence still needed for the wider ledger; it does not override the new deployment/canary gates. Preserve all historical test records pending branch attribution.
 
+**Subsequent Neon confirmation, incorporated at 18:52 UTC:** the owner verified staging is a genuine branch forked from production at `2026-09-11T12:03:03Z`. Neon branch architecture is **CONFIRMED ISOLATED**; staging web DB routing is **CONFIRMED CORRECT**; staging worker saved variables are **CORRECTED**. Worker runtime and end-to-end isolation are **NOT YET VERIFIED**. The next ENV-2 gate is the approved staging-worker redeployment, not a repeat of the branch architecture check. The original collection instructions below remain for evidence retention and other unresolved findings.
+
 ## 1. Establish current database identity first
 
 From your locally linked Railway backend project, enter staging:

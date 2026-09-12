@@ -42,21 +42,21 @@ Commit subjects containing “staging,” “production,” or “confirm” est
 
 ## First dependency: staging isolation
 
-At the initial 17:43 UTC capture, the two supplied accounts conflicted: an isolated Neon branch with a canary versus later identical database endpoints. Neither was accepted as current evidence. A committed `.neon` file and `cb096e3` could not settle this. The owner's later 2026-09-12 update adds the service-variable evidence recorded below as ENV-2; it does not yet establish running-process isolation.
+At the initial 17:43 UTC capture, the two supplied accounts conflicted: an isolated Neon branch with a canary versus later identical database endpoints. Neither was accepted as current evidence. A committed `.neon` file and `cb096e3` could not settle this. The owner's subsequent updates establish the service-variable split recorded as ENV-2 and confirm genuine Neon branch isolation and correct staging web routing. Worker runtime and end-to-end isolation remain unverified.
 
-Pending for **both** backend web and worker services in **both** environments:
+Remaining evidence for the wider ledger:
 
-- Capture UTC time, Railway environment/service, deployed SHA/deployment ID, `DB_HOST`, `DB_DATABASE`, `DB_HOST_POOLED`, and Laravel's effective database host/name.
-- Directly map every effective host to its Neon branch ID and compute endpoint ID. The owner has supplied configured hosts and expected branch IDs, but endpoint metadata is still pending. `neondb` is commonly reused across branches; different pooled/unpooled host spellings do not establish isolation. Different compute endpoints on one branch also do not establish independent data.
+- Capture UTC time, Railway environment/service, deployed SHA/deployment ID, `DB_HOST`, `DB_DATABASE`, `DB_HOST_POOLED`, and Laravel's effective database host/name after staging worker redeployment. Retain comparable service evidence for the other deployments; this does not reopen the owner's confirmed staging web routing.
+- Archive the owner's branch/endpoint metadata when available. Neon architecture and staging web routing are now confirmed from the owner's reported CLI verification; the original raw JSON is not attached here. `neondb` names and pooled/unpooled host spellings alone were never used as proof.
 - Obtain current and relevant historical Railway deployment records, plus Netlify's frontend deployment revision. Fresh identity settles current isolation; historical deployment/environment evidence is separately needed to qualify old staging claims.
 
 Exact owner-run commands and expected results: [live evidence checks](AUDIT_LIVE_CHECKS_2026_09_12.md). No canary or other live test data is requested before identity is established.
 
 ### ENV-2 — Staging Horizon worker pointed at production database
 
-**Status: Blocked — owner-reported configuration corrected; endpoint mapping and runtime correction unverified.** This addition was recorded against the unchanged audit branch after a fresh local capture at **2026-09-12 18:38 UTC**. It preserves, rather than replaces, the earlier evidence state.
+**Status: Blocked — Neon branch architecture and staging web routing confirmed; staging worker variables corrected; worker runtime and end-to-end isolation unverified.** The initial ENV-2 entry was captured at **2026-09-12 18:38 UTC**; the additional owner-supplied Neon confirmation was incorporated at **18:52 UTC**. Earlier evidence states are preserved below.
 
-Evidence source: the owner's dated update says Railway variables were inspected for all four services; Neon branch IDs came from `neonctl branches list --project-id fragrant-cherry-99998400` and branch inspection. Raw endpoint-to-branch metadata, deployment output, and a worker-executed canary have not yet been supplied. These are owner-reported variable observations, not agent-observed runtime results.
+Initial evidence source: the owner's dated update says Railway variables were inspected for all four services; Neon branch IDs came from `neonctl branches list --project-id fragrant-cherry-99998400` and branch inspection. At that point direct endpoint metadata, deployment output, and a worker-executed canary had not been supplied. The following table retains that initial observation, before the later confirmation.
 
 | Railway environment / service | Configured host reported 2026-09-12 | Expected endpoint → branch (not directly cross-confirmed yet) | Runtime evidence |
 | --- | --- | --- | --- |
@@ -66,6 +66,20 @@ Evidence source: the owner's dated update says Railway variables were inspected 
 | production / `CA_BACKEND` | `ep-shy-paper-axsw5ecr.c-4.us-east-2.aws.neon.tech` | `ep-shy-paper-axsw5ecr` → `br-divine-lab-axjoi7y0` | Not supplied; configuration appears intended |
 | production / `ca-horizon-worker` | `ep-shy-paper-axsw5ecr.c-4.us-east-2.aws.neon.tech` | `ep-shy-paper-axsw5ecr` → `br-divine-lab-axjoi7y0` | Not supplied; configuration appears intended |
 
+Latest evidence source: the owner subsequently confirmed branch details using `neonctl branches get ... --output json`. Production is `br-divine-lab-axjoi7y0`; staging is the genuine branch `br-hidden-wildflower-axoalt7m`, forked from production at **2026-09-11T12:03:03Z**, with copy-on-write database isolation. The owner also confirms staging web's staging-endpoint routing is correct. These are owner-supplied CLI conclusions; no CLI invocation or live query was performed by the agent, and no raw JSON transcript is represented as archived here.
+
+| Component | Current status | Evidence / limit |
+| --- | --- | --- |
+| Neon branch architecture | **CONFIRMED ISOLATED** | Owner-confirmed genuine staging branch fork at `2026-09-11T12:03:03Z`; distinct production/staging branch IDs |
+| Staging web DB routing | **CONFIRMED CORRECT** | Owner-confirmed `CA_BACKEND` staging routing to `ep-cold-cake-axtm6s8c` on the staging branch |
+| Staging worker saved Railway variables | **CORRECTED** | Owner changed staging `ca-horizon-worker` from production endpoint `ep-shy-paper-axsw5ecr` to staging endpoint `ep-cold-cake-axtm6s8c` on 2026-09-12 |
+| Staging worker runtime connection | **NOT YET VERIFIED** | Redeployment/restart and effective connection evidence still required |
+| End-to-end worker isolation | **NOT YET VERIFIED** | Real staging upload, worker processing, and cross-branch record comparison still required |
+
+ENV-2 is now narrowed to **Railway worker database configuration**, not Neon branching/aliasing. The fork timestamp is not proof of correct historical worker routing and does not establish the exact misconfiguration window.
+
+Historical reconciliation must also distinguish inherited data from later worker writes: records already present at the fork can legitimately exist on both branches. Matching document IDs alone do not prove a cross-branch write; retain creation/update times, processing evidence, and branch lineage when attributing each historical test.
+
 Chronology and conclusions:
 
 1. Earlier sessions claimed isolated staging and successful worker-backed checks. A later session claimed a shared production database. The initial local audit could not reconcile either assertion from git.
@@ -73,19 +87,20 @@ Chronology and conclusions:
 3. The owner corrected staging worker variables on 2026-09-12. An existing Horizon process can retain its old connection; saved variables are not a runtime correction.
 4. Previous worker-backed “staging verified” claims are now explicitly **contaminated/unreliable pending individual reconciliation**, including queued OCR, chart/vision analysis, insights, embeddings, document status changes, and other worker database operations. This is not a claim that every queued job successfully wrote production data: a job may have found no matching document, failed, or run through another consumer. Locate records and deployment/queue evidence per test.
 5. Preserve historical test documents, processing jobs, AI-run rows, audit records, queue job IDs/failures, and retained deployment/log evidence until their actual branch/location and relationship are established. No cleanup of historical records, queue clearing, retries, or bulk reprocessing is authorized by this update.
+6. The later branch-get confirmation establishes genuine Neon isolation and correct staging web routing. It resolves the architecture question without retroactively validating worker-backed tests. Those tests may have modified production before the worker correction; branch creation and saved-variable correction are neither a worker restart nor a canary result.
 
-Closure requires, in order: direct Neon endpoint metadata; explicitly approved deployment of **only** staging `ca-horizon-worker`; post-deployment effective-connection evidence from the new container; and a minimal upload processed by that worker, with resulting IDs present on staging and absent on production. A fresh Tinker process alone cannot prove the connection held by an existing Horizon process. The worker canary must close that gap. Queue routing must also be attributable to staging before submitting it; a shared queue could invalidate an otherwise correct database mapping.
+With branch architecture and staging web routing confirmed, closure still requires, in order: explicitly approved deployment of **only** staging `ca-horizon-worker`; post-deployment effective-connection evidence from the new container; and a minimal upload processed by that worker, with resulting IDs present on staging and absent on production. A fresh Tinker process alone cannot prove the connection held by an existing Horizon process. The worker canary must close that gap. Queue routing must also be attributable to staging before submitting it; a shared queue could invalidate an otherwise correct database mapping. Historical worker-backed claims retain their contamination flag pending individual reconciliation even after a future canary succeeds.
 
 The exact next checks and held deployment action are in [ENV-2 recovery checks](ENV_2_WORKER_ISOLATION_2026_09_12.md). Per the owner's ordering, the executable canary fixture, upload, SQL comparisons, and cleanup will be prepared only after steps 1–3 have actually succeeded. No test has been uploaded or dispatched in this session.
 
 ## Findings and claims ledger
 
-“Committed” below refers to local git history, not deployment. The fresh full suite passes after the test-only correction described below. A passing suite is not proof of a specific edge case unless that test is identified. Deployment and live behavior remain **unconfirmed for every row**.
+“Committed” below refers to local git history, not deployment. The fresh full suite passes after the test-only correction described below. A passing suite is not proof of a specific edge case unless that test is identified. No application-fix deployment is newly confirmed by this update; the owner-confirmed Neon architecture and staging web routing are explicitly distinguished from pending worker behavior.
 
 | Finding/claim | Git/source evidence today | Test/evidence qualification | Correction or remaining evidence |
 | --- | --- | --- | --- |
-| ENV-1 / P1 item 7: isolated staging | `.neon` in `196dfa7`; isolation-related commit `cb096e3` | Initial claim conflict now supplemented by owner-reported web/worker split (ENV-2) | Still blocked; current and historical runtime isolation not established |
-| ENV-2: staging Horizon worker configured for production | Owner's 2026-09-12 Railway-variable observations, recorded above; this is infrastructure evidence, not a git change | Worker variables corrected, but no redeployment/runtime/canary output supplied; endpoint mapping inferred so far | Worker-backed historical staging claims contaminated; preserve records. Endpoint metadata → approved worker-only deploy → runtime check → branch canary required |
+| ENV-1 / P1 item 7: isolated staging | `.neon` in `196dfa7`; `cb096e3`; owner-confirmed branch-get result and staging web routing | Neon architecture confirmed isolated; staging fork `2026-09-11T12:03:03Z`; web routing confirmed correct | Overall item remains blocked on worker runtime/canary and historical reconciliation |
+| ENV-2: staging Horizon worker configured for production | Owner's 2026-09-12 Railway-variable observations plus later branch-get confirmation; infrastructure evidence, not a deployed git fix | Root cause narrowed to Railway worker configuration; saved variables corrected; runtime and end-to-end isolation not yet verified | Worker-backed historical staging claims contaminated; preserve records. Approved worker-only deploy → runtime check → branch canary still required |
 | AUTH-1: verification gate | Middleware and protected route groups in `196dfa7` remain present | `9679a78` tests purchase initialization/verification returning 403 before email verification and succeeding afterward | Confirms those local boundaries; not an exhaustive route matrix or live proof |
 | AUTH-2: Google ownership handoff | `c1c5041`, AuthController resets password and deletes tokens for an unverified pre-existing account | Google auth tests pass; no dedicated assertion of both old-password and token revocation was identified | Commit is not solely a logging change despite its subject |
 | AUTH-3: password-reset throttling/response consistency | `c1c5041`, reset limiter and generic failures | General auth suite passes; no dedicated reset-throttle boundary test identified | Historical reset-token reuse probe is independently flawed; see older reports below |
@@ -160,7 +175,7 @@ Isolation was explicitly checked before the backend run: PostgreSQL `127.0.0.1:5
 
 | Item # | What | Status | Evidence | Notes for next session |
 | --- | --- | --- | --- | --- |
-| 1 | Reconcile claims and staging identity | Blocked | Git/source findings; `9679a78` local suites; owner-reported ENV-2 variable split and correction | Need endpoint metadata, approved staging-worker redeployment, runtime checks, worker canary; combined report and historical deploy/prompt/health evidence still pending |
+| 1 | Reconcile claims and staging identity | Blocked | Git/source findings; `9679a78` local suites; Neon architecture and staging web routing confirmed; ENV-2 saved-variable correction | Need approved staging-worker redeployment, runtime checks, worker canary; preserve historical contamination finding. Combined report and historical deploy/prompt/health evidence still pending |
 | 2 | Migration hygiene | Not started | Existing history discrepancy noted under item 1 | Obtain live migration names/catalog output before proposing changes |
 | 3 | Exception reporting convention and fixes | Not started | Existing Q&A catch noted only | Start after items 1–2; no application edits yet |
 | 4 | Persistent log target | Not started | Default still local-file stack | Config change and redeploy-retention test need later production confirmation |
