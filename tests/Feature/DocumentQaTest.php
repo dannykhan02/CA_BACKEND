@@ -275,4 +275,11 @@ class DocumentQaTest extends TestCase
         $this->assertStringContainsString('{{question}}', $prompt->template);
         $this->assertStringNotContainsString('{{document_name}}', $prompt->template);
     }
+
+    public function test_insights_prompt_v4_permits_factual_insight_without_trend(): void
+    {
+        $prompt = \App\Models\AiPrompt::where('name', 'document_insights')->where('version', 4)->firstOrFail();
+        $this->assertStringContainsString('Insights without comparison basis', $prompt->template);
+        $this->assertStringContainsString('purely factual insights', $prompt->template);
+    }
 }
