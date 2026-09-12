@@ -9,6 +9,20 @@ use Illuminate\Support\Facades\Http;
 
 class PaystackClient
 {
+    public function verify(string $reference): array
+    {
+        $response = Http::withToken(config('services.paystack.secret_key'))
+            ->acceptJson()->connectTimeout(5)->timeout(10)
+            ->get('https://api.paystack.co/transaction/verify/'.rawurlencode($reference));
+
+        if (! $response->successful() || $response->json('status') !== true
+            || ! is_array($response->json('data'))) {
+            throw new \RuntimeException('Payment verification is temporarily unavailable.');
+        }
+
+        return $response->json();
+    }
+
     /** @return array{authorization_url: string, reference: string} */
     public function initialize(CreditPurchase $purchase, string $email): array
     {
@@ -22,7 +36,7 @@ class PaystackClient
                     'amount' => (string) $purchase->amount_kobo_or_cents,
                     'currency' => $purchase->currency,
                     'reference' => $purchase->paystack_reference,
-                    'callback_url' => 'https://classy-narwhal-44186a.netlify.app/#/billing/return',
+                    'callback_url' => rtrim(config('app.frontend_url'), '/').'/#/billing/return',
                 ]);
         } catch (ConnectionException) {
             throw new PaystackInitializationException;

@@ -124,7 +124,7 @@ class CreditPurchaseTest extends TestCase
             && $request->hasHeader('Content-Type', 'application/json')
             && $request['email'] === $user->email
             && $request['amount'] === '200000' && $request['currency'] === 'KES'
-            && $request['callback_url'] === 'https://classy-narwhal-44186a.netlify.app/#/billing/return'
+            && $request['callback_url'] === rtrim(config('app.frontend_url'), '/').'/#/billing/return'
             && $request['reference'] === $purchase->paystack_reference);
         Http::assertSentCount(1);
     }
@@ -305,5 +305,84 @@ class CreditPurchaseTest extends TestCase
         $this->postJson('/api/workspace/credits/purchases', ['package' => 'documents-100'])->assertStatus(502);
         $this->assertSame('completed', $workspace->purchases()->sole()->status);
         $this->assertSame(100, $workspace->credits->documents_remaining);
+    }
+
+    public function test_return_verification_completes_test_payment_without_webhook_and_only_once(): void
+    {
+        $purchase = $this->purchase();
+        Sanctum::actingAs($purchase->workspace->users()->first());
+        Http::fake(['https://api.paystack.co/transaction/verify/*' => Http::response([
+            'status' => true, 'data' => $this->payload($purchase)['data'] + ['domain' => 'test'],
+        ])]);
+        $url = '/api/workspace/credits/purchases/'.$purchase->paystack_reference.'/verify';
+        $this->postJson($url)->assertOk()->assertJsonPath('data.status', 'completed')->assertJsonPath('data.documents_remaining', 100);
+        $this->postJson($url)->assertOk()->assertJsonPath('data.status', 'completed');
+        $this->webhook($this->payload($purchase))->assertOk();
+        $this->assertSame(100, $purchase->workspace->credits->documents_remaining);
+        Http::assertSentCount(1);
+        Http::assertSent(fn (ClientRequest $request) => $request->method() === 'GET'
+            && $request->url() === 'https://api.paystack.co/transaction/verify/'.$purchase->paystack_reference
+            && $request->hasHeader('Authorization', 'Bearer '.self::SECRET));
+    }
+
+    public function test_return_verification_cannot_be_used_by_other_workspace_or_other_purchaser(): void
+    {
+        $purchase = $this->purchase();
+        $url = '/api/workspace/credits/purchases/'.$purchase->paystack_reference.'/verify';
+        $this->postJson($url)->assertUnauthorized();
+        Sanctum::actingAs($this->workspace()->users()->first());
+        $this->postJson($url)->assertForbidden();
+        $member = $purchase->workspace->users()->first();
+        $purchase->update(['user_id' => User::factory()->create()->id]);
+        Sanctum::actingAs($member);
+        $this->postJson($url)->assertForbidden();
+        Http::assertNothingSent();
+    }
+
+    #[DataProvider('mismatchedCharges')]
+    public function test_return_verification_rejects_mismatch_or_unsuccessful_payment(array $overrides): void
+    {
+        $purchase = $this->purchase();
+        Sanctum::actingAs($purchase->workspace->users()->first());
+        Http::fake(['https://api.paystack.co/transaction/verify/*' => Http::response([
+            'status' => true, 'data' => $this->payload($purchase, $overrides)['data'],
+        ])]);
+        $response = $this->postJson('/api/workspace/credits/purchases/'.$purchase->paystack_reference.'/verify');
+        if (isset($overrides['status'])) {
+            $response->assertOk()->assertJsonPath('data.status', 'pending');
+        } else {
+            $response->assertUnprocessable();
+        }
+        $this->assertSame('pending', $purchase->fresh()->status);
+        $this->assertSame(0, $purchase->workspace->credits->documents_remaining);
+    }
+
+    public function test_verification_failure_or_wrong_reference_cannot_credit_purchase(): void
+    {
+        $purchase = $this->purchase();
+        Sanctum::actingAs($purchase->workspace->users()->first());
+        $url = '/api/workspace/credits/purchases/'.$purchase->paystack_reference.'/verify';
+        Http::fake(['https://api.paystack.co/transaction/verify/*' => Http::sequence()
+            ->push(['status' => false], 503)
+            ->push(['status' => true, 'data' => $this->payload($purchase, ['reference' => 'another-payment'])['data']])]);
+        $this->postJson($url)->assertStatus(502);
+        $this->postJson($url)->assertUnprocessable();
+        $this->assertSame('pending', $purchase->fresh()->status);
+        $this->assertSame(0, $purchase->workspace->credits->documents_remaining);
+    }
+
+    public function test_webhook_during_external_verification_does_not_double_credit(): void
+    {
+        $purchase = $this->purchase();
+        Sanctum::actingAs($purchase->workspace->users()->first());
+        $this->mock(PaystackClient::class, function ($mock) use ($purchase) {
+            $mock->shouldReceive('verify')->once()->andReturnUsing(function () use ($purchase) {
+                $this->webhook($this->payload($purchase))->assertOk();
+
+                return ['status' => true, 'data' => $this->payload($purchase)['data']];
+            });
+        });
+        $this->postJson('/api/workspace/credits/purchases/'.$purchase->paystack_reference.'/verify')->assertOk()->assertJsonPath('data.status', 'completed');
+        $this->assertSame(100, $purchase->workspace->credits->documents_remaining);
     }
 }

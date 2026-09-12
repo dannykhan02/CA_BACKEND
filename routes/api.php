@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\DocumentReprocessController;
 use App\Http\Controllers\Api\DocumentSearchController;
 use App\Http\Controllers\Api\DocumentUploadController;
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\ReferralController;
 use App\Http\Controllers\Api\WorkspaceCreditController;
 use App\Http\Middleware\EnsureEmailIsVerified;
 use Illuminate\Support\Facades\Route;
@@ -82,10 +83,13 @@ Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(functio
 Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(function () {
 
     // Documents
+    Route::get('/referrals/my-code', [ReferralController::class, 'myCode'])->name('referrals.my-code');
     Route::get('/workspace/credits', [WorkspaceCreditController::class, 'show'])
         ->name('workspace.credits');
     Route::post('/workspace/credits/purchases', [CreditPurchaseController::class, 'store'])
         ->name('workspace.credits.purchases');
+    Route::post('/workspace/credits/purchases/{reference}/verify', [CreditPurchaseController::class, 'verify'])
+        ->middleware('throttle:30,1')->name('workspace.credits.purchases.verify');
 
     Route::get('/documents', [DocumentController::class, 'index'])
         ->name('documents.index');

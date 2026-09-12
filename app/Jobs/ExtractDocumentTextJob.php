@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\WorkspaceType;
 use App\Jobs\Concerns\DispatchesIntelligenceChain;
 use App\Models\Document;
 use App\Services\DocumentTextExtractor;
@@ -160,7 +161,7 @@ class ExtractDocumentTextJob implements ShouldQueue
             @unlink($absolutePath);
             $recorder->fail($recorder->start($document, 'ocr_check'), $e->getMessage());
             $document->forceFill([
-                'status' => 'Needs Review',
+                'status' => $document->workspace?->type === WorkspaceType::Personal ? 'Failed' : 'Needs Review',
                 'error_message' => 'OCR could not process this scanned document.',
             ])->save();
             return null;
@@ -183,7 +184,7 @@ class ExtractDocumentTextJob implements ShouldQueue
             @unlink($absolutePath);
             $recorder->fail($recorder->start($document, 'ocr_check'), $e->getMessage());
             $document->forceFill([
-                'status' => 'Needs Review',
+                'status' => $document->workspace?->type === WorkspaceType::Personal ? 'Failed' : 'Needs Review',
                 'error_message' => 'OCR could not process this scanned document.',
             ])->save();
             return null;

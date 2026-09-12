@@ -10,9 +10,9 @@ use Illuminate\Support\Facades\DB;
 
 class WorkspaceService
 {
-    public function createPersonalWorkspaceFor(User $user, ?string $ip = null, ?string $fingerprint = null): Workspace
+    public function createPersonalWorkspaceFor(User $user, ?string $ip = null, ?string $fingerprint = null, ?string $referralCode = null, bool $makeCurrent = true): Workspace
     {
-        return DB::transaction(function () use ($user, $ip, $fingerprint) {
+        return DB::transaction(function () use ($user, $ip, $fingerprint, $referralCode, $makeCurrent) {
             $workspace = Workspace::create([
                 'type' => WorkspaceType::Personal,
                 'name' => null,
@@ -25,10 +25,13 @@ class WorkspaceService
                 'joined_at' => now(),
             ]);
 
-            $user->forceFill(['current_workspace_id' => $workspace->id])->save();
+            if ($makeCurrent) {
+                $user->forceFill(['current_workspace_id' => $workspace->id])->save();
+            }
 
             if ($ip !== null) {
-                app(WorkspaceCreditService::class)->grantTrial($workspace, $user, $ip, $fingerprint);
+                $trialGranted = app(WorkspaceCreditService::class)->grantTrial($workspace, $user, $ip, $fingerprint);
+                app(ReferralService::class)->recordSignup($user, $referralCode, $trialGranted);
             }
 
             return $workspace;

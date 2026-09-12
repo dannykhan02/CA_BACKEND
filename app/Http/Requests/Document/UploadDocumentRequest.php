@@ -9,6 +9,14 @@ use Illuminate\Validation\Rule;
 
 class UploadDocumentRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        if ($this->user()?->currentWorkspace?->type === WorkspaceType::Personal
+            && ! $this->filled('classification')) {
+            $this->merge(['classification' => 'Internal']);
+        }
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      */

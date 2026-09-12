@@ -33,15 +33,11 @@ class GenerateInsightsJob implements ShouldQueue
         $document = Document::find($this->documentId);
 
         // Only proceed if extraction actually left the document in the
-        // in-progress state this stage expects. Two prior stages can leave
-        // it somewhere else WITHOUT throwing (so the chain isn't cancelled):
-        // fallbackToOcr()'s "OCR found no readable text" branch sets
-        // 'Needs Review' and returns null without calling $this->fail(), and
-        // the ineligible-type/ocr-disabled branch does call $this->fail(),
-        // which correctly cancels the chain — but we guard here anyway in
-        // case this job is ever dispatched standalone (see
-        // DocumentReprocessController) against a document that isn't
-        // mid-pipeline
+        // in-progress state this stage expects. ExtractDocumentTextJob and
+        // OcrPageBatchJob can terminate after OCR errors or unreadable text
+        // without cancelling the chain: Personal becomes Failed, Organization
+        // becomes Needs Review. Neither should be marked Ready without analysis.
+        // This also guards standalone dispatch from DocumentReprocessController.
         if (! $document || $document->status !== 'Processing') {
             return;
         }

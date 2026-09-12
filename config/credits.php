@@ -2,6 +2,7 @@
 
 return [
     'trial_documents' => 10,
+    'referral_reward_documents' => (int) env('REFERRAL_REWARD_DOCUMENTS', 10),
     'packages' => [
         'documents-100' => [
             'documents' => 100,

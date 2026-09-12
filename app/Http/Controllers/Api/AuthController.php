@@ -92,7 +92,7 @@ class AuthController extends Controller
                 'role' => 'Viewer',
             ]);
 
-            app(WorkspaceService::class)->createPersonalWorkspaceFor($user, $request->ip(), $validated['fingerprint'] ?? null);
+            app(WorkspaceService::class)->createPersonalWorkspaceFor($user, $request->ip(), $validated['fingerprint'] ?? null, $validated['referral_code'] ?? null);
 
             return $user;
         });
@@ -238,7 +238,7 @@ class AuthController extends Controller
                     'role' => 'Viewer',
                 ]);
 
-                app(WorkspaceService::class)->createPersonalWorkspaceFor($user, $request->ip(), $request->validated('fingerprint'));
+                app(WorkspaceService::class)->createPersonalWorkspaceFor($user, $request->ip(), $request->validated('fingerprint'), $request->validated('referral_code'));
 
                 return $user;
             });

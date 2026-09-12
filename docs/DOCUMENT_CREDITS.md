@@ -1,5 +1,30 @@
 # Document credits implementation status
 
+Referral rewards and Personal upload/review behavior are documented in
+[Referrals and Personal document processing](REFERRALS.md).
+
+## Payment return verification
+
+The return page now posts the checkout reference to authenticated
+`/api/workspace/credits/purchases/{reference}/verify`. The backend calls
+Paystack's Verify Transaction API and checks reference, successful transaction
+status, amount, and currency before completing through `WorkspaceCreditService`.
+This recovers a successful payment when its webhook was missing or delayed.
+Webhook and verification completion share the same locked, idempotent purchase
+and referral accounting. A redirect or unrelated balance increase is not proof
+of a successful purchase. Workspace membership and purchaser identity are
+checked before verification; legacy unattributed purchases require membership.
+
+Checkout redirects use `FRONTEND_URL` rather than a hardcoded deployed site.
+Configure it for the frontend serving the same backend/database. In Paystack's
+test-mode settings, configure the webhook URL as the public backend's
+`/api/paystack/webhook`; localhost is not publicly reachable by Paystack.
+The return page can verify a reference from either the URL or session storage,
+and offers a retry after confirmation times out. This still requires deployment
+of both the new frontend and backend endpoint.
+
+Source: [Paystack payment verification](https://paystack.com/docs/payments/verify-payments/).
+
 The balance, trial guard, upload gate, completion accounting, read endpoint,
 browser fingerprint, and Paystack purchase flow are implemented. The confirmed
 fixed package is **KES 2,000 for 100 documents**, configured once in
@@ -75,11 +100,12 @@ Sources checked on 2026-09-11:
 - Configure `https://<api-domain>/api/paystack/webhook` in Paystack's dashboard.
   This public route uses raw-body HMAC-SHA512 authentication, with constant-time
   comparison; it requires no bearer token. Initialization explicitly sends
-  `callback_url: https://classy-narwhal-44186a.netlify.app/#/billing/return`.
-  **Manual dashboard step:** set this same URL as Paystack's default callback
+  `callback_url: <FRONTEND_URL>/#/billing/return`.
+  **Manual dashboard step:** set this environment's URL as Paystack's default callback
   URL for fallback and reference. This dashboard setting has not been changed
-  or verified by this implementation. Returning to that URL does not grant credits; the signed
-  webhook does. Refresh `GET /api/workspace/credits` to show the resulting balance.
+  or verified by this implementation. The return page requests server-side
+  verification; only a verified successful transaction or signed webhook grants
+  credits. Refresh `GET /api/workspace/credits` to show the resulting balance.
 
 The ledger stores the server-generated unique reference, workspace, documents,
 amount, currency, status and full decoded webhook payload. The purchase is
@@ -87,8 +113,8 @@ persisted before initialization so an early webhook can find it. Workspace
 foreign keys restrict deletion to preserve the ledger. Currency and amount are
 snapshots: later package edits cannot change the interpretation of a payment.
 
-Only a signed `charge.success` with successful transaction status and matching
-amount/currency completes a pending purchase. Purchase and balance row locks
+Only a signed `charge.success` or a successful server-side Paystack verification
+with matching reference, amount, and currency completes a pending purchase. Purchase and balance row locks
 serialize repeated deliveries and concurrent purchases; the completion, both
 balance counters and payload are saved in one transaction. Repeated completed
 references return 200 without changing balances or the original payload.

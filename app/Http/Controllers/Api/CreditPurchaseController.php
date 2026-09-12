@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Exceptions\PaystackInitializationException;
 use App\Http\Controllers\Controller;
 use App\Models\CreditPurchase;
-use App\Models\WorkspaceCredit;
 use App\Services\PaystackClient;
+use App\Services\WorkspaceCreditService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +16,71 @@ use Illuminate\Validation\Rule;
 
 class CreditPurchaseController extends Controller
 {
+    public function verify(Request $request, string $reference, PaystackClient $client): JsonResponse
+    {
+        $purchase = CreditPurchase::where('paystack_reference', $reference)->firstOrFail();
+        $user = $request->user();
+        // Legacy purchases have no purchaser identity; allow a member of their
+        // workspace to reconcile them, without exposing another tenant's data.
+        abort_unless($purchase->workspace_id === $user->current_workspace_id
+            && $purchase->workspace->members()->where('user_id', $user->id)->exists()
+            && ($purchase->user_id === null || $purchase->user_id === $user->id), 403);
+
+        if ($purchase->status !== 'pending') {
+            return $this->purchaseStatus($purchase);
+        }
+        if (! config('services.paystack.secret_key')) {
+            return $this->error('Payments are temporarily unavailable.', [], 503);
+        }
+
+        // Verify with Paystack outside the transaction; never hold database
+        // locks during an external request or trust payment status from a URL.
+        try {
+            $payload = $client->verify($purchase->paystack_reference);
+        } catch (\Throwable $error) {
+            Log::warning('Paystack verification unavailable.', ['reference' => $purchase->paystack_reference]);
+
+            return $this->error('We could not verify your payment yet. Please try again shortly.', [], 502);
+        }
+
+        return DB::transaction(function () use ($purchase, $payload) {
+            $purchase = CreditPurchase::whereKey($purchase->id)->lockForUpdate()->firstOrFail();
+            if ($purchase->status !== 'pending') {
+                return $this->purchaseStatus($purchase);
+            }
+            $data = $payload['data'];
+            if (($data['reference'] ?? null) !== $purchase->paystack_reference
+                || ($data['amount'] ?? null) !== $purchase->amount_kobo_or_cents
+                || ($data['currency'] ?? null) !== $purchase->currency) {
+                Log::warning('Paystack verification does not match purchase.', ['reference' => $purchase->paystack_reference]);
+
+                return $this->error('Charge does not match purchase.', [], 422);
+            }
+            $purchase->paystack_response = $payload;
+            if (($data['status'] ?? null) === 'success') {
+                app(WorkspaceCreditService::class)->completePurchase($purchase);
+            } else {
+                // Keep non-successful verifications pending: a later genuine
+                // success webhook must still be able to complete the purchase.
+                $purchase->save();
+            }
+
+            return $this->purchaseStatus($purchase);
+        }, 3);
+    }
+
+    private function purchaseStatus(CreditPurchase $purchase): JsonResponse
+    {
+        $credits = $purchase->workspace->credits()->firstOrFail();
+
+        return $this->success('Payment status retrieved.', [
+            'reference' => $purchase->paystack_reference,
+            'status' => $purchase->status,
+            'documents_remaining' => $credits->documents_remaining,
+            'documents_purchased_total' => $credits->documents_purchased_total,
+        ]);
+    }
+
     public function store(Request $request, PaystackClient $client): JsonResponse
     {
         $packages = config('credits.packages');
@@ -34,6 +99,7 @@ class CreditPurchaseController extends Controller
         // Persist before the external call so even a very early webhook can
         // resolve this reference. Never take workspace, amount or credits from input.
         $purchase = $workspace->purchases()->create([
+            'user_id' => $request->user()->id,
             'paystack_reference' => 'credits-'.Str::uuid(),
             'documents_purchased' => $package['documents'],
             'amount_kobo_or_cents' => $package['amount_kobo_or_cents'],
@@ -109,12 +175,7 @@ class CreditPurchaseController extends Controller
                 return $this->error('Charge does not match purchase.', [], 422);
             }
 
-            $credits = WorkspaceCredit::where('workspace_id', $purchase->workspace_id)->lockForUpdate()->firstOrFail();
-            $credits->documents_remaining += $purchase->documents_purchased;
-            $credits->documents_purchased_total += $purchase->documents_purchased;
-            $credits->save();
-            $purchase->status = 'completed';
-            $purchase->save();
+            app(WorkspaceCreditService::class)->completePurchase($purchase);
 
             return $this->success('Webhook received.');
         }, 3);

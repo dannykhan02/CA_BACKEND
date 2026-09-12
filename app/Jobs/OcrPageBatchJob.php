@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\WorkspaceType;
 use App\Jobs\Concerns\DispatchesIntelligenceChain;
 use App\Models\Document;
 use App\Models\OcrResult;
@@ -127,14 +128,14 @@ class OcrPageBatchJob implements ShouldQueue
             }
             $recorder->fail($batchStage, $e->getMessage());
             $document->forceFill([
-                'status' => 'Needs Review',
+                'status' => $document->workspace?->type === WorkspaceType::Personal ? 'Failed' : 'Needs Review',
                 'error_message' => 'OCR could not process this scanned document.',
             ])->save();
             $this->cleanupTempDir();
             // Deliberately not calling $this->fail() — matches the
-            // pre-batching fallbackToOcr() behavior: an OCR failure
-            // terminates the document into 'Needs Review' but must not
-            // cancel the rest of the chain. GenerateInsightsJob and
+            // fallbackToOcr() behavior: an OCR failure terminates into
+            // 'Failed' for Personal or 'Needs Review' for Organization, without
+            // cancelling the rest of the chain. GenerateInsightsJob and
             // GenerateEmbeddingsJob both guard on document status
             // themselves and simply no-op for a document that isn't
             // 'Processing'/'Ready' respectively.
@@ -170,8 +171,10 @@ class OcrPageBatchJob implements ShouldQueue
 
         if (trim($text) === '') {
             $document->forceFill([
-                'status' => 'Needs Review',
-                'error_message' => 'OCR ran but found no readable text — needs manual review.',
+                'status' => $document->workspace?->type === WorkspaceType::Personal ? 'Failed' : 'Needs Review',
+                'error_message' => $document->workspace?->type === WorkspaceType::Personal
+                    ? 'OCR ran but found no readable text.'
+                    : 'OCR ran but found no readable text — needs manual review.',
             ])->save();
             return;
         }
