@@ -40,6 +40,7 @@ class AnalyzeEmbeddedVisualsJob implements ShouldQueue
         AnthropicClient $client,
         PdfImageDetector $pdfDetector,
         DocxImageDetector $docxDetector,
+        \App\Services\Vision\ImageFileDetector $imageDetector,
         PdfRasterizer $rasterizer,
     ): void {
         $document = Document::find($this->documentId);
@@ -55,6 +56,7 @@ class AnalyzeEmbeddedVisualsJob implements ShouldQueue
         $detector = match (true) {
             $pdfDetector->supports($document) => $pdfDetector,
             $docxDetector->supports($document) => $docxDetector,
+            $imageDetector->supports($document) => $imageDetector,
             default => null,
         };
         if (! $detector) {
@@ -147,6 +149,25 @@ class AnalyzeEmbeddedVisualsJob implements ShouldQueue
      */
     private function mergeCharts(Document $document, array $charts): void
     {
+        // GenerateInsightsJob's text-based extraction can independently
+        // discover the same chart this job just found via vision — e.g.
+        // OCR transcribing on-image percentage labels, or a caption
+        // containing the same figures. Skip a vision-derived chart whose
+        // title already exists on this document, rather than write a
+        // visually-identical duplicate.
+        $existingTitles = $document->charts()->pluck('title')
+            ->map(fn ($t) => strtolower(trim($t)))
+            ->all();
+
+        $charts = array_values(array_filter($charts, function ($chart) use ($existingTitles) {
+            $title = strtolower(trim($chart['title'] ?? ''));
+            return $title === '' || ! in_array($title, $existingTitles, true);
+        }));
+
+        if (empty($charts)) {
+            return;
+        }
+
         DB::transaction(function () use ($document, $charts) {
             foreach ($charts as $chart) {
                 $documentChart = DocumentChart::create([
