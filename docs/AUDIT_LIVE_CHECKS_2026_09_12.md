@@ -2,6 +2,8 @@
 
 These steps collect evidence; they do not authorize deployment, migrations, prompt activation, or test uploads. Run them yourself and paste the actual labeled output. The agent has no live connection. Do not paste passwords, connection URLs, API keys, tokens, or full environment/config dumps.
 
+**2026-09-12 update:** the owner reports staging web was configured for the staging endpoint while staging Horizon was configured for the production endpoint. Staging worker variables have been corrected, but its running process has not been restarted/verified. Start with the ordered [ENV-2 recovery checks](ENV_2_WORKER_ISOLATION_2026_09_12.md). This original checklist remains evidence still needed for the wider ledger; it does not override the new deployment/canary gates. Preserve all historical test records pending branch attribution.
+
 ## 1. Establish current database identity first
 
 From your locally linked Railway backend project, enter staging:

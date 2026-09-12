@@ -42,15 +42,41 @@ Commit subjects containing “staging,” “production,” or “confirm” est
 
 ## First dependency: staging isolation
 
-The two supplied accounts conflict: an isolated Neon branch with a canary versus later identical database endpoints. Neither is accepted as current evidence. A committed `.neon` file and `cb096e3` cannot settle this.
+At the initial 17:43 UTC capture, the two supplied accounts conflicted: an isolated Neon branch with a canary versus later identical database endpoints. Neither was accepted as current evidence. A committed `.neon` file and `cb096e3` could not settle this. The owner's later 2026-09-12 update adds the service-variable evidence recorded below as ENV-2; it does not yet establish running-process isolation.
 
 Pending for **both** backend web and worker services in **both** environments:
 
 - Capture UTC time, Railway environment/service, deployed SHA/deployment ID, `DB_HOST`, `DB_DATABASE`, `DB_HOST_POOLED`, and Laravel's effective database host/name.
-- Map every effective host to its Neon branch ID and compute endpoint ID. `neondb` is commonly reused across branches; different pooled/unpooled host spellings do not establish isolation. Different compute endpoints on one branch also do not establish independent data.
+- Directly map every effective host to its Neon branch ID and compute endpoint ID. The owner has supplied configured hosts and expected branch IDs, but endpoint metadata is still pending. `neondb` is commonly reused across branches; different pooled/unpooled host spellings do not establish isolation. Different compute endpoints on one branch also do not establish independent data.
 - Obtain current and relevant historical Railway deployment records, plus Netlify's frontend deployment revision. Fresh identity settles current isolation; historical deployment/environment evidence is separately needed to qualify old staging claims.
 
 Exact owner-run commands and expected results: [live evidence checks](AUDIT_LIVE_CHECKS_2026_09_12.md). No canary or other live test data is requested before identity is established.
+
+### ENV-2 — Staging Horizon worker pointed at production database
+
+**Status: Blocked — owner-reported configuration corrected; endpoint mapping and runtime correction unverified.** This addition was recorded against the unchanged audit branch after a fresh local capture at **2026-09-12 18:38 UTC**. It preserves, rather than replaces, the earlier evidence state.
+
+Evidence source: the owner's dated update says Railway variables were inspected for all four services; Neon branch IDs came from `neonctl branches list --project-id fragrant-cherry-99998400` and branch inspection. Raw endpoint-to-branch metadata, deployment output, and a worker-executed canary have not yet been supplied. These are owner-reported variable observations, not agent-observed runtime results.
+
+| Railway environment / service | Configured host reported 2026-09-12 | Expected endpoint → branch (not directly cross-confirmed yet) | Runtime evidence |
+| --- | --- | --- | --- |
+| staging / `CA_BACKEND` | `ep-cold-cake-axtm6s8c.c-4.us-east-2.aws.neon.tech` | `ep-cold-cake-axtm6s8c` → `br-hidden-wildflower-axoalt7m` | Not supplied; configuration appears intended |
+| staging / `ca-horizon-worker` before correction | `ep-shy-paper-axsw5ecr.c-4.us-east-2.aws.neon.tech` | `ep-shy-paper-axsw5ecr` → `br-divine-lab-axjoi7y0` | Owner reports production endpoint was configured; exact affected deployment/time interval pending |
+| staging / `ca-horizon-worker` after correction | `ep-cold-cake-axtm6s8c.c-4.us-east-2.aws.neon.tech` | `ep-cold-cake-axtm6s8c` → `br-hidden-wildflower-axoalt7m` | Variables corrected on 2026-09-12; worker **not redeployed/restarted or runtime-verified** |
+| production / `CA_BACKEND` | `ep-shy-paper-axsw5ecr.c-4.us-east-2.aws.neon.tech` | `ep-shy-paper-axsw5ecr` → `br-divine-lab-axjoi7y0` | Not supplied; configuration appears intended |
+| production / `ca-horizon-worker` | `ep-shy-paper-axsw5ecr.c-4.us-east-2.aws.neon.tech` | `ep-shy-paper-axsw5ecr` → `br-divine-lab-axjoi7y0` | Not supplied; configuration appears intended |
+
+Chronology and conclusions:
+
+1. Earlier sessions claimed isolated staging and successful worker-backed checks. A later session claimed a shared production database. The initial local audit could not reconcile either assertion from git.
+2. The new variable observations identify a web/worker configuration split that could explain the conflicting accounts. They do not establish when that split began or whether either historical account was accurate at its own capture time.
+3. The owner corrected staging worker variables on 2026-09-12. An existing Horizon process can retain its old connection; saved variables are not a runtime correction.
+4. Previous worker-backed “staging verified” claims are now explicitly **contaminated/unreliable pending individual reconciliation**, including queued OCR, chart/vision analysis, insights, embeddings, document status changes, and other worker database operations. This is not a claim that every queued job successfully wrote production data: a job may have found no matching document, failed, or run through another consumer. Locate records and deployment/queue evidence per test.
+5. Preserve historical test documents, processing jobs, AI-run rows, audit records, queue job IDs/failures, and retained deployment/log evidence until their actual branch/location and relationship are established. No cleanup of historical records, queue clearing, retries, or bulk reprocessing is authorized by this update.
+
+Closure requires, in order: direct Neon endpoint metadata; explicitly approved deployment of **only** staging `ca-horizon-worker`; post-deployment effective-connection evidence from the new container; and a minimal upload processed by that worker, with resulting IDs present on staging and absent on production. A fresh Tinker process alone cannot prove the connection held by an existing Horizon process. The worker canary must close that gap. Queue routing must also be attributable to staging before submitting it; a shared queue could invalidate an otherwise correct database mapping.
+
+The exact next checks and held deployment action are in [ENV-2 recovery checks](ENV_2_WORKER_ISOLATION_2026_09_12.md). Per the owner's ordering, the executable canary fixture, upload, SQL comparisons, and cleanup will be prepared only after steps 1–3 have actually succeeded. No test has been uploaded or dispatched in this session.
 
 ## Findings and claims ledger
 
@@ -58,7 +84,8 @@ Exact owner-run commands and expected results: [live evidence checks](AUDIT_LIVE
 
 | Finding/claim | Git/source evidence today | Test/evidence qualification | Correction or remaining evidence |
 | --- | --- | --- | --- |
-| ENV-1 / P1 item 7: isolated staging | `.neon` in `196dfa7`; isolation-related commit `cb096e3` | No fresh live identity or canary output | Contradiction unresolved; obtain endpoint-to-branch mapping first |
+| ENV-1 / P1 item 7: isolated staging | `.neon` in `196dfa7`; isolation-related commit `cb096e3` | Initial claim conflict now supplemented by owner-reported web/worker split (ENV-2) | Still blocked; current and historical runtime isolation not established |
+| ENV-2: staging Horizon worker configured for production | Owner's 2026-09-12 Railway-variable observations, recorded above; this is infrastructure evidence, not a git change | Worker variables corrected, but no redeployment/runtime/canary output supplied; endpoint mapping inferred so far | Worker-backed historical staging claims contaminated; preserve records. Endpoint metadata → approved worker-only deploy → runtime check → branch canary required |
 | AUTH-1: verification gate | Middleware and protected route groups in `196dfa7` remain present | `9679a78` tests purchase initialization/verification returning 403 before email verification and succeeding afterward | Confirms those local boundaries; not an exhaustive route matrix or live proof |
 | AUTH-2: Google ownership handoff | `c1c5041`, AuthController resets password and deletes tokens for an unverified pre-existing account | Google auth tests pass; no dedicated assertion of both old-password and token revocation was identified | Commit is not solely a logging change despite its subject |
 | AUTH-3: password-reset throttling/response consistency | `c1c5041`, reset limiter and generic failures | General auth suite passes; no dedicated reset-throttle boundary test identified | Historical reset-token reuse probe is independently flawed; see older reports below |
@@ -87,7 +114,7 @@ Exact owner-run commands and expected results: [live evidence checks](AUDIT_LIVE
 | Prompt release discipline | AiPromptSeeder ends with `AiPrompt::activate('document_insights', 3)` | Reading confirms behavior; no live seeder run | Rerunning this seeder could replace live v6 with v3. Do not use it to reconcile drift |
 | `5229114` image support/dedup | Actual diff adds ImageFileDetector and AnalyzeEmbeddedVisualsJob integration/title filtering only (2 files, 57 insertions) | No extraction/dispatch/OCR file changed by this commit | Partial fix confirmed in git; no claim the text-empty image reaches vision. Item 5 remains untested |
 | Cleanup: 22 scripts / 5 fixtures | `f7da05d` deletes 22 scripts and a stray empty file | Git shows **one** tracked fixture rename into tests/fixtures/manual | Five relocated fixtures cannot be corroborated by tracked history |
-| Historic 132/134 suite and production health | Supplied narrative only | No archived test/deploy output attached to the combined report | Replace current baseline with actual results below; historical evidence remains missing |
+| Historic 132/134 suite and production health | Supplied narrative only | No archived test/deploy output attached to the combined report | Replace current baseline with actual results below; ENV-2 specifically contaminates worker-backed staging claims, not the provenance of the local test run |
 | Persistent logging fix | Current default is stack, whose default channel list is single/local file | No redeploy/log-retention evidence | Not applied as a repository default; live LOG_CHANNEL overrides unknown. Item 4 remains open |
 | Q&A exception swallowing | Current DocumentQaController::ask catch returns a generic error without reporting the exception | Existing test checks response sanitization, not logging | Still present by source inspection; fix and broader catch audit belong to item 3 |
 | Personal/referral/payment follow-up | Backend `d05fdc1`; frontend `ef0af9e` | Personal, referral, purchase, concurrency and frontend tests pass after fixture correction | No new live payment, webhook, credit balance, or deployed frontend confirmation this session |
@@ -133,7 +160,7 @@ Isolation was explicitly checked before the backend run: PostgreSQL `127.0.0.1:5
 
 | Item # | What | Status | Evidence | Notes for next session |
 | --- | --- | --- | --- | --- |
-| 1 | Reconcile claims and staging identity | Blocked | Git/source findings above; `9679a78` and passing local suites | Need combined report, both environments' identity/Neon mapping, deployment history, prompt metadata, health results |
+| 1 | Reconcile claims and staging identity | Blocked | Git/source findings; `9679a78` local suites; owner-reported ENV-2 variable split and correction | Need endpoint metadata, approved staging-worker redeployment, runtime checks, worker canary; combined report and historical deploy/prompt/health evidence still pending |
 | 2 | Migration hygiene | Not started | Existing history discrepancy noted under item 1 | Obtain live migration names/catalog output before proposing changes |
 | 3 | Exception reporting convention and fixes | Not started | Existing Q&A catch noted only | Start after items 1–2; no application edits yet |
 | 4 | Persistent log target | Not started | Default still local-file stack | Config change and redeploy-retention test need later production confirmation |
