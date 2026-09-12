@@ -1,0 +1,59 @@
+Captured 2026-09-12T17:59:51.001854+00:00
+Backend tested contents committed as 9679a78bae02a0adddb3d3de99ed5cdf3764bd38 (tests only, based on main d05fdc1).
+Frontend tested main ef0af9e, unchanged.
+No deploy or live verification performed.
+
+BACKEND ACTUAL STDOUT
+PHPUnit 12.5.29 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.5.4
+Configuration: /home/collins/boys/CA_BACKEND/phpunit.xml
+
+...............................................................  63 / 227 ( 27%)
+............................................................... 126 / 227 ( 55%)
+............................................................... 189 / 227 ( 83%)
+......................................                          227 / 227 (100%)
+
+Time: 00:33.184, Memory: 101.00 MB
+
+OK (227 tests, 1005 assertions)
+
+FRONTEND ACTUAL JUNIT TOTALS
+{'name': 'vitest tests', 'tests': '12', 'failures': '0', 'errors': '0', 'time': '3.086282662'}
+{'name': 'tests/payment-return.test.tsx', 'timestamp': '2026-09-12T17:51:40.563Z', 'tests': '5', 'failures': '0', 'errors': '0', 'skipped': '0', 'time': '0.399686695'}
+{'name': 'tests/referral-signup.test.tsx', 'timestamp': '2026-09-12T17:51:40.567Z', 'tests': '3', 'failures': '0', 'errors': '0', 'skipped': '0', 'time': '1.500545461'}
+{'name': 'tests/upload-referrals.test.tsx', 'timestamp': '2026-09-12T17:51:40.570Z', 'tests': '4', 'failures': '0', 'errors': '0', 'skipped': '0', 'time': '1.186050506'}
+
+TEST FILE SHA256 AT EXECUTION CONTENTS
+938f4e76d8ac48c37c1e8d011dabaf6bae4809322dbca093c291f3ba0de1ea78  tests/Concerns/FakesGoogleTokens.php
+d875827d98296f4c8a498f444c6dba1245bc94e135186abb2a74f1729e35f3ba  tests/Feature/ReferralTest.php
+
+EXACT LOCAL RUNNER (temporary path /tmp/ca-audit-local-test.sh)
+These are disposable LOCAL test settings. This script was not run in Railway and must never be pointed at a live database.
+#!/usr/bin/env bash
+set -euo pipefail
+cd /home/collins/boys/CA_BACKEND
+export PAO_DISABLE=1
+export APP_ENV=testing APP_DEBUG=false APP_URL=http://localhost FRONTEND_URL=http://localhost:5173
+export APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+export APP_CONFIG_CACHE=/tmp/ca-audit-no-cached-config.php
+export DB_CONNECTION=pgsql DB_HOST=127.0.0.1 DB_PORT=5433
+export DB_DATABASE=ca_document_intelligence_test DB_USERNAME=postgres DB_PASSWORD=password123 DB_SSLMODE=disable DB_URL=
+export REDIS_URL= REDIS_HOST=127.0.0.1 REDIS_PORT=6389 REDIS_USERNAME= REDIS_PASSWORD=
+export REDIS_DB=0 REDIS_CACHE_DB=1 REDIS_PREFIX=ca-audit-test- HORIZON_PREFIX=ca-audit-test-horizon-
+export CACHE_STORE=array QUEUE_CONNECTION=sync SESSION_DRIVER=array MAIL_MAILER=array
+export FILESYSTEM_DISK=local LOG_CHANNEL=single CLAMAV_ENABLED=false
+export PULSE_ENABLED=false TELESCOPE_ENABLED=false NIGHTWATCH_ENABLED=false
+export SENTRY_DSN= SENTRY_LARAVEL_DSN= SENTRY_ENABLE_LOGS=false SENTRY_ENABLE_METRICS=false
+export ANTHROPIC_API_KEY= VOYAGE_API_KEY= PAYSTACK_SECRET_KEY= PAYSTACK_PUBLIC_KEY=
+export RESEND_API_KEY= RESEND_WEBHOOK_SECRET= GOOGLE_CLIENT_ID= GOOGLE_CLIENT_SECRET=
+export AWS_ACCESS_KEY_ID= AWS_SECRET_ACCESS_KEY= R2_ACCESS_KEY_ID= R2_SECRET_ACCESS_KEY=
+export R2_ENDPOINT=http://127.0.0.1:9 R2_BUCKET=ca-local-tests AWS_ENDPOINT=http://127.0.0.1:9 AWS_BUCKET=ca-local-tests
+export SLACK_BOT_USER_OAUTH_TOKEN= LOG_SLACK_WEBHOOK_URL=
+test ! -e "$APP_CONFIG_CACHE"
+php -r 'require "vendor/autoload.php"; $app = require "bootstrap/app.php"; $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); $db = Illuminate\Support\Facades\DB::connection(); $facts = ["environment" => config("app.env"), "database_host" => $db->getConfig("host"), "database_port" => (int) $db->getConfig("port"), "database" => $db->getConfig("database"), "redis_host" => config("database.redis.default.host"), "redis_port" => (int) config("database.redis.default.port"), "storage" => config("filesystems.default"), "queue" => config("queue.default"), "mail" => config("mail.default")]; $expected = ["environment" => "testing", "database_host" => "127.0.0.1", "database_port" => 5433, "database" => "ca_document_intelligence_test", "redis_host" => "127.0.0.1", "redis_port" => 6389, "storage" => "local", "queue" => "sync", "mail" => "array"]; if ($facts !== $expected) { fwrite(STDERR, "Local isolation guard failed.\n"); exit(1); } echo json_encode($facts, JSON_PRETTY_PRINT), PHP_EOL; echo "Actual local database: ", $db->selectOne("SELECT current_database() AS name")->name, PHP_EOL; echo "Local Redis: ", Illuminate\Support\Facades\Redis::connection()->ping() ? "reachable" : "unreachable", PHP_EOL;'
+set +e
+php vendor/bin/phpunit --log-junit /tmp/ca-audit-backend-junit.xml > /tmp/ca-audit-backend-tests.txt 2>&1
+ca_test_exit=$?
+cat /tmp/ca-audit-backend-tests.txt
+exit "$ca_test_exit"
