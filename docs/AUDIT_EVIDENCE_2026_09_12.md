@@ -217,3 +217,21 @@ Both runs used PHP 8.5.4 / PHPUnit 12.5.29 with the same guarded localhost Postg
 | 13–16 | Tier 3 | Not started | Prompt provenance discrepancy recorded only | Finish Tier 2 first; keep AI test volume deliberate |
 
 Nothing is ready to be marked resolved in production. No production deployment is requested for this documentation/test-only branch.
+
+## 2026-09-13: priority payment investigation, before application edits
+
+The owner elevated missing payment credits and the upload-to-final-output workflow ahead of lower-priority audit work. This payment investigation continues from backend `df377cd` and frontend `ef0af9e`; it does not restart the audit or resolve ENV-2. Source, local reproductions, proposed fixes and the separate conditional reconciliation procedure are in [the payment lifecycle report](PAYMENT_LIFECYCLE_INVESTIGATION_2026_09_13.md). No application logic or production records were changed.
+
+| Finding | Status | Evidence | Next evidence/action |
+| --- | --- | --- | --- |
+| Payment completion event can leave an old banner balance | Confirmed locally; unfixed | Frontend test-only `8f59c53` reproduces a 110-credit confirmation beside a 10-credit banner; manual GET refresh recovers | Proposed coalesced refresh is documented, not applied; establish whether affected users match this symptom |
+| Purchase, buyer counters and referral reward atomicity | Confirmed for tested current paths | Backend test-only `42414cd` injects post-update exceptions and checks full rollback/retry; independent-process webhook/verification grants once | Does not prove historical deployments or data integrity; inconsistent completed markers are not repaired by replay |
+| Actual paid-but-uncredited users | Blocked on owner evidence | No affected reference, independent Paystack success, deployed routing or live DB output supplied | Run [allowlisted read-only evidence steps](PAYMENT_LIVE_EVIDENCE_2026_09_13.md); do not replay or edit records |
+| ENV-2 relevance to payments | Runtime/canary still unverified | Payment fulfillment is synchronous in the web handler, not Horizon | Preserve historical worker contamination; separately establish actual web/API/webhook destinations and branch identity |
+| Document upload-to-final-output workflow | Still open, next functional investigation | Existing `5229114` source evidence retained | No new pipeline diagnosis, fix or live confirmation claimed in this payment investigation |
+
+Focused backend: **69 tests / 502 assertions**. Full backend: **270 tests / 1,301 assertions**, zero failures/errors/skips. Focused frontend: **7 tests**; full frontend: **14 tests**, zero failures. The frontend suite includes an explicit characterization of the still-unfixed race; green tests are not a claim that the UI defect is corrected. [Actual local results and revision evidence](audit-evidence/2026-09-13/payment-lifecycle-test-results.txt) are archived separately. No deployment, live health check, payment repair or lower-tier audit closure is asserted.
+
+### Subsequent owner evidence: one affected reference supplied
+
+The owner supplied `credits-e5401cf0-dd11-4666-a6a2-69b4d9879361` and confirmed that Paystack reports success. This updates the earlier capture's absence of an affected reference; it does not establish application fulfillment. The [case record](audit-evidence/2026-09-13/payment-e5401cf0-investigation.md) targets production branch `br-divine-lab-axjoi7y0` only and prepares the documented preflight/lookup sequence. No live query has been executed by the agent and no production output has been supplied. Purchase status, actual workspace mismatch, balances and chronology remain unverified. The case explicitly distinguishes a completed purchase in a different workspace from a provider-successful purchase whose application status is still pending/failed. No repair or application change is proposed.

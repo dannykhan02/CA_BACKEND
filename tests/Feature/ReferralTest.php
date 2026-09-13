@@ -308,6 +308,39 @@ class ReferralTest extends TestCase
         $this->assertSame(17, $owner->currentWorkspace->credits->documents_remaining);
     }
 
+    public function test_failure_after_reward_marker_rolls_back_purchase_and_both_workspaces(): void
+    {
+        $owner = $this->referrer();
+        $this->signup($this->code($owner))->assertCreated();
+        $buyer = User::where('email', 'friend@example.com')->sole();
+        $purchase = $this->purchase($buyer);
+        $shouldFail = true;
+        Referral::updated(function (Referral $referral) use (&$shouldFail) {
+            if ($shouldFail && $referral->status === 'rewarded') {
+                throw new \RuntimeException('Synthetic failure after referral reward update.');
+            }
+        });
+
+        $this->webhook($purchase)->assertStatus(500);
+        $this->assertSame('pending', $purchase->fresh()->status);
+        $this->assertNull($purchase->fresh()->paystack_response);
+        $this->assertSame('pending', Referral::sole()->status);
+        $this->assertNull(Referral::sole()->rewarded_at);
+        $this->assertSame(0, Referral::sole()->reward_documents);
+        $this->assertSame(10, $buyer->currentWorkspace->credits()->first()->documents_remaining);
+        $this->assertSame(0, $buyer->currentWorkspace->credits()->first()->documents_purchased_total);
+        $this->assertSame(0, $owner->currentWorkspace->credits()->first()->documents_remaining);
+
+        $shouldFail = false;
+        $this->webhook($purchase)->assertOk();
+        $this->webhook($purchase)->assertOk();
+        $this->assertSame('completed', $purchase->fresh()->status);
+        $this->assertSame(110, $buyer->currentWorkspace->credits()->first()->documents_remaining);
+        $this->assertSame(100, $buyer->currentWorkspace->credits()->first()->documents_purchased_total);
+        $this->assertSame(17, $owner->currentWorkspace->credits()->first()->documents_remaining);
+        $this->assertSame('rewarded', Referral::sole()->status);
+    }
+
     public function test_purchase_records_authenticated_buyer_and_ignores_identity_from_request(): void
     {
         $owner = $this->referrer();
