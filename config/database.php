@@ -92,7 +92,7 @@ return [
             // setup overhead on every new connection, which showed up as a
             // ~750ms cold-start cost in production latency testing. Falls
             // back to DB_HOST if DB_HOST_POOLED isn't set (e.g. local dev).
-            'host' => env('DB_HOST_POOLED', env('DB_HOST', '127.0.0.1')),
+            'host' => env('DB_HOST_POOLED') ?: env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '5432'),
             'database' => env('DB_DATABASE', 'laravel'),
             'username' => env('DB_USERNAME', 'root'),
