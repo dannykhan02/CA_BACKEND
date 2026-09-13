@@ -1,0 +1,127 @@
+PAYMENT LIFECYCLE INVESTIGATION — LOCAL EVIDENCE ONLY
+Archived UTC: 2026-09-13T17:57:22.762169+00:00
+Backend application baseline: df377cd (includes f8a5c8f payment logging).
+Frontend application baseline: ef0af9e.
+Backend test-only commit: 42414cdfd94f281001d82f3f7f15a7078efe6840
+Frontend test-only commit: 8f59c5305fd3d18f5bf1b7e2f5b0239c97ee3b7e
+
+No application logic, migrations, seeders, credit amounts, configuration,
+webhook signatures, response envelopes, retry or referral semantics changed.
+The frontend race is deliberately characterized as UNFIXED. Passing tests
+do not establish that affected production payments were credited or displayed.
+
+LOCAL ISOLATION
+Both backend runs first checked effective configuration and connections:
+APP_ENV=testing; PostgreSQL=127.0.0.1:5433; database=ca_document_intelligence_test;
+Redis=127.0.0.1:6389; queue=sync; storage=local; mail/cache/session=array;
+config-cache guard path absent; provider credentials cleared; telemetry disabled.
+All provider interactions in the payment tests are mocks/fakes.
+No deployed service, Neon branch or Paystack transaction was accessed.
+
+RUN ORDER AND ACTUAL BACKEND OUTPUT
+
+FOCUSED: bash /tmp/ca-payment-lifecycle-focused.sh
+Output capture mtime UTC: 2026-09-13T17:41:10.189706+00:00
+PHPUnit 12.5.29 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.5.4
+Configuration: /home/collins/boys/CA_BACKEND/phpunit.xml
+
+................................................................. 65 / 69 ( 94%)
+....                                                              69 / 69 (100%)
+
+Time: 00:17.803, Memory: 79.00 MB
+
+OK (69 tests, 502 assertions)
+JUnit confirms: {'tests': '69', 'assertions': '502', 'errors': '0', 'failures': '0', 'skipped': '0'}
+
+FULL: bash /tmp/ca-payment-lifecycle-full.sh
+Output capture mtime UTC: 2026-09-13T17:44:19.321124+00:00
+PHPUnit 12.5.29 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.5.4
+Configuration: /home/collins/boys/CA_BACKEND/phpunit.xml
+
+...............................................................  63 / 270 ( 23%)
+............................................................... 126 / 270 ( 46%)
+............................................................... 189 / 270 ( 70%)
+............................................................... 252 / 270 ( 93%)
+..................                                              270 / 270 (100%)
+
+Time: 00:33.969, Memory: 105.00 MB
+
+OK (270 tests, 1301 assertions)
+JUnit confirms: {'tests': '270', 'assertions': '1301', 'errors': '0', 'failures': '0', 'skipped': '0'}
+
+FRONTEND
+Focused, before full runs: npm test -- tests/payment-balance-investigation.test.tsx tests/payment-return.test.tsx
+Tool output: 2 files / 7 tests passed. No separate focused JUnit file was retained.
+Full: npm test -- --reporter=default --reporter=junit --outputFile.junit=/tmp/ca-payment-lifecycle-frontend-junit.xml
+Full JUnit confirms: {'tests': '14', 'failures': '0', 'errors': '0'}
+  {'name': 'tests/payment-balance-investigation.test.tsx', 'timestamp': '2026-09-13T17:42:26.784Z', 'tests': '2', 'failures': '0', 'errors': '0', 'skipped': '0'}
+  {'name': 'tests/payment-return.test.tsx', 'timestamp': '2026-09-13T17:42:26.786Z', 'tests': '5', 'failures': '0', 'errors': '0', 'skipped': '0'}
+  {'name': 'tests/referral-signup.test.tsx', 'timestamp': '2026-09-13T17:42:26.788Z', 'tests': '3', 'failures': '0', 'errors': '0', 'skipped': '0'}
+  {'name': 'tests/upload-referrals.test.tsx', 'timestamp': '2026-09-13T17:42:26.789Z', 'tests': '4', 'failures': '0', 'errors': '0', 'skipped': '0'}
+
+ADDITIONAL CHECKS
+Pint --test on the three backend investigation test files passed.
+git diff --check passed in both repositories before the test-only commits.
+payment-read-only.sql executed successfully against the migrated LOCAL test
+schema with psql -X -v ON_ERROR_STOP=1 and default_transaction_read_only=on.
+That establishes query syntax/schema compatibility, not production findings.
+
+COVERAGE MAP (existing tests were also run, not rewritten)
+CreditPurchaseTest: signed success; verified success; both completion orders;
+duplicate webhook; early webhook; ambiguous initialization then success;
+charge mismatch; absent balance rollback; authentication and attribution.
+PaymentLifecycleInvestigationTest: throw after completed SQL update on each
+entry point; rollback status/payload/both counters; retry and both replays;
+workspace change; characterization of an intentionally corrupt completed row.
+ReferralTest: success/replays and reward failures, including a new exception
+after the rewarded SQL update that rolls back buyer and referrer mutations.
+ReferralConcurrencyTest: independent-process same-purchase webhook versus
+verification; distinct first purchases across workspaces; one referral reward.
+WorkspaceCreditConcurrencyTest: concurrent balance updates/consumption.
+PaymentExceptionLoggingTest: initialization/verification/JSON failure privacy;
+unchanged responses, purchase state, retry and correlated logging behavior.
+payment-balance-investigation.test.tsx: normal refresh, dropped-event race
+with real return page and balance component, and manual refresh recovery.
+
+TEST CONTENT SHA256 (same bytes used in the successful runs)
+5cb6050644fc6c9f6f82cc9530bb15f4b9790ee76e5c1720b3806646b052cdbb  CA_BACKEND/tests/Feature/PaymentLifecycleInvestigationTest.php
+5c49820498f156b82aba2800d72a8b32f085385e5663fd7628682cdcbebcf48f  CA_BACKEND/tests/Feature/ReferralTest.php
+c94ac56189385f3831629c13d4e45a6e40b0ec99dd815819ce23f0fae0ec89b1  CA_BACKEND/tests/Feature/ReferralConcurrencyTest.php
+3a46df8ff1d1a9d5c21b2caeb4fa7cb8d5941c2f81030331a93da66d7c6af8d3  CA_BACKEND/tests/Feature/DocumentQaTest.php
+93cf43333271c7ba05ab1b7e0ed2209db2ded847a5ba5b5b0bb752a5ab52e3fe  CA/tests/payment-balance-investigation.test.tsx
+
+GUARDED FULL BACKEND RUNNER (local fixture credentials only)
+#!/usr/bin/env bash
+set -euo pipefail
+cd /home/collins/boys/CA_BACKEND
+export PAO_DISABLE=1
+export APP_ENV=testing APP_DEBUG=false APP_URL=http://localhost FRONTEND_URL=http://localhost:5173
+export APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+export APP_CONFIG_CACHE=/tmp/ca-audit-no-cached-config.php
+export DB_CONNECTION=pgsql DB_HOST=127.0.0.1 DB_PORT=5433
+export DB_DATABASE=ca_document_intelligence_test DB_USERNAME=postgres DB_PASSWORD=password123 DB_SSLMODE=disable DB_URL=
+export REDIS_URL= REDIS_HOST=127.0.0.1 REDIS_PORT=6389 REDIS_USERNAME= REDIS_PASSWORD=
+export REDIS_DB=0 REDIS_CACHE_DB=1 REDIS_PREFIX=ca-audit-test- HORIZON_PREFIX=ca-audit-test-horizon-
+export CACHE_STORE=array QUEUE_CONNECTION=sync SESSION_DRIVER=array MAIL_MAILER=array
+export FILESYSTEM_DISK=local LOG_CHANNEL=single CLAMAV_ENABLED=false
+export PULSE_ENABLED=false TELESCOPE_ENABLED=false NIGHTWATCH_ENABLED=false
+export SENTRY_DSN= SENTRY_LARAVEL_DSN= SENTRY_ENABLE_LOGS=false SENTRY_ENABLE_METRICS=false
+export ANTHROPIC_API_KEY= VOYAGE_API_KEY= PAYSTACK_SECRET_KEY= PAYSTACK_PUBLIC_KEY=
+export RESEND_API_KEY= RESEND_WEBHOOK_SECRET= GOOGLE_CLIENT_ID= GOOGLE_CLIENT_SECRET=
+export AWS_ACCESS_KEY_ID= AWS_SECRET_ACCESS_KEY= R2_ACCESS_KEY_ID= R2_SECRET_ACCESS_KEY=
+export R2_ENDPOINT=http://127.0.0.1:9 R2_BUCKET=ca-local-tests AWS_ENDPOINT=http://127.0.0.1:9 AWS_BUCKET=ca-local-tests
+export SLACK_BOT_USER_OAUTH_TOKEN= LOG_SLACK_WEBHOOK_URL=
+test ! -e "$APP_CONFIG_CACHE"
+php -r 'require "vendor/autoload.php"; $app = require "bootstrap/app.php"; $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); $db = Illuminate\Support\Facades\DB::connection(); $facts = ["environment" => config("app.env"), "database_host" => $db->getConfig("host"), "database_port" => (int) $db->getConfig("port"), "database" => $db->getConfig("database"), "redis_host" => config("database.redis.default.host"), "redis_port" => (int) config("database.redis.default.port"), "storage" => config("filesystems.default"), "queue" => config("queue.default"), "mail" => config("mail.default")]; $expected = ["environment" => "testing", "database_host" => "127.0.0.1", "database_port" => 5433, "database" => "ca_document_intelligence_test", "redis_host" => "127.0.0.1", "redis_port" => 6389, "storage" => "local", "queue" => "sync", "mail" => "array"]; if ($facts !== $expected) { fwrite(STDERR, "Local isolation guard failed.\n"); exit(1); } echo json_encode($facts, JSON_PRETTY_PRINT), PHP_EOL; echo "Actual local database: ", $db->selectOne("SELECT current_database() AS name")->name, PHP_EOL; echo "Local Redis: ", Illuminate\Support\Facades\Redis::connection()->ping() ? "reachable" : "unreachable", PHP_EOL;'
+set +e
+php vendor/bin/phpunit --log-junit /tmp/ca-payment-lifecycle-full-junit.xml > /tmp/ca-payment-lifecycle-full-tests.txt 2>&1
+ca_test_exit=$?
+cat /tmp/ca-payment-lifecycle-full-tests.txt
+exit "$ca_test_exit"
+
+Focused runner uses the same guard/exports, with this filter:
+PaymentLifecycleInvestigationTest|CreditPurchaseTest|ReferralTest|ReferralConcurrencyTest|PaymentExceptionLoggingTest|WorkspaceCreditConcurrencyTest
