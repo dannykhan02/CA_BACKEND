@@ -23,7 +23,7 @@ final class SafeExceptionContext
         // Keep the actual diagnostic summary, never appended SQL, headers,
         // request/response bodies, or multiline provider/database context.
         $message = preg_replace(
-            '/(?:\R|\s+\((?:Connection|SQL):|\b(?:DETAIL|CONTEXT|QUERY|STATEMENT):|\b(?:(?:request|response)\s+)?body\s*[:=]|\{).*$/is',
+            '/(?:\R|\s+\((?:Connection|SQL):|\b(?:DETAIL|CONTEXT|QUERY|STATEMENT):|\b(?:(?:request|response|provider)\s+)?(?:body|payload|headers)\s*[:=]|\{).*$/is',
             ' [details redacted]',
             $message
         ) ?? '[exception details redacted]';
@@ -51,10 +51,24 @@ final class SafeExceptionContext
         $message = preg_replace('/\b(Bearer|Basic)\s+[^\s,;]+/i', '$1 [redacted]', $message)
             ?? '[exception details redacted]';
 
+        // Payment diagnostics must not retain signatures, reusable payment
+        // credentials or customer/card/bank fields echoed on the first line.
+        $message = preg_replace(
+            '/\b(x-paystack-signature|signature|(?:authorization|access)[-_ ]?code|customer(?:[-_ ]?(?:code|id))?|email|phone|first[-_ ]?name|last[-_ ]?name|card(?:[-_ ]?(?:number|type|holder))?|pan|bin|last4|cvv|cvc|pin|exp[-_ ]?(?:month|year)|bank|account(?:[-_ ]?(?:number|name))?)["\']?\s*[:=].*$/i',
+            '$1=[redacted]',
+            $message
+        ) ?? '[payment details redacted]';
+        $message = preg_replace([
+            '/\b(?:AUTH|CUS)_[A-Za-z0-9_-]+\b/',
+            '/[A-Z0-9.!#$%&\'*+\/=?^_`{|}~-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i',
+            '/(?<!\d)(?:\d[ -]?){12,18}\d(?!\d)/',
+        ], '[redacted]', $message) ?? '[payment details redacted]';
+
         // Also cover unlabelled credentials echoed by a provider/driver.
         foreach ([
             'app.key', 'services.anthropic.api_key', 'services.voyage.api_key',
             'services.google.client_secret', 'services.resend.key',
+            'services.paystack.secret_key',
             'database.connections.pgsql.password', 'database.redis.default.password',
             'filesystems.disks.documents.key', 'filesystems.disks.documents.secret',
         ] as $key) {

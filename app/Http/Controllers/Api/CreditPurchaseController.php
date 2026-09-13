@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CreditPurchase;
 use App\Services\PaystackClient;
 use App\Services\WorkspaceCreditService;
+use App\Support\SafeExceptionContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -38,7 +39,12 @@ class CreditPurchaseController extends Controller
         try {
             $payload = $client->verify($purchase->paystack_reference);
         } catch (\Throwable $error) {
-            Log::warning('Paystack verification unavailable.', ['reference' => $purchase->paystack_reference]);
+            Log::error('Paystack verification unavailable.', SafeExceptionContext::for($error, [
+                'purchase_id' => $purchase->id,
+                'reference' => $purchase->paystack_reference,
+                'user_id' => $user->id,
+                'workspace_id' => $purchase->workspace_id,
+            ]));
 
             return $this->error('We could not verify your payment yet. Please try again shortly.', [], 502);
         }
@@ -116,7 +122,13 @@ class CreditPurchaseController extends Controller
             }
             // Ambiguous network/server failures stay pending for reconciliation
             // and a possible later success webhook.
-            Log::warning('Paystack initialization failed.', ['reference' => $purchase->paystack_reference]);
+            Log::error('Paystack initialization failed.', SafeExceptionContext::for($exception, [
+                'purchase_id' => $purchase->id,
+                'reference' => $purchase->paystack_reference,
+                'user_id' => $purchase->user_id,
+                'workspace_id' => $purchase->workspace_id,
+                'definitively_rejected' => $exception->definitivelyRejected,
+            ]));
 
             return $this->error($exception->getMessage(), [], 502);
         }
@@ -140,7 +152,11 @@ class CreditPurchaseController extends Controller
         // Parse only after authenticating the exact bytes delivered by Paystack.
         try {
             $payload = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
-        } catch (\JsonException) {
+        } catch (\JsonException $exception) {
+            Log::error('Paystack webhook JSON parsing failed.', SafeExceptionContext::for($exception, [
+                'operation' => 'paystack.webhook.parse',
+            ]));
+
             return $this->error('Invalid webhook payload.', [], 400);
         }
         if (! is_array($payload)) {

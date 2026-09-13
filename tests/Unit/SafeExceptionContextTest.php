@@ -75,7 +75,44 @@ class SafeExceptionContextTest extends TestCase
             'cookie' => ['Failure 503; Cookie: session=private-cookie; another=value', 'private-cookie'],
             'basic' => ['Failure 503; Basic cHJpdmF0ZTpwYXNzd29yZA==', 'cHJpdmF0ZTpwYXNzd29yZA=='],
             'database URL' => ['Failure 503; postgresql://user:private-password@database.example/db', 'private-password'],
+            'Paystack signature' => ['Failure 503; x-paystack-signature: private-signature', 'private-signature'],
+            'authorization code' => ['Failure 503; authorization_code=AUTH_private', 'AUTH_private'],
+            'access code' => ['Failure 503; access_code=private-checkout', 'private-checkout'],
+            'customer' => ['Failure 503; customer: Private Payer', 'Private Payer'],
+            'card data' => ['Failure 503; card_number: 4242424242424242; cvv: 123', '4242424242424242'],
+            'bank account' => ['Failure 503; account_number: private-account; bank: private-bank', 'private-account'],
+            'bare authorization code' => ['Failure 503 for AUTH_private', 'AUTH_private'],
+            'bare customer code' => ['Failure 503 for CUS_private', 'CUS_private'],
+            'bare customer email' => ['Failure 503 for private-payer@example.com', 'private-payer@example.com'],
+            'bare card number' => ['Failure 503 for 4242424242424242', '4242424242424242'],
+            'spaced card number' => ['Failure 503 for 4242 4242 4242 4242', '4242 4242 4242 4242'],
         ];
+    }
+
+    #[DataProvider('paymentPayloads')]
+    public function test_inline_payment_payloads_and_headers_are_not_retained(string $suffix): void
+    {
+        $this->assertSame('Failure 503;  [details redacted]', SafeExceptionContext::for(
+            new \RuntimeException('Failure 503; '.$suffix)
+        )['exception_message']);
+    }
+
+    public static function paymentPayloads(): array
+    {
+        return [
+            'headers' => ['headers: X-Customer-Name=Private Payer; x-paystack-signature=private-signature'],
+            'array payload' => ['provider payload: ["Private Payer", "private-checkout", "4242424242424242"]'],
+            'response body' => ['response body: <html>Private Payer</html>'],
+        ];
+    }
+
+    public function test_unlabelled_configured_paystack_secret_is_redacted(): void
+    {
+        config(['services.paystack.secret_key' => 'sk_test_opaque_payment_credential']);
+
+        $this->assertSame('Failure 503 for [redacted]', SafeExceptionContext::for(
+            new \RuntimeException('Failure 503 for sk_test_opaque_payment_credential')
+        )['exception_message']);
     }
 
     public function test_unlabelled_configured_secret_is_removed_and_message_is_bounded(): void
