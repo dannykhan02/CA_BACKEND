@@ -1,0 +1,81 @@
+V4 PROMPT FIXTURE — LOCAL TEST EVIDENCE
+Captured UTC: 2026-09-13T16:59:32+00:00
+Test-only commit: f7361ad671b3108d5a7a4257c5039f50ef3c156a
+Prior application commit: f8a5c8f58e4998ef129762132da9cb19d46cfe4e
+Source commit: 9e608eaf946a4d015154ac23f29ec1421e06170c
+Audit branch incorporation: 31981f37666d672b0ecd8dfc8a26c61dfa191d54
+
+Runtime preflight confirmed before each run:
+APP_ENV=testing; PostgreSQL host=127.0.0.1 port=5433 database=ca_document_intelligence_test.
+Actual SELECT current_database() result: ca_document_intelligence_test.
+Redis host=127.0.0.1 port=6389: reachable.
+Queue=sync; storage=local; mail/cache/session=array; config cache absent;
+external credentials cleared and telemetry disabled. No live database or provider call.
+
+COMMAND ORDER AND ACTUAL OUTPUT
+
+SINGLE RUN: bash /tmp/ca-v4-fixture-single.sh
+php vendor/bin/phpunit --filter '^Tests\\Feature\\DocumentQaTest::test_insights_prompt_v4_permits_factual_insight_without_trend$' --log-junit /tmp/ca-v4-fixture-single-junit.xml > /tmp/ca-v4-fixture-single-tests.txt 2>&1
+PHPUnit 12.5.29 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.5.4
+Configuration: /home/collins/boys/CA_BACKEND/phpunit.xml
+
+.                                                                   1 / 1 (100%)
+
+Time: 00:02.179, Memory: 61.00 MB
+
+OK (1 test, 3 assertions)
+
+FULL RUN: bash /tmp/ca-v4-fixture-full.sh
+php vendor/bin/phpunit --log-junit /tmp/ca-v4-fixture-full-junit.xml > /tmp/ca-v4-fixture-full-tests.txt 2>&1
+PHPUnit 12.5.29 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.5.4
+Configuration: /home/collins/boys/CA_BACKEND/phpunit.xml
+
+...............................................................  63 / 264 ( 23%)
+............................................................... 126 / 264 ( 47%)
+............................................................... 189 / 264 ( 71%)
+............................................................... 252 / 264 ( 95%)
+............                                                    264 / 264 (100%)
+
+Time: 00:30.363, Memory: 105.00 MB
+
+OK (264 tests, 1237 assertions)
+
+FILE SHA256 AT EXECUTION CONTENTS (seeders/registration unchanged from source commit)
+3a46df8ff1d1a9d5c21b2caeb4fa7cb8d5941c2f81030331a93da66d7c6af8d3  tests/Feature/DocumentQaTest.php
+b78b2b9b4c39d23a8406e11bd33bf3f101d77cef75e7f244b4d8924f11d3241d  database/seeders/DocumentInsightsPromptSeederV4.php
+097813180a2eae811b315a7fa6f3734406d916a847c10bc33d1ddaf4621e9be2  database/seeders/DocumentInsightsPromptSeederV5.php
+58424b8ffcde35433f17957247f8f54f33e5a747a35a2763d8047782f5246863  database/seeders/DocumentInsightsPromptSeederV6.php
+6172298a1c100055fcc6e7b6038aa927c597dd635ddaffcf2980dad4060d822f  database/seeders/DatabaseSeeder.php
+
+GUARDED FULL-SUITE RUNNER (single-test runner differs only in filter/output paths)
+#!/usr/bin/env bash
+set -euo pipefail
+cd /home/collins/boys/CA_BACKEND
+export PAO_DISABLE=1
+export APP_ENV=testing APP_DEBUG=false APP_URL=http://localhost FRONTEND_URL=http://localhost:5173
+export APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+export APP_CONFIG_CACHE=/tmp/ca-audit-no-cached-config.php
+export DB_CONNECTION=pgsql DB_HOST=127.0.0.1 DB_PORT=5433
+export DB_DATABASE=ca_document_intelligence_test DB_USERNAME=postgres DB_PASSWORD=password123 DB_SSLMODE=disable DB_URL=
+export REDIS_URL= REDIS_HOST=127.0.0.1 REDIS_PORT=6389 REDIS_USERNAME= REDIS_PASSWORD=
+export REDIS_DB=0 REDIS_CACHE_DB=1 REDIS_PREFIX=ca-audit-test- HORIZON_PREFIX=ca-audit-test-horizon-
+export CACHE_STORE=array QUEUE_CONNECTION=sync SESSION_DRIVER=array MAIL_MAILER=array
+export FILESYSTEM_DISK=local LOG_CHANNEL=single CLAMAV_ENABLED=false
+export PULSE_ENABLED=false TELESCOPE_ENABLED=false NIGHTWATCH_ENABLED=false
+export SENTRY_DSN= SENTRY_LARAVEL_DSN= SENTRY_ENABLE_LOGS=false SENTRY_ENABLE_METRICS=false
+export ANTHROPIC_API_KEY= VOYAGE_API_KEY= PAYSTACK_SECRET_KEY= PAYSTACK_PUBLIC_KEY=
+export RESEND_API_KEY= RESEND_WEBHOOK_SECRET= GOOGLE_CLIENT_ID= GOOGLE_CLIENT_SECRET=
+export AWS_ACCESS_KEY_ID= AWS_SECRET_ACCESS_KEY= R2_ACCESS_KEY_ID= R2_SECRET_ACCESS_KEY=
+export R2_ENDPOINT=http://127.0.0.1:9 R2_BUCKET=ca-local-tests AWS_ENDPOINT=http://127.0.0.1:9 AWS_BUCKET=ca-local-tests
+export SLACK_BOT_USER_OAUTH_TOKEN= LOG_SLACK_WEBHOOK_URL=
+test ! -e "$APP_CONFIG_CACHE"
+php -r 'require "vendor/autoload.php"; $app = require "bootstrap/app.php"; $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); $db = Illuminate\Support\Facades\DB::connection(); $facts = ["environment" => config("app.env"), "database_host" => $db->getConfig("host"), "database_port" => (int) $db->getConfig("port"), "database" => $db->getConfig("database"), "redis_host" => config("database.redis.default.host"), "redis_port" => (int) config("database.redis.default.port"), "storage" => config("filesystems.default"), "queue" => config("queue.default"), "mail" => config("mail.default")]; $expected = ["environment" => "testing", "database_host" => "127.0.0.1", "database_port" => 5433, "database" => "ca_document_intelligence_test", "redis_host" => "127.0.0.1", "redis_port" => 6389, "storage" => "local", "queue" => "sync", "mail" => "array"]; if ($facts !== $expected) { fwrite(STDERR, "Local isolation guard failed.\n"); exit(1); } echo json_encode($facts, JSON_PRETTY_PRINT), PHP_EOL; echo "Actual local database: ", $db->selectOne("SELECT current_database() AS name")->name, PHP_EOL; echo "Local Redis: ", Illuminate\Support\Facades\Redis::connection()->ping() ? "reachable" : "unreachable", PHP_EOL;'
+set +e
+php vendor/bin/phpunit --log-junit /tmp/ca-v4-fixture-full-junit.xml > /tmp/ca-v4-fixture-full-tests.txt 2>&1
+ca_test_exit=$?
+cat /tmp/ca-v4-fixture-full-tests.txt
+exit "$ca_test_exit"

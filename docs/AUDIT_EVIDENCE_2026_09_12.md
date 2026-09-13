@@ -40,6 +40,26 @@ fad581b Add chart_vision to document_ai_runs purpose check constraint
 
 Commit subjects containing “staging,” “production,” or “confirm” establish neither a successful deployment nor current environment identity.
 
+## Prompt source reconciliation — 2026-09-13
+
+**Current source-control status: document_insights v4, v5 and v6 are present and registered.** This supersedes the earlier source-absence finding, not the requirement to verify deployed prompt content and active versions separately.
+
+Chronology:
+
+1. At the original 2026-09-12 capture, checkout `d05fdc1` and the local refs inspected in that session had no v4–v6 seeder implementation or registration. `git ls-tree d05fdc1` still confirms the three files are absent from that revision. This was an observation about that checkout and available refs, not proof that the source did not exist elsewhere.
+2. Commit `9e608eaf946a4d015154ac23f29ec1421e06170c` (`Update Seeders`, recorded 2026-09-12 14:20:43 UTC) added all three seeders, their `DatabaseSeeder` registrations, and the v4 regression test. Its timestamp predates the initial capture; the initial checkout did not contain it. Merge `31981f37666d672b0ecd8dfc8a26c61dfa191d54` brought it into this audit branch at 2026-09-12 19:11:36 UTC.
+3. On 2026-09-13, git history and the current files were inspected directly. All three seeder files and their registration are unchanged from `9e608ea`. This confirms committed source on the audit branch, not a fetched remote revision, deployment, or live database selection.
+
+| Version | Committed implementation | Registration and behavior |
+| --- | --- | --- |
+| v4 | [DocumentInsightsPromptSeederV4.php](../database/seeders/DocumentInsightsPromptSeederV4.php), rule 10 permits factual insights without a comparison basis | `DatabaseSeeder` calls this class; `updateOrCreate` targets only `document_insights` version 4 and writes `active => false` |
+| v5 | [DocumentInsightsPromptSeederV5.php](../database/seeders/DocumentInsightsPromptSeederV5.php), rules 9–10 prioritize substantive insights before factual fallback | Registered immediately after v4; targets version 5 and writes `active => false` |
+| v6 | [DocumentInsightsPromptSeederV6.php](../database/seeders/DocumentInsightsPromptSeederV6.php), rule 7 defines numeric trend direction | Registered immediately after v5; targets version 6 and writes `active => false` |
+
+The v4 test's original assertions, `Insights without comparison basis` and `purely factual insights`, both match committed v4 rule 10. The fixture correction invokes only that exact seeder inside the test's isolated `RefreshDatabase` scope and asserts the resulting row remains inactive. It does not copy/edit prompt wording, seed v5/v6, run `DatabaseSeeder`/`AiPromptSeeder`, or call `AiPrompt::activate`.
+
+Activation behavior is unchanged: `AiPrompt::active()` selects the row with `active = true`; `AiPrompt::activate()` changes selection explicitly. The existing `AiPromptSeeder` still activates insights v3, so running the global seeder is not an inert way to check a reported live v6 deployment. The three versioned seeders write their own rows inactive even on rerun; they must not be run against live active rows as part of this reconciliation. No live seeder or activation was executed. ENV-2 worker runtime/canary gates and historical contamination findings remain unchanged.
+
 ## First dependency: staging isolation
 
 At the initial 17:43 UTC capture, the two supplied accounts conflicted: an isolated Neon branch with a canary versus later identical database endpoints. Neither was accepted as current evidence. A committed `.neon` file and `cb096e3` could not settle this. The owner's subsequent updates establish the service-variable split recorded as ENV-2 and confirm genuine Neon branch isolation and correct staging web routing. Worker runtime and end-to-end isolation remain unverified.
@@ -95,7 +115,7 @@ The exact next checks and held deployment action are in [ENV-2 recovery checks](
 
 ## Findings and claims ledger
 
-“Committed” below refers to local git history, not deployment. The fresh full suite passes after the test-only correction described below. A passing suite is not proof of a specific edge case unless that test is identified. No application-fix deployment is newly confirmed by this update; the owner-confirmed Neon architecture and staging web routing are explicitly distinguished from pending worker behavior.
+“Committed” below refers to local git history, not deployment. Rows without an explicit 2026-09-13 update retain the original 2026-09-12 assessment; they are not a fresh review of later exception-logging commits. Local test results are dated below. A passing suite is not proof of a specific edge case unless that test is identified. No application-fix deployment is newly confirmed by this update; the owner-confirmed Neon architecture and staging web routing are explicitly distinguished from pending worker behavior.
 
 | Finding/claim | Git/source evidence today | Test/evidence qualification | Correction or remaining evidence |
 | --- | --- | --- | --- |
@@ -121,11 +141,11 @@ The exact next checks and held deployment action are in [ENV-2 recovery checks](
 | TB-1: Q&A placeholder and v2 activation | `196dfa7`, AnthropicClient, DocumentQaPromptSeederV2, DatabaseSeeder registration | DocumentQaTest: 7 pass, including explicit question-placeholder regression | v2 seeder also activates v2 itself; this is not the claimed separate inert-seed/explicit-activation workflow. Live row state pending |
 | TB-2: fixture cleanup | Cleanup commit `f7da05d` is present; document-author random-password logic predates it (`14c087e`) | No live account inspection/deletion evidence supplied | Need exact TB-2 report; do not infer database fixture cleanup from source or file deletion |
 | TB-3: adversarial probes | Narrative says two probes did not complete | No completed live outputs available | Remains pending Tier 3; external Redis reachability is not evidence of an app defect |
-| TB-7: quantitative accuracy | Narrative describes real v4/v6 defects and successful live checks | No corresponding v4–v6 code or current live results available | Claimed observations remain historical assertions pending artifacts |
+| TB-7: quantitative accuracy — updated 2026-09-13 | v4–v6 source is confirmed in `9e608ea`, merged into this branch by `31981f3`; narrative describes live v4/v6 defects and checks | The v4 test checks fixture content, not real model accuracy; current live results remain unavailable | Source gap reconciled; historical/live accuracy claims still require their own artifacts |
 | document_insights v1 | `a420bdf`, inline AiPromptSeeder version 1 | Source present | Live version/hash pending |
 | document_insights v2 | `556714e`, inline AiPromptSeeder version 2 | Source present | Live version/hash pending |
 | document_insights v3 | `f695e8b`, inline version 3 includes target/threshold and description/data rules | Source present; no separately named V3 seeder | Live version/hash pending |
-| document_insights v4/v5/v6 | No matching versioned seeder files, registrations, or history found in local refs | No reproducible committed v4–v6 implementation identified | Cannot say absent live; request metadata plus source from the other working session |
+| document_insights v4/v5/v6 — updated 2026-09-13 | All three versioned seeders and registrations are committed in `9e608ea` and present through merge `31981f3` | Exact source and inactive seeding behavior confirmed; v4 test explicitly establishes its committed fixture | Earlier absence applied to checkout `d05fdc1` and refs inspected then. Live version/hash/activation evidence remains pending; source files are no longer missing |
 | Prompt release discipline | AiPromptSeeder ends with `AiPrompt::activate('document_insights', 3)` | Reading confirms behavior; no live seeder run | Rerunning this seeder could replace live v6 with v3. Do not use it to reconcile drift |
 | `5229114` image support/dedup | Actual diff adds ImageFileDetector and AnalyzeEmbeddedVisualsJob integration/title filtering only (2 files, 57 insertions) | No extraction/dispatch/OCR file changed by this commit | Partial fix confirmed in git; no claim the text-empty image reaches vision. Item 5 remains untested |
 | Cleanup: 22 scripts / 5 fixtures | `f7da05d` deletes 22 scripts and a stray empty file | Git shows **one** tracked fixture rename into tests/fixtures/manual | Five relocated fixtures cannot be corroborated by tracked history |
@@ -171,7 +191,20 @@ Final run on those exact test contents: **227 tests, 1,005 assertions, zero fail
 
 Isolation was explicitly checked before the backend run: PostgreSQL `127.0.0.1:5433`, database `ca_document_intelligence_test`; Redis `127.0.0.1:6389`; cache/session/mail array, queue sync, storage local, config-cache path nonexistent, external provider credentials cleared, Sentry/Pulse disabled. No production-like label was used as isolation evidence. Tests migrated only this disposable local database. Test runner details are in the archived result file.
 
-## Handoff status — tier remains incomplete
+### 2026-09-13: v4 fixture correction and current backend baseline
+
+After merge `31981f3` introduced the v4 test, local runs failed because that test queried a prompt row without creating it. The later exception-logging runs preserved this unrelated error: `f8a5c8f` had 263 passing tests and one `ModelNotFoundException` in `test_insights_prompt_v4_permits_factual_insight_without_trend`. This was missing test setup, not evidence that the v4 source was missing or that a live prompt was unavailable.
+
+Test-only commit **`f7361ad`** adds four lines solely inside that method: an explanatory comment, an explicit call to the committed `DocumentInsightsPromptSeederV4`, and an assertion that the seeded row is inactive. The original content assertions remain unchanged. All v4–v6 seeder bytes and `DatabaseSeeder` registration match source commit `9e608ea`; no prompt wording, activation code, migration, or production configuration changed.
+
+| Local run on the committed test contents | Tests | Assertions | Failures | Errors | Skips |
+| --- | --- | --- | --- | --- | --- |
+| v4 test alone, run first | 1 | 3 | 0 | 0 | 0 |
+| Full backend suite, run afterward | 264 | 1,237 | 0 | 0 | 0 |
+
+Both runs used PHP 8.5.4 / PHPUnit 12.5.29 with the same guarded localhost PostgreSQL/Redis setup described above. The test explicitly seeds v4 within `RefreshDatabase`; it does not depend on ambient prompt/seeder state and makes no real provider call. Actual outputs and fixture provenance are archived in [v4 fixture test evidence](audit-evidence/2026-09-13/v4-fixture-test-results.txt). These results replace the one-error local baseline, not the historical transcripts. They do not verify live AI output, deployment health, or active prompt selection. Frontend tests were not rerun for this backend test-only change.
+
+## Handoff status — original 2026-09-12 snapshot; tier remains incomplete
 
 | Item # | What | Status | Evidence | Notes for next session |
 | --- | --- | --- | --- | --- |

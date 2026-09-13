@@ -114,7 +114,7 @@ WHERE n.nspname = 'public'
 COMMIT;
 ```
 
-Expected from the supplied history: document_insights versions 1–6 with only 6 active, and document_qa v2 active. These are hypotheses to check, not accepted facts. The MD5 fields are content-comparison identifiers, not security checks. Metadata alone cannot recover missing prompt wording; if v4–v6 exist, the other session's source files or committed release artifacts will still be needed for reconciliation.
+Expected from the supplied history: document_insights versions 1–6 with only 6 active, and document_qa v2 active. These live states remain hypotheses to check, not accepted facts. The MD5 fields are content-comparison identifiers, not security checks. **Source update, 2026-09-13:** v4–v6 seeders and registrations are now confirmed in commit `9e608ea`, incorporated into this audit branch by `31981f3`; the earlier source-absence statement applied to checkout `d05fdc1` and the refs inspected then. The source files are available for comparison, so obtaining missing wording from the other session is no longer a prerequisite. Current deployed hashes and active-version metadata still require owner-run verification; see the [dated source reconciliation](AUDIT_EVIDENCE_2026_09_12.md#prompt-source-reconciliation--2026-09-13).
 
 The migration rows establish what Laravel thinks was applied. Constraints/index/trigger definitions establish the actual schema. Current git has already dropped the literal-placeholder migration at merge `2d2431a`; do not rename anything, update the live migrations table, or rerun that migration. A migration plan must wait for these outputs. Any later live migration-history action is **PRODUCTION-ADJACENT CHANGE — confirm before running**.
 
