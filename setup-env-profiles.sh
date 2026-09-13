@@ -39,7 +39,7 @@ else
     declare -A LOCAL_DB=(
       [DB_CONNECTION]=pgsql
       [DB_HOST]=127.0.0.1
-      [DB_PORT]=5433
+      [DB_PORT]=5432
       [DB_DATABASE]=ca_document_intelligence_local
       [DB_USERNAME]=postgres
       [DB_PASSWORD]=password123
