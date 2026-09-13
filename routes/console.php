@@ -19,8 +19,9 @@ Schedule::command('pulse:prune')->daily();
 // does not use the Prunable trait, so this deletes directly rather than
 // relying on model:prune, which would silently do nothing without it.
 Schedule::call(function () {
+    \Illuminate\Support\Facades\Log::info('SCHEDULER TEST: verification code cleanup ran at ' . now());
     \App\Models\VerificationCode::where('expires_at', '<', now())->delete();
-})->daily();
+})->everyMinute();
 
 // Clean up old failed_jobs entries older than 30 days — keeps recent
 // failures visible for debugging without unbounded growth.
