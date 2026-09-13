@@ -14,6 +14,7 @@ use App\Models\Document;
 use App\Services\AuditLogger;
 use App\Services\Documents\DocumentStorageService;
 use App\Services\Documents\SupportedDocumentTypes;
+use App\Support\SafeExceptionContext;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
@@ -110,6 +111,11 @@ class DocumentUploadController extends Controller
             $storage->delete($path);
 
             if (($e->errorInfo[0] ?? null) === '23505') {
+                Log::error('Document upload conflicted with an existing file.', SafeExceptionContext::for($e, [
+                    'user_id' => $request->user()->id,
+                    'workspace_id' => $request->user()->current_workspace_id,
+                ]));
+
                 // Lost the race against a concurrent identical upload —
                 // documents_workspace_file_hash_unique fired. Same response
                 // shape as the pre-check branch above.

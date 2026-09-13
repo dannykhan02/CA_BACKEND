@@ -201,6 +201,7 @@ class AnthropicClient
                     'messages' => $messages,
                 ]);
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            // Intentionally quiet during retries; exhaustion captures and throws the actual failure below.
             if ($attempt >= $maxAttempts) {
                 $final = new \RuntimeException(
                     "Anthropic API connection failed after {$maxAttempts} attempts: {$e->getMessage()}"

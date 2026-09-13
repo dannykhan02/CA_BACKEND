@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Services\AI\DocumentContextRetriever;
 use App\Services\AnthropicClient;
+use App\Support\SafeExceptionContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class DocumentQaController extends Controller
 {
@@ -43,6 +45,12 @@ class DocumentQaController extends Controller
                 $context->documentIds(),
             );
         } catch (\Throwable $e) {
+            Log::error('Document Q&A failed.', SafeExceptionContext::for($e, [
+                'user_id' => $user->id,
+                'workspace_id' => $user->current_workspace_id,
+                'document_ids' => $context->documentIds(),
+            ]));
+
             return response()->json([
                 'success' => false,
                 'message' => 'Unable to answer this question right now.',

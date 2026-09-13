@@ -11,6 +11,7 @@ use App\Services\AnthropicClient;
 use App\Services\Embeddings\VoyageEmbeddingClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -239,6 +240,7 @@ class DocumentQaTest extends TestCase
         });
 
         Sanctum::actingAs($user);
+        Log::spy();
         $response = $this->postJson('/api/documents/query', ['question' => 'What is in this document?']);
 
         $response->assertStatus(500)
@@ -253,6 +255,46 @@ class DocumentQaTest extends TestCase
         $body = $response->getContent();
         $this->assertStringNotContainsString('529', $body);
         $this->assertStringNotContainsString('RuntimeException', $body);
+
+        Log::shouldHaveReceived('error')->once()->with('Document Q&A failed.', [
+            'user_id' => $user->id,
+            'workspace_id' => $workspace->id,
+            'document_ids' => [$doc->id],
+            'exception_class' => \RuntimeException::class,
+            'exception_message' => 'Anthropic API request failed with status 529.',
+        ]);
+    }
+
+    public function test_qa_failure_log_redacts_credentials_and_omits_question_and_document_text(): void
+    {
+        [$user, $workspace] = $this->createOrgUser('Viewer');
+        $doc = $this->createDocInWorkspace($workspace->id);
+        $this->mockEmbeddingClient();
+        $this->insertEmbeddingRow($workspace->id, $doc->id, 'Private document text must not be logged.');
+        $this->mock(AnthropicClient::class, function ($mock) {
+            $mock->shouldReceive('answerDocumentQuestion')->once()->andThrow(new \RuntimeException(
+                'Provider rejected request (401). Authorization: Bearer secret-fixture-token'
+                ."\nResponse body: private provider payload"
+            ));
+        });
+
+        Sanctum::actingAs($user);
+        Log::spy();
+        $this->postJson('/api/documents/query', ['question' => 'Private question must not be logged.'])
+            ->assertStatus(500)->assertExactJson([
+                'success' => false,
+                'message' => 'Unable to answer this question right now.',
+            ]);
+
+        // Exact context also prevents accidentally adding a request, full
+        // exception object/trace, question or retrieved document contents.
+        Log::shouldHaveReceived('error')->once()->with('Document Q&A failed.', [
+            'user_id' => $user->id,
+            'workspace_id' => $workspace->id,
+            'document_ids' => [$doc->id],
+            'exception_class' => \RuntimeException::class,
+            'exception_message' => 'Provider rejected request (401). Authorization=[redacted]',
+        ]);
     }
 
     public function test_qa_prompt_uses_question_placeholder_not_document_name(): void
