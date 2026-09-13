@@ -10,6 +10,8 @@ use App\Jobs\GenerateDocumentSummaryJob;
 use App\Models\Document;
 use App\Services\Pipeline\PipelineStageRecorder;
 use App\Services\AnthropicClient;
+use App\Support\SafeExceptionContext;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Orchestration façade over the independently-proven Day 2/3/4 jobs.
@@ -55,9 +57,12 @@ class DocumentIntelligenceEngine
                 (new $jobClass($document->id, $forceReprocess))->handle($this->client, $this->recorder);
                 $results[$stage] = true;
             } catch (\Throwable $e) {
-                // Each job already records its own failure via
-                // PipelineStageRecorder — swallow here only to let
-                // subsequent independent stages still attempt to run.
+                // Persistence errors can escape a job's own failure recorder.
+                Log::error('Document intelligence stage failed.', SafeExceptionContext::for($e, [
+                    'document_id' => $document->id,
+                    'workspace_id' => $document->workspace_id,
+                    'stage' => $stage,
+                ]));
                 $results[$stage] = false;
             }
         }
@@ -66,6 +71,11 @@ class DocumentIntelligenceEngine
             (new GenerateDocumentSummaryJob($document->id, $forceReprocess))->handle($this->client, $this->recorder);
             $results['document_summary'] = true;
         } catch (\Throwable $e) {
+            Log::error('Document intelligence summary failed.', SafeExceptionContext::for($e, [
+                'document_id' => $document->id,
+                'workspace_id' => $document->workspace_id,
+                'stage' => 'document_summary',
+            ]));
             $results['document_summary'] = false;
         }
 

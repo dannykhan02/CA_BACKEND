@@ -7,10 +7,13 @@ use App\Models\CreditPurchase;
 use App\Models\Referral;
 use App\Models\ReferralCode;
 use App\Models\User;
+use App\Notifications\VerificationCodeNotification;
 use App\Services\PaystackClient;
 use App\Services\ReferralService;
 use App\Services\WorkspaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
@@ -63,6 +66,16 @@ class ReferralTest extends TestCase
             'paystack_reference' => 'credits-'.Str::uuid(), 'documents_purchased' => 100,
             'amount_kobo_or_cents' => 200000, 'currency' => 'KES', 'status' => 'pending',
         ]);
+    }
+
+    private function verifyBuyerEmail(User $buyer): void
+    {
+        $notification = Notification::sent($buyer, VerificationCodeNotification::class)->sole();
+        $this->postJson('/api/auth/verify-email', [
+            'email' => $buyer->email,
+            'code' => $notification->code,
+        ])->assertOk();
+        $buyer->refresh();
     }
 
     private function webhook(CreditPurchase $purchase, array $overrides = [], ?string $signature = null): TestResponse
@@ -302,6 +315,10 @@ class ReferralTest extends TestCase
         $buyer = User::where('email', 'friend@example.com')->sole();
         Sanctum::actingAs($buyer);
         $this->mock(PaystackClient::class, fn ($mock) => $mock->shouldReceive('initialize')->once()->andReturn(['authorization_url' => 'https://checkout.paystack.com/test']));
+        // Signup alone must not bypass AUTH-1 to initialize a purchase.
+        $this->postJson('/api/workspace/credits/purchases', ['package' => 'documents-100'])->assertForbidden();
+        $this->assertDatabaseCount('credit_purchases', 0);
+        $this->verifyBuyerEmail($buyer);
         $this->postJson('/api/workspace/credits/purchases', ['package' => 'documents-100', 'user_id' => $owner->id])->assertCreated();
         $purchase = CreditPurchase::sole();
         $this->assertSame($buyer->id, $purchase->user_id);
@@ -347,11 +364,70 @@ class ReferralTest extends TestCase
                 'amount' => 200000, 'currency' => 'KES', 'domain' => 'test'],
         ]));
         $url = '/api/workspace/credits/purchases/'.$purchase->paystack_reference.'/verify';
+        $this->postJson($url)->assertForbidden();
+        $this->assertSame('pending', $purchase->fresh()->status);
+        $this->assertSame('pending', Referral::sole()->status);
+        $this->verifyBuyerEmail($buyer);
         $this->postJson($url)->assertOk()->assertJsonPath('data.status', 'completed');
         $this->postJson($url)->assertOk();
         $this->webhook($purchase)->assertOk();
         $this->assertSame(17, $owner->currentWorkspace->credits->documents_remaining);
         $this->assertSame(110, $buyer->currentWorkspace->credits->documents_remaining);
         $this->assertSame('rewarded', Referral::sole()->status);
+    }
+
+    public function test_logged_payment_failures_then_reconciliation_and_replays_reward_only_once(): void
+    {
+        $owner = $this->referrer();
+        $this->signup($this->code($owner))->assertCreated();
+        $buyer = User::where('email', 'friend@example.com')->sole();
+        $this->verifyBuyerEmail($buyer);
+        Sanctum::actingAs($buyer);
+        Http::preventStrayRequests();
+        $verificationAttempts = 0;
+        Http::fake([
+            'https://api.paystack.co/transaction/initialize' => Http::failedConnection('Initialization timed out.'),
+            'https://api.paystack.co/transaction/verify/*' => function () use ($buyer, &$verificationAttempts) {
+                if (++$verificationAttempts === 1) {
+                    return Http::response(['status' => false], 503);
+                }
+                $purchase = CreditPurchase::where('user_id', $buyer->id)->sole();
+
+                return Http::response(['status' => true, 'data' => [
+                    'status' => 'success', 'reference' => $purchase->paystack_reference,
+                    'amount' => $purchase->amount_kobo_or_cents, 'currency' => $purchase->currency,
+                ]]);
+            },
+        ]);
+
+        Log::spy();
+        $this->postJson('/api/workspace/credits/purchases', ['package' => 'documents-100'])->assertStatus(502);
+        $purchase = CreditPurchase::where('user_id', $buyer->id)->sole();
+        $url = '/api/workspace/credits/purchases/'.$purchase->paystack_reference.'/verify';
+        $this->postJson($url)->assertStatus(502);
+        $this->assertSame('pending', $purchase->fresh()->status);
+        $this->assertNull($purchase->fresh()->paystack_response);
+        $this->assertSame('pending', Referral::sole()->status);
+        $this->assertNull(Referral::sole()->rewarded_at);
+        $this->assertSame(10, $buyer->currentWorkspace->credits()->first()->documents_remaining);
+        $this->assertSame(0, $owner->currentWorkspace->credits()->first()->documents_remaining);
+        Http::assertSentCount(2); // One initialize attempt and one verify attempt.
+
+        $this->postJson($url)->assertOk()->assertJsonPath('data.status', 'completed');
+        $rewardedAt = Referral::sole()->rewarded_at->toISOString();
+        $this->webhook($purchase)->assertOk();
+        $this->webhook($purchase)->assertOk();
+        $this->postJson($url)->assertOk();
+        $this->webhook($this->purchase($buyer))->assertOk();
+        $this->assertSame(2, CreditPurchase::where('user_id', $buyer->id)->where('status', 'completed')->count());
+        $this->assertSame(210, $buyer->currentWorkspace->credits()->first()->documents_remaining);
+        $this->assertSame(200, $buyer->currentWorkspace->credits()->first()->documents_purchased_total);
+        $this->assertSame(17, $owner->currentWorkspace->credits()->first()->documents_remaining);
+        $this->assertSame('rewarded', Referral::sole()->status);
+        $this->assertSame(17, Referral::sole()->reward_documents);
+        $this->assertSame($rewardedAt, Referral::sole()->rewarded_at->toISOString());
+        Http::assertSentCount(3); // Completed purchases and webhooks make no provider request.
+        Log::shouldHaveReceived('error')->times(3); // Two initialization logs plus one verification log.
+        Log::shouldNotHaveReceived('warning');
     }
 }

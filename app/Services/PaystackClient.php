@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Exceptions\PaystackInitializationException;
 use App\Models\CreditPurchase;
+use App\Support\SafeExceptionContext;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class PaystackClient
 {
@@ -38,7 +40,14 @@ class PaystackClient
                     'reference' => $purchase->paystack_reference,
                     'callback_url' => rtrim(config('app.frontend_url'), '/').'/#/billing/return',
                 ]);
-        } catch (ConnectionException) {
+        } catch (ConnectionException $exception) {
+            Log::error('Paystack initialization connection failed.', SafeExceptionContext::for($exception, [
+                'purchase_id' => $purchase->id,
+                'reference' => $purchase->paystack_reference,
+                'user_id' => $purchase->user_id,
+                'workspace_id' => $purchase->workspace_id,
+            ]));
+
             throw new PaystackInitializationException;
         }
 

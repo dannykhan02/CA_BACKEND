@@ -1,5 +1,10 @@
 <?php
 
+// Every catch block that returns an error response must log the caught exception first.
+// Use Log::error with SafeExceptionContext and server-side IDs; keep client responses unchanged.
+// Existing report($e) calls also retain the exception. Explain intentional silence inline.
+// See commit 4d55ff1 for the pattern and the logging/redaction regression tests.
+
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use App\Exceptions\EmbeddingProviderException;

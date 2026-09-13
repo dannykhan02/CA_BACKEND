@@ -25,6 +25,7 @@ use App\Notifications\VerificationCodeNotification;
 use App\Notifications\WelcomeNotification;
 use App\Services\GoogleTokenVerifier;
 use App\Services\WorkspaceService;
+use App\Support\SafeExceptionContext;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -418,6 +419,10 @@ class AuthController extends Controller
             });
         } catch (QueryException $e) {
             if ((string) $e->getCode() === '23000') {
+                Log::error('Email change conflicted with another account.', SafeExceptionContext::for($e, [
+                    'user_id' => $user->id,
+                ]));
+
                 return $this->error('That email address was just taken by another account. Please choose a different one.', [], 409);
             }
             throw $e;

@@ -14,6 +14,9 @@ trait FakesGoogleTokens
 
     protected function setUpGoogleTokenFaking(): void
     {
+        // Signed local fixtures must not depend on a deployed OAuth client ID.
+        config(['services.google.client_id' => 'ca-test.apps.googleusercontent.com']);
+
         // GoogleTokenVerifier caches the JWKS response for an hour — must
         // clear it between tests or one test's mocked keys leak into the
         // next and cause spurious verification failures/passes.
