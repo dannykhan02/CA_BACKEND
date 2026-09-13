@@ -159,14 +159,3 @@ Route::middleware(['auth:sanctum', 'role:Administrator'])
 
         Route::patch('/users/{user}/role', [UserController::class, 'updateRole']);
     });
-
-// TEMPORARY — DB latency diagnostic. Remove after use, no auth, do not leave live.
-Route::get('/debug/db-latency', function () {
-    $times = [];
-    for ($i = 0; $i < 5; $i++) {
-        $start = microtime(true);
-        \DB::select('SELECT 1');
-        $times[] = round((microtime(true) - $start) * 1000, 2);
-    }
-    return response()->json(['latencies_ms' => $times]);
-});
