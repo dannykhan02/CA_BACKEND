@@ -87,12 +87,16 @@ return [
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DB_URL'),
-            // Prefer the pooled (PgBouncer-style) endpoint for regular app
-            // queries — Neon's direct endpoint pays real per-connection
-            // setup overhead on every new connection, which showed up as a
-            // ~750ms cold-start cost in production latency testing. Falls
-            // back to DB_HOST if DB_HOST_POOLED isn't set (e.g. local dev).
-            'host' => env('DB_HOST_POOLED') ?: env('DB_HOST', '127.0.0.1'),
+            // Reverted from pooled endpoint back to direct connection —
+            // Neon's pooled endpoint (PgBouncer transaction-mode pooling)
+            // caused cascading SQLSTATE[25P02] "transaction aborted"
+            // failures across concurrent document-processing jobs sharing
+            // a pooled connection whose prior transaction wasn't cleanly
+            // closed. Confirmed via production failure of a real document
+            // upload; reverting restores correctness over the ~70% latency
+            // win. Revisit only after confirming Laravel's job/batch
+            // transaction handling is safe under transaction-mode pooling.
+            'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '5432'),
             'database' => env('DB_DATABASE', 'laravel'),
             'username' => env('DB_USERNAME', 'root'),
