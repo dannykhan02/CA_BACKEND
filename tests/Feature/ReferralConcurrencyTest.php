@@ -7,11 +7,13 @@ use App\Models\Referral;
 use App\Models\ReferralCode;
 use App\Models\User;
 use App\Models\WorkspaceCredit;
+use App\Services\PaystackClient;
 use App\Services\ReferralService;
 use App\Services\WorkspaceService;
 use Illuminate\Foundation\Testing\DatabaseTruncation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class ReferralConcurrencyTest extends TestCase
@@ -132,5 +134,41 @@ class ReferralConcurrencyTest extends TestCase
         $this->assertSame('rewarded', Referral::sole()->status);
         $this->assertSame(17, $rewardWorkspace->credits->documents_remaining);
         $this->assertSame(200, (int) WorkspaceCredit::sum('documents_purchased_total'));
+    }
+
+    public function test_concurrent_webhook_and_verification_reward_and_credit_one_purchase_once(): void
+    {
+        $secret = 'sk_test_concurrent_completion';
+        config(['services.paystack.secret_key' => $secret, 'credits.referral_reward_documents' => 17]);
+        $owner = User::factory()->create();
+        $rewardWorkspace = app(WorkspaceService::class)->createPersonalWorkspaceFor($owner);
+        $buyer = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->createPersonalWorkspaceFor($buyer, '203.0.113.15', 'race-browser', app(ReferralService::class)->codeFor($owner)->code);
+        $purchase = $workspace->purchases()->create([
+            'user_id' => $buyer->id, 'paystack_reference' => 'credits-'.Str::uuid(),
+            'documents_purchased' => 100, 'amount_kobo_or_cents' => 200000, 'currency' => 'KES',
+        ]);
+        $data = ['reference' => $purchase->paystack_reference, 'status' => 'success', 'amount' => 200000, 'currency' => 'KES'];
+
+        $this->concurrently(function (int $index) use ($buyer, $purchase, $data, $secret) {
+            if ($index === 0) {
+                Sanctum::actingAs($buyer->fresh());
+                $this->mock(PaystackClient::class, fn ($mock) => $mock->shouldReceive('verify')->atMost()->once()->andReturn(['status' => true, 'data' => $data]));
+                $this->postJson('/api/workspace/credits/purchases/'.$purchase->paystack_reference.'/verify')
+                    ->assertOk()->assertJsonPath('data.status', 'completed');
+            } else {
+                $body = json_encode(['event' => 'charge.success', 'data' => $data]);
+                $this->call('POST', '/api/paystack/webhook', [], [], [], [
+                    'CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json',
+                    'HTTP_X_PAYSTACK_SIGNATURE' => hash_hmac('sha512', $body, $secret),
+                ], $body)->assertOk();
+            }
+        });
+        $this->assertSame('completed', $purchase->fresh()->status);
+        $this->assertSame(110, $workspace->credits()->first()->documents_remaining);
+        $this->assertSame(100, $workspace->credits()->first()->documents_purchased_total);
+        $this->assertSame(17, $rewardWorkspace->credits()->first()->documents_remaining);
+        $this->assertSame('rewarded', Referral::sole()->status);
+        $this->assertSame(17, Referral::sole()->reward_documents);
     }
 }
