@@ -320,7 +320,11 @@ class DocumentQaTest extends TestCase
 
     public function test_insights_prompt_v4_permits_factual_insight_without_trend(): void
     {
+        // Seed the exact committed v4 fixture without running global prompt activation.
+        $this->seed(\Database\Seeders\DocumentInsightsPromptSeederV4::class);
+
         $prompt = \App\Models\AiPrompt::where('name', 'document_insights')->where('version', 4)->firstOrFail();
+        $this->assertFalse($prompt->active);
         $this->assertStringContainsString('Insights without comparison basis', $prompt->template);
         $this->assertStringContainsString('purely factual insights', $prompt->template);
     }
