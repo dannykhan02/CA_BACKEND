@@ -109,6 +109,26 @@ return [
             // changed from 'prefer' to 'require' since this connection now
             // points at Neon for local development, not a local socket.
             'sslmode' => env('DB_SSLMODE', 'require'),
+            // Emulate prepared statements rather than using PDO's native
+            // (server-side PREPARE/DEALLOCATE) mode. Confirmed root cause
+            // of the 2026-09-13 production incident: under PgBouncer
+            // transaction-mode pooling (Neon's pooled endpoint), a
+            // DEALLOCATE for a statement prepared on one physical
+            // connection can be routed to a different one by the pooler,
+            // leaving that connection in a broken state — this is what
+            // produced the cascading SQLSTATE[25P02] failures. Emulated
+            // prepares never issue a server-side PREPARE/DEALLOCATE at
+            // all, so there is nothing for the pooler to misroute. This is
+            // a standard, documented workaround for PHP < 8.4 (which
+            // lacks pooling-aware native prepares) on any PgBouncer-style
+            // pooled Postgres connection. Safe with Laravel's query
+            // builder/Eloquent, since parameter binding is always done
+            // correctly regardless of this setting — only relevant if raw
+            // SQL were built by string concatenation, which this codebase
+            // does not do.
+            'options' => extension_loaded('pdo_pgsql') ? [
+                \PDO::ATTR_EMULATE_PREPARES => true,
+            ] : [],
         ],
 
         'sqlsrv' => [
