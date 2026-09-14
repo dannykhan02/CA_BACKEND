@@ -87,16 +87,16 @@ return [
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DB_URL'),
-            // Re-enabling pooled endpoint (2026-09-14) after adding
-            // PDO::ATTR_EMULATE_PREPARES below, which removes the
-            // PREPARE/DEALLOCATE handshake that caused the 2026-09-13
-            // SQLSTATE[25P02] incident under transaction-mode pooling.
-            // If ANY 25P02 error, "current transaction is aborted", or
-            // document processing failure appears after this change,
-            // revert this single line back to env('DB_HOST', '127.0.0.1')
-            // immediately — do not investigate further while pointed at
-            // the pooled endpoint with live traffic.
-            'host' => env('DB_HOST_POOLED', env('DB_HOST', '127.0.0.1')),
+            // Reverted from pooled endpoint back to direct connection —
+            // Neon's pooled endpoint (PgBouncer transaction-mode pooling)
+            // caused cascading SQLSTATE[25P02] "transaction aborted"
+            // failures across concurrent document-processing jobs sharing
+            // a pooled connection whose prior transaction wasn't cleanly
+            // closed. Confirmed via production failure of a real document
+            // upload; reverting restores correctness over the ~70% latency
+            // win. Revisit only after confirming Laravel's job/batch
+            // transaction handling is safe under transaction-mode pooling.
+            'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '5432'),
             'database' => env('DB_DATABASE', 'laravel'),
             'username' => env('DB_USERNAME', 'root'),
