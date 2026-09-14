@@ -126,9 +126,7 @@ return [
             // correctly regardless of this setting — only relevant if raw
             // SQL were built by string concatenation, which this codebase
             // does not do.
-            'options' => extension_loaded('pdo_pgsql') ? [
-                \PDO::ATTR_EMULATE_PREPARES => true,
-            ] : [],
+            'options' => extension_loaded('pdo_pgsql') ? [] : [],
         ],
 
         'sqlsrv' => [
