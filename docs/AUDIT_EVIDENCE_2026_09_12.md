@@ -218,6 +218,12 @@ Both runs used PHP 8.5.4 / PHPUnit 12.5.29 with the same guarded localhost Postg
 
 Nothing is ready to be marked resolved in production. No production deployment is requested for this documentation/test-only branch.
 
+## Owner priority update — 2026-09-14
+
+Persistent log capture (historical item 4) is now the **top remaining Tier 1 priority**, superseding the original ordering above. The owner confirmed that Railway retention no longer covers the September 13 production incident. A separate [implementation-options plan](DURABLE_LOG_CAPTURE_PLAN.md) is prepared; implementation and deployment are not yet authorized. This reprioritization does not close any other audit item.
+
+The completed document-job transaction review and real PostgreSQL recovery regression are not being repeated. The remaining incident evidence paths are [Horizon's independent Redis records](HORIZON_INCIDENT_RETRIEVAL_2026_09_13.md) and owner-supplied live runtime/pooling-history confirmation. Retrieval is currently blocked by unauthenticated local Railway CLI access, not by a confirmed empty Horizon result.
+
 ## 2026-09-13: priority payment investigation, before application edits
 
 The owner elevated missing payment credits and the upload-to-final-output workflow ahead of lower-priority audit work. This payment investigation continues from backend `df377cd` and frontend `ef0af9e`; it does not restart the audit or resolve ENV-2. Source, local reproductions, proposed fixes and the separate conditional reconciliation procedure are in [the payment lifecycle report](PAYMENT_LIFECYCLE_INVESTIGATION_2026_09_13.md). No application logic or production records were changed.
