@@ -26,7 +26,7 @@ class DashboardApiTest extends TestCase
 
     public function test_summary_returns_correct_counts_per_status(): void
     {
-        $workspace = Workspace::where('name', 'Communications Authority Demo')->firstOrFail();
+        $workspace = Workspace::where('name', 'DocIntel Demo')->firstOrFail();
         $user = User::factory()->administrator()->create([
             'current_workspace_id' => $workspace->id,
         ]);

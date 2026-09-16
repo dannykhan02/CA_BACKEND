@@ -44,7 +44,7 @@ class VerificationEmailDeliveryTest extends TestCase
             'queue.default' => 'redis',
             'mail.default' => 'resend',
             'mail.from.address' => 'verification@example.com',
-            'mail.from.name' => 'CA Document Intelligence',
+            'mail.from.name' => 'DocIntel',
         ]);
 
         // Capture the asynchronous boundary only. Tests execute the serialized
@@ -79,7 +79,7 @@ class VerificationEmailDeliveryTest extends TestCase
         $email = json_decode((string) $request->getBody(), true, 512, JSON_THROW_ON_ERROR);
         $sender = Address::create($email['from']);
         $this->assertSame('worker@example.com', $sender->getAddress());
-        $this->assertSame('CA Document Intelligence', $sender->getName());
+        $this->assertSame('DocIntel', $sender->getName());
         $this->assertSame(['new-user@example.com'], $email['to']);
         $this->assertSame('Verify Your Email', $email['subject']);
         foreach (['html', 'text'] as $format) {

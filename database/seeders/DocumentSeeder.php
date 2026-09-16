@@ -15,7 +15,7 @@ class DocumentSeeder extends Seeder
     public function run(): void
     {
         $workspace = Workspace::firstOrCreate(
-            ['name' => 'Communications Authority Demo'],
+            ['name' => 'DocIntel Demo'],
             ['type' => WorkspaceType::Organization->value]
         );
 

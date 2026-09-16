@@ -22,7 +22,7 @@ class DocumentApiTest extends TestCase
 
     private function authenticate()
     {
-        $workspace = Workspace::where('name', 'Communications Authority Demo')->firstOrFail();
+        $workspace = Workspace::where('name', 'DocIntel Demo')->firstOrFail();
         $user = User::factory()->administrator()->create([
             'current_workspace_id' => $workspace->id,
         ]);

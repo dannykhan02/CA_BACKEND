@@ -22,7 +22,7 @@ class DocumentReviewApiTest extends TestCase
 
     private function authenticateAs(string $role = 'Reviewer'): User
     {
-        $workspace = Workspace::where('name', 'Communications Authority Demo')->firstOrFail();
+        $workspace = Workspace::where('name', 'DocIntel Demo')->firstOrFail();
         $user = User::factory()->create([
             'role' => $role,
             'current_workspace_id' => $workspace->id,

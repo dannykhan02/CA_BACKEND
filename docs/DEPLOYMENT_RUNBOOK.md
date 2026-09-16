@@ -60,7 +60,7 @@ It should contain variable names but never real secrets.
 
 Example:
 
-APP_NAME="CA Backend"
+APP_NAME="DocIntel"
 APP_ENV=production
 APP_KEY=
 APP_DEBUG=false
