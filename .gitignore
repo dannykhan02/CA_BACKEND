@@ -59,3 +59,9 @@ finish-clamav-migration.sh
 run-migration.sh
 setup-antigravity-wsl.sh
 tatus
+composer.phar
+add-clamav-ci-integration.sh
+add-docker-check-job.sh
+fix-docker-check-step.sh
+fix-horizon-config-v2.sh
+update-horizon-config.sh
