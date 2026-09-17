@@ -54,3 +54,8 @@ storage/backups/
 storage/monitor/
 resources/views/vendor/pulse/
 .last-deploy-commit
+apply-clamav-cli-migration.sh
+finish-clamav-migration.sh
+run-migration.sh
+setup-antigravity-wsl.sh
+tatus
