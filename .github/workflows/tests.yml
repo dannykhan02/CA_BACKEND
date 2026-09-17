@@ -100,5 +100,17 @@ jobs:
 
       - name: Verify clamscan works inside the built image
         run: |
-          docker run --rm ca-backend-clamav-test sh -c "freshclam --quiet && echo 'clean test' > /tmp/t.txt && clamscan /tmp/t.txt"
-          docker run --rm ca-backend-clamav-test sh -c "printf 'X5O!P%%@AP[4\\PZX54(P^)7CC)7}\$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!\$H+H*' > /tmp/eicar.txt && clamscan /tmp/eicar.txt; test \$? -eq 1"
+          docker run --rm ca-backend-clamav-test sh -c "
+            freshclam --quiet || echo 'freshclam failed, continuing with baked-in signatures';
+            echo 'clean test' > /tmp/t.txt;
+            clamscan /tmp/t.txt;
+            clean_exit=\$?;
+            echo \"clean file exit code: \$clean_exit\";
+            [ \$clean_exit -eq 0 ] || exit 1;
+            printf 'X5O!P%%@AP[4\\PZX54(P^)7CC)7}\$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!\$H+H*' > /tmp/eicar.txt;
+            clamscan /tmp/eicar.txt;
+            eicar_exit=\$?;
+            echo \"eicar exit code: \$eicar_exit\";
+            [ \$eicar_exit -eq 1 ] || exit 1;
+            echo 'BOTH CHECKS PASSED: clean file scanned OK, EICAR correctly flagged.'
+          "
