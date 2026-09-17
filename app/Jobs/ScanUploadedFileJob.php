@@ -10,6 +10,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 
 class ScanUploadedFileJob implements ShouldQueue
@@ -46,9 +47,12 @@ class ScanUploadedFileJob implements ShouldQueue
 
         $host = config('document_processing.clamav_host');
         $port = config('document_processing.clamav_port');
+        $driver = config('document_processing.clamav_driver', 'socket');
 
         try {
-            $result = $this->scanWithClamd($tmpPath, $host, $port);
+            $result = $driver === 'cli'
+                ? $this->scanWithClamscan($tmpPath)
+                : $this->scanWithClamd($tmpPath, $host, $port);
         } catch (MalwareScannerUnavailableException $e) {
             $recorder->fail($scanStage, 'SCANNER_UNAVAILABLE: ' . $e->getMessage());
             throw $e;
@@ -105,6 +109,29 @@ class ScanUploadedFileJob implements ShouldQueue
         }
 
         return str_contains($response, 'FOUND') ? 'FOUND' : 'OK';
+    }
+
+    private function scanWithClamscan(string $path): string
+    {
+        if (! file_exists($path) || ! is_readable($path)) {
+            throw new \RuntimeException("File not found or unreadable for scanning: {$path}");
+        }
+
+        $binary = config('document_processing.clamav_binary', 'clamscan');
+
+        try {
+            $result = Process::timeout(45)->run([$binary, '--no-summary', $path]);
+        } catch (\Throwable $e) {
+            Log::error("clamscan execution failed for {$path}: " . $e->getMessage());
+            throw new MalwareScannerUnavailableException('Malware scanner unavailable.');
+        }
+
+        if ($result->exitCode() === 2) {
+            Log::error("clamscan error for {$path}: " . $result->errorOutput());
+            throw new MalwareScannerUnavailableException('Malware scanner unavailable: ' . trim($result->errorOutput()));
+        }
+
+        return $result->exitCode() === 1 ? 'FOUND' : 'OK';
     }
 
     public function failed(\Throwable $e): void

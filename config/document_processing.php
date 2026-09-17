@@ -18,4 +18,6 @@ return [
     'clamav_socket' => env('CLAMAV_SOCKET', '/var/run/clamav/clamd.ctl'),
     'clamav_host' => env('CLAMAV_HOST', '127.0.0.1'),
     'clamav_port' => env('CLAMAV_PORT', 3310),
+    'clamav_driver' => env('CLAMAV_DRIVER', 'socket'), // 'socket' (current) or 'cli' (clamscan) — flip for cutover, flip back for instant rollback
+    'clamav_binary' => env('CLAMAV_BINARY', 'clamscan'),
 ];
