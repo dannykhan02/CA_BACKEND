@@ -82,5 +82,23 @@ jobs:
       - name: Run migrations
         run: php artisan migrate --force
 
+      - name: Install ClamAV for real-binary tests
+        run: sudo apt-get update && sudo apt-get install -y clamav clamav-freshclam
+      - name: Update virus definitions
+        run: sudo freshclam || true  # freshclam can rate-limit on shared CI IPs; don't fail the build if it does
+
       - name: Run tests
         run: php artisan test
+
+  docker-build-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t ca-backend-clamav-test .
+
+      - name: Verify clamscan works inside the built image
+        run: |
+          docker run --rm ca-backend-clamav-test sh -c "freshclam --quiet && echo 'clean test' > /tmp/t.txt && clamscan /tmp/t.txt"
+          docker run --rm ca-backend-clamav-test sh -c "printf 'X5O!P%%@AP[4\\PZX54(P^)7CC)7}\$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!\$H+H*' > /tmp/eicar.txt && clamscan /tmp/eicar.txt; test \$? -eq 1"
