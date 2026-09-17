@@ -19,14 +19,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
-/**
- * Runs AFTER GenerateInsightsJob, not instead of it — merges vision-derived
- * charts alongside whatever text-based KPIs/charts already exist, rather
- * than racing them. Only appended to the chain when a type-specific
- * detector actually finds something worth looking at (see
- * ExtractDocumentTextJob), so this is a no-op cost for the common
- * text-only document.
- */
 class AnalyzeEmbeddedVisualsJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -45,7 +37,7 @@ class AnalyzeEmbeddedVisualsJob implements ShouldQueue
     ): void {
         $document = Document::find($this->documentId);
         if (! $document || $document->status !== 'Ready') {
-            return; // GenerateInsightsJob must have finished successfully first
+            return;
         }
 
         $workspaceVisionEnabled = $document->workspace?->aiConfig?->vision_enabled ?? true;
@@ -66,18 +58,19 @@ class AnalyzeEmbeddedVisualsJob implements ShouldQueue
         $absolutePath = tempnam(sys_get_temp_dir(), 'visual_');
         file_put_contents($absolutePath, Storage::disk('documents')->get($document->file_path));
 
+        $rasterCache = null;
+
         try {
             $refs = $detector->detect($absolutePath);
             if (empty($refs)) {
                 return;
             }
 
-            $rasterCache = null; // lazily rasterize once per job, only if PDF refs need it
             $extractedCharts = [];
 
             foreach ($refs as $ref) {
                 try {
-                    [$base64, $mediaType] = $this->resolveImageBytes($ref, $document, $absolutePath, $rasterizer, $rasterCache);
+                    [$base64, $mediaType] = $this->resolveImageBytes($ref, $absolutePath, $rasterizer, $rasterCache, $refs);
                     if ($base64 === null) {
                         continue;
                     }
@@ -87,10 +80,6 @@ class AnalyzeEmbeddedVisualsJob implements ShouldQueue
                         $extractedCharts[] = $chart;
                     }
                 } catch (\Throwable $e) {
-                    // A single unreadable visual (bad rasterization, one
-                    // corrupt page image) must not sink every other visual
-                    // in this document, and must never touch document
-                    // status — this job's output is strictly additive.
                     Log::warning('AnalyzeEmbeddedVisualsJob: failed to process one visual reference', [
                         'document_id' => $document->id,
                         'error' => $e->getMessage(),
@@ -103,35 +92,37 @@ class AnalyzeEmbeddedVisualsJob implements ShouldQueue
                 $this->mergeCharts($document, $extractedCharts);
             }
         } catch (\Throwable $e) {
-            // Whole-detector-level failure (e.g. pdftoppm missing entirely,
-            // corrupt source file). This job is a bonus enrichment step —
-            // GenerateInsightsJob already committed the document's real
-            // KPIs/charts/status before this job ever ran. Log and exit
-            // clean; never fail the job, never touch document status.
             Log::error('AnalyzeEmbeddedVisualsJob failed for document', [
                 'document_id' => $document->id,
                 'error' => $e->getMessage(),
             ]);
         } finally {
             @unlink($absolutePath);
+            if ($rasterCache) {
+                $rasterizer->cleanup($rasterCache);
+            }
         }
     }
 
     private function resolveImageBytes(
         VisualReference $ref,
-        Document $document,
         string $absolutePath,
         PdfRasterizer $rasterizer,
         ?array &$rasterCache,
+        array $allRefs,
     ): array {
         if ($ref->imageBase64 !== null) {
             return [$ref->imageBase64, $ref->mediaType];
         }
 
         if ($ref->pageNumber !== null) {
-            // Rasterize once, reuse across all flagged pages in this doc.
-            $rasterCache ??= $rasterizer->toPageImages($absolutePath);
-            $path = $rasterCache[$ref->pageNumber - 1] ?? null;
+            if ($rasterCache === null) {
+                $neededPages = array_values(array_unique(array_filter(
+                    array_map(fn ($r) => $r->pageNumber, $allRefs)
+                )));
+                $rasterCache = $rasterizer->toPageImages($absolutePath, $neededPages);
+            }
+            $path = $rasterCache[$ref->pageNumber] ?? null;
             if (! $path || ! file_exists($path)) {
                 return [null, null];
             }
@@ -141,20 +132,8 @@ class AnalyzeEmbeddedVisualsJob implements ShouldQueue
         return [null, null];
     }
 
-    /**
-     * Additive, not destructive — unlike GenerateInsightsJob's
-     * delete-then-insert (which owns the full text-derived set), this only
-     * appends. A vision failure or empty result must never wipe out charts
-     * GenerateInsightsJob already wrote from the document's text.
-     */
     private function mergeCharts(Document $document, array $charts): void
     {
-        // GenerateInsightsJob's text-based extraction can independently
-        // discover the same chart this job just found via vision — e.g.
-        // OCR transcribing on-image percentage labels, or a caption
-        // containing the same figures. Skip a vision-derived chart whose
-        // title already exists on this document, rather than write a
-        // visually-identical duplicate.
         $existingTitles = $document->charts()->pluck('title')
             ->map(fn ($t) => strtolower(trim($t)))
             ->all();
