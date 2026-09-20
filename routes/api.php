@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\DocumentUploadController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\ReferralController;
 use App\Http\Controllers\Api\WorkspaceCreditController;
+use App\Http\Controllers\Api\WorkspaceInsightsController;
 use App\Http\Middleware\EnsureEmailIsVerified;
 use Illuminate\Support\Facades\Route;
 
@@ -127,6 +128,9 @@ Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(functio
 
     Route::get('/dashboard/summary', [DashboardController::class, 'summary'])
         ->name('dashboard.summary');
+
+    Route::get('/workspace/insights/trends', [WorkspaceInsightsController::class, 'trends'])
+        ->name('workspace.insights.trends');
 
     Route::post('/documents', [DocumentUploadController::class, 'store'])
         ->middleware('throttle:document-uploads')
