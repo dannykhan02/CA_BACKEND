@@ -14,6 +14,7 @@ class IndexDocumentsRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'matter_id' => ['nullable', 'uuid'],
             'q' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', 'array'],
             'status.*' => ['string', 'in:Processing,Ready,Needs Review,Failed'],

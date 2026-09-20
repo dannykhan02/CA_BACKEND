@@ -18,6 +18,15 @@ class DocumentReprocessController extends Controller
     public function store(Request $request, Document $document): JsonResponse
     {
         $this->authorize('reprocess', $document);
+        $request->validate(['intelligence_only' => 'sometimes|boolean']);
+        $intelligenceOnly = $request->boolean('intelligence_only');
+        if ($intelligenceOnly) {
+            $states = app(\App\Services\DocumentIntelligenceService::class)->getProcessingStatus($document);
+            abort_unless($document->status === 'Ready' && $document->extracted_text
+                && count(array_intersect($states, ['failed', 'not_started'])) > 0
+                && count(array_intersect($states, ['pending', 'processing'])) === 0, 422,
+                'Only missing or failed intelligence on a processed document can be retried here.');
+        }
 
         if ($document->status === 'Failed' && empty($document->extracted_text)) {
             // Full pipeline re-run: scan/extract never produced usable text,
@@ -43,7 +52,7 @@ class DocumentReprocessController extends Controller
             ], 202);
         }
 
-        if ($document->status !== 'Needs Review' && $document->status !== 'Failed') {
+        if (!$intelligenceOnly && $document->status !== 'Needs Review' && $document->status !== 'Failed') {
             return response()->json([
                 'message' => 'Only documents with status "Needs Review" or "Failed" (with existing extracted text) can be reprocessed.',
             ], 422);
@@ -52,14 +61,19 @@ class DocumentReprocessController extends Controller
         // Existing Needs-Review-style AI-only batch path — also now covers a
         // Failed document that already has extracted_text (no need to
         // re-scan/re-extract; text is there, only the AI stages need a retry).
-        $document->forceFill([
-            'status' => 'Processing',
-            'progress' => 60,
-            'error_message' => null,
-            'last_updated_by' => $request->user()->id,
-        ])->save();
-
-        GenerateInsightsJob::dispatch($document->id, true)->onQueue('extraction');
+        if (!$intelligenceOnly) {
+            $document->forceFill([
+                'status' => 'Processing', 'progress' => 60, 'error_message' => null,
+                'last_updated_by' => $request->user()->id,
+            ])->save();
+            GenerateInsightsJob::dispatch($document->id, true)->onQueue('extraction');
+        } else {
+            $document->update(['last_updated_by' => $request->user()->id]);
+            foreach (['document_type', 'entities', 'risks', 'deadlines', 'document_summary'] as $stage) {
+                \App\Models\ProcessingJob::create(['workspace_id' => $document->workspace_id, 'document_id' => $document->id,
+                    'stage' => $stage, 'status' => 'pending']);
+            }
+        }
 
         $documentId = $document->id;
 

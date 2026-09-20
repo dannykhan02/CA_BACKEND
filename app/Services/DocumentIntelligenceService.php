@@ -32,7 +32,7 @@ class DocumentIntelligenceService
     {
         $latestPerStage = $document->processingJobs()
             ->whereIn('stage', self::STAGES)
-            ->orderByDesc('created_at')
+            ->orderByDesc('created_at')->orderByDesc('id')
             ->get()
             ->unique('stage');
 

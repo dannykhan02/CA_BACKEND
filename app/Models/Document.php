@@ -13,7 +13,7 @@ class Document extends Model
     use HasUuids;
 
     protected $fillable = [
-        'name', 'type', 'size_kb', 'status', 'classification', 'year',
+        'matter_id', 'name', 'type', 'size_kb', 'status', 'classification', 'year',
         'workspace_id', 'uploaded_by', 'last_updated_by', 'pages',
         'has_structured_data', 'progress', 'error_message',
         'power_bi_status', 'insights', 'file_path', 'file_hash',
@@ -28,6 +28,11 @@ class Document extends Model
         'extraction_started_at' => 'datetime',
         'extraction_completed_at' => 'datetime',
     ];
+
+    public function matter()
+    {
+        return $this->belongsTo(Matter::class);
+    }
 
     // ✅ Fixed: method name and parameter list
     public function kpis()

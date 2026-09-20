@@ -60,6 +60,11 @@ class DocumentController extends Controller
             $query->whereIn('classification', $allowedClassifications);
         }
 
+        if (! empty($validated['matter_id'])) {
+            $matter = app(\App\Services\IntelligenceAccess::class)->matter($user, $validated['matter_id']);
+            $query->where('matter_id', $matter->id);
+        }
+
         if (! empty($validated['q'])) {
             $term = $this->escapeLike(mb_strtolower($validated['q']));
             $query->whereRaw(
@@ -126,7 +131,7 @@ class DocumentController extends Controller
     {
         $this->authorize('delete', $document);
 
-        $document->delete();
+        \Illuminate\Support\Facades\DB::transaction(fn () => $document->delete());
 
         return response()->json(['message' => 'Document deleted.'], 200);
     }

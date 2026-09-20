@@ -159,3 +159,32 @@ Route::middleware(['auth:sanctum', 'role:Administrator'])
 
         Route::patch('/users/{user}/role', [UserController::class, 'updateRole']);
     });
+
+Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(function () {
+    $matter = \App\Http\Controllers\Api\MatterController::class;
+    Route::get('/matters', [$matter, 'index']);
+    Route::post('/matters', [$matter, 'store']);
+    Route::get('/matters/{matter}', [$matter, 'show']);
+    Route::patch('/matters/{matter}', [$matter, 'update']);
+    Route::delete('/matters/{matter}', [$matter, 'destroy']);
+    Route::post('/matters/{matter}/report-generated', [$matter, 'reportGenerated']);
+    Route::get('/matters/{matter}/intelligence', [$matter, 'intelligence']);
+    Route::post('/matters/{matter}/documents/{document}', [$matter, 'assign']);
+    Route::delete('/matters/{matter}/documents/{document}', [$matter, 'assign']);
+    $relationships = \App\Http\Controllers\Api\DocumentRelationshipController::class;
+    Route::get('/document-relationships', [$relationships, 'index']);
+    Route::post('/document-relationships', [$relationships, 'store']);
+    Route::patch('/document-relationships/{relationship}', [$relationships, 'update']);
+    Route::delete('/document-relationships/{relationship}', [$relationships, 'destroy']);
+    $tracked = \App\Http\Controllers\Api\TrackedItemController::class;
+    Route::get('/tracked-items', [$tracked, 'index']);
+    Route::post('/tracked-items', [$tracked, 'store']);
+    Route::patch('/tracked-items/{trackedItem}', [$tracked, 'update']);
+    $comparisons = \App\Http\Controllers\Api\DocumentComparisonController::class;
+    Route::get('/document-comparisons', [$comparisons, 'index']);
+    Route::post('/document-comparisons', [$comparisons, 'store'])->middleware('throttle:20,1');
+    Route::get('/document-comparisons/{comparison}', [$comparisons, 'show']);
+    Route::patch('/documents/{document}/risks/{risk}', [\App\Http\Controllers\Api\DocumentRiskReviewController::class, 'update']);
+    Route::get('/documents/{document}/context', [\App\Http\Controllers\Api\DocumentContextController::class, 'show']);
+    Route::post('/documents/{document}/suggestions/{related}/dismiss', [\App\Http\Controllers\Api\DocumentContextController::class, 'dismiss']);
+});

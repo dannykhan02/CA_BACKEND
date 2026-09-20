@@ -29,6 +29,41 @@ class ResponseValidator
         return $decoded;
     }
 
+    public function validateComparison(array $decoded, array $context): array
+    {
+        if (!isset($decoded['changes']) || !is_array($decoded['changes']) || !array_is_list($decoded['changes']) || count($decoded['changes']) > 20) {
+            throw new \RuntimeException('Invalid comparison changes.');
+        }
+        $changes = [];
+        foreach ($decoded['changes'] as $change) {
+            foreach (['label', 'description', 'category'] as $field) {
+                if (!is_string($change[$field] ?? null) || trim($change[$field]) === '' || mb_strlen($change[$field]) > 3000) throw new \RuntimeException('Invalid comparison field.');
+            }
+            if (!in_array($change['category'], ['terms', 'requirements', 'amounts', 'obligations', 'dates', 'potential_conflict'], true)) throw new \RuntimeException('Invalid comparison category.');
+            $normalized = ['label' => $change['label'], 'category' => $change['category'], 'description' => $change['description'], 'method' => 'ai'];
+            foreach (['before' => 'base', 'after' => 'compared'] as $side => $key) {
+                if (!array_key_exists($side, $change)) throw new \RuntimeException('Missing comparison side.');
+                $value = $change[$side];
+                $normalized[$side] = [];
+                if ($value === null) continue;
+                if (!is_array($value) || !is_string($value['value'] ?? null) || trim($value['value']) === '' || mb_strlen($value['value']) > 3000
+                    || !is_string($value['quote'] ?? null) || trim($value['quote']) === '' || !is_string($value['chunk_id'] ?? null)) throw new \RuntimeException('Invalid comparison source.');
+                $chunk = collect($context[$key]['excerpts'])->firstWhere('chunk_id', $value['chunk_id']);
+                if (!$chunk || !str_contains($chunk['text'], $value['quote'])) throw new \RuntimeException('Unsupported comparison citation rejected.');
+                $normalized[$side][] = ['value' => ['state' => $value['value']], 'source' => [
+                    'document_id' => $context[$key]['document_id'], 'document_name' => $context[$key]['document_name'],
+                    'chunk_reference' => $value['chunk_id'], 'evidence' => $value['quote'],
+                ]];
+            }
+            if (!$normalized['before'] && !$normalized['after']) throw new \RuntimeException('Comparison change has no evidence.');
+            if (!$normalized['before']) $normalized['description'] = 'Newly observed in selected excerpts; verify in both originals.';
+            elseif (!$normalized['after']) $normalized['description'] = 'Not observed in compared excerpts; removal is not confirmed.';
+            else $normalized['description'] = 'Potential change: '.$normalized['description'];
+            $changes[] = $normalized;
+        }
+        return ['changes' => $changes];
+    }
+
     public function validateDocumentType(array $decoded): array
     {
         $allowedTypes = [

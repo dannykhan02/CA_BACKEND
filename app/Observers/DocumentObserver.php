@@ -9,6 +9,14 @@ class DocumentObserver
 {
     public function __construct(private AuditLogger $auditLogger) {}
 
+    public function deleted(Document $document): void
+    {
+        \App\Models\DocumentRelationship::where('from_document_id', $document->id)->orWhere('to_document_id', $document->id)->delete();
+        \App\Models\DocumentComparison::where('base_document_id', $document->id)->orWhere('compared_document_id', $document->id)->delete();
+        \App\Models\TrackedItem::where('document_id', $document->id)->delete();
+        \Illuminate\Support\Facades\DB::table('document_suggestion_dismissals')->where('document_id', $document->id)->orWhere('related_document_id', $document->id)->delete();
+    }
+
     public function updated(Document $document): void
     {
         if ($document->wasChanged('status')) {

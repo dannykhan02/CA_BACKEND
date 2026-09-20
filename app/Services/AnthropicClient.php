@@ -86,6 +86,20 @@ class AnthropicClient
         return $this->parseDeadlinesResponse($response);
     }
 
+    public function compareDocumentIntelligence(array $context, Document $document): array
+    {
+        $this->currentOperation = 'document_comparison';
+        $this->throttle();
+        $manager = app(\App\Services\AI\PromptManager::class);
+        $prompt = $manager->resolve('document_comparison');
+        $this->lastResolvedPromptVersion = $prompt->version;
+        $rendered = $manager->render($prompt, ['{{comparison_context}}' => json_encode($context, JSON_THROW_ON_ERROR)]);
+        $response = $this->callWithRetry([['role' => 'user', 'content' => $rendered]]);
+        $parsed = app(\App\Services\AI\ResponseValidator::class)->validateComparison($this->decodeJsonContent($response), $context);
+        $this->recordAiRun($document, 'document_comparison', $response);
+        return $parsed + ['model' => config('services.anthropic.model'), 'prompt_version' => $prompt->version];
+    }
+
     public function extractTextFromImage(string $base64Image, string $mediaType = 'image/png', ?Document $document = null): array
     {
         $this->currentOperation = 'ocr';
@@ -164,7 +178,7 @@ class AnthropicClient
             return;
         }
 
-        $versionedPurposes = ['insights', 'document_type', 'entities', 'risks', 'deadlines', 'document_summary', 'chart_vision'];
+        $versionedPurposes = ['insights', 'document_type', 'entities', 'risks', 'deadlines', 'document_summary', 'chart_vision', 'document_comparison'];
         $promptVersion = (in_array($purpose, $versionedPurposes, true) && $this->lastResolvedPromptVersion !== null)
             ? (string) $this->lastResolvedPromptVersion
             : null;

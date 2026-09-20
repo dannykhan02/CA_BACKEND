@@ -52,6 +52,7 @@ class DetectDocumentRisksJob implements ShouldQueue
         }
 
         DB::transaction(function () use ($document, $result) {
+            $reviewedStatuses = $document->risks()->get()->keyBy(fn ($risk) => hash('sha256', $risk->title.'|'.$risk->evidence))->map->status;
             DocumentRisk::where('document_id', $document->id)->delete();
 
             foreach ($result['risks'] as $risk) {
@@ -64,7 +65,7 @@ class DetectDocumentRisksJob implements ShouldQueue
                     'severity' => $risk['severity'],
                     'confidence' => $risk['confidence'],
                     'evidence' => $risk['evidence'],
-                    'status' => 'open',
+                    'status' => $reviewedStatuses[hash('sha256', $risk['title'].'|'.$risk['evidence'])] ?? 'open',
                     'prompt_version' => (string) $result['prompt_version'],
                     'provider' => 'anthropic',
                     'model' => config('services.anthropic.model'),

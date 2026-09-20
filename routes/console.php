@@ -26,3 +26,11 @@ Schedule::call(function () {
 // Clean up old failed_jobs entries older than 30 days — keeps recent
 // failures visible for debugging without unbounded growth.
 Schedule::command('queue:prune-failed', ['--hours' => 24 * 30])->daily();
+
+Schedule::call(function () {
+    \App\Models\TrackedItem::where('status', 'open')->whereNotNull('remind_at')
+        ->where('remind_at', '<=', now())->whereNull('reminded_at')
+        ->chunkById(100, function ($items) {
+            foreach ($items as $item) \App\Jobs\SendTrackedDeadlineReminder::dispatch($item->id);
+        });
+})->name('tracked-deadline-reminders')->everyMinute()->withoutOverlapping();
