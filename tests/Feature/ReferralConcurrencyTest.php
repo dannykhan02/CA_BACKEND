@@ -99,7 +99,7 @@ class ReferralConcurrencyTest extends TestCase
         $this->assertDatabaseCount('trial_grants', 1);
         $this->assertSame(1, Referral::where('reward_eligible', true)->count());
         $this->assertSame(1, Referral::where('ineligible_reason', 'trial_abuse_signal_match')->count());
-        $this->assertSame(10, (int) WorkspaceCredit::sum('documents_remaining'));
+        $this->assertSame(5, (int) WorkspaceCredit::sum('documents_remaining'));
     }
 
     public function test_simultaneous_first_purchases_in_different_workspaces_reward_once(): void
@@ -165,7 +165,7 @@ class ReferralConcurrencyTest extends TestCase
             }
         });
         $this->assertSame('completed', $purchase->fresh()->status);
-        $this->assertSame(110, $workspace->credits()->first()->documents_remaining);
+        $this->assertSame(105, $workspace->credits()->first()->documents_remaining);
         $this->assertSame(100, $workspace->credits()->first()->documents_purchased_total);
         $this->assertSame(17, $rewardWorkspace->credits()->first()->documents_remaining);
         $this->assertSame('rewarded', Referral::sole()->status);

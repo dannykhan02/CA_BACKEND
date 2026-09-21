@@ -25,9 +25,10 @@ class ErrorHandlingTest extends TestCase
 
         $workspace = Workspace::create([
             'type' => WorkspaceType::Organization,
-            'name' => 'Org ' . $user->id,
+            'name' => 'Org '.$user->id,
         ]);
 
+        $workspace->credits()->update(['documents_remaining' => 5]);
         WorkspaceMember::create([
             'workspace_id' => $workspace->id,
             'user_id' => $user->id,
@@ -83,7 +84,7 @@ class ErrorHandlingTest extends TestCase
         [$user] = $this->createOrgUser();
         Sanctum::actingAs($user);
 
-        $response = $this->getJson('/api/documents/' . (string) Str::uuid());
+        $response = $this->getJson('/api/documents/'.(string) Str::uuid());
 
         $response->assertStatus(404)->assertExactJson([
             'success' => false,
@@ -101,7 +102,7 @@ class ErrorHandlingTest extends TestCase
 
         Sanctum::actingAs($userA);
 
-        $response = $this->getJson('/api/documents/' . $foreignDoc->id);
+        $response = $this->getJson('/api/documents/'.$foreignDoc->id);
 
         $response->assertStatus(403)->assertExactJson([
             'success' => false,

@@ -5,11 +5,15 @@ namespace App\Http\Controllers\Api;
 use App\Exceptions\PaystackInitializationException;
 use App\Http\Controllers\Controller;
 use App\Models\CreditPurchase;
+use App\Models\Workspace;
+use App\Services\EntitlementService;
 use App\Services\PaystackClient;
+use App\Services\SubscriptionService;
 use App\Services\WorkspaceCreditService;
 use App\Support\SafeExceptionContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -62,6 +66,9 @@ class CreditPurchaseController extends Controller
 
                 return $this->error('Charge does not match purchase.', [], 422);
             }
+            if (isset($data['id']) && CreditPurchase::where('provider_transaction_id', (string) $data['id'])->whereKeyNot($purchase->id)->exists()) {
+                return $this->error('Charge already recorded.', [], 422);
+            }
             $purchase->paystack_response = $payload;
             if (($data['status'] ?? null) === 'success') {
                 app(WorkspaceCreditService::class)->completePurchase($purchase);
@@ -77,41 +84,52 @@ class CreditPurchaseController extends Controller
 
     private function purchaseStatus(CreditPurchase $purchase): JsonResponse
     {
-        $credits = $purchase->workspace->credits()->firstOrFail();
+        $credits = app(EntitlementService::class)->summary($purchase->workspace_id);
 
         return $this->success('Payment status retrieved.', [
             'reference' => $purchase->paystack_reference,
             'status' => $purchase->status,
-            'documents_remaining' => $credits->documents_remaining,
-            'documents_purchased_total' => $credits->documents_purchased_total,
+            'documents_remaining' => $credits['documents_remaining'],
+            'documents_purchased_total' => $credits['documents_purchased_total'],
         ]);
     }
 
     public function store(Request $request, PaystackClient $client): JsonResponse
     {
-        $packages = config('credits.packages');
         $validated = $request->validate([
-            'package' => ['required', 'string', Rule::in(array_keys($packages))],
+            'plan' => ['required', 'string', Rule::in(array_keys(config('billing.plans')))],
+            'interval' => ['required', Rule::in(['monthly', 'annual'])],
+            'renewal' => ['required', Rule::in(['automatic', 'manual'])],
+            'amount' => ['prohibited'], 'price' => ['prohibited'], 'plan_code' => ['prohibited'],
         ]);
         $workspace = $request->user()->currentWorkspace;
-        abort_unless($workspace, 409, 'Select a workspace before purchasing credits.');
+        abort_unless($workspace, 409, 'Select a workspace before subscribing.');
         abort_unless($workspace->members()->where('user_id', $request->user()->id)->exists(), 403);
-
         if (! config('services.paystack.secret_key')) {
             return $this->error('Payments are temporarily unavailable.', [], 503);
         }
+        $plan = config('billing.plans.'.$validated['plan']);
+        $code = $validated['renewal'] === 'automatic' ? $plan['plan_codes'][$validated['interval']] : null;
+        abort_if($validated['renewal'] === 'automatic' && ! $code, 503, 'Automatic renewal is not configured for this plan. Choose manual renewal.');
+        $purchase = DB::transaction(function () use ($request, $workspace, $validated, $plan, $code) {
+            Workspace::whereKey($workspace->id)->lockForUpdate()->firstOrFail();
+            $entitlements = app(EntitlementService::class);
+            $sub = $entitlements->subscription($workspace->id);
+            abort_if($sub && $sub->user_id !== $request->user()->id, 403, 'Only the billing owner can renew this subscription.');
+            abort_if($sub && ($sub->auto_renews || ($sub->metadata['renewal_requested'] ?? null) === 'automatic') && ! $sub->cancel_at_period_end, 409, 'Manage or cancel the existing automatic subscription before starting another checkout.');
+            abort_if($sub?->grandfathered && $validated['plan'] === 'starter', 409, 'You already have ongoing Starter access at no charge.');
+            abort_if(! $sub?->grandfathered && $entitlements->paid($sub) && ($sub->plan_key !== $validated['plan'] || $sub->billing_interval !== $validated['interval'] || $validated['renewal'] !== 'manual'), 409, 'Plan changes are available after the current paid period ends.');
+            abort_if($workspace->purchases()->whereNotNull('plan_key')->where('status', 'pending')->where('created_at', '>', now()->subDay())->exists(), 409, 'A checkout is pending. Verify that payment before starting another.');
 
-        $package = $packages[$validated['package']];
-        // Persist before the external call so even a very early webhook can
-        // resolve this reference. Never take workspace, amount or credits from input.
-        $purchase = $workspace->purchases()->create([
-            'user_id' => $request->user()->id,
-            'paystack_reference' => 'credits-'.Str::uuid(),
-            'documents_purchased' => $package['documents'],
-            'amount_kobo_or_cents' => $package['amount_kobo_or_cents'],
-            'currency' => $package['currency'],
-            'status' => 'pending',
-        ]);
+            return $workspace->purchases()->create([
+                'user_id' => $request->user()->id, 'paystack_reference' => 'credits-'.Str::uuid(),
+                'documents_purchased' => 0, 'amount_kobo_or_cents' => $plan['prices'][$validated['interval']],
+                'currency' => config('billing.currency'), 'status' => 'pending',
+                'plan_key' => $validated['plan'], 'billing_interval' => $validated['interval'],
+                'renewal_type' => $validated['renewal'], 'provider_plan_code' => $code,
+                'billing_metadata' => Arr::only($plan, ['documents', 'comparisons', 'storage_bytes']),
+            ]);
+        }, 3);
 
         try {
             $transaction = $client->initialize($purchase, $request->user()->email);
@@ -162,38 +180,15 @@ class CreditPurchaseController extends Controller
         if (! is_array($payload)) {
             return $this->error('Invalid webhook payload.', [], 400);
         }
-        if (($payload['event'] ?? null) !== 'charge.success') {
+        $events = ['charge.success', 'subscription.create', 'invoice.create', 'invoice.update', 'invoice.payment_failed', 'subscription.not_renew', 'subscription.disable'];
+        if (! in_array($payload['event'] ?? null, $events, true)) {
             return $this->success('Webhook received.');
         }
-        $data = $payload['data'] ?? null;
-        if (! is_array($data) || ! is_string($data['reference'] ?? null) || $data['reference'] === '') {
-            return $this->error('Invalid charge payload.', [], 422);
+        if (! is_array($payload['data'] ?? null)) {
+            return $this->error('Invalid webhook payload.', [], 422);
         }
+        app(SubscriptionService::class)->receive($payload);
 
-        return DB::transaction(function () use ($payload, $data) {
-            $purchase = CreditPurchase::where('paystack_reference', $data['reference'])->lockForUpdate()->first();
-            if (! $purchase) {
-                Log::warning('Paystack webhook reference is not a credit purchase.', ['reference' => $data['reference']]);
-
-                return $this->success('Webhook received.');
-            }
-            if ($purchase->status !== 'pending') {
-                return $this->success('Webhook received.');
-            }
-
-            $purchase->paystack_response = $payload;
-            if (($data['status'] ?? null) !== 'success'
-                || ($data['amount'] ?? null) !== $purchase->amount_kobo_or_cents
-                || ($data['currency'] ?? null) !== $purchase->currency) {
-                $purchase->save();
-                Log::warning('Paystack charge does not match purchase.', ['reference' => $purchase->paystack_reference]);
-
-                return $this->error('Charge does not match purchase.', [], 422);
-            }
-
-            app(WorkspaceCreditService::class)->completePurchase($purchase);
-
-            return $this->success('Webhook received.');
-        }, 3);
+        return $this->success('Webhook received.');
     }
 }

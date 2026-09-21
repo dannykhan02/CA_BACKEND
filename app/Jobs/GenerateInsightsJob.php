@@ -8,6 +8,7 @@ use App\Models\DocumentChart;
 use App\Models\DocumentChartPoint;
 use App\Models\DocumentKpi;
 use App\Services\AnthropicClient;
+use App\Services\EntitlementService;
 use App\Services\Pipeline\PipelineStageRecorder;
 use App\Services\WorkspaceCreditService;
 use Illuminate\Bus\Queueable;
@@ -72,6 +73,8 @@ class GenerateInsightsJob implements ShouldQueue
 
             return;
         }
+
+        app(EntitlementService::class)->reserveDocument($document);
 
         $insightsStage = $recorder->start($document, 'ai_analysis');
 

@@ -127,7 +127,7 @@ class ReferralTest extends TestCase
             'referred_user_id' => $buyer->id, 'status' => 'pending', 'reward_eligible' => true,
             'rewarded_at' => null, 'reward_documents' => 0, 'ineligible_reason' => null,
         ]);
-        $this->assertSame(10, $buyer->currentWorkspace->credits->documents_remaining);
+        $this->assertSame(5, $buyer->currentWorkspace->credits->documents_remaining);
         $this->assertSame(0, $owner->currentWorkspace->credits->documents_remaining);
         $this->assertDatabaseCount('trial_grants', 1);
     }
@@ -160,7 +160,7 @@ class ReferralTest extends TestCase
         $this->webhook($this->purchase($buyer))->assertOk();
         $this->assertSame(17, $owner->currentWorkspace->credits->documents_remaining);
         $this->assertSame(0, $owner->currentWorkspace->credits->documents_purchased_total);
-        $this->assertSame(110, $purchase->workspace->credits->documents_remaining);
+        $this->assertSame(105, $purchase->workspace->credits->documents_remaining);
         $this->assertSame($rewardedAt, Referral::sole()->rewarded_at->toISOString());
         $this->assertDatabaseHas('referrals', ['status' => 'rewarded', 'reward_documents' => 17, 'rewarded_workspace_id' => $owner->current_workspace_id]);
         Sanctum::actingAs($owner);
@@ -302,7 +302,7 @@ class ReferralTest extends TestCase
         $this->assertSame('pending', $purchase->fresh()->status);
         $this->assertNull($purchase->fresh()->paystack_response);
         $this->assertSame('pending', Referral::sole()->status);
-        $this->assertSame(10, $buyer->currentWorkspace->credits->documents_remaining);
+        $this->assertSame(5, $buyer->currentWorkspace->credits->documents_remaining);
         $owner->currentWorkspace->credits()->create([]);
         $this->webhook($purchase)->assertOk();
         $this->assertSame(17, $owner->currentWorkspace->credits->documents_remaining);
@@ -327,7 +327,7 @@ class ReferralTest extends TestCase
         $this->assertSame('pending', Referral::sole()->status);
         $this->assertNull(Referral::sole()->rewarded_at);
         $this->assertSame(0, Referral::sole()->reward_documents);
-        $this->assertSame(10, $buyer->currentWorkspace->credits()->first()->documents_remaining);
+        $this->assertSame(5, $buyer->currentWorkspace->credits()->first()->documents_remaining);
         $this->assertSame(0, $buyer->currentWorkspace->credits()->first()->documents_purchased_total);
         $this->assertSame(0, $owner->currentWorkspace->credits()->first()->documents_remaining);
 
@@ -335,7 +335,7 @@ class ReferralTest extends TestCase
         $this->webhook($purchase)->assertOk();
         $this->webhook($purchase)->assertOk();
         $this->assertSame('completed', $purchase->fresh()->status);
-        $this->assertSame(110, $buyer->currentWorkspace->credits()->first()->documents_remaining);
+        $this->assertSame(105, $buyer->currentWorkspace->credits()->first()->documents_remaining);
         $this->assertSame(100, $buyer->currentWorkspace->credits()->first()->documents_purchased_total);
         $this->assertSame(17, $owner->currentWorkspace->credits()->first()->documents_remaining);
         $this->assertSame('rewarded', Referral::sole()->status);
@@ -349,10 +349,10 @@ class ReferralTest extends TestCase
         Sanctum::actingAs($buyer);
         $this->mock(PaystackClient::class, fn ($mock) => $mock->shouldReceive('initialize')->once()->andReturn(['authorization_url' => 'https://checkout.paystack.com/test']));
         // Signup alone must not bypass AUTH-1 to initialize a purchase.
-        $this->postJson('/api/workspace/credits/purchases', ['package' => 'documents-100'])->assertForbidden();
+        $this->postJson('/api/workspace/credits/purchases', ['plan' => 'starter', 'interval' => 'monthly', 'renewal' => 'manual'])->assertForbidden();
         $this->assertDatabaseCount('credit_purchases', 0);
         $this->verifyBuyerEmail($buyer);
-        $this->postJson('/api/workspace/credits/purchases', ['package' => 'documents-100', 'user_id' => $owner->id])->assertCreated();
+        $this->postJson('/api/workspace/credits/purchases', ['plan' => 'starter', 'interval' => 'monthly', 'renewal' => 'manual', 'user_id' => $owner->id])->assertCreated();
         $purchase = CreditPurchase::sole();
         $this->assertSame($buyer->id, $purchase->user_id);
         $this->webhook($purchase, ['metadata' => ['user_id' => $owner->id]])->assertOk();
@@ -405,7 +405,7 @@ class ReferralTest extends TestCase
         $this->postJson($url)->assertOk();
         $this->webhook($purchase)->assertOk();
         $this->assertSame(17, $owner->currentWorkspace->credits->documents_remaining);
-        $this->assertSame(110, $buyer->currentWorkspace->credits->documents_remaining);
+        $this->assertSame(105, $buyer->currentWorkspace->credits->documents_remaining);
         $this->assertSame('rewarded', Referral::sole()->status);
     }
 
@@ -434,7 +434,7 @@ class ReferralTest extends TestCase
         ]);
 
         Log::spy();
-        $this->postJson('/api/workspace/credits/purchases', ['package' => 'documents-100'])->assertStatus(502);
+        $this->postJson('/api/workspace/credits/purchases', ['plan' => 'starter', 'interval' => 'monthly', 'renewal' => 'manual'])->assertStatus(502);
         $purchase = CreditPurchase::where('user_id', $buyer->id)->sole();
         $url = '/api/workspace/credits/purchases/'.$purchase->paystack_reference.'/verify';
         $this->postJson($url)->assertStatus(502);
@@ -442,7 +442,7 @@ class ReferralTest extends TestCase
         $this->assertNull($purchase->fresh()->paystack_response);
         $this->assertSame('pending', Referral::sole()->status);
         $this->assertNull(Referral::sole()->rewarded_at);
-        $this->assertSame(10, $buyer->currentWorkspace->credits()->first()->documents_remaining);
+        $this->assertSame(5, $buyer->currentWorkspace->credits()->first()->documents_remaining);
         $this->assertSame(0, $owner->currentWorkspace->credits()->first()->documents_remaining);
         Http::assertSentCount(2); // One initialize attempt and one verify attempt.
 
@@ -453,8 +453,8 @@ class ReferralTest extends TestCase
         $this->postJson($url)->assertOk();
         $this->webhook($this->purchase($buyer))->assertOk();
         $this->assertSame(2, CreditPurchase::where('user_id', $buyer->id)->where('status', 'completed')->count());
-        $this->assertSame(210, $buyer->currentWorkspace->credits()->first()->documents_remaining);
-        $this->assertSame(200, $buyer->currentWorkspace->credits()->first()->documents_purchased_total);
+        $this->assertSame(105, $buyer->currentWorkspace->credits()->first()->documents_remaining);
+        $this->assertSame(100, $buyer->currentWorkspace->credits()->first()->documents_purchased_total);
         $this->assertSame(17, $owner->currentWorkspace->credits()->first()->documents_remaining);
         $this->assertSame('rewarded', Referral::sole()->status);
         $this->assertSame(17, Referral::sole()->reward_documents);

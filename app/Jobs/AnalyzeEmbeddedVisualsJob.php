@@ -6,8 +6,10 @@ use App\Models\Document;
 use App\Models\DocumentChart;
 use App\Models\DocumentChartPoint;
 use App\Services\AnthropicClient;
+use App\Services\EntitlementService;
 use App\Services\Ocr\PdfRasterizer;
 use App\Services\Vision\DocxImageDetector;
+use App\Services\Vision\ImageFileDetector;
 use App\Services\Vision\PdfImageDetector;
 use App\Services\Vision\VisualReference;
 use Illuminate\Bus\Queueable;
@@ -24,6 +26,7 @@ class AnalyzeEmbeddedVisualsJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 2;
+
     public int $timeout = 120;
 
     public function __construct(public string $documentId) {}
@@ -32,7 +35,7 @@ class AnalyzeEmbeddedVisualsJob implements ShouldQueue
         AnthropicClient $client,
         PdfImageDetector $pdfDetector,
         DocxImageDetector $docxDetector,
-        \App\Services\Vision\ImageFileDetector $imageDetector,
+        ImageFileDetector $imageDetector,
         PdfRasterizer $rasterizer,
     ): void {
         $document = Document::find($this->documentId);
@@ -54,6 +57,8 @@ class AnalyzeEmbeddedVisualsJob implements ShouldQueue
         if (! $detector) {
             return;
         }
+
+        app(EntitlementService::class)->reserveDocument($document);
 
         $absolutePath = tempnam(sys_get_temp_dir(), 'visual_');
         file_put_contents($absolutePath, Storage::disk('documents')->get($document->file_path));
@@ -84,6 +89,7 @@ class AnalyzeEmbeddedVisualsJob implements ShouldQueue
                         'document_id' => $document->id,
                         'error' => $e->getMessage(),
                     ]);
+
                     continue;
                 }
             }
@@ -126,6 +132,7 @@ class AnalyzeEmbeddedVisualsJob implements ShouldQueue
             if (! $path || ! file_exists($path)) {
                 return [null, null];
             }
+
             return [base64_encode(file_get_contents($path)), 'image/png'];
         }
 
@@ -140,6 +147,7 @@ class AnalyzeEmbeddedVisualsJob implements ShouldQueue
 
         $charts = array_values(array_filter($charts, function ($chart) use ($existingTitles) {
             $title = strtolower(trim($chart['title'] ?? ''));
+
             return $title === '' || ! in_array($title, $existingTitles, true);
         }));
 

@@ -6,6 +6,7 @@ use App\Enums\WorkspaceType;
 use App\Jobs\Concerns\DispatchesIntelligenceChain;
 use App\Models\Document;
 use App\Models\OcrResult;
+use App\Services\EntitlementService;
 use App\Services\Ocr\OcrEngineResolver;
 use App\Services\Pipeline\PipelineStageRecorder;
 use Illuminate\Bus\Queueable;
@@ -39,24 +40,24 @@ use Illuminate\Support\Facades\Storage;
  */
 class OcrPageBatchJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, DispatchesIntelligenceChain;
+    use Dispatchable, DispatchesIntelligenceChain, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 2;
+
     public int $timeout = 90;
 
     /**
-     * @param string $documentId
-     * @param string[] $pageImagePaths Absolute paths to this batch's page images, in page order.
-     * @param int $startingPageNumber 1-based page_number of the first image in this batch.
-     * @param bool $isLastBatch Whether this batch finalizes extracted_text and continues the chain.
-     * @param string|null $tempDir Rasterization temp dir to clean up — only set (and only ever
-     *        cleaned up) on the last batch, and only when rasterization actually created one.
-     *        Never set for a bare JPG/PNG upload, whose "page image" is the original stored file.
-     * @param bool $fetchPageFromSourceDisk When true (JPG/PNG source only, always a single-page,
-     *        single-batch job), $pageImagePaths is ignored for extraction — instead a fresh copy
-     *        is re-downloaded from the 'documents' disk (R2) right here at execution time and
-     *        deleted again once this batch finishes, rather than trusting a raw local path handed
-     *        across the queue boundary to still exist whenever this job happens to run.
+     * @param  string[]  $pageImagePaths  Absolute paths to this batch's page images, in page order.
+     * @param  int  $startingPageNumber  1-based page_number of the first image in this batch.
+     * @param  bool  $isLastBatch  Whether this batch finalizes extracted_text and continues the chain.
+     * @param  string|null  $tempDir  Rasterization temp dir to clean up — only set (and only ever
+     *                                cleaned up) on the last batch, and only when rasterization actually created one.
+     *                                Never set for a bare JPG/PNG upload, whose "page image" is the original stored file.
+     * @param  bool  $fetchPageFromSourceDisk  When true (JPG/PNG source only, always a single-page,
+     *                                         single-batch job), $pageImagePaths is ignored for extraction — instead a fresh copy
+     *                                         is re-downloaded from the 'documents' disk (R2) right here at execution time and
+     *                                         deleted again once this batch finishes, rather than trusting a raw local path handed
+     *                                         across the queue boundary to still exist whenever this job happens to run.
      */
     public function __construct(
         public string $documentId,
@@ -70,8 +71,12 @@ class OcrPageBatchJob implements ShouldQueue
     public function handle(OcrEngineResolver $resolver, PipelineStageRecorder $recorder): void
     {
         $document = Document::find($this->documentId);
+        if ($document) {
+            app(EntitlementService::class)->reserveDocument($document);
+        }
         if (! $document || $document->status === 'Failed') {
             $this->cleanupTempDir();
+
             return;
         }
 
@@ -132,6 +137,7 @@ class OcrPageBatchJob implements ShouldQueue
                 'error_message' => 'OCR could not process this scanned document.',
             ])->save();
             $this->cleanupTempDir();
+
             // Deliberately not calling $this->fail() — matches the
             // fallbackToOcr() behavior: an OCR failure terminates into
             // 'Failed' for Personal or 'Needs Review' for Organization, without
@@ -176,6 +182,7 @@ class OcrPageBatchJob implements ShouldQueue
                     ? 'OCR ran but found no readable text.'
                     : 'OCR ran but found no readable text — needs manual review.',
             ])->save();
+
             return;
         }
 
@@ -195,7 +202,7 @@ class OcrPageBatchJob implements ShouldQueue
             return;
         }
 
-        foreach (glob($this->tempDir . '/*.png') ?: [] as $file) {
+        foreach (glob($this->tempDir.'/*.png') ?: [] as $file) {
             @unlink($file);
         }
         @rmdir($this->tempDir);

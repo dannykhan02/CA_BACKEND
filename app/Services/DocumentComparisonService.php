@@ -81,6 +81,7 @@ class DocumentComparisonService
                 'compared_document_id' => $new->id, 'fingerprint' => hash('sha256', json_encode($metadata)),
             ], ['created_by' => $user->id, 'matter_id' => $base->matter_id === $new->matter_id ? $base->matter_id : null, 'metadata' => $metadata]);
             if ($comparison->wasRecentlyCreated || $comparison->status === 'failed') {
+                app(EntitlementService::class)->reserveComparison($comparison, true);
                 $comparison->update(['status' => 'queued', 'error_message' => null]);
                 CompareDocumentsJob::dispatch($comparison->id)->onQueue('extraction')->afterCommit();
             }

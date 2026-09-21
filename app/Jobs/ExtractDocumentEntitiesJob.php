@@ -6,6 +6,7 @@ use App\Jobs\Concerns\SkipsUnchangedDocuments;
 use App\Models\Document;
 use App\Models\DocumentEntity;
 use App\Services\AnthropicClient;
+use App\Services\EntitlementService;
 use App\Services\Pipeline\PipelineStageRecorder;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
@@ -21,6 +22,7 @@ class ExtractDocumentEntitiesJob implements ShouldQueue
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments;
 
     public int $tries = 2;
+
     public int $timeout = 60;
 
     public function __construct(public string $documentId, public bool $forceReprocess = false) {}
@@ -41,6 +43,8 @@ class ExtractDocumentEntitiesJob implements ShouldQueue
             return;
         }
 
+        app(EntitlementService::class)->reserveDocument($document);
+
         $stage = $recorder->start($document, 'entities');
 
         try {
@@ -48,6 +52,7 @@ class ExtractDocumentEntitiesJob implements ShouldQueue
         } catch (\Throwable $e) {
             $recorder->fail($stage, $e->getMessage());
             $this->fail($e);
+
             return;
         }
 

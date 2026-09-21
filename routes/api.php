@@ -2,20 +2,27 @@
 
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BillingController;
 use App\Http\Controllers\Api\CreditPurchaseController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DocumentApproveController;
+use App\Http\Controllers\Api\DocumentComparisonController;
+use App\Http\Controllers\Api\DocumentContextController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\DocumentDownloadController;
 use App\Http\Controllers\Api\DocumentIntelligenceController;
 use App\Http\Controllers\Api\DocumentQaController;
 use App\Http\Controllers\Api\DocumentRejectController;
+use App\Http\Controllers\Api\DocumentRelationshipController;
 use App\Http\Controllers\Api\DocumentReportController;
 use App\Http\Controllers\Api\DocumentReprocessController;
+use App\Http\Controllers\Api\DocumentRiskReviewController;
 use App\Http\Controllers\Api\DocumentSearchController;
 use App\Http\Controllers\Api\DocumentUploadController;
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\MatterController;
 use App\Http\Controllers\Api\ReferralController;
+use App\Http\Controllers\Api\TrackedItemController;
 use App\Http\Controllers\Api\WorkspaceCreditController;
 use App\Http\Controllers\Api\WorkspaceInsightsController;
 use App\Http\Middleware\EnsureEmailIsVerified;
@@ -23,6 +30,8 @@ use Illuminate\Support\Facades\Route;
 
 // Unauthenticated — must be reachable by load balancers/uptime monitors/
 // deployment scripts without a Sanctum token.
+Route::get('/billing/plans', [BillingController::class, 'plans']);
+
 Route::get('/health', [HealthController::class, 'index'])->name('health');
 
 // Paystack authenticates with HMAC-SHA512, not a Sanctum bearer token.
@@ -85,6 +94,9 @@ Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(functio
 
     // Documents
     Route::get('/referrals/my-code', [ReferralController::class, 'myCode'])->name('referrals.my-code');
+    Route::get('/workspace/billing', [BillingController::class, 'show']);
+    Route::post('/workspace/billing/cancel', [BillingController::class, 'cancel'])->middleware('throttle:10,1');
+    Route::post('/workspace/billing/manage', [BillingController::class, 'manage'])->middleware('throttle:10,1');
     Route::get('/workspace/credits', [WorkspaceCreditController::class, 'show'])
         ->name('workspace.credits');
     Route::post('/workspace/credits/purchases', [CreditPurchaseController::class, 'store'])
@@ -165,7 +177,7 @@ Route::middleware(['auth:sanctum', 'role:Administrator'])
     });
 
 Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(function () {
-    $matter = \App\Http\Controllers\Api\MatterController::class;
+    $matter = MatterController::class;
     Route::get('/matters', [$matter, 'index']);
     Route::post('/matters', [$matter, 'store']);
     Route::get('/matters/{matter}', [$matter, 'show']);
@@ -175,20 +187,20 @@ Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(functio
     Route::get('/matters/{matter}/intelligence', [$matter, 'intelligence']);
     Route::post('/matters/{matter}/documents/{document}', [$matter, 'assign']);
     Route::delete('/matters/{matter}/documents/{document}', [$matter, 'assign']);
-    $relationships = \App\Http\Controllers\Api\DocumentRelationshipController::class;
+    $relationships = DocumentRelationshipController::class;
     Route::get('/document-relationships', [$relationships, 'index']);
     Route::post('/document-relationships', [$relationships, 'store']);
     Route::patch('/document-relationships/{relationship}', [$relationships, 'update']);
     Route::delete('/document-relationships/{relationship}', [$relationships, 'destroy']);
-    $tracked = \App\Http\Controllers\Api\TrackedItemController::class;
+    $tracked = TrackedItemController::class;
     Route::get('/tracked-items', [$tracked, 'index']);
     Route::post('/tracked-items', [$tracked, 'store']);
     Route::patch('/tracked-items/{trackedItem}', [$tracked, 'update']);
-    $comparisons = \App\Http\Controllers\Api\DocumentComparisonController::class;
+    $comparisons = DocumentComparisonController::class;
     Route::get('/document-comparisons', [$comparisons, 'index']);
     Route::post('/document-comparisons', [$comparisons, 'store'])->middleware('throttle:20,1');
     Route::get('/document-comparisons/{comparison}', [$comparisons, 'show']);
-    Route::patch('/documents/{document}/risks/{risk}', [\App\Http\Controllers\Api\DocumentRiskReviewController::class, 'update']);
-    Route::get('/documents/{document}/context', [\App\Http\Controllers\Api\DocumentContextController::class, 'show']);
-    Route::post('/documents/{document}/suggestions/{related}/dismiss', [\App\Http\Controllers\Api\DocumentContextController::class, 'dismiss']);
+    Route::patch('/documents/{document}/risks/{risk}', [DocumentRiskReviewController::class, 'update']);
+    Route::get('/documents/{document}/context', [DocumentContextController::class, 'show']);
+    Route::post('/documents/{document}/suggestions/{related}/dismiss', [DocumentContextController::class, 'dismiss']);
 });

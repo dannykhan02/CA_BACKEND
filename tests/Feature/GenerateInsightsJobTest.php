@@ -10,6 +10,7 @@ use App\Models\DocumentChartPoint;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Services\AnthropicClient;
+use App\Services\Pipeline\PipelineStageRecorder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -21,6 +22,7 @@ class GenerateInsightsJobTest extends TestCase
     {
         $user = User::factory()->create();
         $workspace = Workspace::create(['type' => WorkspaceType::Organization, 'name' => 'Test WS']);
+        $workspace->credits()->update(['documents_remaining' => 5]);
 
         $document = Document::create([
             'name' => 'Insights Test Doc',
@@ -58,7 +60,7 @@ class GenerateInsightsJobTest extends TestCase
 
         (new GenerateInsightsJob($document->id))->handle(
             app(AnthropicClient::class),
-            app(\App\Services\Pipeline\PipelineStageRecorder::class),
+            app(PipelineStageRecorder::class),
         );
 
         $document->refresh();
@@ -81,6 +83,7 @@ class GenerateInsightsJobTest extends TestCase
     {
         $user = User::factory()->create();
         $workspace = Workspace::create(['type' => WorkspaceType::Organization, 'name' => 'Reprocess WS']);
+        $workspace->credits()->update(['documents_remaining' => 5]);
 
         $document = Document::create([
             'name' => 'Reprocess Doc',
@@ -131,7 +134,7 @@ class GenerateInsightsJobTest extends TestCase
 
         (new GenerateInsightsJob($document->id, true))->handle(
             app(AnthropicClient::class),
-            app(\App\Services\Pipeline\PipelineStageRecorder::class),
+            app(PipelineStageRecorder::class),
         );
 
         $this->assertSame(1, DocumentChart::where('document_id', $document->id)->count());

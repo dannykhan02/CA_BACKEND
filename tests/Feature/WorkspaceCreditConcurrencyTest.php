@@ -11,6 +11,7 @@ use App\Services\Pipeline\PipelineStageRecorder;
 use App\Services\WorkspaceService;
 use Illuminate\Foundation\Testing\DatabaseTruncation;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class WorkspaceCreditConcurrencyTest extends TestCase
@@ -18,7 +19,7 @@ class WorkspaceCreditConcurrencyTest extends TestCase
     // Fixtures must commit so two independent worker connections can see them.
     use DatabaseTruncation;
 
-    public function test_concurrent_ready_jobs_share_one_credit_without_a_negative_balance(): void
+    public function test_concurrent_ready_jobs_cannot_overspend_one_credit(): void
     {
         if (! function_exists('pcntl_fork') || DB::getDriverName() !== 'pgsql') {
             $this->markTestSkipped('Requires PostgreSQL and pcntl for independent worker processes.');
@@ -47,22 +48,11 @@ class WorkspaceCreditConcurrencyTest extends TestCase
             $this->assertNotSame(-1, $pid);
             if ($pid === 0) {
                 try {
-                    $this->mock(AnthropicClient::class, function ($mock) use ($directory, $index) {
-                        $mock->shouldReceive('extractDocumentInsights')->andReturnUsing(function () use ($directory, $index) {
-                            touch($directory.'/ready-'.$index);
-                            $deadline = microtime(true) + 10;
-                            while (! file_exists($directory.'/ready-'.(1 - $index))) {
-                                if (microtime(true) > $deadline) {
-                                    throw new \RuntimeException('Other worker never reached completion barrier.');
-                                }
-                                usleep(10000);
-                            }
-
-                            return [];
-                        });
-                    });
+                    $this->mock(AnthropicClient::class, fn ($mock) => $mock->shouldReceive('extractDocumentInsights')->andReturn([]));
                     (new GenerateInsightsJob($id))->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
                     exit(Document::findOrFail($id)->status === 'Ready' ? 0 : 1);
+                } catch (HttpException $error) {
+                    exit($error->getStatusCode() === 402 ? 0 : 1);
                 } catch (\Throwable $error) {
                     file_put_contents($directory.'/error-'.$index, $error->getMessage());
                     exit(1);
@@ -77,7 +67,7 @@ class WorkspaceCreditConcurrencyTest extends TestCase
                 $errors = array_map('file_get_contents', glob($directory.'/error-*'));
                 $this->assertTrue(pcntl_wifexited($status) && pcntl_wexitstatus($status) === 0, implode("\n", $errors));
             }
-            $this->assertSame(2, Document::whereIn('id', $ids)->where('status', 'Ready')->whereNotNull('credit_accounted_at')->count());
+            $this->assertSame(1, Document::whereIn('id', $ids)->where('status', 'Ready')->whereNotNull('credit_accounted_at')->count());
             $this->assertSame(0, WorkspaceCredit::where('workspace_id', $workspace->id)->firstOrFail()->documents_remaining);
         } finally {
             foreach (glob($directory.'/*') as $file) {

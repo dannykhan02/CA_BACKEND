@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Exceptions\PaystackInitializationException;
 use App\Models\CreditPurchase;
+use App\Models\Subscription;
 use App\Support\SafeExceptionContext;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
@@ -38,6 +39,8 @@ class PaystackClient
                     'amount' => (string) $purchase->amount_kobo_or_cents,
                     'currency' => $purchase->currency,
                     'reference' => $purchase->paystack_reference,
+                    ...($purchase->provider_plan_code ? ['plan' => $purchase->provider_plan_code, 'channels' => ['card']] : []),
+                    'metadata' => ['purchase_reference' => $purchase->paystack_reference],
                     'callback_url' => rtrim(config('app.frontend_url'), '/').'/#/billing/return',
                 ]);
         } catch (ConnectionException $exception) {
@@ -66,5 +69,36 @@ class PaystackClient
         }
 
         return ['authorization_url' => $url, 'reference' => $purchase->paystack_reference];
+    }
+
+    public function disableSubscription(Subscription $subscription): void
+    {
+        $response = Http::withToken(config('services.paystack.secret_key'))->acceptJson()->connectTimeout(5)->timeout(10)
+            ->get('https://api.paystack.co/subscription/'.rawurlencode($subscription->provider_subscription_code));
+        if (! $response->successful() || $response->json('status') !== true) {
+            throw new \RuntimeException('Unable to retrieve subscription.');
+        }
+        $token = $response->json('data.email_token');
+        if (! is_string($token) || $token === '') {
+            throw new \RuntimeException('Subscription cancellation is temporarily unavailable.');
+        }
+        $response = Http::withToken(config('services.paystack.secret_key'))->acceptJson()->connectTimeout(5)->timeout(10)
+            ->post('https://api.paystack.co/subscription/disable', ['code' => $subscription->provider_subscription_code, 'token' => $token]);
+        if (! $response->successful() || $response->json('status') !== true) {
+            throw new \RuntimeException('Unable to cancel subscription.');
+        }
+    }
+
+    public function managementLink(Subscription $subscription): string
+    {
+        $response = Http::withToken(config('services.paystack.secret_key'))->acceptJson()->connectTimeout(5)->timeout(10)
+            ->get('https://api.paystack.co/subscription/'.rawurlencode($subscription->provider_subscription_code).'/manage/link');
+        $url = $response->json('data.link');
+        if (! $response->successful() || $response->json('status') !== true || ! is_string($url)
+            || parse_url($url, PHP_URL_SCHEME) !== 'https' || parse_url($url, PHP_URL_HOST) !== 'paystack.com') {
+            throw new \RuntimeException('Payment management is temporarily unavailable.');
+        }
+
+        return $url;
     }
 }

@@ -6,6 +6,7 @@ use App\Exceptions\PaystackInitializationException;
 use App\Models\CreditPurchase;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Services\EntitlementService;
 use App\Services\PaystackClient;
 use App\Services\WorkspaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -80,8 +81,8 @@ class CreditPurchaseTest extends TestCase
             $mock->shouldReceive('initialize')->once()->withArgs(function ($purchase, $email) use ($workspace, $user) {
                 $this->assertDatabaseHas('credit_purchases', [
                     'id' => $purchase->id, 'workspace_id' => $workspace->id,
-                    'status' => 'pending', 'documents_purchased' => 100,
-                    'amount_kobo_or_cents' => 200000, 'currency' => 'KES',
+                    'status' => 'pending', 'documents_purchased' => 0,
+                    'amount_kobo_or_cents' => 150000, 'currency' => 'KES',
                 ]);
 
                 return $email === $user->email;
@@ -92,7 +93,7 @@ class CreditPurchaseTest extends TestCase
         });
 
         $response = $this->postJson('/api/workspace/credits/purchases', [
-            'package' => 'documents-100', 'workspace_id' => $other->id,
+            'plan' => 'starter', 'interval' => 'monthly', 'renewal' => 'manual', 'workspace_id' => $other->id,
             'amount_kobo_or_cents' => 1, 'currency' => 'USD', 'documents_purchased' => 9999,
         ])->assertCreated()->assertJsonPath('data.authorization_url', 'https://checkout.paystack.com/test-checkout');
         $purchase = $workspace->purchases()->sole();
@@ -116,14 +117,14 @@ class CreditPurchaseTest extends TestCase
             ]]);
         }]);
 
-        $this->postJson('/api/workspace/credits/purchases', ['package' => 'documents-100'])
+        $this->postJson('/api/workspace/credits/purchases', ['plan' => 'starter', 'interval' => 'monthly', 'renewal' => 'manual'])
             ->assertCreated()->assertJsonPath('data.authorization_url', 'https://checkout.paystack.com/fixture');
         $purchase = $workspace->purchases()->sole();
         Http::assertSent(fn (ClientRequest $request) => $request->method() === 'POST'
             && $request->hasHeader('Authorization', 'Bearer '.self::SECRET)
             && $request->hasHeader('Content-Type', 'application/json')
             && $request['email'] === $user->email
-            && $request['amount'] === '200000' && $request['currency'] === 'KES'
+            && $request['amount'] === '150000' && $request['currency'] === 'KES'
             && $request['callback_url'] === rtrim(config('app.frontend_url'), '/').'/#/billing/return'
             && $request['reference'] === $purchase->paystack_reference);
         Http::assertSentCount(1);
@@ -131,7 +132,7 @@ class CreditPurchaseTest extends TestCase
 
     public function test_purchase_requires_authentication(): void
     {
-        $this->postJson('/api/workspace/credits/purchases', ['package' => 'documents-100'])->assertUnauthorized();
+        $this->postJson('/api/workspace/credits/purchases', ['plan' => 'starter', 'interval' => 'monthly', 'renewal' => 'manual'])->assertUnauthorized();
         Http::assertNothingSent();
     }
 
@@ -149,7 +150,7 @@ class CreditPurchaseTest extends TestCase
     {
         $workspace = $this->workspace();
         Sanctum::actingAs(User::factory()->create(['current_workspace_id' => $workspace->id]));
-        $this->postJson('/api/workspace/credits/purchases', ['package' => 'documents-100'])->assertForbidden();
+        $this->postJson('/api/workspace/credits/purchases', ['plan' => 'starter', 'interval' => 'monthly', 'renewal' => 'manual'])->assertForbidden();
         $this->assertSame(0, $workspace->purchases()->count());
         Http::assertNothingSent();
     }
@@ -159,7 +160,7 @@ class CreditPurchaseTest extends TestCase
         config(['services.paystack.secret_key' => null]);
         $workspace = $this->workspace();
         Sanctum::actingAs($workspace->users()->first());
-        $this->postJson('/api/workspace/credits/purchases', ['package' => 'documents-100'])->assertStatus(503);
+        $this->postJson('/api/workspace/credits/purchases', ['plan' => 'starter', 'interval' => 'monthly', 'renewal' => 'manual'])->assertStatus(503);
         $this->webhook(['event' => 'charge.success'])->assertStatus(503);
         $this->assertSame(0, $workspace->purchases()->count());
         Http::assertNothingSent();
@@ -170,7 +171,7 @@ class CreditPurchaseTest extends TestCase
         $workspace = $this->workspace();
         Sanctum::actingAs($workspace->users()->first());
         Http::fake(['https://api.paystack.co/*' => Http::response(['status' => false], 400)]);
-        $this->postJson('/api/workspace/credits/purchases', ['package' => 'documents-100'])->assertStatus(502);
+        $this->postJson('/api/workspace/credits/purchases', ['plan' => 'starter', 'interval' => 'monthly', 'renewal' => 'manual'])->assertStatus(502);
         $this->assertSame('failed', $workspace->purchases()->sole()->status);
         $this->assertSame(0, $workspace->credits->documents_remaining);
     }
@@ -180,11 +181,12 @@ class CreditPurchaseTest extends TestCase
         $workspace = $this->workspace();
         Sanctum::actingAs($workspace->users()->first());
         Http::fake(['https://api.paystack.co/*' => Http::failedConnection()]);
-        $this->postJson('/api/workspace/credits/purchases', ['package' => 'documents-100'])->assertStatus(502);
+        $this->postJson('/api/workspace/credits/purchases', ['plan' => 'starter', 'interval' => 'monthly', 'renewal' => 'manual'])->assertStatus(502);
         $purchase = $workspace->purchases()->sole();
         $this->assertSame('pending', $purchase->status);
         $this->webhook($this->payload($purchase))->assertOk();
-        $this->assertSame(100, $workspace->credits->documents_remaining);
+        $this->assertSame(0, $workspace->credits->documents_remaining);
+        $this->assertSame(20, app(EntitlementService::class)->summary($workspace->id)['documents_remaining']);
     }
 
     public function test_mismatched_initialize_reference_does_not_return_checkout_url(): void
@@ -194,7 +196,7 @@ class CreditPurchaseTest extends TestCase
         Http::fake(['https://api.paystack.co/*' => Http::response(['status' => true, 'data' => [
             'reference' => 'wrong-reference', 'authorization_url' => 'https://checkout.paystack.com/fixture',
         ]])]);
-        $this->postJson('/api/workspace/credits/purchases', ['package' => 'documents-100'])->assertStatus(502);
+        $this->postJson('/api/workspace/credits/purchases', ['plan' => 'starter', 'interval' => 'monthly', 'renewal' => 'manual'])->assertStatus(502);
         $this->assertSame('pending', $workspace->purchases()->sole()->status);
     }
 
@@ -302,9 +304,10 @@ class CreditPurchaseTest extends TestCase
                 throw new PaystackInitializationException(true);
             });
         });
-        $this->postJson('/api/workspace/credits/purchases', ['package' => 'documents-100'])->assertStatus(502);
+        $this->postJson('/api/workspace/credits/purchases', ['plan' => 'starter', 'interval' => 'monthly', 'renewal' => 'manual'])->assertStatus(502);
         $this->assertSame('completed', $workspace->purchases()->sole()->status);
-        $this->assertSame(100, $workspace->credits->documents_remaining);
+        $this->assertSame(0, $workspace->credits->documents_remaining);
+        $this->assertSame(20, app(EntitlementService::class)->summary($workspace->id)['documents_remaining']);
     }
 
     public function test_return_verification_completes_test_payment_without_webhook_and_only_once(): void

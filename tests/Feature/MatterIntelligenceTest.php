@@ -13,6 +13,7 @@ use App\Models\DocumentDeadline;
 use App\Models\DocumentRelationship;
 use App\Models\Matter;
 use App\Models\ProcessingJob;
+use App\Models\Subscription;
 use App\Models\TrackedItem;
 use App\Models\User;
 use App\Models\Workspace;
@@ -47,6 +48,8 @@ class MatterIntelligenceTest extends TestCase
             WorkspaceMember::create(['workspace_id' => $workspace->id, 'user_id' => $user->id, 'role' => $role, 'joined_at' => now()]);
             $user->update(['current_workspace_id' => $workspace->id]);
         }
+
+        $user->fresh()->currentWorkspace->credits()->update(['documents_remaining' => 5]);
 
         return $user;
     }
@@ -257,6 +260,8 @@ class MatterIntelligenceTest extends TestCase
         Bus::fake();
         $this->seed(DocumentComparisonPromptSeeder::class);
         $u = $this->actor();
+        $sub = Subscription::create(['workspace_id' => $u->current_workspace_id, 'user_id' => $u->id, 'plan_key' => 'starter', 'billing_interval' => 'monthly', 'status' => 'active', 'current_period_start' => now(), 'current_period_end' => now()->addMonth()]);
+        $sub->periods()->create(['period_start' => now(), 'period_end' => now()->addMonth(), 'documents_allowed' => 20, 'comparisons_allowed' => 5, 'storage_bytes' => 1073741824]);
         Sanctum::actingAs($u);
         $a = $this->document($u, ['extracted_text' => 'Payment is due Net 45.']);
         $b = $this->document($u, ['extracted_text' => 'Payment is due Net 30.']);
