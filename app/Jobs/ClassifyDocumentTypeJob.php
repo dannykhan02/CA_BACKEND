@@ -6,6 +6,7 @@ use App\Jobs\Concerns\SkipsUnchangedDocuments;
 use App\Models\Document;
 use App\Models\DocumentTypeClassification;
 use App\Services\AnthropicClient;
+use App\Services\EntitlementService;
 use App\Services\Pipeline\PipelineStageRecorder;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
@@ -20,6 +21,7 @@ class ClassifyDocumentTypeJob implements ShouldQueue
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments;
 
     public int $tries = 2;
+
     public int $timeout = 60;
 
     public function __construct(public string $documentId, public bool $forceReprocess = false) {}
@@ -45,6 +47,8 @@ class ClassifyDocumentTypeJob implements ShouldQueue
             return;
         }
 
+        app(EntitlementService::class)->reserveDocument($document);
+
         $stage = $recorder->start($document, 'document_type');
 
         try {
@@ -52,6 +56,7 @@ class ClassifyDocumentTypeJob implements ShouldQueue
         } catch (\Throwable $e) {
             $recorder->fail($stage, $e->getMessage());
             $this->fail($e);
+
             return;
         }
 

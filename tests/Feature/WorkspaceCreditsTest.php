@@ -11,12 +11,12 @@ use App\Services\Pipeline\PipelineStageRecorder;
 use App\Services\WorkspaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
 use Laravel\Sanctum\Sanctum;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class WorkspaceCreditsTest extends TestCase
@@ -56,7 +56,7 @@ class WorkspaceCreditsTest extends TestCase
         $this->postJson('/api/documents', [
             'file' => UploadedFile::fake()->create('report.pdf', 1, 'application/pdf'),
             'classification' => 'Public',
-        ])->assertStatus(402)->assertJsonPath('message', 'Your workspace has no document credits remaining. Purchase more to continue.');
+        ])->assertStatus(402)->assertJsonPath('message', 'No processing credits remain. Subscribe or renew to process new documents. Your existing work remains available.');
         $this->assertSame(0, Document::where('workspace_id', $workspace->id)->count());
         Queue::assertNothingPushed();
     }
@@ -98,19 +98,17 @@ class WorkspaceCreditsTest extends TestCase
         $this->assertSame(2, $workspace->credits->documents_remaining);
     }
 
-    public function test_two_in_progress_documents_finish_but_balance_floors_at_zero(): void
+    public function test_second_unreserved_job_is_blocked_after_last_credit_is_used(): void
     {
         $workspace = $this->workspace(1);
         $first = $this->document($workspace);
         $second = $this->document($workspace);
-        Log::spy();
-        $this->mock(AnthropicClient::class, fn ($mock) => $mock->shouldReceive('extractDocumentInsights')->twice()->andReturn([]));
+        $this->mock(AnthropicClient::class, fn ($mock) => $mock->shouldReceive('extractDocumentInsights')->once()->andReturn([]));
         $this->runJob($first);
-        $this->runJob($second);
         $this->assertSame('Ready', $first->fresh()->status);
-        $this->assertSame('Ready', $second->fresh()->status);
         $this->assertSame(0, $workspace->credits->documents_remaining);
-        Log::shouldHaveReceived('warning')->once()->with('Document completed without remaining workspace credits.', \Mockery::type('array'));
+        $this->expectException(HttpException::class);
+        $this->runJob($second);
     }
 
     public function test_balance_is_scoped_to_current_workspace(): void
@@ -139,10 +137,10 @@ class WorkspaceCreditsTest extends TestCase
         $this->assertSame($balance, User::where('email', $email)->firstOrFail()->currentWorkspace->credits->documents_remaining);
     }
 
-    public function test_new_signals_receive_ten_trial_documents(): void
+    public function test_new_signals_receive_five_trial_documents(): void
     {
         $this->signup('NEW@example.com', '203.0.113.1', 'browser-a')->assertCreated();
-        $this->assertBalanceForEmail('new@example.com', 10);
+        $this->assertBalanceForEmail('new@example.com', 5);
         $this->assertDatabaseHas('trial_grants', ['email' => 'new@example.com', 'ip_address' => '203.0.113.1', 'fingerprint' => 'browser-a']);
     }
 
@@ -176,7 +174,7 @@ class WorkspaceCreditsTest extends TestCase
         $this->signup('first@example.com', '203.0.113.1', null)->assertCreated();
         $this->signup('second@example.com', '203.0.113.2', null)->assertCreated();
         $this->signup('third@example.com', '203.0.113.2', null)->assertCreated();
-        $this->assertBalanceForEmail('second@example.com', 10);
+        $this->assertBalanceForEmail('second@example.com', 5);
         $this->assertBalanceForEmail('third@example.com', 0);
     }
 }

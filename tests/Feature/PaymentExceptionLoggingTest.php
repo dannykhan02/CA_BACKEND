@@ -86,7 +86,7 @@ class PaymentExceptionLoggingTest extends TestCase
         ], $status, ['x-paystack-signature' => 'private-signature'])]);
 
         Log::spy();
-        $this->postJson('/api/workspace/credits/purchases', ['package' => 'documents-100'])
+        $this->postJson('/api/workspace/credits/purchases', ['plan' => 'starter', 'interval' => 'monthly', 'renewal' => 'manual'])
             ->assertStatus(502)->assertExactJson([
                 'success' => false,
                 'message' => 'Unable to initialize payment. Please try again later.',
@@ -123,7 +123,7 @@ class PaymentExceptionLoggingTest extends TestCase
         )]);
 
         Log::spy();
-        $this->postJson('/api/workspace/credits/purchases', ['package' => 'documents-100'])
+        $this->postJson('/api/workspace/credits/purchases', ['plan' => 'starter', 'interval' => 'monthly', 'renewal' => 'manual'])
             ->assertStatus(502)->assertExactJson([
                 'success' => false,
                 'message' => 'Unable to initialize payment. Please try again later.',

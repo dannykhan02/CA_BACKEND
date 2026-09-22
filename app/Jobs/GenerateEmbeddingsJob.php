@@ -6,6 +6,7 @@ use App\Models\Document;
 use App\Models\DocumentEmbedding;
 use App\Services\Embeddings\TextChunker;
 use App\Services\Embeddings\VoyageEmbeddingClient;
+use App\Services\EntitlementService;
 use App\Services\Pipeline\PipelineStageRecorder;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -20,6 +21,7 @@ class GenerateEmbeddingsJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 2;
+
     public int $timeout = 90;
 
     public function __construct(public string $documentId) {}
@@ -50,14 +52,18 @@ class GenerateEmbeddingsJob implements ShouldQueue
         $text = $document->extracted_text;
         if (! $text || trim($text) === '') {
             Log::info("Embeddings skipped — no extracted_text available for document {$document->id}, not re-extracting for a non-critical stage.");
+
             return;
         }
+
+        app(EntitlementService::class)->reserveDocument($document);
 
         $chunkStage = $recorder->start($document, 'chunk');
 
         $chunks = $chunker->chunk($text);
         if (empty($chunks)) {
             $recorder->complete($chunkStage, ['chunks' => 0]);
+
             return;
         }
 
@@ -66,6 +72,7 @@ class GenerateEmbeddingsJob implements ShouldQueue
         } catch (\Throwable $e) {
             // Non-fatal by design — see status-gate comment above.
             $recorder->fail($chunkStage, $e->getMessage());
+
             return;
         }
 
@@ -84,7 +91,7 @@ class GenerateEmbeddingsJob implements ShouldQueue
                     'chunk_text' => $chunkText,
                     'provider' => 'voyage',
                     'model' => $result['model'],
-                    'embedding' => '[' . implode(',', $result['embeddings'][$index]) . ']',
+                    'embedding' => '['.implode(',', $result['embeddings'][$index]).']',
                 ]);
             }
         });

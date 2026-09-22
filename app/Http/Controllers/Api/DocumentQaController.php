@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Services\AI\DocumentContextRetriever;
 use App\Services\AnthropicClient;
+use App\Services\AuditLogger;
+use App\Services\EntitlementService;
 use App\Support\SafeExceptionContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,6 +22,7 @@ class DocumentQaController extends Controller
         ]);
 
         $user = $request->user();
+        app(EntitlementService::class)->assertAiAccess($user->current_workspace_id);
 
         // Authorization lives inside the retriever (Day 9 Batch 2) — the
         // controller never touches document_embeddings/documents directly,
@@ -57,7 +60,7 @@ class DocumentQaController extends Controller
             ], 500);
         }
 
-        app(\App\Services\AuditLogger::class)->log(
+        app(AuditLogger::class)->log(
             $user,
             'document.qa_asked',
             null,

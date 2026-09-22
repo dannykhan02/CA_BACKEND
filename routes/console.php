@@ -1,7 +1,15 @@
 <?php
 
+use App\Jobs\SendTrackedDeadlineReminder;
+use App\Models\Subscription;
+use App\Models\TrackedItem;
+use App\Models\VerificationCode;
+use App\Services\EntitlementService;
+use App\Services\SubscriptionService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
@@ -19,8 +27,8 @@ Schedule::command('pulse:prune')->daily();
 // does not use the Prunable trait, so this deletes directly rather than
 // relying on model:prune, which would silently do nothing without it.
 Schedule::call(function () {
-    \Illuminate\Support\Facades\Log::info('SCHEDULER TEST: verification code cleanup ran at ' . now());
-    \App\Models\VerificationCode::where('expires_at', '<', now())->delete();
+    Log::info('SCHEDULER TEST: verification code cleanup ran at '.now());
+    VerificationCode::where('expires_at', '<', now())->delete();
 })->everyMinute();
 
 // Clean up old failed_jobs entries older than 30 days — keeps recent
@@ -28,9 +36,29 @@ Schedule::call(function () {
 Schedule::command('queue:prune-failed', ['--hours' => 24 * 30])->daily();
 
 Schedule::call(function () {
-    \App\Models\TrackedItem::where('status', 'open')->whereNotNull('remind_at')
+    TrackedItem::where('status', 'open')->whereNotNull('remind_at')
         ->where('remind_at', '<=', now())->whereNull('reminded_at')
         ->chunkById(100, function ($items) {
-            foreach ($items as $item) \App\Jobs\SendTrackedDeadlineReminder::dispatch($item->id);
+            foreach ($items as $item) {
+                SendTrackedDeadlineReminder::dispatch($item->id);
+            }
         });
 })->name('tracked-deadline-reminders')->everyMinute()->withoutOverlapping();
+
+// Entitlements also check dates on every request; this keeps reporting states current.
+Schedule::call(function () {
+    Subscription::whereIn('status', ['active', 'non_renewing', 'past_due'])->each(function ($subscription) {
+        app(EntitlementService::class)->subscription($subscription->workspace_id);
+    });
+})->name('billing-expiration')->hourly()->withoutOverlapping();
+
+// Retry authenticated events which arrived before their subscription could be linked.
+Schedule::call(function () {
+    DB::table('billing_webhook_events')->whereNull('processed_at')->orderBy('updated_at')->orderBy('id')->limit(100)->get()->each(function ($event) {
+        try {
+            app(SubscriptionService::class)->receive(json_decode($event->payload, true));
+        } catch (Throwable $e) {
+            report($e);
+        }
+    });
+})->name('billing-event-reconciliation')->everyFiveMinutes()->withoutOverlapping();

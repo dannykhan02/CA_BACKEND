@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Notifications\VerificationCodeNotification;
 use App\Services\AnthropicClient;
 use App\Services\DocumentTextExtractor;
+use App\Services\EntitlementService;
 use App\Services\Ocr\OcrEngineResolver;
 use App\Services\Pipeline\PipelineStageRecorder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -27,6 +28,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -72,7 +74,7 @@ class PersonalWorkspaceJourneyTest extends TestCase
         $this->assertDatabaseHas('trial_grants', [
             'email' => $owner->email, 'ip_address' => '203.0.113.10', 'fingerprint' => 'owner-browser',
         ]);
-        $this->assertBalance($owner, 10, 0);
+        $this->assertBalance($owner, 5, 0);
 
         $this->mockExtraction(self::TEXT);
         $this->mockIntelligence();
@@ -82,7 +84,7 @@ class PersonalWorkspaceJourneyTest extends TestCase
         // document-type classification remains part of the four-job batch.
         $this->assertSame('Internal', $document->classification);
         Storage::disk('documents')->assertExists($document->file_path);
-        $this->assertBalance($owner, 10, 0); // Acceptance is not consumption.
+        $this->assertBalance($owner, 5, 0); // Acceptance is not consumption.
 
         $this->continueUploadChain($document);
         $document->refresh();
@@ -90,7 +92,7 @@ class PersonalWorkspaceJourneyTest extends TestCase
         $this->assertSame('Ready', $document->status);
         $this->assertSame(100, $document->progress);
         $this->assertNotNull($document->credit_accounted_at);
-        $this->assertBalance($owner, 9, 0);
+        $this->assertBalance($owner, 4, 0);
         $this->assertNoReview($document);
 
         $batchId = DB::table('job_batches')->where('name', 'document-intelligence:'.$document->id)->sole()->id;
@@ -114,7 +116,7 @@ class PersonalWorkspaceJourneyTest extends TestCase
         // One delivery replay is enough here; exhaustive reprocessing and
         // webhook races remain in the focused credit/purchase test classes.
         (new GenerateInsightsJob($document->id))->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
-        $this->assertBalance($owner, 9, 0);
+        $this->assertBalance($owner, 4, 0);
         $this->getJson('/api/documents/'.$document->id)->assertOk()->assertJsonPath('data.status', 'Ready');
         $this->postJson('/api/documents/'.$document->id.'/report-generated', ['note' => 'Downloaded Word report'])
             ->assertOk()->assertJsonPath('message', 'Report generation recorded.');
@@ -124,36 +126,36 @@ class PersonalWorkspaceJourneyTest extends TestCase
         $this->assertSame(Document::class, $audit->auditable_type);
         $this->assertSame($document->id, $audit->auditable_id);
         $this->assertSame(['note' => 'Downloaded Word report'], $audit->metadata);
-        $this->assertBalance($owner, 9, 0);
+        $this->assertBalance($owner, 4, 0);
 
         $ownerPurchase = $this->initializePurchase($owner);
-        $this->assertBalance($owner, 9, 0);
+        $this->assertBalance($owner, 4, 0);
         $this->completePurchase($ownerPurchase);
-        $this->assertBalance($owner, 109, 100);
+        $this->assertBalance($owner, 104, 100);
 
         $code = $this->getJson('/api/referrals/my-code')->assertOk()->json('data.code');
         $friend = $this->signup('friend@example.com', '203.0.113.11', 'friend-browser', $code);
         $referral = Referral::where('referred_user_id', $friend->id)->sole();
         $this->assertSame('pending', $referral->status);
         $this->assertTrue($referral->reward_eligible);
-        $this->assertBalance($friend, 10, 0, $owner->current_workspace_id);
-        $this->assertBalance($owner, 109, 100, $friend->current_workspace_id);
+        $this->assertBalance($friend, 5, 0, $owner->current_workspace_id);
+        $this->assertBalance($owner, 104, 100, $friend->current_workspace_id);
 
         $friendPurchase = $this->initializePurchase($friend);
         $this->assertSame('pending', $referral->fresh()->status);
-        $this->assertBalance($friend, 10, 0, $owner->current_workspace_id);
-        $this->assertBalance($owner, 109, 100, $friend->current_workspace_id);
+        $this->assertBalance($friend, 5, 0, $owner->current_workspace_id);
+        $this->assertBalance($owner, 104, 100, $friend->current_workspace_id);
         $this->completePurchase($friendPurchase);
         $this->completePurchase($friendPurchase); // Duplicate provider delivery.
         $this->assertSame('rewarded', $referral->fresh()->status);
         $this->assertSame(10, $referral->fresh()->reward_documents);
         $this->assertSame($owner->current_workspace_id, $referral->fresh()->rewarded_workspace_id);
-        $this->assertBalance($friend, 110, 100, $owner->current_workspace_id);
-        $this->assertBalance($owner, 119, 100, $friend->current_workspace_id);
+        $this->assertBalance($friend, 105, 100, $owner->current_workspace_id);
+        $this->assertBalance($owner, 114, 100, $friend->current_workspace_id);
         $this->getJson('/api/referrals/my-code')->assertOk()->assertJsonPath('data.summary', [
             'signups' => 1, 'rewarded' => 1, 'credits_earned' => 10,
         ]);
-        Http::assertSentCount(2); // Only the two mocked checkout initializations.
+        Http::assertNothingSent(); // Historical checkout reconciliation uses signed webhooks.
     }
 
     public function test_reused_trial_signal_leads_to_zero_balance_and_upload_payment_gate(): void
@@ -163,7 +165,7 @@ class PersonalWorkspaceJourneyTest extends TestCase
         // One representative signal links signup to upload billing. The full
         // email/IP/fingerprint matrix belongs to WorkspaceCreditsTest.
         $this->assertDatabaseCount('trial_grants', 1);
-        $this->assertBalance($owner, 10, 0, $second->current_workspace_id);
+        $this->assertBalance($owner, 5, 0, $second->current_workspace_id);
         $this->assertBalance($second, 0, 0, $owner->current_workspace_id);
         $this->postJson('/api/documents', ['file' => UploadedFile::fake()->create('blocked.pdf', 1, 'application/pdf')])
             ->assertStatus(402);
@@ -191,7 +193,7 @@ class PersonalWorkspaceJourneyTest extends TestCase
             $this->mockIntelligence(analysisFails: true);
         }
         $document = $this->upload($owner);
-        $this->assertBalance($owner, 10, 0);
+        $this->assertBalance($owner, 5, 0);
         $this->continueUploadChain($document);
         $this->assertSame('Failed', $document->fresh()->status);
         $this->assertNull($document->fresh()->credit_accounted_at);
@@ -200,7 +202,7 @@ class PersonalWorkspaceJourneyTest extends TestCase
             'status' => 'failed',
         ]);
         $this->assertNoReview($document);
-        $this->assertBalance($owner, 10, 0);
+        $this->assertBalance($owner, 5, 0);
         Http::assertNothingSent();
     }
 
@@ -224,7 +226,10 @@ class PersonalWorkspaceJourneyTest extends TestCase
     {
         Sanctum::actingAs($user->fresh());
         $url = '/api/workspace/credits'.($foreignWorkspaceId ? '?workspace_id='.$foreignWorkspaceId : '');
-        $this->getJson($url)->assertOk()->assertJsonPath('data.documents_remaining', $remaining)
+        $this->assertSame($remaining, $user->fresh()->currentWorkspace->credits->documents_remaining);
+        app(EntitlementService::class)->summary($user->current_workspace_id);
+        $reserved = DB::table('billing_operations')->where('workspace_id', $user->current_workspace_id)->where('status', 'reserved')->count();
+        $this->getJson($url)->assertOk()->assertJsonPath('data.documents_remaining', max(0, $remaining - $reserved))
             ->assertJsonPath('data.documents_purchased_total', $purchased);
     }
 
@@ -315,9 +320,8 @@ class PersonalWorkspaceJourneyTest extends TestCase
     private function initializePurchase(User $buyer): CreditPurchase
     {
         Sanctum::actingAs($buyer->fresh());
-        $response = $this->postJson('/api/workspace/credits/purchases', ['package' => 'documents-100'])
-            ->assertCreated()->assertJsonPath('data.authorization_url', 'https://checkout.paystack.com/journey');
-        $purchase = CreditPurchase::where('paystack_reference', $response->json('data.reference'))->sole();
+        // A checkout initialized before the subscription cutover must still reconcile.
+        $purchase = $buyer->currentWorkspace->purchases()->create(['user_id' => $buyer->id, 'paystack_reference' => 'legacy-'.Str::uuid(), 'documents_purchased' => 100, 'amount_kobo_or_cents' => 200000, 'currency' => 'KES', 'status' => 'pending']);
         $this->assertSame($buyer->id, $purchase->user_id);
         $this->assertSame($buyer->current_workspace_id, $purchase->workspace_id);
         $this->assertSame('pending', $purchase->status);

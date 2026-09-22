@@ -88,6 +88,7 @@ class CaughtExceptionLoggingTest extends TestCase
     {
         $user = User::factory()->create();
         app(WorkspaceService::class)->createPersonalWorkspaceFor($user);
+        $user->fresh()->currentWorkspace->credits()->update(['documents_remaining' => 5]);
         $document = Document::create([
             'workspace_id' => $user->fresh()->current_workspace_id,
             'uploaded_by' => $user->id,

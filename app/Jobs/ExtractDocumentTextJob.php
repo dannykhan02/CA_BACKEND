@@ -6,6 +6,8 @@ use App\Enums\WorkspaceType;
 use App\Jobs\Concerns\DispatchesIntelligenceChain;
 use App\Models\Document;
 use App\Services\DocumentTextExtractor;
+use App\Services\EntitlementService;
+use App\Services\Extraction\SpreadsheetTextExtractor;
 use App\Services\Ocr\OcrEngineResolver;
 use App\Services\Ocr\PdfRasterizer;
 use App\Services\Pipeline\PipelineStageRecorder;
@@ -20,9 +22,10 @@ use Illuminate\Support\Facades\Storage;
 
 class ExtractDocumentTextJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, DispatchesIntelligenceChain;
+    use Dispatchable, DispatchesIntelligenceChain, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 2;
+
     public int $timeout = 120;
 
     public function __construct(public string $documentId) {}
@@ -34,6 +37,9 @@ class ExtractDocumentTextJob implements ShouldQueue
         PdfRasterizer $rasterizer,
     ): void {
         $document = Document::find($this->documentId);
+        if ($document) {
+            app(EntitlementService::class)->reserveDocument($document);
+        }
         if (! $document || $document->status === 'Failed') {
             if (! $document) {
                 \Illuminate\Support\Facades\Log::warning("ExtractDocumentTextJob: Document {$this->documentId} not found — unexpected null, possible soft-delete race.");
@@ -59,7 +65,7 @@ class ExtractDocumentTextJob implements ShouldQueue
             $text = match ($document->type) {
                 'PDF' => $extractor->extractPdfText($absolutePath),
                 'DOCX' => $extractor->extractDocxText($absolutePath),
-                'XLSX' => app(\App\Services\Extraction\SpreadsheetTextExtractor::class)->extract($absolutePath),
+                'XLSX' => app(SpreadsheetTextExtractor::class)->extract($absolutePath),
                 'JPG', 'PNG' => '', // no native text layer — forces straight to OCR fallback below
                 default => throw new \RuntimeException("Unsupported document type: {$document->type}"),
             };
@@ -79,6 +85,7 @@ class ExtractDocumentTextJob implements ShouldQueue
                 'error_message' => 'Could not extract text: the file may be corrupted or password-protected.',
             ])->save();
             $this->fail($e);
+
             return;
         }
 
@@ -151,6 +158,7 @@ class ExtractDocumentTextJob implements ShouldQueue
             ])->save();
             $this->fail(new \RuntimeException('Empty extracted text, OCR unavailable.'));
             @unlink($absolutePath);
+
             return null;
         }
 
@@ -167,6 +175,7 @@ class ExtractDocumentTextJob implements ShouldQueue
                 'status' => $document->workspace?->type === WorkspaceType::Personal ? 'Failed' : 'Needs Review',
                 'error_message' => 'OCR could not process this scanned document.',
             ])->save();
+
             return null;
         }
 
@@ -190,6 +199,7 @@ class ExtractDocumentTextJob implements ShouldQueue
                 'status' => $document->workspace?->type === WorkspaceType::Personal ? 'Failed' : 'Needs Review',
                 'error_message' => 'OCR could not process this scanned document.',
             ])->save();
+
             return null;
         }
 

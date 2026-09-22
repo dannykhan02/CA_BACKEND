@@ -61,6 +61,7 @@ class DocumentJobTransactionRecoveryTest extends TestCase
 
         $user = User::factory()->create();
         $workspace = Workspace::create(['type' => WorkspaceType::Organization, 'name' => 'Transaction recovery']);
+        $workspace->credits()->update(['documents_remaining' => 5]);
         $document = Document::create([
             'name' => 'Recovery.pdf', 'type' => 'PDF', 'size_kb' => 1,
             'status' => 'Processing', 'classification' => 'Public', 'year' => 2026,

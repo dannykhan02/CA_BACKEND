@@ -4,11 +4,19 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\DocumentResource;
+use App\Jobs\ClassifyDocumentTypeJob;
+use App\Jobs\DetectDocumentDeadlinesJob;
+use App\Jobs\DetectDocumentRisksJob;
+use App\Jobs\ExtractDocumentEntitiesJob;
 use App\Jobs\ExtractDocumentTextJob;
+use App\Jobs\GenerateDocumentSummaryJob;
 use App\Jobs\GenerateEmbeddingsJob;
 use App\Jobs\GenerateInsightsJob;
 use App\Jobs\ScanUploadedFileJob;
 use App\Models\Document;
+use App\Models\ProcessingJob;
+use App\Services\DocumentIntelligenceService;
+use App\Services\EntitlementService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
@@ -21,12 +29,14 @@ class DocumentReprocessController extends Controller
         $request->validate(['intelligence_only' => 'sometimes|boolean']);
         $intelligenceOnly = $request->boolean('intelligence_only');
         if ($intelligenceOnly) {
-            $states = app(\App\Services\DocumentIntelligenceService::class)->getProcessingStatus($document);
+            $states = app(DocumentIntelligenceService::class)->getProcessingStatus($document);
             abort_unless($document->status === 'Ready' && $document->extracted_text
                 && count(array_intersect($states, ['failed', 'not_started'])) > 0
                 && count(array_intersect($states, ['pending', 'processing'])) === 0, 422,
                 'Only missing or failed intelligence on a processed document can be retried here.');
         }
+
+        app(EntitlementService::class)->reserveDocument($document, true);
 
         if ($document->status === 'Failed' && empty($document->extracted_text)) {
             // Full pipeline re-run: scan/extract never produced usable text,
@@ -52,7 +62,7 @@ class DocumentReprocessController extends Controller
             ], 202);
         }
 
-        if (!$intelligenceOnly && $document->status !== 'Needs Review' && $document->status !== 'Failed') {
+        if (! $intelligenceOnly && $document->status !== 'Needs Review' && $document->status !== 'Failed') {
             return response()->json([
                 'message' => 'Only documents with status "Needs Review" or "Failed" (with existing extracted text) can be reprocessed.',
             ], 422);
@@ -61,7 +71,7 @@ class DocumentReprocessController extends Controller
         // Existing Needs-Review-style AI-only batch path — also now covers a
         // Failed document that already has extracted_text (no need to
         // re-scan/re-extract; text is there, only the AI stages need a retry).
-        if (!$intelligenceOnly) {
+        if (! $intelligenceOnly) {
             $document->forceFill([
                 'status' => 'Processing', 'progress' => 60, 'error_message' => null,
                 'last_updated_by' => $request->user()->id,
@@ -70,7 +80,7 @@ class DocumentReprocessController extends Controller
         } else {
             $document->update(['last_updated_by' => $request->user()->id]);
             foreach (['document_type', 'entities', 'risks', 'deadlines', 'document_summary'] as $stage) {
-                \App\Models\ProcessingJob::create(['workspace_id' => $document->workspace_id, 'document_id' => $document->id,
+                ProcessingJob::create(['workspace_id' => $document->workspace_id, 'document_id' => $document->id,
                     'stage' => $stage, 'status' => 'pending']);
             }
         }
@@ -78,16 +88,16 @@ class DocumentReprocessController extends Controller
         $documentId = $document->id;
 
         Bus::batch([
-            new \App\Jobs\ClassifyDocumentTypeJob($documentId, true),
-            new \App\Jobs\ExtractDocumentEntitiesJob($documentId, true),
-            new \App\Jobs\DetectDocumentRisksJob($documentId, true),
-            new \App\Jobs\DetectDocumentDeadlinesJob($documentId, true),
+            new ClassifyDocumentTypeJob($documentId, true),
+            new ExtractDocumentEntitiesJob($documentId, true),
+            new DetectDocumentRisksJob($documentId, true),
+            new DetectDocumentDeadlinesJob($documentId, true),
         ])
             ->name("document-reprocess:{$documentId}")
             ->onQueue('extraction')
             ->allowFailures()
             ->finally(function () use ($documentId) {
-                \App\Jobs\GenerateDocumentSummaryJob::dispatch($documentId, true)
+                GenerateDocumentSummaryJob::dispatch($documentId, true)
                     ->onQueue('extraction');
             })
             ->dispatch();

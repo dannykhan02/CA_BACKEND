@@ -3,12 +3,14 @@
 namespace Tests\Feature;
 
 use App\Enums\WorkspaceType;
+use App\Models\AiPrompt;
 use App\Models\Document;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
 use App\Services\AnthropicClient;
 use App\Services\Embeddings\VoyageEmbeddingClient;
+use Database\Seeders\DocumentInsightsPromptSeederV4;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -64,7 +66,7 @@ class DocumentQaTest extends TestCase
      */
     private function insertEmbeddingRow(string $workspaceId, string $documentId, string $chunkText = 'Synthetic test chunk for Q&A retrieval.'): void
     {
-        $vectorLiteral = '[' . implode(',', $this->fakeVector()) . ']';
+        $vectorLiteral = '['.implode(',', $this->fakeVector()).']';
 
         DB::statement(
             'INSERT INTO document_embeddings
@@ -81,9 +83,10 @@ class DocumentQaTest extends TestCase
 
         $workspace = Workspace::create([
             'type' => WorkspaceType::Organization,
-            'name' => 'Org ' . $user->id,
+            'name' => 'Org '.$user->id,
         ]);
 
+        $workspace->credits()->update(['documents_remaining' => 5]);
         WorkspaceMember::create([
             'workspace_id' => $workspace->id,
             'user_id' => $user->id,
@@ -304,7 +307,7 @@ class DocumentQaTest extends TestCase
         // mocks AnthropicClient entirely, so this is the only test here
         // that touches AiPrompt::active() for real — it must create its
         // own row rather than assume seeder or fixture state.
-        \App\Models\AiPrompt::create([
+        AiPrompt::create([
             'name' => 'document_qa',
             'version' => 99,
             'provider' => 'anthropic',
@@ -313,7 +316,7 @@ class DocumentQaTest extends TestCase
             'template' => 'Question: {{question}} Context: {{document_text}}',
         ]);
 
-        $prompt = \App\Models\AiPrompt::active('document_qa');
+        $prompt = AiPrompt::active('document_qa');
         $this->assertStringContainsString('{{question}}', $prompt->template);
         $this->assertStringNotContainsString('{{document_name}}', $prompt->template);
     }
@@ -321,9 +324,9 @@ class DocumentQaTest extends TestCase
     public function test_insights_prompt_v4_permits_factual_insight_without_trend(): void
     {
         // Seed the exact committed v4 fixture without running global prompt activation.
-        $this->seed(\Database\Seeders\DocumentInsightsPromptSeederV4::class);
+        $this->seed(DocumentInsightsPromptSeederV4::class);
 
-        $prompt = \App\Models\AiPrompt::where('name', 'document_insights')->where('version', 4)->firstOrFail();
+        $prompt = AiPrompt::where('name', 'document_insights')->where('version', 4)->firstOrFail();
         $this->assertFalse($prompt->active);
         $this->assertStringContainsString('Insights without comparison basis', $prompt->template);
         $this->assertStringContainsString('purely factual insights', $prompt->template);

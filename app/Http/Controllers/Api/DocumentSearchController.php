@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Enums\WorkspaceType;
 use App\Http\Controllers\Controller;
 use App\Policies\DocumentPolicy;
+use App\Services\AuditLogger;
 use App\Services\Embeddings\VoyageEmbeddingClient;
+use App\Services\EntitlementService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -13,20 +15,22 @@ use Illuminate\Support\Facades\DB;
 class DocumentSearchController extends Controller
 {
     private const DEFAULT_LIMIT = 10;
+
     private const MAX_LIMIT = 50;
 
     public function search(Request $request, VoyageEmbeddingClient $client): JsonResponse
     {
         $validated = $request->validate([
             'q' => ['required', 'string', 'min:2', 'max:500'],
-            'limit' => ['sometimes', 'integer', 'min:1', 'max:' . self::MAX_LIMIT],
+            'limit' => ['sometimes', 'integer', 'min:1', 'max:'.self::MAX_LIMIT],
         ]);
 
         $user = $request->user();
+        app(EntitlementService::class)->assertAiAccess($user->current_workspace_id);
         $limit = $validated['limit'] ?? self::DEFAULT_LIMIT;
 
         $result = $client->embed([$validated['q']], 'query');
-        $queryVector = '[' . implode(',', $result['embeddings'][0]) . ']';
+        $queryVector = '['.implode(',', $result['embeddings'][0]).']';
 
         // workspace_id remains the outer filter (non-negotiable, unchanged).
         // Inner boundary mirrors DocumentPolicy::view() exactly:
@@ -95,7 +99,7 @@ class DocumentSearchController extends Controller
             }
         }
 
-        app(\App\Services\AuditLogger::class)->log(
+        app(AuditLogger::class)->log(
             $user,
             'document.searched',
             null,

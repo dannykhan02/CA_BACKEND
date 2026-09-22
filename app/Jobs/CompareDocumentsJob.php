@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\DocumentComparison;
 use App\Services\AnthropicClient;
 use App\Services\DocumentComparisonService;
+use App\Services\EntitlementService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -42,6 +43,7 @@ class CompareDocumentsJob implements ShouldQueue
         $changes = $service->changes($item->metadata['base'], $item->metadata['compared']);
         $metadata = $item->metadata;
         if (isset($metadata['ai_context'])) {
+            app(EntitlementService::class)->reserveComparison($item);
             $result = app(AnthropicClient::class)->compareDocumentIntelligence($metadata['ai_context'], $item->baseDocument);
             $changes = [...$changes, ...$result['changes']];
             $metadata['model'] = $result['model'];

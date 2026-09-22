@@ -35,12 +35,13 @@ class WorkspaceCreditService
                 'email' => $email,
                 'ip_address' => $ip,
                 'fingerprint' => $fingerprint,
+                'initial_credits' => (int) config('billing.free_initial_credits'),
                 'granted_at' => now(),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
             if ($inserted) {
-                $this->addCredits($workspace->id, (int) config('credits.trial_documents'));
+                $this->addCredits($workspace->id, (int) config('billing.free_initial_credits'));
             }
 
             return (bool) $inserted;
@@ -60,8 +61,12 @@ class WorkspaceCreditService
             User::whereKey($purchase->user_id)->lockForUpdate()->firstOrFail();
         }
 
-        $this->addCredits($purchase->workspace_id, $purchase->documents_purchased, true);
-        $purchase->forceFill(['status' => 'completed'])->save();
+        if ($purchase->plan_key !== null) {
+            app(SubscriptionService::class)->completePurchase($purchase);
+        } else {
+            $this->addCredits($purchase->workspace_id, $purchase->documents_purchased, true);
+            $purchase->forceFill(['status' => 'completed', 'provider_transaction_id' => isset($purchase->paystack_response['data']['id']) ? (string) $purchase->paystack_response['data']['id'] : null])->save();
+        }
 
         if ($purchase->user_id !== null && ! CreditPurchase::where('user_id', $purchase->user_id)
             ->where('status', 'completed')->whereKeyNot($purchase->id)->exists()) {
@@ -118,6 +123,12 @@ class WorkspaceCreditService
     public function accountForReadyDocument(Document $document): void
     {
         if ($document->credit_accounted_at !== null) {
+            return;
+        }
+
+        if (app(EntitlementService::class)->settleDocument($document)) {
+            $document->forceFill(['credit_accounted_at' => now()]);
+
             return;
         }
 

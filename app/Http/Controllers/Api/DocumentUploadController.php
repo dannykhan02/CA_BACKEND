@@ -11,12 +11,15 @@ use App\Jobs\GenerateEmbeddingsJob;
 use App\Jobs\GenerateInsightsJob;
 use App\Jobs\ScanUploadedFileJob;
 use App\Models\Document;
+use App\Models\Workspace;
 use App\Services\AuditLogger;
 use App\Services\Documents\DocumentStorageService;
 use App\Services\Documents\SupportedDocumentTypes;
+use App\Services\EntitlementService;
 use App\Support\SafeExceptionContext;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 
@@ -24,12 +27,8 @@ class DocumentUploadController extends Controller
 {
     public function store(UploadDocumentRequest $request): JsonResponse
     {
-        $remaining = $request->user()->currentWorkspace?->credits?->documents_remaining ?? 0;
-        if ($remaining <= 0) {
-            return $this->error('Your workspace has no document credits remaining. Purchase more to continue.', [], 402);
-        }
-
         $file = $request->file('file');
+        app(EntitlementService::class)->assertProcessing($request->user()->current_workspace_id, (int) ceil($file->getSize() / 1024) * 1024);
         $hash = hash_file('sha256', $file->getRealPath());
 
         // Workspace-scoped dedup: an identical file hash in a different workspace
@@ -90,23 +89,30 @@ class DocumentUploadController extends Controller
         // would have returned, so a losing concurrent request gets a clean
         // response instead of a raw 500.
         try {
-            $document = Document::create([
-                'name' => $file->getClientOriginalName(),
-                'type' => $documentType, // resolved via SupportedDocumentTypes, matches documents_type_check
-                'size_kb' => (int) ceil($file->getSize() / 1024),
-                'status' => 'Processing',
-                'classification' => $request->validated('classification'),
-                'year' => (int) now()->year,
-                'uploaded_by' => $request->user()->id,
-                'workspace_id' => $request->user()->current_workspace_id,
-                'pages' => 0,
-                'has_structured_data' => false,
-                'power_bi_status' => 'not-synced',
-                'insights' => [],
-                'file_path' => $path,
-                'file_hash' => $hash,
-                'progress' => 0,
-            ]);
+            $document = DB::transaction(function () use ($request, $file, $documentType, $path, $hash) {
+                Workspace::whereKey($request->user()->current_workspace_id)->lockForUpdate()->firstOrFail();
+                app(EntitlementService::class)->assertProcessing($request->user()->current_workspace_id, (int) ceil($file->getSize() / 1024) * 1024);
+                $document = Document::create([
+                    'name' => $file->getClientOriginalName(),
+                    'type' => $documentType, // resolved via SupportedDocumentTypes, matches documents_type_check
+                    'size_kb' => (int) ceil($file->getSize() / 1024),
+                    'status' => 'Processing',
+                    'classification' => $request->validated('classification'),
+                    'year' => (int) now()->year,
+                    'uploaded_by' => $request->user()->id,
+                    'workspace_id' => $request->user()->current_workspace_id,
+                    'pages' => 0,
+                    'has_structured_data' => false,
+                    'power_bi_status' => 'not-synced',
+                    'insights' => [],
+                    'file_path' => $path,
+                    'file_hash' => $hash,
+                    'progress' => 0,
+                ]);
+                app(EntitlementService::class)->reserveDocument($document);
+
+                return $document;
+            }, 3);
         } catch (QueryException $e) {
             $storage->delete($path);
 
