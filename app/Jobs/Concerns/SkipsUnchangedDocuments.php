@@ -26,6 +26,7 @@ trait SkipsUnchangedDocuments
         string $stage,
         PipelineStageRecorder $recorder,
         array $onSkipDocumentUpdate = [],
+        ?\Closure $verifyCompleted = null,
     ): bool {
         if ($this->forceReprocess) {
             return false;
@@ -42,6 +43,21 @@ trait SkipsUnchangedDocuments
             ->first();
 
         if (! $lastRun || $lastRun->file_hash !== $document->file_hash) {
+            return false;
+        }
+
+        // A DocumentAiRun row only proves Claude was called and its response
+        // validated — not that the caller's own persistence step (DB writes,
+        // status transition) actually finished. A crash or timeout between
+        // the two leaves a matching run with nothing behind it, which would
+        // otherwise cause every future attempt to skip forever. When the
+        // caller supplies a completion check, honor it.
+        if ($verifyCompleted && ! $verifyCompleted($document, $lastRun)) {
+            \Illuminate\Support\Facades\Log::warning(
+                "{$purpose}: matching AI run found (id {$lastRun->id}) but completion check failed — reprocessing instead of skipping.",
+                ['document_id' => $document->id]
+            );
+
             return false;
         }
 

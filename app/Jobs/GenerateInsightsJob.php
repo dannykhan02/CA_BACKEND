@@ -49,7 +49,13 @@ class GenerateInsightsJob implements ShouldQueue
         // Unlike the other intelligence jobs, this one owns the document's
         // terminal status transition — a skip must still finalize the
         // document as Ready, or it would be stuck at 'Processing' forever.
-        if ($this->skipIfUnchanged($document, 'insights', 'ai_analysis', $recorder)) {
+        if ($this->skipIfUnchanged(
+            $document,
+            'insights',
+            'ai_analysis',
+            $recorder,
+            verifyCompleted: fn (Document $d) => ! is_null($d->insights),
+        )) {
             DB::transaction(function () use ($document) {
                 $document = Document::whereKey($document->id)->lockForUpdate()->first();
                 if (! $document || $document->status !== 'Processing') {
