@@ -51,21 +51,44 @@ class PaystackClient
                 'workspace_id' => $purchase->workspace_id,
             ]));
 
-            throw new PaystackInitializationException;
+            throw new PaystackInitializationException(false, 'connection_error');
         }
 
-        if (! $response->successful() || $response->json('status') !== true) {
+        $payload = $response->json();
+        $providerMessage = is_array($payload) ? ($payload['message'] ?? null) : null;
+        $safeMessage = is_string($providerMessage)
+            ? SafeExceptionContext::for(new \RuntimeException($providerMessage))['exception_message']
+            : null;
+
+        if (! $response->successful()) {
             throw new PaystackInitializationException(
-                in_array($response->status(), [400, 401, 403, 422], true)
-                || ($response->successful() && $response->json('status') === false)
+                in_array($response->status(), [400, 401, 403, 422], true),
+                'upstream_http_error',
+                $response->status(),
+                $safeMessage,
             );
         }
+        if (! is_array($payload)) {
+            throw new PaystackInitializationException(false, 'response_json_invalid', $response->status());
+        }
+        $providerStatus = $payload['status'] ?? null;
+        if ($providerStatus !== true) {
+            throw new PaystackInitializationException($providerStatus === false, 'upstream_status_invalid', $response->status(), $safeMessage);
+        }
+        $data = $payload['data'] ?? null;
+        if (! is_array($data)) {
+            throw new PaystackInitializationException(false, 'response_data_invalid', $response->status(), $safeMessage);
+        }
 
-        $url = $response->json('data.authorization_url');
-        if (! is_string($url) || ! filter_var($url, FILTER_VALIDATE_URL)
-            || parse_url($url, PHP_URL_SCHEME) !== 'https'
-            || $response->json('data.reference') !== $purchase->paystack_reference) {
-            throw new PaystackInitializationException;
+        $url = $data['authorization_url'] ?? null;
+        if (! is_string($url) || $url === '') {
+            throw new PaystackInitializationException(false, 'authorization_url_missing', $response->status(), $safeMessage);
+        }
+        if (! filter_var($url, FILTER_VALIDATE_URL) || parse_url($url, PHP_URL_SCHEME) !== 'https') {
+            throw new PaystackInitializationException(false, 'authorization_url_invalid', $response->status(), $safeMessage);
+        }
+        if (($data['reference'] ?? null) !== $purchase->paystack_reference) {
+            throw new PaystackInitializationException(false, 'reference_mismatch', $response->status(), $safeMessage);
         }
 
         return ['authorization_url' => $url, 'reference' => $purchase->paystack_reference];

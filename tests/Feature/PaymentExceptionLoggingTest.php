@@ -100,6 +100,9 @@ class PaymentExceptionLoggingTest extends TestCase
         Http::assertSentCount(1);
         $this->assertOnlyErrorLogs([['Paystack initialization failed.', $this->identifiers($purchase) + [
             'definitively_rejected' => $rejected,
+            'failure_reason' => 'upstream_http_error',
+            'upstream_status' => $status,
+            'upstream_message' => 'Provider echoed [redacted]',
             'exception_class' => PaystackInitializationException::class,
             'exception_message' => 'Unable to initialize payment. Please try again later.',
         ]]]);
@@ -142,6 +145,9 @@ class PaymentExceptionLoggingTest extends TestCase
             ]],
             ['Paystack initialization failed.', $this->identifiers($purchase) + [
                 'definitively_rejected' => false,
+                'failure_reason' => 'connection_error',
+                'upstream_status' => null,
+                'upstream_message' => null,
                 'exception_class' => PaystackInitializationException::class,
                 'exception_message' => 'Unable to initialize payment. Please try again later.',
             ]],

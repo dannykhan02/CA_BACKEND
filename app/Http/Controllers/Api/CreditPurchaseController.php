@@ -146,6 +146,9 @@ class CreditPurchaseController extends Controller
                 'user_id' => $purchase->user_id,
                 'workspace_id' => $purchase->workspace_id,
                 'definitively_rejected' => $exception->definitivelyRejected,
+                'failure_reason' => $exception->failureReason,
+                'upstream_status' => $exception->upstreamStatus,
+                'upstream_message' => $exception->upstreamMessage,
             ]));
 
             return $this->error($exception->getMessage(), [], 502);

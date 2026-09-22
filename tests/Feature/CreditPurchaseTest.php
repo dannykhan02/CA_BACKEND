@@ -12,6 +12,7 @@ use App\Services\WorkspaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request as ClientRequest;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 use Laravel\Sanctum\Sanctum;
@@ -198,6 +199,55 @@ class CreditPurchaseTest extends TestCase
         ]])]);
         $this->postJson('/api/workspace/credits/purchases', ['plan' => 'starter', 'interval' => 'monthly', 'renewal' => 'manual'])->assertStatus(502);
         $this->assertSame('pending', $workspace->purchases()->sole()->status);
+    }
+
+    #[DataProvider('ambiguousInitializationResponses')]
+    public function test_ambiguous_initialize_response_logs_the_actual_failure_branch(
+        int $status,
+        array|string $body,
+        string $reason,
+        ?string $upstreamMessage,
+    ): void {
+        $workspace = $this->workspace();
+        Sanctum::actingAs($workspace->users()->first());
+        Http::fake(['https://api.paystack.co/transaction/initialize' => Http::response($body, $status)]);
+        Log::spy();
+
+        $this->postJson('/api/workspace/credits/purchases', [
+            'plan' => 'starter', 'interval' => 'monthly', 'renewal' => 'manual',
+        ])->assertStatus(502)->assertExactJson([
+            'success' => false,
+            'message' => 'Unable to initialize payment. Please try again later.',
+            'errors' => [],
+        ]);
+
+        $purchase = $workspace->purchases()->sole();
+        $this->assertSame('pending', $purchase->status);
+        Http::assertSentCount(1);
+        Log::shouldHaveReceived('error')->once()->withArgs(function ($message, $context) use ($purchase, $status, $reason, $upstreamMessage) {
+            $this->assertSame('Paystack initialization failed.', $message);
+            $this->assertSame($purchase->paystack_reference, $context['reference']);
+            $this->assertFalse($context['definitively_rejected']);
+            $this->assertSame($reason, $context['failure_reason']);
+            $this->assertSame($status, $context['upstream_status']);
+            $this->assertSame($upstreamMessage, $context['upstream_message']);
+            $this->assertArrayNotHasKey('data', $context);
+
+            return true;
+        });
+    }
+
+    public static function ambiguousInitializationResponses(): array
+    {
+        return [
+            'upstream 503' => [503, ['status' => false, 'message' => 'Provider unavailable'], 'upstream_http_error', 'Provider unavailable'],
+            'missing status' => [200, ['message' => 'Provider unavailable'], 'upstream_status_invalid', 'Provider unavailable'],
+            'invalid JSON' => [200, 'not-json', 'response_json_invalid', null],
+            'missing data' => [200, ['status' => true, 'message' => 'Provider unavailable'], 'response_data_invalid', 'Provider unavailable'],
+            'missing authorization URL' => [200, ['status' => true, 'message' => 'Provider unavailable', 'data' => ['reference' => 'other']], 'authorization_url_missing', 'Provider unavailable'],
+            'invalid authorization URL' => [200, ['status' => true, 'message' => 'Provider unavailable', 'data' => ['authorization_url' => 'http://checkout.paystack.com/test']], 'authorization_url_invalid', 'Provider unavailable'],
+            'wrong reference' => [200, ['status' => true, 'message' => 'Provider unavailable', 'data' => ['authorization_url' => 'https://checkout.paystack.com/test', 'reference' => 'wrong']], 'reference_mismatch', 'Provider unavailable'],
+        ];
     }
 
     public function test_valid_signed_pending_purchase_credits_workspace_and_stores_full_payload(): void
