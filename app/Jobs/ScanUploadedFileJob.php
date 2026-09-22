@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Jobs;
 
 use App\Exceptions\MalwareScannerUnavailableException;
@@ -18,6 +19,7 @@ class ScanUploadedFileJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 2;
+
     public int $timeout = 60;
 
     public function __construct(public string $documentId) {}
@@ -26,36 +28,31 @@ class ScanUploadedFileJob implements ShouldQueue
     {
         $document = Document::find($this->documentId);
         if (! $document) {
-            \Illuminate\Support\Facades\Log::warning("ScanUploadedFileJob: Document {$this->documentId} not found — unexpected null, possible soft-delete race.");
+            Log::warning("ScanUploadedFileJob: Document {$this->documentId} not found — unexpected null, possible soft-delete race.");
+
             return;
         }
 
         if (! config('document_processing.clamav_enabled')) {
             Log::warning("ClamAV disabled — skipping malware scan for document {$document->id}");
             $recorder->skip($document, 'virus_scan', 'ClamAV disabled via config');
+
             return;
         }
 
         $scanStage = $recorder->start($document, 'virus_scan');
 
-        // The 'documents' disk may be a remote driver (e.g. S3/R2) — clamd
-        // runs in its own dedicated container and has no access to this
-        // app's filesystem, so the remote file is pulled to a local temp
-        // copy first, streamed to clamd over TCP via INSTREAM, then always
-        // cleaned up regardless of outcome.
         $tmpPath = tempnam(sys_get_temp_dir(), 'clamscan_');
-        file_put_contents($tmpPath, Storage::disk('documents')->get($document->file_path));
-
-        $host = config('document_processing.clamav_host');
-        $port = config('document_processing.clamav_port');
-        $driver = config('document_processing.clamav_driver', 'socket');
 
         try {
-            $result = $driver === 'cli'
-                ? $this->scanWithClamscan($tmpPath)
-                : $this->scanWithClamd($tmpPath, $host, $port);
+            if (config('document_processing.clamav_driver') !== 'cli') {
+                throw new MalwareScannerUnavailableException('Only the ClamAV CLI driver is supported.');
+            }
+            // Remote storage is copied locally; cleanup also covers read failures.
+            file_put_contents($tmpPath, Storage::disk('documents')->get($document->file_path));
+            $result = $this->scanWithClamscan($tmpPath);
         } catch (MalwareScannerUnavailableException $e) {
-            $recorder->fail($scanStage, 'SCANNER_UNAVAILABLE: ' . $e->getMessage());
+            $recorder->fail($scanStage, 'SCANNER_UNAVAILABLE: '.$e->getMessage());
             throw $e;
         } finally {
             @unlink($tmpPath);
@@ -69,47 +66,11 @@ class ScanUploadedFileJob implements ShouldQueue
             ])->save();
             Storage::disk('documents')->delete($document->file_path);
             $this->fail(new \RuntimeException('Malware detected in uploaded file.'));
+
             return;
         }
 
         $recorder->complete($scanStage, ['result' => 'clean']);
-    }
-
-    private function scanWithClamd(string $path, string $host, int $port): string
-    {
-        if (! file_exists($path) || ! is_readable($path)) {
-            throw new \RuntimeException("File not found or unreadable for scanning: {$path}");
-        }
-
-        $sock = @stream_socket_client("tcp://{$host}:{$port}", $errno, $errstr, 5);
-        if (! $sock) {
-            Log::error("Could not connect to clamd at {$host}:{$port}: {$errstr}");
-            throw new MalwareScannerUnavailableException('Malware scanner unavailable.');
-        }
-
-        stream_set_timeout($sock, 30);
-        fwrite($sock, "zINSTREAM\0");
-
-        $handle = fopen($path, 'rb');
-        while (! feof($handle)) {
-            $chunk = fread($handle, 8192);
-            if ($chunk === false || $chunk === '') {
-                break;
-            }
-            fwrite($sock, pack('N', strlen($chunk)) . $chunk);
-        }
-        fclose($handle);
-        fwrite($sock, pack('N', 0));
-
-        $response = fread($sock, 4096);
-        fclose($sock);
-
-        if ($response === false || str_contains($response, 'ERROR')) {
-            Log::error("Clamd scan error for {$path}: " . ($response ?: 'no response'));
-            throw new \RuntimeException("Clamd scan error: " . ($response ?: 'no response'));
-        }
-
-        return str_contains($response, 'FOUND') ? 'FOUND' : 'OK';
     }
 
     private function scanWithClamscan(string $path): string
@@ -123,13 +84,13 @@ class ScanUploadedFileJob implements ShouldQueue
         try {
             $result = Process::timeout(45)->run([$binary, '--no-summary', $path]);
         } catch (\Throwable $e) {
-            Log::error("clamscan execution failed for {$path}: " . $e->getMessage());
+            Log::error("clamscan execution failed for {$path}: ".$e->getMessage());
             throw new MalwareScannerUnavailableException('Malware scanner unavailable.');
         }
 
-        if ($result->exitCode() === 2) {
-            Log::error("clamscan error for {$path}: " . $result->errorOutput());
-            throw new MalwareScannerUnavailableException('Malware scanner unavailable: ' . trim($result->errorOutput()));
+        if (! in_array($result->exitCode(), [0, 1], true)) {
+            Log::error("clamscan error for {$path}: ".$result->errorOutput());
+            throw new MalwareScannerUnavailableException('Malware scanner unavailable: '.trim($result->errorOutput()));
         }
 
         return $result->exitCode() === 1 ? 'FOUND' : 'OK';
@@ -145,7 +106,7 @@ class ScanUploadedFileJob implements ShouldQueue
         }
         $document?->forceFill([
             'status' => 'Failed',
-            'error_message' => $document->error_message ?? 'File scan failed: ' . $e->getMessage(),
+            'error_message' => $document->error_message ?? 'File scan failed: '.$e->getMessage(),
         ])->save();
     }
 }

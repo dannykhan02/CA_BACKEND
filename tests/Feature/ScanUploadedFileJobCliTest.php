@@ -32,7 +32,7 @@ class ScanUploadedFileJobCliTest extends TestCase
 
         return Document::create(array_merge([
             'name' => 'clamscan-test.pdf',
-            'file_path' => 'clamscan-test-' . uniqid() . '.pdf',
+            'file_path' => 'clamscan-test-'.uniqid().'.pdf',
             'type' => 'PDF',
             'size_kb' => 1,
             'status' => 'Processing',
@@ -97,5 +97,28 @@ class ScanUploadedFileJobCliTest extends TestCase
         (new ScanUploadedFileJob($document->id))->handle(app(PipelineStageRecorder::class));
 
         $this->assertEquals('Failed', $document->fresh()->status);
+    }
+
+    public function test_unexpected_scanner_exit_never_counts_as_clean(): void
+    {
+        Process::fake(['*' => Process::result(exitCode: 127)]);
+        $document = $this->makeDocument();
+        Storage::disk('documents')->put($document->file_path, 'harmless');
+        $this->expectException(MalwareScannerUnavailableException::class);
+        (new ScanUploadedFileJob($document->id))->handle(app(PipelineStageRecorder::class));
+    }
+
+    public function test_legacy_driver_is_rejected_before_any_scan(): void
+    {
+        config(['document_processing.clamav_driver' => 'socket']);
+        Process::fake();
+        $document = $this->makeDocument();
+        try {
+            (new ScanUploadedFileJob($document->id))->handle(app(PipelineStageRecorder::class));
+            $this->fail('Legacy driver accepted');
+        } catch (MalwareScannerUnavailableException $e) {
+            Process::assertNothingRan();
+            $this->assertStringContainsString('Only the ClamAV CLI', $e->getMessage());
+        }
     }
 }

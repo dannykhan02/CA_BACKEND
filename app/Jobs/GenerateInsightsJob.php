@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Jobs\Concerns\SkipsUnchangedDocuments;
 use App\Models\Document;
+use App\Models\DocumentAiRun;
 use App\Models\DocumentChart;
 use App\Models\DocumentChartPoint;
 use App\Models\DocumentKpi;
@@ -41,8 +42,9 @@ class GenerateInsightsJob implements ShouldQueue
         // This also guards standalone dispatch from DocumentReprocessController.
         if (! $document || $document->status !== 'Processing') {
             if (! $document) {
-                \Illuminate\Support\Facades\Log::warning("GenerateInsightsJob: Document {$this->documentId} not found — unexpected null, possible soft-delete race.");
+                Log::warning("GenerateInsightsJob: Document {$this->documentId} not found — unexpected null, possible soft-delete race.");
             }
+
             return;
         }
 
@@ -54,14 +56,17 @@ class GenerateInsightsJob implements ShouldQueue
             'insights',
             'ai_analysis',
             $recorder,
-            verifyCompleted: fn (Document $d) => ! is_null($d->insights),
+            verifyCompleted: fn (Document $d, DocumentAiRun $run) => $d->processingJobs()
+                ->where('stage', 'ai_analysis')->where('status', 'completed')
+                ->where('output->ai_run_id', $run->id)->exists(),
         )) {
             DB::transaction(function () use ($document) {
                 $document = Document::whereKey($document->id)->lockForUpdate()->first();
                 if (! $document || $document->status !== 'Processing') {
                     if (! $document) {
-                        \Illuminate\Support\Facades\Log::warning("GenerateInsightsJob: Document {$this->documentId} disappeared during skip-transaction.");
+                        Log::warning("GenerateInsightsJob: Document {$this->documentId} disappeared during skip-transaction.");
                     }
+
                     return;
                 }
                 app(WorkspaceCreditService::class)->accountForReadyDocument($document);
@@ -107,12 +112,16 @@ class GenerateInsightsJob implements ShouldQueue
         $charts = $result['charts'] ?? [];
         $insights = $result['insights'] ?? [];
 
-        DB::transaction(function () use ($document, $kpis, $charts, $insights) {
+        $aiRunId = DocumentAiRun::where('document_id', $document->id)
+            ->where('purpose', 'insights')->latest('created_at')->value('id');
+
+        DB::transaction(function () use ($document, $kpis, $charts, $insights, $recorder, $insightsStage, $aiRunId) {
             $document = Document::whereKey($document->id)->lockForUpdate()->first();
             if (! $document || $document->status !== 'Processing') {
                 if (! $document) {
-                    \Illuminate\Support\Facades\Log::warning("GenerateInsightsJob: Document {$this->documentId} disappeared during insights-save transaction.");
+                    Log::warning("GenerateInsightsJob: Document {$this->documentId} disappeared during insights-save transaction.");
                 }
+
                 return;
             }
             // Delete-before-insert — a reprocessed document must not leave
@@ -183,13 +192,17 @@ class GenerateInsightsJob implements ShouldQueue
                 'status' => 'Ready',
                 'progress' => 100,
             ])->save();
-        });
 
-        $recorder->complete($insightsStage, [
-            'kpi_count' => count($kpis),
-            'chart_count' => count($charts),
-            'insight_count' => count($insights),
-        ]);
+            // Commit the completion proof with the output, not after it.
+            // Uploads already initialize insights=[], so non-null insights
+            // cannot distinguish a completed run from an interrupted one.
+            $recorder->complete($insightsStage, [
+                'ai_run_id' => $aiRunId,
+                'kpi_count' => count($kpis),
+                'chart_count' => count($charts),
+                'insight_count' => count($insights),
+            ]);
+        });
     }
 
     /**

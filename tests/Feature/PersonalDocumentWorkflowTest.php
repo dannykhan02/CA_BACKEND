@@ -93,16 +93,44 @@ class PersonalDocumentWorkflowTest extends TestCase
     public function test_unchanged_personal_analysis_also_finishes_directly_as_ready(string $classification): void
     {
         $document = $this->document($this->owner(), $classification);
-        $document->update(['file_hash' => hash('sha256', 'unchanged')]);
-        DocumentAiRun::create([
+        // A matching AI call alone is not a completed analysis.
+        $document->update(['file_hash' => hash('sha256', 'unchanged'), 'insights' => []]);
+        $run = DocumentAiRun::create([
             'document_id' => $document->id, 'workspace_id' => $document->workspace_id,
             'purpose' => 'insights', 'provider' => 'anthropic', 'model' => 'test',
             'prompt_version' => 1, 'file_hash' => $document->file_hash, 'created_at' => now(),
+        ]);
+        $document->processingJobs()->create([
+            'workspace_id' => $document->workspace_id, 'stage' => 'ai_analysis',
+            'status' => 'completed', 'output' => ['ai_run_id' => $run->id],
+            'started_at' => now(), 'completed_at' => now(),
         ]);
         $client = $this->mock(AnthropicClient::class, fn ($mock) => $mock->shouldNotReceive('extractDocumentInsights'));
         (new GenerateInsightsJob($document->id))->handle($client, app(PipelineStageRecorder::class));
         $this->assertSame('Ready', $document->fresh()->status);
         $this->assertDatabaseMissing('audit_logs', ['workspace_id' => $document->workspace_id, 'action' => 'document.needs_review']);
+    }
+
+    public function test_interrupted_analysis_with_upload_default_insights_is_retried(): void
+    {
+        $document = $this->document($this->owner());
+        $document->update(['file_hash' => hash('sha256', 'interrupted'), 'insights' => []]);
+        $run = DocumentAiRun::create([
+            'document_id' => $document->id, 'workspace_id' => $document->workspace_id,
+            'purpose' => 'insights', 'provider' => 'anthropic', 'model' => 'test',
+            'prompt_version' => 1, 'file_hash' => $document->file_hash, 'created_at' => now(),
+        ]);
+        $client = $this->mock(AnthropicClient::class, fn ($mock) => $mock
+            ->shouldReceive('extractDocumentInsights')->once()->andReturn([
+                'kpis' => [['label' => 'Achievement', 'value' => '85%']], 'insights' => [],
+            ]));
+        (new GenerateInsightsJob($document->id))->handle($client, app(PipelineStageRecorder::class));
+        $this->assertSame('Ready', $document->fresh()->status);
+        $this->assertSame(1, $document->kpis()->count());
+        $this->assertDatabaseHas('processing_jobs', [
+            'document_id' => $document->id, 'stage' => 'ai_analysis', 'status' => 'completed',
+            'output->ai_run_id' => $run->id,
+        ]);
     }
 
     public static function omittedClassifications(): array

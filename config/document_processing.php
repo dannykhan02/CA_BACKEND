@@ -15,9 +15,6 @@ return [
     'min_search_similarity' => (float) env('DOC_MIN_SEARCH_SIMILARITY', 0.3),
 
     'clamav_enabled' => filter_var(env('CLAMAV_ENABLED', false), FILTER_VALIDATE_BOOL),
-    'clamav_socket' => env('CLAMAV_SOCKET', '/var/run/clamav/clamd.ctl'),
-    'clamav_host' => env('CLAMAV_HOST', '127.0.0.1'),
-    'clamav_port' => env('CLAMAV_PORT', 3310),
-    'clamav_driver' => env('CLAMAV_DRIVER', 'socket'), // 'socket' (current) or 'cli' (clamscan) — flip for cutover, flip back for instant rollback
+    'clamav_driver' => env('CLAMAV_DRIVER', 'cli'),
     'clamav_binary' => env('CLAMAV_BINARY', 'clamscan'),
 ];
