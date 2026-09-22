@@ -46,6 +46,7 @@ class GenerateDocumentSummaryJob implements ShouldQueue
         $document = Document::find($this->documentId);
 
         if (! $document) {
+            \Illuminate\Support\Facades\Log::warning("GenerateDocumentSummaryJob: Document {$this->documentId} not found — unexpected null, possible soft-delete race.");
             return;
         }
 

@@ -35,6 +35,9 @@ class ExtractDocumentTextJob implements ShouldQueue
     ): void {
         $document = Document::find($this->documentId);
         if (! $document || $document->status === 'Failed') {
+            if (! $document) {
+                \Illuminate\Support\Facades\Log::warning("ExtractDocumentTextJob: Document {$this->documentId} not found — unexpected null, possible soft-delete race.");
+            }
             return;
         }
 

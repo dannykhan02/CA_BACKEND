@@ -39,6 +39,9 @@ class GenerateInsightsJob implements ShouldQueue
         // becomes Needs Review. Neither should be marked Ready without analysis.
         // This also guards standalone dispatch from DocumentReprocessController.
         if (! $document || $document->status !== 'Processing') {
+            if (! $document) {
+                \Illuminate\Support\Facades\Log::warning("GenerateInsightsJob: Document {$this->documentId} not found — unexpected null, possible soft-delete race.");
+            }
             return;
         }
 
@@ -49,6 +52,9 @@ class GenerateInsightsJob implements ShouldQueue
             DB::transaction(function () use ($document) {
                 $document = Document::whereKey($document->id)->lockForUpdate()->first();
                 if (! $document || $document->status !== 'Processing') {
+                    if (! $document) {
+                        \Illuminate\Support\Facades\Log::warning("GenerateInsightsJob: Document {$this->documentId} disappeared during skip-transaction.");
+                    }
                     return;
                 }
                 app(WorkspaceCreditService::class)->accountForReadyDocument($document);
@@ -95,6 +101,9 @@ class GenerateInsightsJob implements ShouldQueue
         DB::transaction(function () use ($document, $kpis, $charts, $insights) {
             $document = Document::whereKey($document->id)->lockForUpdate()->first();
             if (! $document || $document->status !== 'Processing') {
+                if (! $document) {
+                    \Illuminate\Support\Facades\Log::warning("GenerateInsightsJob: Document {$this->documentId} disappeared during insights-save transaction.");
+                }
                 return;
             }
             // Delete-before-insert — a reprocessed document must not leave

@@ -40,6 +40,11 @@ class CheckProductionSafetyConfig extends Command
             $failures[] = 'document_processing.clamav_enabled is not TRUE in production — malware scanning is being skipped for all uploads.';
         }
 
+        if (config('document_processing.clamav_enabled') === true
+            && config('document_processing.clamav_driver') !== 'cli') {
+            $failures[] = "document_processing.clamav_driver is '".config('document_processing.clamav_driver')."' but must be 'cli' in production — the 'socket' driver connects to a clamd daemon that no longer exists.";
+        }
+
         if (config('app.debug') === true) {
             $failures[] = 'app.debug is TRUE in production — stack traces and internals may be exposed on errors.';
         }

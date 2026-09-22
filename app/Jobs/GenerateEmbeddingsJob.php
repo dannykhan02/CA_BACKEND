@@ -35,6 +35,9 @@ class GenerateEmbeddingsJob implements ShouldQueue
         // stages correctly do, since "can't search this yet" isn't the same
         // severity as "this document couldn't be processed at all."
         if (! $document || ! in_array($document->status, ['Ready'], true)) {
+            if (! $document) {
+                \Illuminate\Support\Facades\Log::warning("GenerateEmbeddingsJob: Document {$this->documentId} not found — unexpected null, possible soft-delete race.");
+            }
             return;
         }
 
