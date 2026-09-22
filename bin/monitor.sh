@@ -124,27 +124,15 @@ else
     ok "Load average: ${LOAD_1M} across ${NPROC} cores"
 fi
 
-# 9. ClamAV — probe the actual Unix socket ScanUploadedFileJob connects to,
-#    using the SAME config key and PING/PONG protocol as the real job
-#    (app/Jobs/ScanUploadedFileJob.php:52,55,83). A running clamd process
-#    with an unreachable/misconfigured socket previously reported "ok" here
-#    while real uploads were silently failing — this replaces that check.
-CLAMD_CHECK=$(php artisan tinker --execute="
-    \$socket = config('document_processing.clamav_socket');
-    if (!\$socket) { echo 'FAIL:clamav_socket not configured'; exit; }
-    \$sock = @stream_socket_client(\"unix://{\$socket}\", \$errno, \$errstr, 5);
-    if (!\$sock) { echo 'FAIL:'.\$errstr; exit; }
-    fwrite(\$sock, \"PING\n\");
-    \$resp = trim((string) fread(\$sock, 100));
-    fclose(\$sock);
-    echo \$resp === 'PONG' ? 'OK' : 'FAIL:unexpected response \"'.\$resp.'\"';
-" 2>/dev/null | tail -1)
-
-if [ "$CLAMD_CHECK" = "OK" ]; then
-    ok "ClamAV socket: PONG"
+# 9. ClamAV — exercise the same CLI scanner and signature database as uploads.
+CLAMAV_PROBE=$(mktemp)
+printf '%s\n' 'DocIntel monitor scanner check' > "$CLAMAV_PROBE"
+if CLAMAV_RESULT=$(clamscan --database="${CLAMAV_DATABASE_DIRECTORY:-/var/lib/clamav}" --no-summary "$CLAMAV_PROBE" 2>&1); then
+    ok "ClamAV CLI: clean scan succeeded"
 else
-    alert "ClamAV socket check failed: ${CLAMD_CHECK:-no response from tinker}"
+    alert "ClamAV CLI scan failed: $CLAMAV_RESULT"
 fi
+rm -f "$CLAMAV_PROBE"
 
 # 10. OCR / AI / embedding provider failures (real log message patterns confirmed in this codebase)
 PROVIDER_ERRORS=$(grep -cE "Anthropic API error|Anthropic response (was not valid JSON|failed JSON decode)|GenerateEmbeddingsJob failed after retries" "$LOG_FILE" 2>/dev/null || echo 0)
@@ -157,8 +145,8 @@ else
 fi
 echo "$PROVIDER_ERRORS" > "$PROVIDER_ERRORS_FILE"
 
-# 11. Upload / malware-scan failures (log-based; complements the direct socket probe in #9)
-UPLOAD_ERRORS=$(grep -cE "Could not connect to clamd|Clamd scan error" "$LOG_FILE" 2>/dev/null || echo 0)
+# 11. Upload / malware-scan failures (log-based; complements the direct CLI probe in #9)
+UPLOAD_ERRORS=$(grep -cE "clamscan (execution failed|error)|Malware scanner was unreachable|SCANNER_UNAVAILABLE" "$LOG_FILE" 2>/dev/null || echo 0)
 UPLOAD_ERRORS_FILE="$STATE_DIR/upload_error_count"
 LAST_UPLOAD_ERRORS=$(cat "$UPLOAD_ERRORS_FILE" 2>/dev/null || echo 0)
 if [ "$UPLOAD_ERRORS" -gt "$LAST_UPLOAD_ERRORS" ]; then
