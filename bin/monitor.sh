@@ -146,7 +146,8 @@ fi
 echo "$PROVIDER_ERRORS" > "$PROVIDER_ERRORS_FILE"
 
 # 11. Upload / malware-scan failures (log-based; complements the direct CLI probe in #9)
-UPLOAD_ERRORS=$(grep -cE "clamscan (execution failed|error)|Malware scanner was unreachable|SCANNER_UNAVAILABLE" "$LOG_FILE" 2>/dev/null || echo 0)
+UPLOAD_ERRORS=$(grep -cE "clamscan (execution failed|error)|Malware scanner was unreachable|SCANNER_UNAVAILABLE" "$LOG_FILE" 2>/dev/null || true)
+UPLOAD_ERRORS=${UPLOAD_ERRORS:-0}
 UPLOAD_ERRORS_FILE="$STATE_DIR/upload_error_count"
 LAST_UPLOAD_ERRORS=$(cat "$UPLOAD_ERRORS_FILE" 2>/dev/null || echo 0)
 if [ "$UPLOAD_ERRORS" -gt "$LAST_UPLOAD_ERRORS" ]; then
