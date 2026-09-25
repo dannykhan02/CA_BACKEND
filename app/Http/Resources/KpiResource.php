@@ -12,6 +12,8 @@ class KpiResource extends JsonResource
         return [
             'id' => (string) $this->id,
             'label' => $this->label,
+            'kpiDefinitionId' => $this->kpi_definition_id,
+            'period' => $this->period,
             'value' => $this->value,
             'unit' => $this->unit,
             'trend' => $this->trend,

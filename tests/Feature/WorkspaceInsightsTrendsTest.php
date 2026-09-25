@@ -8,6 +8,7 @@ use App\Models\DocumentKpi;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
+use App\Services\Kpis\KpiIdentityResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -15,6 +16,41 @@ use Tests\TestCase;
 class WorkspaceInsightsTrendsTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_canonical_grouping_preserves_source_labels_and_counts_distinct_documents(): void
+    {
+        [$user, $workspace] = $this->createOrgUser('Administrator');
+        $a = $this->createReadyDocument($workspace);
+        $b = $this->createReadyDocument($workspace);
+        $resolver = app(KpiIdentityResolver::class);
+        foreach ([[$a, 'Internal Service Charter Performance'], [$b, 'Internal Charter Performance'], [$b, 'Internal Charter Performance']] as [$doc, $label]) {
+            $id = $resolver->resolve($workspace->id, ['label' => $label])['definition_id'];
+            $doc->kpis()->create(['workspace_id' => $workspace->id, 'label' => $label, 'value' => '80', 'kpi_definition_id' => $id]);
+        }
+        // A legacy observation is not speculatively absorbed into a resolved identity.
+        $a->kpis()->create(['workspace_id' => $workspace->id, 'label' => 'Internal Charter Performance', 'value' => '70']);
+        Sanctum::actingAs($user);
+        $response = $this->getJson('/api/workspace/insights/trends')->assertOk()->assertJsonCount(2, 'data.trends');
+        $canonical = collect($response->json('data.trends'))->firstWhere('kpiDefinitionId', $id);
+        $this->assertSame(2, $canonical['reportsIncluded']);
+        $this->assertSame(2, $canonical['reportsTotal']);
+        $this->assertTrue($canonical['isComplete']);
+        $this->assertCount(3, $canonical['points']);
+        $this->assertEqualsCanonicalizing(['Internal Service Charter Performance', 'Internal Charter Performance'], collect($canonical['points'])->pluck('label')->unique()->all());
+        $legacy = collect($response->json('data.trends'))->firstWhere('kpiDefinitionId', null);
+        $this->assertSame(1, $legacy['reportsIncluded']);
+        $this->assertFalse($legacy['isComplete']);
+    }
+
+    public function test_unlinked_punctuation_variants_keep_the_existing_distinct_fallback_groups(): void
+    {
+        [$user, $workspace] = $this->createOrgUser('Administrator');
+        foreach (['Internal Charter Performance', 'Internal — Charter Performance'] as $label) {
+            $this->createReadyDocument($workspace)->kpis()->create(['workspace_id' => $workspace->id, 'label' => $label, 'value' => '80']);
+        }
+        Sanctum::actingAs($user);
+        $this->getJson('/api/workspace/insights/trends')->assertOk()->assertJsonCount(2, 'data.trends');
+    }
 
     public function test_kpis_with_identical_labels_are_grouped_into_one_trend(): void
     {

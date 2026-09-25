@@ -10,6 +10,7 @@ use App\Models\DocumentChartPoint;
 use App\Models\DocumentKpi;
 use App\Services\AnthropicClient;
 use App\Services\EntitlementService;
+use App\Services\Kpis\KpiIdentityResolver;
 use App\Services\Pipeline\PipelineStageRecorder;
 use App\Services\WorkspaceCreditService;
 use Illuminate\Bus\Queueable;
@@ -109,6 +110,7 @@ class GenerateInsightsJob implements ShouldQueue
         }
 
         $kpis = $result['kpis'] ?? [];
+        $kpis = app(KpiIdentityResolver::class)->forDocument($document, $kpis);
         $charts = $result['charts'] ?? [];
         $insights = $result['insights'] ?? [];
 
@@ -136,6 +138,9 @@ class GenerateInsightsJob implements ShouldQueue
                     'workspace_id' => $document->workspace_id,
                     'document_id' => $document->id,
                     'label' => $kpi['label'] ?? '',
+                    'kpi_definition_id' => $kpi['kpi_definition_id'],
+                    'identity_metadata' => $kpi['identity'] ?? null,
+                    'period' => $kpi['period'],
                     'value' => $kpi['value'] ?? '',
                     'value_numeric' => $this->parseNumericValue($kpi['value'] ?? null),
                     'unit' => $kpi['unit'] ?? null,

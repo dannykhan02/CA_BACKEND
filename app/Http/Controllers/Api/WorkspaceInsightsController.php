@@ -13,26 +13,9 @@ use Illuminate\Support\Facades\DB;
 class WorkspaceInsightsController extends Controller
 {
     /**
-     * Cross-document KPI trends, grouped by exact label text (case/whitespace
-     * normalized only — no semantic/fuzzy matching; see v2 note below).
-     *
-     * Each Claude call in GenerateInsightsJob writes KPI labels independently
-     * per document, so the same real-world metric can surface under slightly
-     * different label text across reports (e.g. "Internal Service Charter
-     * Performance" vs "Internal Charter Performance"). Grouping only on
-     * identical (normalized) text means a trend can legitimately omit some
-     * uploaded reports — reportsIncluded / reportsTotal makes that explicit
-     * to the frontend instead of silently implying full coverage.
-     *
-     * v2 (not built here, deliberately): use the Voyage embeddings already
-     * generated per-document (DocumentEmbedding) to compute label similarity
-     * and merge near-duplicate labels. Deferred because a false semantic
-     * match (merging two actually-different metrics) is worse than a false
-     * non-match (an honestly incomplete trend) — same prove-the-need-first
-     * principle used elsewhere in this project. This endpoint's response
-     * shape (reportsIncluded/reportsTotal) is the extension point: a v2
-     * grouping strategy only needs to change how rows are bucketed, not the
-     * response contract.
+     * Canonical identity groups resolved observations. Unresolved history keeps
+     * the existing lower/trim label grouping in a separate key namespace; it is
+     * never silently attached to a resolved series. Coverage counts documents.
      */
     public function trends(Request $request): JsonResponse
     {
@@ -62,6 +45,8 @@ class WorkspaceInsightsController extends Controller
             ->select([
                 DB::raw('TRIM(LOWER(label)) as normalized_label'),
                 'label',
+                'kpi_definition_id',
+                'period',
                 'document_id',
                 'value',
                 'value_numeric',
@@ -73,7 +58,7 @@ class WorkspaceInsightsController extends Controller
             ->orderBy('document_kpis.created_at')
             ->get();
 
-        $groups = $rows->groupBy('normalized_label');
+        $groups = $rows->groupBy(fn (DocumentKpi $row) => $row->identityKey($row->normalized_label));
 
         $trends = $groups->map(function ($groupRows) use ($reportsTotal) {
             // Display label: use the most recent report's exact casing/
@@ -84,11 +69,14 @@ class WorkspaceInsightsController extends Controller
 
             return [
                 'label' => $displayLabel,
+                'kpiDefinitionId' => $groupRows->first()->kpi_definition_id,
                 'reportsIncluded' => $reportsIncluded,
                 'reportsTotal' => $reportsTotal,
                 'isComplete' => $reportsIncluded === $reportsTotal,
                 'points' => $groupRows->map(fn ($row) => [
                     'documentId' => $row->document_id,
+                    'label' => $row->label,
+                    'period' => $row->period,
                     'value' => $row->value,
                     'valueNumeric' => $row->value_numeric,
                     'unit' => $row->unit,

@@ -4,6 +4,21 @@ namespace App\Services\AI;
 
 class ResponseValidator
 {
+    /** Optional metadata: old prompt versions and existing responses remain valid. */
+    public function validateKpiIdentities(array $kpis): void
+    {
+        foreach ($kpis as $kpi) {
+            if (! isset($kpi['identity'])) continue;
+            if (! is_array($kpi['identity'])) throw new \RuntimeException('Invalid KPI identity metadata.');
+            foreach ($kpi['identity'] as $field => $value) {
+                if (! in_array($field, ['concept', 'scope', 'metric_type', 'quantity_kind', 'aggregation', 'value_basis', 'period'], true)
+                    || ($value !== null && (! is_string($value) || mb_strlen($value) > 255))) {
+                    throw new \RuntimeException('Invalid KPI identity metadata field.');
+                }
+            }
+        }
+    }
+
     public function validate(array $decoded, array $schema): array
     {
         foreach ($schema as $field => $expectedType) {

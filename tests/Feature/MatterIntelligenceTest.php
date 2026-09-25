@@ -38,6 +38,21 @@ class MatterIntelligenceTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_matter_kpis_expose_canonical_identity_without_collapsing_source_observations(): void
+    {
+        $user = $this->actor();
+        Sanctum::actingAs($user);
+        $matter = Matter::create(['workspace_id' => $user->current_workspace_id, 'created_by' => $user->id, 'name' => 'Charter']);
+        foreach (['Internal Service Charter Performance', 'Internal Charter Performance'] as $label) {
+            $doc = $this->document($user, ['matter_id' => $matter->id]);
+            $id = app(\App\Services\Kpis\KpiIdentityResolver::class)->resolve($user->current_workspace_id, ['label' => $label])['definition_id'];
+            $doc->kpis()->create(['workspace_id' => $user->current_workspace_id, 'label' => $label, 'value' => '80', 'kpi_definition_id' => $id]);
+        }
+        $response = $this->getJson("/api/matters/{$matter->id}/intelligence?kind=kpis")->assertOk()->assertJsonCount(2, 'data');
+        $this->assertSame([$id, $id], array_column($response->json('data'), 'kpi_definition_id'));
+        $this->assertSame(['Internal Service Charter Performance', 'Internal Charter Performance'], array_column($response->json('data'), 'label'));
+    }
+
     private function actor(bool $personal = true, string $role = 'Administrator'): User
     {
         $user = User::factory()->create(['role' => $role]);

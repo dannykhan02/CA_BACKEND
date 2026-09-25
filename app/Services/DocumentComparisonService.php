@@ -26,7 +26,8 @@ class DocumentComparisonService
                     'entities' => ['value' => $item->normalized_value ?: $item->value],
                     'kpis' => ['value' => $item->value, 'unit' => $item->unit],
                 };
-                $key = $kind.':'.mb_strtolower(trim(preg_replace('/\s+/u', ' ', $item->$label)));
+                $normalized = mb_strtolower(trim(preg_replace('/\s+/u', ' ', $item->$label)));
+                $key = $kind.':'.($kind === 'kpis' ? $item->identityKey($normalized) : $normalized);
                 $result[$key][] = ['category' => $kind, 'label' => $item->$label, 'value' => $value,
                     'source' => ['document_id' => $document->id, 'document_name' => $document->name,
                         'insight_id' => $item->id, 'evidence' => $item->evidence ?? $item->context]];
