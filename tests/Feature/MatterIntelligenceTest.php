@@ -270,6 +270,32 @@ class MatterIntelligenceTest extends TestCase
         Notification::assertSentToTimes($u, TrackedDeadlineReminder::class, 1);
     }
 
+    public function test_deadline_attention_uses_local_calendar_date_and_excludes_inactive_or_undated_items(): void
+    {
+        $this->travelTo(\Carbon\Carbon::parse('2026-10-14 23:30:00 UTC'));
+        $u = $this->actor();
+        Sanctum::actingAs($u);
+        $make = function (?string $dueDate, string $status = 'open') use ($u): TrackedItem {
+            $doc = $this->document($u);
+            $item = app(TrackingService::class)->track($u, $doc->id, $this->deadline($doc)->id);
+            $item->update(['due_date' => $dueDate, 'status' => $status]);
+            return $item;
+        };
+
+        $overdue = $make('2026-10-14');
+        $today = $make('2026-10-15');
+        $soon = $make('2026-10-22');
+        $make('2026-10-23');
+        $make('2026-10-14', 'completed');
+        $make('2026-10-14', 'dismissed');
+        $make(null);
+
+        $response = $this->getJson('/api/tracked-items/attention?today=2026-10-15')->assertOk();
+        $this->assertSame(3, $response->json('count'));
+        $this->assertSame([$overdue->id, $today->id, $soon->id], array_column($response->json('items'), 'id'));
+        $this->getJson('/api/tracked-items/attention?today=invalid')->assertUnprocessable();
+    }
+
     public function test_ai_terms_comparison_reuses_provider_and_rejects_fabricated_quotes(): void
     {
         Bus::fake();

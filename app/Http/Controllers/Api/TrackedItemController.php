@@ -34,6 +34,21 @@ class TrackedItemController extends Controller
         return $q->orderBy('due_date')->orderBy('id')->paginate(30);
     }
 
+    public function attention(Request $r)
+    {
+        $r->validate(['today' => 'required|date_format:Y-m-d']);
+        $today = Carbon::createFromFormat('Y-m-d', $r->query('today'))->startOfDay();
+        $items = TrackedItem::whereIn('document_id', $this->access->documents($r->user())->select('id'))
+            ->where('workspace_id', $r->user()->current_workspace_id)
+            ->where('status', 'open')->whereNotNull('due_date')
+            ->where('due_date', '<=', $today->copy()->addDays(7)->toDateString());
+
+        return response()->json([
+            'count' => (clone $items)->count(),
+            'items' => $items->orderBy('due_date')->orderBy('id')->limit(5)->get(['id', 'title', 'due_date', 'document_id']),
+        ]);
+    }
+
     public function store(Request $r)
     {
         $data = $r->validate(['document_id' => 'required|uuid', 'deadline_id' => 'required|integer|min:1']);

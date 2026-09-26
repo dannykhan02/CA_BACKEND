@@ -194,6 +194,7 @@ Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(functio
     Route::delete('/document-relationships/{relationship}', [$relationships, 'destroy']);
     $tracked = TrackedItemController::class;
     Route::get('/tracked-items', [$tracked, 'index']);
+    Route::get('/tracked-items/attention', [$tracked, 'attention']);
     Route::post('/tracked-items', [$tracked, 'store']);
     Route::patch('/tracked-items/{trackedItem}', [$tracked, 'update']);
     $comparisons = DocumentComparisonController::class;

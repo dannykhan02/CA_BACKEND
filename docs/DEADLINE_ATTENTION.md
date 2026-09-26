@@ -1,0 +1,7 @@
+# Tracked deadline attention
+
+The dashboard now requests `GET /api/tracked-items/attention?today=YYYY-MM-DD` when it opens. `today` is the browser's local calendar date. The endpoint returns a count and up to five visible, open tracked items with an absolute due date no later than seven calendar days from that date. The dashboard groups those items as overdue, due today, or due soon. Completed, dismissed, and undated relative obligations do not produce urgency alerts. This uses stored dates; it does not run document analysis or a scheduled job.
+
+Deadline email reminders are deliberately deferred from the current product flow. The frontend no longer offers an email reminder control or submits `remind_at` when a tracked item is edited. The existing `remind_at` and `reminded_at` columns, API compatibility, scheduled callback, job, and notification remain unchanged to preserve older records. If a scheduler is later enabled, previously opted-in records may still send under that legacy code. No migration or new Railway process is required for the in-app alert.
+
+At the time of the implementation, the Railway production project exposed a web service and a Horizon worker, with no scheduler process. Horizon alone does not execute Laravel scheduled tasks. The existing scheduler also defines unrelated verification-code cleanup, Pulse and failed-job pruning, billing expiration, and billing-event reconciliation. No deployment or scheduler configuration was changed as part of this work.
