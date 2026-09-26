@@ -87,6 +87,8 @@ Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(functio
         ->name('user.update-password');
     Route::patch('/user/notification-preferences', [AuthController::class, 'updateNotificationPreferences'])
         ->name('user.update-notification-preferences');
+    Route::patch('/user/product-tour', [AuthController::class, 'completeProductTour'])
+        ->name('user.complete-product-tour');
 });
 
 // Audit AUTH-1: was plain 'auth:sanctum'.

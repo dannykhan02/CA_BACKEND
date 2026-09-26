@@ -14,6 +14,28 @@ class UserApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_product_tour_completion_is_persisted_per_user_and_returned_by_me(): void
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $this->patchJson('/api/user/product-tour', ['version' => 'product_tour_v1'])
+            ->assertOk()
+            ->assertJsonPath('data.user.product_tour_version', 'product_tour_v1');
+
+        $this->assertSame('product_tour_v1', $user->fresh()->product_tour_version);
+        $this->getJson('/api/auth/me')->assertJsonPath('data.user.product_tour_version', 'product_tour_v1');
+    }
+
+    public function test_product_tour_rejects_unknown_version(): void
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $this->patchJson('/api/user/product-tour', ['version' => 'product_tour_v2'])->assertUnprocessable();
+        $this->assertNull($user->fresh()->product_tour_version);
+    }
+
     public function test_authenticated_user_can_update_full_name(): void
     {
         $user = User::factory()->create(['full_name' => 'Old Name']);

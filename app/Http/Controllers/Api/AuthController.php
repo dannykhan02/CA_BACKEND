@@ -631,7 +631,19 @@ class AuthController extends Controller
                 'type' => $user->currentWorkspace->type->value,
             ] : null,
             'notification_preferences' => $user->notification_preferences,
+            'product_tour_version' => $user->product_tour_version,
         ];
+    }
+
+    public function completeProductTour(Request $request): JsonResponse
+    {
+        $request->validate(['version' => ['required', 'in:product_tour_v1']]);
+        $user = $request->user();
+        $user->forceFill(['product_tour_version' => 'product_tour_v1'])->save();
+
+        return $this->success('Product tour dismissed.', [
+            'user' => $this->userPayload($user),
+        ]);
     }
 
     public function updateNotificationPreferences(UpdateNotificationPreferencesRequest $request): JsonResponse

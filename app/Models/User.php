@@ -19,6 +19,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'notification_preferences',
+        'product_tour_version',
         'email',
         'password',
         'full_name',
