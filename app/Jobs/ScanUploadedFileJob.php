@@ -106,7 +106,7 @@ class ScanUploadedFileJob implements ShouldQueue
         }
         $document?->forceFill([
             'status' => 'Failed',
-            'error_message' => $document->error_message ?? 'File scan failed: '.$e->getMessage(),
+            'error_message' => 'File scan could not be completed. Please try again.',
         ])->save();
     }
 }

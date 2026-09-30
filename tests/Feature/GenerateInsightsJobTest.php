@@ -18,6 +18,21 @@ class GenerateInsightsJobTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_provider_error_is_not_exposed_in_document_or_stage_status(): void
+    {
+        $user = User::factory()->create();
+        $workspace = Workspace::create(['type' => WorkspaceType::Organization, 'name' => 'Safe errors']);
+        $workspace->credits()->update(['documents_remaining' => 5]);
+        $document = Document::create(['name' => 'Sensitive document', 'type' => 'PDF', 'size_kb' => 1,
+            'status' => 'Processing', 'classification' => 'Public', 'year' => 2026,
+            'workspace_id' => $workspace->id, 'uploaded_by' => $user->id, 'extracted_text' => 'Test text']);
+        $this->mock(AnthropicClient::class, fn ($mock) => $mock->shouldReceive('extractDocumentInsights')
+            ->once()->andThrow(new \RuntimeException('provider token secret-response-body')));
+        (new GenerateInsightsJob($document->id))->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+        $this->assertSame('Analysis could not be completed. Please try again.', $document->fresh()->error_message);
+        $this->assertSame('Analysis could not be completed. Please try again.', $document->processingJobs()->where('stage', 'ai_analysis')->latest()->first()->error_message);
+    }
+
     public function test_job_writes_normalized_chart_points_from_chart_json(): void
     {
         $user = User::factory()->create();

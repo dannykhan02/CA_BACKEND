@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\CreditPurchase;
 use App\Models\Document;
 use App\Models\DocumentComparison;
+use App\Jobs\CompareDocumentsJob;
+use App\Jobs\RetryDeferredBillingEvent;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Services\EntitlementService;
@@ -315,6 +317,106 @@ class SubscriptionBillingTest extends TestCase
             $this->assertSame(402, $e->getStatusCode());
         }
         $this->assertSame(5, Subscription::sole()->periods()->sum('comparisons_used'));
+    }
+
+    public function test_comparison_failure_releases_once_and_retry_settles_once(): void
+    {
+        $workspace = $this->workspace();
+        $this->charge($this->checkout())->assertOk();
+        $a = $this->document($workspace);
+        $b = $this->document($workspace);
+        $comparison = DocumentComparison::create(['workspace_id' => $workspace->id, 'created_by' => $a->uploaded_by,
+            'base_document_id' => $a->id, 'compared_document_id' => $b->id, 'fingerprint' => hash('sha256', 'release-test'),
+            'metadata' => ['ai_context' => []]]);
+        $service = app(EntitlementService::class);
+        $service->reserveComparison($comparison, true);
+        $service->reserveComparison($comparison);
+        $this->assertSame(1, $service->summary($workspace->id)['usage']['comparisons_used']);
+        $job = new CompareDocumentsJob($comparison->id);
+        $job->failed(new \RuntimeException('provider secret response'));
+        $job->failed(new \RuntimeException('duplicate failure'));
+        $this->assertSame(0, $service->summary($workspace->id)['usage']['comparisons_used']);
+        $this->assertSame('Comparison could not be completed. Please retry.', $comparison->fresh()->error_message);
+        $service->reserveComparison($comparison->fresh(), true);
+        $service->reserveComparison($comparison->fresh());
+        $this->assertSame(1, $service->summary($workspace->id)['usage']['comparisons_used']);
+        $service->settleComparison($comparison->fresh());
+        $service->settleComparison($comparison->fresh());
+        $this->assertSame(1, $service->summary($workspace->id)['usage']['comparisons_used']);
+        $this->assertDatabaseHas('billing_operations', ['kind' => 'comparison', 'resource_id' => $comparison->id, 'status' => 'completed']);
+        $this->assertSame(2, DB::table('credit_ledger')->where('workspace_id', $workspace->id)->where('reason', 'comparison_started')->count());
+        $this->assertSame(1, DB::table('credit_ledger')->where('workspace_id', $workspace->id)->where('reason', 'comparison_failed')->count());
+        $this->assertSame(1, DB::table('credit_ledger')->where('workspace_id', $workspace->id)->where('reason', 'comparison_completed')->count());
+    }
+
+    public function test_provider_plan_mismatch_cannot_activate_automatic_purchase(): void
+    {
+        $this->workspace();
+        $purchase = $this->checkout('starter', 'monthly', 'automatic');
+        $this->charge($purchase, ['plan' => ['plan_code' => 'PLN_other']])->assertUnprocessable();
+        $this->assertSame('pending', $purchase->fresh()->status);
+        $this->assertDatabaseCount('subscriptions', 0);
+        $this->charge($purchase)->assertOk();
+        $this->assertSame('completed', $purchase->fresh()->status);
+    }
+
+    public function test_return_verification_rejects_wrong_automatic_provider_plan(): void
+    {
+        $this->workspace();
+        $purchase = $this->checkout('starter', 'monthly', 'automatic');
+        Http::fake(['https://api.paystack.co/transaction/verify/*' => Http::response(['status' => true,
+            'data' => ['id' => 9001, 'reference' => $purchase->paystack_reference, 'status' => 'success',
+                'amount' => $purchase->amount_kobo_or_cents, 'currency' => $purchase->currency,
+                'plan' => ['plan_code' => 'PLN_wrong']]])]);
+        $this->postJson('/api/workspace/credits/purchases/'.$purchase->paystack_reference.'/verify')->assertUnprocessable();
+        $this->assertSame('pending', $purchase->fresh()->status);
+        $this->assertDatabaseCount('subscriptions', 0);
+    }
+
+    public function test_unlinked_signed_event_is_deferred_and_queued_then_processed_once(): void
+    {
+        Queue::fake();
+        $this->workspace();
+        $purchase = $this->checkout('starter', 'monthly', 'automatic');
+        $this->event('subscription.create', $this->providerCreated())->assertOk();
+        $event = DB::table('billing_webhook_events')->sole();
+        $this->assertSame('deferred', $event->status);
+        $this->assertSame('subscription_unlinked', $event->deferral_reason);
+        Queue::assertPushed(RetryDeferredBillingEvent::class);
+        $this->charge($purchase)->assertOk();
+        $this->assertSame('processed', DB::table('billing_webhook_events')->where('id', $event->id)->value('status'));
+        $this->assertDatabaseCount('subscription_usage_periods', 1);
+        $this->assertDatabaseCount('credit_purchases', 1);
+    }
+
+    public function test_final_unresolved_event_requires_review_and_duplicate_retry_is_noop(): void
+    {
+        Queue::fake();
+        $this->workspace();
+        $this->event('subscription.create', $this->providerCreated())->assertOk();
+        $event = DB::table('billing_webhook_events')->sole();
+        $job = new RetryDeferredBillingEvent($event->id);
+        $queueJob = \Mockery::mock(\Illuminate\Contracts\Queue\Job::class);
+        $queueJob->shouldReceive('attempts')->once()->andReturn(6);
+        $job->job = $queueJob;
+        $job->handle(app(\App\Services\SubscriptionService::class));
+        $this->assertSame('requires_review', DB::table('billing_webhook_events')->where('id', $event->id)->value('status'));
+        (new RetryDeferredBillingEvent($event->id))->handle(app(\App\Services\SubscriptionService::class));
+        $this->assertSame(0, DB::table('credit_purchases')->where('status', 'completed')->count());
+    }
+
+    public function test_linking_subscription_dispatches_immediate_retry_for_earlier_paid_invoice(): void
+    {
+        Queue::fake();
+        $this->workspace();
+        $purchase = $this->checkout('starter', 'monthly', 'automatic');
+        $this->event('invoice.update', ['subscription' => ['subscription_code' => 'SUB_test'],
+            'paid' => true, 'transaction' => ['reference' => 'early-renewal']])->assertOk();
+        $invoice = DB::table('billing_webhook_events')->where('event_type', 'invoice.update')->sole();
+        $this->assertSame('deferred', $invoice->status);
+        $this->charge($purchase)->assertOk();
+        $this->event('subscription.create', $this->providerCreated())->assertOk();
+        Queue::assertPushed(RetryDeferredBillingEvent::class, fn ($job) => $job->eventId === $invoice->id && $job->delay === null);
     }
 
     public function test_automatic_cancellation_calls_existing_client_and_keeps_paid_access(): void

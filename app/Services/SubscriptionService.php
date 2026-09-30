@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
+use App\Jobs\RetryDeferredBillingEvent;
 use App\Models\CreditPurchase;
 use App\Models\Subscription;
 use App\Models\Workspace;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class SubscriptionService
 {
@@ -20,6 +22,19 @@ class SubscriptionService
         }
 
         return ['free_initial_credits' => config('billing.free_initial_credits'), 'currency' => config('billing.currency'), 'plans' => $plans];
+    }
+
+    public function assertProviderPlan(CreditPurchase $purchase, array $data): void
+    {
+        if ($purchase->renewal_type !== 'automatic' || ! $purchase->provider_plan_code) {
+            return;
+        }
+        $plan = is_array($data['plan'] ?? null) ? ($data['plan']['plan_code'] ?? null) : ($data['plan'] ?? null);
+        $plan ??= $data['plan_object']['plan_code'] ?? null;
+        if ($plan !== null && $plan !== '' && $plan !== $purchase->provider_plan_code) {
+            Log::warning('Paystack plan does not match purchase.', ['purchase_id' => $purchase->id, 'reference' => $purchase->paystack_reference]);
+            abort(422, 'Charge does not match purchase.');
+        }
     }
 
     /** Called under the financial transaction lock, only after amount/currency verification. */
@@ -37,6 +52,9 @@ class SubscriptionService
         $recurring = $purchase->subscription_id !== null;
         $purchase->forceFill(['subscription_id' => $subscription->id, 'status' => 'completed', 'paid_at' => $paid,
             'provider_transaction_id' => isset($data['id']) ? (string) $data['id'] : null])->save();
+        app(CreditLedger::class)->record($purchase->workspace_id, 'payment_activation:'.$purchase->id,
+            'payment', 'info', 0, 'subscription_payment_recorded',
+            'purchase', (string) $purchase->id, $purchase->user_id);
         // A late older charge is financial history, not another renewal.
         if ($purchase->renewal_type !== 'manual' && isset($subscription->metadata['last_paid_at']) && $paid->lessThanOrEqualTo(CarbonImmutable::parse($subscription->metadata['last_paid_at']))) {
             return;
@@ -73,6 +91,14 @@ class SubscriptionService
                 'documents_allowed' => $snapshot['documents'], 'comparisons_allowed' => $snapshot['comparisons'],
                 'storage_bytes' => $snapshot['storage_bytes'],
             ]);
+            if ($usage->wasRecentlyCreated) {
+                app(CreditLedger::class)->record($purchase->workspace_id, 'period_documents:'.$usage->id,
+                    'subscription_document', 'credit', $usage->documents_allowed, 'monthly_allowance_created',
+                    'usage_period', (string) $usage->id, $purchase->user_id, $usage->documents_allowed);
+                app(CreditLedger::class)->record($purchase->workspace_id, 'period_comparisons:'.$usage->id,
+                    'subscription_comparison', 'credit', $usage->comparisons_allowed, 'monthly_allowance_created',
+                    'usage_period', (string) $usage->id, $purchase->user_id, $usage->comparisons_allowed);
+            }
             if ($wasGrandfathered && ! $usage->wasRecentlyCreated) {
                 $usage->update(['period_end' => $end, 'documents_allowed' => $snapshot['documents'], 'comparisons_allowed' => $snapshot['comparisons'], 'storage_bytes' => $snapshot['storage_bytes']]);
             }
@@ -81,12 +107,13 @@ class SubscriptionService
         foreach (DB::table('billing_webhook_events')->whereNull('processed_at')->where('event_type', 'subscription.create')->get() as $event) {
             $payload = json_decode($event->payload, true);
             if ($this->lifecycle($payload['event'], $payload['data'])) {
-                DB::table('billing_webhook_events')->where('id', $event->id)->update(['processed_at' => now()]);
+                DB::table('billing_webhook_events')->where('id', $event->id)->update(['processed_at' => now(), 'status' => 'processed', 'deferral_reason' => null]);
             }
         }
+        $this->dispatchRelatedAfterCommit($subscription);
     }
 
-    public function receive(array $payload): void
+    public function receive(array $payload, bool $fromRetry = false): void
     {
         if ($payload['event'] === 'charge.success') {
             $data = $payload['data'];
@@ -100,6 +127,7 @@ class SubscriptionService
         // Invoice reconciliation needs network verification, before acquiring workspace/event locks.
         $invoiceCharge = null;
         $invoiceAlreadyRecorded = false;
+        $verificationUnavailable = false;
         if ($payload['event'] === 'invoice.update' && ($payload['data']['paid'] ?? false) && isset($payload['data']['transaction']['reference'])) {
             $data = $payload['data'];
             $sub = Subscription::where('provider_subscription_code', $data['subscription']['subscription_code'] ?? '')->first();
@@ -107,23 +135,55 @@ class SubscriptionService
                 $reference = $data['transaction']['reference'];
                 $invoiceAlreadyRecorded = CreditPurchase::where('paystack_reference', $reference)->where('subscription_id', $sub->id)->where('status', 'completed')->exists();
                 if (! $invoiceAlreadyRecorded) {
-                    $verified = app(PaystackClient::class)->verify($reference);
-                    abort_unless(($verified['data']['reference'] ?? null) === $reference, 422, 'Invoice verification reference mismatch.');
-                    $invoiceCharge = ['event' => 'charge.success', 'data' => [...$verified['data'], 'plan' => $sub->provider_plan_code, 'subscription' => ['subscription_code' => $sub->provider_subscription_code], 'customer' => ['customer_code' => $sub->provider_customer_code]]];
+                    try {
+                        $verified = app(PaystackClient::class)->verify($reference);
+                        abort_unless(($verified['data']['reference'] ?? null) === $reference, 422, 'Invoice verification reference mismatch.');
+                        $invoiceCharge = ['event' => 'charge.success', 'data' => [...$verified['data'], 'plan' => $verified['data']['plan'] ?? $sub->provider_plan_code, 'subscription' => ['subscription_code' => $sub->provider_subscription_code], 'customer' => ['customer_code' => $sub->provider_customer_code]]];
+                    } catch (\Illuminate\Http\Exceptions\HttpResponseException|\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+                        throw $e;
+                    } catch (\Throwable $e) {
+                        $verificationUnavailable = true;
+                    }
                 }
             }
         }
-        DB::transaction(function () use ($payload, $invoiceCharge, $invoiceAlreadyRecorded) {
+        DB::transaction(function () use ($payload, $invoiceCharge, $invoiceAlreadyRecorded, $verificationUnavailable, $fromRetry) {
             $key = hash('sha256', json_encode($payload));
             DB::table('billing_webhook_events')->insertOrIgnore(['event_key' => $key, 'event_type' => $payload['event'],
-                'payload' => json_encode($payload), 'created_at' => now(), 'updated_at' => now()]);
+                'payload' => json_encode($payload), 'status' => 'received', 'created_at' => now(), 'updated_at' => now()]);
             $event = DB::table('billing_webhook_events')->where('event_key', $key)->lockForUpdate()->first();
             if ($event->processed_at) {
                 return;
             }
-            $done = $invoiceAlreadyRecorded || ($invoiceCharge !== null ? $this->charge($invoiceCharge) : ($payload['event'] === 'charge.success' ? $this->charge($payload) : $this->lifecycle($payload['event'], $payload['data'])));
-            DB::table('billing_webhook_events')->where('id', $event->id)->update(['processed_at' => $done ? now() : null, 'updated_at' => now()]);
+            $done = $invoiceAlreadyRecorded || ($invoiceCharge !== null ? $this->charge($invoiceCharge) : ($verificationUnavailable ? false : ($payload['event'] === 'charge.success' ? $this->charge($payload) : $this->lifecycle($payload['event'], $payload['data']))));
+            $reason = $verificationUnavailable ? 'provider_verification_unavailable' : ($payload['event'] === 'charge.success' ? 'purchase_or_subscription_unlinked' : 'subscription_unlinked');
+            DB::table('billing_webhook_events')->where('id', $event->id)->update([
+                'processed_at' => $done ? now() : null, 'status' => $done ? 'processed' : 'deferred',
+                'deferral_reason' => $done ? null : $reason, 'updated_at' => now(),
+            ]);
+            if (! $done && ! $fromRetry && $event->status !== 'requires_review') {
+                DB::afterCommit(fn () => RetryDeferredBillingEvent::dispatch($event->id)->delay(now()->addMinute())->onQueue('default'));
+            }
         }, 3);
+    }
+
+    private function dispatchRelatedAfterCommit(Subscription $subscription): void
+    {
+        if (! $subscription->provider_customer_code && ! $subscription->provider_subscription_code) {
+            return;
+        }
+        DB::afterCommit(function () use ($subscription) {
+            DB::table('billing_webhook_events')->whereNull('processed_at')->whereIn('status', ['deferred', 'failed'])
+                ->where(function ($query) use ($subscription) {
+                    if ($subscription->provider_customer_code) {
+                        $query->orWhere('payload->data->customer->customer_code', $subscription->provider_customer_code);
+                    }
+                    if ($subscription->provider_subscription_code) {
+                        $query->orWhere('payload->data->subscription->subscription_code', $subscription->provider_subscription_code)
+                            ->orWhere('payload->data->subscription_code', $subscription->provider_subscription_code);
+                    }
+                })->limit(100)->pluck('id')->each(fn ($id) => RetryDeferredBillingEvent::dispatch($id)->onQueue('default'));
+        });
     }
 
     private function charge(array $payload): bool
@@ -164,6 +224,7 @@ class SubscriptionService
             return true;
         }
         abort_unless(($data['amount'] ?? null) === $purchase->amount_kobo_or_cents && ($data['currency'] ?? null) === $purchase->currency, 422, 'Charge does not match purchase.');
+        $this->assertProviderPlan($purchase, $data);
         if (isset($data['id']) && CreditPurchase::where('provider_transaction_id', (string) $data['id'])->whereKeyNot($purchase->id)->exists()) {
             abort(422, 'Charge already recorded.');
         }
@@ -209,6 +270,7 @@ class SubscriptionService
                     $sub->current_period_end = $next;
                 }
             }
+            $this->dispatchRelatedAfterCommit($sub);
         } elseif (in_array($event, ['subscription.not_renew', 'subscription.disable'], true)) {
             $sub->auto_renews = false;
             $sub->cancel_at_period_end = true;

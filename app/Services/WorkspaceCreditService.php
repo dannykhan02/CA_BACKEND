@@ -42,6 +42,9 @@ class WorkspaceCreditService
             ]);
             if ($inserted) {
                 $this->addCredits($workspace->id, (int) config('billing.free_initial_credits'));
+                app(CreditLedger::class)->record($workspace->id, 'trial:'.$user->id, 'saved_document', 'credit',
+                    (int) config('billing.free_initial_credits'), 'trial_grant', 'user', $user->id, $user->id,
+                    WorkspaceCredit::where('workspace_id', $workspace->id)->value('documents_remaining'));
             }
 
             return (bool) $inserted;
@@ -66,6 +69,9 @@ class WorkspaceCreditService
         } else {
             $this->addCredits($purchase->workspace_id, $purchase->documents_purchased, true);
             $purchase->forceFill(['status' => 'completed', 'provider_transaction_id' => isset($purchase->paystack_response['data']['id']) ? (string) $purchase->paystack_response['data']['id'] : null])->save();
+            app(CreditLedger::class)->record($purchase->workspace_id, 'legacy_purchase:'.$purchase->id, 'saved_document', 'credit',
+                $purchase->documents_purchased, 'legacy_purchase', 'purchase', (string) $purchase->id, $purchase->user_id,
+                WorkspaceCredit::where('workspace_id', $purchase->workspace_id)->value('documents_remaining'));
         }
 
         if ($purchase->user_id !== null && ! CreditPurchase::where('user_id', $purchase->user_id)
@@ -100,6 +106,9 @@ class WorkspaceCreditService
         }
         $documents = max(0, (int) config('credits.referral_reward_documents'));
         $this->addCredits($workspace->id, $documents);
+        app(CreditLedger::class)->record($workspace->id, 'referral:'.$referral->id, 'saved_document', 'credit',
+            $documents, 'referral_grant', 'referral', (string) $referral->id, $referrer->id,
+            WorkspaceCredit::where('workspace_id', $workspace->id)->value('documents_remaining'));
         $referral->update([
             'status' => 'rewarded',
             'reward_documents' => $documents,
@@ -141,6 +150,8 @@ class WorkspaceCreditService
         }
         $credits->documents_remaining = max(0, $credits->documents_remaining - 1);
         $credits->save();
+        app(CreditLedger::class)->record($document->workspace_id, 'document_debit:'.$document->id, 'saved_document', 'debit',
+            1, 'document_completed', 'document', $document->id, $document->uploaded_by, $credits->documents_remaining);
         // Persisted with Ready, including zero-balance completions, so retries
         // or later reprocessing cannot charge this document a second time.
         $document->forceFill(['credit_accounted_at' => now()]);

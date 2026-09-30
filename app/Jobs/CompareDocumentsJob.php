@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\DocumentComparison;
+use App\Models\Workspace;
 use App\Services\AnthropicClient;
 use App\Services\DocumentComparisonService;
 use App\Services\EntitlementService;
@@ -12,6 +13,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 
 class CompareDocumentsJob implements ShouldQueue
 {
@@ -35,6 +37,7 @@ class CompareDocumentsJob implements ShouldQueue
             return;
         }
         if (! $item->baseDocument || ! $item->comparedDocument) {
+            app(EntitlementService::class)->releaseComparison($item);
             $item->delete();
 
             return;
@@ -49,12 +52,32 @@ class CompareDocumentsJob implements ShouldQueue
             $metadata['model'] = $result['model'];
             $metadata['prompt_version'] = $result['prompt_version'];
         }
-        $item->update(['metadata' => $metadata, 'status' => 'completed', 'changes' => $changes,
-            'summary' => count($changes).' changes observed in extracted intelligence. Review the evidence in both documents.', 'error_message' => null]);
+        DB::transaction(function () use ($item, $metadata, $changes) {
+            Workspace::whereKey($item->workspace_id)->lockForUpdate()->firstOrFail();
+            $locked = DocumentComparison::whereKey($item->id)->lockForUpdate()->first();
+            if (! $locked || $locked->status === 'completed') {
+                return;
+            }
+            app(EntitlementService::class)->settleComparison($locked);
+            $locked->update(['metadata' => $metadata, 'status' => 'completed', 'changes' => $changes,
+                'summary' => count($changes).' changes observed in extracted intelligence. Review the evidence in both documents.', 'error_message' => null]);
+        }, 3);
     }
 
     public function failed(\Throwable $e): void
     {
-        DocumentComparison::whereKey($this->comparisonId)->update(['status' => 'failed', 'error_message' => 'Comparison failed. Please retry.']);
+        $workspaceId = DocumentComparison::whereKey($this->comparisonId)->value('workspace_id');
+        if (! $workspaceId) {
+            return;
+        }
+        DB::transaction(function () use ($workspaceId) {
+            Workspace::whereKey($workspaceId)->lockForUpdate()->firstOrFail();
+            $item = DocumentComparison::whereKey($this->comparisonId)->lockForUpdate()->first();
+            if (! $item || $item->status === 'completed') {
+                return;
+            }
+            app(EntitlementService::class)->releaseComparison($item);
+            $item->update(['status' => 'failed', 'error_message' => 'Comparison could not be completed. Please retry.']);
+        }, 3);
     }
 }

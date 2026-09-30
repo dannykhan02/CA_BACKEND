@@ -90,11 +90,23 @@ class EntitlementService
 
     private function releaseFailures(string $workspace): void
     {
-        DB::table('billing_operations')->where('workspace_id', $workspace)->where('status', 'reserved')->where('kind', 'document')
-            ->where(function ($q) {
-                $q->where('updated_at', '<=', now()->subHours(config('billing.pipeline_hours')))->orWhereNotIn('resource_id', Document::select('id'))->orWhereIn('resource_id', Document::whereIn('status', ['Failed', 'Needs Review'])->select('id'));
-            })
-            ->update(['status' => 'released', 'updated_at' => now()]);
+        DB::transaction(function () use ($workspace) {
+            Workspace::whereKey($workspace)->lockForUpdate()->firstOrFail();
+            $stale = DB::table('billing_operations')->where('workspace_id', $workspace)->where('status', 'reserved')->where('kind', 'document')
+                ->where(function ($q) {
+                    $q->where('updated_at', '<=', now()->subHours(config('billing.pipeline_hours')))->orWhereNotIn('resource_id', Document::select('id'))->orWhereIn('resource_id', Document::whereIn('status', ['Failed', 'Needs Review'])->select('id'));
+                })
+                ->get();
+            foreach ($stale as $operation) {
+                $changed = DB::table('billing_operations')->where('id', $operation->id)->where('status', 'reserved')
+                    ->where('updated_at', $operation->updated_at)->update(['status' => 'released', 'updated_at' => now()]);
+                if ($changed) {
+                    app(CreditLedger::class)->record($workspace, 'document_release:'.$operation->resource_id.':'.$operation->attempt_number,
+                        $operation->usage_period_id ? 'subscription_document' : 'saved_document', 'release', 1,
+                        'document_not_completed', 'document', $operation->resource_id);
+                }
+            }
+        }, 3);
     }
 
     public function summary(string $workspace): array
@@ -154,9 +166,13 @@ class EntitlementService
             } // Original once-per-document rule for retries.
             $sub = $this->subscription($document->workspace_id);
             $period = $this->paid($sub) ? $this->period($sub) : null;
+            $attempt = $operation ? $operation->attempt_number + ($operation->status === 'released' ? 1 : 0) : 1;
             DB::table('billing_operations')->updateOrInsert(['kind' => 'document', 'resource_id' => $document->id], [
-                'workspace_id' => $document->workspace_id, 'usage_period_id' => $period?->id, 'status' => 'reserved', 'created_at' => now(), 'updated_at' => now(),
+                'workspace_id' => $document->workspace_id, 'usage_period_id' => $period?->id, 'status' => 'reserved',
+                'attempt_number' => $attempt, 'created_at' => now(), 'updated_at' => now(),
             ]);
+            app(CreditLedger::class)->record($document->workspace_id, 'document_reserve:'.$document->id.':'.$attempt,
+                $period ? 'subscription_document' : 'saved_document', 'reserve', 1, 'document_started', 'document', $document->id, $document->uploaded_by);
         }, 3);
     }
 
@@ -171,6 +187,8 @@ class EntitlementService
         if ($op->status !== 'completed') {
             if ($op->usage_period_id) {
                 SubscriptionUsagePeriod::whereKey($op->usage_period_id)->increment('documents_used');
+                app(CreditLedger::class)->record($document->workspace_id, 'document_usage:'.$document->id,
+                    'subscription_document', 'debit', 1, 'document_completed', 'document', $document->id, $document->uploaded_by);
             }
             DB::table('billing_operations')->where('id', $op->id)->update(['status' => 'completed', 'updated_at' => now()]);
         }
@@ -191,7 +209,7 @@ class EntitlementService
             }
             $sub = $this->subscription($comparison->workspace_id);
             $period = $this->paid($sub) ? $this->period($sub) : null;
-            if ($operation && $period && $operation->usage_period_id === $period->id) {
+            if ($operation && $period && $operation->usage_period_id === $period->id && $operation->status !== 'released') {
                 DB::table('billing_operations')->where('id', $operation->id)->update(['updated_at' => now()]);
 
                 return;
@@ -201,8 +219,44 @@ class EntitlementService
             }
             abort_unless($period && $period->comparisons_used < $period->comparisons_allowed, 402, 'Subscribe or renew for an available AI comparison allowance.');
             $period->increment('comparisons_used');
+            $attempt = $operation ? $operation->attempt_number + 1 : 1;
             DB::table('billing_operations')->updateOrInsert(['kind' => 'comparison', 'resource_id' => $comparison->id], ['workspace_id' => $comparison->workspace_id, 'usage_period_id' => $period->id,
-                'kind' => 'comparison', 'resource_id' => $comparison->id, 'status' => 'completed', 'created_at' => now(), 'updated_at' => now()]);
+                'kind' => 'comparison', 'resource_id' => $comparison->id, 'status' => 'reserved', 'attempt_number' => $attempt,
+                'created_at' => now(), 'updated_at' => now()]);
+            app(CreditLedger::class)->record($comparison->workspace_id, 'comparison_reserve:'.$comparison->id.':'.$attempt,
+                'subscription_comparison', 'reserve', 1, 'comparison_started', 'comparison', $comparison->id, $comparison->created_by);
+        }, 3);
+    }
+
+    public function settleComparison(DocumentComparison $comparison): void
+    {
+        DB::transaction(function () use ($comparison) {
+            Workspace::whereKey($comparison->workspace_id)->lockForUpdate()->firstOrFail();
+            $operation = DB::table('billing_operations')->where('kind', 'comparison')->where('resource_id', $comparison->id)->lockForUpdate()->first();
+            abort_if($operation && $operation->status === 'released', 409, 'This comparison reservation has been released. Retry the comparison.');
+            $changed = DB::table('billing_operations')->where('kind', 'comparison')->where('resource_id', $comparison->id)
+                ->where('status', 'reserved')->update(['status' => 'completed', 'updated_at' => now()]);
+            if ($changed) {
+                app(CreditLedger::class)->record($comparison->workspace_id, 'comparison_usage:'.$comparison->id,
+                    'subscription_comparison', 'debit', 1, 'comparison_completed', 'comparison', $comparison->id, $comparison->created_by);
+            }
+        }, 3);
+    }
+
+    public function releaseComparison(DocumentComparison $comparison): void
+    {
+        DB::transaction(function () use ($comparison) {
+            Workspace::whereKey($comparison->workspace_id)->lockForUpdate()->firstOrFail();
+            $operation = DB::table('billing_operations')->where('kind', 'comparison')->where('resource_id', $comparison->id)->lockForUpdate()->first();
+            if (! $operation || $operation->status !== 'reserved') {
+                return;
+            }
+            if ($operation->usage_period_id) {
+                SubscriptionUsagePeriod::whereKey($operation->usage_period_id)->where('comparisons_used', '>', 0)->decrement('comparisons_used');
+            }
+            DB::table('billing_operations')->where('id', $operation->id)->update(['status' => 'released', 'updated_at' => now()]);
+            app(CreditLedger::class)->record($comparison->workspace_id, 'comparison_release:'.$comparison->id.':'.$operation->attempt_number,
+                'subscription_comparison', 'release', 1, 'comparison_failed', 'comparison', $comparison->id, $comparison->created_by);
         }, 3);
     }
 }

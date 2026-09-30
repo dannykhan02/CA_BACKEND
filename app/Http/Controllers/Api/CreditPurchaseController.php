@@ -69,6 +69,7 @@ class CreditPurchaseController extends Controller
             if (isset($data['id']) && CreditPurchase::where('provider_transaction_id', (string) $data['id'])->whereKeyNot($purchase->id)->exists()) {
                 return $this->error('Charge already recorded.', [], 422);
             }
+            app(SubscriptionService::class)->assertProviderPlan($purchase, $data);
             $purchase->paystack_response = $payload;
             if (($data['status'] ?? null) === 'success') {
                 app(WorkspaceCreditService::class)->completePurchase($purchase);
@@ -89,6 +90,8 @@ class CreditPurchaseController extends Controller
         return $this->success('Payment status retrieved.', [
             'reference' => $purchase->paystack_reference,
             'status' => $purchase->status,
+            'plan_key' => $purchase->plan_key,
+            'provider_status' => $purchase->paystack_response['data']['status'] ?? null,
             'documents_remaining' => $credits['documents_remaining'],
             'documents_purchased_total' => $credits['documents_purchased_total'],
         ]);

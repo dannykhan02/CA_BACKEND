@@ -13,6 +13,7 @@ use App\Services\EntitlementService;
 use App\Services\Kpis\KpiIdentityResolver;
 use App\Services\Pipeline\PipelineStageRecorder;
 use App\Services\WorkspaceCreditService;
+use App\Support\SafeExceptionContext;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -99,10 +100,13 @@ class GenerateInsightsJob implements ShouldQueue
         try {
             $result = $client->extractDocumentInsights($text, $document->name, $document);
         } catch (\Throwable $e) {
-            $recorder->fail($insightsStage, $e->getMessage());
+            $recorder->fail($insightsStage, 'Analysis could not be completed. Please try again.');
+            Log::error('Document analysis failed.', SafeExceptionContext::for($e, [
+                'document_id' => $document->id, 'workspace_id' => $document->workspace_id,
+            ]));
             $document->forceFill([
                 'status' => 'Failed',
-                'error_message' => 'AI analysis failed: '.$e->getMessage(),
+                'error_message' => 'Analysis could not be completed. Please try again.',
             ])->save();
             $this->fail($e);
 
