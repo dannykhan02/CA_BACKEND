@@ -21,8 +21,7 @@ class DocumentComparisonController extends Controller
             ->with(['baseDocument:id,name', 'comparedDocument:id,name']);
         if ($r->filled('matter_id')) {
             $matter = $this->access->matter($r->user(), $r->query('matter_id'));
-            $q->whereHas('baseDocument', fn ($q) => $q->where('matter_id', $matter->id))
-                ->whereHas('comparedDocument', fn ($q) => $q->where('matter_id', $matter->id));
+            $q->where('matter_id', $matter->id);
         }
         if ($r->filled('document_id')) {
             $doc = $this->access->document($r->user(), $r->query('document_id'));

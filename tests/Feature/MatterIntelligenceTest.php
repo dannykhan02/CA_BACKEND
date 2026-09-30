@@ -11,6 +11,7 @@ use App\Models\Document;
 use App\Models\DocumentComparison;
 use App\Models\DocumentDeadline;
 use App\Models\DocumentRelationship;
+use App\Models\AiPrompt;
 use App\Models\Matter;
 use App\Models\ProcessingJob;
 use App\Models\Subscription;
@@ -37,6 +38,11 @@ use Tests\TestCase;
 class MatterIntelligenceTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_ai_comparison_prompt_is_installed_by_migrations(): void
+    {
+        $this->assertSame('document_comparison', AiPrompt::active('document_comparison')->name);
+    }
 
     public function test_matter_kpis_expose_canonical_identity_without_collapsing_source_observations(): void
     {
@@ -102,6 +108,36 @@ class MatterIntelligenceTest extends TestCase
         $this->deleteJson("/api/matters/$id")->assertNoContent();
         $this->assertNull($doc->fresh()->matter_id);
         $this->assertNotNull($doc->fresh());
+    }
+
+    public function test_matter_search_and_repeat_assignment_keep_one_membership(): void
+    {
+        $user = $this->actor();
+        Sanctum::actingAs($user);
+        $doc = $this->document($user);
+        $first = $this->postJson('/api/matters', ['name' => 'Supplier review'])->assertCreated()->json('data.id');
+        $second = $this->postJson('/api/matters', ['name' => 'Budget audit'])->assertCreated()->json('data.id');
+        $this->getJson('/api/matters?q=Budget')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $second);
+        $this->postJson("/api/matters/$first/documents/{$doc->id}")->assertNoContent();
+        $this->postJson("/api/matters/$first/documents/{$doc->id}")->assertNoContent();
+        $this->getJson("/api/matters/$first")->assertOk()->assertJsonPath('overview.documents', 1);
+        $this->getJson("/api/documents/{$doc->id}/context")->assertOk()->assertJsonPath('matter.id', $first);
+        $this->postJson("/api/matters/$second/documents/{$doc->id}")->assertNoContent();
+        $this->getJson("/api/documents/{$doc->id}/context")->assertOk()->assertJsonPath('matter.id', $second);
+        $this->getJson("/api/matters/$first")->assertOk()->assertJsonPath('overview.documents', 0);
+    }
+
+    public function test_comparison_remains_in_its_matter_history_after_a_document_moves(): void
+    {
+        Bus::fake();
+        $user = $this->actor();
+        Sanctum::actingAs($user);
+        $matter = Matter::create(['workspace_id' => $user->current_workspace_id, 'created_by' => $user->id, 'name' => 'Review']);
+        $base = $this->document($user, ['matter_id' => $matter->id]);
+        $new = $this->document($user, ['matter_id' => $matter->id]);
+        $comparison = app(DocumentComparisonService::class)->create($user, $base->id, $new->id);
+        $new->update(['matter_id' => null]);
+        $this->getJson("/api/document-comparisons?matter_id={$matter->id}")->assertOk()->assertJsonPath('data.0.id', $comparison->id);
     }
 
     public function test_cross_workspace_endpoints_never_expose_or_accept_foreign_ids(): void
@@ -347,6 +383,21 @@ class MatterIntelligenceTest extends TestCase
         $matter = Matter::create(['workspace_id' => $u->current_workspace_id, 'created_by' => $u->id, 'name' => 'Review']);
         $this->postJson("/api/matters/{$matter->id}/documents/{$a->id}", ['related_document_id' => $b->id])->assertNotFound();
         $this->assertNull($a->fresh()->matter_id);
+    }
+
+    public function test_create_from_document_is_atomic_when_related_document_is_forbidden(): void
+    {
+        $user = $this->actor();
+        $foreign = $this->actor();
+        Sanctum::actingAs($user);
+        $document = $this->document($user);
+        $related = $this->document($foreign);
+        $this->postJson('/api/matters', ['name' => 'New review', 'document_id' => $document->id,
+            'related_document_id' => $related->id])->assertNotFound();
+        $this->assertNull($document->fresh()->matter_id);
+        $this->assertDatabaseMissing('matters', ['workspace_id' => $user->current_workspace_id, 'name' => 'New review']);
+        $id = $this->postJson('/api/matters', ['name' => 'New review', 'document_id' => $document->id])->assertCreated()->json('data.id');
+        $this->assertSame($id, $document->fresh()->matter_id);
     }
 
     public function test_risk_dismissal_is_authorized_and_preserved_when_identical_evidence_is_reextracted(): void

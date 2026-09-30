@@ -16,14 +16,33 @@ class MatterController extends Controller
 
     public function index(Request $r)
     {
-        return $this->access->matters($r->user())->latest()->paginate(20);
+        $data = $r->validate(['q' => 'sometimes|string|max:200']);
+        $query = $this->access->matters($r->user());
+        if (! empty($data['q'])) {
+            $query->where('name', 'ilike', '%'.addcslashes($data['q'], '%_\\').'%');
+        }
+
+        return $query->latest()->paginate(20);
     }
 
     public function store(Request $r)
     {
         $workspace = $this->access->workspace($r->user(), true);
+        $data = $this->validated($r);
+        $membership = $r->validate(['document_id' => 'required_with:related_document_id|uuid', 'related_document_id' => 'nullable|uuid']);
+        $matter = DB::transaction(function () use ($r, $workspace, $data, $membership) {
+            $matter = Matter::create($data + ['workspace_id' => $workspace, 'created_by' => $r->user()->id]);
+            if (isset($membership['document_id'])) {
+                $this->service->assign($r->user(), $matter->id, $membership['document_id']);
+                if (! empty($membership['related_document_id'])) {
+                    $this->service->assign($r->user(), $matter->id, $membership['related_document_id']);
+                }
+            }
 
-        return response()->json(['data' => Matter::create($this->validated($r) + ['workspace_id' => $workspace, 'created_by' => $r->user()->id])], 201);
+            return $matter;
+        });
+
+        return response()->json(['data' => $matter], 201);
     }
 
     public function show(Request $r, string $matter)

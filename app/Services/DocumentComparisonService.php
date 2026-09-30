@@ -61,7 +61,7 @@ class DocumentComparisonService
         $metadata = ['method' => 'structured-v1', 'base' => $before, 'compared' => $after,
             'limitations' => 'Compares extracted intelligence, not every clause. Missing extraction is not proof a term was removed. Confirm changes in both originals; no legal authority is inferred.'];
         if ($includeTerms) {
-            abort_unless(AiPrompt::where('name', 'document_comparison')->where('active', true)->exists(), 503, 'Terms comparison is not configured. Activate the document_comparison prompt.');
+            abort_unless(AiPrompt::where('name', 'document_comparison')->where('active', true)->exists(), 503, 'AI comparison is temporarily unavailable. Please try again later.');
             $contextService = app(ComparisonContextService::class);
             $metadata['method'] = 'structured-and-terms-v1';
             $metadata['ai_context'] = [];
