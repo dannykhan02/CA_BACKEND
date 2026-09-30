@@ -51,6 +51,7 @@ class ReferralTest extends TestCase
     private function signup(?string $code, string $email = 'friend@example.com', string $ip = '203.0.113.10', ?string $fingerprint = 'new-browser'): TestResponse
     {
         return $this->withServerVariables(['REMOTE_ADDR' => $ip])->postJson('/api/auth/signup', [
+            'accepted_terms' => true, 'terms_version' => config('legal.version'),
             'full_name' => 'Referred Friend', 'email' => $email,
             'password' => 'StrongPassword1!', 'password_confirmation' => 'StrongPassword1!',
             'fingerprint' => $fingerprint, 'referral_code' => $code,
@@ -257,18 +258,20 @@ class ReferralTest extends TestCase
         $owner = $this->referrer();
         $token = $this->fakeGoogleIdToken('google@example.com', 'Google Friend');
         $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.30'])->postJson('/api/auth/google', [
+            'accepted_terms' => true, 'terms_version' => config('legal.version'),
             'id_token' => $token, 'referral_code' => $this->code($owner), 'fingerprint' => 'google-browser',
         ])->assertOk();
         $referral = Referral::sole();
         $this->assertTrue($referral->reward_eligible);
         $this->assertSame('pending', $referral->status);
         $other = $this->referrer();
-        $this->postJson('/api/auth/google', ['id_token' => $token, 'referral_code' => $this->code($other)])->assertOk();
+        $this->postJson('/api/auth/google', ['accepted_terms' => true, 'terms_version' => config('legal.version'), 'id_token' => $token, 'referral_code' => $this->code($other)])->assertOk();
         $this->assertSame($referral->referral_code_id, Referral::sole()->referral_code_id);
 
         $existing = User::factory()->create(['email' => 'existing@example.com']);
         app(WorkspaceService::class)->createPersonalWorkspaceFor($existing);
         $this->postJson('/api/auth/google', [
+            'accepted_terms' => true, 'terms_version' => config('legal.version'),
             'id_token' => $this->fakeGoogleIdToken($existing->email, 'Existing User'), 'referral_code' => $this->code($owner),
         ])->assertOk();
         $this->assertDatabaseCount('referrals', 1);

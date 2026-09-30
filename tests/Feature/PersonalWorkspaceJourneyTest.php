@@ -210,6 +210,7 @@ class PersonalWorkspaceJourneyTest extends TestCase
     {
         $this->app['auth']->forgetGuards();
         $this->withServerVariables(['REMOTE_ADDR' => $ip])->postJson('/api/auth/signup', [
+            'accepted_terms' => true, 'terms_version' => config('legal.version'),
             'email' => $email, 'full_name' => 'Journey User',
             'password' => 'StrongPassword1!', 'password_confirmation' => 'StrongPassword1!',
             'fingerprint' => $fingerprint, 'referral_code' => $referralCode,

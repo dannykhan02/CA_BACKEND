@@ -69,6 +69,7 @@ class EmailVerificationGateTest extends TestCase
     public function test_old_verification_code_is_invalidated_after_resend(): void
     {
         $signup = $this->postJson('/api/auth/signup', [
+            'accepted_terms' => true, 'terms_version' => config('legal.version'),
             'full_name' => 'Resend Test',
             'email' => 'resendtest@example.com',
             'password' => 'SecurePass123!',

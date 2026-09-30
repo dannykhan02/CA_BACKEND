@@ -14,6 +14,7 @@ class SignupAnyDomainTest extends TestCase
     public function test_signup_works_regardless_of_email_domain(string $email): void
     {
         $this->postJson('/api/auth/signup', [
+            'accepted_terms' => true, 'terms_version' => config('legal.version'),
             'full_name' => 'Test User',
             'email' => $email,
             'password' => 'Password123!',

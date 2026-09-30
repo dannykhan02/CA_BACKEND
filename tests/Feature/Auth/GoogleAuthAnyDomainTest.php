@@ -23,7 +23,7 @@ class GoogleAuthAnyDomainTest extends TestCase
     {
         $idToken = $this->fakeGoogleIdToken($email, 'Test User');
 
-        $response = $this->postJson('/api/auth/google', ['id_token' => $idToken]);
+        $response = $this->postJson('/api/auth/google', ['accepted_terms' => true, 'terms_version' => config('legal.version'), 'id_token' => $idToken]);
 
         $response->assertStatus(200)
             ->assertJson(['success' => true])
@@ -35,12 +35,24 @@ class GoogleAuthAnyDomainTest extends TestCase
     public function test_existing_google_user_logs_in_instead_of_duplicating(): void
     {
         $idToken1 = $this->fakeGoogleIdToken('repeat@gmail.com', 'Repeat User');
-        $this->postJson('/api/auth/google', ['id_token' => $idToken1])->assertStatus(200);
+        $this->postJson('/api/auth/google', ['accepted_terms' => true, 'terms_version' => config('legal.version'), 'id_token' => $idToken1])->assertStatus(200);
 
         $idToken2 = $this->fakeGoogleIdToken('repeat@gmail.com', 'Repeat User');
-        $this->postJson('/api/auth/google', ['id_token' => $idToken2])->assertStatus(200);
+        $this->postJson('/api/auth/google', ['accepted_terms' => true, 'terms_version' => config('legal.version'), 'id_token' => $idToken2])->assertStatus(200);
 
         $this->assertDatabaseCount('users', 1);
+    }
+
+    public function test_new_google_account_requires_acceptance_but_existing_login_does_not(): void
+    {
+        $token = $this->fakeGoogleIdToken('acceptance@gmail.com', 'New User');
+        $this->postJson('/api/auth/google', ['id_token' => $token])->assertUnprocessable();
+        $this->assertDatabaseCount('users', 0);
+        $this->postJson('/api/auth/google', ['id_token' => $token,
+            'accepted_terms' => true, 'terms_version' => config('legal.version')])->assertOk();
+        $this->assertDatabaseHas('legal_acceptances', ['terms_version' => config('legal.version'), 'method' => 'google']);
+        $this->postJson('/api/auth/google', ['id_token' => $token])->assertOk();
+        $this->assertDatabaseCount('legal_acceptances', 1);
     }
 
     public static function anyEmailDomain(): array

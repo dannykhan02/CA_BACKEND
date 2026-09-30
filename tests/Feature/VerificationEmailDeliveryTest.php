@@ -153,6 +153,7 @@ class VerificationEmailDeliveryTest extends TestCase
     private function signup(): void
     {
         $this->postJson('/api/auth/signup', [
+            'accepted_terms' => true, 'terms_version' => config('legal.version'),
             'full_name' => 'New User',
             'email' => 'New-User@Example.com',
             'password' => 'SecurePass123!',

@@ -15,6 +15,7 @@ class AuthApiTest extends TestCase
     public function test_signup_assigns_viewer_role_by_default(): void
     {
         $response = $this->postJson('/api/auth/signup', [
+            'accepted_terms' => true, 'terms_version' => config('legal.version'),
             'full_name' => 'Test User',
             'email' => 'test@gmail.com',
             'password' => 'Password123!',
@@ -26,6 +27,17 @@ class AuthApiTest extends TestCase
         $user = User::where('email', 'test@gmail.com')->firstOrFail();
         $this->assertSame('Viewer', $user->role);
         $this->assertSame('Viewer', $response->json('data.user.role'));
+        $this->assertDatabaseHas('legal_acceptances', ['user_id' => $user->id,
+            'terms_version' => config('legal.version'), 'privacy_version' => config('legal.version'), 'method' => 'email']);
+    }
+
+    public function test_signup_requires_current_terms_acceptance(): void
+    {
+        $payload = ['full_name' => 'Test User', 'email' => 'test@example.com',
+            'password' => 'Password123!', 'password_confirmation' => 'Password123!'];
+        $this->postJson('/api/auth/signup', $payload)->assertUnprocessable();
+        $this->postJson('/api/auth/signup', $payload + ['accepted_terms' => true, 'terms_version' => 'outdated'])->assertUnprocessable();
+        $this->assertDatabaseCount('users', 0);
     }
 
     public function test_password_reset_notification_url_matches_frontend_router_format(): void

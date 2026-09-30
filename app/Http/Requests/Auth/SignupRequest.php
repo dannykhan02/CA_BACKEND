@@ -9,6 +9,8 @@ class SignupRequest extends BaseAuthRequest
     public function rules(): array
     {
         return [
+            'accepted_terms' => ['required', 'accepted'],
+            'terms_version' => ['required', 'in:'.config('legal.version')],
             'referral_code' => ['nullable', 'string', 'max:255'],
             'fingerprint' => ['nullable', 'string', 'max:255'],
             'full_name' => [

@@ -13,6 +13,7 @@ class EmailCaseInsensitivityTest extends TestCase
     public function test_signup_rejects_case_variant_of_existing_email(): void
     {
         $this->postJson('/api/auth/signup', [
+            'accepted_terms' => true, 'terms_version' => config('legal.version'),
             'full_name' => 'Original User',
             'email' => 'dkimaiyo@ca.go.ke',
             'password' => 'SecurePass123!',
@@ -20,6 +21,7 @@ class EmailCaseInsensitivityTest extends TestCase
         ])->assertStatus(201);
 
         $response = $this->postJson('/api/auth/signup', [
+            'accepted_terms' => true, 'terms_version' => config('legal.version'),
             'full_name' => 'Case Variant User',
             'email' => 'DKimaiyo@CA.GO.KE',
             'password' => 'SecurePass123!',
@@ -34,6 +36,7 @@ class EmailCaseInsensitivityTest extends TestCase
     public function test_email_is_stored_normalized_to_lowercase(): void
     {
         $this->postJson('/api/auth/signup', [
+            'accepted_terms' => true, 'terms_version' => config('legal.version'),
             'full_name' => 'Case Test',
             'email' => 'MixedCase@Example.COM',
             'password' => 'SecurePass123!',

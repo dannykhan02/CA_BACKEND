@@ -22,7 +22,7 @@ class GoogleAuthEmailVerifiedTest extends TestCase
     {
         $idToken = $this->fakeGoogleIdToken('googleuser@gmail.com', 'Google User');
 
-        $this->postJson('/api/auth/google', ['id_token' => $idToken])->assertStatus(200);
+        $this->postJson('/api/auth/google', ['accepted_terms' => true, 'terms_version' => config('legal.version'), 'id_token' => $idToken])->assertStatus(200);
 
         $user = User::where('email', 'googleuser@gmail.com')->first();
         $this->assertNotNull($user);

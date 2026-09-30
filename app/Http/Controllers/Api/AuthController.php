@@ -93,6 +93,8 @@ class AuthController extends Controller
                 'role' => 'Viewer',
             ]);
 
+            $this->recordLegalAcceptance($user, $request, 'email');
+
             app(WorkspaceService::class)->createPersonalWorkspaceFor($user, $request->ip(), $validated['fingerprint'] ?? null, $validated['referral_code'] ?? null);
 
             return $user;
@@ -229,6 +231,9 @@ class AuthController extends Controller
         // sent here. Do not add one; it would ask the user to re-verify an
         // address Google has already verified.
         if ($isNewUser) {
+            if (! $request->boolean('accepted_terms') || $request->input('terms_version') !== config('legal.version')) {
+                return $this->error('To create an account, use Sign up and accept the current Terms of Service.', [], 422);
+            }
             // Same atomicity requirement as signup(): a user must never be
             // created without a personal workspace.
             $user = DB::transaction(function () use ($name, $email, $request) {
@@ -238,6 +243,8 @@ class AuthController extends Controller
                     'password' => Str::random(32),
                     'role' => 'Viewer',
                 ]);
+
+                $this->recordLegalAcceptance($user, $request, 'google');
 
                 app(WorkspaceService::class)->createPersonalWorkspaceFor($user, $request->ip(), $request->validated('fingerprint'), $request->validated('referral_code'));
 
@@ -277,6 +284,18 @@ class AuthController extends Controller
         return $this->success('Signed in successfully.', [
             'user' => $this->userPayload($user),
             'token' => $token,
+        ]);
+    }
+
+    private function recordLegalAcceptance(User $user, Request $request, string $method): void
+    {
+        DB::table('legal_acceptances')->insert([
+            'user_id' => $user->id,
+            'terms_version' => config('legal.version'),
+            'privacy_version' => config('legal.version'),
+            'method' => $method,
+            'ip_address' => $request->ip(),
+            'accepted_at' => now(),
         ]);
     }
 

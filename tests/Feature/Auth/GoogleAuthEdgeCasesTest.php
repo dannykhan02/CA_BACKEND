@@ -30,7 +30,7 @@ class GoogleAuthEdgeCasesTest extends TestCase
 
         $idToken = $this->fakeGoogleIdToken('dan@gmail.com', 'Dan From Google');
 
-        $response = $this->postJson('/api/auth/google', ['id_token' => $idToken]);
+        $response = $this->postJson('/api/auth/google', ['accepted_terms' => true, 'terms_version' => config('legal.version'), 'id_token' => $idToken]);
 
         $response->assertStatus(200)->assertJson(['success' => true]);
 
@@ -45,7 +45,7 @@ class GoogleAuthEdgeCasesTest extends TestCase
     {
         // Deliberately not a JWT at all — must fail signature parsing,
         // not hit the mocked JWKS endpoint's happy path.
-        $response = $this->postJson('/api/auth/google', ['id_token' => 'garbage-token']);
+        $response = $this->postJson('/api/auth/google', ['accepted_terms' => true, 'terms_version' => config('legal.version'), 'id_token' => 'garbage-token']);
 
         $response->assertStatus(401)->assertJson(['success' => false]);
         $this->assertDatabaseCount('users', 0);
@@ -62,7 +62,7 @@ class GoogleAuthEdgeCasesTest extends TestCase
             audience: 'some-other-app.apps.googleusercontent.com',
         );
 
-        $response = $this->postJson('/api/auth/google', ['id_token' => $idToken]);
+        $response = $this->postJson('/api/auth/google', ['accepted_terms' => true, 'terms_version' => config('legal.version'), 'id_token' => $idToken]);
 
         $response->assertStatus(401)->assertJson(['success' => false]);
         $this->assertDatabaseCount('users', 0);
@@ -72,7 +72,7 @@ class GoogleAuthEdgeCasesTest extends TestCase
     {
         $idToken = $this->fakeGoogleIdToken('unverified@gmail.com', 'Unverified Person', verified: false);
 
-        $response = $this->postJson('/api/auth/google', ['id_token' => $idToken]);
+        $response = $this->postJson('/api/auth/google', ['accepted_terms' => true, 'terms_version' => config('legal.version'), 'id_token' => $idToken]);
 
         $response->assertStatus(401)->assertJson(['success' => false]);
         $this->assertDatabaseCount('users', 0);

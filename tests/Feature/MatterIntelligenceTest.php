@@ -39,9 +39,15 @@ class MatterIntelligenceTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_ai_comparison_prompt_is_installed_by_migrations(): void
+    public function test_ai_comparison_prompt_installer_is_idempotent(): void
     {
+        // DatabaseTruncation tests earlier in the full suite clear seed data
+        // without rerunning migrations. Install this fixture explicitly so the
+        // assertion is independent of test order and verifies the installer.
+        $this->seed(DocumentComparisonPromptSeeder::class);
+        $this->seed(DocumentComparisonPromptSeeder::class);
         $this->assertSame('document_comparison', AiPrompt::active('document_comparison')->name);
+        $this->assertSame(1, AiPrompt::where('name', 'document_comparison')->count());
     }
 
     public function test_matter_kpis_expose_canonical_identity_without_collapsing_source_observations(): void
