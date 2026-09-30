@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Redis;
  * to a Redis prefix nobody was looking at. This is NOT a gate — exits 0
  * always. config:check-production-safety already exists as the hard gate;
  * this command is for a human to eyeball, e.g. as the first step of
- * scripts/smoke-test.sh and scripts/provision.sh.
+ * scripts/smoke-test.sh and scripts/provis
  *
  * Usage: php artisan env:info
  */
