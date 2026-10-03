@@ -3,10 +3,10 @@
 namespace App\Jobs;
 
 use App\Jobs\Concerns\SkipsUnchangedDocuments;
+use App\Jobs\Concerns\GuardsDocumentIntelligence;
 use App\Models\Document;
 use App\Models\DocumentRisk;
 use App\Services\AnthropicClient;
-use App\Services\EntitlementService;
 use App\Services\Pipeline\PipelineStageRecorder;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Log;
 
 class DetectDocumentRisksJob implements ShouldQueue
 {
-    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments;
+    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments, GuardsDocumentIntelligence;
 
     public int $tries = 2;
 
@@ -35,7 +35,7 @@ class DetectDocumentRisksJob implements ShouldQueue
 
         $document = Document::find($this->documentId);
 
-        if (! $document || ! $document->extracted_text) {
+        if (! $document?->canGenerateIntelligence()) {
             return;
         }
 
@@ -43,16 +43,24 @@ class DetectDocumentRisksJob implements ShouldQueue
             return;
         }
 
-        app(EntitlementService::class)->reserveDocument($document);
-
-        $stage = $recorder->start($document, 'risks');
+        $stage = $this->startIntelligence($document, 'risks', $recorder);
+        if (! $stage || $this->abandonIntelligence($document, $stage)) {
+            return;
+        }
 
         try {
             $result = $client->detectDocumentRisks($document->extracted_text, $document->name, $document);
         } catch (\Throwable $e) {
+            if ($this->abandonIntelligence($document, $stage)) {
+                return;
+            }
             $recorder->fail($stage, $e->getMessage());
             $this->fail($e);
 
+            return;
+        }
+
+        if ($this->abandonIntelligence($document, $stage)) {
             return;
         }
 

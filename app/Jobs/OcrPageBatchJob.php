@@ -218,10 +218,12 @@ class OcrPageBatchJob implements ShouldQueue
         ]);
 
         $document = Document::find($this->documentId);
-        $document?->forceFill([
-            'status' => 'Failed',
-            'error_message' => 'Document processing could not be completed. Please try again.',
-        ])->save();
+        if ($document && $document->status !== 'Failed') {
+            $document->forceFill([
+                'status' => 'Failed',
+                'error_message' => 'Document processing could not be completed. Please try again.',
+            ])->save();
+        }
 
         $this->cleanupTempDir();
     }

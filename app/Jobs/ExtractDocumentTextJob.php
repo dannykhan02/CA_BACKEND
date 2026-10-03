@@ -255,7 +255,10 @@ class ExtractDocumentTextJob implements ShouldQueue
         ]);
 
         $document = Document::find($this->documentId);
-        $document?->forceFill([
+        if (! $document || $document->status === 'Failed') {
+            return;
+        }
+        $document->forceFill([
             'status' => 'Failed',
             'error_message' => 'Document processing could not be completed. Please try again.',
         ])->save();

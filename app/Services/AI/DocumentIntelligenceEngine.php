@@ -53,6 +53,10 @@ class DocumentIntelligenceEngine
             'risks' => DetectDocumentRisksJob::class,
             'deadlines' => DetectDocumentDeadlinesJob::class,
         ] as $stage => $jobClass) {
+            if (! $document->fresh()?->canGenerateIntelligence()) {
+                $results[$stage] = false;
+                continue;
+            }
             try {
                 (new $jobClass($document->id, $forceReprocess))->handle($this->client, $this->recorder);
                 $results[$stage] = true;
@@ -65,6 +69,10 @@ class DocumentIntelligenceEngine
                 ]));
                 $results[$stage] = false;
             }
+        }
+
+        if (! $document->fresh()?->canGenerateIntelligence()) {
+            return $results + ['document_summary' => false];
         }
 
         try {

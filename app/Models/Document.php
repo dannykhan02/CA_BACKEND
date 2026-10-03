@@ -29,6 +29,14 @@ class Document extends Model
         'extraction_completed_at' => 'datetime',
     ];
 
+    /** Structured KPI matching can use existing observations without the source text. */
+    public function canGenerateIntelligence(bool $requiresExtractedText = true): bool
+    {
+        return ! $this->trashed()
+            && in_array($this->status, ['Processing', 'Ready'], true)
+            && (! $requiresExtractedText || trim((string) $this->extracted_text) !== '');
+    }
+
     public function matter()
     {
         return $this->belongsTo(Matter::class);

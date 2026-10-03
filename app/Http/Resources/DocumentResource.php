@@ -16,6 +16,7 @@ class DocumentResource extends JsonResource
             'type' => $this->type,
             'sizeKb' => $this->size_kb,
             'status' => $this->status,
+            'processingFailure' => app(\App\Services\DocumentIntelligenceService::class)->getDocumentFailure($this->resource),
             'classification' => $this->classification,
             'year' => $this->year,
             'uploadedAt' => $this->created_at?->toIso8601String(),

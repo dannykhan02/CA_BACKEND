@@ -104,7 +104,10 @@ class ScanUploadedFileJob implements ShouldQueue
                 'document_id' => $this->documentId,
             ]);
         }
-        $document?->forceFill([
+        if (! $document || $document->status === 'Failed') {
+            return;
+        }
+        $document->forceFill([
             'status' => 'Failed',
             'error_message' => 'File scan could not be completed. Please try again.',
         ])->save();

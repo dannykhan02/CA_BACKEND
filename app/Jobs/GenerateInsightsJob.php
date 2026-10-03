@@ -3,13 +3,13 @@
 namespace App\Jobs;
 
 use App\Jobs\Concerns\SkipsUnchangedDocuments;
+use App\Jobs\Concerns\GuardsDocumentIntelligence;
 use App\Models\Document;
 use App\Models\DocumentAiRun;
 use App\Models\DocumentChart;
 use App\Models\DocumentChartPoint;
 use App\Models\DocumentKpi;
 use App\Services\AnthropicClient;
-use App\Services\EntitlementService;
 use App\Services\Kpis\KpiIdentityResolver;
 use App\Services\Pipeline\PipelineStageRecorder;
 use App\Services\WorkspaceCreditService;
@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\Log;
 
 class GenerateInsightsJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments, GuardsDocumentIntelligence;
 
     public int $tries = 2;
 
@@ -93,23 +93,39 @@ class GenerateInsightsJob implements ShouldQueue
             return;
         }
 
-        app(EntitlementService::class)->reserveDocument($document);
-
-        $insightsStage = $recorder->start($document, 'ai_analysis');
+        $insightsStage = $this->startIntelligence($document, 'ai_analysis', $recorder);
+        if (! $insightsStage || $this->abandonIntelligence($document, $insightsStage)) {
+            return;
+        }
 
         try {
             $result = $client->extractDocumentInsights($text, $document->name, $document);
         } catch (\Throwable $e) {
-            $recorder->fail($insightsStage, 'Analysis could not be completed. Please try again.');
+            $failed = DB::transaction(function () use ($document, $recorder, $insightsStage) {
+                $current = Document::whereKey($document->id)->lockForUpdate()->first();
+                if (! $current || $current->status !== 'Processing') {
+                    $insightsStage->update(['status' => 'skipped', 'completed_at' => now()]);
+                    return false;
+                }
+                $recorder->fail($insightsStage, 'Analysis could not be completed. Please try again.');
+                $current->forceFill([
+                    'status' => 'Failed',
+                    'error_message' => 'Analysis could not be completed. Please try again.',
+                ])->save();
+                return true;
+            });
+            if (! $failed) {
+                return;
+            }
             Log::error('Document analysis failed.', SafeExceptionContext::for($e, [
                 'document_id' => $document->id, 'workspace_id' => $document->workspace_id,
             ]));
-            $document->forceFill([
-                'status' => 'Failed',
-                'error_message' => 'Analysis could not be completed. Please try again.',
-            ])->save();
             $this->fail($e);
 
+            return;
+        }
+
+        if ($this->abandonIntelligence($document, $insightsStage)) {
             return;
         }
 

@@ -23,8 +23,10 @@ class DocumentIntelligenceResource extends JsonResource
             'document' => [
                 'id' => $this->id,
                 'name' => $this->name,
+                'errorMessage' => $this->error_message,
                 'type' => $this->type,
                 'status' => $this->status,
+                'processingFailure' => app(\App\Services\DocumentIntelligenceService::class)->getDocumentFailure($this->resource),
             ],
             'documentType' => $this->whenLoaded(
                 'documentTypeClassification',

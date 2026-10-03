@@ -39,9 +39,35 @@ class DocumentIntelligenceService
         $status = [];
         foreach (self::STAGES as $stage) {
             $job = $latestPerStage->firstWhere('stage', $stage);
-            $status[$stage] = $job?->status ?? 'not_started';
+            $status[$stage] = $document->status === 'Failed'
+                && ! in_array($job?->status, ['completed', 'failed'], true)
+                    ? 'blocked' : ($job?->status ?? 'not_started');
         }
 
         return $status;
+    }
+
+    /** Public, document-level failure metadata; never expose raw provider errors. */
+    public function getDocumentFailure(Document $document): ?array
+    {
+        if ($document->status !== 'Failed') {
+            return null;
+        }
+
+        $stage = $document->processingJobs()
+            ->whereNotIn('stage', self::STAGES)->where('status', 'failed')
+            ->orderByDesc('created_at')->orderByDesc('id')->first();
+        $message = $document->error_message ?: 'Document processing could not be completed.';
+        // Legacy documents store the public failure reason in error_message.
+        // Conservatively require replacement for files known to be unusable.
+        $replace = preg_match('/corrupt|password.protected|unsupported|malware scan and was not processed|no extractable text found in this document/i', $message) === 1
+            || str_starts_with($stage?->error_message ?? '', 'MALWARE_FOUND:');
+
+        return [
+            'kind' => $stage?->stage === 'ai_analysis' ? 'analysis' : 'processing',
+            'stage' => $stage?->stage,
+            'message' => $message,
+            'recovery' => $replace ? 'replace' : 'retry_processing',
+        ];
     }
 }

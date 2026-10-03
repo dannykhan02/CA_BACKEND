@@ -36,6 +36,10 @@ trait DispatchesIntelligenceChain
 {
     private function dispatchIntelligenceChain(Document $document): void
     {
+        if (! $document->fresh()?->canGenerateIntelligence()) {
+            return;
+        }
+
         $documentId = $document->id;
 
         Bus::batch([
@@ -48,6 +52,9 @@ trait DispatchesIntelligenceChain
             ->onQueue('extraction')
             ->allowFailures()
             ->finally(function () use ($documentId) {
+                if (! Document::find($documentId)?->canGenerateIntelligence()) {
+                    return;
+                }
                 \App\Jobs\GenerateDocumentSummaryJob::dispatch($documentId)
                     ->onQueue('extraction');
             })
