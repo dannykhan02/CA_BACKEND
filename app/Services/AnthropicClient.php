@@ -65,7 +65,11 @@ Choose "same" only if one candidate is unambiguously equivalent. If uncertain or
 PROMPT;
         $response = $this->callWithRetry([
             ['role' => 'user', 'content' => $instructions."\n".json_encode($context, JSON_THROW_ON_ERROR)],
-        ], options: ['max_attempts' => 1, 'timeout' => 8, 'max_tokens' => 400, 'intelligence_document' => $document]);
+        ], options: [
+            'max_attempts' => 1, 'timeout' => 8, 'max_tokens' => 400,
+            'intelligence_document' => $document,
+            'requires_extracted_text' => false,
+        ]);
         // Record usage even when the optional adjudication response is unusable.
         $this->recordAiRun($document, 'kpi_identity', $response);
         $decoded = $this->decodeJsonContent($response);
@@ -232,7 +236,9 @@ PROMPT;
     private function callWithRetry(array $messages, int $attempt = 1, array $options = []): array
     {
         $document = $options['intelligence_document'] ?? null;
-        if ($document && ! $document->fresh()?->canGenerateIntelligence()) {
+        if ($document && ! $document->fresh()?->canGenerateIntelligence(
+            requiresExtractedText: $options['requires_extracted_text'] ?? true,
+        )) {
             throw new \RuntimeException('Document processing no longer permits intelligence.');
         }
 

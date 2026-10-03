@@ -198,6 +198,34 @@ class KpiIdentityTest extends TestCase
         Http::assertSentCount(1);
     }
 
+    public function test_semantic_matching_rechecks_live_document_state_even_with_structured_input(): void
+    {
+        config(['kpi_identity.semantic_matching' => true]);
+        Http::fake();
+
+        foreach (['Failed', 'Needs Review', 'deleted'] as $status) {
+            $workspace = $this->workspace();
+            $known = $this->resolve($workspace, 'Average Case Resolution Time', ['unit' => 'days']);
+            $document = $this->document($workspace, ['extracted_text' => 'Previously extracted text.']);
+
+            // Leave the caller's model at Ready to simulate a concurrent failure.
+            $current = $document->fresh();
+            if ($status === 'deleted') {
+                $current->delete();
+            } else {
+                $current->update(['status' => $status]);
+            }
+
+            $result = app(KpiIdentityResolver::class)->forDocument($document, [
+                ['label' => 'Average Case Handling Time', 'unit' => 'days'],
+            ]);
+
+            $this->assertNotSame($known['definition_id'], $result[0]['kpi_definition_id']);
+            Http::assertNothingSent();
+            $this->assertDatabaseMissing('document_ai_runs', ['document_id' => $document->id]);
+        }
+    }
+
     public function test_extraction_preserves_original_label_and_metadata_and_reuses_identity(): void
     {
         $workspace = $this->workspace();
