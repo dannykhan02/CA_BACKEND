@@ -20,8 +20,8 @@ RUN php -r '$files = ["artisan"]; foreach (["app", "bootstrap", "config", "route
 
 RUN install-php-extensions gd zip pcntl ctype curl dom fileinfo filter hash mbstring openssl pcre pdo session tokenizer xml pdo_pgsql redis
 
-# Match PHP's upload limits with DocIntel's 20 MB application limit.
-RUN printf "upload_max_filesize=20M\npost_max_size=25M\n" \
+# Match PHP's upload and memory limits with DocIntel's processing needs.
+RUN printf "upload_max_filesize=20M\npost_max_size=25M\nmemory_limit=512M\n" \
     > /usr/local/etc/php/conf.d/uploads.ini
 
 RUN composer install --optimize-autoloader --no-dev --no-interaction
