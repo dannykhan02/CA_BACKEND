@@ -39,3 +39,8 @@ Schedule::call(function () {
 
 // Billing events retry through Horizon. `billing:reconcile-events` is an
 // operator-triggered fallback; no billing correctness schedule is required.
+
+if (env('APP_DEMO_MODE') === '1') {
+    require base_path('../demo/seed/commands.php');
+    require base_path('../demo/seed/personal-commands.php');
+}

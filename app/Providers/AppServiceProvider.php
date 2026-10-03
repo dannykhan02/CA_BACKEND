@@ -34,6 +34,23 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (env('APP_DEMO_MODE') === '1') {
+            $database = config('database.connections.pgsql');
+            if (config('database.default') !== 'pgsql'
+                || ($database['host'] ?? null) !== '127.0.0.1'
+                || ($database['database'] ?? null) !== 'docintel_demo'
+                || ($database['url'] ?? null)) {
+                throw new \RuntimeException('Demo mode requires the local docintel_demo database.');
+            }
+
+            config()->set('filesystems.disks.documents', [
+                'driver' => 'local',
+                'root' => base_path('../demo/storage/documents'),
+                'visibility' => 'private',
+                'throw' => true,
+            ]);
+        }
+
         \App\Models\Document::observe(\App\Observers\DocumentObserver::class);
         Workspace::observe(WorkspaceObserver::class);
 

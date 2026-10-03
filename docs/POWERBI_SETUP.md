@@ -1,3 +1,5 @@
+> Neon-specific guidance here is superseded by [the Railway migration](migrations/2026-10-02-neon-to-railway-migration.md); Power BI guidance is superseded by [the deferred plan](POWERBI_DEFERRED_PLAN.md).
+
 # Power BI Setup — Direct Postgres Reporting
 
 CA Backend exposes Power BI data through two Postgres **views** (`power_bi_kpis`, `power_bi_chart_points`), not through a REST export API. Each client/workspace gets its own Postgres **LOGIN role** scoped by Row-Level Security (RLS).

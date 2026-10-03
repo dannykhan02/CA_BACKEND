@@ -1,3 +1,5 @@
+> Neon-specific guidance here is superseded by [the Railway migration](migrations/2026-10-02-neon-to-railway-migration.md); Power BI guidance is superseded by [the deferred plan](POWERBI_DEFERRED_PLAN.md).
+
 # Day 10 — Remaining Work & Lessons Learned
 
 This document is referenced from [`.env.example`](../.env.example) and tracks the Power BI workspace RLS milestone (migrations dated 2026-08-19) plus operational follow-ups.

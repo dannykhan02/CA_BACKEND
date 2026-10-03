@@ -22,7 +22,8 @@ use Tests\TestCase;
  * Deliberately does NOT rely on Eloquent factories (none exist yet for
  * these models) or query the views through the app's own DB
  * connection: that connection owns these tables and therefore bypasses
- * RLS entirely, exactly like neondb_owner does in production. The only
+ * RLS entirely; the app's owner role is postgres on Railway (formerly
+ * neondb_owner on Neon). The only
  * way to actually exercise the policy is a second, independent PDO
  * connection authenticated as the real powerbi_reader_<slug> role.
  */
