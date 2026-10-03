@@ -81,7 +81,7 @@ class VerificationEmailDeliveryTest extends TestCase
         $this->assertSame('worker@example.com', $sender->getAddress());
         $this->assertSame('DocIntel', $sender->getName());
         $this->assertSame(['new-user@example.com'], $email['to']);
-        $this->assertSame('Verify Your Email', $email['subject']);
+        $this->assertSame('Verify your DocIntel email address', $email['subject']);
         foreach (['html', 'text'] as $format) {
             $this->assertStringContainsString($job->notification->code, $email[$format]);
             $this->assertStringContainsString('Use the code below to verify your email address.', $email[$format]);
