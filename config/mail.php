@@ -112,7 +112,17 @@ return [
 
     'from' => [
         'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
-        'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
+        'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'DocIntel')),
+    ],
+
+    'reply_to' => [
+        'address' => env('MAIL_REPLY_TO_ADDRESS', 'support@docintel.co.ke'),
+        'name' => env('MAIL_REPLY_TO_NAME', 'DocIntel Support'),
+    ],
+
+    'markdown' => [
+        'theme' => 'docintel',
+        'paths' => [resource_path('views/vendor/mail')],
     ],
 
 ];
