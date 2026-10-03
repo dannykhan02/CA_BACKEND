@@ -2,11 +2,14 @@
 
 namespace App\Providers;
 
+use App\Models\Document;
 use App\Models\Workspace;
+use App\Observers\DocumentObserver;
 use App\Observers\WorkspaceObserver;
 use App\Services\Ocr\OcrEngineResolver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -34,6 +37,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if ($address = config('mail.reply_to.address')) {
+            Mail::alwaysReplyTo($address, config('mail.reply_to.name'));
+        }
+
         if (env('APP_DEMO_MODE') === '1') {
             $database = config('database.connections.pgsql');
             if (config('database.default') !== 'pgsql'
@@ -51,7 +58,7 @@ class AppServiceProvider extends ServiceProvider
             ]);
         }
 
-        \App\Models\Document::observe(\App\Observers\DocumentObserver::class);
+        Document::observe(DocumentObserver::class);
         Workspace::observe(WorkspaceObserver::class);
 
         // Day 5 — protects against a single account (or compromised token)
@@ -79,6 +86,7 @@ class AppServiceProvider extends ServiceProvider
                 'trim',
                 explode(',', (string) env('HORIZON_AUTHORIZED_EMAILS', ''))
             ));
+
             return in_array(optional($user)->email, $authorized, true);
         });
     }
