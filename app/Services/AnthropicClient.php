@@ -40,7 +40,7 @@ class AnthropicClient
         $this->currentOperation = 'insights';
         $this->throttle();
         $prompt = $this->buildInsightsPrompt($documentText, $documentName, $document?->classification);
-        $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]]);
+        $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]], options: ['intelligence_document' => $document]);
         $parsed = $this->parseInsightsResponse($response); // validate BEFORE recording
         $this->recordAiRun($document, 'insights', $response);
         return $parsed;
@@ -65,7 +65,7 @@ Choose "same" only if one candidate is unambiguously equivalent. If uncertain or
 PROMPT;
         $response = $this->callWithRetry([
             ['role' => 'user', 'content' => $instructions."\n".json_encode($context, JSON_THROW_ON_ERROR)],
-        ], options: ['max_attempts' => 1, 'timeout' => 8, 'max_tokens' => 400]);
+        ], options: ['max_attempts' => 1, 'timeout' => 8, 'max_tokens' => 400, 'intelligence_document' => $document]);
         // Record usage even when the optional adjudication response is unusable.
         $this->recordAiRun($document, 'kpi_identity', $response);
         $decoded = $this->decodeJsonContent($response);
@@ -83,7 +83,7 @@ PROMPT;
         $this->currentOperation = 'document_type';
         $this->throttle();
         $prompt = $this->buildDocumentTypePrompt($documentText, $documentName);
-        $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]]);
+        $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]], options: ['intelligence_document' => $document]);
         $this->recordAiRun($document, 'document_type', $response);
         return $this->parseDocumentTypeResponse($response);
     }
@@ -93,7 +93,7 @@ PROMPT;
         $this->currentOperation = 'entities';
         $this->throttle();
         $prompt = $this->buildEntitiesPrompt($documentText, $documentName);
-        $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]]);
+        $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]], options: ['intelligence_document' => $document]);
         $this->recordAiRun($document, 'entities', $response);
         return $this->parseEntitiesResponse($response);
     }
@@ -103,7 +103,7 @@ PROMPT;
         $this->currentOperation = 'risks';
         $this->throttle();
         $prompt = $this->buildRisksPrompt($documentText, $documentName);
-        $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]]);
+        $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]], options: ['intelligence_document' => $document]);
         $this->recordAiRun($document, 'risks', $response);
         return $this->parseRisksResponse($response);
     }
@@ -113,7 +113,7 @@ PROMPT;
         $this->currentOperation = 'deadlines';
         $this->throttle();
         $prompt = $this->buildDeadlinesPrompt($documentText, $documentName);
-        $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]]);
+        $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]], options: ['intelligence_document' => $document]);
         $this->recordAiRun($document, 'deadlines', $response);
         return $this->parseDeadlinesResponse($response);
     }
@@ -231,6 +231,11 @@ PROMPT;
 
     private function callWithRetry(array $messages, int $attempt = 1, array $options = []): array
     {
+        $document = $options['intelligence_document'] ?? null;
+        if ($document && ! $document->fresh()?->canGenerateIntelligence()) {
+            throw new \RuntimeException('Document processing no longer permits intelligence.');
+        }
+
         $maxAttempts = $options['max_attempts'] ?? 4;
         $retryableStatuses = [429, 500, 502, 503, 529];
 
@@ -469,7 +474,7 @@ PROMPT;
         $this->currentOperation = 'document_summary';
         $this->throttle();
         $prompt = $this->buildSummaryPrompt($extractedDataJson, $documentName);
-        $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]]);
+        $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]], options: ['intelligence_document' => $document]);
         $this->recordAiRun($document, 'document_summary', $response);
         return $this->parseSummaryResponse($response);
     }

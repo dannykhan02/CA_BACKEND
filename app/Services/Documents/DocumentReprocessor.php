@@ -22,6 +22,11 @@ class DocumentReprocessor
 {
     public function reprocess(Document $document, User $actor, bool $intelligenceOnly = false): Document
     {
+        $document->refresh();
+        abort_if($document->status === 'Failed'
+            && app(DocumentIntelligenceService::class)->getDocumentFailure($document)['recovery'] === 'replace',
+            422, 'Replace or remove this document; its file cannot be processed.');
+
         if ($intelligenceOnly) {
             $states = app(DocumentIntelligenceService::class)->getProcessingStatus($document);
             abort_unless($document->status === 'Ready' && $document->extracted_text
@@ -35,14 +40,13 @@ class DocumentReprocessor
 
         app(EntitlementService::class)->reserveDocument($document, true);
 
-        if ($document->status === 'Failed' && empty($document->extracted_text)) {
-            // Full pipeline re-run: scan/extract never produced usable text,
-            // so re-running only the AI batch (like the Needs-Review path
-            // below) would run against nothing. Mirrors the exact chain
-            // DocumentUploadController::store() dispatches on first upload.
+        if ($document->status === 'Failed') {
+            // Failed prerequisites must run again even when old text remains.
+            // Clear it so queued intelligence cannot start during the new scan.
             $document->forceFill([
                 'status' => 'Processing',
                 'progress' => 0,
+                'extracted_text' => null,
                 'error_message' => null,
                 'last_updated_by' => $actor->id,
             ])->save();
@@ -56,9 +60,7 @@ class DocumentReprocessor
             return $document->fresh();
         }
 
-        // Existing Needs-Review-style AI-only batch path — also now covers a
-        // Failed document that already has extracted_text (no need to
-        // re-scan/re-extract; text is there, only the AI stages need a retry).
+        // Review and intelligence-only retries reuse valid extracted text.
         if (! $intelligenceOnly) {
             $document->forceFill([
                 'status' => 'Processing', 'progress' => 60, 'error_message' => null,
@@ -73,6 +75,10 @@ class DocumentReprocessor
             }
         }
 
+        if (! $document->fresh()?->canGenerateIntelligence()) {
+            return $document->fresh();
+        }
+
         $documentId = $document->id;
 
         Bus::batch([
@@ -85,6 +91,9 @@ class DocumentReprocessor
             ->onQueue('extraction')
             ->allowFailures()
             ->finally(function () use ($documentId) {
+                if (! Document::find($documentId)?->canGenerateIntelligence()) {
+                    return;
+                }
                 GenerateDocumentSummaryJob::dispatch($documentId, true)
                     ->onQueue('extraction');
             })

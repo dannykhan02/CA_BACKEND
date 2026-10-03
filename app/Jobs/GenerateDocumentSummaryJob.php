@@ -3,10 +3,10 @@
 namespace App\Jobs;
 
 use App\Jobs\Concerns\SkipsUnchangedDocuments;
+use App\Jobs\Concerns\GuardsDocumentIntelligence;
 use App\Models\Document;
 use App\Models\DocumentIntelligenceSummary;
 use App\Services\AnthropicClient;
-use App\Services\EntitlementService;
 use App\Services\Pipeline\PipelineStageRecorder;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
@@ -35,7 +35,7 @@ use Illuminate\Support\Facades\Log;
  */
 class GenerateDocumentSummaryJob implements ShouldQueue
 {
-    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments;
+    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments, GuardsDocumentIntelligence;
 
     public int $tries = 2;
 
@@ -47,8 +47,7 @@ class GenerateDocumentSummaryJob implements ShouldQueue
     {
         $document = Document::find($this->documentId);
 
-        if (! $document) {
-            \Illuminate\Support\Facades\Log::warning("GenerateDocumentSummaryJob: Document {$this->documentId} not found — unexpected null, possible soft-delete race.");
+        if ($this->batch()?->cancelled() || ! $document?->canGenerateIntelligence()) {
             return;
         }
 
@@ -72,16 +71,24 @@ class GenerateDocumentSummaryJob implements ShouldQueue
             ])->toArray(),
         ];
 
-        app(EntitlementService::class)->reserveDocument($document);
-
-        $stage = $recorder->start($document, 'document_summary');
+        $stage = $this->startIntelligence($document, 'document_summary', $recorder);
+        if (! $stage || $this->abandonIntelligence($document, $stage)) {
+            return;
+        }
 
         try {
             $result = $client->generateDocumentSummary(json_encode($extractedData), $document->name, $document);
         } catch (\Throwable $e) {
+            if ($this->abandonIntelligence($document, $stage)) {
+                return;
+            }
             $recorder->fail($stage, $e->getMessage());
             $this->fail($e);
 
+            return;
+        }
+
+        if ($this->abandonIntelligence($document, $stage)) {
             return;
         }
 

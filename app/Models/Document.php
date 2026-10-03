@@ -29,6 +29,13 @@ class Document extends Model
         'extraction_completed_at' => 'datetime',
     ];
 
+    /** Text alone is insufficient: a later prerequisite failure invalidates it. */
+    public function canGenerateIntelligence(): bool
+    {
+        return in_array($this->status, ['Processing', 'Ready'], true)
+            && trim((string) $this->extracted_text) !== '';
+    }
+
     public function matter()
     {
         return $this->belongsTo(Matter::class);

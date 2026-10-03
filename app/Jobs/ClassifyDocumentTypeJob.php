@@ -3,10 +3,10 @@
 namespace App\Jobs;
 
 use App\Jobs\Concerns\SkipsUnchangedDocuments;
+use App\Jobs\Concerns\GuardsDocumentIntelligence;
 use App\Models\Document;
 use App\Models\DocumentTypeClassification;
 use App\Services\AnthropicClient;
-use App\Services\EntitlementService;
 use App\Services\Pipeline\PipelineStageRecorder;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Log;
 
 class ClassifyDocumentTypeJob implements ShouldQueue
 {
-    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments;
+    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments, GuardsDocumentIntelligence;
 
     public int $tries = 2;
 
@@ -39,7 +39,7 @@ class ClassifyDocumentTypeJob implements ShouldQueue
 
         $document = Document::find($this->documentId);
 
-        if (! $document || ! $document->extracted_text) {
+        if (! $document?->canGenerateIntelligence()) {
             return;
         }
 
@@ -47,16 +47,24 @@ class ClassifyDocumentTypeJob implements ShouldQueue
             return;
         }
 
-        app(EntitlementService::class)->reserveDocument($document);
-
-        $stage = $recorder->start($document, 'document_type');
+        $stage = $this->startIntelligence($document, 'document_type', $recorder);
+        if (! $stage || $this->abandonIntelligence($document, $stage)) {
+            return;
+        }
 
         try {
             $result = $client->classifyDocumentType($document->extracted_text, $document->name, $document);
         } catch (\Throwable $e) {
+            if ($this->abandonIntelligence($document, $stage)) {
+                return;
+            }
             $recorder->fail($stage, $e->getMessage());
             $this->fail($e);
 
+            return;
+        }
+
+        if ($this->abandonIntelligence($document, $stage)) {
             return;
         }
 
