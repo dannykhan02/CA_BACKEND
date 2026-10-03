@@ -1,12 +1,8 @@
 @props(['url'])
 <tr>
 <td class="header">
-<a href="{{ $url }}" style="display: inline-block;">
-@if (trim($slot) === config('app.name'))
-<span style="font-size: 20px; font-weight: 700; color: #0C1A2B; text-decoration: none;">{{ $slot }}</span>
-@else
-{!! $slot !!}
-@endif
+<a href="{{ $url }}" style="display: inline-block; text-decoration: none; font-family: Georgia, 'Times New Roman', serif; font-size: 26px; font-weight: 600;">
+<span style="color: #FAF9F6;">Doc</span><span style="color: #D4A04E;">Intel</span>
 </a>
 </td>
 </tr>

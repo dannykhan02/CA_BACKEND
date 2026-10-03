@@ -2,7 +2,7 @@
     {{-- Header --}}
     <x-slot:header>
         <x-mail::header :url="config('app.url')">
-            {{ config('app.name') }}
+            DocIntel
         </x-mail::header>
     </x-slot:header>
 
@@ -21,7 +21,9 @@
     {{-- Footer --}}
     <x-slot:footer>
         <x-mail::footer>
-            © {{ date('Y') }} {{ config('app.name') }}. @lang('All rights reserved.')
+            © {{ date('Y') }} DocIntel. @lang('All rights reserved.')
+
+            Questions? Just reply to this email or write to {{ config('mail.reply_to.address') }}.
         </x-mail::footer>
     </x-slot:footer>
 </x-mail::layout>

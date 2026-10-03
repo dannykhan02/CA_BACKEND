@@ -6,6 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\HtmlString;
 
 /**
  * Additional hardening (found on re-review, not in original audit): every
@@ -22,9 +23,7 @@ class VerificationCodeNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(public string $code)
-    {
-    }
+    public function __construct(public string $code) {}
 
     public function via($notifiable): array
     {
@@ -34,13 +33,13 @@ class VerificationCodeNotification extends Notification implements ShouldQueue
     public function toMail($notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Verify Your Email')
+            ->subject('Verify your DocIntel email address')
             ->greeting('Hello!')
             ->line('Use the code below to verify your email address.')
-            ->line(new \Illuminate\Support\HtmlString(
-                '<div style="font-size: 32px; font-weight: 700; letter-spacing: 6px; text-align: center; background: #FDF3E7; color: #854F0B; border-radius: 8px; padding: 18px; margin: 20px 0;">' . $this->code . '</div>'
+            ->line(new HtmlString(
+                '<div style="font-size: 32px; font-weight: 700; letter-spacing: 6px; text-align: center; background: #2D2618; color: #D4A04E; border-radius: 8px; padding: 18px; margin: 20px 0;">'.$this->code.'</div>'
             ))
             ->line('This code will expire shortly.')
-            ->line('If you did not request this, no further action is required.');
+            ->line("If you didn't request this code, you can ignore this email. Contact ".config('mail.reply_to.address')." if you're concerned.");
     }
 }

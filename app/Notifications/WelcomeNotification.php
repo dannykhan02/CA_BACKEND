@@ -19,9 +19,9 @@ class WelcomeNotification extends Notification implements ShouldQueue
     public function toMail($notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Welcome to ' . config('app.name'))
-            ->greeting('Welcome, ' . ($notifiable->full_name ?? 'there') . '!')
+            ->subject('Welcome to DocIntel')
+            ->greeting('Welcome, '.($notifiable->full_name ?? 'there').'!')
             ->line('Your account is ready to go.')
-            ->line('If you have any questions, just reply to this email.');
+            ->line('Need help getting started? Just reply to this email.');
     }
 }

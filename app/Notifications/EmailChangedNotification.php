@@ -6,6 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\HtmlString;
 
 /**
  * Note: this is a security alert (unexpected-change notification), so queue
@@ -28,10 +29,10 @@ class EmailChangedNotification extends Notification implements ShouldQueue
     public function toMail($notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Your Account Email Was Changed')
-            ->line("This is a confirmation that your account email was changed to {$this->newEmail}.")
-            ->line(new \Illuminate\Support\HtmlString(
-                '<div style="background: #FBEAEA; color: #9E2A2B; border-left: 4px solid #9E2A2B; border-radius: 6px; padding: 14px 16px; margin: 16px 0; font-size: 14px;">If you did NOT make this change, contact support immediately — your account may be compromised.</div>'
+            ->subject('Your DocIntel email address was changed')
+            ->line("This is a confirmation that your DocIntel account email was changed to {$this->newEmail}.")
+            ->line(new HtmlString(
+                '<div style="background: #FBEDEA; color: #8C2F20; border-left: 4px solid #B4412F; border-radius: 6px; padding: 14px 16px; margin: 16px 0; font-size: 14px;">Wasn\'t you? Reply to this email right away at '.e(config('mail.reply_to.address')).'.</div>'
             ));
     }
 }
