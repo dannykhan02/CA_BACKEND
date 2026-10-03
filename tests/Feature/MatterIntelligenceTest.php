@@ -133,6 +133,19 @@ class MatterIntelligenceTest extends TestCase
         $this->getJson("/api/matters/$first")->assertOk()->assertJsonPath('overview.documents', 0);
     }
 
+    public function test_matter_index_accepts_blank_search_and_rejects_non_string_search(): void
+    {
+        $user = $this->actor();
+        Sanctum::actingAs($user);
+        $contract = Matter::create(['workspace_id' => $user->current_workspace_id, 'created_by' => $user->id, 'name' => 'Contract review']);
+        Matter::create(['workspace_id' => $user->current_workspace_id, 'created_by' => $user->id, 'name' => 'Budget audit']);
+
+        $this->getJson('/api/matters?page=1')->assertOk()->assertJsonCount(2, 'data');
+        $this->getJson('/api/matters?page=1&q=')->assertOk()->assertJsonCount(2, 'data');
+        $this->getJson('/api/matters?page=1&q=contract')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $contract->id);
+        $this->getJson('/api/matters?page=1&q[]=contract')->assertUnprocessable()->assertJsonValidationErrors('q');
+    }
+
     public function test_comparison_remains_in_its_matter_history_after_a_document_moves(): void
     {
         Bus::fake();

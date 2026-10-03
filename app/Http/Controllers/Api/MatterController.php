@@ -16,7 +16,7 @@ class MatterController extends Controller
 
     public function index(Request $r)
     {
-        $data = $r->validate(['q' => 'sometimes|string|max:200']);
+        $data = $r->validate(['q' => 'sometimes|nullable|string|max:200']);
         $query = $this->access->matters($r->user());
         if (! empty($data['q'])) {
             $query->where('name', 'ilike', '%'.addcslashes($data['q'], '%_\\').'%');
