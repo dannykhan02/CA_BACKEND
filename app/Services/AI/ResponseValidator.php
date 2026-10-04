@@ -6,6 +6,10 @@ class ResponseValidator
 {
     private const SUMMARY_TEXT_LIMIT = 350;
 
+    private const SUMMARY_WORD_BOUNDARY_LOOKBACK = 80;
+
+    private const SUMMARY_PROSE_FIELDS = ['text', 'title', 'explanation', 'why_it_matters', 'observation', 'significance', 'question', 'reason'];
+
     public function validateInsights(array $decoded): array
     {
         foreach (['kpis', 'charts', 'insights'] as $field) {
@@ -294,7 +298,7 @@ class ResponseValidator
                 }
             }
         };
-        $validateText = function (array $item, string $path, array $fields) use ($validateSources): void {
+        $validateText = function (array &$item, string $path, array $fields) use ($validateSources): void {
             foreach ($fields as $field) {
                 $fieldPath = "{$path}.{$field}";
                 $limit = self::SUMMARY_TEXT_LIMIT;
@@ -309,7 +313,10 @@ class ResponseValidator
                 }
                 $length = mb_strlen($item[$field]);
                 if ($length > $limit) {
-                    throw new \RuntimeException("Invalid structured assessment field {$fieldPath}: exceeds {$limit} characters (received {$length}).");
+                    if (! in_array($field, self::SUMMARY_PROSE_FIELDS, true)) {
+                        throw new \RuntimeException("Invalid structured assessment field {$fieldPath}: exceeds {$limit} characters (received {$length}).");
+                    }
+                    $item[$field] = $this->truncateSummaryProse($item[$field], $limit, $fieldPath);
                 }
             }
             $validateSources($item, $path);
@@ -331,7 +338,7 @@ class ResponseValidator
             }
             foreach ($decoded[$field] as $index => $item) {
                 if (! is_array($item)) throw new \RuntimeException("Invalid structured assessment item: {$field}.");
-                $validateText($item, "{$field}[{$index}]", $fields);
+                $validateText($decoded[$field][$index], "{$field}[{$index}]", $fields);
                 if ($field === 'material_findings' && ! in_array($item['severity'], ['low', 'medium', 'high', 'critical'], true)) {
                     throw new \RuntimeException('Invalid finding severity.');
                 }
@@ -339,6 +346,28 @@ class ResponseValidator
         }
 
         return $decoded;
+    }
+
+    private function truncateSummaryProse(string $text, int $limit, string $fieldPath): string
+    {
+        $prefix = mb_substr($text, 0, $limit);
+        $next = mb_substr($text, $limit, 1);
+        if (preg_match('/^\s$/u', $next) || preg_match('/\s$/u', $prefix)) {
+            $candidate = rtrim($prefix);
+            if (mb_strlen($candidate) >= $limit - self::SUMMARY_WORD_BOUNDARY_LOOKBACK) {
+                return $candidate;
+            }
+        }
+        if (preg_match('/^(.*)\s+\S*$/us', $prefix, $matches)) {
+            $candidate = rtrim($matches[1]);
+            if (mb_strlen($candidate) >= $limit - self::SUMMARY_WORD_BOUNDARY_LOOKBACK) {
+                return $candidate;
+            }
+        }
+
+        // A very long unbroken token may be an identifier or URL. Do not
+        // damage it merely to make a response pass validation.
+        throw new \RuntimeException("Invalid structured assessment field {$fieldPath}: no safe word boundary within {$limit} characters.");
     }
 
     /**

@@ -95,7 +95,15 @@ PROMPT;
         $this->currentOperation = 'entities';
         $this->throttle();
         $prompt = $this->buildEntitiesPrompt($documentText, $documentName);
-        return $this->structuredCall($prompt, $document, 'entities', $this->parseEntitiesResponse(...));
+        // One bounded transport attempt per structured response. The existing
+        // single corrected retry for malformed/truncated JSON is retained;
+        // four transport attempts inside each response would exceed the job
+        // timeout and let the worker kill an otherwise recoverable result.
+        return $this->structuredCall($prompt, $document, 'entities', $this->parseEntitiesResponse(...), [
+            'timeout' => config('services.anthropic.entity_timeout'),
+            'connect_timeout' => config('services.anthropic.entity_connect_timeout'),
+            'max_attempts' => 1,
+        ]);
     }
 
     public function detectDocumentRisks(string $documentText, string $documentName, ?Document $document = null): array
@@ -228,7 +236,7 @@ PROMPT;
     }
 
     /** Parse before marking the usage row successful. Each provider response gets one audit row. */
-    private function structuredCall(string $prompt, ?Document $document, string $purpose, callable $parser): array
+    private function structuredCall(string $prompt, ?Document $document, string $purpose, callable $parser, array $requestOptions = []): array
     {
         $this->currentDocumentId = $document?->id;
         $maxTokens = (int) config('services.anthropic.max_tokens');
@@ -240,9 +248,9 @@ PROMPT;
                 $messages[] = ['role' => 'user', 'content' => 'Return one complete JSON object only, matching the requested schema. No prose or fences.'];
             }
             try {
-                $response = $this->callWithRetry($messages, options: [
+                $response = $this->callWithRetry($messages, options: array_merge($requestOptions, [
                     'intelligence_document' => $document, 'max_tokens' => $maxTokens,
-                ]);
+                ]));
             } catch (\Throwable $e) {
                 if (! $document || $document->fresh()?->canGenerateIntelligence()) {
                     $this->recordAiRun($document, $purpose, [], 'provider_error');
@@ -290,17 +298,20 @@ PROMPT;
         $retryableStatuses = [429, 500, 502, 503, 529];
 
         try {
-            $response = Http::withHeaders([
+            $request = Http::withHeaders([
                 'x-api-key' => config('services.anthropic.api_key'),
                 'anthropic-version' => '2023-06-01',
                 'content-type' => 'application/json',
             ])
-                ->timeout($options['timeout'] ?? config('services.anthropic.timeout'))
-                ->post('https://api.anthropic.com/v1/messages', [
-                    'model' => config('services.anthropic.model'),
-                    'max_tokens' => $options['max_tokens'] ?? config('services.anthropic.max_tokens'),
-                    'messages' => $messages,
-                ]);
+                ->timeout($options['timeout'] ?? config('services.anthropic.timeout'));
+            if (isset($options['connect_timeout'])) {
+                $request->connectTimeout($options['connect_timeout']);
+            }
+            $response = $request->post('https://api.anthropic.com/v1/messages', [
+                'model' => config('services.anthropic.model'),
+                'max_tokens' => $options['max_tokens'] ?? config('services.anthropic.max_tokens'),
+                'messages' => $messages,
+            ]);
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
             // Intentionally quiet during retries; exhaustion captures and throws the actual failure below.
             if ($attempt >= $maxAttempts) {

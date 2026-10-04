@@ -219,14 +219,14 @@ return [
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
             ],
-        
+
             'supervisor-extraction' => [
                 'connection' => 'redis',
                 'queue' => ['extraction'],
                 'balance' => 'simple',
                 'maxProcesses' => 2, // was 5 — right-sized for pre-real-users volume
                 'tries' => 3,
-                'timeout' => 150, // must exceed the longest job on this queue (120s), with headroom
+                'timeout' => 360, // exceeds the 330s entity job, below Redis retry_after
             ],
         ],
 
@@ -243,7 +243,7 @@ return [
                 // throughput — this is the actual enforcement point, more reliable
                 // than AnthropicClient's in-code throttle counter alone.
                 'maxProcesses' => 2,
-                'timeout' => 150, // must exceed the longest job on this queue (120s), with headroom
+                'timeout' => 360, // exceeds the 330s entity job, below Redis retry_after
             ],
         ],
     ],

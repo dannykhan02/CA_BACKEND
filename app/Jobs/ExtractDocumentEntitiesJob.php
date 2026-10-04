@@ -2,8 +2,8 @@
 
 namespace App\Jobs;
 
-use App\Jobs\Concerns\SkipsUnchangedDocuments;
 use App\Jobs\Concerns\GuardsDocumentIntelligence;
+use App\Jobs\Concerns\SkipsUnchangedDocuments;
 use App\Models\Document;
 use App\Models\DocumentEntity;
 use App\Services\AnthropicClient;
@@ -18,11 +18,11 @@ use Illuminate\Support\Facades\Log;
 
 class ExtractDocumentEntitiesJob implements ShouldQueue
 {
-    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments, GuardsDocumentIntelligence;
+    use Batchable, Dispatchable, GuardsDocumentIntelligence, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments;
 
     public int $tries = 2;
 
-    public int $timeout = 60;
+    public int $timeout = 330;
 
     public bool $failOnTimeout = true;
 

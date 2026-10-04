@@ -42,6 +42,8 @@ return [
         'max_tokens' => (int) env('ANTHROPIC_MAX_TOKENS', 4096),
         'structured_max_tokens_ceiling' => (int) env('ANTHROPIC_STRUCTURED_MAX_TOKENS_CEILING', 8192),
         'timeout' => (int) env('ANTHROPIC_TIMEOUT', 60),
+        'entity_timeout' => min(120, max(1, (int) env('ANTHROPIC_ENTITY_TIMEOUT', 120))),
+        'entity_connect_timeout' => min(10, max(1, (int) env('ANTHROPIC_ENTITY_CONNECT_TIMEOUT', 10))),
     ],
 
     // Was missing entirely — VoyageEmbeddingClient::embed() called

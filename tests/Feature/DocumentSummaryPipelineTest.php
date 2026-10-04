@@ -89,11 +89,12 @@ class DocumentSummaryPipelineTest extends TestCase
         $this->assertDatabaseCount('billing_operations', 0);
     }
 
-    public function test_completed_haiku_response_with_overlong_assessment_is_invalid_schema_without_retry(): void
+    public function test_completed_haiku_response_with_overlong_assessment_is_normalized_and_saved(): void
     {
         $document = $this->document();
+        $assessment = str_repeat('word ', 70).'more';
         Http::fake(['api.anthropic.com/*' => Http::response(
-            $this->response($this->summary($document, str_repeat('a', 351)))
+            $this->response($this->summary($document, $assessment))
         )]);
 
         (new GenerateDocumentSummaryJob($document->id, true))->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
@@ -101,13 +102,35 @@ class DocumentSummaryPipelineTest extends TestCase
         Http::assertSentCount(1);
         $this->assertDatabaseHas('document_ai_runs', [
             'document_id' => $document->id, 'purpose' => 'document_summary',
-            'status' => 'invalid_schema', 'stop_reason' => 'end_turn', 'prompt_version' => '3',
+            'status' => 'success', 'stop_reason' => 'end_turn', 'prompt_version' => '3',
         ]);
-        $this->assertSame('failed', $document->processingJobs()->where('stage', 'document_summary')->sole()->status);
-        $this->assertStringContainsString('executive_assessment.text: exceeds 350 characters (received 351)',
-            $document->processingJobs()->where('stage', 'document_summary')->sole()->error_message);
-        $this->assertDatabaseCount('document_intelligence_summaries', 0);
+        $this->assertSame('completed', $document->processingJobs()->where('stage', 'document_summary')->sole()->status);
+        $this->assertSame(str_repeat('word ', 69).'word', $document->intelligenceSummary()->sole()->executive_assessment['text']);
         $this->assertDatabaseCount('billing_operations', 0);
+    }
+
+    public function test_production_shape_371_character_finding_explanation_persists_and_completes_stage(): void
+    {
+        $document = $this->document();
+        $response = $this->summary($document, 'Debt pressure rose.');
+        $response['material_findings'] = [[
+            'title' => 'Debt increased', 'category' => 'financial',
+            'explanation' => str_repeat('word ', 70).'renewed warning here!',
+            'why_it_matters' => 'Funding pressure.', 'severity' => 'high',
+            'basis' => 'explicit', 'source_ids' => ['risk:'.$document->risks()->sole()->id],
+        ]];
+        $this->assertSame(371, mb_strlen($response['material_findings'][0]['explanation']));
+        Http::fake(['api.anthropic.com/*' => Http::response($this->response($response))]);
+
+        (new GenerateDocumentSummaryJob($document->id, true))->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+
+        Http::assertSentCount(1);
+        $summary = $document->intelligenceSummary()->sole();
+        $this->assertSame(str_repeat('word ', 69).'word', $summary->material_findings[0]['explanation']);
+        $this->assertSame('completed', $document->processingJobs()->where('stage', 'document_summary')->sole()->status);
+        $this->assertDatabaseHas('document_ai_runs', [
+            'document_id' => $document->id, 'purpose' => 'document_summary', 'status' => 'success',
+        ]);
     }
 
     public function test_successful_ai_response_with_summary_persistence_failure_fails_stage(): void

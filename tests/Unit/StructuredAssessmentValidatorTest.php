@@ -72,16 +72,60 @@ class StructuredAssessmentValidatorTest extends TestCase
         self::assertSame($text, $this->validate(['executive_assessment' => $this->assessment($text)])['executive_assessment']['text']);
     }
 
-    public function test_assessment_text_over_350_character_boundary_is_rejected(): void
+    public function test_assessment_text_at_351_characters_is_trimmed_to_a_word_boundary(): void
     {
-        $this->assertInvalidAssessment($this->assessment(str_repeat('a', 351)), 'executive_assessment.text: exceeds 350 characters (received 351)');
+        $text = str_repeat('word ', 70).'x';
+        self::assertSame(351, mb_strlen($text));
+        $normalized = $this->validate(['executive_assessment' => $this->assessment($text)]);
+        self::assertSame(str_repeat('word ', 69).'word', $normalized['executive_assessment']['text']);
     }
 
-    public function test_production_style_completed_response_with_overlong_assessment_reports_schema_reason(): void
+    public function test_351_character_material_finding_explanation_is_normalized(): void
     {
-        // The production payload is not retained. This reproduces one shape that
-        // reaches the reported exception after successful JSON parsing.
-        $this->assertInvalidAssessment($this->assessment(str_repeat('a', 480)), 'executive_assessment.text: exceeds 350 characters (received 480)');
+        $text = str_repeat('a', 345).' final';
+        self::assertSame(351, mb_strlen($text));
+        $finding = $this->finding($text);
+        $normalized = $this->validate(['material_findings' => [$finding]]);
+        self::assertSame(str_repeat('a', 345), $normalized['material_findings'][0]['explanation']);
+    }
+
+    public function test_371_character_material_finding_explanation_is_normalized(): void
+    {
+        $text = str_repeat('word ', 70).'renewed warning here!';
+        self::assertSame(371, mb_strlen($text));
+        $normalized = $this->validate(['material_findings' => [$this->finding($text)]]);
+        self::assertLessThanOrEqual(350, mb_strlen($normalized['material_findings'][0]['explanation']));
+        self::assertStringEndsWith('word', $normalized['material_findings'][0]['explanation']);
+    }
+
+    private function finding(string $explanation): array
+    {
+        return ['title' => 'Debt increased', 'category' => 'financial', 'explanation' => $explanation,
+            'why_it_matters' => 'Funding pressure.', 'severity' => 'high', 'basis' => 'explicit',
+            'source_ids' => ['risk:1']];
+    }
+
+    public function test_overlong_structural_category_is_still_rejected(): void
+    {
+        $finding = $this->finding('Debt rose.');
+        $finding['category'] = str_repeat('x', 351);
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('material_findings[0].category: exceeds 350 characters');
+        $this->validate(['material_findings' => [$finding]]);
+    }
+
+    public function test_normalized_prose_does_not_bypass_evidence_and_enum_checks(): void
+    {
+        $finding = $this->finding(str_repeat('word ', 70).'renewed warning here!');
+        $finding['source_ids'] = ['risk:unknown'];
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('material_findings[0].source_ids[0]: unavailable source');
+        $this->validate(['material_findings' => [$finding]]);
+    }
+
+    public function test_long_unbroken_prose_token_is_not_damaged(): void
+    {
+        $this->assertInvalidAssessment($this->assessment(str_repeat('a', 371)), 'no safe word boundary');
     }
 
     public function test_valid_source_ids_are_accepted(): void
