@@ -13,7 +13,7 @@ class DocumentAiRun extends Model
 
     protected $fillable = [
         'workspace_id', 'document_id', 'file_hash', 'purpose', 'provider',
-        'model', 'prompt_version', 'input_tokens', 'output_tokens', 'created_at',
+        'model', 'prompt_version', 'input_tokens', 'output_tokens', 'status', 'stop_reason', 'created_at',
     ];
 
     protected $casts = ['created_at' => 'datetime'];

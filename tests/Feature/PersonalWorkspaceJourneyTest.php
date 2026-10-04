@@ -181,7 +181,7 @@ class PersonalWorkspaceJourneyTest extends TestCase
     }
 
     #[DataProvider('pipelineFailures')]
-    public function test_failed_personal_upload_preserves_trial_credits_without_entering_review(string $failure): void
+    public function test_failed_personal_upload_preserves_trial_credits_and_marks_analysis_for_review(string $failure): void
     {
         $owner = $this->signup('owner@example.com', '203.0.113.10', 'owner-browser');
         $this->mockExtraction($failure === 'ocr' ? '' : self::TEXT);
@@ -195,13 +195,15 @@ class PersonalWorkspaceJourneyTest extends TestCase
         $document = $this->upload($owner);
         $this->assertBalance($owner, 5, 0);
         $this->continueUploadChain($document);
-        $this->assertSame('Failed', $document->fresh()->status);
+        $this->assertSame($failure === 'ocr' ? 'Failed' : 'Needs Review', $document->fresh()->status);
         $this->assertNull($document->fresh()->credit_accounted_at);
         $this->assertDatabaseHas('processing_jobs', [
             'document_id' => $document->id, 'stage' => $failure === 'ocr' ? 'ocr_check' : 'ai_analysis',
             'status' => 'failed',
         ]);
-        $this->assertNoReview($document);
+        if ($failure === 'ocr') {
+            $this->assertNoReview($document);
+        }
         $this->assertBalance($owner, 5, 0);
         Http::assertNothingSent();
     }

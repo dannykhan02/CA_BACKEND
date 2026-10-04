@@ -4,6 +4,21 @@ namespace App\Services\AI;
 
 class ResponseValidator
 {
+    public function validateInsights(array $decoded): array
+    {
+        foreach (['kpis', 'charts', 'insights'] as $field) {
+            if (! isset($decoded[$field]) || ! is_array($decoded[$field]) || ! array_is_list($decoded[$field])) {
+                throw new \RuntimeException("AI response missing required array field: {$field}");
+            }
+        }
+        foreach ($decoded['insights'] as $insight) {
+            if (! is_string($insight) || trim($insight) === '') {
+                throw new \RuntimeException('AI response insight must be a non-empty string.');
+            }
+        }
+        return $decoded;
+    }
+
     /** Optional metadata: old prompt versions and existing responses remain valid. */
     public function validateKpiIdentities(array $kpis): void
     {

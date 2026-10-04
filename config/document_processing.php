@@ -9,6 +9,10 @@ return [
     'auto_extract_classifications' => explode(',', env('DOC_AUTO_EXTRACT_CLASSIFICATIONS', 'Public,Internal,Confidential')),
 
     'max_extraction_chars' => (int) env('DOC_MAX_EXTRACTION_CHARS', 60000), // ~15k tokens, keeps cost bounded
+    'insights_max_kpis' => (int) env('DOC_INSIGHTS_MAX_KPIS', 12),
+    'insights_max_charts' => (int) env('DOC_INSIGHTS_MAX_CHARTS', 3),
+    'insights_max_chart_points' => (int) env('DOC_INSIGHTS_MAX_CHART_POINTS', 8),
+    'insights_max_observations' => (int) env('DOC_INSIGHTS_MAX_OBSERVATIONS', 5),
     // Audit finding (MEDIUM) — search/Q&A retrieval had no relevance floor,
     // so irrelevant queries still returned top-N nearest neighbors regardless
     // of actual similarity. 0.3 is a starting point, not a tuned value.

@@ -65,6 +65,7 @@ class DetectDocumentRisksJob implements ShouldQueue
         }
 
         DB::transaction(function () use ($document, $result) {
+            Document::whereKey($document->id)->lockForUpdate()->firstOrFail();
             $reviewedStatuses = $document->risks()->get()->keyBy(fn ($risk) => hash('sha256', $risk->title.'|'.$risk->evidence))->map->status;
             DocumentRisk::where('document_id', $document->id)->delete();
 

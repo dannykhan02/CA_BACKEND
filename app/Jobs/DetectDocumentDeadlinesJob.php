@@ -65,6 +65,7 @@ class DetectDocumentDeadlinesJob implements ShouldQueue
         }
 
         DB::transaction(function () use ($document, $result) {
+            Document::whereKey($document->id)->lockForUpdate()->firstOrFail();
             DocumentDeadline::where('document_id', $document->id)->delete();
 
             foreach ($result['deadlines'] as $deadline) {
