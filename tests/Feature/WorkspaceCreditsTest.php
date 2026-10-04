@@ -93,7 +93,7 @@ class WorkspaceCreditsTest extends TestCase
         $document = $this->document($workspace);
         $this->mock(AnthropicClient::class, fn ($mock) => $mock->shouldReceive('extractDocumentInsights')->once()->andThrow(new \RuntimeException('AI unavailable')));
         $this->runJob($document);
-        $this->assertSame('Failed', $document->fresh()->status);
+        $this->assertSame('Needs Review', $document->fresh()->status);
         $this->assertNull($document->fresh()->credit_accounted_at);
         $this->assertSame(2, $workspace->credits->documents_remaining);
     }

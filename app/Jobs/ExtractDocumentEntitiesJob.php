@@ -65,6 +65,7 @@ class ExtractDocumentEntitiesJob implements ShouldQueue
         }
 
         DB::transaction(function () use ($document, $result) {
+            Document::whereKey($document->id)->lockForUpdate()->firstOrFail();
             // Delete-before-insert, same pattern as GenerateInsightsJob's
             // kpis/charts — a reprocessed document must not accumulate
             // stale entities alongside fresh ones.

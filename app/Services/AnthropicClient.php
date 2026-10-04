@@ -3,11 +3,13 @@
 namespace App\Services;
 
 use App\Exceptions\AnthropicRateLimitException;
+use App\Exceptions\AnthropicStructuredOutputException;
 use App\Models\Document;
 use App\Models\DocumentAiRun;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use JsonException;
 use Sentry\State\Scope;
 use function Sentry\withScope;
 use function Sentry\captureException;
@@ -40,10 +42,7 @@ class AnthropicClient
         $this->currentOperation = 'insights';
         $this->throttle();
         $prompt = $this->buildInsightsPrompt($documentText, $documentName, $document?->classification);
-        $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]], options: ['intelligence_document' => $document]);
-        $parsed = $this->parseInsightsResponse($response); // validate BEFORE recording
-        $this->recordAiRun($document, 'insights', $response);
-        return $parsed;
+        return $this->structuredCall($prompt, $document, 'insights', $this->parseInsightsResponse(...));
     }
 
     public function adjudicateKpiIdentity(array $observation, array $candidates, Document $document): array
@@ -87,9 +86,7 @@ PROMPT;
         $this->currentOperation = 'document_type';
         $this->throttle();
         $prompt = $this->buildDocumentTypePrompt($documentText, $documentName);
-        $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]], options: ['intelligence_document' => $document]);
-        $this->recordAiRun($document, 'document_type', $response);
-        return $this->parseDocumentTypeResponse($response);
+        return $this->structuredCall($prompt, $document, 'document_type', $this->parseDocumentTypeResponse(...));
     }
 
     public function extractDocumentEntities(string $documentText, string $documentName, ?Document $document = null): array
@@ -97,9 +94,7 @@ PROMPT;
         $this->currentOperation = 'entities';
         $this->throttle();
         $prompt = $this->buildEntitiesPrompt($documentText, $documentName);
-        $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]], options: ['intelligence_document' => $document]);
-        $this->recordAiRun($document, 'entities', $response);
-        return $this->parseEntitiesResponse($response);
+        return $this->structuredCall($prompt, $document, 'entities', $this->parseEntitiesResponse(...));
     }
 
     public function detectDocumentRisks(string $documentText, string $documentName, ?Document $document = null): array
@@ -107,9 +102,7 @@ PROMPT;
         $this->currentOperation = 'risks';
         $this->throttle();
         $prompt = $this->buildRisksPrompt($documentText, $documentName);
-        $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]], options: ['intelligence_document' => $document]);
-        $this->recordAiRun($document, 'risks', $response);
-        return $this->parseRisksResponse($response);
+        return $this->structuredCall($prompt, $document, 'risks', $this->parseRisksResponse(...));
     }
 
     public function detectDocumentDeadlines(string $documentText, string $documentName, ?Document $document = null): array
@@ -117,9 +110,7 @@ PROMPT;
         $this->currentOperation = 'deadlines';
         $this->throttle();
         $prompt = $this->buildDeadlinesPrompt($documentText, $documentName);
-        $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]], options: ['intelligence_document' => $document]);
-        $this->recordAiRun($document, 'deadlines', $response);
-        return $this->parseDeadlinesResponse($response);
+        return $this->structuredCall($prompt, $document, 'deadlines', $this->parseDeadlinesResponse(...));
     }
 
     public function compareDocumentIntelligence(array $context, Document $document): array
@@ -208,7 +199,7 @@ PROMPT;
         }
     }
 
-    private function recordAiRun(?Document $document, string $purpose, array $response): void
+    private function recordAiRun(?Document $document, string $purpose, array $response, string $status = 'success'): void
     {
         if (! $document) {
             return;
@@ -225,12 +216,60 @@ PROMPT;
             'file_hash' => $document->file_hash,
             'purpose' => $purpose,
             'provider' => 'anthropic',
-            'model' => config('services.anthropic.model'),
+            'model' => $response['model'] ?? config('services.anthropic.model'),
             'prompt_version' => $promptVersion,
             'input_tokens' => $response['usage']['input_tokens'] ?? null,
             'output_tokens' => $response['usage']['output_tokens'] ?? null,
+            'stop_reason' => $response['stop_reason'] ?? null,
+            'status' => $status,
             'created_at' => now(),
         ]);
+    }
+
+    /** Parse before marking the usage row successful. Each provider response gets one audit row. */
+    private function structuredCall(string $prompt, ?Document $document, string $purpose, callable $parser): array
+    {
+        $this->currentDocumentId = $document?->id;
+        $maxTokens = (int) config('services.anthropic.max_tokens');
+        $ceiling = max($maxTokens, (int) config('services.anthropic.structured_max_tokens_ceiling'));
+        for ($attempt = 0; $attempt < 2; $attempt++) {
+            $messages = [['role' => 'user', 'content' => $prompt]];
+            if ($attempt === 1) {
+                // An explicit correction changes the request after malformed output.
+                $messages[] = ['role' => 'user', 'content' => 'Return one complete JSON object only, matching the requested schema. No prose or fences.'];
+            }
+            try {
+                $response = $this->callWithRetry($messages, options: [
+                    'intelligence_document' => $document, 'max_tokens' => $maxTokens,
+                ]);
+            } catch (\Throwable $e) {
+                if (! $document || $document->fresh()?->canGenerateIntelligence()) {
+                    $this->recordAiRun($document, $purpose, [], 'provider_error');
+                }
+                throw $e;
+            }
+            try {
+                $parsed = $parser($response);
+                $this->recordAiRun($document, $purpose, $response);
+                return $parsed;
+            } catch (AnthropicStructuredOutputException $e) {
+                $this->recordAiRun($document, $purpose, $response, $e->outputStatus);
+                if ($attempt === 1 || ! in_array($e->outputStatus, ['malformed_output', 'truncated'], true)) {
+                    throw $e;
+                }
+                if ($e->outputStatus === 'truncated') {
+                    if ($maxTokens >= $ceiling) {
+                        throw $e;
+                    }
+                    $maxTokens = min($ceiling, $maxTokens * 2);
+                }
+                $this->throttle();
+            } catch (\Throwable $e) {
+                $this->recordAiRun($document, $purpose, $response, 'invalid_schema');
+                throw $e;
+            }
+        }
+        throw new \LogicException('Structured response retry exhausted.');
     }
 
     private function callWithRetry(array $messages, int $attempt = 1, array $options = []): array
@@ -285,7 +324,7 @@ PROMPT;
         }
 
         if ($response->failed()) {
-            Log::error('Anthropic API error', ['status' => $response->status(), 'body' => $response->body()]);
+            Log::error('Anthropic API error', ['status' => $response->status(), 'operation' => $this->currentOperation]);
             $e = new \RuntimeException("Anthropic API request failed with status {$response->status()}.");
             $this->tagAndCapture($e);
             throw $e;
@@ -300,11 +339,16 @@ PROMPT;
         $manager = app(\App\Services\AI\PromptManager::class);
         $prompt = $manager->resolve('document_insights');
         $this->lastResolvedPromptVersion = $prompt->version;
-        return $manager->render($prompt, [
+        $rendered = $manager->render($prompt, [
             '{{document_name}}' => $documentName,
             '{{document_text}}' => $truncated,
             '{{document_classification}}' => $classification ?? 'Unknown',
         ]);
+        return $rendered."\n\nFor this response, select at most "
+            .(int) config('document_processing.insights_max_kpis')." high-value KPIs, "
+            .(int) config('document_processing.insights_max_charts')." charts with at most "
+            .(int) config('document_processing.insights_max_chart_points')." points each, and "
+            .(int) config('document_processing.insights_max_observations')." insights. Prioritize material findings; keep the required JSON schema.";
     }
 
     private function buildDocumentTypePrompt(string $documentText, string $documentName): string
@@ -389,6 +433,7 @@ PROMPT;
         $decoded = app(\App\Services\AI\ResponseValidator::class)->validate($decoded, [
             'kpis' => 'array', 'charts' => 'array', 'insights' => 'array',
         ]);
+        $decoded = app(\App\Services\AI\ResponseValidator::class)->validateInsights($decoded);
         app(\App\Services\AI\ResponseValidator::class)->validateKpiIdentities($decoded['kpis'] ?? []);
         return [
             'kpis' => $decoded['kpis'] ?? [],
@@ -460,19 +505,64 @@ PROMPT;
 
     private function decodeJsonContent(array $response): array
     {
-        $text = $response['content'][0]['text'] ?? '';
-        $cleaned = preg_replace('/^```json\s*|\s*```$/m', '', trim($text));
-        $decoded = json_decode($cleaned, true);
-        if (json_last_error() !== JSON_ERROR_NONE || ! is_array($decoded)) {
-            \Illuminate\Support\Facades\Log::warning('Anthropic response failed JSON decode', [
-                'json_error' => json_last_error_msg(),
-                'raw_text' => $text,
-            ]);
-            $e = new \RuntimeException('Anthropic response was not valid JSON: ' . json_last_error_msg());
-            $this->tagAndCapture($e);
-            throw $e;
+        $blocks = is_array($response['content'] ?? null) ? $response['content'] : [];
+        $text = implode('', array_map(
+            fn (array $block) => $block['text'],
+            array_values(array_filter($blocks, fn ($block) => is_array($block)
+                && ($block['type'] ?? null) === 'text' && is_string($block['text'] ?? null)))
+        ));
+        $metadata = [
+            'operation' => $this->currentOperation ?? 'unknown',
+            'document_id' => $this->currentDocumentId,
+            'stop_reason' => $response['stop_reason'] ?? null,
+            'input_tokens' => $response['usage']['input_tokens'] ?? null,
+            'output_tokens' => $response['usage']['output_tokens'] ?? null,
+            'content_block_count' => count($blocks),
+            'model' => $response['model'] ?? config('services.anthropic.model'),
+            'prompt_version' => $this->lastResolvedPromptVersion,
+        ];
+        if (($response['stop_reason'] ?? null) === 'max_tokens') {
+            $this->structuredOutputFailure('truncated', 'Anthropic response reached max_tokens.', $metadata, $text);
+        }
+        if (isset($response['stop_reason']) && ! in_array($response['stop_reason'], ['end_turn', 'stop_sequence'], true)) {
+            $this->structuredOutputFailure('provider_error', 'Anthropic stopped without a final text response.', $metadata, $text);
+        }
+        $cleaned = trim($text);
+        if (preg_match('/\A```(?:json)?[ \t]*\R([\s\S]*?)\R```\z/i', $cleaned, $match)) {
+            $cleaned = trim($match[1]);
+        }
+        try {
+            $decoded = json_decode($cleaned, true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException $e) {
+            $this->structuredOutputFailure('malformed_output', $e->getMessage(), $metadata, $text, $e);
+        }
+        if (! is_array($decoded) || (array_is_list($decoded) && ($decoded !== [] || $cleaned !== '{}'))) {
+            $this->structuredOutputFailure('malformed_output', 'Expected a JSON object.', $metadata, $text);
         }
         return $decoded;
+    }
+
+    private ?string $currentDocumentId = null;
+
+    private function structuredOutputFailure(string $status, string $detail, array $metadata, string $text, ?\Throwable $previous = null): never
+    {
+        Log::warning('Anthropic structured response unusable', $metadata + [
+            'json_error' => $detail,
+            'response_preview' => mb_substr($text, 0, 1000),
+        ]);
+        $e = new AnthropicStructuredOutputException($status, "Anthropic structured response {$status}: {$detail}", $previous);
+        withScope(function (Scope $scope) use ($e, $metadata, $status) {
+            $scope->setTag('provider', 'anthropic');
+            $scope->setTag('operation', $metadata['operation']);
+            $scope->setTag('output_status', $status);
+            $scope->setTag('stop_reason', (string) ($metadata['stop_reason'] ?? 'unknown'));
+            $scope->setTag('model', (string) $metadata['model']);
+            if ($metadata['document_id']) {
+                $scope->setTag('document_id', $metadata['document_id']);
+            }
+            captureException($e);
+        });
+        throw $e;
     }
 
     public function generateDocumentSummary(string $extractedDataJson, string $documentName, ?Document $document = null): array
@@ -480,9 +570,7 @@ PROMPT;
         $this->currentOperation = 'document_summary';
         $this->throttle();
         $prompt = $this->buildSummaryPrompt($extractedDataJson, $documentName);
-        $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]], options: ['intelligence_document' => $document]);
-        $this->recordAiRun($document, 'document_summary', $response);
-        return $this->parseSummaryResponse($response);
+        return $this->structuredCall($prompt, $document, 'document_summary', $this->parseSummaryResponse(...));
     }
 
     private function buildSummaryPrompt(string $extractedDataJson, string $documentName): string

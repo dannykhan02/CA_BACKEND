@@ -39,6 +39,7 @@ trait SkipsUnchangedDocuments
 
         $lastRun = DocumentAiRun::where('document_id', $document->id)
             ->where('purpose', $purpose)
+            ->where('status', 'success')
             ->latest('created_at')
             ->first();
 
@@ -52,7 +53,11 @@ trait SkipsUnchangedDocuments
         // the two leaves a matching run with nothing behind it, which would
         // otherwise cause every future attempt to skip forever. When the
         // caller supplies a completion check, honor it.
-        if ($verifyCompleted && ! $verifyCompleted($document, $lastRun)) {
+        $completed = $verifyCompleted
+            ? $verifyCompleted($document, $lastRun)
+            : $document->processingJobs()->where('stage', $stage)->where('status', 'completed')
+                ->where('completed_at', '>=', $lastRun->created_at)->exists();
+        if (! $completed) {
             \Illuminate\Support\Facades\Log::warning(
                 "{$purpose}: matching AI run found (id {$lastRun->id}) but completion check failed — reprocessing instead of skipping.",
                 ['document_id' => $document->id]

@@ -109,7 +109,7 @@ class GenerateInsightsJob implements ShouldQueue
                 }
                 $recorder->fail($insightsStage, 'Analysis could not be completed. Please try again.');
                 $current->forceFill([
-                    'status' => 'Failed',
+                    'status' => 'Needs Review',
                     'error_message' => 'Analysis could not be completed. Please try again.',
                 ])->save();
                 return true;
@@ -291,10 +291,12 @@ class GenerateInsightsJob implements ShouldQueue
     public function failed(\Throwable $e): void
     {
         $document = Document::find($this->documentId);
-        $document?->forceFill([
-            'status' => 'Failed',
-            'error_message' => $document->error_message ?? 'AI insights generation failed.',
-        ])->save();
+        if ($document && in_array($document->status, ['Processing', 'Needs Review'], true)) {
+            $document->forceFill([
+                'status' => $document->extracted_text ? 'Needs Review' : 'Failed',
+                'error_message' => $document->error_message ?? 'AI insights generation failed.',
+            ])->save();
+        }
 
         Log::error('GenerateInsightsJob failed after retries', [
             'document_id' => $this->documentId,
