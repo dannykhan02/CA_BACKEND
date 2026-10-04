@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
             DocumentRisksPromptSeeder::class,
             DocumentSummaryPromptSeeder::class,
             DocumentSummaryPromptSeederV2::class,
+            DocumentSummaryPromptSeederV3::class,
             DocumentTypePromptSeeder::class,
             DocumentComparisonPromptSeeder::class,
         ]);
