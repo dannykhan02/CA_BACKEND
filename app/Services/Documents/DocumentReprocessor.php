@@ -69,35 +69,37 @@ class DocumentReprocessor
             if ($refreshSummary && ! in_array('document_summary', $selected, true)) {
                 $selected[] = 'document_summary';
             }
-            DB::transaction(function () use ($document, $actor, $selected) {
+            $attemptIds = DB::transaction(function () use ($document, $actor, $selected) {
                 $locked = Document::whereKey($document->id)->lockForUpdate()->firstOrFail();
                 $current = app(DocumentIntelligenceService::class)->getProcessingStatus($locked);
+                $attemptIds = [];
                 foreach ($selected as $stage) {
                     abort_unless($stage === 'document_summary'
                         ? ! in_array($current[$stage], ['pending', 'processing'], true)
                         : in_array($current[$stage], ['failed', 'not_started'], true), 409,
                         'Analysis retry is already in progress or has completed.');
-                    ProcessingJob::create(['workspace_id' => $locked->workspace_id,
-                        'document_id' => $locked->id, 'stage' => $stage, 'status' => 'pending']);
+                    $attemptIds[$stage] = ProcessingJob::create(['workspace_id' => $locked->workspace_id,
+                        'document_id' => $locked->id, 'stage' => $stage, 'status' => 'pending'])->id;
                 }
                 $locked->update(['last_updated_by' => $actor->id]);
+                return $attemptIds;
             });
             $jobs = [];
             foreach ($selected as $stage) {
                 if (isset(self::OPTIONAL_JOBS[$stage])) {
-                    $jobs[] = new (self::OPTIONAL_JOBS[$stage])($document->id, true);
+                    $jobs[] = new (self::OPTIONAL_JOBS[$stage])($document->id, true, $attemptIds[$stage]);
                 }
             }
             if ($jobs) {
                 $documentId = $document->id;
                 Bus::batch($jobs)->name("document-intelligence-retry:{$documentId}")
-                    ->onQueue('extraction')->allowFailures()->finally(function () use ($documentId) {
+                    ->onQueue('extraction')->allowFailures()->finally(function () use ($documentId, $attemptIds) {
                         if (Document::find($documentId)?->canGenerateIntelligence()) {
-                            GenerateDocumentSummaryJob::dispatch($documentId, true)->onQueue('extraction');
+                            GenerateDocumentSummaryJob::dispatch($documentId, true, $attemptIds['document_summary'])->onQueue('extraction');
                         }
                     })->dispatch();
             } else {
-                GenerateDocumentSummaryJob::dispatch($document->id, true)->onQueue('extraction');
+                GenerateDocumentSummaryJob::dispatch($document->id, true, $attemptIds['document_summary'])->onQueue('extraction');
             }
             return $document->fresh();
         }

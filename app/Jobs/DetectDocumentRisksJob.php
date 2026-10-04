@@ -14,7 +14,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class DetectDocumentRisksJob implements ShouldQueue
@@ -25,7 +24,9 @@ class DetectDocumentRisksJob implements ShouldQueue
 
     public int $timeout = 60;
 
-    public function __construct(public string $documentId, public bool $forceReprocess = false) {}
+    public bool $failOnTimeout = true;
+
+    public function __construct(public string $documentId, public bool $forceReprocess = false, public ?string $queuedStageId = null) {}
 
     public function handle(AnthropicClient $client, PipelineStageRecorder $recorder): void
     {
@@ -64,8 +65,7 @@ class DetectDocumentRisksJob implements ShouldQueue
             return;
         }
 
-        DB::transaction(function () use ($document, $result) {
-            Document::whereKey($document->id)->lockForUpdate()->firstOrFail();
+        $this->persistIntelligence($document, $stage, $recorder, function () use ($document, $result) {
             $reviewedStatuses = $document->risks()->get()->keyBy(fn ($risk) => hash('sha256', $risk->title.'|'.$risk->evidence))->map->status;
             DocumentRisk::where('document_id', $document->id)->delete();
 
@@ -85,13 +85,12 @@ class DetectDocumentRisksJob implements ShouldQueue
                     'model' => config('services.anthropic.model'),
                 ]);
             }
-        });
-
-        $recorder->complete($stage, ['risk_count' => count($result['risks'])]);
+        }, ['risk_count' => count($result['risks'])]);
     }
 
     public function failed(\Throwable $e): void
     {
+        $this->finalizeIntelligenceFailure('risks', $e);
         Log::error('DetectDocumentRisksJob failed after retries', [
             'document_id' => $this->documentId,
             'error' => $e->getMessage(),

@@ -1,8 +1,10 @@
 <?php
 
+use App\Models\Document;
 use App\Models\Subscription;
 use App\Models\VerificationCode;
 use App\Services\EntitlementService;
+use App\Services\Pipeline\ProcessingStageReconciler;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
@@ -29,6 +31,32 @@ Schedule::call(function () {
 // Clean up old failed_jobs entries older than 30 days — keeps recent
 // failures visible for debugging without unbounded growth.
 Schedule::command('queue:prune-failed', ['--hours' => 24 * 30])->daily();
+
+// Catch abandoned intelligence attempts even when nobody opens the document.
+// The reconciler changes only expired or superseded stage history.
+Schedule::call(function () {
+    Document::whereHas('processingJobs', function ($query) {
+        $query->whereIn('stage', ['document_type', 'entities', 'risks', 'deadlines', 'document_summary'])
+            ->where(function ($query) {
+                $query->where(fn ($query) => $query->where('status', 'pending')
+                    ->where('created_at', '<=', now()->subMinutes(ProcessingStageReconciler::PENDING_GRACE_MINUTES)))
+                    ->orWhere(fn ($query) => $query->where('status', 'processing')
+                        ->where(function ($query) {
+                            $threshold = now()->subMinutes(ProcessingStageReconciler::PROCESSING_GRACE_MINUTES);
+                            $query->where('started_at', '<=', $threshold)
+                                ->orWhere(fn ($query) => $query->whereNull('started_at')->where('created_at', '<=', $threshold));
+                        }));
+            });
+    })->select('id')->chunkById(100, function ($documents) {
+        foreach ($documents as $document) {
+            try {
+                app(ProcessingStageReconciler::class)->reconcile($document);
+            } catch (Throwable $e) {
+                Log::error('Processing stage reconciliation failed.', ['document_id' => $document->id, 'error_type' => $e::class]);
+            }
+        }
+    });
+})->name('reconcile-processing-stages')->hourly()->withoutOverlapping();
 
 // Entitlements also check dates on every request; this keeps reporting states current.
 Schedule::call(function () {

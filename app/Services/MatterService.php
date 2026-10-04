@@ -66,7 +66,14 @@ class MatterService
 
         return [
             'failed_stages' => (clone $latestStages)->where('status', 'failed')->count(),
-            'pending_stages' => (clone $latestStages)->whereIn('status', ['pending', 'processing'])->count(),
+            'pending_stages' => (clone $latestStages)->where(function ($q) {
+                $q->where(fn ($q) => $q->where('status', 'pending')->where('created_at', '>', now()->subMinutes(\App\Services\Pipeline\ProcessingStageReconciler::PENDING_GRACE_MINUTES)))
+                    ->orWhere(fn ($q) => $q->where('status', 'processing')->where(function ($q) {
+                        $threshold = now()->subMinutes(\App\Services\Pipeline\ProcessingStageReconciler::PROCESSING_GRACE_MINUTES);
+                        $q->where('started_at', '>', $threshold)
+                            ->orWhere(fn ($q) => $q->whereNull('started_at')->where('created_at', '>', $threshold));
+                    }));
+            })->count(),
             'documents' => (clone $documents)->count(),
             'risks' => $this->intelligence($user, $matter, 'risks')->where('status', 'open')->count(),
             'obligations' => $this->intelligence($user, $matter, 'obligations')->count(),

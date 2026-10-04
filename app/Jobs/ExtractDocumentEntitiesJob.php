@@ -14,7 +14,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ExtractDocumentEntitiesJob implements ShouldQueue
@@ -25,7 +24,9 @@ class ExtractDocumentEntitiesJob implements ShouldQueue
 
     public int $timeout = 60;
 
-    public function __construct(public string $documentId, public bool $forceReprocess = false) {}
+    public bool $failOnTimeout = true;
+
+    public function __construct(public string $documentId, public bool $forceReprocess = false, public ?string $queuedStageId = null) {}
 
     public function handle(AnthropicClient $client, PipelineStageRecorder $recorder): void
     {
@@ -64,8 +65,7 @@ class ExtractDocumentEntitiesJob implements ShouldQueue
             return;
         }
 
-        DB::transaction(function () use ($document, $result) {
-            Document::whereKey($document->id)->lockForUpdate()->firstOrFail();
+        $this->persistIntelligence($document, $stage, $recorder, function () use ($document, $result) {
             // Delete-before-insert, same pattern as GenerateInsightsJob's
             // kpis/charts — a reprocessed document must not accumulate
             // stale entities alongside fresh ones.
@@ -85,13 +85,12 @@ class ExtractDocumentEntitiesJob implements ShouldQueue
                     'model' => config('services.anthropic.model'),
                 ]);
             }
-        });
-
-        $recorder->complete($stage, ['entity_count' => count($result['entities'])]);
+        }, ['entity_count' => count($result['entities'])]);
     }
 
     public function failed(\Throwable $e): void
     {
+        $this->finalizeIntelligenceFailure('entities', $e);
         Log::error('ExtractDocumentEntitiesJob failed after retries', [
             'document_id' => $this->documentId,
             'error' => $e->getMessage(),

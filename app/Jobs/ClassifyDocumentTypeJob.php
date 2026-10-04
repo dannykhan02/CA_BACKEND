@@ -24,7 +24,9 @@ class ClassifyDocumentTypeJob implements ShouldQueue
 
     public int $timeout = 60;
 
-    public function __construct(public string $documentId, public bool $forceReprocess = false) {}
+    public bool $failOnTimeout = true;
+
+    public function __construct(public string $documentId, public bool $forceReprocess = false, public ?string $queuedStageId = null) {}
 
     public function handle(AnthropicClient $client, PipelineStageRecorder $recorder): void
     {
@@ -68,20 +70,20 @@ class ClassifyDocumentTypeJob implements ShouldQueue
             return;
         }
 
-        DocumentTypeClassification::updateOrCreate(
-            ['document_id' => $document->id],
-            [
-                'workspace_id' => $document->workspace_id,
-                'document_type' => $result['document_type'],
-                'confidence' => $result['confidence'],
-                'reasoning' => $result['reasoning'],
-                'prompt_version' => (string) $result['prompt_version'],
-                'provider' => 'anthropic',
-                'model' => config('services.anthropic.model'),
-            ]
-        );
-
-        $recorder->complete($stage, [
+        $this->persistIntelligence($document, $stage, $recorder, function () use ($document, $result) {
+            DocumentTypeClassification::updateOrCreate(
+                ['document_id' => $document->id],
+                [
+                    'workspace_id' => $document->workspace_id,
+                    'document_type' => $result['document_type'],
+                    'confidence' => $result['confidence'],
+                    'reasoning' => $result['reasoning'],
+                    'prompt_version' => (string) $result['prompt_version'],
+                    'provider' => 'anthropic',
+                    'model' => config('services.anthropic.model'),
+                ]
+            );
+        }, [
             'document_type' => $result['document_type'],
             'confidence' => $result['confidence'],
         ]);
@@ -89,6 +91,7 @@ class ClassifyDocumentTypeJob implements ShouldQueue
 
     public function failed(\Throwable $e): void
     {
+        $this->finalizeIntelligenceFailure('document_type', $e);
         Log::error('ClassifyDocumentTypeJob failed after retries', [
             'document_id' => $this->documentId,
             'error' => $e->getMessage(),

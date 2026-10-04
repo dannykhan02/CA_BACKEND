@@ -3,13 +3,12 @@
 namespace App\Services;
 
 use App\Models\Document;
+use App\Services\Pipeline\ProcessingStageReconciler;
 
 /**
- * Read-only aggregation over Day 3/4 extraction tables and the Day 6
- * grounded summary — does NOT call Anthropic, does NOT dispatch jobs,
- * does NOT write to entities/risks/deadlines/document_intelligence_summaries.
- * Purely reads what the existing extraction jobs and
- * GenerateDocumentSummaryJob already produced.
+ * Aggregates persisted intelligence without calling Anthropic or dispatching
+ * jobs. Status reads reconcile expired processing attempts, but never alter
+ * extracted intelligence or billing records.
  */
 class DocumentIntelligenceService
 {
@@ -30,6 +29,7 @@ class DocumentIntelligenceService
      */
     public function getProcessingStatus(Document $document): array
     {
+        app(ProcessingStageReconciler::class)->reconcile($document);
         $latestPerStage = $document->processingJobs()
             ->whereIn('stage', self::STAGES)
             ->orderByDesc('created_at')->orderByDesc('id')

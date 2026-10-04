@@ -41,7 +41,9 @@ class GenerateDocumentSummaryJob implements ShouldQueue
 
     public int $timeout = 60;
 
-    public function __construct(public string $documentId, public bool $forceReprocess = false) {}
+    public bool $failOnTimeout = true;
+
+    public function __construct(public string $documentId, public bool $forceReprocess = false, public ?string $queuedStageId = null) {}
 
     public function handle(AnthropicClient $client, PipelineStageRecorder $recorder): void
     {
@@ -100,32 +102,33 @@ class GenerateDocumentSummaryJob implements ShouldQueue
             return;
         }
 
-        DocumentIntelligenceSummary::updateOrCreate(
-            ['document_id' => $document->id],
-            [
-                'workspace_id' => $document->workspace_id,
-                'executive_summary' => $result['executive_summary'],
-                'key_findings' => $result['key_findings'],
-                'critical_risks' => $result['critical_risks'],
-                'upcoming_deadlines' => $result['upcoming_deadlines'],
-                'important_entities' => $result['important_entities'],
-                'recommended_attention' => $result['recommended_attention'],
-                'executive_assessment' => $result['executive_assessment'] ?? null,
-                'material_findings' => $result['material_findings'] ?? [],
-                'trends' => $result['trends'] ?? [],
-                'tensions' => $result['tensions'] ?? [],
-                'questions' => $result['questions'] ?? [],
-                'prompt_version' => (string) $result['prompt_version'],
-                'provider' => 'anthropic',
-                'model' => config('services.anthropic.model'),
-            ]
-        );
-
-        $recorder->complete($stage, ['generated' => true]);
+        $this->persistIntelligence($document, $stage, $recorder, function () use ($document, $result) {
+            DocumentIntelligenceSummary::updateOrCreate(
+                ['document_id' => $document->id],
+                [
+                    'workspace_id' => $document->workspace_id,
+                    'executive_summary' => $result['executive_summary'],
+                    'key_findings' => $result['key_findings'],
+                    'critical_risks' => $result['critical_risks'],
+                    'upcoming_deadlines' => $result['upcoming_deadlines'],
+                    'important_entities' => $result['important_entities'],
+                    'recommended_attention' => $result['recommended_attention'],
+                    'executive_assessment' => $result['executive_assessment'] ?? null,
+                    'material_findings' => $result['material_findings'] ?? [],
+                    'trends' => $result['trends'] ?? [],
+                    'tensions' => $result['tensions'] ?? [],
+                    'questions' => $result['questions'] ?? [],
+                    'prompt_version' => (string) $result['prompt_version'],
+                    'provider' => 'anthropic',
+                    'model' => config('services.anthropic.model'),
+                ]
+            );
+        }, ['generated' => true]);
     }
 
     public function failed(\Throwable $e): void
     {
+        $this->finalizeIntelligenceFailure('document_summary', $e);
         Log::error('GenerateDocumentSummaryJob failed after retries', [
             'document_id' => $this->documentId,
             'error' => $e->getMessage(),

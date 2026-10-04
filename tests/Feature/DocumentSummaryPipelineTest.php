@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Jobs\GenerateDocumentSummaryJob;
 use App\Models\Document;
+use App\Models\DocumentIntelligenceSummary;
 use App\Models\User;
 use App\Services\AnthropicClient;
+use App\Services\DocumentIntelligenceService;
 use App\Services\Pipeline\PipelineStageRecorder;
 use App\Services\WorkspaceService;
 use Database\Seeders\DocumentSummaryPromptSeederV3;
@@ -106,5 +108,32 @@ class DocumentSummaryPipelineTest extends TestCase
             $document->processingJobs()->where('stage', 'document_summary')->sole()->error_message);
         $this->assertDatabaseCount('document_intelligence_summaries', 0);
         $this->assertDatabaseCount('billing_operations', 0);
+    }
+
+    public function test_successful_ai_response_with_summary_persistence_failure_fails_stage(): void
+    {
+        $document = $this->document();
+        Http::fake(['api.anthropic.com/*' => Http::response(
+            $this->response($this->summary($document, 'Debt pressure rose.'))
+        )]);
+        DocumentIntelligenceSummary::creating(function () {
+            throw new \RuntimeException('Simulated summary database failure.');
+        });
+
+        try {
+            (new GenerateDocumentSummaryJob($document->id, true))->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+            $this->fail('Summary persistence failure should escape for queue retry.');
+        } catch (\RuntimeException $e) {
+            $this->assertSame('Simulated summary database failure.', $e->getMessage());
+        }
+
+        Http::assertSentCount(1);
+        $this->assertDatabaseHas('document_ai_runs', [
+            'document_id' => $document->id, 'purpose' => 'document_summary', 'status' => 'success',
+        ]);
+        $this->assertDatabaseCount('document_intelligence_summaries', 0);
+        $this->assertSame('failed', $document->processingJobs()->where('stage', 'document_summary')->sole()->status);
+        $this->assertSame('failed', app(DocumentIntelligenceService::class)
+            ->getProcessingStatus($document)['document_summary']);
     }
 }

@@ -30,6 +30,8 @@ class GenerateInsightsJob implements ShouldQueue
 
     public int $timeout = 120;
 
+    public bool $failOnTimeout = true;
+
     public function __construct(public string $documentId, public bool $forceReprocess = false) {}
 
     public function handle(AnthropicClient $client, PipelineStageRecorder $recorder): void
@@ -129,105 +131,113 @@ class GenerateInsightsJob implements ShouldQueue
             return;
         }
 
-        $kpis = $result['kpis'] ?? [];
-        $kpis = app(KpiIdentityResolver::class)->forDocument($document, $kpis);
-        $charts = $result['charts'] ?? [];
-        $insights = $result['insights'] ?? [];
+        try {
+            $kpis = $result['kpis'] ?? [];
+            $kpis = app(KpiIdentityResolver::class)->forDocument($document, $kpis);
+            $charts = $result['charts'] ?? [];
+            $insights = $result['insights'] ?? [];
 
-        $aiRunId = DocumentAiRun::where('document_id', $document->id)
-            ->where('purpose', 'insights')->latest('created_at')->value('id');
+            $aiRunId = DocumentAiRun::where('document_id', $document->id)
+                ->where('purpose', 'insights')->latest('created_at')->value('id');
 
-        DB::transaction(function () use ($document, $kpis, $charts, $insights, $recorder, $insightsStage, $aiRunId) {
-            $document = Document::whereKey($document->id)->lockForUpdate()->first();
-            if (! $document || $document->status !== 'Processing') {
-                if (! $document) {
-                    Log::warning("GenerateInsightsJob: Document {$this->documentId} disappeared during insights-save transaction.");
+            DB::transaction(function () use ($document, $kpis, $charts, $insights, $recorder, $insightsStage, $aiRunId) {
+                $document = Document::whereKey($document->id)->lockForUpdate()->first();
+                if (! $document || $document->status !== 'Processing') {
+                    if (! $document) {
+                        Log::warning("GenerateInsightsJob: Document {$this->documentId} disappeared during insights-save transaction.");
+                    }
+
+                    $insightsStage->forceFill(['status' => 'skipped', 'completed_at' => now(),
+                        'output' => ['reason' => 'Document is no longer processing.']])->save();
+                    return;
                 }
+                if (! $recorder->isCurrent($insightsStage)) return;
+                // Delete-before-insert — a reprocessed document must not leave
+                // stale kpis/charts from a prior version sitting alongside the
+                // current ones. Same reasoning as GenerateEmbeddingsJob's
+                // chunk replacement.
+                DocumentKpi::where('document_id', $document->id)->delete();
+                DocumentChart::where('document_id', $document->id)->delete();
 
-                return;
-            }
-            // Delete-before-insert — a reprocessed document must not leave
-            // stale kpis/charts from a prior version sitting alongside the
-            // current ones. Same reasoning as GenerateEmbeddingsJob's
-            // chunk replacement.
-            DocumentKpi::where('document_id', $document->id)->delete();
-            DocumentChart::where('document_id', $document->id)->delete();
-
-            foreach ($kpis as $kpi) {
-                DocumentKpi::create([
-                    'workspace_id' => $document->workspace_id,
-                    'document_id' => $document->id,
-                    'label' => $kpi['label'] ?? '',
-                    'kpi_definition_id' => $kpi['kpi_definition_id'],
-                    'identity_metadata' => $kpi['identity'] ?? null,
-                    'period' => $kpi['period'],
-                    'value' => $kpi['value'] ?? '',
-                    'value_numeric' => $this->parseNumericValue($kpi['value'] ?? null),
-                    'unit' => $kpi['unit'] ?? null,
-                    'trend' => $kpi['trend'] ?? null,
-                    'trend_value' => $kpi['trendValue'] ?? null,
-                ]);
-            }
-
-            foreach ($charts as $chart) {
-                $documentChart = DocumentChart::create([
-                    'workspace_id' => $document->workspace_id,
-                    'document_id' => $document->id,
-                    'type' => $chart['type'] ?? 'bar',
-                    'title' => $chart['title'] ?? '',
-                    'description' => $chart['description'] ?? '',
-                    'data' => $chart['data'] ?? [],
-                ]);
-
-                $sortOrder = 0;
-                foreach ($chart['data'] ?? [] as $point) {
-                    $value = $point['value'] ?? null;
-                    if (! is_numeric($value)) {
-                        continue;
-                    }
-
-                    $label = (string) ($point['label'] ?? '');
-                    if ($this->looksLikeTargetOrThreshold($label)) {
-                        // Prompt v3 already instructs the model not to plot
-                        // a mandated target/threshold as a series value, but
-                        // the model does not reliably follow this — verified
-                        // against a real document where "Target" still
-                        // appeared as a plotted point despite the rule.
-                        // Enforced here in code instead, since chart-point
-                        // labels are a controlled-enough vocabulary that a
-                        // keyword filter is a safe backstop, not a guess.
-                        continue;
-                    }
-
-                    DocumentChartPoint::create([
-                        'document_chart_id' => $documentChart->id,
+                foreach ($kpis as $kpi) {
+                    DocumentKpi::create([
                         'workspace_id' => $document->workspace_id,
-                        'label' => $label,
-                        'value' => (float) $value,
-                        'sort_order' => $sortOrder,
+                        'document_id' => $document->id,
+                        'label' => $kpi['label'] ?? '',
+                        'kpi_definition_id' => $kpi['kpi_definition_id'],
+                        'identity_metadata' => $kpi['identity'] ?? null,
+                        'period' => $kpi['period'],
+                        'value' => $kpi['value'] ?? '',
+                        'value_numeric' => $this->parseNumericValue($kpi['value'] ?? null),
+                        'unit' => $kpi['unit'] ?? null,
+                        'trend' => $kpi['trend'] ?? null,
+                        'trend_value' => $kpi['trendValue'] ?? null,
                     ]);
-                    $sortOrder++;
                 }
-            }
 
-            app(WorkspaceCreditService::class)->accountForReadyDocument($document);
-            $document->forceFill([
-                'insights' => $insights,
-                'has_structured_data' => ! empty($kpis) || ! empty($charts),
-                'status' => 'Ready',
-                'progress' => 100,
-            ])->save();
+                foreach ($charts as $chart) {
+                    $documentChart = DocumentChart::create([
+                        'workspace_id' => $document->workspace_id,
+                        'document_id' => $document->id,
+                        'type' => $chart['type'] ?? 'bar',
+                        'title' => $chart['title'] ?? '',
+                        'description' => $chart['description'] ?? '',
+                        'data' => $chart['data'] ?? [],
+                    ]);
 
-            // Commit the completion proof with the output, not after it.
-            // Uploads already initialize insights=[], so non-null insights
-            // cannot distinguish a completed run from an interrupted one.
-            $recorder->complete($insightsStage, [
-                'ai_run_id' => $aiRunId,
-                'kpi_count' => count($kpis),
-                'chart_count' => count($charts),
-                'insight_count' => count($insights),
-            ]);
-        });
+                    $sortOrder = 0;
+                    foreach ($chart['data'] ?? [] as $point) {
+                        $value = $point['value'] ?? null;
+                        if (! is_numeric($value)) {
+                            continue;
+                        }
+
+                        $label = (string) ($point['label'] ?? '');
+                        if ($this->looksLikeTargetOrThreshold($label)) {
+                            // Prompt v3 already instructs the model not to plot
+                            // a mandated target/threshold as a series value, but
+                            // the model does not reliably follow this — verified
+                            // against a real document where "Target" still
+                            // appeared as a plotted point despite the rule.
+                            // Enforced here in code instead, since chart-point
+                            // labels are a controlled-enough vocabulary that a
+                            // keyword filter is a safe backstop, not a guess.
+                            continue;
+                        }
+
+                        DocumentChartPoint::create([
+                            'document_chart_id' => $documentChart->id,
+                            'workspace_id' => $document->workspace_id,
+                            'label' => $label,
+                            'value' => (float) $value,
+                            'sort_order' => $sortOrder,
+                        ]);
+                        $sortOrder++;
+                    }
+                }
+
+                app(WorkspaceCreditService::class)->accountForReadyDocument($document);
+                $document->forceFill([
+                    'insights' => $insights,
+                    'has_structured_data' => ! empty($kpis) || ! empty($charts),
+                    'status' => 'Ready',
+                    'progress' => 100,
+                ])->save();
+
+                // Commit the completion proof with the output, not after it.
+                // Uploads already initialize insights=[], so non-null insights
+                // cannot distinguish a completed run from an interrupted one.
+                $recorder->complete($insightsStage, [
+                    'ai_run_id' => $aiRunId,
+                    'kpi_count' => count($kpis),
+                    'chart_count' => count($charts),
+                    'insight_count' => count($insights),
+                ]);
+            });
+        } catch (\Throwable $e) {
+            $recorder->fail($insightsStage, 'Analysis results could not be saved. Please retry.');
+            throw $e;
+        }
     }
 
     /**
@@ -290,6 +300,7 @@ class GenerateInsightsJob implements ShouldQueue
 
     public function failed(\Throwable $e): void
     {
+        $this->finalizeIntelligenceFailure('ai_analysis', $e);
         $document = Document::find($this->documentId);
         if ($document && in_array($document->status, ['Processing', 'Needs Review'], true)) {
             $document->forceFill([

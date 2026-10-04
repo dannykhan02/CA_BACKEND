@@ -15,9 +15,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 /**
- * Entirely read-only. No AI calls, no job dispatch, no writes to
- * entities/risks/deadlines/document_intelligence_summaries/document_ai_runs/
- * processing_jobs — reuses the existing 'view' policy gate used by
+ * No AI calls or job dispatch. Status reads may reconcile expired
+ * processing_jobs attempts. Reuses the existing 'view' policy gate used by
  * DocumentController::show(), so authorization/workspace isolation is not
  * reimplemented here.
  */

@@ -51,7 +51,10 @@ class DocumentComparisonService
             $stages = app(DocumentIntelligenceService::class)->getProcessingStatus($document);
             foreach (['entities', 'risks', 'deadlines'] as $stage) {
                 if (($stages[$stage] ?? null) === 'skipped') {
-                    $stages[$stage] = $document->processingJobs()->where('stage', $stage)->where('status', '!=', 'skipped')->latest('created_at')->orderByDesc('id')->value('status');
+                    // A skipped attempt can reuse a prior completed result;
+                    // an older processing row is never proof of active work.
+                    $stages[$stage] = $document->processingJobs()->where('stage', $stage)
+                        ->where('status', 'completed')->latest('created_at')->orderByDesc('id')->value('status');
                 }
                 abort_unless(in_array($stages[$stage] ?? null, ['completed', 'skipped'], true), 422, 'Structured extraction must complete successfully for both documents before comparison.');
             }
