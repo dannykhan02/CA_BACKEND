@@ -264,7 +264,7 @@ class ResponseValidator
      * required, since a summary with no findings and no summary text
      * would indicate the model didn't actually process the extracted data.
      */
-    public function validateSummary(array $decoded): array
+    public function validateSummary(array $decoded, array $availableSourceIds = []): array
     {
         if (! isset($decoded['executive_summary']) || ! is_string($decoded['executive_summary']) || trim($decoded['executive_summary']) === '') {
             throw new \RuntimeException('AI response missing required non-empty string field: executive_summary');
@@ -277,6 +277,49 @@ class ResponseValidator
             foreach ($decoded[$field] as $i => $item) {
                 if (! is_string($item)) {
                     throw new \RuntimeException("AI response {$field}[{$i}] is not a string.");
+                }
+            }
+        }
+
+        $validateSources = function (array $item) use ($availableSourceIds): void {
+            if (! isset($item['source_ids']) || ! is_array($item['source_ids']) || ! array_is_list($item['source_ids'])
+                || count($item['source_ids']) < 1 || count($item['source_ids']) > 4) {
+                throw new \RuntimeException('Structured assessment requires one to four source references.');
+            }
+            foreach ($item['source_ids'] as $sourceId) {
+                if (! is_string($sourceId) || ! in_array($sourceId, $availableSourceIds, true)) {
+                    throw new \RuntimeException('Structured assessment cites an unavailable source.');
+                }
+            }
+        };
+        $validateText = function (array $item, array $fields) use ($validateSources): void {
+            foreach ($fields as $field) {
+                if (! is_string($item[$field] ?? null) || trim($item[$field]) === '' || mb_strlen($item[$field]) > 350) {
+                    throw new \RuntimeException("Invalid structured assessment field: {$field}.");
+                }
+            }
+            $validateSources($item);
+            if (isset($item['basis']) && ! in_array($item['basis'], ['explicit', 'inferred'], true)) {
+                throw new \RuntimeException('Invalid structured assessment evidence basis.');
+            }
+        };
+        if (array_key_exists('executive_assessment', $decoded) && $decoded['executive_assessment'] !== null) {
+            if (! is_array($decoded['executive_assessment'])) throw new \RuntimeException('Invalid executive assessment.');
+            $validateText($decoded['executive_assessment'], ['text']);
+        }
+        foreach (['material_findings' => [4, ['title', 'category', 'explanation', 'why_it_matters', 'severity']],
+            'trends' => [2, ['observation', 'significance']],
+            'tensions' => [2, ['observation', 'significance']],
+            'questions' => [3, ['question', 'reason']]] as $field => [$limit, $fields]) {
+            if (! array_key_exists($field, $decoded)) continue;
+            if (! is_array($decoded[$field]) || ! array_is_list($decoded[$field]) || count($decoded[$field]) > $limit) {
+                throw new \RuntimeException("Invalid structured assessment list: {$field}.");
+            }
+            foreach ($decoded[$field] as $item) {
+                if (! is_array($item)) throw new \RuntimeException("Invalid structured assessment item: {$field}.");
+                $validateText($item, $fields);
+                if ($field === 'material_findings' && ! in_array($item['severity'], ['low', 'medium', 'high', 'critical'], true)) {
+                    throw new \RuntimeException('Invalid finding severity.');
                 }
             }
         }

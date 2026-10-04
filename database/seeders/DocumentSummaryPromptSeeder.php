@@ -9,12 +9,14 @@ class DocumentSummaryPromptSeeder extends Seeder
 {
     public function run(): void
     {
+        $activate = ! AiPrompt::where('name', 'document_summary')
+            ->where('active', true)->where('version', '!=', 1)->exists();
         AiPrompt::updateOrCreate(
             ['name' => 'document_summary', 'version' => 1],
             [
                 'provider' => 'anthropic',
                 'model' => config('services.anthropic.model'),
-                'active' => true,
+                'active' => $activate,
                 'template' => <<<'PROMPT'
 You are producing an executive intelligence summary for a document titled "{{document_name}}", based ONLY on structured data already extracted from it by prior analysis stages.
 

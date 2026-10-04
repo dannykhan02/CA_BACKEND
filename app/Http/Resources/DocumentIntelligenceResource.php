@@ -18,6 +18,14 @@ class DocumentIntelligenceResource extends JsonResource
     public function toArray(Request $request): array
     {
         $service = app(DocumentIntelligenceService::class);
+        $locator = app(\App\Services\Documents\EvidencePageLocator::class);
+        $sourcePages = [];
+        foreach (['risk' => ['risks', 'evidence'], 'deadline' => ['deadlines', 'evidence'], 'entity' => ['entities', 'context']] as $kind => [$relation, $field]) {
+            foreach ($this->resource->$relation as $item) {
+                $page = $locator->locate($this->extracted_text, (int) $this->pages, $item->$field);
+                if ($page !== null) $sourcePages[$kind.':'.$item->id] = $page;
+            }
+        }
 
         return [
             'document' => [
@@ -49,6 +57,7 @@ class DocumentIntelligenceResource extends JsonResource
                     : null
             ),
             'processing' => $service->getProcessingStatus($this->resource),
+            'sourcePages' => (object) $sourcePages,
         ];
     }
 }

@@ -49,7 +49,9 @@ class KpiIdentityResolver
         $match = $this->lookup($workspaceId, $profile);
         $adjudicated = null;
         if (! $match['definition'] && ! $match['ambiguous'] && $allowAi && ! $dryRun
-            && $document?->workspace_id === $workspaceId && config('kpi_identity.semantic_matching', false)) {
+            && $document?->workspace_id === $workspaceId
+            && in_array($document->fresh()?->status, ['Processing', 'Ready'], true)
+            && config('kpi_identity.semantic_matching', false)) {
             $candidates = $this->candidates($workspaceId, $profile);
             if ($candidates) {
                 try {

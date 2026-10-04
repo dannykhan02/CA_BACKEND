@@ -16,6 +16,11 @@ class DocumentIntelligenceSummaryResource extends JsonResource
             'upcomingDeadlines' => $this->upcoming_deadlines,
             'importantEntities' => $this->important_entities,
             'recommendedAttention' => $this->recommended_attention,
+            'executiveAssessment' => $this->executive_assessment,
+            'materialFindings' => $this->material_findings ?? [],
+            'trends' => $this->trends ?? [],
+            'tensions' => $this->tensions ?? [],
+            'questions' => $this->questions ?? [],
             'promptVersion' => $this->prompt_version,
             'generatedAt' => $this->created_at?->toIso8601String(),
         ];

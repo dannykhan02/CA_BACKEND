@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
             DocumentEntitiesPromptSeeder::class,
             DocumentRisksPromptSeeder::class,
             DocumentSummaryPromptSeeder::class,
+            DocumentSummaryPromptSeederV2::class,
             DocumentTypePromptSeeder::class,
             DocumentComparisonPromptSeeder::class,
         ]);

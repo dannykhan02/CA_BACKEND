@@ -12,6 +12,7 @@ use App\Jobs\GenerateDocumentSummaryJob;
 use App\Jobs\GenerateInsightsJob;
 use App\Jobs\ScanUploadedFileJob;
 use App\Models\Document;
+use App\Models\DocumentRisk;
 use App\Models\User;
 use App\Services\AnthropicClient;
 use App\Services\DocumentIntelligenceService;
@@ -229,5 +230,59 @@ class DocumentIntelligenceFailureTest extends TestCase
         Bus::assertNotDispatched(ClassifyDocumentTypeJob::class);
         $this->assertSame('Processing', $document->fresh()->status);
         $this->assertNull($document->fresh()->extracted_text);
+    }
+
+    public function test_targeted_deadline_retry_preserves_successful_stages_and_rejects_duplicate_request(): void
+    {
+        $document = $this->document('Ready');
+        $document->update(['credit_accounted_at' => now(), 'insights' => ['Existing finding']]);
+        $recorder = app(PipelineStageRecorder::class);
+        foreach (['document_type', 'entities', 'risks', 'document_summary'] as $stage) {
+            $recorder->complete($recorder->start($document, $stage));
+        }
+        $recorder->fail($recorder->start($document, 'deadlines'), 'Provider unavailable');
+        Bus::fake();
+
+        $this->postJson("/api/documents/{$document->id}/reprocess", [
+            'intelligence_only' => true, 'stage' => 'deadlines',
+        ])->assertAccepted()
+            ->assertJsonPath('data.insights.0', 'Existing finding')
+            ->assertJsonPath('data.status', 'Ready');
+
+        Bus::assertBatchCount(1);
+        $this->assertSame('completed', app(DocumentIntelligenceService::class)->getProcessingStatus($document)['risks']);
+        $this->assertSame('pending', app(DocumentIntelligenceService::class)->getProcessingStatus($document)['deadlines']);
+        $this->assertSame('pending', app(DocumentIntelligenceService::class)->getProcessingStatus($document)['document_summary']);
+        $this->postJson("/api/documents/{$document->id}/reprocess", [
+            'intelligence_only' => true, 'stage' => 'deadlines',
+        ])->assertStatus(422);
+        $this->assertDatabaseCount('document_ai_runs', 0);
+        $this->assertDatabaseCount('billing_operations', 0);
+    }
+
+    public function test_needs_review_with_stale_text_cannot_start_optional_analysis(): void
+    {
+        $document = $this->document('Needs Review');
+        $client = $this->mock(AnthropicClient::class);
+        $client->shouldNotReceive('detectDocumentDeadlines');
+        (new DetectDocumentDeadlinesJob($document->id, true))->handle($client, app(PipelineStageRecorder::class));
+        $this->postJson("/api/documents/{$document->id}/reprocess", [
+            'intelligence_only' => true, 'stage' => 'deadlines',
+        ])->assertStatus(422);
+        $this->assertDatabaseCount('processing_jobs', 0);
+    }
+
+    public function test_exact_evidence_excerpt_has_page_only_when_page_boundaries_are_known(): void
+    {
+        $document = $this->document('Ready');
+        $document->update(['pages' => 2, 'extracted_text' => "Introduction.\fDebt increased in the quarter."]);
+        $risk = DocumentRisk::create([
+            'workspace_id' => $document->workspace_id, 'document_id' => $document->id,
+            'title' => 'Debt pressure', 'description' => 'Debt rose.', 'severity' => 'high',
+            'confidence' => .9, 'evidence' => 'Debt increased in the quarter.',
+            'prompt_version' => 'test',
+        ]);
+        $this->getJson("/api/documents/{$document->id}/intelligence")->assertOk()
+            ->assertJsonPath("data.sourcePages.risk:{$risk->id}", 2);
     }
 }

@@ -10,6 +10,9 @@ class DocumentResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        // Mutation endpoints return this resource without eager loading. Keep the
+        // wire contract identical to show() while preserving existing results.
+        $this->resource->loadMissing(['pageFlags', 'kpis', 'charts']);
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -24,11 +27,11 @@ class DocumentResource extends JsonResource
             'lastUpdatedBy' => $this->lastUpdater?->full_name,
             'lastUpdatedAt' => $this->updated_at?->toIso8601String(),
             'pages' => $this->pages,
-            'pageFlags' => PageFlagResource::collection($this->whenLoaded('pageFlags')),
+            'pageFlags' => PageFlagResource::collection($this->pageFlags),
             'hasStructuredData' => $this->has_structured_data,
             'powerBIStatus' => $this->power_bi_status,
-            'kpis' => KpiResource::collection($this->whenLoaded('kpis')),
-            'charts' => ChartResource::collection($this->whenLoaded('charts')),
+            'kpis' => KpiResource::collection($this->kpis),
+            'charts' => ChartResource::collection($this->charts),
             'insights' => $this->insights ?? [],
             'progress' => $this->progress,
             'errorMessage' => $this->error_message,

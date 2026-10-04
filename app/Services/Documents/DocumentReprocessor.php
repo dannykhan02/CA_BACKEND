@@ -17,28 +17,90 @@ use App\Models\User;
 use App\Services\DocumentIntelligenceService;
 use App\Services\EntitlementService;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\DB;
 
 class DocumentReprocessor
 {
-    public function reprocess(Document $document, User $actor, bool $intelligenceOnly = false): Document
+    private const OPTIONAL_JOBS = [
+        'document_type' => ClassifyDocumentTypeJob::class,
+        'entities' => ExtractDocumentEntitiesJob::class,
+        'risks' => DetectDocumentRisksJob::class,
+        'deadlines' => DetectDocumentDeadlinesJob::class,
+    ];
+
+    public function reprocess(Document $document, User $actor, bool $intelligenceOnly = false, ?string $requestedStage = null): Document
     {
         $document->refresh();
         abort_if($document->status === 'Failed'
             && app(DocumentIntelligenceService::class)->getDocumentFailure($document)['recovery'] === 'replace',
             422, 'Replace or remove this document; its file cannot be processed.');
 
+        if ($requestedStage !== null) {
+            abort_unless($intelligenceOnly && in_array($requestedStage, [...array_keys(self::OPTIONAL_JOBS), 'document_summary'], true),
+                422, 'Invalid intelligence stage.');
+        }
+
         if ($intelligenceOnly) {
             $states = app(DocumentIntelligenceService::class)->getProcessingStatus($document);
             abort_unless($document->status === 'Ready' && $document->extracted_text
-                && count(array_intersect($states, ['failed', 'not_started'])) > 0
-                && count(array_intersect($states, ['pending', 'processing'])) === 0, 422,
+                && count(array_intersect($states, ['failed', 'not_started'])) > 0, 422,
                 'Only missing or failed intelligence on a processed document can be retried here.');
+            if ($requestedStage !== null) {
+                abort_unless(in_array($states[$requestedStage], ['failed', 'not_started'], true), 422,
+                    'This analysis section does not need retrying.');
+            }
         }
 
         abort_unless($intelligenceOnly || in_array($document->status, ['Failed', 'Needs Review'], true),
             422, 'Only Failed or Needs Review documents can be reprocessed.');
 
-        app(EntitlementService::class)->reserveDocument($document, true);
+        // Optional analysis does not change document allowance. A core retry
+        // retains the existing reservation/credit semantics.
+        if (! $intelligenceOnly) {
+            app(EntitlementService::class)->reserveDocument($document, true);
+        }
+
+        if ($intelligenceOnly) {
+            $selected = $requestedStage !== null ? [$requestedStage] : array_keys(array_filter($states,
+                fn ($status) => in_array($status, ['failed', 'not_started'], true)));
+            $refreshSummary = count(array_intersect($selected, array_keys(self::OPTIONAL_JOBS))) > 0;
+            // The summary is synthesized from the four extraction stages.
+            // Refresh it once after those selected stages settle.
+            if ($refreshSummary && ! in_array('document_summary', $selected, true)) {
+                $selected[] = 'document_summary';
+            }
+            DB::transaction(function () use ($document, $actor, $selected) {
+                $locked = Document::whereKey($document->id)->lockForUpdate()->firstOrFail();
+                $current = app(DocumentIntelligenceService::class)->getProcessingStatus($locked);
+                foreach ($selected as $stage) {
+                    abort_unless($stage === 'document_summary'
+                        ? ! in_array($current[$stage], ['pending', 'processing'], true)
+                        : in_array($current[$stage], ['failed', 'not_started'], true), 409,
+                        'Analysis retry is already in progress or has completed.');
+                    ProcessingJob::create(['workspace_id' => $locked->workspace_id,
+                        'document_id' => $locked->id, 'stage' => $stage, 'status' => 'pending']);
+                }
+                $locked->update(['last_updated_by' => $actor->id]);
+            });
+            $jobs = [];
+            foreach ($selected as $stage) {
+                if (isset(self::OPTIONAL_JOBS[$stage])) {
+                    $jobs[] = new (self::OPTIONAL_JOBS[$stage])($document->id, true);
+                }
+            }
+            if ($jobs) {
+                $documentId = $document->id;
+                Bus::batch($jobs)->name("document-intelligence-retry:{$documentId}")
+                    ->onQueue('extraction')->allowFailures()->finally(function () use ($documentId) {
+                        if (Document::find($documentId)?->canGenerateIntelligence()) {
+                            GenerateDocumentSummaryJob::dispatch($documentId, true)->onQueue('extraction');
+                        }
+                    })->dispatch();
+            } else {
+                GenerateDocumentSummaryJob::dispatch($document->id, true)->onQueue('extraction');
+            }
+            return $document->fresh();
+        }
 
         if ($document->status === 'Failed') {
             // Failed prerequisites must run again even when old text remains.
@@ -67,12 +129,6 @@ class DocumentReprocessor
                 'last_updated_by' => $actor->id,
             ])->save();
             GenerateInsightsJob::dispatch($document->id, true)->onQueue('extraction');
-        } else {
-            $document->update(['last_updated_by' => $actor->id]);
-            foreach (['document_type', 'entities', 'risks', 'deadlines', 'document_summary'] as $stage) {
-                ProcessingJob::create(['workspace_id' => $document->workspace_id, 'document_id' => $document->id,
-                    'stage' => $stage, 'status' => 'pending']);
-            }
         }
 
         if (! $document->fresh()?->canGenerateIntelligence()) {

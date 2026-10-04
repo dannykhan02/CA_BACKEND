@@ -131,7 +131,11 @@ class DocumentController extends Controller
     {
         $this->authorize('delete', $document);
 
-        \Illuminate\Support\Facades\DB::transaction(fn () => $document->delete());
+        \Illuminate\Support\Facades\DB::transaction(function () use ($document, $request) {
+            $document->delete();
+            app(\App\Services\AuditLogger::class)->log($request->user(), 'document.deleted', $document,
+                ['name' => $document->name], $document->workspace_id);
+        });
 
         return response()->json(['message' => 'Document deleted.'], 200);
     }

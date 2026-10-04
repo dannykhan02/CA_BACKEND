@@ -55,20 +55,28 @@ class GenerateDocumentSummaryJob implements ShouldQueue
             return;
         }
 
-        $document->loadMissing(['documentTypeClassification', 'entities', 'risks', 'deadlines']);
+        $document->loadMissing(['documentTypeClassification', 'entities', 'risks', 'deadlines', 'kpis']);
 
         $extractedData = [
             'document_type' => $document->documentTypeClassification?->document_type,
             'entities' => $document->entities->map(fn ($e) => [
-                'type' => $e->entity_type, 'value' => $e->value,
+                'id' => 'entity:'.$e->id, 'type' => $e->entity_type, 'value' => $e->value,
+                'context' => $e->context,
             ])->toArray(),
             'risks' => $document->risks->map(fn ($r) => [
-                'title' => $r->title, 'severity' => $r->severity, 'description' => $r->description,
+                'id' => 'risk:'.$r->id, 'title' => $r->title, 'severity' => $r->severity,
+                'description' => $r->description, 'evidence' => $r->evidence,
             ])->toArray(),
             'deadlines' => $document->deadlines->map(fn ($d) => [
-                'title' => $d->title, 'date_type' => $d->date_type,
+                'id' => 'deadline:'.$d->id, 'title' => $d->title, 'date_type' => $d->date_type,
                 'due_date' => $d->due_date?->toDateString(), 'relative_text' => $d->relative_text,
+                'evidence' => $d->evidence,
             ])->toArray(),
+            'kpis' => $document->kpis->map(fn ($k) => [
+                'id' => 'kpi:'.$k->id, 'label' => $k->label, 'period' => $k->period,
+                'value' => $k->value, 'unit' => $k->unit, 'trend' => $k->trend,
+            ])->toArray(),
+            'insights' => array_slice($document->insights ?? [], 0, 5),
         ];
 
         $stage = $this->startIntelligence($document, 'document_summary', $recorder);
@@ -102,6 +110,11 @@ class GenerateDocumentSummaryJob implements ShouldQueue
                 'upcoming_deadlines' => $result['upcoming_deadlines'],
                 'important_entities' => $result['important_entities'],
                 'recommended_attention' => $result['recommended_attention'],
+                'executive_assessment' => $result['executive_assessment'] ?? null,
+                'material_findings' => $result['material_findings'] ?? [],
+                'trends' => $result['trends'] ?? [],
+                'tensions' => $result['tensions'] ?? [],
+                'questions' => $result['questions'] ?? [],
                 'prompt_version' => (string) $result['prompt_version'],
                 'provider' => 'anthropic',
                 'model' => config('services.anthropic.model'),

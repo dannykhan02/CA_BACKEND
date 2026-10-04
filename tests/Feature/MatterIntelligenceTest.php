@@ -463,7 +463,9 @@ class MatterIntelligenceTest extends TestCase
         $this->assertSame('Ready', $doc->fresh()->status);
         $this->assertSame(1, $doc->kpis()->count());
         Bus::assertNotDispatched(GenerateInsightsJob::class);
-        Bus::assertBatched(fn ($batch) => $batch->jobs->count() === 4);
+        // Only the missing document type runs; summary is refreshed after it.
+        Bus::assertBatched(fn ($batch) => $batch->jobs->count() === 1
+            && $batch->jobs->first() instanceof \App\Jobs\ClassifyDocumentTypeJob);
         $this->postJson("/api/documents/{$doc->id}/reprocess", ['intelligence_only' => true])->assertUnprocessable();
     }
 }

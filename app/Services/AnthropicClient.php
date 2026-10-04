@@ -68,6 +68,7 @@ PROMPT;
             'max_attempts' => 1, 'timeout' => 8, 'max_tokens' => 400,
             'intelligence_document' => $document,
             'requires_extracted_text' => false,
+            'allowed_statuses' => ['Processing', 'Ready'],
         ]);
         // Record usage even when the optional adjudication response is unusable.
         $this->recordAiRun($document, 'kpi_identity', $response);
@@ -275,6 +276,10 @@ PROMPT;
     private function callWithRetry(array $messages, int $attempt = 1, array $options = []): array
     {
         $document = $options['intelligence_document'] ?? null;
+        if ($document && isset($options['allowed_statuses'])
+            && ! in_array($document->fresh()?->status, $options['allowed_statuses'], true)) {
+            throw new \RuntimeException('Document processing no longer permits this analysis.');
+        }
         if ($document && ! $document->fresh()?->canGenerateIntelligence(
             requiresExtractedText: $options['requires_extracted_text'] ?? true,
         )) {
@@ -570,7 +575,8 @@ PROMPT;
         $this->currentOperation = 'document_summary';
         $this->throttle();
         $prompt = $this->buildSummaryPrompt($extractedDataJson, $documentName);
-        return $this->structuredCall($prompt, $document, 'document_summary', $this->parseSummaryResponse(...));
+        return $this->structuredCall($prompt, $document, 'document_summary',
+            fn (array $response) => $this->parseSummaryResponse($response, $extractedDataJson));
     }
 
     private function buildSummaryPrompt(string $extractedDataJson, string $documentName): string
@@ -582,10 +588,20 @@ PROMPT;
         return $manager->render($prompt, ['{{document_name}}' => $documentName, '{{document_text}}' => $truncated]);
     }
 
-    private function parseSummaryResponse(array $response): array
+    private function parseSummaryResponse(array $response, string $extractedDataJson): array
     {
         $decoded = $this->decodeJsonContent($response);
-        $decoded = app(\App\Services\AI\ResponseValidator::class)->validateSummary($decoded);
+        $source = json_decode($extractedDataJson, true) ?: [];
+        $sourceIds = [];
+        foreach (['entities', 'risks', 'deadlines', 'kpis'] as $group) {
+            foreach ($source[$group] ?? [] as $item) {
+                if (is_string($item['id'] ?? null)
+                    && str_contains(mb_substr($extractedDataJson, 0, config('document_processing.max_extraction_chars')), json_encode($item['id']))) {
+                    $sourceIds[] = $item['id'];
+                }
+            }
+        }
+        $decoded = app(\App\Services\AI\ResponseValidator::class)->validateSummary($decoded, $sourceIds);
         return [
             'executive_summary' => $decoded['executive_summary'],
             'key_findings' => $decoded['key_findings'],
@@ -593,6 +609,11 @@ PROMPT;
             'upcoming_deadlines' => $decoded['upcoming_deadlines'],
             'important_entities' => $decoded['important_entities'],
             'recommended_attention' => $decoded['recommended_attention'],
+            'executive_assessment' => $decoded['executive_assessment'] ?? null,
+            'material_findings' => $decoded['material_findings'] ?? [],
+            'trends' => $decoded['trends'] ?? [],
+            'tensions' => $decoded['tensions'] ?? [],
+            'questions' => $decoded['questions'] ?? [],
             'prompt_version' => $this->lastResolvedPromptVersion,
         ];
     }

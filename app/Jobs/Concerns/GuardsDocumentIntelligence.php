@@ -20,7 +20,11 @@ trait GuardsDocumentIntelligence
                 return null;
             }
 
-            app(EntitlementService::class)->reserveDocument($current);
+            // Optional retries on an already-accounted document must not
+            // create a new allowance reservation or require a fresh credit.
+            if (! $current->credit_accounted_at) {
+                app(EntitlementService::class)->reserveDocument($current);
+            }
 
             return $recorder->start($current, $stage);
         });
