@@ -287,18 +287,27 @@ class ResponseValidator
             }
         }
 
-        $validateSources = function (array $item, string $path) use ($availableSourceIds): void {
+        $sourceValidationError = function (array $item, string $path) use ($availableSourceIds): ?string {
             if (! isset($item['source_ids']) || ! is_array($item['source_ids']) || ! array_is_list($item['source_ids'])
                 || count($item['source_ids']) < 1 || count($item['source_ids']) > 4) {
-                throw new \RuntimeException("Invalid structured assessment field {$path}.source_ids: requires one to four source references.");
+                return "Invalid structured assessment field {$path}.source_ids: requires one to four source references.";
             }
             foreach ($item['source_ids'] as $index => $sourceId) {
-                if (! is_string($sourceId) || ! in_array($sourceId, $availableSourceIds, true)) {
-                    throw new \RuntimeException("Invalid structured assessment field {$path}.source_ids[{$index}]: unavailable source.");
+                if (! is_string($sourceId)
+                    || ! preg_match('/\A(?:entity|risk|deadline|kpi):.+\z/', $sourceId)
+                    || ! in_array($sourceId, $availableSourceIds, true)) {
+                    return "Invalid structured assessment field {$path}.source_ids[{$index}]: unavailable source.";
                 }
             }
+
+            return null;
         };
-        $validateText = function (array &$item, string $path, array $fields) use ($validateSources): void {
+        $validateSources = function (array $item, string $path) use ($sourceValidationError): void {
+            if (($error = $sourceValidationError($item, $path)) !== null) {
+                throw new \RuntimeException($error);
+            }
+        };
+        $validateText = function (array &$item, string $path, array $fields, bool $requireSources = true) use ($validateSources): void {
             foreach ($fields as $field) {
                 $fieldPath = "{$path}.{$field}";
                 $limit = self::SUMMARY_TEXT_LIMIT;
@@ -319,14 +328,21 @@ class ResponseValidator
                     $item[$field] = $this->truncateSummaryProse($item[$field], $limit, $fieldPath);
                 }
             }
-            $validateSources($item, $path);
+            if ($requireSources) {
+                $validateSources($item, $path);
+            }
             if (isset($item['basis']) && ! in_array($item['basis'], ['explicit', 'inferred'], true)) {
                 throw new \RuntimeException("Invalid structured assessment field {$path}.basis: expected explicit or inferred.");
             }
         };
         if (array_key_exists('executive_assessment', $decoded) && $decoded['executive_assessment'] !== null) {
             if (! is_array($decoded['executive_assessment'])) throw new \RuntimeException('Invalid executive assessment.');
-            $validateText($decoded['executive_assessment'], 'executive_assessment', ['text']);
+            $validateText($decoded['executive_assessment'], 'executive_assessment', ['text'], false);
+            if ($sourceValidationError($decoded['executive_assessment'], 'executive_assessment') !== null) {
+                // The assessment is optional. Discard an ungrounded synthesis;
+                // never invent a citation or relax evidence checks elsewhere.
+                $decoded['executive_assessment'] = null;
+            }
         }
         foreach (['material_findings' => [4, ['title', 'category', 'explanation', 'why_it_matters', 'severity']],
             'trends' => [2, ['observation', 'significance']],

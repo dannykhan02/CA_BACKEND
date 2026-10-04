@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Resources\DocumentIntelligenceSummaryResource;
 use App\Jobs\GenerateDocumentSummaryJob;
 use App\Models\Document;
 use App\Models\DocumentIntelligenceSummary;
@@ -12,6 +13,7 @@ use App\Services\Pipeline\PipelineStageRecorder;
 use App\Services\WorkspaceService;
 use Database\Seeders\DocumentSummaryPromptSeederV3;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -127,6 +129,32 @@ class DocumentSummaryPipelineTest extends TestCase
         Http::assertSentCount(1);
         $summary = $document->intelligenceSummary()->sole();
         $this->assertSame(str_repeat('word ', 69).'word', $summary->material_findings[0]['explanation']);
+        $this->assertSame('completed', $document->processingJobs()->where('stage', 'document_summary')->sole()->status);
+        $this->assertDatabaseHas('document_ai_runs', [
+            'document_id' => $document->id, 'purpose' => 'document_summary', 'status' => 'success',
+        ]);
+    }
+
+    public function test_ungrounded_optional_assessment_is_null_while_grounded_summary_persists(): void
+    {
+        $document = $this->document();
+        $response = $this->summary($document, 'Debt pressure rose.');
+        $response['executive_assessment']['source_ids'] = [];
+        $response['material_findings'] = [[
+            'title' => 'Debt increased', 'category' => 'financial',
+            'explanation' => 'Debt rose during the period.',
+            'why_it_matters' => 'Funding pressure.', 'severity' => 'high',
+            'basis' => 'explicit', 'source_ids' => ['risk:'.$document->risks()->sole()->id],
+        ]];
+        Http::fake(['api.anthropic.com/*' => Http::response($this->response($response))]);
+
+        (new GenerateDocumentSummaryJob($document->id, true))->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+
+        Http::assertSentCount(1);
+        $summary = $document->intelligenceSummary()->sole();
+        $this->assertNull($summary->executive_assessment);
+        $this->assertSame($response['material_findings'], $summary->material_findings);
+        $this->assertNull((new DocumentIntelligenceSummaryResource($summary))->toArray(new Request)['executiveAssessment']);
         $this->assertSame('completed', $document->processingJobs()->where('stage', 'document_summary')->sole()->status);
         $this->assertDatabaseHas('document_ai_runs', [
             'document_id' => $document->id, 'purpose' => 'document_summary', 'status' => 'success',

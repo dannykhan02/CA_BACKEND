@@ -23,7 +23,9 @@ class StructuredAssessmentValidatorTest extends TestCase
 
     private function validate(array $additional): array
     {
-        return (new ResponseValidator)->validateSummary($this->base() + $additional, ['risk:1', 'kpi:2']);
+        return (new ResponseValidator)->validateSummary($this->base() + $additional, [
+            'risk:1', 'kpi:2', 'entity:3', 'deadline:4', 'risk:5',
+        ]);
     }
 
     private function assertInvalidAssessment(array $assessment, string $message): void
@@ -123,23 +125,91 @@ class StructuredAssessmentValidatorTest extends TestCase
         $this->validate(['material_findings' => [$finding]]);
     }
 
+    public function test_invalid_finding_source_still_fails_when_assessment_is_normalized_to_null(): void
+    {
+        $assessment = $this->assessment();
+        $assessment['source_ids'] = [];
+        $finding = $this->finding('Debt rose.');
+        $finding['source_ids'] = ['risk:unknown'];
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('material_findings[0].source_ids[0]: unavailable source');
+        $this->validate(['executive_assessment' => $assessment, 'material_findings' => [$finding]]);
+    }
+
     public function test_long_unbroken_prose_token_is_not_damaged(): void
     {
         $this->assertInvalidAssessment($this->assessment(str_repeat('a', 371)), 'no safe word boundary');
     }
 
-    public function test_valid_source_ids_are_accepted(): void
+    public function test_one_valid_assessment_source_id_is_accepted(): void
     {
         $assessment = $this->assessment();
-        $assessment['source_ids'] = ['risk:1', 'kpi:2'];
         self::assertSame($assessment, $this->validate(['executive_assessment' => $assessment])['executive_assessment']);
     }
 
-    public function test_unknown_source_ids_are_rejected(): void
+    public function test_four_valid_assessment_source_ids_are_accepted(): void
+    {
+        $assessment = $this->assessment();
+        $assessment['source_ids'] = ['risk:1', 'kpi:2', 'entity:3', 'deadline:4'];
+        self::assertSame($assessment, $this->validate(['executive_assessment' => $assessment])['executive_assessment']);
+    }
+
+    public function test_empty_assessment_source_ids_normalize_the_assessment_to_null(): void
+    {
+        $assessment = $this->assessment();
+        $assessment['source_ids'] = [];
+        self::assertNull($this->validate(['executive_assessment' => $assessment])['executive_assessment']);
+    }
+
+    public function test_missing_assessment_source_ids_normalize_the_assessment_to_null(): void
+    {
+        $assessment = $this->assessment();
+        unset($assessment['source_ids']);
+        self::assertNull($this->validate(['executive_assessment' => $assessment])['executive_assessment']);
+    }
+
+    public function test_null_assessment_source_ids_normalize_the_assessment_to_null(): void
+    {
+        $assessment = $this->assessment();
+        $assessment['source_ids'] = null;
+        self::assertNull($this->validate(['executive_assessment' => $assessment])['executive_assessment']);
+    }
+
+    public function test_unknown_assessment_source_ids_normalize_the_assessment_to_null(): void
     {
         $assessment = $this->assessment();
         $assessment['source_ids'] = ['risk:other'];
-        $this->assertInvalidAssessment($assessment, 'executive_assessment.source_ids[0]: unavailable source');
+        self::assertNull($this->validate(['executive_assessment' => $assessment])['executive_assessment']);
+    }
+
+    public function test_non_string_assessment_source_ids_normalize_the_assessment_to_null(): void
+    {
+        $assessment = $this->assessment();
+        $assessment['source_ids'] = [123];
+        self::assertNull($this->validate(['executive_assessment' => $assessment])['executive_assessment']);
+    }
+
+    public function test_five_assessment_source_ids_normalize_the_assessment_to_null(): void
+    {
+        $assessment = $this->assessment();
+        $assessment['source_ids'] = ['risk:1', 'kpi:2', 'entity:3', 'deadline:4', 'risk:5'];
+        self::assertNull($this->validate(['executive_assessment' => $assessment])['executive_assessment']);
+    }
+
+    public function test_assessment_source_with_unapproved_prefix_normalizes_to_null(): void
+    {
+        $assessment = $this->assessment();
+        $assessment['source_ids'] = ['other:6'];
+        $summary = $this->base() + ['executive_assessment' => $assessment];
+        self::assertNull((new ResponseValidator)->validateSummary($summary, ['other:6'])['executive_assessment']);
+    }
+
+    public function test_invalid_assessment_basis_still_fails_even_when_sources_are_missing(): void
+    {
+        $assessment = $this->assessment();
+        $assessment['source_ids'] = [];
+        $assessment['basis'] = 'certain';
+        $this->assertInvalidAssessment($assessment, 'executive_assessment.basis: expected explicit or inferred');
     }
 
     public function test_invalid_evidence_basis_is_rejected(): void
