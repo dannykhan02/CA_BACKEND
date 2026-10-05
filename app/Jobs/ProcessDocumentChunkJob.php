@@ -9,6 +9,7 @@ use App\Services\AI\AiModels;
 use App\Services\AI\AiPricing;
 use App\Services\AI\Incremental\ChunkPlanner;
 use App\Services\AI\Incremental\EvidenceSchema;
+use App\Services\AI\Incremental\ExtractionCapacity;
 use App\Services\AI\Incremental\IncrementalPipeline;
 use App\Services\AnthropicClient;
 use Illuminate\Bus\Queueable;
@@ -24,7 +25,8 @@ class ProcessDocumentChunkJob implements ShouldQueue
 
     public int $tries = 1;
 
-    public int $timeout = 150;
+    // Token count (15s) + one extraction request (extraction_timeout_seconds) + bookkeeping.
+    public int $timeout = 180;
 
     public bool $failOnTimeout = true;
 
@@ -54,7 +56,7 @@ class ProcessDocumentChunkJob implements ShouldQueue
                         $unit->start_offset, $unit->end_offset - $unit->start_offset)], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR))
                     + strlen(json_encode(EvidenceSchema::extraction()))
                     + strlen(EvidenceSchema::instructions()) + 512,
-                (int) config('document_intelligence.extraction_max_tokens'),
+                app(ExtractionCapacity::class)->outputTokens(),
                 cacheWrite: true
             );
             if (! $pipeline->canReserve($locked, $cost)) {
@@ -85,7 +87,7 @@ class ProcessDocumentChunkJob implements ShouldQueue
                 $tokens = app(ChunkPlanner::class)
                     ->estimate($text);
             }
-            if ($tokens > config('document_intelligence.chunk_max_tokens')) {
+            if ($tokens > app(ExtractionCapacity::class)->maxRequestInputTokens()) {
                 throw new AiProcessingException('context_overflow');
             }
             $chunk->update(['token_count' => $tokens]);
@@ -94,7 +96,7 @@ class ProcessDocumentChunkJob implements ShouldQueue
             $chunk->update(['status' => 'completed', 'result' => $result, 'completed_at' => now(), 'failure_class' => null]);
         } catch (AiProcessingException $e) {
             $chunk->update(['failure_class' => $e->classification]);
-            if (in_array($e->classification, ['max_tokens', 'context_overflow', 'timeout'], true)) {
+            if (in_array($e->classification, IncrementalPipeline::SPLITTABLE_FAILURES, true)) {
                 $pipeline->split($chunk, $document);
             } elseif ($e->classification === 'transient' && $chunk->attempts < config('document_intelligence.attempts')) {
                 $chunk->update(['status' => 'queued']);

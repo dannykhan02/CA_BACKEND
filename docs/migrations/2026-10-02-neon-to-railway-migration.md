@@ -57,9 +57,9 @@ That leaves a harmless base role with no login and no table access. Re-grant onl
 
 Also: keep the Railway TCP proxy off when it is not needed. While it is enabled, the database is reachable from the internet.
 
-## Staging is unverified
+## Staging does not exist
 
-Older documents (`docs/ENV_2_WORKER_ISOLATION_2026_09_12.md`, `docs/PAYMENT_LIVE_EVIDENCE_2026_09_13.md`, `docs/AUDIT_EVIDENCE_2026_09_12.md`) describe a Railway `staging` environment whose services used a separate Neon endpoint (`ep-cold-cake-axtm6s8c`). The Neon projects visible on 2026-10-02 did not include that endpoint, and only the `production` environment was inspected during the migration. Check whether `staging` still exists and where it points before deleting anything on Neon.
+Older documents (`docs/ENV_2_WORKER_ISOLATION_2026_09_12.md`, `docs/PAYMENT_LIVE_EVIDENCE_2026_09_13.md`, `docs/AUDIT_EVIDENCE_2026_09_12.md`) describe a Railway `staging` environment whose services used a separate Neon endpoint (`ep-cold-cake-axtm6s8c`). The Neon projects visible on 2026-10-02 did not include that endpoint, and only the `production` environment was inspected during the migration. Checked on 2026-10-03: the Railway project has no `staging` environment, so nothing else depends on Neon.
 
 ## Local development after the migration
 
@@ -80,7 +80,7 @@ Point `CA_BACKEND` and `ca-horizon-worker` back at Neon by restoring the saved `
 - [ ] Turn the Railway TCP proxy off when idle
 - [x] Run `bin/post-migration-local-cleanup.sh --apply` (done 2026-10-03)
 - [ ] Pause the Healthchecks checks
-- [ ] Check the `staging` environment
+- [x] Check the `staging` environment (none exists, checked 2026-10-03)
 - [ ] Check for `neondb_owner` references in migrations and tests
 - [ ] Enable Railway volume backups if the plan supports them, and schedule a regular `pg_dump` (Neon's point-in-time history disappears once Neon is deleted)
 - [ ] Give the app its own non-superuser database role instead of `postgres`

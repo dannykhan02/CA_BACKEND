@@ -7,6 +7,7 @@ use App\Exceptions\AnthropicStructuredOutputException;
 use App\Jobs\Concerns\GuardsDocumentIntelligence;
 use App\Jobs\Concerns\SkipsUnchangedDocuments;
 use App\Models\Document;
+use App\Models\DocumentAiRun;
 use App\Models\DocumentChunk;
 use App\Models\DocumentIntelligenceSummary;
 use App\Services\AI\AiModels;
@@ -108,7 +109,7 @@ class GenerateDocumentSummaryJob implements ShouldQueue
         ];
 
         if (($document->ai_pipeline['route'] ?? null) === 'incremental') {
-            $extractedData = app(EvidenceBudget::class)->forDocument($document);
+            $extractedData = app(EvidenceBudget::class)->forSynthesis($document);
         } else {
             $extractedData = app(EvidenceBudget::class)->trimNormal($extractedData);
         }
@@ -168,6 +169,7 @@ class GenerateDocumentSummaryJob implements ShouldQueue
             if ($checkpoint) {
                 app(IncrementalPipeline::class)->settleCost($checkpoint, $providerCalled);
                 $client->setRunContext([]);
+                $this->logSynthesis($document, $checkpoint, $providerCalled, $extractedData['coverage'] ?? []);
             }
         }
 
@@ -225,6 +227,27 @@ class GenerateDocumentSummaryJob implements ShouldQueue
             AnalyzeEmbeddedVisualsJob::dispatch($document->id)->onQueue('extraction');
             GenerateEmbeddingsJob::dispatch($document->id)->onQueue('extraction');
         }
+    }
+
+    /** Metadata only: never evidence, source text, prompts or the response. */
+    private function logSynthesis(Document $document, DocumentChunk $checkpoint, bool $providerCalled, array $coverage): void
+    {
+        $checkpoint->refresh();
+        $runs = DocumentAiRun::where('chunk_id', $checkpoint->id)->where('request_attempt', $checkpoint->attempts)->get();
+        $pipeline = $document->fresh()?->ai_pipeline ?? [];
+        Log::info('Document synthesis attempt finished', [
+            'document_id' => $document->id, 'chunk_id' => $checkpoint->id, 'status' => $checkpoint->status,
+            'failure_class' => $checkpoint->failure_class, 'attempt' => $checkpoint->attempts,
+            'reused_checkpoint' => ! $providerCalled, 'configured_model' => app(AiModels::class)->forTask('document_summary'),
+            'source_context' => $coverage['source_text'] ?? null, 'evidence_total' => $coverage['evidence_total'] ?? null,
+            'evidence_omitted' => $coverage['evidence_omitted'] ?? null,
+            'provider_requests' => $runs->count(), 'repair_requests' => max(0, $runs->count() - 1),
+            'synthesis_reductions' => $pipeline['synthesis_reductions'] ?? 0,
+            'input_tokens' => (int) $runs->sum('input_tokens'), 'output_tokens' => (int) $runs->sum('output_tokens'),
+            'latency_ms' => (int) $runs->sum('duration_ms'),
+            'estimated_cost_usd' => $checkpoint->cost_accounting['estimate'] ?? null,
+            'settled_cost_usd' => $checkpoint->cost_accounting['cost'] ?? null,
+        ]);
     }
 
     public function failed(\Throwable $e): void

@@ -38,6 +38,26 @@ class KpiIdentityResolver
         return $kpis;
     }
 
+    /**
+     * Read-only fast path. When this exact label/context alias is already learned and
+     * compatible, resolve() would return the same definition and its alias write is a
+     * no-op, so callers may skip the locked write transaction.
+     */
+    public function existingAlias(string $workspaceId, array $kpi): ?array
+    {
+        $profile = $this->profiles->make($kpi);
+        if (! $profile['valid']) {
+            return null;
+        }
+        $alias = KpiAlias::with('definition')->where('workspace_id', $workspaceId)
+            ->where('normalized_label', $profile['normalized_label'])->where('context_key', $profile['context_key'])->first();
+        if (! $alias?->definition || ! $this->profiles->compatible($profile, $alias->definition->matching_metadata)) {
+            return null;
+        }
+
+        return ['definition_id' => $alias->definition->id, 'profile' => $profile, 'method' => 'alias', 'ai_attempted' => false];
+    }
+
     /** External adjudication happens before the short identity-write transaction. */
     public function resolve(string $workspaceId, array $kpi, bool $allowCreate = true, bool $dryRun = false, ?Document $document = null, bool $allowAi = false): array
     {

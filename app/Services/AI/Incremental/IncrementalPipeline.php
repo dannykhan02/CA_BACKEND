@@ -13,13 +13,18 @@ use App\Models\DocumentChunk;
 use App\Services\AI\AiModels;
 use App\Services\AnthropicClient;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class IncrementalPipeline
 {
     public function __construct(
         private ChunkPlanner $planner,
-        private AnthropicClient $client
+        private AnthropicClient $client,
+        private ExtractionCapacity $capacity
     ) {}
+
+    /** Only capacity-type failures may be retried on smaller input. */
+    public const SPLITTABLE_FAILURES = ['max_tokens', 'context_overflow', 'timeout'];
 
     public function route(Document $document): bool
     {
@@ -66,20 +71,27 @@ class IncrementalPipeline
         }
 
         /*
-         * Avoid the legacy character truncation even if token density happens
-         * to be unusually low.
+         * The legacy four-job path truncates at max_extraction_chars, so it is only
+         * used when that is lossless. Everything else is routed by model capacity.
          */
-        $large =
-            $metadata['tokens'] > config('document_intelligence.large_tokens')
-            || mb_strlen($text) > config('document_processing.max_extraction_chars');
+        $legacy =
+            $metadata['tokens'] <= config('document_intelligence.large_tokens')
+            && mb_strlen($text) <= config('document_processing.max_extraction_chars');
 
-        $metadata['route'] = $large ? 'incremental' : 'normal';
+        $metadata['route'] = $legacy ? 'normal' : 'incremental';
+
+        if (! $legacy) {
+            $metadata['routing'] = $this->capacity->decide((int) $metadata['tokens']);
+            $metadata['mode'] = $metadata['routing']['mode'];
+            // Metadata only: never text, prompts or evidence.
+            Log::info('Document intelligence route selected', ['document_id' => $document->id, ...$metadata['routing']]);
+        }
 
         $document->forceFill([
             'ai_pipeline' => $metadata,
         ])->save();
 
-        if (! $large) {
+        if ($legacy) {
             return false;
         }
 
@@ -127,15 +139,20 @@ class IncrementalPipeline
                     / max(1, strlen($document->extracted_text))
                 : 1 / 3;
 
-        $plan = $this->planner->plan(
+        $tokens = (int) ($document->ai_pipeline['tokens'] ?? $this->planner->estimate($document->extracted_text));
+        $routing = $this->capacity->decide($tokens);
+        $plan = $this->planner->partition(
             $document->extracted_text,
-            tokensPerByte: $density
+            $routing['partition_tokens'],
+            $density
         );
+        $routing['root_chunks'] = count($plan);
 
         DB::transaction(function () use (
             $document,
             $key,
             $plan,
+            $routing,
             $version,
             $prompt
         ) {
@@ -176,6 +193,8 @@ class IncrementalPipeline
 
             $metadata['key'] = $key;
             $metadata['route'] = 'incremental';
+            $metadata['mode'] = $routing['mode'];
+            $metadata['routing'] = $routing;
             $metadata['recovery_complete'] = false;
             $metadata['pipeline_version'] = $version;
             $metadata['prompt_version'] = $prompt;
@@ -198,6 +217,10 @@ class IncrementalPipeline
                 'ai_pipeline' => $metadata,
             ])->save();
         });
+
+        Log::info('Document intelligence partitions planned', ['document_id' => $document->id,
+            'mode' => $routing['mode'], 'root_chunks' => $routing['root_chunks'],
+            'partition_tokens' => $routing['partition_tokens'], 'document_tokens' => $routing['document_tokens']]);
 
         $this->pump($document->id);
     }
@@ -250,6 +273,17 @@ class IncrementalPipeline
             $cost = ! $providerCalled ? 0 : ($known ? (float) $runs->sum('estimated_cost_usd') : $accounting['estimate']);
             $locked->update(['reserved_cost' => round($accounting['previous_cost'] + $cost, 6),
                 'cost_accounting' => [...$accounting, 'settled' => true, 'actual_known' => $known || ! $providerCalled, 'cost' => $cost]]);
+            $document = Document::find($locked->document_id);
+            $committed = (float) DocumentChunk::where('document_id', $locked->document_id)
+                ->where('pipeline_key', $locked->pipeline_key)->sum('reserved_cost');
+            $budget = (float) ($document?->ai_pipeline['budget_usd'] ?? 0);
+            // Metadata only: identifiers, token counts and USD amounts.
+            Log::info('Document AI cost settled', ['document_id' => $locked->document_id, 'chunk_id' => $locked->id,
+                'stage' => $locked->stage, 'attempt' => $accounting['attempt'], 'provider_called' => $providerCalled,
+                'estimated_cost_usd' => $accounting['estimate'], 'settled_cost_usd' => $cost, 'actual_known' => $known || ! $providerCalled,
+                'input_tokens' => (int) $runs->sum('input_tokens'), 'output_tokens' => (int) $runs->sum('output_tokens'),
+                'document_budget_usd' => $budget, 'document_committed_usd' => round($committed, 6),
+                'document_budget_remaining_usd' => round($budget - $committed, 6)]);
         });
     }
 
@@ -480,17 +514,12 @@ class IncrementalPipeline
          * contract failures. Splitting those recursively creates smaller and
          * smaller requests without fixing the underlying problem.
          */
-        if (
-            ! in_array(
-                $chunk->failure_class,
-                ['max_tokens', 'context_overflow', 'timeout'],
-                true
-            )
-        ) {
+        if (! in_array($chunk->failure_class, self::SPLITTABLE_FAILURES, true)) {
             $chunk->update([
                 'status' => 'failed',
                 'completed_at' => now(),
             ]);
+            $this->logSplit($chunk, 'not_split', 0);
 
             return;
         }
@@ -501,17 +530,23 @@ class IncrementalPipeline
             $chunk->end_offset - $chunk->start_offset
         );
 
+        /*
+         * Each child must stay above the minimum size: a failure on a slice that
+         * small is degenerate output, not oversized input.
+         */
         if (
-            mb_strlen($text)
+            mb_strlen($text) / 2
                 < config('document_intelligence.minimum_split_chars')
             || $chunk->depth
                 >= config('document_intelligence.max_split_depth')
         ) {
+            $reason = $chunk->failure_class;
             $chunk->update([
                 'status' => 'failed',
                 'failure_class' => 'split_limit',
                 'completed_at' => now(),
             ]);
+            $this->logSplit($chunk, 'split_limit', 0, $reason);
 
             return;
         }
@@ -522,7 +557,7 @@ class IncrementalPipeline
          */
         $target = max(
             1,
-            (int) ceil($this->planner->estimate($text) / 2)
+            (int) ceil(($chunk->token_count ?: $this->planner->estimate($text)) / 2)
         );
 
         $children = $this->planner->plan(
@@ -569,6 +604,15 @@ class IncrementalPipeline
                 'completed_at' => now(),
             ]);
         });
+        $this->logSplit($chunk, 'split', count($children));
+    }
+
+    /** Metadata only: identifiers, failure class, depth and sizes. */
+    private function logSplit(DocumentChunk $chunk, string $outcome, int $children, ?string $reason = null): void
+    {
+        Log::info('Document intelligence chunk split decision', ['document_id' => $chunk->document_id,
+            'chunk_id' => $chunk->id, 'outcome' => $outcome, 'failure_class' => $reason ?? $chunk->failure_class,
+            'depth' => $chunk->depth, 'children' => $children, 'token_count' => $chunk->token_count]);
     }
 
     /**

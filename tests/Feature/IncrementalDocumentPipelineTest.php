@@ -54,7 +54,7 @@ class IncrementalDocumentPipelineTest extends TestCase
         $this->seed(DocumentSummaryPromptSeederV3::class);
         config(['services.anthropic.extraction_model' => 'claude-haiku-4-5-20251001',
             'services.anthropic.synthesis_model' => 'claude-sonnet-5-5',
-            'document_intelligence.large_tokens' => 100, 'document_intelligence.chunk_target_tokens' => 80,
+            'document_intelligence.large_tokens' => 100,
             'document_intelligence.chunk_max_tokens' => 100, 'document_intelligence.chunk_overlap_tokens' => 5,
             'document_intelligence.minimum_split_chars' => 10, 'document_intelligence.budget_base_usd' => 2]);
     }
@@ -128,7 +128,7 @@ class IncrementalDocumentPipelineTest extends TestCase
     public function test_no_heading_unicode_document_preserves_coverage_and_limits(): void
     {
         $text = str_repeat('漢字 revenue without punctuation ', 80);
-        $chunks = app(ChunkPlanner::class)->plan($text);
+        $chunks = app(ChunkPlanner::class)->plan($text, 80);
         $covered = 0;
         foreach ($chunks as $chunk) {
             self::assertLessThanOrEqual(80, $chunk['token_count']);
@@ -143,7 +143,7 @@ class IncrementalDocumentPipelineTest extends TestCase
     public function test_page_mapping_survives_planning(): void
     {
         $text = str_repeat('A', 160)."\f".str_repeat('B', 160)."\f".str_repeat('C', 160);
-        foreach (app(ChunkPlanner::class)->plan($text) as $chunk) {
+        foreach (app(ChunkPlanner::class)->plan($text, 80) as $chunk) {
             self::assertSame(1 + substr_count(mb_substr($text, 0, $chunk['start_offset']), "\f"), $chunk['start_page']);
         }
     }

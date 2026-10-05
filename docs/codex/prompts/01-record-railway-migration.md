@@ -13,7 +13,7 @@ Read `AGENTS.md` first and follow it. This task changes **documentation and comm
 - The data was copied with `pg_dump --no-owner --no-acl`, so **roles and grants did not migrate**.
 - On 2026-10-03 the developer's local checkout was cleaned up: local `.env` points at `127.0.0.1/ca_dev` (no local Postgres installed yet), the local supervisor `pulse-work` program is disabled, and the cron heartbeat jobs are commented out.
 - **Power BI is deferred: there is no Power BI license yet.** The intended design is in `docs/POWERBI_DEFERRED_PLAN.md`. A hand-made `powerbi_reader` LOGIN role was created on Railway during the migration by mistake; the human locked it down on 2026-10-03 (NOLOGIN, no table grants).
-- Unknown and to be investigated: whether a `staging` Railway environment still exists, and whether any migration or test depends on the role name `neondb_owner`.
+- Unknown and to be investigated: whether any migration or test depends on the role name `neondb_owner`.
 
 ## Hard rules
 

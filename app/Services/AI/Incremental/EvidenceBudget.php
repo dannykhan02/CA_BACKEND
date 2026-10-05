@@ -5,6 +5,7 @@ namespace App\Services\AI\Incremental;
 use App\Models\Document;
 use App\Models\DocumentChunk;
 use App\Models\DocumentEvidence;
+use App\Services\AI\AiModels;
 
 class EvidenceBudget
 {
@@ -76,5 +77,108 @@ class EvidenceBudget
             'warning' => $complete ? null : 'This intelligence is based on incomplete document evidence; some content could not be processed or included.'];
 
         return $data;
+    }
+
+    /** Evidence (authoritative) plus original source text for cross-section context. */
+    public function forSynthesis(Document $document): array
+    {
+        $data = $this->forDocument($document);
+        $data['source_context'] = $this->sourceContext($document, $data);
+        $data['coverage']['source_text'] = $data['source_context']['coverage'];
+
+        return $data;
+    }
+
+    /** Token budget for source text; halves with every synthesis context reduction. */
+    public function sourceBudgetTokens(Document $document): int
+    {
+        $model = app(AiModels::class)->forTask('document_summary');
+        $context = (config('document_intelligence.model_capabilities', [])[$model] ?? ['context_window' => 0])['context_window'];
+        // Room left after the bounded evidence, prompt/schema, output and safety margin.
+        $room = $context - (int) config('document_intelligence.synthesis_token_budget') - 8192
+            - (int) config('document_intelligence.synthesis_max_tokens')
+            - (int) ceil($context * (float) config('document_intelligence.context_safety_ratio'));
+
+        return max(0, (int) floor(min($room, (int) config('document_intelligence.synthesis_source_max_tokens'))
+            / (2 ** ($document->ai_pipeline['synthesis_reductions'] ?? 0))));
+    }
+
+    /** Conservative token count; never smaller than the counted/estimated document size. */
+    private function documentTokens(Document $document): int
+    {
+        return max((int) ($document->ai_pipeline['tokens'] ?? 0), (int) ceil(strlen((string) $document->extracted_text) / 3));
+    }
+
+    /**
+     * Deterministic: the full document when it fits, else source windows around the
+     * evidence already selected for synthesis (in that priority order), else nothing.
+     */
+    public function sourceContext(Document $document, array $data): array
+    {
+        $text = (string) $document->extracted_text;
+        $budget = $this->sourceBudgetTokens($document);
+        $tokens = $this->documentTokens($document);
+        if ($text !== '' && $tokens <= $budget) {
+            return ['coverage' => 'full', 'text' => $text];
+        }
+        // Bytes per token from the same conservative count, so the excerpt budget stays within tokens.
+        $byteBudget = (int) floor($budget * strlen($text) / max(1, $tokens));
+        $radius = (int) config('document_intelligence.synthesis_excerpt_radius_chars');
+        $length = mb_strlen($text);
+        $windows = [];
+        $used = 0;
+        foreach (['deadlines', 'kpis', 'risks', 'facts', 'entities'] as $group) {
+            foreach ($data[$group] ?? [] as $item) {
+                foreach ($item['sources'] ?? [] as $source) {
+                    $start = max(0, $source['start_offset'] - $radius);
+                    $end = min($length, $source['end_offset'] + $radius);
+                    $covered = false;
+                    foreach ($windows as $window) {
+                        if ($start >= $window[0] && $end <= $window[1]) {
+                            $covered = true;
+                            break;
+                        }
+                    }
+                    if ($covered) {
+                        continue;
+                    }
+                    $size = strlen(mb_substr($text, $start, $end - $start));
+                    if ($used + $size > $byteBudget) {
+                        break 3;
+                    }
+                    $windows[] = [$start, $end];
+                    $used += $size;
+                }
+            }
+        }
+        if (! $windows) {
+            return ['coverage' => 'omitted', 'excerpts' => []];
+        }
+        sort($windows);
+        $merged = [];
+        foreach ($windows as [$start, $end]) {
+            if ($merged && $start <= $merged[count($merged) - 1][1]) {
+                $merged[count($merged) - 1][1] = max($merged[count($merged) - 1][1], $end);
+            } else {
+                $merged[] = [$start, $end];
+            }
+        }
+
+        return ['coverage' => 'excerpts', 'excerpts' => array_map(fn ($w) => ['start_offset' => $w[0], 'end_offset' => $w[1],
+            'text' => mb_substr($text, $w[0], $w[1] - $w[0])], $merged)];
+    }
+
+    /** Upper bound (bytes) of the source context future synthesis may include. */
+    public function sourceReserveBytes(Document $document): int
+    {
+        $text = (string) $document->extracted_text;
+        $budget = $this->sourceBudgetTokens($document);
+        if ($this->documentTokens($document) <= $budget) {
+            return strlen(json_encode($text, JSON_UNESCAPED_UNICODE)) + 64;
+        }
+        $byteBudget = (int) floor($budget * strlen($text) / max(1, $this->documentTokens($document)));
+
+        // JSON escaping at most doubles ordinary text; offsets/keys per excerpt are small.
+        return 2 * $byteBudget + 4096;
     }
 }

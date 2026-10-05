@@ -5,17 +5,44 @@ return [
     'incremental' => (bool) env('DOCINTEL_INCREMENTAL_PROCESSING', true),
     'pipeline_version' => '1',
     'prompt_version' => '1',
+    // Eligibility for the legacy four-job path only: it truncates at
+    // document_processing.max_extraction_chars, so it is used only when that is lossless.
+    // It is NOT a chunking threshold; incremental routing is ExtractionCapacity::decide().
     'large_tokens' => 14000,
-    'chunk_target_tokens' => 14000,
-    'chunk_max_tokens' => 18000,
+    // Published limits (https://platform.claude.com/docs/en/about-claude/models/overview).
+    'model_capabilities' => [
+        'claude-haiku-4-5-20251001' => ['context_window' => 200000, 'max_output_tokens' => 64000],
+        'claude-haiku-4-5' => ['context_window' => 200000, 'max_output_tokens' => 64000],
+        'claude-sonnet-4-5-20250929' => ['context_window' => 200000, 'max_output_tokens' => 64000],
+        'claude-sonnet-4-6' => ['context_window' => 1000000, 'max_output_tokens' => 128000],
+        'claude-sonnet-5-5' => ['context_window' => 1000000, 'max_output_tokens' => 128000],
+    ],
+    // Unused context kept free for tokenizer/JSON-escaping drift.
+    'context_safety_ratio' => 0.10,
+    // Planned output is 75% of the request cap; the rest absorbs denser-than-expected slices.
+    'output_fill_ratio' => 0.75,
+    // Structured-output estimate. sector_report.pdf (62k tokens) needed far more than 4096
+    // output tokens per 14k-token slice; one schema record is ~120-180 output tokens.
+    'expected_records_per_1k_tokens' => 4,
+    'output_tokens_per_record' => 150,
+    // Optional operator ceiling on partition input tokens; null = derived from capacity.
+    'chunk_max_tokens' => null,
+    // Cross-boundary context (about two paragraphs), capped at 15% of a slice.
     'chunk_overlap_tokens' => 400,
-    'minimum_split_chars' => 1000,
-    'max_split_depth' => 6,
+    // A child below this size would mean degenerate output, not oversize input.
+    'minimum_split_chars' => 2000,
+    'max_split_depth' => 4,
     'concurrency' => 2, // Matches existing Horizon extraction workers.
     'attempts' => 3,
     'synthesis_token_budget' => 16000,
-    // Per-request output bounds. The legacy max_tokens ENV remains the extraction default.
-    'extraction_max_tokens' => (int) env('ANTHROPIC_MAX_TOKENS', 4096),
+    // Original source text offered to synthesis when it fits; otherwise evidence-anchored excerpts.
+    'synthesis_source_max_tokens' => 80000,
+    'synthesis_excerpt_radius_chars' => 600,
+    // Per-request output bounds. Incremental extraction has its own cap (still clamped to the
+    // model's max output); ANTHROPIC_MAX_TOKENS keeps governing only the legacy four-job path.
+    // Partition sizing derives from this value, so lowering it yields more, smaller partitions.
+    'extraction_max_tokens' => (int) env('ANTHROPIC_EXTRACTION_MAX_TOKENS', 16000),
+    'extraction_timeout_seconds' => 120,
     'synthesis_max_tokens' => 8192,
     'repair_max_tokens' => 2048,
     'context_max_tokens' => 1000,

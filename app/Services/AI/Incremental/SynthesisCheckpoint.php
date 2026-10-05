@@ -20,7 +20,7 @@ class SynthesisCheckpoint
                 ->whereIn('stage', ['extraction', 'merge'])->whereIn('status', ['pending', 'queued', 'running'])->exists()) {
                 return null;
             }
-            $data = app(EvidenceBudget::class)->forDocument($locked);
+            $data = app(EvidenceBudget::class)->forSynthesis($locked);
             $model = app(AiModels::class)->forTask('document_summary');
             $version = (string) AiPrompt::active('document_summary')->version;
             $hash = hash('sha256', json_encode([$data, $model, $version,

@@ -7,6 +7,7 @@ use App\Models\DocumentAiRun;
 use App\Models\DocumentChunk;
 use App\Models\DocumentEvidence;
 use App\Services\AI\Incremental\ChunkPlanner;
+use App\Services\AI\Incremental\ExtractionCapacity;
 use Illuminate\Console\Command;
 
 class DocumentAiBenchmark extends Command
@@ -31,9 +32,10 @@ class DocumentAiBenchmark extends Command
             }
             $text = file_get_contents($path);
             $large = $planner->estimate($text) > config('document_intelligence.large_tokens') || mb_strlen($text) > config('document_processing.max_extraction_chars');
-            $chunks = $large ? $planner->plan($text) : [];
+            $routing = $large ? app(ExtractionCapacity::class)->decide($planner->estimate($text)) : null;
+            $chunks = $large ? $planner->partition($text, $routing['partition_tokens']) : [];
             $this->line(json_encode(['mode' => 'planning_only', 'estimated_tokens' => $planner->estimate($text),
-                'route' => $large ? 'incremental' : 'normal', 'chunk_count' => count($chunks),
+                'route' => $large ? 'incremental' : 'normal', 'routing' => $routing, 'chunk_count' => count($chunks),
                 'planned_text_generation_requests' => $large ? count($chunks) + 1 : 6, 'optional_requests' => 'not estimated',
                 'duration_ms' => (hrtime(true) - $started) / 1000000, 'peak_memory_bytes' => memory_get_peak_usage(true)], JSON_PRETTY_PRINT));
 

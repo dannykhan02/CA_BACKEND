@@ -7,7 +7,7 @@ Full story: `docs/migrations/2026-10-02-neon-to-railway-migration.md`.
 - **Production database is Railway Postgres**: service `Postgres`, project `superb-emotion`, environment `production`, image `pgvector/pgvector:pg18`, database `railway`. Neon is the previous host. It is legacy and kept only as a short-term rollback.
 - `CA_BACKEND` and `ca-horizon-worker` connect through Railway reference variables (`${{Postgres.RAILWAY_PRIVATE_DOMAIN}}` and friends) over the private network. `DB_SSLMODE=prefer`, because the image has no SSL.
 - Redis is a separate Railway service. Queues use Redis.
-- **Staging is unverified.** Older docs mention a `staging` Railway environment that used its own Neon endpoint. Check it before assuming it was migrated.
+- **There is no staging environment** (checked 2026-10-03). Older docs mention one that used its own Neon endpoint.
 
 ### Rules
 1. **Local development uses a local database.** The local `.env` must never contain a Neon or Railway host. `bin/post-migration-local-cleanup.sh` (dry run by default) fixes a checkout.

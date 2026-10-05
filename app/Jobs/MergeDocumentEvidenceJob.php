@@ -18,6 +18,7 @@ use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\TimeoutExceededException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class MergeDocumentEvidenceJob implements ShouldQueue
 {
@@ -129,13 +130,19 @@ class MergeDocumentEvidenceJob implements ShouldQueue
              *
              * IMPORTANT:
              * Do NOT wrap the entire merge in one giant DB transaction.
-             * EvidenceMerger already commits its individual evidence units.
+             * EvidenceMerger commits bounded batches and never locks the document row.
              */
             $document->refresh();
 
-            $merger->merge($document);
+            $diagnostics = $merger->merge($document);
 
+            $clock = hrtime(true);
             app(ContextResolver::class)->resolve($document);
+            $diagnostics['context_ms'] = round((hrtime(true) - $clock) / 1e6, 1);
+            $diagnostics += $this->chunkTree($unit);
+            // Counts and timings only: never quotes, evidence content or prompts.
+            Log::info('Document evidence merge completed', ['document_id' => $document->id,
+                'attempt' => $unit->fresh()?->attempts, ...$diagnostics]);
 
             /*
              * Finalize intelligence stage state first.
@@ -145,7 +152,8 @@ class MergeDocumentEvidenceJob implements ShouldQueue
             DB::transaction(function () use (
                 $unit,
                 $document,
-                $recorder
+                $recorder,
+                $diagnostics
             ) {
                 $lockedDocument = Document::whereKey($document->id)
                     ->lockForUpdate()
@@ -193,6 +201,7 @@ class MergeDocumentEvidenceJob implements ShouldQueue
                     'status' => 'completed',
                     'completed_at' => now(),
                     'failure_class' => null,
+                    'result' => ['diagnostics' => $diagnostics],
                 ]);
 
                 $lockedDocument->forceFill([
@@ -227,6 +236,21 @@ class MergeDocumentEvidenceJob implements ShouldQueue
 
             throw $e;
         }
+    }
+
+    /** Extraction tree shape for diagnostics: counts by status/failure class and depth only. */
+    private function chunkTree(DocumentChunk $unit): array
+    {
+        $chunks = DocumentChunk::where('document_id', $unit->document_id)->where('pipeline_key', $unit->pipeline_key)
+            ->where('stage', 'extraction')->get(['parent_id', 'status', 'failure_class', 'depth']);
+
+        return [
+            'root_chunks' => $chunks->whereNull('parent_id')->count(),
+            'split_parents' => $chunks->where('status', 'split')->count(),
+            'max_split_depth' => (int) $chunks->max('depth'),
+            'leaf_statuses' => $chunks->where('status', '!=', 'split')->countBy('status')->all(),
+            'leaf_failure_classes' => $chunks->whereNotIn('status', ['split', 'completed'])->countBy(fn ($c) => $c->failure_class ?? 'unknown')->all(),
+        ];
     }
 
     /** Repeatable after a crash between the merge checkpoint and credit settlement. */
