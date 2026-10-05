@@ -82,8 +82,11 @@ jobs:
       - name: Run migrations
         run: php artisan migrate --force
 
-      - name: Install ClamAV for real-binary tests
-        run: sudo apt-get update && sudo apt-get install -y clamav clamav-freshclam
+      - name: Install document-processing tools for real-binary tests
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y poppler-utils clamav clamav-freshclam
+          pdftoppm -v
       - name: Update virus definitions
         run: sudo freshclam || true  # freshclam can rate-limit on shared CI IPs; don't fail the build if it does
 

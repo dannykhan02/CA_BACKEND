@@ -7,6 +7,26 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## DocIntel backend test dependencies
+
+The PDF rasterizer tests execute the real `pdftoppm` binary against a synthetic
+PDF fixture. Install Poppler before running them; Composer does not install
+system executables. The production Docker image and GitHub Actions test job
+install `poppler-utils`.
+
+On Ubuntu/Debian:
+
+```sh
+sudo apt-get update
+sudo apt-get install -y poppler-utils
+pdftoppm -v
+php artisan test --filter=PdfRasterizerTest
+```
+
+Run the full backend suite against a local test database and Redis as described
+in `AGENTS.md`. ClamAV is also required for the real malware-scanner integration
+test. Do not point local test workers at production services.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
