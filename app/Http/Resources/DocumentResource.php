@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Services\DocumentIntelligenceService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Gate;
@@ -13,13 +14,14 @@ class DocumentResource extends JsonResource
         // Mutation endpoints return this resource without eager loading. Keep the
         // wire contract identical to show() while preserving existing results.
         $this->resource->loadMissing(['pageFlags', 'kpis', 'charts']);
+
         return [
             'id' => $this->id,
             'name' => $this->name,
             'type' => $this->type,
             'sizeKb' => $this->size_kb,
             'status' => $this->status,
-            'processingFailure' => app(\App\Services\DocumentIntelligenceService::class)->getDocumentFailure($this->resource),
+            'processingFailure' => app(DocumentIntelligenceService::class)->getDocumentFailure($this->resource),
             'classification' => $this->classification,
             'year' => $this->year,
             'uploadedAt' => $this->created_at?->toIso8601String(),
@@ -34,6 +36,8 @@ class DocumentResource extends JsonResource
             'charts' => ChartResource::collection($this->charts),
             'insights' => $this->insights ?? [],
             'progress' => $this->progress,
+            // Structured stage (key, label, optional step/total). Null once processing ends.
+            'progressStage' => $this->status === 'Processing' ? ($this->ai_pipeline['progress_stage'] ?? null) : null,
             'errorMessage' => $this->error_message,
             // Single source of truth for these four actions — mirrors
             // DocumentPolicy exactly, including its Personal-workspace

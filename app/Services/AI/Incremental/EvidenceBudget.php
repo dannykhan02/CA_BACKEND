@@ -48,7 +48,8 @@ class EvidenceBudget
             'definition', 'entity' => 3, default => 4,
         })->values();
         $data = ['entities' => [], 'risks' => [], 'deadlines' => [], 'kpis' => [], 'facts' => []];
-        $budget = (int) (config('document_intelligence.synthesis_token_budget') / (2 ** ($document->ai_pipeline['synthesis_reductions'] ?? 0)));
+        // Identical at every synthesis fallback level: only source context is degraded.
+        $budget = (int) config('document_intelligence.synthesis_token_budget');
         $used = 0;
         $trimmed = 0;
         foreach ($records as $record) {
@@ -70,10 +71,12 @@ class EvidenceBudget
             ->where('stage', 'extraction')->where('status', '!=', 'split')->get();
         $failed = $leaves->where('status', '!=', 'completed')->count();
         $dropped = $leaves->sum(fn ($chunk) => array_sum($chunk->result['_dropped_records'] ?? []));
-        $complete = $trimmed === 0 && $unresolved === 0 && $failed === 0 && $dropped === 0;
+        // A response that reached its record limit may have left lower-priority evidence out.
+        $saturated = $leaves->filter(fn ($chunk) => $chunk->status === 'completed' && ($chunk->result['_saturated'] ?? false))->count();
+        $complete = $trimmed === 0 && $unresolved === 0 && $failed === 0 && $dropped === 0 && $saturated === 0;
         $data['coverage'] = ['evidence_total' => $records->count(), 'evidence_omitted' => $trimmed,
             'unresolved_references' => $unresolved, 'failed_chunks' => $failed, 'total_chunks' => $leaves->count(),
-            'dropped_records' => $dropped, 'comprehensive' => $complete,
+            'dropped_records' => $dropped, 'saturated_chunks' => $saturated, 'comprehensive' => $complete,
             'warning' => $complete ? null : 'This intelligence is based on incomplete document evidence; some content could not be processed or included.'];
 
         return $data;
@@ -85,22 +88,44 @@ class EvidenceBudget
         $data = $this->forDocument($document);
         $data['source_context'] = $this->sourceContext($document, $data);
         $data['coverage']['source_text'] = $data['source_context']['coverage'];
+        $data['coverage']['synthesis_level'] = self::level($document);
 
         return $data;
     }
 
-    /** Token budget for source text; halves with every synthesis context reduction. */
-    public function sourceBudgetTokens(Document $document): int
+    /** Current synthesis fallback level (0 = full source context ... 3 = evidence only). */
+    public static function level(Document $document): int
     {
+        return min(count(config('document_intelligence.synthesis_levels')) - 1, max(0, (int) ($document->ai_pipeline['synthesis_reductions'] ?? 0)));
+    }
+
+    public static function levelConfig(int $level): array
+    {
+        $levels = config('document_intelligence.synthesis_levels');
+
+        return $levels[min(count($levels) - 1, max(0, $level))];
+    }
+
+    /**
+     * Token budget for source text at a fallback level. Level 0 is bounded by the synthesis model's
+     * room; every later level is a fraction of what level 0 could actually send (never more than the
+     * document), so each step materially reduces the previous source context.
+     */
+    public function sourceBudgetTokens(Document $document, ?int $level = null): int
+    {
+        $level ??= self::level($document);
         $model = app(AiModels::class)->forTask('document_summary');
         $context = (config('document_intelligence.model_capabilities', [])[$model] ?? ['context_window' => 0])['context_window'];
         // Room left after the bounded evidence, prompt/schema, output and safety margin.
         $room = $context - (int) config('document_intelligence.synthesis_token_budget') - 8192
             - (int) config('document_intelligence.synthesis_max_tokens')
             - (int) ceil($context * (float) config('document_intelligence.context_safety_ratio'));
+        $full = max(0, min($room, (int) config('document_intelligence.synthesis_source_max_tokens')));
+        if ($level === 0) {
+            return $full;
+        }
 
-        return max(0, (int) floor(min($room, (int) config('document_intelligence.synthesis_source_max_tokens'))
-            / (2 ** ($document->ai_pipeline['synthesis_reductions'] ?? 0))));
+        return max(0, (int) floor(min($full, $this->documentTokens($document)) * (float) self::levelConfig($level)['source_fraction']));
     }
 
     /** Conservative token count; never smaller than the counted/estimated document size. */
@@ -113,17 +138,22 @@ class EvidenceBudget
      * Deterministic: the full document when it fits, else source windows around the
      * evidence already selected for synthesis (in that priority order), else nothing.
      */
-    public function sourceContext(Document $document, array $data): array
+    public function sourceContext(Document $document, array $data, ?int $level = null): array
     {
+        $level ??= self::level($document);
+        $mode = self::levelConfig($level)['source'];
         $text = (string) $document->extracted_text;
-        $budget = $this->sourceBudgetTokens($document);
+        $budget = $this->sourceBudgetTokens($document, $level);
         $tokens = $this->documentTokens($document);
-        if ($text !== '' && $tokens <= $budget) {
+        if ($mode === 'none' || $budget === 0) {
+            return ['coverage' => 'omitted', 'excerpts' => []];
+        }
+        if ($text !== '' && $tokens <= $budget && $mode !== 'excerpts') {
             return ['coverage' => 'full', 'text' => $text];
         }
         // Bytes per token from the same conservative count, so the excerpt budget stays within tokens.
         $byteBudget = (int) floor($budget * strlen($text) / max(1, $tokens));
-        $radius = (int) config('document_intelligence.synthesis_excerpt_radius_chars');
+        $radius = (int) floor((int) config('document_intelligence.synthesis_excerpt_radius_chars') * (float) self::levelConfig($level)['radius_fraction']);
         $length = mb_strlen($text);
         $windows = [];
         $used = 0;
@@ -169,16 +199,22 @@ class EvidenceBudget
     }
 
     /** Upper bound (bytes) of the source context future synthesis may include. */
-    public function sourceReserveBytes(Document $document): int
+    public function sourceReserveBytes(Document $document, ?int $level = null): int
     {
+        $level ??= self::level($document);
         $text = (string) $document->extracted_text;
-        $budget = $this->sourceBudgetTokens($document);
-        if ($this->documentTokens($document) <= $budget) {
+        $budget = $this->sourceBudgetTokens($document, $level);
+        if ($budget === 0 || self::levelConfig($level)['source'] === 'none') {
+            return 0;
+        }
+        if ($this->documentTokens($document) <= $budget && self::levelConfig($level)['source'] !== 'excerpts') {
             return strlen(json_encode($text, JSON_UNESCAPED_UNICODE)) + 64;
         }
         $byteBudget = (int) floor($budget * strlen($text) / max(1, $this->documentTokens($document)));
+        // Excerpts are substrings, so they cannot hold more escapable characters than the whole
+        // document: the document's own escaping overhead bounds theirs (and never above 2x).
+        $escaping = max(0, strlen(json_encode($text, JSON_UNESCAPED_UNICODE)) - strlen($text) - 2);
 
-        // JSON escaping at most doubles ordinary text; offsets/keys per excerpt are small.
-        return 2 * $byteBudget + 4096;
+        return min(2 * $byteBudget, $byteBudget + $escaping) + 4096;
     }
 }

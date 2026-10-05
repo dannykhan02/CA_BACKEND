@@ -126,8 +126,9 @@ class AnthropicClient
             if (! in_array($model, config('document_intelligence.structured_models'), true)) {
                 throw new AiProcessingException('unsupported_structured_model');
             }
+            $limit = app(ExtractionCapacity::class)->recordLimit();
             $response = $this->callWithRetry([['role' => 'user', 'content' => json_encode(['document_name' => $document->name, 'start_page' => $chunk->start_page,
-                'end_page' => $chunk->end_page, 'source_text' => $text], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)]], options: [
+                'end_page' => $chunk->end_page, 'max_records' => $limit, 'source_text' => $text], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)]], options: [
                     'model' => $model, 'max_attempts' => 1, 'timeout' => (int) config('document_intelligence.extraction_timeout_seconds'), 'connect_timeout' => 10,
                     'max_tokens' => app(ExtractionCapacity::class)->outputTokens(),
                     'intelligence_document' => $document, 'typed_errors' => true,
@@ -136,7 +137,14 @@ class AnthropicClient
                     'output_config' => ['format' => ['type' => 'json_schema', 'schema' => $schema]],
                 ]);
 
-            return EvidenceSchema::validate($this->decodeJsonContent($response), $text);
+            $decoded = $this->decodeJsonContent($response);
+            $returned = is_array($decoded['records'] ?? null) ? count($decoded['records']) : 0;
+            $result = EvidenceSchema::validate($decoded, $text);
+            // A response at the limit may have omitted lower-priority evidence: coverage must say so.
+            $result['_returned_records'] = $returned;
+            $result['_saturated'] = $returned >= $limit;
+
+            return $result;
         } catch (AnthropicStructuredOutputException $e) {
             $status = $e->outputStatus;
             throw new AiProcessingException($status === 'truncated' ? 'max_tokens' : $status);
@@ -861,7 +869,9 @@ PROMPT;
             $options['output_config']['effort'] = config('services.anthropic.synthesis_effort');
         }
         if (($document?->ai_pipeline['route'] ?? null) === 'incremental') {
-            $options += ['single_response' => true, 'max_attempts' => 1, 'timeout' => 45, 'typed_errors' => true,
+            // Per-level provider timeout: production Sonnet synthesis over ~62k source tokens exceeded 45s.
+            $options += ['single_response' => true, 'max_attempts' => 1, 'typed_errors' => true,
+                'timeout' => (int) EvidenceBudget::levelConfig(EvidenceBudget::level($document))['timeout'],
                 'max_tokens' => config('document_intelligence.synthesis_max_tokens')];
         }
 
@@ -869,24 +879,43 @@ PROMPT;
             fn (array $response) => $this->parseSummaryResponse($response, $extractedDataJson, $document), $options);
     }
 
-    /** Same prompt and schemas as the requests; bytes bound tokens conservatively before usage exists. */
-    public function synthesisReservation(Document $document, ?array $data = null): array
+    /**
+     * Same prompt and schemas as the requests; bytes bound tokens conservatively before usage exists.
+     * Reserves the attempt at $level, the next (cheaper) fallback level and one repair separately, so
+     * a timed-out attempt whose usage stays unknown cannot consume every recovery option.
+     */
+    public function synthesisReservation(Document $document, ?array $data = null, ?int $level = null): array
     {
+        $budget = app(EvidenceBudget::class);
+        $level ??= EvidenceBudget::level($document);
+        $last = count(config('document_intelligence.synthesis_levels')) - 1;
+        $next = min($last, $level + 1);
         $json = $data === null ? '' : json_encode($data, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+        $evidenceJson = $this->withoutSourceContext($json);
         // EvidenceBudget bounds whole-record bytes. Allow the group/coverage envelope too.
         $futureEvidence = $data === null ? (int) config('document_intelligence.synthesis_token_budget') + 1024 : 0;
+        $envelope = strlen(json_encode(SynthesisSchema::schema())) + 512 + $futureEvidence;
         // Source context goes only to synthesis, never to the required-field repair.
-        $futureSource = $data === null ? app(EvidenceBudget::class)->sourceReserveBytes($document) : 0;
-        $input = strlen($this->buildSummaryPrompt($json, $document->name))
-            + strlen(json_encode(SynthesisSchema::schema())) + 512 + $futureEvidence + $futureSource;
-        $repairInput = strlen($this->summaryRepairPrompt(['executive_summary', 'key_findings'], $this->withoutSourceContext($json)))
+        $input = strlen($this->buildSummaryPrompt($json, $document->name)) + $envelope
+            + ($data === null ? $budget->sourceReserveBytes($document, $level) : 0);
+        // A fallback only ever sends less source context than this level does.
+        $currentSource = $data === null ? $budget->sourceReserveBytes($document, $level)
+            : strlen(json_encode($data['source_context'] ?? [], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+        $degradedInput = strlen($this->buildSummaryPrompt($evidenceJson, $document->name)) + $envelope
+            + min($budget->sourceReserveBytes($document, $next), $currentSource);
+        $repairInput = strlen($this->summaryRepairPrompt(['executive_summary', 'key_findings'], $evidenceJson))
             + strlen(json_encode($this->summaryRepairSchema())) + 512 + $futureEvidence;
         $pricing = app(AiPricing::class);
+        $model = $this->modelFor('document_summary');
+        $output = (int) config('document_intelligence.synthesis_max_tokens');
 
         return [
-            'synthesis_model' => $this->modelFor('document_summary'),
+            'synthesis_model' => $model,
+            'synthesis_level' => $level,
             'synthesis_input_bound' => $input,
-            'synthesis_reserved_usd' => $pricing->reserve($this->modelFor('document_summary'), $input, (int) config('document_intelligence.synthesis_max_tokens')),
+            'synthesis_reserved_usd' => $pricing->reserve($model, $input, $output),
+            // Held back for one fallback attempt until synthesis is admitted at the last level.
+            'synthesis_degraded_reserved_usd' => $next > $level ? $pricing->reserve($model, $degradedInput, $output) : 0.0,
             'repair_reserved_usd' => $pricing->reserve($this->modelFor('summary_repair'), $repairInput, (int) config('document_intelligence.repair_max_tokens')),
         ];
     }

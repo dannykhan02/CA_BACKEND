@@ -51,7 +51,7 @@ class ExtractionCapacity
     public function promptOverheadTokens(): int
     {
         return strlen(EvidenceSchema::instructions()) + strlen(json_encode(EvidenceSchema::extraction()))
-            + strlen(json_encode(['document_name' => str_repeat('x', 255), 'start_page' => 99999, 'end_page' => 99999, 'source_text' => ''])) + 512;
+            + strlen(json_encode(['document_name' => str_repeat('x', 255), 'start_page' => 99999, 'end_page' => 99999, 'max_records' => 99999, 'source_text' => ''])) + 512;
     }
 
     public function safetyMarginTokens(): int
@@ -72,23 +72,67 @@ class ExtractionCapacity
         return (int) floor($this->outputTokens() * (float) config('document_intelligence.output_fill_ratio'));
     }
 
-    private function outputPer1kInput(): float
+    /**
+     * Deterministic evidence-density signals (metadata only). Spreadsheets and numeric tables
+     * produce one schema record per figure, so they are planned with the dense record rate.
+     */
+    public function density(string $text, ?string $type = null): array
     {
-        return (float) config('document_intelligence.expected_records_per_1k_tokens')
-            * (int) config('document_intelligence.output_tokens_per_record');
+        $tokens = preg_split('/\s+/u', $text, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $numeric = count(preg_grep('/^[(\-+]?[$€£]?\d[\d,.]*%?\)?$/u', $tokens));
+        $lines = array_filter(preg_split('/\R/u', $text) ?: [], fn ($line) => trim($line) !== '');
+        // A table row: tab- or pipe-delimited, or at least three figures making up 40%+ of its tokens.
+        // A prose paragraph that merely mentions a few figures is not tabular.
+        $tabular = count(array_filter($lines, function ($line) {
+            if (str_contains($line, "\t") || substr_count($line, '|') >= 2) {
+                return true;
+            }
+            $cells = preg_split('/\s+/u', trim($line), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+            $figures = count(preg_grep('/^[(\-+]?[$€£]?\d[\d,.]*%?\)?$/u', $cells));
+
+            return $figures >= 3 && $figures / max(1, count($cells)) >= 0.4;
+        }));
+        $numericRatio = $tokens ? round($numeric / count($tokens), 3) : 0.0;
+        $tabularRatio = $lines ? round($tabular / count($lines), 3) : 0.0;
+        $spreadsheet = in_array(strtoupper((string) $type), ['XLSX', 'XLS', 'CSV'], true);
+        $dense = $spreadsheet || $numericRatio >= (float) config('document_intelligence.dense_numeric_ratio')
+            || $tabularRatio >= (float) config('document_intelligence.dense_tabular_line_ratio');
+
+        return ['dense' => $dense, 'spreadsheet' => $spreadsheet, 'numeric_ratio' => $numericRatio, 'tabular_line_ratio' => $tabularRatio,
+            'records_per_1k_tokens' => (float) config($dense ? 'document_intelligence.dense_records_per_1k_tokens' : 'document_intelligence.expected_records_per_1k_tokens')];
     }
 
-    public function expectedOutputTokens(int $documentTokens): int
+    private function recordsPer1k(?float $recordsPer1k): float
     {
-        $records = (int) ceil($documentTokens / 1000 * (float) config('document_intelligence.expected_records_per_1k_tokens'));
+        return $recordsPer1k ?? (float) config('document_intelligence.expected_records_per_1k_tokens');
+    }
+
+    private function outputPer1kInput(?float $recordsPer1k = null): float
+    {
+        return $this->recordsPer1k($recordsPer1k) * (int) config('document_intelligence.output_tokens_per_record');
+    }
+
+    public function expectedOutputTokens(int $documentTokens, ?float $recordsPer1k = null): int
+    {
+        $records = (int) ceil($documentTokens / 1000 * $this->recordsPer1k($recordsPer1k));
 
         return $records * (int) config('document_intelligence.output_tokens_per_record') + 64; // JSON envelope.
     }
 
-    /** Largest input slice whose expected output AND input both fit one request. */
-    public function partitionTokens(): int
+    /**
+     * Records one request may return. Sent with every extraction request so the model ends its
+     * response inside the output budget instead of being truncated at max_tokens (which discards
+     * the whole response and forces a split).
+     */
+    public function recordLimit(): int
     {
-        $byOutput = (int) floor(max(0, $this->outputCapacity() - 64) / max(1, $this->outputPer1kInput()) * 1000);
+        return max(1, intdiv(max(0, $this->outputCapacity() - 64), max(1, (int) config('document_intelligence.output_tokens_per_record'))));
+    }
+
+    /** Largest input slice whose expected output AND input both fit one request. */
+    public function partitionTokens(?float $recordsPer1k = null): int
+    {
+        $byOutput = (int) floor(max(0, $this->outputCapacity() - 64) / max(1, $this->outputPer1kInput($recordsPer1k)) * 1000);
         $tokens = min($this->inputCapacity(), $byOutput);
         // Optional operator ceiling (null by default): never larger than derived capacity.
         if (config('document_intelligence.chunk_max_tokens')) {
@@ -110,12 +154,13 @@ class ExtractionCapacity
     }
 
     /** Deterministic route decision plus metadata-only diagnostics. */
-    public function decide(int $documentTokens): array
+    public function decide(int $documentTokens, ?array $density = null): array
     {
         $capabilities = $this->capabilities();
         $input = $this->inputCapacity();
-        $partition = $this->partitionTokens();
-        $expected = $this->expectedOutputTokens($documentTokens);
+        $rate = $density['records_per_1k_tokens'] ?? null;
+        $partition = $this->partitionTokens($rate);
+        $expected = $this->expectedOutputTokens($documentTokens, $rate);
         $mode = match (true) {
             $documentTokens <= $partition && $expected <= $this->outputCapacity() => 'direct',
             $documentTokens <= $input => 'coarse',
@@ -139,6 +184,11 @@ class ExtractionCapacity
             'input_headroom_tokens' => $input - $documentTokens,
             'output_headroom_tokens' => $this->outputCapacity() - $expected,
             'planned_partitions' => $mode === 'direct' ? 1 : (int) ceil($documentTokens / $partition),
+            'record_limit' => $this->recordLimit(),
+            'dense' => (bool) ($density['dense'] ?? false),
+            'records_per_1k_tokens' => $this->recordsPer1k($rate),
+            'numeric_ratio' => (float) ($density['numeric_ratio'] ?? 0),
+            'tabular_line_ratio' => (float) ($density['tabular_line_ratio'] ?? 0),
         ];
     }
 }

@@ -18,6 +18,7 @@ use App\Services\AI\Incremental\EvidenceSchema;
 use App\Services\AI\Incremental\ExtractionCapacity;
 use App\Services\AI\Incremental\IncrementalPipeline;
 use App\Services\AnthropicClient;
+use App\Services\Kpis\KpiIdentityResolver;
 use App\Services\Pipeline\PipelineStageRecorder;
 use App\Services\WorkspaceService;
 use Database\Seeders\DocumentEntitiesPromptSeeder;
@@ -650,7 +651,7 @@ class DocumentRoutingAndMergeScaleTest extends TestCase
         self::assertSame($route['input_capacity_tokens'] - 15385, $route['input_headroom_tokens']);
         self::assertSame($route['output_capacity_tokens'] - $route['expected_output_tokens'], $route['output_headroom_tokens']);
         foreach ($route as $key => $value) {
-            self::assertTrue(is_int($value) || is_bool($value) || in_array($key, ['document_id', 'mode', 'model'], true), $key);
+            self::assertTrue(is_int($value) || is_bool($value) || is_float($value) || in_array($key, ['document_id', 'mode', 'model'], true), $key);
         }
         $plan = $records->first(fn ($r) => $r['message'] === 'Document intelligence partitions planned')['context'];
         self::assertSame(1, $plan['root_chunks']);
@@ -750,5 +751,52 @@ class DocumentRoutingAndMergeScaleTest extends TestCase
         (new MergeDocumentEvidenceJob($merge->id))->handle(app(EvidenceMerger::class), app(PipelineStageRecorder::class));
         (new MergeDocumentEvidenceJob($merge->id))->handle(app(EvidenceMerger::class), app(PipelineStageRecorder::class));
         self::assertSame($before, $snapshot());
+    }
+
+    public function test_derived_rows_for_two_hundred_fifty_records_use_a_bounded_number_of_statements(): void
+    {
+        // ~245 evidence rows (production sector_report.pdf merged 233). Every statement is a database
+        // round trip, which is what dominated production merge time (~48s of ~50s), not CPU.
+        [$document, $records] = $this->evidenceDocument(180);
+        $merger = app(EvidenceMerger::class);
+        $statements = [];
+        $this->countQueries(function () use ($merger, $document, &$stats) {
+            $stats = $merger->merge($document);
+        }, $statements);
+        self::assertSame(count($records) - 1, $stats['derived_created']);
+        $derived = array_filter($statements, fn ($sql) => preg_match('/insert into "document_(kpis|entities|risks|deadlines)"|nextval|UPDATE document_evidence SET source_id/i', $sql));
+        // One multi-row insert and one id allocation per derived table, one link update per batch.
+        self::assertLessThanOrEqual(9, count($derived));
+        self::assertSame(180, $document->kpis()->count());
+        self::assertSame(0, DocumentEvidence::whereNull('source_id')->count());
+        foreach (DocumentEvidence::all() as $evidence) {
+            [$kind, $id] = explode(':', $evidence->source_id);
+            $table = ['kpi' => 'document_kpis', 'entity' => 'document_entities', 'risk' => 'document_risks', 'deadline' => 'document_deadlines', 'fact' => null][$kind];
+            if ($table) {
+                self::assertTrue(DB::table($table)->where('id', $id)->where('document_id', $document->id)->exists(), $evidence->source_id);
+            }
+        }
+        // The KPI observation row carries the same fields the per-row Eloquent create wrote.
+        $kpi = $document->kpis()->orderBy('id')->first();
+        self::assertSame('Region', $kpi->identity_metadata['scope']);
+        self::assertNotNull($kpi->created_at);
+        // Retry: nothing new is created and links stay stable.
+        $links = DocumentEvidence::orderBy('id')->pluck('source_id')->all();
+        $again = $merger->merge($document);
+        self::assertSame(0, $again['derived_created']);
+        self::assertSame($links, DocumentEvidence::orderBy('id')->pluck('source_id')->all());
+        self::assertSame(180, $document->kpis()->count());
+    }
+
+    public function test_bulk_derived_rows_reject_foreign_workspace_kpi_identity(): void
+    {
+        [$document] = $this->evidenceDocument(3);
+        $foreign = KpiDefinition::create(['workspace_id' => $this->document('x')->workspace_id, 'canonical_name' => 'Indicator 0',
+            'normalized_name' => 'indicator 0', 'matching_metadata' => [], 'identity_key' => 'foreign']);
+        $resolver = \Mockery::mock(KpiIdentityResolver::class);
+        $resolver->shouldReceive('existingAlias')->andReturn(['definition_id' => $foreign->id, 'profile' => [], 'method' => 'alias']);
+        $this->app->instance(KpiIdentityResolver::class, $resolver);
+        $this->expectException(\LogicException::class);
+        app(EvidenceMerger::class)->merge($document);
     }
 }

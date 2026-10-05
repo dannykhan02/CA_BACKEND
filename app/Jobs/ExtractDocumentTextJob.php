@@ -11,6 +11,7 @@ use App\Services\EntitlementService;
 use App\Services\Extraction\SpreadsheetTextExtractor;
 use App\Services\Ocr\OcrEngineResolver;
 use App\Services\Ocr\PdfRasterizer;
+use App\Services\Pipeline\DocumentProgress;
 use App\Services\Pipeline\PipelineStageRecorder;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -50,7 +51,8 @@ class ExtractDocumentTextJob implements ShouldQueue
         }
 
         $extractStage = $recorder->start($document, 'extract');
-        $document->forceFill(['progress' => 25])->save();
+        $document->forceFill(['progress' => max(25, (int) $document->progress)])->save();
+        app(DocumentProgress::class)->record($document->id, 'extracting_text', 25);
 
         // The 'documents' disk may be a remote driver (e.g. S3/R2) — text
         // extractors and the PDF rasterizer need a real local filesystem

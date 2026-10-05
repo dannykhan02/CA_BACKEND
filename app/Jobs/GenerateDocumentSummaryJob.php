@@ -15,6 +15,7 @@ use App\Services\AI\Incremental\EvidenceBudget;
 use App\Services\AI\Incremental\IncrementalPipeline;
 use App\Services\AI\Incremental\SynthesisCheckpoint;
 use App\Services\AnthropicClient;
+use App\Services\Pipeline\DocumentProgress;
 use App\Services\Pipeline\PipelineStageRecorder;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
@@ -47,7 +48,9 @@ class GenerateDocumentSummaryJob implements ShouldQueue
 
     public int $tries = 2;
 
-    public int $timeout = 140;
+    // Largest per-level provider timeout (110s) + one bounded repair (40s) + bookkeeping.
+    // Stays below the 360s extraction worker timeout and the 390s Redis retry_after.
+    public int $timeout = 200;
 
     public bool $failOnTimeout = true;
 
@@ -72,6 +75,11 @@ class GenerateDocumentSummaryJob implements ShouldQueue
             if (! $checkpoint) {
                 return;
             }
+            // The claim may have moved down the fallback ladder and recorded new reservations.
+            $document->refresh();
+            $level = EvidenceBudget::level($document);
+            app(DocumentProgress::class)->record($document->id, $level > 0 ? 'synthesis_retry' : 'synthesizing', 95 + min(3, $level),
+                ['level' => $level]);
         }
 
         $stage = $this->startIntelligence($document, 'document_summary', $recorder);
@@ -133,27 +141,12 @@ class GenerateDocumentSummaryJob implements ShouldQueue
                 : ($e instanceof AnthropicStructuredOutputException ? $e->outputStatus : 'validation');
             $checkpoint?->update(['status' => 'failed', 'failure_class' => $failure]);
             if ($checkpoint) {
-                $document->refresh()->forceFill(['status' => 'Needs Review', 'progress' => 100,
-                    'error_message' => $failure === 'billing'
-                        ? 'AI analysis is temporarily unavailable. Your extracted evidence has been preserved. Please contact support.'
-                        : 'Available evidence is preserved, but document synthesis could not be completed.',
-                    'ai_pipeline' => [...$document->ai_pipeline, 'partial' => true, 'synthesis' => $failure]])->save();
-                if (in_array($failure, ['max_tokens', 'truncated', 'context_overflow', 'timeout'], true)
-                    && ($document->ai_pipeline['synthesis_reductions'] ?? 0) < 2) {
-                    // Only synthesis changes: completed extraction is never scheduled again.
-                    $document->forceFill(['ai_pipeline' => [...$document->ai_pipeline,
-                        'synthesis_reductions' => ($document->ai_pipeline['synthesis_reductions'] ?? 0) + 1]])->save();
-                    $document->forceFill(['status' => 'Processing'])->save();
-                    self::dispatch($document->id, true)->onQueue('extraction');
-                    $retryScheduled = true;
+                // Settle (idempotent) before any fallback claim reads the committed spend.
+                app(IncrementalPipeline::class)->settleCost($checkpoint, $providerCalled);
+                $retryScheduled = $this->scheduleRecovery($document, $checkpoint, $failure, $e);
+                if (! $retryScheduled) {
+                    $this->markSynthesisFailed($document, $failure);
                 }
-            }
-            if ($checkpoint && $e instanceof AiProcessingException && $e->classification === 'transient'
-                && $checkpoint->attempts < config('document_intelligence.attempts')) {
-                $checkpoint->update(['status' => 'pending']);
-                $document->forceFill(['status' => 'Processing'])->save();
-                self::dispatch($document->id, true)->onQueue('extraction')->delay(max(2 ** $checkpoint->attempts * 5, $e->retryAfter) + random_int(0, 5));
-                $retryScheduled = true;
             }
 
             if (! $checkpoint && $this->abandonIntelligence($document, $stage)) {
@@ -175,6 +168,9 @@ class GenerateDocumentSummaryJob implements ShouldQueue
 
         if ($this->abandonIntelligence($document, $stage)) {
             return;
+        }
+        if ($checkpoint) {
+            app(DocumentProgress::class)->record($document->id, 'finalizing', 99);
         }
 
         if ($checkpoint && ! empty($extractedData['coverage']['warning'])
@@ -229,6 +225,53 @@ class GenerateDocumentSummaryJob implements ShouldQueue
         }
     }
 
+    /**
+     * Degradable failures (timeout, truncation, context size) move one level down the fallback
+     * ladder: same validated evidence, less source context. Transient provider failures retry at
+     * the same level. Authentication, billing, model and schema failures are never retried here.
+     */
+    private function scheduleRecovery(Document $document, DocumentChunk $checkpoint, string $failure, \Throwable $e): bool
+    {
+        $document->refresh();
+        $level = EvidenceBudget::level($document);
+        $last = count(config('document_intelligence.synthesis_levels')) - 1;
+        if (in_array($failure, config('document_intelligence.synthesis_degradable_failures'), true) && $level < $last) {
+            $document->forceFill(['status' => 'Processing', 'error_message' => null, 'ai_pipeline' => [...$document->ai_pipeline,
+                'synthesis_reductions' => $level + 1, 'synthesis' => 'pending',
+                'synthesis_degradations' => [...($document->ai_pipeline['synthesis_degradations'] ?? []),
+                    ['from' => $level, 'to' => $level + 1, 'reason' => $failure === 'truncated' ? 'max_tokens' : $failure]]]])->save();
+            app(DocumentProgress::class)->record($document->id, 'synthesis_retry', 96 + min(2, $level), ['level' => $level + 1]);
+            self::dispatch($document->id, true)->onQueue('extraction');
+
+            return true;
+        }
+        if ($e instanceof AiProcessingException && $failure === 'transient'
+            && $checkpoint->attempts < config('document_intelligence.attempts')) {
+            $checkpoint->update(['status' => 'pending']);
+            $document->forceFill(['status' => 'Processing'])->save();
+            self::dispatch($document->id, true)->onQueue('extraction')->delay(max(2 ** $checkpoint->attempts * 5, $e->retryAfter) + random_int(0, 5));
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /** Short, non-technical terminal reason; the failure class stays in admin diagnostics only. */
+    private function markSynthesisFailed(Document $document, string $failure): void
+    {
+        $document->refresh();
+        [$reason, $message] = match (true) {
+            $failure === 'billing' => ['billing', 'AI analysis is temporarily unavailable. Your extracted evidence has been preserved. Please contact support.'],
+            in_array($failure, config('document_intelligence.synthesis_degradable_failures'), true) => ['timeout_exhausted',
+                'The final summary could not be completed, even with reduced document context. Your extracted evidence is preserved.'],
+            default => [$failure, 'Available evidence is preserved, but document synthesis could not be completed.'],
+        };
+        $document->forceFill(['status' => 'Needs Review', 'progress' => 100, 'error_message' => $message,
+            'ai_pipeline' => [...$document->ai_pipeline, 'partial' => true, 'synthesis' => $failure,
+                'synthesis_failure_reason' => $reason]])->save();
+    }
+
     /** Metadata only: never evidence, source text, prompts or the response. */
     private function logSynthesis(Document $document, DocumentChunk $checkpoint, bool $providerCalled, array $coverage): void
     {
@@ -242,11 +285,22 @@ class GenerateDocumentSummaryJob implements ShouldQueue
             'source_context' => $coverage['source_text'] ?? null, 'evidence_total' => $coverage['evidence_total'] ?? null,
             'evidence_omitted' => $coverage['evidence_omitted'] ?? null,
             'provider_requests' => $runs->count(), 'repair_requests' => max(0, $runs->count() - 1),
+            'synthesis_level' => $checkpoint->cost_accounting['synthesis_level'] ?? null,
+            'source_context_mode' => $checkpoint->cost_accounting['source_context'] ?? null,
+            'source_tokens_bound' => $pipeline['synthesis_input_bound'] ?? null,
+            'evidence_count' => $coverage['evidence_total'] ?? null,
+            'queue_wait_ms' => $checkpoint->started_at && $checkpoint->created_at ? (int) $checkpoint->created_at->diffInMilliseconds($checkpoint->started_at, true) : null,
+            'timeouts' => $runs->where('failure_class', 'timeout')->count(),
+            'context_reductions' => count($pipeline['synthesis_degradations'] ?? []),
+            'degradations' => $pipeline['synthesis_degradations'] ?? [],
             'synthesis_reductions' => $pipeline['synthesis_reductions'] ?? 0,
             'input_tokens' => (int) $runs->sum('input_tokens'), 'output_tokens' => (int) $runs->sum('output_tokens'),
             'latency_ms' => (int) $runs->sum('duration_ms'),
             'estimated_cost_usd' => $checkpoint->cost_accounting['estimate'] ?? null,
             'settled_cost_usd' => $checkpoint->cost_accounting['cost'] ?? null,
+            'actual_known' => $checkpoint->cost_accounting['actual_known'] ?? null,
+            'document_budget_remaining_usd' => round((float) ($pipeline['budget_usd'] ?? 0) - (float) DocumentChunk::where('document_id', $document->id)
+                ->where('pipeline_key', $checkpoint->pipeline_key)->sum('reserved_cost'), 6),
         ]);
     }
 
