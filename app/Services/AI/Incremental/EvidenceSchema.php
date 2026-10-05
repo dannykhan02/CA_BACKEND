@@ -35,114 +35,158 @@ PROMPT;
     }
 
     public static function validate(array $result, string $text): array
-        {
-            if (! is_array($result['records'] ?? null) || ! array_is_list($result['records'])) {
-                throw new AiProcessingException('invalid_schema');
-            }
+    {
+        if (
+            ! is_array($result['records'] ?? null)
+            || ! array_is_list($result['records'])
+        ) {
+            throw new AiProcessingException('invalid_schema');
+        }
 
-            $schema = self::extraction()['properties']['records']['items']['properties'];
-
-            $valid = [];
-            $dropped = [
-                'invalid_schema' => 0,
-                'invalid_evidence' => 0,
-                'invalid_date' => 0,
+        /*
+        * A genuinely empty extraction is valid.
+        * The model is allowed to say there is no useful evidence in this slice.
+        */
+        if ($result['records'] === []) {
+            return [
+                'records' => [],
+                '_dropped_records' => [],
             ];
+        }
 
-            foreach ($result['records'] as $record) {
-                try {
-                    if (! is_array($record)) {
+        $schema = self::extraction()['properties']['records']['items']['properties'];
+
+        $valid = [];
+
+        $dropped = [
+            'invalid_schema' => 0,
+            'invalid_evidence' => 0,
+            'invalid_date' => 0,
+        ];
+
+        $firstFailure = null;
+
+        foreach ($result['records'] as $record) {
+            try {
+                if (! is_array($record)) {
+                    throw new AiProcessingException('invalid_schema');
+                }
+
+                foreach ($schema as $field => $rule) {
+                    if (! array_key_exists($field, $record)) {
                         throw new AiProcessingException('invalid_schema');
                     }
 
-                    foreach ($schema as $field => $rule) {
-                        if (! array_key_exists($field, $record)) {
-                            throw new AiProcessingException('invalid_schema');
-                        }
+                    $value = $record[$field];
 
-                        $value = $record[$field];
+                    $fieldValid = match ($rule['type']) {
+                        'string' => is_string($value),
 
-                        $fieldValid = match ($rule['type']) {
-                            'string' => is_string($value),
+                        'number' => is_int($value) || is_float($value),
 
-                            'number' => is_int($value) || is_float($value),
+                        'array' => is_array($value)
+                            && array_is_list($value)
+                            && count(array_filter($value, 'is_string')) === count($value),
 
-                            'array' => is_array($value)
-                                && array_is_list($value)
-                                && count(array_filter($value, 'is_string')) === count($value),
-
-                            default => $value === null || is_string($value),
-                        };
-
-                        if (! $fieldValid
-                            || (isset($rule['enum']) && ! in_array($value, $rule['enum'], true))) {
-                            throw new AiProcessingException('invalid_schema');
-                        }
-                    }
+                        default => $value === null || is_string($value),
+                    };
 
                     if (
-                        $record['confidence'] < 0
-                        || $record['confidence'] > 1
-                        || trim($record['quote']) === ''
-                        || trim($record['label']) === ''
-                    ) {
-                        throw new AiProcessingException('invalid_evidence');
-                    }
-
-                    /*
-                    * Grounding remains strict.
-                    * Never invent or rewrite a quote just to make validation pass.
-                    */
-                    if (! str_contains($text, $record['quote'])) {
-                        throw new AiProcessingException('invalid_evidence');
-                    }
-
-                    if ($record['date_type'] === 'explicit' && $record['due_date'] === null) {
-                        throw new AiProcessingException('invalid_date');
-                    }
-
-                    if ($record['due_date'] !== null) {
-                        $date = \DateTimeImmutable::createFromFormat(
-                            '!Y-m-d',
-                            $record['due_date']
-                        );
-
-                        if (
-                            $record['date_type'] !== 'explicit'
-                            || ! $date
-                            || $date->format('Y-m-d') !== $record['due_date']
-                        ) {
-                            throw new AiProcessingException('invalid_date');
-                        }
-                    }
-
-                    if (
-                        in_array($record['kind'], ['deadline', 'obligation'], true)
-                        && ! in_array(
-                            $record['date_type'],
-                            ['explicit', 'relative', 'inferred'],
-                            true
+                        ! $fieldValid
+                        || (
+                            isset($rule['enum'])
+                            && ! in_array($value, $rule['enum'], true)
                         )
                     ) {
-                        throw new AiProcessingException('invalid_date');
-                    }
-
-                    $valid[] = $record;
-
-                } catch (AiProcessingException $e) {
-                    $classification = $e->classification;
-
-                    if (array_key_exists($classification, $dropped)) {
-                        $dropped[$classification]++;
-                    } else {
-                        $dropped['invalid_evidence']++;
+                        throw new AiProcessingException('invalid_schema');
                     }
                 }
-            }
 
-            return [
-                'records' => $valid,
-                '_dropped_records' => array_filter($dropped),
-            ];
+                if (
+                    $record['confidence'] < 0
+                    || $record['confidence'] > 1
+                    || trim($record['quote']) === ''
+                    || trim($record['label']) === ''
+                ) {
+                    throw new AiProcessingException('invalid_evidence');
+                }
+
+                /*
+                * Grounding remains strict.
+                * Quotes must actually exist in the supplied chunk.
+                */
+                if (! str_contains($text, $record['quote'])) {
+                    throw new AiProcessingException('invalid_evidence');
+                }
+
+                if (
+                    $record['date_type'] === 'explicit'
+                    && $record['due_date'] === null
+                ) {
+                    throw new AiProcessingException('invalid_date');
+                }
+
+                if ($record['due_date'] !== null) {
+                    $date = \DateTimeImmutable::createFromFormat(
+                        '!Y-m-d',
+                        $record['due_date']
+                    );
+
+                    if (
+                        $record['date_type'] !== 'explicit'
+                        || ! $date
+                        || $date->format('Y-m-d') !== $record['due_date']
+                    ) {
+                        throw new AiProcessingException('invalid_date');
+                    }
+                }
+
+                if (
+                    in_array(
+                        $record['kind'],
+                        ['deadline', 'obligation'],
+                        true
+                    )
+                    && ! in_array(
+                        $record['date_type'],
+                        ['explicit', 'relative', 'inferred'],
+                        true
+                    )
+                ) {
+                    throw new AiProcessingException('invalid_date');
+                }
+
+                $valid[] = $record;
+            } catch (AiProcessingException $e) {
+                $classification = $e->classification;
+
+                $firstFailure ??= $classification;
+
+                if (array_key_exists($classification, $dropped)) {
+                    $dropped[$classification]++;
+                } else {
+                    $dropped['invalid_evidence']++;
+                }
+            }
         }
+
+        /*
+        * Important distinction:
+        *
+        * [] from the provider is a legitimate "nothing found".
+        *
+        * A non-empty response where every item was invalid means the provider
+        * attempted extraction but produced no trustworthy evidence.
+        */
+        if ($valid === []) {
+            throw new AiProcessingException(
+                $firstFailure ?? 'invalid_evidence'
+            );
+        }
+
+        return [
+            'records' => $valid,
+            '_dropped_records' => array_filter($dropped),
+        ];
+    }
 }
