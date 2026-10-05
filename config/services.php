@@ -40,8 +40,7 @@ return [
         'api_key' => env('ANTHROPIC_API_KEY'),
         'model' => env('ANTHROPIC_MODEL', 'claude-haiku-4-5-20251001'),
         'extraction_model' => env('ANTHROPIC_EXTRACTION_MODEL', env('ANTHROPIC_MODEL', 'claude-haiku-4-5-20251001')),
-        // Set explicitly after checking account access; null preserves existing routing.
-        'synthesis_model' => env('ANTHROPIC_SYNTHESIS_MODEL'),
+        'synthesis_model' => env('ANTHROPIC_SYNTHESIS_MODEL', 'claude-sonnet-5-5'),
         'synthesis_effort' => env('ANTHROPIC_SYNTHESIS_EFFORT', 'medium'),
         'max_tokens' => (int) env('ANTHROPIC_MAX_TOKENS', 4096),
         'structured_max_tokens_ceiling' => (int) env('ANTHROPIC_STRUCTURED_MAX_TOKENS_CEILING', 8192),

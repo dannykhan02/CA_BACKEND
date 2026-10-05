@@ -3,6 +3,7 @@
 namespace App\Services\AI\Incremental;
 
 use App\Models\Document;
+use App\Models\DocumentChunk;
 use App\Models\DocumentEvidence;
 
 class EvidenceBudget
@@ -64,8 +65,15 @@ class EvidenceBudget
             $data[$group][] = $item;
             $used += $tokens;
         }
+        $leaves = DocumentChunk::where('document_id', $document->id)->where('pipeline_key', $document->ai_pipeline['key'])
+            ->where('stage', 'extraction')->where('status', '!=', 'split')->get();
+        $failed = $leaves->where('status', '!=', 'completed')->count();
+        $dropped = $leaves->sum(fn ($chunk) => array_sum($chunk->result['_dropped_records'] ?? []));
+        $complete = $trimmed === 0 && $unresolved === 0 && $failed === 0 && $dropped === 0;
         $data['coverage'] = ['evidence_total' => $records->count(), 'evidence_omitted' => $trimmed,
-            'unresolved_references' => $unresolved, 'comprehensive' => $trimmed === 0 && $unresolved === 0];
+            'unresolved_references' => $unresolved, 'failed_chunks' => $failed, 'total_chunks' => $leaves->count(),
+            'dropped_records' => $dropped, 'comprehensive' => $complete,
+            'warning' => $complete ? null : 'This intelligence is based on incomplete document evidence; some content could not be processed or included.'];
 
         return $data;
     }

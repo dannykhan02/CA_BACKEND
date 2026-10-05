@@ -7,6 +7,7 @@ use App\Models\Document;
 use App\Models\DocumentChunk;
 use App\Services\AI\AiModels;
 use App\Services\AI\AiPricing;
+use App\Services\AI\Incremental\IncrementalPipeline;
 use App\Services\AI\Incremental\VisualPlanner;
 use App\Services\AnthropicClient;
 use Illuminate\Bus\Queueable;
@@ -50,10 +51,14 @@ class ProcessDocumentVisualJob implements ShouldQueue
                 $locked = Document::whereKey($document->id)->lockForUpdate()->firstOrFail();
                 $budget = $locked->ai_pipeline['budget_usd'] ?? config('document_intelligence.budget_base_usd');
                 $spent = DocumentChunk::where('document_id', $document->id)->where('pipeline_key', $unit->pipeline_key)->sum('reserved_cost');
-                if ($cost === null || $spent + $cost > $budget) {
+                if (($locked->ai_pipeline['route'] ?? null) === 'incremental'
+                    ? ! app(IncrementalPipeline::class)->canReserve($locked, $cost)
+                    : ($cost === null || $spent + $cost > $budget)) {
                     return false;
                 }
-                $unit->update(['reserved_cost' => $cost]);
+                // The visual status claim above is independent of its paid request claim.
+                $unit->attempts = 0;
+                app(IncrementalPipeline::class)->reserveCost($unit, $cost);
 
                 return true;
             });
@@ -74,6 +79,7 @@ class ProcessDocumentVisualJob implements ShouldQueue
         } catch (\Throwable $e) {
             $unit->update(['status' => 'failed', 'failure_class' => $e instanceof AiProcessingException ? $e->classification : 'visual_partial', 'completed_at' => now()]);
         } finally {
+            app(IncrementalPipeline::class)->settleCost($unit);
             Storage::disk('documents')->delete($asset['path']);
             $planner->pump($document, $unit->pipeline_key);
         }

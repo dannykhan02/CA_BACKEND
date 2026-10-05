@@ -17,9 +17,14 @@ class DocumentIntelligenceService
 
     public function loadIntelligence(Document $document): Document
     {
-        return $document->loadMissing([
+        $document->loadMissing([
             'documentTypeClassification', 'entities', 'risks', 'deadlines', 'intelligenceSummary',
         ]);
+        if ($document->ai_pipeline['summary_stale'] ?? false) {
+            $document->setRelation('intelligenceSummary', null);
+        }
+
+        return $document;
     }
 
     /**
@@ -57,6 +62,9 @@ class DocumentIntelligenceService
             if ($status['document_summary'] === 'not_started') {
                 $status['document_summary'] = $state === 'processing' ? 'pending' : 'failed';
             }
+            if ($document->ai_pipeline['summary_stale'] ?? false) {
+                $status['document_summary'] = $document->status === 'Processing' ? 'pending' : 'failed';
+            }
         }
 
         return $status;
@@ -81,7 +89,9 @@ class DocumentIntelligenceService
         }
 
         return ['route' => $document->ai_pipeline['route'] ?? 'normal', 'partial' => $partial,
-            'evidenceTrimmed' => (bool) ($document->ai_pipeline['evidence_trimmed'] ?? false), 'stages' => $stages];
+            'evidenceTrimmed' => (bool) ($document->ai_pipeline['evidence_trimmed'] ?? false), 'stages' => $stages,
+            'coverage' => $document->ai_pipeline['coverage'] ?? null,
+            'synthesisCoverageWarning' => $document->ai_pipeline['synthesis_coverage_warning'] ?? null];
     }
 
     /** Public, document-level failure metadata; never expose raw provider errors. */

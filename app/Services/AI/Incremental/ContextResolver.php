@@ -56,17 +56,22 @@ class ContextResolver
         if ($unit->status !== 'completed') {
             $claimed = DB::transaction(function () use ($unit, $document, $requests) {
                 $locked = Document::whereKey($document->id)->lockForUpdate()->firstOrFail();
-                $cost = app(AiPricing::class)->estimate(app(AiModels::class)->forTask('context_resolution'),
-                    ['input_tokens' => strlen(json_encode($requests)) + 1000, 'output_tokens' => 1000]);
-                $spent = DocumentChunk::where('document_id', $document->id)->where('pipeline_key', $unit->pipeline_key)->sum('reserved_cost');
-                if ($cost === null || $cost + $spent > $locked->ai_pipeline['budget_usd']) {
+                $unit->refresh();
+                if ($unit->status !== 'pending') {
+                    return false;
+                }
+                $cost = app(AiPricing::class)->reserve(app(AiModels::class)->forTask('context_resolution'),
+                    strlen(json_encode($requests)) + 2000, (int) config('document_intelligence.context_max_tokens'));
+                $pipeline = app(IncrementalPipeline::class);
+                if (! $pipeline->canReserve($locked, $cost)) {
                     DocumentChunk::whereKey($unit->id)->where('status', 'pending')->update(['status' => 'budget', 'failure_class' => 'budget_exceeded']);
 
                     return false;
                 }
 
-                return DocumentChunk::whereKey($unit->id)->where('status', 'pending')->update([
-                    'status' => 'running', 'started_at' => now(), 'attempts' => 1, 'reserved_cost' => $cost]) === 1;
+                $pipeline->reserveCost($unit, $cost);
+
+                return true;
             });
             if (! $claimed) {
                 return;
@@ -80,6 +85,8 @@ class ContextResolver
                 $unit->update(['status' => 'failed', 'failure_class' => 'optional_resolution']);
 
                 return;
+            } finally {
+                app(IncrementalPipeline::class)->settleCost($unit);
             }
         }
         foreach ($unit->result['resolutions'] ?? [] as $resolution) {

@@ -8,6 +8,7 @@ use App\Jobs\GenerateEmbeddingsJob;
 use App\Jobs\MergeDocumentEvidenceJob;
 use App\Jobs\ProcessDocumentChunkJob;
 use App\Models\Document;
+use App\Models\DocumentAiRun;
 use App\Models\DocumentChunk;
 use App\Services\AI\AiModels;
 use App\Services\AnthropicClient;
@@ -191,12 +192,97 @@ class IncrementalPipeline
                     )
             );
 
+            $metadata = [...$metadata, ...$this->client->synthesisReservation($locked), 'synthesis' => 'pending'];
+
             $locked->forceFill([
                 'ai_pipeline' => $metadata,
             ])->save();
         });
 
         $this->pump($document->id);
+    }
+
+    /** Caller holds the document lock, serializing all paid stage admissions. */
+    public function canReserve(Document $document, ?float $cost, bool $synthesis = false): bool
+    {
+        if ($cost === null) {
+            return false;
+        }
+        $protected = 0;
+        if (($document->ai_pipeline['route'] ?? null) === 'incremental' && ! $synthesis
+            && ($document->ai_pipeline['synthesis'] ?? null) !== 'completed') {
+            if (! array_key_exists('synthesis_reserved_usd', $document->ai_pipeline)) {
+                $document->forceFill(['ai_pipeline' => [...$document->ai_pipeline,
+                    ...$this->client->synthesisReservation($document)]])->save();
+            }
+            if ($document->ai_pipeline['synthesis_reserved_usd'] === null || $document->ai_pipeline['repair_reserved_usd'] === null) {
+                return false;
+            }
+            $protected = $document->ai_pipeline['synthesis_reserved_usd'] + $document->ai_pipeline['repair_reserved_usd'];
+        }
+        $committed = DocumentChunk::where('document_id', $document->id)
+            ->where('pipeline_key', $document->ai_pipeline['key'])->sum('reserved_cost');
+
+        return round($committed + $cost + $protected, 6) <= ($document->ai_pipeline['budget_usd'] ?? 0);
+    }
+
+    /** reserved_cost retains settled spend plus the one active attempt's upper bound. */
+    public function reserveCost(DocumentChunk $unit, float $cost): void
+    {
+        $unit->update(['status' => 'running', 'started_at' => now(), 'attempts' => $unit->attempts + 1,
+            'reserved_cost' => round($unit->reserved_cost + $cost, 6),
+            'cost_accounting' => ['attempt' => $unit->attempts + 1, 'previous_cost' => (float) $unit->reserved_cost,
+                'estimate' => $cost, 'settled' => false]]);
+    }
+
+    /** Idempotent settlement. Unknown/time-limited requests retain their conservative commitment. */
+    public function settleCost(DocumentChunk $unit, bool $providerCalled = true): void
+    {
+        DB::transaction(function () use ($unit, $providerCalled) {
+            Document::whereKey($unit->document_id)->lockForUpdate()->firstOrFail();
+            $locked = DocumentChunk::whereKey($unit->id)->lockForUpdate()->firstOrFail();
+            $accounting = $locked->cost_accounting;
+            if (! $accounting || $accounting['settled'] || $accounting['attempt'] !== (int) $unit->attempts) {
+                return;
+            }
+            $runs = DocumentAiRun::where('chunk_id', $locked->id)->where('request_attempt', $accounting['attempt'])->get();
+            $known = $runs->isNotEmpty() && $runs->every(fn ($run) => $run->estimated_cost_usd !== null);
+            $cost = ! $providerCalled ? 0 : ($known ? (float) $runs->sum('estimated_cost_usd') : $accounting['estimate']);
+            $locked->update(['reserved_cost' => round($accounting['previous_cost'] + $cost, 6),
+                'cost_accounting' => [...$accounting, 'settled' => true, 'actual_known' => $known || ! $providerCalled, 'cost' => $cost]]);
+        });
+    }
+
+    /** Explicit user retry: retain evidence/cost history and invalidate dependent checkpoints. */
+    public function reanalyze(Document $document, string $actorId, bool $summaryOnly = false, bool $dispatch = true): void
+    {
+        DB::transaction(function () use ($document, $actorId, $summaryOnly) {
+            $locked = Document::whereKey($document->id)->lockForUpdate()->firstOrFail();
+            $units = fn () => DocumentChunk::where('document_id', $locked->id)->where('pipeline_key', $locked->ai_pipeline['key']);
+            abort_if($locked->status === 'Processing' || $units()->whereIn('status', ['pending', 'queued', 'running'])->exists(),
+                409, 'Analysis is already in progress.');
+            if (! $summaryOnly) {
+                // No recursive splitting of invalid evidence. Only explicit user requests reopen failures.
+                $units()->where('stage', 'extraction')->whereIn('status', ['failed', 'uncertain', 'budget'])
+                    ->update(['status' => 'pending', 'failure_class' => null, 'completed_at' => null]);
+                $units()->where('stage', 'merge')->update(['status' => 'pending', 'failure_class' => null, 'completed_at' => null]);
+                $units()->where('stage', 'context')->update(['status' => 'superseded']);
+            }
+            $units()->where('stage', 'synthesis')->update(['status' => 'superseded']);
+            $locked->forceFill(['status' => 'Processing', 'progress' => $summaryOnly ? 95 : 50,
+                'error_message' => null, 'last_updated_by' => $actorId,
+                'ai_pipeline' => [...$locked->ai_pipeline, ...$this->client->synthesisReservation($locked),
+                    'analysis_revision' => ($locked->ai_pipeline['analysis_revision'] ?? 0) + 1,
+                    'synthesis_reductions' => 0, 'synthesis' => 'pending', 'summary_stale' => true, 'recovery_complete' => false]])->save();
+        });
+        if (! $dispatch) {
+            return;
+        }
+        if ($summaryOnly) {
+            GenerateDocumentSummaryJob::dispatch($document->id, true)->onQueue('extraction');
+        } else {
+            $this->pump($document->id);
+        }
     }
 
     /**
@@ -304,11 +390,16 @@ class IncrementalPipeline
              * can safely be merged or synthesized.
              */
             if ($hasFailures && ! $hasCompleted) {
+                $billingFailure = $query()->where('failure_class', 'billing')->exists();
                 $document->forceFill([
                     'status' => 'Needs Review',
                     'progress' => 100,
-                    'error_message' =>
-                        'Document intelligence could not produce usable evidence.',
+                    'error_message' => $billingFailure
+                        ? 'AI analysis is temporarily unavailable. Please contact support.'
+                        : 'Document intelligence could not produce usable evidence.',
+                    'ai_pipeline' => [...$document->ai_pipeline, 'partial' => true, 'synthesis' => 'no_evidence',
+                        'coverage' => ['failed_chunks' => $leafCount, 'total_chunks' => $leafCount,
+                            'comprehensive' => false, 'warning' => 'No usable document evidence was extracted.']],
                 ])->save();
 
                 return;
@@ -330,10 +421,8 @@ class IncrementalPipeline
                     'workspace_id' => $document->workspace_id,
                     'stage' => 'merge',
                     'input_hash' => $key,
-                    'pipeline_version' =>
-                        config('document_intelligence.pipeline_version'),
-                    'prompt_version' =>
-                        config('document_intelligence.prompt_version'),
+                    'pipeline_version' => config('document_intelligence.pipeline_version'),
+                    'prompt_version' => config('document_intelligence.prompt_version'),
                 ]
             );
 
@@ -341,30 +430,28 @@ class IncrementalPipeline
              * Merge finished. Finalize according to coverage.
              */
             if ($merge->status === 'completed') {
-                if ($hasFailures) {
-                    $document->forceFill([
-                        'status' => 'Needs Review',
-                        'progress' => 100,
-                        'error_message' =>
-                            'Some document evidence could not be processed. Available intelligence is partial.',
-                    ])->save();
-                } else {
-                    $document->forceFill([
-                        'status' => 'Ready',
-                        'progress' => 100,
-                        'error_message' => null,
-                    ])->save();
-                }
+                $coverage = app(EvidenceBudget::class)->forDocument($document)['coverage'];
+                $document->forceFill(['ai_pipeline' => [...$document->ai_pipeline,
+                    'partial' => ! $coverage['comprehensive'], 'coverage' => $coverage]])->save();
+                if ($coverage['evidence_total'] <= $coverage['evidence_omitted']) {
+                    $document->forceFill(['status' => 'Needs Review', 'progress' => 100,
+                        'error_message' => 'Document intelligence could not produce usable evidence.',
+                        'ai_pipeline' => [...$document->ai_pipeline, 'partial' => true, 'synthesis' => 'no_evidence']])->save();
 
-                /*
-                 * Generate synthesis from persisted valid evidence.
-                 *
-                 * GenerateDocumentSummaryJob must itself tolerate partial
-                 * evidence when the document is Needs Review.
-                 */
-                GenerateDocumentSummaryJob::dispatch($documentId)
-                    ->onQueue('extraction')
-                    ->afterCommit();
+                    return;
+                }
+                if (($document->ai_pipeline['synthesis'] ?? null) === 'completed') {
+                    return;
+                }
+                if (DocumentChunk::where('document_id', $documentId)->where('pipeline_key', $key)
+                    ->where('stage', 'synthesis')->whereIn('status', ['failed', 'budget', 'uncertain'])->exists()
+                    && ! DocumentChunk::where('document_id', $documentId)->where('pipeline_key', $key)
+                        ->where('stage', 'synthesis')->whereIn('status', ['pending', 'running'])->exists()) {
+                    return;
+                }
+                // Synthesis is required, even when only partial evidence survived.
+                $document->forceFill(['status' => 'Processing', 'progress' => 95, 'error_message' => null])->save();
+                GenerateDocumentSummaryJob::dispatch($documentId)->onQueue('extraction')->afterCommit();
 
                 return;
             }

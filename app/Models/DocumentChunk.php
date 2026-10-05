@@ -14,7 +14,7 @@ class DocumentChunk extends Model
     // Eloquent does not reload database defaults after INSERT. Claims inspect these immediately.
     protected $attributes = ['status' => 'pending', 'attempts' => 0, 'reserved_cost' => 0, 'depth' => 0];
 
-    protected $casts = ['result' => 'array', 'started_at' => 'datetime', 'completed_at' => 'datetime'];
+    protected $casts = ['result' => 'array', 'cost_accounting' => 'array', 'started_at' => 'datetime', 'completed_at' => 'datetime'];
 
     public function document()
     {

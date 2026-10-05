@@ -12,7 +12,6 @@ use App\Jobs\GenerateEmbeddingsJob;
 use App\Jobs\GenerateInsightsJob;
 use App\Jobs\ScanUploadedFileJob;
 use App\Models\Document;
-use App\Models\DocumentChunk;
 use App\Models\ProcessingJob;
 use App\Models\User;
 use App\Services\AI\Incremental\IncrementalPipeline;
@@ -44,20 +43,7 @@ class DocumentReprocessor
 
         if (($document->ai_pipeline['route'] ?? null) === 'incremental'
             && $document->extracted_text && $document->status !== 'Failed') {
-            if ($requestedStage === 'document_summary') {
-                GenerateDocumentSummaryJob::dispatch($document->id, true)->onQueue('extraction');
-
-                return $document;
-            }
-            // Explicit user resume changes failed input, while retaining completed units.
-            $document->forceFill(['status' => 'Processing', 'error_message' => null, 'last_updated_by' => $actor->id])->save();
-            $pipeline = app(IncrementalPipeline::class);
-            foreach (DocumentChunk::where('document_id', $document->id)
-                ->where('pipeline_key', $document->ai_pipeline['key'])->where('stage', 'extraction')
-                ->whereIn('status', ['failed', 'uncertain'])->get() as $chunk) {
-                $pipeline->split($chunk, $document);
-            }
-            $pipeline->start($document);
+            app(IncrementalPipeline::class)->reanalyze($document, $actor->id, $requestedStage === 'document_summary');
 
             return $document->fresh();
         }
@@ -131,13 +117,16 @@ class DocumentReprocessor
         if ($document->status === 'Failed') {
             // Failed prerequisites must run again even when old text remains.
             // Clear it so queued intelligence cannot start during the new scan.
-            $document->forceFill([
-                'status' => 'Processing',
-                'progress' => 0,
-                'extracted_text' => null,
-                'error_message' => null,
-                'last_updated_by' => $actor->id,
-            ])->save();
+            DB::transaction(function () use ($document, $actor) {
+                if (($document->ai_pipeline['route'] ?? null) === 'incremental' && isset($document->ai_pipeline['key'])) {
+                    app(IncrementalPipeline::class)->reanalyze($document, $actor->id, dispatch: false);
+                    $document->refresh();
+                }
+                $document->forceFill([
+                    'status' => 'Processing', 'progress' => 0, 'extracted_text' => null,
+                    'error_message' => null, 'last_updated_by' => $actor->id,
+                ])->save();
+            });
 
             ScanUploadedFileJob::withChain([
                 (new ExtractDocumentTextJob($document->id))->onQueue('extraction'),

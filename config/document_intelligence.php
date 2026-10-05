@@ -14,6 +14,11 @@ return [
     'concurrency' => 2, // Matches existing Horizon extraction workers.
     'attempts' => 3,
     'synthesis_token_budget' => 16000,
+    // Per-request output bounds. The legacy max_tokens ENV remains the extraction default.
+    'extraction_max_tokens' => (int) env('ANTHROPIC_MAX_TOKENS', 4096),
+    'synthesis_max_tokens' => 8192,
+    'repair_max_tokens' => 2048,
+    'context_max_tokens' => 1000,
     'visual_cap' => 12,
     'visual_min_bytes' => 10000,
     'visual_min_dimension' => 200,
@@ -25,7 +30,9 @@ return [
         'claude-haiku-4-5' => [1, 5, 1.25, 0.10],
         'claude-sonnet-4-6' => [3, 15, 3.75, 0.30],
         'claude-sonnet-4-5-20250929' => [3, 15, 3.75, 0.30],
+        // https://platform.claude.com/docs/en/models/sonnet-5-5/overview
+        'claude-sonnet-5-5' => [2, 10, 2.50, 0.20],
     ],
-    'structured_models' => ['claude-haiku-4-5-20251001', 'claude-haiku-4-5', 'claude-sonnet-4-6', 'claude-sonnet-4-5-20250929'],
-    'effort_models' => ['claude-sonnet-4-6'],
+    'structured_models' => ['claude-haiku-4-5-20251001', 'claude-haiku-4-5', 'claude-sonnet-4-6', 'claude-sonnet-4-5-20250929', 'claude-sonnet-5-5'],
+    'effort_models' => ['claude-sonnet-4-6', 'claude-sonnet-5-5'],
 ];

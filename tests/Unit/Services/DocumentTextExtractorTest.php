@@ -7,6 +7,16 @@ use PHPUnit\Framework\TestCase;
 
 class DocumentTextExtractorTest extends TestCase
 {
+    public function test_pdf_utf8_sanitation_preserves_unicode_and_page_structure(): void
+    {
+        $valid = "Renée — € £ ¥\tNairobi\nJosé\f東京\r\n";
+        $extractor = new DocumentTextExtractor;
+        self::assertSame($valid, $extractor->sanitizeUtf8($valid));
+        $clean = $extractor->sanitizeUtf8($valid."\x96\0\x01");
+        self::assertTrue(mb_check_encoding($clean, 'UTF-8'));
+        self::assertSame($valid, $clean);
+    }
+
     public function test_embedded_emf_does_not_prevent_paragraph_and_table_extraction(): void
     {
         $path = dirname(__DIR__, 2).'/Fixtures/embedded-emf.docx';

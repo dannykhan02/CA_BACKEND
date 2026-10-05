@@ -23,16 +23,23 @@ use App\Services\AI\Incremental\IncrementalPipeline;
 use App\Services\AI\ResponseValidator;
 use App\Services\AnthropicClient;
 use App\Services\DocumentIntelligenceService;
+use App\Services\Documents\DocumentReprocessor;
 use App\Services\Ocr\OcrEngineResolver;
 use App\Services\Ocr\OcrPageResult;
 use App\Services\Ocr\OcrProviderInterface;
 use App\Services\Pipeline\PipelineStageRecorder;
+use App\Services\WorkspaceCreditService;
 use App\Services\WorkspaceService;
 use Database\Seeders\DocumentSummaryPromptSeederV3;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Sanctum\Sanctum;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 use Tests\TestCase;
 
 class IncrementalDocumentPipelineTest extends TestCase
@@ -44,7 +51,9 @@ class IncrementalDocumentPipelineTest extends TestCase
         parent::setUp();
         Bus::fake();
         Http::preventStrayRequests();
+        $this->seed(DocumentSummaryPromptSeederV3::class);
         config(['services.anthropic.extraction_model' => 'claude-haiku-4-5-20251001',
+            'services.anthropic.synthesis_model' => 'claude-sonnet-5-5',
             'document_intelligence.large_tokens' => 100, 'document_intelligence.chunk_target_tokens' => 80,
             'document_intelligence.chunk_max_tokens' => 100, 'document_intelligence.chunk_overlap_tokens' => 5,
             'document_intelligence.minimum_split_chars' => 10, 'document_intelligence.budget_base_usd' => 2]);
@@ -360,7 +369,8 @@ class IncrementalDocumentPipelineTest extends TestCase
         Bus::assertDispatchedTimes(MergeDocumentEvidenceJob::class, 1);
         $merge = DocumentChunk::where('stage', 'merge')->sole();
         (new MergeDocumentEvidenceJob($merge->id))->handle(app(EvidenceMerger::class), app(PipelineStageRecorder::class));
-        self::assertSame('Ready', $document->fresh()->status);
+        // Required synthesis has not completed yet.
+        self::assertSame('Processing', $document->fresh()->status);
         $sourceId = DocumentEvidence::sole()->source_id;
         Http::fake(['*/messages' => Http::response($this->response($this->coreSummary() + [
             'trends' => [['observation' => 'Revenue rose.', 'significance' => 'Growth.', 'source_ids' => [$sourceId]]]]))]);
@@ -615,5 +625,370 @@ class IncrementalDocumentPipelineTest extends TestCase
         $this->executeChunk($chunk);
         self::assertSame('queued', $chunk->fresh()->status);
         self::assertSame('transient', DocumentAiRun::where('chunk_id', $chunk->id)->sole()->failure_class);
+    }
+
+    public function test_extraction_cannot_spend_the_synthesis_and_repair_reservation(): void
+    {
+        $document = $this->document('Revenue increased to USD 10 in 2024.');
+        $chunk = $this->plan($document);
+        $reserved = $document->ai_pipeline['synthesis_reserved_usd'] + $document->ai_pipeline['repair_reserved_usd'];
+        self::assertGreaterThan(0, $reserved);
+        $document->forceFill(['ai_pipeline' => [...$document->ai_pipeline, 'budget_usd' => $reserved + 0.001]])->save();
+        $this->executeChunk($chunk);
+        self::assertSame('budget', $chunk->fresh()->status);
+        self::assertSame(0.0, (float) $chunk->fresh()->reserved_cost);
+        Http::assertNothingSent();
+    }
+
+    public function test_reserved_sonnet_synthesis_succeeds_when_extraction_used_its_entire_allowance(): void
+    {
+        $document = $this->document('Revenue increased to USD 10 in 2024.');
+        $chunk = $this->plan($document);
+        $reserved = $document->ai_pipeline['synthesis_reserved_usd'] + $document->ai_pipeline['repair_reserved_usd'];
+        $chunk->update(['status' => 'completed', 'result' => ['records' => [$this->record()]],
+            'reserved_cost' => $document->ai_pipeline['budget_usd'] - $reserved]);
+        app(EvidenceMerger::class)->merge($document);
+        Http::fake(['*/messages' => Http::response($this->response($this->coreSummary()))]);
+        $job = new GenerateDocumentSummaryJob($document->id);
+        $job->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+        self::assertSame('completed', DocumentChunk::where('stage', 'synthesis')->sole()->status);
+        self::assertSame('Ready', $document->fresh()->status);
+        self::assertSame('claude-sonnet-5-5', $document->fresh()->intelligenceSummary->model);
+        Http::assertSent(fn ($request) => $request['model'] === 'claude-sonnet-5-5' && $request['max_tokens'] === 8192);
+        $spent = (float) DocumentChunk::sum('reserved_cost');
+        self::assertLessThan($document->ai_pipeline['budget_usd'], $spent);
+        $job->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+        self::assertSame($spent, (float) DocumentChunk::sum('reserved_cost'));
+        Http::assertSentCount(1);
+    }
+
+    public function test_synthesis_reservation_uses_rendered_prompt_schema_and_configured_model(): void
+    {
+        $document = $this->document();
+        $client = app(AnthropicClient::class);
+        $data = ['kpis' => [['id' => 'kpi:test', 'value' => '10']], 'coverage' => ['comprehensive' => true]];
+        $early = $client->synthesisReservation($document);
+        $actual = $client->synthesisReservation($document, $data);
+        self::assertLessThan($early['synthesis_reserved_usd'], $actual['synthesis_reserved_usd']);
+        self::assertSame(round(($actual['synthesis_input_bound'] * 2 + 8192 * 10) / 1000000, 6), $actual['synthesis_reserved_usd']);
+        config(['services.anthropic.synthesis_model' => 'claude-sonnet-4-6']);
+        $other = $client->synthesisReservation($document, $data);
+        self::assertSame(round(($other['synthesis_input_bound'] * 3 + 8192 * 15) / 1000000, 6), $other['synthesis_reserved_usd']);
+        self::assertGreaterThan($actual['synthesis_reserved_usd'], $other['synthesis_reserved_usd']);
+    }
+
+    public function test_actual_extraction_cost_is_settled_once_and_releases_unused_allowance(): void
+    {
+        $this->fakeProvider();
+        $chunk = $this->plan($this->document('Revenue increased to USD 10 in 2024.'));
+        $this->executeChunk($chunk);
+        $chunk->refresh();
+        $cost = (float) DocumentAiRun::where('chunk_id', $chunk->id)->sole()->estimated_cost_usd;
+        self::assertSame($cost, (float) $chunk->reserved_cost);
+        self::assertLessThan($chunk->cost_accounting['estimate'], $cost);
+        app(IncrementalPipeline::class)->settleCost($chunk);
+        $this->executeChunk($chunk);
+        self::assertSame($cost, (float) $chunk->fresh()->reserved_cost);
+        Http::assertSentCount(2);
+    }
+
+    public function test_synthesis_transient_retry_does_not_spend_or_reserve_twice(): void
+    {
+        $document = $this->document('Revenue increased to USD 10 in 2024.');
+        $chunk = $this->plan($document);
+        $chunk->update(['status' => 'completed', 'result' => ['records' => [$this->record()]]]);
+        app(EvidenceMerger::class)->merge($document);
+        Http::fake(['*/messages' => Http::sequence()->push([], 429)->push($this->response($this->coreSummary()))]);
+        (new GenerateDocumentSummaryJob($document->id))->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+        $unit = DocumentChunk::where('stage', 'synthesis')->sole();
+        self::assertSame('pending', $unit->status);
+        self::assertSame(0.0, (float) $unit->reserved_cost);
+        (new GenerateDocumentSummaryJob($document->id))->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+        $cost = (float) DocumentAiRun::where('chunk_id', $unit->id)->sum('estimated_cost_usd');
+        self::assertSame($cost, (float) $unit->fresh()->reserved_cost);
+        self::assertSame(2, $unit->fresh()->attempts);
+        (new GenerateDocumentSummaryJob($document->id))->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+        Http::assertSentCount(2);
+    }
+
+    public function test_partial_evidence_can_finish_with_a_visible_coverage_warning(): void
+    {
+        $document = $this->document('Revenue increased to USD 10 in 2024.');
+        $chunk = $this->plan($document);
+        $chunk->update(['status' => 'completed', 'result' => ['records' => [$this->record()]]]);
+        $failed = $chunk->replicate();
+        $failed->identity = 'failed-leaf';
+        $failed->status = 'failed';
+        $failed->failure_class = 'invalid_evidence';
+        $failed->result = null;
+        $failed->save();
+        app(IncrementalPipeline::class)->pump($document->id);
+        $merge = DocumentChunk::where('stage', 'merge')->sole();
+        (new MergeDocumentEvidenceJob($merge->id))->handle(app(EvidenceMerger::class), app(PipelineStageRecorder::class));
+        self::assertSame('Processing', $document->fresh()->status);
+        Http::fake(['*/messages' => Http::response($this->response($this->coreSummary()))]);
+        (new GenerateDocumentSummaryJob($document->id))->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+        $document->refresh();
+        self::assertSame('Ready', $document->status);
+        self::assertTrue($document->ai_pipeline['partial']);
+        self::assertSame(1, $document->ai_pipeline['coverage']['failed_chunks']);
+        self::assertFalse($document->ai_pipeline['coverage']['comprehensive']);
+        self::assertStringContainsString('Coverage note:', $document->intelligenceSummary->executive_summary);
+        self::assertNotNull(app(DocumentIntelligenceService::class)->processingDetails($document)['synthesisCoverageWarning']);
+        self::assertSame(0, DocumentChunk::where('parent_id', $failed->id)->count());
+    }
+
+    public function test_all_empty_extractions_never_synthesize_or_charge_a_document(): void
+    {
+        $document = $this->document('Revenue increased to USD 10 in 2024.');
+        $chunk = $this->plan($document);
+        $chunk->update(['status' => 'completed', 'result' => ['records' => []]]);
+        app(IncrementalPipeline::class)->pump($document->id);
+        $merge = DocumentChunk::where('stage', 'merge')->sole();
+        (new MergeDocumentEvidenceJob($merge->id))->handle(app(EvidenceMerger::class), app(PipelineStageRecorder::class));
+        (new GenerateDocumentSummaryJob($document->id))->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+        self::assertSame('Needs Review', $document->fresh()->status);
+        self::assertNull($document->fresh()->credit_accounted_at);
+        self::assertNull($document->fresh()->intelligenceSummary);
+        Http::assertNothingSent();
+    }
+
+    public function test_valid_and_invalid_records_keep_exact_valid_quotes_without_splitting(): void
+    {
+        $this->fakeProvider($this->response(['records' => [$this->record(), $this->record(['quote' => 'Invented quote.']), ['kind' => 'unknown']]]));
+        $chunk = $this->plan($this->document('Revenue increased to USD 10 in 2024.'));
+        $this->executeChunk($chunk);
+        self::assertSame('completed', $chunk->fresh()->status);
+        self::assertEquals([$this->record()], $chunk->fresh()->result['records']);
+        self::assertSame(2, array_sum($chunk->fresh()->result['_dropped_records']));
+        self::assertSame(0, DocumentChunk::whereNotNull('parent_id')->count());
+    }
+
+    public function test_all_invalid_records_fail_without_recursively_splitting(): void
+    {
+        $this->fakeProvider($this->response(['records' => [$this->record(['quote' => 'Invented quote.'])]]));
+        $chunk = $this->plan($this->document('Revenue increased to USD 10 in 2024.'));
+        $this->executeChunk($chunk);
+        self::assertSame('failed', $chunk->fresh()->status);
+        self::assertSame('invalid_evidence', $chunk->fresh()->failure_class);
+        self::assertSame(0, DocumentChunk::whereNotNull('parent_id')->count());
+        self::assertSame('Needs Review', $chunk->document->status);
+        Bus::assertNotDispatched(GenerateDocumentSummaryJob::class);
+    }
+
+    public function test_provider_auth_model_and_credit_errors_are_terminal_and_safe(): void
+    {
+        Http::fake(['*/count_tokens' => Http::response(['input_tokens' => 50]),
+            '*/messages' => Http::sequence()->push(['error' => ['message' => 'invalid key']], 401)
+                ->push(['error' => ['message' => 'model unavailable']], 404)
+                ->push(['error' => ['message' => 'Your credit balance is too low']], 400)]);
+        foreach ([[401, 'invalid key', 'authentication'], [404, 'model unavailable', 'invalid_model'],
+            [400, 'Your credit balance is too low', 'billing']] as [$status, $message, $classification]) {
+            $chunk = $this->plan($this->document('Revenue increased to USD 10 in 2024.'));
+            $this->executeChunk($chunk);
+            $this->executeChunk($chunk);
+            self::assertSame('failed', $chunk->fresh()->status);
+            self::assertSame($classification, $chunk->fresh()->failure_class);
+            self::assertSame(1, $chunk->fresh()->attempts);
+            self::assertSame(0.0, (float) $chunk->fresh()->reserved_cost);
+            self::assertStringNotContainsString($message, DocumentAiRun::where('chunk_id', $chunk->id)->sole()->toJson());
+            if ($classification === 'billing') {
+                self::assertStringContainsString('contact support', $chunk->document->error_message);
+            }
+        }
+    }
+
+    public function test_one_trimmed_api_key_is_used_for_haiku_and_sonnet(): void
+    {
+        config(['services.anthropic.api_key' => "  fake-shared-key\n"]);
+        Http::fake(['*/count_tokens' => Http::response(['input_tokens' => 50]),
+            '*/messages' => Http::sequence()->push($this->response(['records' => [$this->record()]]))
+                ->push($this->response($this->coreSummary()))]);
+        $document = $this->document('Revenue increased to USD 10 in 2024.');
+        $chunk = $this->plan($document);
+        $this->executeChunk($chunk);
+        app(EvidenceMerger::class)->merge($document);
+        // Complete the queued deterministic merge so synthesis can claim.
+        DocumentChunk::where('stage', 'merge')->update(['status' => 'completed']);
+        (new GenerateDocumentSummaryJob($document->id))->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+        Http::assertSent(fn ($request) => ($request['model'] ?? '') === 'claude-haiku-4-5-20251001' && $request->hasHeader('x-api-key', 'fake-shared-key'));
+        Http::assertSent(fn ($request) => ($request['model'] ?? '') === 'claude-sonnet-5-5' && $request->hasHeader('x-api-key', 'fake-shared-key'));
+        self::assertSame(['api_key'], array_values(array_filter(array_keys(config('services.anthropic')), fn ($key) => str_contains($key, 'key'))));
+        self::assertStringNotContainsString('fake-shared-key', DocumentAiRun::all()->toJson());
+    }
+
+    public function test_reanalysis_invalidates_synthesis_and_merge_without_duplicate_evidence_or_billing(): void
+    {
+        $document = $this->document('Revenue increased to USD 10 in 2024.');
+        $chunk = $this->plan($document);
+        $chunk->update(['status' => 'completed', 'result' => ['records' => [$this->record()]]]);
+        app(IncrementalPipeline::class)->pump($document->id);
+        $merge = DocumentChunk::where('stage', 'merge')->sole();
+        $mergeJob = new MergeDocumentEvidenceJob($merge->id);
+        $mergeJob->handle(app(EvidenceMerger::class), app(PipelineStageRecorder::class));
+        Http::fake(['*/messages' => Http::response($this->response($this->coreSummary()))]);
+        (new GenerateDocumentSummaryJob($document->id))->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+        $original = DocumentChunk::where('stage', 'synthesis')->sole();
+        $failed = $chunk->replicate();
+        $failed->identity = 'omitted-leaf';
+        $failed->status = 'failed';
+        $failed->failure_class = 'invalid_evidence';
+        $failed->result = null;
+        $failed->save();
+        $balance = $document->workspace->credits->documents_remaining;
+        app(DocumentReprocessor::class)->reprocess($document, User::findOrFail($document->uploaded_by));
+        self::assertSame('superseded', $original->fresh()->status);
+        self::assertSame('pending', $merge->fresh()->status);
+        self::assertSame('queued', $failed->fresh()->status);
+        self::assertNull(app(DocumentIntelligenceService::class)->loadIntelligence($document->fresh())->intelligenceSummary);
+        Sanctum::actingAs(User::findOrFail($document->uploaded_by));
+        $this->getJson('/api/documents/'.$document->id.'/summary')->assertOk()->assertJsonPath('data', null);
+        // A delivery from the old merge may not finalize while reopened extraction is active.
+        $mergeJob->handle(app(EvidenceMerger::class), app(PipelineStageRecorder::class));
+        self::assertSame('pending', $merge->fresh()->status);
+        // A stale summary delivery may not run while extraction is open.
+        (new GenerateDocumentSummaryJob($document->id))->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+        Http::assertSentCount(1);
+        $failed->update(['status' => 'completed', 'result' => ['records' => [$this->record()]]]);
+        app(IncrementalPipeline::class)->pump($document->id);
+        $mergeJob->handle(app(EvidenceMerger::class), app(PipelineStageRecorder::class));
+        $mergeJob->handle(app(EvidenceMerger::class), app(PipelineStageRecorder::class));
+        (new GenerateDocumentSummaryJob($document->id))->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+        Http::assertSentCount(2);
+        self::assertSame(1, $document->kpis()->count());
+        self::assertSame(1, DocumentEvidence::count());
+        self::assertSame($balance, $document->workspace->credits()->value('documents_remaining'));
+        self::assertSame(1, DB::table('credit_ledger')->where('related_id', $document->id)->where('direction', 'debit')->count());
+        self::assertSame('Ready', $document->fresh()->status);
+    }
+
+    public function test_provider_telemetry_and_logs_never_include_document_or_key(): void
+    {
+        $handler = new TestHandler;
+        Log::swap(new Logger('test', [$handler]));
+        config(['services.anthropic.api_key' => 'fake-private-key']);
+        $body = str_repeat('CONFIDENTIAL complete document body ', 10);
+        Http::fake(['*/count_tokens' => Http::response(['input_tokens' => 50]),
+            '*/messages' => Http::response($this->response(['records' => []], 'max_tokens'))]);
+        $chunk = $this->plan($this->document($body));
+        $this->executeChunk($chunk);
+        $logs = json_encode($handler->getRecords()).DocumentAiRun::all()->toJson();
+        self::assertStringNotContainsString('fake-private-key', $logs);
+        self::assertStringNotContainsString($body, $logs);
+        self::assertStringNotContainsString('CONFIDENTIAL', $logs);
+        self::assertTrue($handler->hasWarningRecords());
+    }
+
+    public function test_unknown_usage_keeps_a_conservative_commitment(): void
+    {
+        $response = $this->response(['records' => []]);
+        unset($response['usage']);
+        $this->fakeProvider($response);
+        $chunk = $this->plan($this->document('Revenue increased to USD 10 in 2024.'));
+        $this->executeChunk($chunk);
+        self::assertSame((float) $chunk->fresh()->cost_accounting['estimate'], (float) $chunk->fresh()->reserved_cost);
+        self::assertFalse($chunk->fresh()->cost_accounting['actual_known']);
+    }
+
+    public function test_bounded_repair_spends_only_its_actual_usage(): void
+    {
+        $document = $this->document('Revenue increased to USD 10 in 2024.');
+        $chunk = $this->plan($document);
+        $chunk->update(['status' => 'completed', 'result' => ['records' => [$this->record()]]]);
+        app(EvidenceMerger::class)->merge($document);
+        Http::fake(['*/messages' => Http::sequence()
+            ->push($this->response([...$this->coreSummary(), 'executive_summary' => '']))
+            ->push($this->response($this->coreSummary()))]);
+        (new GenerateDocumentSummaryJob($document->id))->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+        $unit = DocumentChunk::where('stage', 'synthesis')->sole();
+        self::assertSame('completed', $unit->status);
+        self::assertSame(2, DocumentAiRun::where('chunk_id', $unit->id)->count());
+        self::assertSame((float) DocumentAiRun::where('chunk_id', $unit->id)->sum('estimated_cost_usd'), (float) $unit->reserved_cost);
+        self::assertSame([8192, 2048], Http::recorded()->map(fn ($entry) => $entry[0]['max_tokens'])->all());
+        (new GenerateDocumentSummaryJob($document->id, true))->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+        Http::assertSentCount(2);
+    }
+
+    public function test_network_retries_stop_at_the_configured_attempt_limit(): void
+    {
+        config(['document_intelligence.attempts' => 2]);
+        Http::fake(['*/count_tokens' => Http::response(['input_tokens' => 50]),
+            '*/messages' => Http::failedConnection('Temporary network failure')]);
+        $chunk = $this->plan($this->document('Revenue increased to USD 10 in 2024.'));
+        $this->executeChunk($chunk);
+        $this->executeChunk($chunk);
+        $this->executeChunk($chunk);
+        self::assertSame(2, $chunk->fresh()->attempts);
+        self::assertSame('failed', $chunk->fresh()->status);
+        self::assertSame(2, DocumentAiRun::where('chunk_id', $chunk->id)->count());
+        self::assertFalse($chunk->fresh()->cost_accounting['actual_known']);
+    }
+
+    public function test_context_resolution_cannot_spend_the_synthesis_reserve(): void
+    {
+        $document = $this->document('Revenue increased to USD 10 in 2024.');
+        $chunk = $this->plan($document);
+        $chunk->update(['status' => 'completed', 'result' => ['records' => [
+            $this->record(), $this->record(['kind' => 'unresolved', 'reference' => 'Revenue'])]]]);
+        app(EvidenceMerger::class)->merge($document);
+        $protected = $document->ai_pipeline['synthesis_reserved_usd'] + $document->ai_pipeline['repair_reserved_usd'];
+        $document->forceFill(['ai_pipeline' => [...$document->ai_pipeline, 'budget_usd' => $protected + 0.001]])->save();
+        app(ContextResolver::class)->resolve($document);
+        self::assertSame('budget', DocumentChunk::where('stage', 'context')->sole()->status);
+        Http::assertNothingSent();
+    }
+
+    public function test_completed_merge_recovers_billing_failure_without_double_charging(): void
+    {
+        $document = $this->document('Revenue increased to USD 10 in 2024.');
+        $chunk = $this->plan($document);
+        $chunk->update(['status' => 'completed', 'result' => ['records' => [$this->record()]]]);
+        app(IncrementalPipeline::class)->pump($document->id);
+        $merge = DocumentChunk::where('stage', 'merge')->sole();
+        $real = app(WorkspaceCreditService::class);
+        $mock = \Mockery::mock(WorkspaceCreditService::class);
+        $mock->shouldReceive('accountForReadyDocument')->once()->andThrow(new \RuntimeException('Simulated settlement outage'));
+        $this->app->instance(WorkspaceCreditService::class, $mock);
+        $job = new MergeDocumentEvidenceJob($merge->id);
+        try {
+            $job->handle(app(EvidenceMerger::class), app(PipelineStageRecorder::class));
+            self::fail('Expected settlement failure');
+        } catch (\RuntimeException $e) {
+            self::assertSame('Simulated settlement outage', $e->getMessage());
+        }
+        self::assertSame('completed', $merge->fresh()->status);
+        self::assertSame('Needs Review', $document->fresh()->status);
+        self::assertNull($document->fresh()->credit_accounted_at);
+        $this->app->instance(WorkspaceCreditService::class, $real);
+        $job->handle(app(EvidenceMerger::class), app(PipelineStageRecorder::class));
+        $job->handle(app(EvidenceMerger::class), app(PipelineStageRecorder::class));
+        self::assertSame('Processing', $document->fresh()->status);
+        self::assertNotNull($document->fresh()->credit_accounted_at);
+        self::assertSame(1, $document->kpis()->count());
+        self::assertSame(1, DB::table('credit_ledger')->where('related_id', $document->id)->where('direction', 'debit')->count());
+    }
+
+    public function test_failed_document_rescan_invalidates_downstream_even_when_text_is_unchanged(): void
+    {
+        $text = 'Revenue increased to USD 10 in 2024.';
+        $document = $this->document($text);
+        $chunk = $this->plan($document);
+        $chunk->update(['status' => 'completed', 'result' => ['records' => [$this->record()]]]);
+        app(IncrementalPipeline::class)->pump($document->id);
+        $merge = DocumentChunk::where('stage', 'merge')->sole();
+        (new MergeDocumentEvidenceJob($merge->id))->handle(app(EvidenceMerger::class), app(PipelineStageRecorder::class));
+        Http::fake(['*/messages' => Http::response($this->response($this->coreSummary()))]);
+        (new GenerateDocumentSummaryJob($document->id))->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+        $summary = DocumentChunk::where('stage', 'synthesis')->sole();
+        $document->refresh()->update(['status' => 'Failed', 'error_message' => 'Temporary processing failure.']);
+        app(DocumentReprocessor::class)->reprocess($document, User::findOrFail($document->uploaded_by));
+        self::assertNull($document->fresh()->extracted_text);
+        self::assertSame('superseded', $summary->fresh()->status);
+        self::assertSame('pending', $merge->fresh()->status);
+        $document->refresh()->update(['extracted_text' => $text]);
+        app(IncrementalPipeline::class)->start($document->fresh());
+        self::assertSame('queued', $merge->fresh()->status);
+        self::assertTrue($document->fresh()->ai_pipeline['summary_stale']);
+        Http::assertSentCount(1);
     }
 }

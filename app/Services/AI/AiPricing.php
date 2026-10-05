@@ -6,7 +6,8 @@ class AiPricing
 {
     public function estimate(string $model, array $usage): ?float
     {
-        $rates = config('document_intelligence.pricing.'.$model);
+        // Model IDs can contain dots; Laravel's dotted config lookup would split those IDs.
+        $rates = config('document_intelligence.pricing', [])[$model] ?? null;
         if (! $rates) {
             return null;
         }
@@ -16,5 +17,14 @@ class AiPricing
         }
 
         return round($cost, 6);
+    }
+
+    /** Conservative preflight, including the higher rate for a possible cache write. */
+    public function reserve(string $model, int $inputTokens, int $outputTokens, bool $cacheWrite = false): ?float
+    {
+        return $this->estimate($model, [
+            $cacheWrite ? 'cache_creation_input_tokens' : 'input_tokens' => $inputTokens,
+            'output_tokens' => $outputTokens,
+        ]);
     }
 }

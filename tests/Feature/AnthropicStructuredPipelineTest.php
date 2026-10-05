@@ -10,9 +10,10 @@ use App\Models\User;
 use App\Services\AnthropicClient;
 use App\Services\Pipeline\PipelineStageRecorder;
 use App\Services\WorkspaceService;
+use Database\Seeders\DocumentEntitiesPromptSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class AnthropicStructuredPipelineTest extends TestCase
@@ -21,7 +22,7 @@ class AnthropicStructuredPipelineTest extends TestCase
 
     private function document(): Document
     {
-        $this->seed(\Database\Seeders\DocumentEntitiesPromptSeeder::class);
+        $this->seed(DocumentEntitiesPromptSeeder::class);
         $user = User::factory()->create();
         app(WorkspaceService::class)->createPersonalWorkspaceFor($user);
         $user->fresh()->currentWorkspace->credits()->update(['documents_remaining' => 5]);
@@ -44,6 +45,8 @@ class AnthropicStructuredPipelineTest extends TestCase
 
     public function test_malformed_then_valid_response_audits_both_and_persists_once(): void
     {
+        // The configured request model must agree with this test's provider fixture.
+        config(['services.anthropic.extraction_model' => 'claude-test']);
         $document = $this->document();
         $valid = json_encode(['entities' => [['entity_type' => 'organization', 'value' => 'Acme Ltd',
             'normalized_value' => 'Acme Ltd', 'confidence' => 0.9, 'context' => 'Acme Ltd is named']]]);

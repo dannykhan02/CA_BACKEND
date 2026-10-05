@@ -7,6 +7,8 @@ use App\Models\Document;
 use App\Models\DocumentChunk;
 use App\Services\AI\AiModels;
 use App\Services\AI\AiPricing;
+use App\Services\AI\Incremental\ChunkPlanner;
+use App\Services\AI\Incremental\EvidenceSchema;
 use App\Services\AI\Incremental\IncrementalPipeline;
 use App\Services\AnthropicClient;
 use Illuminate\Bus\Queueable;
@@ -36,35 +38,31 @@ class ProcessDocumentChunkJob implements ShouldQueue
             || $chunk->pipeline_key !== ($document->ai_pipeline['key'] ?? null)) {
             return;
         }
-        $claimed = DB::transaction(function () use ($chunk, $document) {
+        $claimed = DB::transaction(function () use ($chunk, $document, $pipeline) {
             $locked = Document::whereKey($document->id)->lockForUpdate()->firstOrFail();
             $unit = DocumentChunk::whereKey($chunk->id)->lockForUpdate()->firstOrFail();
+            if (! $locked->canGenerateIntelligence() || $unit->pipeline_key !== ($locked->ai_pipeline['key'] ?? null)) {
+                return false;
+            }
             if (! in_array($unit->status, ['queued', 'pending'], true)) {
                 return false;
             }
-            
-            
-            $cost = app(AiPricing::class)->estimate(
+            $cost = app(AiPricing::class)->reserve(
                 app(AiModels::class)->forTask('extraction'),
-                [
-                    'input_tokens' => strlen(
-                        mb_substr(
-                            $locked->extracted_text,
-                            $unit->start_offset,
-                            $unit->end_offset - $unit->start_offset
-                        )
-                    ) + 4000,
-                    'output_tokens' => config('services.anthropic.max_tokens'),
-                ]
+                strlen(json_encode(['document_name' => $locked->name, 'start_page' => $unit->start_page,
+                    'end_page' => $unit->end_page, 'source_text' => mb_substr($locked->extracted_text,
+                        $unit->start_offset, $unit->end_offset - $unit->start_offset)], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR))
+                    + strlen(json_encode(EvidenceSchema::extraction()))
+                    + strlen(EvidenceSchema::instructions()) + 512,
+                (int) config('document_intelligence.extraction_max_tokens'),
+                cacheWrite: true
             );
-            $spent = DocumentChunk::where('document_id', $document->id)->where('pipeline_key', $unit->pipeline_key)->sum('reserved_cost');
-            if ($cost === null || $spent + $cost > ($locked->ai_pipeline['budget_usd'] ?? 0)) {
+            if (! $pipeline->canReserve($locked, $cost)) {
                 $unit->update(['status' => 'budget', 'failure_class' => 'budget_exceeded']);
 
                 return false;
             }
-            $unit->update(['status' => 'running', 'attempts' => $unit->attempts + 1,
-                'started_at' => now(), 'reserved_cost' => $unit->reserved_cost + $cost]);
+            $pipeline->reserveCost($unit, $cost);
 
             return true;
         });
@@ -75,21 +73,23 @@ class ProcessDocumentChunkJob implements ShouldQueue
         }
         $chunk->refresh();
         $text = mb_substr($document->extracted_text, $chunk->start_offset, $chunk->end_offset - $chunk->start_offset);
+        $providerCalled = false;
         try {
             if (hash('sha256', $text) !== $chunk->input_hash) {
                 throw new AiProcessingException('input_changed');
             }
             // Check actual tokens before generation. A conservative local estimate remains on endpoint failure.
-           try {
-                    $tokens = $client->countTokens($text);
-                } catch (\Throwable) {
-                    $tokens = app(\App\Services\AI\Incremental\ChunkPlanner::class)
-                        ->estimate($text);
-                }
+            try {
+                $tokens = $client->countTokens($text);
+            } catch (\Throwable) {
+                $tokens = app(ChunkPlanner::class)
+                    ->estimate($text);
+            }
             if ($tokens > config('document_intelligence.chunk_max_tokens')) {
                 throw new AiProcessingException('context_overflow');
             }
             $chunk->update(['token_count' => $tokens]);
+            $providerCalled = true;
             $result = $client->extractChunk($document, $chunk, $text);
             $chunk->update(['status' => 'completed', 'result' => $result, 'completed_at' => now(), 'failure_class' => null]);
         } catch (AiProcessingException $e) {
@@ -105,6 +105,8 @@ class ProcessDocumentChunkJob implements ShouldQueue
             }
         } catch (\Throwable) {
             $chunk->update(['status' => 'failed', 'failure_class' => 'deterministic', 'completed_at' => now()]);
+        } finally {
+            $pipeline->settleCost($chunk, $providerCalled);
         }
         $pipeline->pump($document->id);
     }

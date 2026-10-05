@@ -11,6 +11,7 @@ use App\Models\DocumentChunk;
 use App\Models\DocumentIntelligenceSummary;
 use App\Services\AI\AiModels;
 use App\Services\AI\Incremental\EvidenceBudget;
+use App\Services\AI\Incremental\IncrementalPipeline;
 use App\Services\AI\Incremental\SynthesisCheckpoint;
 use App\Services\AnthropicClient;
 use App\Services\Pipeline\PipelineStageRecorder;
@@ -59,7 +60,8 @@ class GenerateDocumentSummaryJob implements ShouldQueue
             return;
         }
 
-        if ($this->skipIfUnchanged($document, 'document_summary', 'document_summary', $recorder)) {
+        if (($document->ai_pipeline['route'] ?? null) !== 'incremental'
+            && $this->skipIfUnchanged($document, 'document_summary', 'document_summary', $recorder)) {
             return;
         }
 
@@ -73,6 +75,11 @@ class GenerateDocumentSummaryJob implements ShouldQueue
 
         $stage = $this->startIntelligence($document, 'document_summary', $recorder);
         if (! $stage || $this->abandonIntelligence($document, $stage)) {
+            if ($checkpoint && $checkpoint->status === 'running') {
+                app(IncrementalPipeline::class)->settleCost($checkpoint, false);
+                $checkpoint->update(['status' => 'pending']);
+            }
+
             return;
         }
 
@@ -112,42 +119,65 @@ class GenerateDocumentSummaryJob implements ShouldQueue
             $client->setRunContext(['chunk_id' => $checkpoint->id, 'pipeline_version' => $checkpoint->pipeline_version,
                 'request_attempt' => $checkpoint->attempts, 'evidence_trimmed' => ($extractedData['coverage']['evidence_omitted'] ?? 0) > 0]);
         }
+        $providerCalled = false;
         try {
-            $result = $checkpoint?->result ?? $client->generateDocumentSummary(json_encode($extractedData), $document->name, $document);
+            $providerCalled = $checkpoint?->result === null;
+            $result = $checkpoint?->result ?? $client->generateDocumentSummary(json_encode($extractedData, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR), $document->name, $document);
             if ($checkpoint && $checkpoint->status !== 'completed') {
                 $checkpoint->update(['status' => 'completed', 'result' => $result, 'completed_at' => now(), 'failure_class' => null]);
             }
         } catch (\Throwable $e) {
+            $retryScheduled = false;
             $failure = $e instanceof AiProcessingException ? $e->classification
                 : ($e instanceof AnthropicStructuredOutputException ? $e->outputStatus : 'validation');
             $checkpoint?->update(['status' => 'failed', 'failure_class' => $failure]);
             if ($checkpoint) {
-                $document->refresh()->forceFill(['ai_pipeline' => [...$document->ai_pipeline, 'partial' => true]])->save();
+                $document->refresh()->forceFill(['status' => 'Needs Review', 'progress' => 100,
+                    'error_message' => $failure === 'billing'
+                        ? 'AI analysis is temporarily unavailable. Your extracted evidence has been preserved. Please contact support.'
+                        : 'Available evidence is preserved, but document synthesis could not be completed.',
+                    'ai_pipeline' => [...$document->ai_pipeline, 'partial' => true, 'synthesis' => $failure]])->save();
                 if (in_array($failure, ['max_tokens', 'truncated', 'context_overflow', 'timeout'], true)
                     && ($document->ai_pipeline['synthesis_reductions'] ?? 0) < 2) {
                     // Only synthesis changes: completed extraction is never scheduled again.
                     $document->forceFill(['ai_pipeline' => [...$document->ai_pipeline,
                         'synthesis_reductions' => ($document->ai_pipeline['synthesis_reductions'] ?? 0) + 1]])->save();
+                    $document->forceFill(['status' => 'Processing'])->save();
                     self::dispatch($document->id, true)->onQueue('extraction');
+                    $retryScheduled = true;
                 }
             }
             if ($checkpoint && $e instanceof AiProcessingException && $e->classification === 'transient'
                 && $checkpoint->attempts < config('document_intelligence.attempts')) {
                 $checkpoint->update(['status' => 'pending']);
-                self::dispatch($document->id, true)->onQueue('extraction')->delay(max(10, $e->retryAfter) + random_int(0, 5));
+                $document->forceFill(['status' => 'Processing'])->save();
+                self::dispatch($document->id, true)->onQueue('extraction')->delay(max(2 ** $checkpoint->attempts * 5, $e->retryAfter) + random_int(0, 5));
+                $retryScheduled = true;
             }
 
-            if ($this->abandonIntelligence($document, $stage)) {
+            if (! $checkpoint && $this->abandonIntelligence($document, $stage)) {
                 return;
             }
             $recorder->fail($stage, $e->getMessage());
-            $this->fail($e);
+            if (! $retryScheduled) {
+                $this->fail($e);
+            }
 
             return;
+        } finally {
+            if ($checkpoint) {
+                app(IncrementalPipeline::class)->settleCost($checkpoint, $providerCalled);
+                $client->setRunContext([]);
+            }
         }
 
         if ($this->abandonIntelligence($document, $stage)) {
             return;
+        }
+
+        if ($checkpoint && ! empty($extractedData['coverage']['warning'])
+            && ! str_contains($result['executive_summary'], $extractedData['coverage']['warning'])) {
+            $result['executive_summary'] .= "\n\nCoverage note: ".$extractedData['coverage']['warning'];
         }
 
         $this->persistIntelligence($document, $stage, $recorder, function () use ($document, $result, $recorder) {
@@ -187,16 +217,33 @@ class GenerateDocumentSummaryJob implements ShouldQueue
                 ->whereIn('status', ['failed', 'budget', 'uncertain'])->exists();
             $document->refresh()->forceFill(['ai_pipeline' => [...$document->ai_pipeline,
                 'partial' => $otherFailures || ! empty($result['_optional_items_dropped'])
-                    || ($extractedData['coverage']['unresolved_references'] ?? 0) > 0]])->save();
+                    || ! ($extractedData['coverage']['comprehensive'] ?? false),
+                'synthesis' => 'completed', 'summary_stale' => false,
+                'coverage' => $extractedData['coverage'],
+                'synthesis_coverage_warning' => $extractedData['coverage']['warning'] ?? null],
+                'status' => 'Ready', 'progress' => 100, 'error_message' => null])->save();
+            AnalyzeEmbeddedVisualsJob::dispatch($document->id)->onQueue('extraction');
+            GenerateEmbeddingsJob::dispatch($document->id)->onQueue('extraction');
         }
     }
 
     public function failed(\Throwable $e): void
     {
         $this->finalizeIntelligenceFailure('document_summary', $e);
+        $document = Document::find($this->documentId);
+        if (($document?->ai_pipeline['route'] ?? null) === 'incremental') {
+            DocumentChunk::where('document_id', $document->id)->where('pipeline_key', $document->ai_pipeline['key'])
+                ->where('stage', 'synthesis')->where('status', 'running')
+                ->update(['status' => 'uncertain', 'failure_class' => 'worker_timeout']);
+            if ($document->status === 'Processing') {
+                $document->forceFill(['status' => 'Needs Review', 'progress' => 100,
+                    'error_message' => 'Available evidence is preserved, but document synthesis could not be completed.',
+                    'ai_pipeline' => [...$document->ai_pipeline, 'partial' => true]])->save();
+            }
+        }
         Log::error('GenerateDocumentSummaryJob failed after retries', [
             'document_id' => $this->documentId,
-            'error' => $e->getMessage(),
+            'failure_class' => $e instanceof AiProcessingException ? $e->classification : 'synthesis_failure',
         ]);
     }
 }

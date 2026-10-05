@@ -23,6 +23,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 class DocumentIntelligenceController extends Controller
 {
     private const DEFAULT_PER_PAGE = 20;
+
     private const MAX_PER_PAGE = 100;
 
     public function __construct(private DocumentIntelligenceService $service) {}
@@ -80,7 +81,7 @@ class DocumentIntelligenceController extends Controller
     {
         $this->authorize('view', $document);
 
-        $document->loadMissing('intelligenceSummary');
+        $document = $this->service->loadIntelligence($document);
 
         return response()->json([
             'data' => $document->intelligenceSummary

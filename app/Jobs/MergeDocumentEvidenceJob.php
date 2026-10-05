@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Document;
 use App\Models\DocumentChunk;
 use App\Services\AI\Incremental\ContextResolver;
+use App\Services\AI\Incremental\EvidenceBudget;
 use App\Services\AI\Incremental\EvidenceMerger;
 use App\Services\AI\Incremental\IncrementalPipeline;
 use App\Services\Pipeline\PipelineStageRecorder;
@@ -13,6 +14,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\TimeoutExceededException;
 use Illuminate\Support\Facades\DB;
@@ -38,6 +40,11 @@ class MergeDocumentEvidenceJob implements ShouldQueue
 
     public function __construct(public string $chunkId) {}
 
+    public function middleware(): array
+    {
+        return [(new WithoutOverlapping('document-merge:'.$this->chunkId))->dontRelease()->expireAfter(360)];
+    }
+
     public function handle(
         EvidenceMerger $merger,
         PipelineStageRecorder $recorder
@@ -48,7 +55,9 @@ class MergeDocumentEvidenceJob implements ShouldQueue
         if (
             ! $unit
             || ! $document
-            || ! $document->canGenerateIntelligence()
+            || (! $document->canGenerateIntelligence()
+                && ! ($document->status === 'Needs Review' && in_array($unit->status, ['completed', 'failed'], true)
+                    && ($document->ai_pipeline['synthesis'] ?? 'pending') === 'pending'))
             || $unit->workspace_id !== $document->workspace_id
             || $unit->pipeline_key !== ($document->ai_pipeline['key'] ?? null)
         ) {
@@ -59,7 +68,12 @@ class MergeDocumentEvidenceJob implements ShouldQueue
          * Another delivery may already have completed this deterministic unit.
          */
         if ($unit->status === 'completed') {
+            $this->finalizeMerge($document);
+
             return;
+        }
+        if ($document->status === 'Needs Review') {
+            $document->forceFill(['status' => 'Processing'])->save();
         }
 
         /*
@@ -69,6 +83,12 @@ class MergeDocumentEvidenceJob implements ShouldQueue
          * while performing the potentially expensive evidence merge.
          */
         $claimed = DB::transaction(function () use ($unit) {
+            $document = Document::whereKey($unit->document_id)->lockForUpdate()->firstOrFail();
+            if (! $document->canGenerateIntelligence() || $unit->pipeline_key !== ($document->ai_pipeline['key'] ?? null)
+                || DocumentChunk::where('document_id', $document->id)->where('pipeline_key', $unit->pipeline_key)
+                    ->where('stage', 'extraction')->whereIn('status', ['pending', 'queued', 'running'])->exists()) {
+                return false;
+            }
             $locked = DocumentChunk::whereKey($unit->id)
                 ->lockForUpdate()
                 ->firstOrFail();
@@ -83,7 +103,7 @@ class MergeDocumentEvidenceJob implements ShouldQueue
              */
             if (! in_array(
                 $locked->status,
-                ['pending', 'queued', 'running'],
+                ['pending', 'queued', 'running', 'failed'],
                 true
             )) {
                 return false;
@@ -144,8 +164,7 @@ class MergeDocumentEvidenceJob implements ShouldQueue
                 }
 
                 foreach (
-                    ['entities', 'risks', 'deadlines', 'ai_analysis']
-                    as $stage
+                    ['entities', 'risks', 'deadlines', 'ai_analysis'] as $stage
                 ) {
                     $job = $recorder->start(
                         $lockedDocument,
@@ -178,52 +197,11 @@ class MergeDocumentEvidenceJob implements ShouldQueue
 
                 $lockedDocument->forceFill([
                     'progress' => 95,
-                    'has_structured_data' =>
-                        $lockedDocument->kpis()->exists(),
+                    'has_structured_data' => $lockedDocument->kpis()->exists(),
                 ])->save();
             });
 
-            /*
-             * Billing deliberately happens OUTSIDE the merge transaction.
-             *
-             * accountForReadyDocument() performs its own workspace/billing
-             * locking. Keeping it out here prevents the long merge transaction
-             * from holding unrelated locks while the credit ledger settles.
-             */
-            $fresh = Document::findOrFail($document->id);
-
-            DB::transaction(function () use ($fresh) {
-                $locked = Document::whereKey($fresh->id)
-                    ->lockForUpdate()
-                    ->firstOrFail();
-
-                app(WorkspaceCreditService::class)
-                    ->accountForReadyDocument($locked);
-
-                $locked->forceFill([
-                    'status' => 'Ready',
-                    'progress' => 100,
-                    'error_message' => null,
-                ])->save();
-            });
-
-            /*
-             * Continue optional/post-processing work only after finalization.
-             */
-            GenerateDocumentSummaryJob::dispatch($document->id)
-                ->onQueue('extraction');
-
-            AnalyzeEmbeddedVisualsJob::dispatch($document->id)
-                ->onQueue('extraction');
-
-            GenerateEmbeddingsJob::dispatch($document->id)
-                ->onQueue('extraction');
-
-            /*
-             * Let the incremental coordinator reconcile final/partial state.
-             */
-            app(IncrementalPipeline::class)
-                ->pump($document->id);
+            $this->finalizeMerge($document);
         } catch (\Throwable $e) {
             /*
              * Never leave a dead merge looking like active processing.
@@ -243,13 +221,30 @@ class MergeDocumentEvidenceJob implements ShouldQueue
             if ($freshDocument?->status === 'Processing') {
                 $freshDocument->forceFill([
                     'status' => 'Needs Review',
-                    'error_message' =>
-                        'Document intelligence is partially available, but finalization could not be completed.',
+                    'error_message' => 'Document intelligence is partially available, but finalization could not be completed.',
                 ])->save();
             }
 
             throw $e;
         }
+    }
+
+    /** Repeatable after a crash between the merge checkpoint and credit settlement. */
+    private function finalizeMerge(Document $document): void
+    {
+        $fresh = $document->fresh();
+        $coverage = app(EvidenceBudget::class)->forDocument($fresh)['coverage'];
+        if ($coverage['evidence_total'] > $coverage['evidence_omitted']) {
+            DB::transaction(function () use ($fresh) {
+                $locked = Document::whereKey($fresh->id)->lockForUpdate()->firstOrFail();
+                app(WorkspaceCreditService::class)->accountForReadyDocument($locked);
+                if ($locked->status === 'Needs Review' && ($locked->ai_pipeline['synthesis'] ?? 'pending') === 'pending') {
+                    $locked->forceFill(['status' => 'Processing', 'progress' => 95, 'error_message' => null]);
+                }
+                $locked->save();
+            });
+        }
+        app(IncrementalPipeline::class)->pump($fresh->id);
     }
 
     public function failed(\Throwable $e): void
@@ -267,8 +262,7 @@ class MergeDocumentEvidenceJob implements ShouldQueue
         if ($unit->status !== 'completed') {
             $unit->update([
                 'status' => 'failed',
-                'failure_class' =>
-                    $e instanceof TimeoutExceededException
+                'failure_class' => $e instanceof TimeoutExceededException
                         ? 'worker_timeout'
                         : 'merge_failure',
                 'completed_at' => now(),
@@ -283,8 +277,7 @@ class MergeDocumentEvidenceJob implements ShouldQueue
         ) {
             $document->forceFill([
                 'status' => 'Needs Review',
-                'error_message' =>
-                    'Document intelligence is partially available, but finalization could not be completed.',
+                'error_message' => 'Document intelligence is partially available, but finalization could not be completed.',
             ])->save();
         }
     }
