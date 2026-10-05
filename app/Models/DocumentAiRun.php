@@ -13,11 +13,20 @@ class DocumentAiRun extends Model
 
     protected $fillable = [
         'workspace_id', 'document_id', 'file_hash', 'purpose', 'provider',
-        'model', 'prompt_version', 'input_tokens', 'output_tokens', 'status', 'stop_reason', 'created_at',
+        'chunk_id', 'pipeline_version', 'request_attempt', 'cache_creation_tokens', 'cache_read_tokens',
+        'duration_ms', 'process_peak_memory_bytes', 'estimated_cost_usd', 'failure_class', 'provider_request_id', 'partial',
+        'evidence_trimmed', 'optional_items_dropped', 'model', 'prompt_version', 'input_tokens', 'output_tokens', 'status', 'stop_reason', 'created_at',
     ];
 
     protected $casts = ['created_at' => 'datetime'];
 
-    public function document() { return $this->belongsTo(Document::class); }
-    public function workspace() { return $this->belongsTo(Workspace::class); }
+    public function document()
+    {
+        return $this->belongsTo(Document::class);
+    }
+
+    public function workspace()
+    {
+        return $this->belongsTo(Workspace::class);
+    }
 }

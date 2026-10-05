@@ -52,4 +52,14 @@ class DocumentTextExtractorTest extends TestCase
             }
         }
     }
+
+    public function test_native_pdf_preserves_page_boundaries_and_reuses_page_count(): void
+    {
+        $extractor = new DocumentTextExtractor;
+        $path = dirname(__DIR__, 2).'/Fixtures/test_5page.pdf';
+        $text = $extractor->extractPdfText($path);
+        self::assertSame(4, substr_count($text, "\f"));
+        self::assertSame(5, $extractor->countPdfPages($path));
+        self::assertStringContainsString('Synthetic benchmark page 5', explode("\f", $text)[4]);
+    }
 }

@@ -66,3 +66,6 @@ add-docker-check-job.sh
 fix-docker-check-step.sh
 fix-horizon-config-v2.sh
 update-horizon-config.sh
+
+# Synthetic five-page PDF generated for rasterizer/extraction tests (no report content).
+!tests/Fixtures/test_5page.pdf

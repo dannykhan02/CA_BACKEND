@@ -35,7 +35,7 @@ class DocumentStorageService
         }
 
         $suffix = $extension !== '' ? ".{$extension}" : '';
-        $path = "{$workspaceId}/" . (string) Str::uuid() . $suffix;
+        $path = "{$workspaceId}/".(string) Str::uuid().$suffix;
 
         Storage::disk(self::DISK)->putFileAs(
             dirname($path),
@@ -44,6 +44,34 @@ class DocumentStorageService
         );
 
         return $path;
+    }
+
+    /** Stream a private local copy without loading the original PDF into a PHP string. */
+    public function temporaryCopy(string $path, string $prefix = 'docintel_'): string
+    {
+        $temporary = tempnam(sys_get_temp_dir(), $prefix);
+        $input = null;
+        $output = null;
+        try {
+            $input = Storage::disk(self::DISK)->readStream($path);
+            $output = fopen($temporary, 'wb');
+            if (! is_resource($input) || ! is_resource($output) || stream_copy_to_stream($input, $output) === false) {
+                throw new \RuntimeException('Unable to create a local document copy.');
+            }
+            chmod($temporary, 0600);
+
+            return $temporary;
+        } catch (\Throwable $e) {
+            @unlink($temporary);
+            throw $e;
+        } finally {
+            if (is_resource($input)) {
+                fclose($input);
+            }
+            if (is_resource($output)) {
+                fclose($output);
+            }
+        }
     }
 
     public function delete(string $path): bool

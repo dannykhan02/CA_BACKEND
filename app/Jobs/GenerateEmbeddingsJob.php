@@ -12,6 +12,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -26,6 +27,11 @@ class GenerateEmbeddingsJob implements ShouldQueue
 
     public function __construct(public string $documentId) {}
 
+    public function middleware(): array
+    {
+        return [(new WithoutOverlapping('document-embeddings:'.$this->documentId))->expireAfter(120)->dontRelease()];
+    }
+
     public function handle(TextChunker $chunker, VoyageEmbeddingClient $client, PipelineStageRecorder $recorder): void
     {
         $document = Document::find($this->documentId);
@@ -38,8 +44,9 @@ class GenerateEmbeddingsJob implements ShouldQueue
         // severity as "this document couldn't be processed at all."
         if (! $document || ! in_array($document->status, ['Ready'], true)) {
             if (! $document) {
-                \Illuminate\Support\Facades\Log::warning("GenerateEmbeddingsJob: Document {$this->documentId} not found — unexpected null, possible soft-delete race.");
+                Log::warning("GenerateEmbeddingsJob: Document {$this->documentId} not found — unexpected null, possible soft-delete race.");
             }
+
             return;
         }
 
@@ -56,6 +63,12 @@ class GenerateEmbeddingsJob implements ShouldQueue
             return;
         }
 
+        $inputHash = hash('sha256', $text);
+        if ($document->processingJobs()->where('stage', 'chunk')->where('status', 'completed')
+            ->where('output->input_hash', $inputHash)->where('output->model', config('services.voyage.model'))->exists()
+            && DocumentEmbedding::where('document_id', $document->id)->exists()) {
+            return;
+        }
         app(EntitlementService::class)->reserveDocument($document);
 
         $chunkStage = $recorder->start($document, 'chunk');
@@ -96,7 +109,7 @@ class GenerateEmbeddingsJob implements ShouldQueue
             }
         });
 
-        $recorder->complete($chunkStage, ['chunks' => count($chunks), 'model' => $result['model']]);
+        $recorder->complete($chunkStage, ['chunks' => count($chunks), 'model' => $result['model'], 'input_hash' => $inputHash]);
     }
 
     public function failed(\Throwable $e): void

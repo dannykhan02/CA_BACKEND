@@ -2,7 +2,13 @@
 
 namespace App\Jobs\Concerns;
 
+use App\Jobs\ClassifyDocumentTypeJob;
+use App\Jobs\DetectDocumentDeadlinesJob;
+use App\Jobs\DetectDocumentRisksJob;
+use App\Jobs\ExtractDocumentEntitiesJob;
+use App\Jobs\GenerateDocumentSummaryJob;
 use App\Models\Document;
+use App\Services\AI\Incremental\IncrementalPipeline;
 use Illuminate\Support\Facades\Bus;
 
 /**
@@ -40,13 +46,17 @@ trait DispatchesIntelligenceChain
             return;
         }
 
+        if (app(IncrementalPipeline::class)->route($document)) {
+            return;
+        }
+
         $documentId = $document->id;
 
         Bus::batch([
-            new \App\Jobs\ClassifyDocumentTypeJob($documentId),
-            new \App\Jobs\ExtractDocumentEntitiesJob($documentId),
-            new \App\Jobs\DetectDocumentRisksJob($documentId),
-            new \App\Jobs\DetectDocumentDeadlinesJob($documentId),
+            new ClassifyDocumentTypeJob($documentId),
+            new ExtractDocumentEntitiesJob($documentId),
+            new DetectDocumentRisksJob($documentId),
+            new DetectDocumentDeadlinesJob($documentId),
         ])
             ->name("document-intelligence:{$documentId}")
             ->onQueue('extraction')
@@ -55,7 +65,7 @@ trait DispatchesIntelligenceChain
                 if (! Document::find($documentId)?->canGenerateIntelligence()) {
                     return;
                 }
-                \App\Jobs\GenerateDocumentSummaryJob::dispatch($documentId)
+                GenerateDocumentSummaryJob::dispatch($documentId)
                     ->onQueue('extraction');
             })
             ->dispatch();

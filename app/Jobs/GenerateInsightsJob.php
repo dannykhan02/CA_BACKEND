@@ -2,13 +2,14 @@
 
 namespace App\Jobs;
 
-use App\Jobs\Concerns\SkipsUnchangedDocuments;
 use App\Jobs\Concerns\GuardsDocumentIntelligence;
+use App\Jobs\Concerns\SkipsUnchangedDocuments;
 use App\Models\Document;
 use App\Models\DocumentAiRun;
 use App\Models\DocumentChart;
 use App\Models\DocumentChartPoint;
 use App\Models\DocumentKpi;
+use App\Services\AI\Incremental\IncrementalPipeline;
 use App\Services\AnthropicClient;
 use App\Services\Kpis\KpiIdentityResolver;
 use App\Services\Pipeline\PipelineStageRecorder;
@@ -24,7 +25,7 @@ use Illuminate\Support\Facades\Log;
 
 class GenerateInsightsJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments, GuardsDocumentIntelligence;
+    use Dispatchable, GuardsDocumentIntelligence, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments;
 
     public int $tries = 2;
 
@@ -48,6 +49,12 @@ class GenerateInsightsJob implements ShouldQueue
             if (! $document) {
                 Log::warning("GenerateInsightsJob: Document {$this->documentId} not found — unexpected null, possible soft-delete race.");
             }
+
+            return;
+        }
+
+        if (($document->ai_pipeline['route'] ?? null) === 'incremental') {
+            app(IncrementalPipeline::class)->start($document);
 
             return;
         }
@@ -107,6 +114,7 @@ class GenerateInsightsJob implements ShouldQueue
                 $current = Document::whereKey($document->id)->lockForUpdate()->first();
                 if (! $current || $current->status !== 'Processing') {
                     $insightsStage->update(['status' => 'skipped', 'completed_at' => now()]);
+
                     return false;
                 }
                 $recorder->fail($insightsStage, 'Analysis could not be completed. Please try again.');
@@ -114,6 +122,7 @@ class GenerateInsightsJob implements ShouldQueue
                     'status' => 'Needs Review',
                     'error_message' => 'Analysis could not be completed. Please try again.',
                 ])->save();
+
                 return true;
             });
             if (! $failed) {
@@ -149,9 +158,12 @@ class GenerateInsightsJob implements ShouldQueue
 
                     $insightsStage->forceFill(['status' => 'skipped', 'completed_at' => now(),
                         'output' => ['reason' => 'Document is no longer processing.']])->save();
+
                     return;
                 }
-                if (! $recorder->isCurrent($insightsStage)) return;
+                if (! $recorder->isCurrent($insightsStage)) {
+                    return;
+                }
                 // Delete-before-insert — a reprocessed document must not leave
                 // stale kpis/charts from a prior version sitting alongside the
                 // current ones. Same reasoning as GenerateEmbeddingsJob's

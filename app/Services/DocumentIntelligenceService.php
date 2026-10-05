@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Document;
+use App\Models\DocumentChunk;
 use App\Services\Pipeline\ProcessingStageReconciler;
 
 /**
@@ -44,7 +45,43 @@ class DocumentIntelligenceService
                     ? 'blocked' : ($job?->status ?? 'not_started');
         }
 
+        if (($document->ai_pipeline['route'] ?? null) === 'incremental') {
+            $chunks = DocumentChunk::where('document_id', $document->id)->where('workspace_id', $document->workspace_id)
+                ->where('pipeline_key', $document->ai_pipeline['key'])->where('stage', 'extraction')->pluck('status');
+            $state = $chunks->contains(fn ($s) => in_array($s, ['failed', 'uncertain', 'budget'])) ? 'failed'
+                : ($chunks->contains(fn ($s) => in_array($s, ['pending', 'queued', 'running'])) ? 'processing' : 'completed');
+            foreach (['entities', 'risks', 'deadlines'] as $stage) {
+                $status[$stage] = $state;
+            }
+            $status['document_type'] = $document->documentTypeClassification()->exists() ? 'completed' : 'skipped';
+            if ($status['document_summary'] === 'not_started') {
+                $status['document_summary'] = $state === 'processing' ? 'pending' : 'failed';
+            }
+        }
+
         return $status;
+    }
+
+    public function processingDetails(Document $document): array
+    {
+        $units = DocumentChunk::where('document_id', $document->id)->where('workspace_id', $document->workspace_id);
+        if (isset($document->ai_pipeline['key'])) {
+            $units->where('pipeline_key', $document->ai_pipeline['key']);
+        }
+        $counts = $units->selectRaw('stage, status, count(*) as total')->groupBy('stage', 'status')->get();
+        $stages = [];
+        foreach ($counts as $count) {
+            $stages[$count->stage][$count->status] = (int) $count->total;
+        }
+        $partial = (bool) ($document->ai_pipeline['partial'] ?? false);
+        foreach ($stages as $states) {
+            if (array_intersect(array_keys($states), ['failed', 'uncertain', 'budget'])) {
+                $partial = true;
+            }
+        }
+
+        return ['route' => $document->ai_pipeline['route'] ?? 'normal', 'partial' => $partial,
+            'evidenceTrimmed' => (bool) ($document->ai_pipeline['evidence_trimmed'] ?? false), 'stages' => $stages];
     }
 
     /** Public, document-level failure metadata; never expose raw provider errors. */

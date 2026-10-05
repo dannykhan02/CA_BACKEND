@@ -13,11 +13,16 @@ use Smalot\PdfParser\Parser as PdfParser;
  */
 class DocumentTextExtractor
 {
+    private array $pdfPageCounts = [];
+
     public function extractPdfText(string $path): string
     {
         $parser = new PdfParser;
 
-        return $parser->parseFile($path)->getText();
+        $pages = $parser->parseFile($path)->getPages();
+        $this->pdfPageCounts[$path] = count($pages);
+
+        return implode("\f", array_map(fn ($page) => $page->getText(), $pages));
     }
 
     /**
@@ -29,6 +34,9 @@ class DocumentTextExtractor
      */
     public function countPdfPages(string $path): int
     {
+        if (isset($this->pdfPageCounts[$path])) {
+            return $this->pdfPageCounts[$path];
+        }
         $parser = new PdfParser;
 
         return count($parser->parseFile($path)->getPages());

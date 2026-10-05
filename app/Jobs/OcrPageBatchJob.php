@@ -6,6 +6,7 @@ use App\Enums\WorkspaceType;
 use App\Jobs\Concerns\DispatchesIntelligenceChain;
 use App\Models\Document;
 use App\Models\OcrResult;
+use App\Services\Documents\DocumentStorageService;
 use App\Services\EntitlementService;
 use App\Services\Ocr\OcrEngineResolver;
 use App\Services\Pipeline\PipelineStageRecorder;
@@ -66,6 +67,7 @@ class OcrPageBatchJob implements ShouldQueue
         public bool $isLastBatch,
         public ?string $tempDir = null,
         public bool $fetchPageFromSourceDisk = false,
+        public bool $storedPageImages = false,
     ) {}
 
     public function handle(OcrEngineResolver $resolver, PipelineStageRecorder $recorder): void
@@ -82,21 +84,7 @@ class OcrPageBatchJob implements ShouldQueue
 
         $batchStage = $recorder->start($document, 'ocr_check');
 
-        // Idempotency: a Horizon-enforced timeout hard-kills the worker
-        // process mid-loop, bypassing this method's own try/catch entirely
-        // — $tries=2 then re-dispatches this exact batch from scratch,
-        // which would otherwise leave duplicate OcrResult rows for any
-        // page written before the kill (observed in practice: a 90s
-        // timeout mid-batch, retry re-wrote pages already committed by
-        // the first attempt). Clearing this batch's own page range first
-        // makes every attempt — first or retried — safe to run from a
-        // clean slate.
-        OcrResult::where('document_id', $document->id)
-            ->whereBetween('page_number', [
-                $this->startingPageNumber,
-                $this->startingPageNumber + count($this->pageImagePaths) - 1,
-            ])
-            ->delete();
+        // Completed OCR pages are checkpoints; a retry skips them rather than deleting them.
 
         // For the JPG/PNG single-image case, $pageImagePaths[0] points at
         // a temp file ExtractDocumentTextJob already deleted — nothing
@@ -106,16 +94,30 @@ class OcrPageBatchJob implements ShouldQueue
         // ourselves once we're done with it, regardless of outcome.
         $fetchedSourcePath = null;
         if ($this->fetchPageFromSourceDisk) {
-            $fetchedSourcePath = tempnam(sys_get_temp_dir(), 'ocr_src_');
-            file_put_contents($fetchedSourcePath, Storage::disk('documents')->get($document->file_path));
-            chmod($fetchedSourcePath, 0644);
+            $fetchedSourcePath = app(DocumentStorageService::class)->temporaryCopy($document->file_path, 'ocr_src_');
         }
 
         try {
             $provider = $resolver->resolve($document);
 
             foreach ($this->pageImagePaths as $offset => $imagePath) {
-                $result = $provider->extractPage($fetchedSourcePath ?? $imagePath, $document);
+                if (OcrResult::where('document_id', $document->id)->where('workspace_id', $document->workspace_id)
+                    ->where('page_number', $this->startingPageNumber + $offset)->exists()) {
+                    if ($this->storedPageImages) {
+                        Storage::disk('documents')->delete($imagePath);
+                    }
+
+                    continue;
+                }
+                $localPage = $this->storedPageImages
+                    ? app(DocumentStorageService::class)->temporaryCopy($imagePath, 'ocr_page_') : null;
+                try {
+                    $result = $provider->extractPage($localPage ?? $fetchedSourcePath ?? $imagePath, $document);
+                } finally {
+                    if ($localPage) {
+                        @unlink($localPage);
+                    }
+                }
 
                 OcrResult::create([
                     'workspace_id' => $document->workspace_id,
@@ -126,6 +128,9 @@ class OcrPageBatchJob implements ShouldQueue
                     'confidence' => $result->confidence,
                     'metadata' => $result->metadata,
                 ]);
+                if ($this->storedPageImages) {
+                    Storage::disk('documents')->delete($imagePath);
+                }
             }
         } catch (\Throwable $e) {
             if ($fetchedSourcePath) {

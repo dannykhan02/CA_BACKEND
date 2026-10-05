@@ -6,6 +6,7 @@ use App\Jobs\Concerns\GuardsDocumentIntelligence;
 use App\Jobs\Concerns\SkipsUnchangedDocuments;
 use App\Models\Document;
 use App\Models\DocumentEntity;
+use App\Services\AI\AiModels;
 use App\Services\AnthropicClient;
 use App\Services\Pipeline\PipelineStageRecorder;
 use Illuminate\Bus\Batchable;
@@ -82,7 +83,7 @@ class ExtractDocumentEntitiesJob implements ShouldQueue
                     'context' => $entity['context'] ?? null,
                     'prompt_version' => (string) $result['prompt_version'],
                     'provider' => 'anthropic',
-                    'model' => config('services.anthropic.model'),
+                    'model' => app(AiModels::class)->forTask('entities'),
                 ]);
             }
         }, ['entity_count' => count($result['entities'])]);

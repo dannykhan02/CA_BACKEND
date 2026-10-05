@@ -27,13 +27,21 @@ trait GuardsDocumentIntelligence
                     ->where('document_id', $current->id)->where('stage', $stage)->first();
                 $latestId = $current->processingJobs()->where('stage', $stage)
                     ->orderByDesc('created_at')->orderByDesc('id')->value('id');
-                if ($reserved?->status === 'failed' && $this->attempts() > 1
-                    && $latestId === $pendingId) {
-                    // Queue retry of the same dispatch: preserve the failed
-                    // first attempt and start a fresh attempt-history row.
+                if (! $reserved || $latestId !== $pendingId
+                    || in_array($reserved->status, ['completed', 'skipped'], true)) {
+                    return null;
+                }
+                if ($reserved->status === 'failed' && ! $reserved->started_at && $this->attempts() === 1) {
+                    // An unclaimed reservation expired while waiting in the
+                    // queue. Its original delivery may not restart it.
+                    return null;
+                }
+                if ($this->attempts() > 1 || $reserved->status === 'failed') {
+                    // The reservation belongs to the first execution. A queue
+                    // retry (or a replay of its failed payload) needs its own
+                    // history row, even when the older row was left processing.
                     $pendingId = null;
-                } elseif ($reserved?->status !== 'pending'
-                    || $latestId !== $pendingId) {
+                } elseif ($reserved->status !== 'pending') {
                     return null;
                 }
             }
@@ -44,7 +52,8 @@ trait GuardsDocumentIntelligence
                 app(EntitlementService::class)->reserveDocument($current);
             }
 
-            $attempt = $recorder->start($current, $stage, $this->job?->uuid(), $pendingId);
+            $attempt = $recorder->start($current, $stage, $this->job?->uuid(), $pendingId,
+                $this->job ? $this->attempts() : null);
             $this->intelligenceStageAttemptId = $attempt->id;
 
             return $attempt;
@@ -53,16 +62,50 @@ trait GuardsDocumentIntelligence
 
     private function finalizeIntelligenceFailure(string $stage, \Throwable $e): void
     {
+        $queueUuid = $this->job?->uuid();
+        $queueAttempt = $this->job ? $this->attempts() : null;
         $attempt = null;
         if ($this->intelligenceStageAttemptId) {
             $attempt = ProcessingJob::find($this->intelligenceStageAttemptId);
-        } elseif ($this->job?->uuid()) {
+        }
+        if (! $attempt && $queueUuid) {
             $attempt = ProcessingJob::where('document_id', $this->documentId)
-                ->where('stage', $stage)->where('input->queue_job_uuid', $this->job->uuid())
+                ->where('stage', $stage)->where('input->queue_job_uuid', $queueUuid)
+                ->where('input->queue_attempt', $queueAttempt)
+                ->orderByDesc('created_at')->orderByDesc('id')->first();
+        }
+        if (! $attempt && $queueUuid && $queueAttempt === 1) {
+            // Rows created before queue-attempt metadata existed can still be
+            // finalized, but a later retry must never claim that older row.
+            $attempt = ProcessingJob::where('document_id', $this->documentId)
+                ->where('stage', $stage)->where('input->queue_job_uuid', $queueUuid)
+                ->whereNull('input->queue_attempt')
+                ->whereIn('status', ['pending', 'processing'])
                 ->orderByDesc('created_at')->orderByDesc('id')->first();
         }
         if (! $attempt && ($this->queuedStageId ?? null)) {
-            $attempt = ProcessingJob::find($this->queuedStageId);
+            DB::transaction(function () use ($stage, $queueUuid, $queueAttempt): void {
+                $document = Document::whereKey($this->documentId)->lockForUpdate()->first();
+                $reserved = ProcessingJob::whereKey($this->queuedStageId)
+                    ->where('document_id', $this->documentId)->where('stage', $stage)->first();
+                if (! $document || ! $reserved || $document->processingJobs()->where('stage', $stage)
+                    ->orderByDesc('created_at')->orderByDesc('id')->value('id') !== $reserved->id) {
+                    return;
+                }
+
+                $recorder = app(PipelineStageRecorder::class);
+                if (($queueAttempt ?? 1) === 1 && in_array($reserved->status, ['pending', 'processing'], true)) {
+                    $recorder->fail($reserved, 'Analysis attempt failed or timed out. Please retry this section.');
+                } elseif ($queueUuid && in_array($reserved->status, ['pending', 'processing', 'failed'], true)) {
+                    // The worker failed before it could claim a fresh queue
+                    // retry row. Keep the reservation as history and record
+                    // this execution as a separate terminal attempt.
+                    $retry = $recorder->start($document, $stage, $queueUuid, null, $queueAttempt);
+                    $recorder->fail($retry, 'Analysis attempt failed or timed out. Please retry this section.');
+                }
+            });
+
+            return;
         }
 
         if ($attempt && $attempt->document_id === $this->documentId && $attempt->stage === $stage) {

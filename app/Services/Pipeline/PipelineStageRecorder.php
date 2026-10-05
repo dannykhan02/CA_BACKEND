@@ -9,8 +9,9 @@ class PipelineStageRecorder
 {
     private const MANAGED_STAGES = ['document_type', 'entities', 'risks', 'deadlines', 'document_summary', 'ai_analysis'];
 
-    public function start(Document $document, string $stage, ?string $queueJobUuid = null, ?string $pendingId = null): ProcessingJob
+    public function start(Document $document, string $stage, ?string $queueJobUuid = null, ?string $pendingId = null, ?int $queueAttempt = null): ProcessingJob
     {
+        $input = $queueJobUuid ? ['queue_job_uuid' => $queueJobUuid, 'queue_attempt' => $queueAttempt ?? 1] : null;
         if (in_array($stage, self::MANAGED_STAGES, true)) {
             $open = $document->processingJobs()->where('stage', $stage)
                 ->whereIn('status', ['pending', 'processing'])
@@ -27,7 +28,7 @@ class PipelineStageRecorder
             }
             if ($pending) {
                 $pending->forceFill(['status' => 'processing', 'started_at' => now(),
-                    'input' => $queueJobUuid ? ['queue_job_uuid' => $queueJobUuid] : null])->save();
+                    'input' => $input])->save();
 
                 return $pending;
             }
@@ -39,7 +40,7 @@ class PipelineStageRecorder
             'stage' => $stage,
             'status' => 'processing',
             'started_at' => now(),
-            'input' => $queueJobUuid ? ['queue_job_uuid' => $queueJobUuid] : null,
+            'input' => $input,
         ]);
     }
 

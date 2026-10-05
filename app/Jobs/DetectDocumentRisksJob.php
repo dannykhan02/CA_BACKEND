@@ -2,10 +2,11 @@
 
 namespace App\Jobs;
 
-use App\Jobs\Concerns\SkipsUnchangedDocuments;
 use App\Jobs\Concerns\GuardsDocumentIntelligence;
+use App\Jobs\Concerns\SkipsUnchangedDocuments;
 use App\Models\Document;
 use App\Models\DocumentRisk;
+use App\Services\AI\AiModels;
 use App\Services\AnthropicClient;
 use App\Services\Pipeline\PipelineStageRecorder;
 use Illuminate\Bus\Batchable;
@@ -18,7 +19,7 @@ use Illuminate\Support\Facades\Log;
 
 class DetectDocumentRisksJob implements ShouldQueue
 {
-    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments, GuardsDocumentIntelligence;
+    use Batchable, Dispatchable, GuardsDocumentIntelligence, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments;
 
     public int $tries = 2;
 
@@ -82,7 +83,7 @@ class DetectDocumentRisksJob implements ShouldQueue
                     'status' => $reviewedStatuses[hash('sha256', $risk['title'].'|'.$risk['evidence'])] ?? 'open',
                     'prompt_version' => (string) $result['prompt_version'],
                     'provider' => 'anthropic',
-                    'model' => config('services.anthropic.model'),
+                    'model' => app(AiModels::class)->forTask('risks'),
                 ]);
             }
         }, ['risk_count' => count($result['risks'])]);

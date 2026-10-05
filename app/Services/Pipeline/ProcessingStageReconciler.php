@@ -10,8 +10,8 @@ class ProcessingStageReconciler
 {
     private const OPTIONAL_STAGES = ['document_type', 'entities', 'risks', 'deadlines', 'document_summary'];
 
-    // These stages have a 60-second job timeout. Allow ample room for queue
-    // retries and clock skew before treating an attempt as orphaned.
+    // Optional jobs have bounded timeouts (entity extraction is the longest
+    // at 330 seconds). Allow room for retries and clock skew before expiry.
     public const PROCESSING_GRACE_MINUTES = 15;
 
     // A queued retry may wait for a busy worker. Only expire an unclaimed

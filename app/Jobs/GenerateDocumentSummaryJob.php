@@ -2,10 +2,16 @@
 
 namespace App\Jobs;
 
-use App\Jobs\Concerns\SkipsUnchangedDocuments;
+use App\Exceptions\AiProcessingException;
+use App\Exceptions\AnthropicStructuredOutputException;
 use App\Jobs\Concerns\GuardsDocumentIntelligence;
+use App\Jobs\Concerns\SkipsUnchangedDocuments;
 use App\Models\Document;
+use App\Models\DocumentChunk;
 use App\Models\DocumentIntelligenceSummary;
+use App\Services\AI\AiModels;
+use App\Services\AI\Incremental\EvidenceBudget;
+use App\Services\AI\Incremental\SynthesisCheckpoint;
 use App\Services\AnthropicClient;
 use App\Services\Pipeline\PipelineStageRecorder;
 use Illuminate\Bus\Batchable;
@@ -35,11 +41,11 @@ use Illuminate\Support\Facades\Log;
  */
 class GenerateDocumentSummaryJob implements ShouldQueue
 {
-    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments, GuardsDocumentIntelligence;
+    use Batchable, Dispatchable, GuardsDocumentIntelligence, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments;
 
     public int $tries = 2;
 
-    public int $timeout = 60;
+    public int $timeout = 140;
 
     public bool $failOnTimeout = true;
 
@@ -54,6 +60,19 @@ class GenerateDocumentSummaryJob implements ShouldQueue
         }
 
         if ($this->skipIfUnchanged($document, 'document_summary', 'document_summary', $recorder)) {
+            return;
+        }
+
+        $checkpoint = null;
+        if (($document->ai_pipeline['route'] ?? null) === 'incremental') {
+            $checkpoint = app(SynthesisCheckpoint::class)->claim($document);
+            if (! $checkpoint) {
+                return;
+            }
+        }
+
+        $stage = $this->startIntelligence($document, 'document_summary', $recorder);
+        if (! $stage || $this->abandonIntelligence($document, $stage)) {
             return;
         }
 
@@ -81,14 +100,43 @@ class GenerateDocumentSummaryJob implements ShouldQueue
             'insights' => array_slice($document->insights ?? [], 0, 5),
         ];
 
-        $stage = $this->startIntelligence($document, 'document_summary', $recorder);
-        if (! $stage || $this->abandonIntelligence($document, $stage)) {
-            return;
+        if (($document->ai_pipeline['route'] ?? null) === 'incremental') {
+            $extractedData = app(EvidenceBudget::class)->forDocument($document);
+        } else {
+            $extractedData = app(EvidenceBudget::class)->trimNormal($extractedData);
         }
+        $document->forceFill(['ai_pipeline' => [...($document->ai_pipeline ?? []),
+            'evidence_trimmed' => $extractedData['coverage']['evidence_omitted'] > 0]])->save();
 
+        if ($checkpoint) {
+            $client->setRunContext(['chunk_id' => $checkpoint->id, 'pipeline_version' => $checkpoint->pipeline_version,
+                'request_attempt' => $checkpoint->attempts, 'evidence_trimmed' => ($extractedData['coverage']['evidence_omitted'] ?? 0) > 0]);
+        }
         try {
-            $result = $client->generateDocumentSummary(json_encode($extractedData), $document->name, $document);
+            $result = $checkpoint?->result ?? $client->generateDocumentSummary(json_encode($extractedData), $document->name, $document);
+            if ($checkpoint && $checkpoint->status !== 'completed') {
+                $checkpoint->update(['status' => 'completed', 'result' => $result, 'completed_at' => now(), 'failure_class' => null]);
+            }
         } catch (\Throwable $e) {
+            $failure = $e instanceof AiProcessingException ? $e->classification
+                : ($e instanceof AnthropicStructuredOutputException ? $e->outputStatus : 'validation');
+            $checkpoint?->update(['status' => 'failed', 'failure_class' => $failure]);
+            if ($checkpoint) {
+                $document->refresh()->forceFill(['ai_pipeline' => [...$document->ai_pipeline, 'partial' => true]])->save();
+                if (in_array($failure, ['max_tokens', 'truncated', 'context_overflow', 'timeout'], true)
+                    && ($document->ai_pipeline['synthesis_reductions'] ?? 0) < 2) {
+                    // Only synthesis changes: completed extraction is never scheduled again.
+                    $document->forceFill(['ai_pipeline' => [...$document->ai_pipeline,
+                        'synthesis_reductions' => ($document->ai_pipeline['synthesis_reductions'] ?? 0) + 1]])->save();
+                    self::dispatch($document->id, true)->onQueue('extraction');
+                }
+            }
+            if ($checkpoint && $e instanceof AiProcessingException && $e->classification === 'transient'
+                && $checkpoint->attempts < config('document_intelligence.attempts')) {
+                $checkpoint->update(['status' => 'pending']);
+                self::dispatch($document->id, true)->onQueue('extraction')->delay(max(10, $e->retryAfter) + random_int(0, 5));
+            }
+
             if ($this->abandonIntelligence($document, $stage)) {
                 return;
             }
@@ -102,7 +150,14 @@ class GenerateDocumentSummaryJob implements ShouldQueue
             return;
         }
 
-        $this->persistIntelligence($document, $stage, $recorder, function () use ($document, $result) {
+        $this->persistIntelligence($document, $stage, $recorder, function () use ($document, $result, $recorder) {
+            if (($document->ai_pipeline['route'] ?? null) === 'incremental' && ! empty($result['document_type_assessment'])) {
+                $document->documentTypeClassification()->updateOrCreate(['document_id' => $document->id],
+                    $result['document_type_assessment'] + ['workspace_id' => $document->workspace_id,
+                        'prompt_version' => (string) $result['prompt_version'], 'provider' => 'anthropic',
+                        'model' => app(AiModels::class)->forTask('document_summary')]);
+                $recorder->complete($recorder->start($document, 'document_type'), ['from_global_synthesis' => true]);
+            }
             DocumentIntelligenceSummary::updateOrCreate(
                 ['document_id' => $document->id],
                 [
@@ -120,10 +175,20 @@ class GenerateDocumentSummaryJob implements ShouldQueue
                     'questions' => $result['questions'] ?? [],
                     'prompt_version' => (string) $result['prompt_version'],
                     'provider' => 'anthropic',
-                    'model' => config('services.anthropic.model'),
+                    'model' => app(AiModels::class)->forTask('document_summary'),
                 ]
             );
-        }, ['generated' => true]);
+        }, ['generated' => true, 'optional_items_dropped' => array_sum($result['_optional_items_dropped'] ?? [])]);
+        if ($checkpoint) {
+            DocumentChunk::where('document_id', $document->id)->where('pipeline_key', $checkpoint->pipeline_key)
+                ->where('stage', 'synthesis')->where('id', '!=', $checkpoint->id)
+                ->whereIn('status', ['failed', 'budget', 'uncertain'])->update(['status' => 'superseded']);
+            $otherFailures = DocumentChunk::where('document_id', $document->id)->where('pipeline_key', $checkpoint->pipeline_key)
+                ->whereIn('status', ['failed', 'budget', 'uncertain'])->exists();
+            $document->refresh()->forceFill(['ai_pipeline' => [...$document->ai_pipeline,
+                'partial' => $otherFailures || ! empty($result['_optional_items_dropped'])
+                    || ($extractedData['coverage']['unresolved_references'] ?? 0) > 0]])->save();
+        }
     }
 
     public function failed(\Throwable $e): void

@@ -1,0 +1,212 @@
+<?php
+
+namespace App\Services\AI\Incremental;
+
+use App\Jobs\AnalyzeEmbeddedVisualsJob;
+use App\Jobs\GenerateDocumentSummaryJob;
+use App\Jobs\GenerateEmbeddingsJob;
+use App\Jobs\MergeDocumentEvidenceJob;
+use App\Jobs\ProcessDocumentChunkJob;
+use App\Models\Document;
+use App\Models\DocumentChunk;
+use App\Services\AI\AiModels;
+use App\Services\AnthropicClient;
+use Illuminate\Support\Facades\DB;
+
+class IncrementalPipeline
+{
+    public function __construct(private ChunkPlanner $planner, private AnthropicClient $client) {}
+
+    public function route(Document $document): bool
+    {
+        if (! config('document_intelligence.incremental') || ! $document->canGenerateIntelligence()) {
+            return false;
+        }
+        $text = $document->extracted_text;
+        $hash = hash('sha256', $text);
+        $model = app(AiModels::class)->forTask('extraction');
+        $metadata = $document->ai_pipeline ?? [];
+        if (($metadata['text_hash'] ?? null) !== $hash || ($metadata['model'] ?? null) !== $model) {
+            // The byte count is a safe token upper bound for tiny documents; no network cost.
+            $method = 'byte_upper_bound';
+            $tokens = strlen($text);
+            if ($tokens > config('document_intelligence.large_tokens')) {
+                try {
+                    $tokens = $this->client->countTokens($text, $model);
+                    $method = 'anthropic';
+                } catch (\Throwable) {
+                    $tokens = $this->planner->estimate($text);
+                    $method = 'estimated';
+                }
+            }
+            $metadata = ['text_hash' => $hash, 'model' => $model, 'tokens' => $tokens, 'count_method' => $method];
+        }
+        // Avoid the legacy char truncation even when a low token-density document fits.
+        $large = $metadata['tokens'] > config('document_intelligence.large_tokens')
+            || mb_strlen($text) > config('document_processing.max_extraction_chars');
+        $metadata['route'] = $large ? 'incremental' : 'normal';
+        $document->forceFill(['ai_pipeline' => $metadata])->save();
+        if (! $large) {
+            return false;
+        }
+        $this->start($document);
+
+        return true;
+    }
+
+    public function start(Document $document): void
+    {
+        $version = (string) config('document_intelligence.pipeline_version');
+        $prompt = (string) config('document_intelligence.prompt_version');
+        $key = hash('sha256', implode('|', [$document->workspace_id, $document->id,
+            hash('sha256', $document->extracted_text), $version, $prompt, app(AiModels::class)->forTask('extraction')]));
+        if (($document->ai_pipeline['key'] ?? null) === $key
+            && DocumentChunk::where('document_id', $document->id)->where('pipeline_key', $key)->where('stage', 'extraction')->exists()) {
+            $this->pump($document->id);
+
+            return;
+        }
+        $density = ($document->ai_pipeline['count_method'] ?? null) === 'anthropic'
+            ? $document->ai_pipeline['tokens'] / max(1, strlen($document->extracted_text)) : 1 / 3;
+        $plan = $this->planner->plan($document->extracted_text, tokensPerByte: $density);
+        DB::transaction(function () use ($document, $key, $plan, $version, $prompt) {
+            $locked = Document::whereKey($document->id)->lockForUpdate()->firstOrFail();
+            if (! $locked->canGenerateIntelligence()) {
+                return;
+            }
+            $pageMapKnown = $locked->type === 'PDF' && substr_count($locked->extracted_text, "\f") + 1 === (int) $locked->pages;
+            foreach ($plan as $index => $range) {
+                if (! $pageMapKnown) {
+                    $range['start_page'] = null;
+                    $range['end_page'] = null;
+                }
+                DocumentChunk::firstOrCreate(['document_id' => $locked->id, 'pipeline_key' => $key,
+                    'identity' => 'chunk:'.$index], $range + ['workspace_id' => $locked->workspace_id,
+                        'pipeline_version' => $version, 'prompt_version' => $prompt]);
+            }
+            $metadata = $locked->ai_pipeline ?? [];
+            $metadata['key'] = $key;
+            $metadata['route'] = 'incremental';
+            $metadata['recovery_complete'] = false;
+            $metadata['pipeline_version'] = $version;
+            $metadata['prompt_version'] = $prompt;
+            $metadata['budget_usd'] = min(config('document_intelligence.budget_max_usd'),
+                config('document_intelligence.budget_base_usd') + ($metadata['tokens'] ?? $this->planner->estimate($locked->extracted_text))
+                / 1000 * config('document_intelligence.budget_per_1000_tokens_usd'));
+            $locked->forceFill(['ai_pipeline' => $metadata])->save();
+        });
+        $this->pump($document->id);
+    }
+
+    /** At most N outstanding jobs per document; no worker waits for children. */
+    public function pump(string $documentId): void
+    {
+        DB::transaction(function () use ($documentId) {
+            $document = Document::whereKey($documentId)->lockForUpdate()->first();
+            if (! $document?->canGenerateIntelligence()) {
+                return;
+            }
+            $key = $document->ai_pipeline['key'] ?? null;
+            if (! $key) {
+                return;
+            }
+            $query = fn () => DocumentChunk::where('document_id', $documentId)->where('pipeline_key', $key)->where('stage', 'extraction');
+            $leafCount = $query()->where('status', '!=', 'split')->count();
+            if ($document->status === 'Processing' && $leafCount) {
+                $document->forceFill(['progress' => 50 + (int) (35 * $query()->where('status', 'completed')->count() / $leafCount)])->save();
+            }
+            $active = $query()->whereIn('status', ['queued', 'running'])->count();
+            $slots = max(0, (int) config('document_intelligence.concurrency') - $active);
+            foreach ($query()->where('status', 'pending')->orderBy('start_offset')->limit($slots)->get() as $chunk) {
+                $chunk->update(['status' => 'queued']);
+                ProcessDocumentChunkJob::dispatch($chunk->id)->onQueue('extraction')->afterCommit();
+            }
+            if ($query()->whereIn('status', ['pending', 'queued', 'running'])->exists()) {
+                return;
+            }
+            if ($query()->whereNotIn('status', ['completed', 'split'])->exists()) {
+                $document->forceFill(['status' => 'Needs Review', 'error_message' => 'Some document evidence needs review. Completed chunks have been saved.'])->save();
+
+                return;
+            }
+            $merge = DocumentChunk::firstOrCreate(['document_id' => $documentId, 'pipeline_key' => $key, 'identity' => 'merge'],
+                ['workspace_id' => $document->workspace_id, 'stage' => 'merge', 'input_hash' => $key,
+                    'pipeline_version' => config('document_intelligence.pipeline_version'),
+                    'prompt_version' => config('document_intelligence.prompt_version')]);
+            if ($merge->status === 'completed' && $document->status === 'Processing') {
+                $document->forceFill(['status' => 'Ready', 'progress' => 100])->save();
+                GenerateDocumentSummaryJob::dispatch($documentId)->onQueue('extraction')->afterCommit();
+            }
+            if ($merge->status === 'pending') {
+                $merge->update(['status' => 'queued']);
+                MergeDocumentEvidenceJob::dispatch($merge->id)->onQueue('extraction')->afterCommit();
+            }
+        });
+    }
+
+    public function split(DocumentChunk $chunk, Document $document): void
+    {
+        $text = mb_substr($document->extracted_text, $chunk->start_offset, $chunk->end_offset - $chunk->start_offset);
+        if (mb_strlen($text) < config('document_intelligence.minimum_split_chars')
+            || $chunk->depth >= config('document_intelligence.max_split_depth')) {
+            $chunk->update(['status' => 'failed', 'failure_class' => 'split_limit']);
+
+            return;
+        }
+        $target = max(1, (int) ceil($this->planner->estimate($text) / 2));
+        $children = $this->planner->plan($text, $target, $chunk->start_offset, $chunk->start_page ?? 1, false);
+        DB::transaction(function () use ($chunk, $children) {
+            $locked = DocumentChunk::whereKey($chunk->id)->lockForUpdate()->firstOrFail();
+            if ($locked->status === 'split') {
+                return;
+            }
+            foreach ($children as $index => $range) {
+                if ($chunk->start_page === null) {
+                    $range['start_page'] = null;
+                    $range['end_page'] = null;
+                }
+                DocumentChunk::firstOrCreate(['document_id' => $chunk->document_id, 'pipeline_key' => $chunk->pipeline_key,
+                    'identity' => $chunk->identity.'.'.$index], $range + ['workspace_id' => $chunk->workspace_id,
+                        'parent_id' => $chunk->id, 'depth' => $chunk->depth + 1,
+                        'pipeline_version' => $chunk->pipeline_version, 'prompt_version' => $chunk->prompt_version]);
+            }
+            $locked->update(['status' => 'split', 'completed_at' => now()]);
+        });
+    }
+
+    /** A crash after sending a request is ambiguous; never silently re-bill it. */
+    public function recover(Document $document): void
+    {
+        DocumentChunk::where('document_id', $document->id)->where('pipeline_key', $document->ai_pipeline['key'] ?? '')
+            ->where('status', 'running')->where('started_at', '<', now()->subMinutes(7))
+            ->update(['status' => 'uncertain', 'failure_class' => 'interrupted']);
+        // Recover lost dispatch after DB commit. Duplicate queued deliveries are harmless at claim time.
+        DocumentChunk::where('document_id', $document->id)->where('pipeline_key', $document->ai_pipeline['key'] ?? '')
+            ->where('stage', 'extraction')->where('status', 'queued')->where('updated_at', '<', now()->subMinutes(10))
+            ->update(['status' => 'pending']);
+        foreach (DocumentChunk::where('document_id', $document->id)->where('pipeline_key', $document->ai_pipeline['key'] ?? '')
+            ->where('stage', 'merge')->where('status', 'queued')->where('updated_at', '<', now()->subMinutes(10))->get() as $merge) {
+            $merge->update(['status' => 'pending']);
+        }
+        $this->pump($document->id);
+        if ($document->fresh()?->status === 'Ready') {
+            $units = fn () => DocumentChunk::where('document_id', $document->id)->where('pipeline_key', $document->ai_pipeline['key']);
+            if (! $document->intelligenceSummary()->exists() && (! $units()->where('stage', 'synthesis')->exists()
+                || $units()->where('stage', 'synthesis')->whereIn('status', ['completed', 'pending'])->exists())) {
+                GenerateDocumentSummaryJob::dispatch($document->id, true)->onQueue('extraction');
+            }
+            if (! $units()->where('stage', 'visual_plan')->exists()) {
+                AnalyzeEmbeddedVisualsJob::dispatch($document->id)->onQueue('extraction');
+            }
+            if (! $document->processingJobs()->where('stage', 'chunk')->exists()) {
+                GenerateEmbeddingsJob::dispatch($document->id)->onQueue('extraction');
+            }
+            if (! $units()->whereIn('status', ['pending', 'queued', 'running'])->exists()
+                && $units()->where('stage', 'visual_plan')->exists()
+                && ($document->intelligenceSummary()->exists() || $units()->where('stage', 'synthesis')->exists())
+                && $document->processingJobs()->where('stage', 'chunk')->exists()) {
+                $document->refresh()->forceFill(['ai_pipeline' => [...$document->ai_pipeline, 'recovery_complete' => true]])->save();
+            }
+        }
+    }
+}

@@ -72,3 +72,6 @@ if (env('APP_DEMO_MODE') === '1') {
     require base_path('../demo/seed/commands.php');
     require base_path('../demo/seed/personal-commands.php');
 }
+
+// Recover a lost queue dispatch; ambiguous provider attempts require explicit review.
+Schedule::command('docintel:resume')->everyFiveMinutes()->withoutOverlapping();

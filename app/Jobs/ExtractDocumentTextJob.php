@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Enums\WorkspaceType;
 use App\Jobs\Concerns\DispatchesIntelligenceChain;
 use App\Models\Document;
+use App\Services\Documents\DocumentStorageService;
 use App\Services\DocumentTextExtractor;
 use App\Services\EntitlementService;
 use App\Services\Extraction\SpreadsheetTextExtractor;
@@ -42,8 +43,9 @@ class ExtractDocumentTextJob implements ShouldQueue
         }
         if (! $document || $document->status === 'Failed') {
             if (! $document) {
-                \Illuminate\Support\Facades\Log::warning("ExtractDocumentTextJob: Document {$this->documentId} not found — unexpected null, possible soft-delete race.");
+                Log::warning("ExtractDocumentTextJob: Document {$this->documentId} not found — unexpected null, possible soft-delete race.");
             }
+
             return;
         }
 
@@ -56,9 +58,7 @@ class ExtractDocumentTextJob implements ShouldQueue
         // $cleanupAbsolutePath tracks whether *this* job invocation still
         // owns that temp file: true until/unless fallbackToOcr() hands
         // ownership off for the JPG/PNG async-OCR case (see its comments).
-        $absolutePath = tempnam(sys_get_temp_dir(), 'extract_');
-        file_put_contents($absolutePath, Storage::disk('documents')->get($document->file_path));
-        chmod($absolutePath, 0644);
+        $absolutePath = app(DocumentStorageService::class)->temporaryCopy($document->file_path, 'extract_');
         $cleanupAbsolutePath = true;
 
         try {
@@ -211,11 +211,31 @@ class ExtractDocumentTextJob implements ShouldQueue
         // reference document), leaving comfortable headroom under
         // OcrPageBatchJob's own 90s timeout even in the worst observed
         // case, with an extra safety margin after observing one real batch exceed 90s at 4 pages/batch during testing.
+        $storedPageImages = $document->type === 'PDF';
+        if ($storedPageImages) {
+            $localImages = $imagePaths;
+            try {
+                foreach ($localImages as $page => $localPath) {
+                    $key = 'ai-ocr/'.$document->workspace_id.'/'.$document->id.'/'.$document->file_hash.'/page-'.$page.'.png';
+                    $stream = fopen($localPath, 'rb');
+                    try {
+                        Storage::disk('documents')->put($key, $stream);
+                    } finally {
+                        if (is_resource($stream)) {
+                            fclose($stream);
+                        }
+                    }
+                    $imagePaths[$page] = $key;
+                }
+            } finally {
+                $rasterizer->cleanup($localImages);
+            }
+        }
         $batches = array_chunk($imagePaths, 3);
         // Only a real PDF rasterization produces a disposable temp
         // directory — a bare JPG/PNG upload's "image path" IS the
         // original stored file, which must never be cleaned up here.
-        $tempDir = $document->type === 'PDF' ? dirname($imagePaths[0]) : null;
+        $tempDir = null; // Page assets now survive worker replacement in the documents disk.
         // JPG/PNG is always exactly one page, so exactly one batch below —
         // that batch re-fetches its own fresh copy from R2 at execution
         // time rather than trusting the (already-deleted) local path
@@ -233,6 +253,7 @@ class ExtractDocumentTextJob implements ShouldQueue
                 isLastBatch: $isLastBatch,
                 tempDir: $isLastBatch ? $tempDir : null,
                 fetchPageFromSourceDisk: $fetchFromSourceDisk,
+                storedPageImages: $storedPageImages,
             ))->onQueue('extraction');
             $startingPage += count($batchPaths);
         }

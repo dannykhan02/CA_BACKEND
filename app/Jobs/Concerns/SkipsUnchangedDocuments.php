@@ -5,6 +5,8 @@ namespace App\Jobs\Concerns;
 use App\Models\Document;
 use App\Models\DocumentAiRun;
 use App\Services\Pipeline\PipelineStageRecorder;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Day 8 Batch 3 — reprocessing cost guard. Compares $document->file_hash
@@ -20,6 +22,13 @@ use App\Services\Pipeline\PipelineStageRecorder;
  */
 trait SkipsUnchangedDocuments
 {
+    public function middleware(): array
+    {
+        // Duplicate deliveries cannot overlap paid work, including the normal path.
+        return [(new WithoutOverlapping(static::class.':'.$this->documentId))
+            ->dontRelease()->expireAfter(($this->timeout ?? 120) + 30)];
+    }
+
     protected function skipIfUnchanged(
         Document $document,
         string $purpose,
@@ -58,7 +67,7 @@ trait SkipsUnchangedDocuments
             : $document->processingJobs()->where('stage', $stage)->where('status', 'completed')
                 ->where('completed_at', '>=', $lastRun->created_at)->exists();
         if (! $completed) {
-            \Illuminate\Support\Facades\Log::warning(
+            Log::warning(
                 "{$purpose}: matching AI run found (id {$lastRun->id}) but completion check failed — reprocessing instead of skipping.",
                 ['document_id' => $document->id]
             );

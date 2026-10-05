@@ -12,8 +12,10 @@ use App\Jobs\GenerateEmbeddingsJob;
 use App\Jobs\GenerateInsightsJob;
 use App\Jobs\ScanUploadedFileJob;
 use App\Models\Document;
+use App\Models\DocumentChunk;
 use App\Models\ProcessingJob;
 use App\Models\User;
+use App\Services\AI\Incremental\IncrementalPipeline;
 use App\Services\DocumentIntelligenceService;
 use App\Services\EntitlementService;
 use Illuminate\Support\Facades\Bus;
@@ -38,6 +40,26 @@ class DocumentReprocessor
         if ($requestedStage !== null) {
             abort_unless($intelligenceOnly && in_array($requestedStage, [...array_keys(self::OPTIONAL_JOBS), 'document_summary'], true),
                 422, 'Invalid intelligence stage.');
+        }
+
+        if (($document->ai_pipeline['route'] ?? null) === 'incremental'
+            && $document->extracted_text && $document->status !== 'Failed') {
+            if ($requestedStage === 'document_summary') {
+                GenerateDocumentSummaryJob::dispatch($document->id, true)->onQueue('extraction');
+
+                return $document;
+            }
+            // Explicit user resume changes failed input, while retaining completed units.
+            $document->forceFill(['status' => 'Processing', 'error_message' => null, 'last_updated_by' => $actor->id])->save();
+            $pipeline = app(IncrementalPipeline::class);
+            foreach (DocumentChunk::where('document_id', $document->id)
+                ->where('pipeline_key', $document->ai_pipeline['key'])->where('stage', 'extraction')
+                ->whereIn('status', ['failed', 'uncertain'])->get() as $chunk) {
+                $pipeline->split($chunk, $document);
+            }
+            $pipeline->start($document);
+
+            return $document->fresh();
         }
 
         if ($intelligenceOnly) {
@@ -82,6 +104,7 @@ class DocumentReprocessor
                         'document_id' => $locked->id, 'stage' => $stage, 'status' => 'pending'])->id;
                 }
                 $locked->update(['last_updated_by' => $actor->id]);
+
                 return $attemptIds;
             });
             $jobs = [];
@@ -101,6 +124,7 @@ class DocumentReprocessor
             } else {
                 GenerateDocumentSummaryJob::dispatch($document->id, true, $attemptIds['document_summary'])->onQueue('extraction');
             }
+
             return $document->fresh();
         }
 

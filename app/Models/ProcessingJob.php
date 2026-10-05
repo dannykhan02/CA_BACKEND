@@ -5,6 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Attempt history for a document stage. A pending row reserves the first
+ * delivery; each later queue execution gets its own row. Current stage state
+ * is derived from the newest attempt, not from any historical open row.
+ */
 class ProcessingJob extends Model
 {
     use HasUuids;

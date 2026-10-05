@@ -7,19 +7,18 @@ use Symfony\Component\Process\Process;
 class PdfRasterizer
 {
     /**
-     * @param string $pdfPath
-     * @param int[]|null $pageNumbers 1-indexed pages actually needed. Null/empty
-     *        rasterizes the whole document (preserves original behavior for any
-     *        caller that genuinely needs every page).
+     * @param  int[]|null  $pageNumbers  1-indexed pages actually needed. Null/empty
+     *                                   rasterizes the whole document (preserves original behavior for any
+     *                                   caller that genuinely needs every page).
      * @return array<int,string> page_number => absolute PNG path. Only the pages
-     *         actually rasterized are present (a contiguous range covering
-     *         min..max of $pageNumbers when a subset is requested).
+     *                           actually rasterized are present (a contiguous range covering
+     *                           min..max of $pageNumbers when a subset is requested).
      */
     public function toPageImages(string $pdfPath, ?array $pageNumbers = null): array
     {
-        $outputDir = sys_get_temp_dir() . '/ocr_' . uniqid();
+        $outputDir = sys_get_temp_dir().'/ocr_'.uniqid();
         mkdir($outputDir);
-        $prefix = $outputDir . '/page';
+        $prefix = $outputDir.'/page';
 
         $command = ['pdftoppm', '-png', '-r', '200'];
 
@@ -38,13 +37,25 @@ class PdfRasterizer
         // if missing on Wu-Tang.
         $process = new Process($command);
         $process->setTimeout(60);
-        $process->run();
-
-        if (! $process->isSuccessful()) {
-            throw new \RuntimeException('PDF rasterization failed: ' . $process->getErrorOutput());
+        try {
+            $process->run();
+        } catch (\Throwable $e) {
+            foreach (glob($prefix.'*.png') ?: [] as $file) {
+                @unlink($file);
+            }
+            @rmdir($outputDir);
+            throw $e;
         }
 
-        $files = glob($prefix . '*.png');
+        if (! $process->isSuccessful()) {
+            foreach (glob($prefix.'*.png') ?: [] as $file) {
+                @unlink($file);
+            }
+            @rmdir($outputDir);
+            throw new \RuntimeException('PDF rasterization failed: '.$process->getErrorOutput());
+        }
+
+        $files = glob($prefix.'*.png');
         sort($files, SORT_NATURAL);
 
         // pdftoppm names output <prefix>-<actual_page_number>.png even when
@@ -68,7 +79,7 @@ class PdfRasterizer
             return;
         }
         $dir = dirname(reset($pageImages));
-        foreach (glob($dir . '/*.png') ?: [] as $file) {
+        foreach (glob($dir.'/*.png') ?: [] as $file) {
             @unlink($file);
         }
         @rmdir($dir);

@@ -2,10 +2,11 @@
 
 namespace App\Jobs;
 
-use App\Jobs\Concerns\SkipsUnchangedDocuments;
 use App\Jobs\Concerns\GuardsDocumentIntelligence;
+use App\Jobs\Concerns\SkipsUnchangedDocuments;
 use App\Models\Document;
 use App\Models\DocumentDeadline;
+use App\Services\AI\AiModels;
 use App\Services\AnthropicClient;
 use App\Services\Pipeline\PipelineStageRecorder;
 use Illuminate\Bus\Batchable;
@@ -18,7 +19,7 @@ use Illuminate\Support\Facades\Log;
 
 class DetectDocumentDeadlinesJob implements ShouldQueue
 {
-    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments, GuardsDocumentIntelligence;
+    use Batchable, Dispatchable, GuardsDocumentIntelligence, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments;
 
     public int $tries = 2;
 
@@ -83,7 +84,7 @@ class DetectDocumentDeadlinesJob implements ShouldQueue
                     'status' => 'open',
                     'prompt_version' => (string) $result['prompt_version'],
                     'provider' => 'anthropic',
-                    'model' => config('services.anthropic.model'),
+                    'model' => app(AiModels::class)->forTask('deadlines'),
                 ]);
             }
         }, ['deadline_count' => count($result['deadlines'])]);

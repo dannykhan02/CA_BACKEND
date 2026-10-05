@@ -5,7 +5,10 @@ namespace App\Jobs;
 use App\Models\Document;
 use App\Models\DocumentChart;
 use App\Models\DocumentChartPoint;
+use App\Models\DocumentChunk;
+use App\Services\AI\Incremental\VisualPlanner;
 use App\Services\AnthropicClient;
+use App\Services\Documents\DocumentStorageService;
 use App\Services\EntitlementService;
 use App\Services\Ocr\PdfRasterizer;
 use App\Services\Vision\DocxImageDetector;
@@ -25,7 +28,7 @@ class AnalyzeEmbeddedVisualsJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries = 2;
+    public int $tries = 1;
 
     public int $timeout = 120;
 
@@ -43,10 +46,16 @@ class AnalyzeEmbeddedVisualsJob implements ShouldQueue
             return;
         }
 
-        $workspaceVisionEnabled = $document->workspace?->aiConfig?->vision_enabled ?? true;
-        if (! $workspaceVisionEnabled) {
+        $key = $document->ai_pipeline['key'] ?? hash('sha256', $document->workspace_id.'|'.$document->id.'|'.$document->file_hash.'|visual-v1');
+        $plan = DocumentChunk::firstOrCreate(['document_id' => $document->id, 'pipeline_key' => $key, 'identity' => 'visual-plan'],
+            ['workspace_id' => $document->workspace_id, 'stage' => 'visual_plan', 'input_hash' => $key,
+                'pipeline_version' => config('document_intelligence.pipeline_version'), 'prompt_version' => '1']);
+        if (! DocumentChunk::whereKey($plan->id)->where('status', 'pending')->update([
+            'status' => 'running', 'started_at' => now(), 'attempts' => 1])) {
             return;
         }
+
+        $workspaceVisionEnabled = $document->workspace?->aiConfig?->vision_enabled ?? true;
 
         $detector = match (true) {
             $pdfDetector->supports($document) => $pdfDetector,
@@ -54,56 +63,78 @@ class AnalyzeEmbeddedVisualsJob implements ShouldQueue
             $imageDetector->supports($document) => $imageDetector,
             default => null,
         };
-        if (! $detector) {
+        if (! $workspaceVisionEnabled || ! $detector) {
+            $plan->update(['status' => 'skipped', 'completed_at' => now()]);
+
             return;
         }
+        if (! $document->credit_accounted_at) {
+            app(EntitlementService::class)->reserveDocument($document);
+        }
 
-        app(EntitlementService::class)->reserveDocument($document);
-
-        $absolutePath = tempnam(sys_get_temp_dir(), 'visual_');
-        file_put_contents($absolutePath, Storage::disk('documents')->get($document->file_path));
+        $absolutePath = null;
 
         $rasterCache = null;
 
         try {
+            $absolutePath = app(DocumentStorageService::class)->temporaryCopy($document->file_path, 'visual_');
             $refs = $detector->detect($absolutePath);
             if (empty($refs)) {
+                $plan->update(['status' => 'completed', 'completed_at' => now()]);
+
                 return;
             }
 
-            $extractedCharts = [];
-
-            foreach ($refs as $ref) {
-                try {
-                    [$base64, $mediaType] = $this->resolveImageBytes($ref, $absolutePath, $rasterizer, $rasterCache, $refs);
-                    if ($base64 === null) {
-                        continue;
-                    }
-
-                    $result = $client->extractChartDataFromImage($base64, $mediaType, $document);
-                    foreach ($result['charts'] ?? [] as $chart) {
-                        $extractedCharts[] = $chart;
-                    }
-                } catch (\Throwable $e) {
-                    Log::warning('AnalyzeEmbeddedVisualsJob: failed to process one visual reference', [
-                        'document_id' => $document->id,
-                        'error' => $e->getMessage(),
-                    ]);
-
+            $key = $document->ai_pipeline['key'] ?? hash('sha256', $document->workspace_id.'|'.$document->id.'|'.$document->file_hash.'|visual-v1');
+            $planner = app(VisualPlanner::class);
+            $seen = [];
+            foreach (array_slice($refs, 0, config('document_intelligence.visual_cap')) as $ref) {
+                [$base64, $mediaType] = $this->resolveImageBytes($ref, $absolutePath, $rasterizer, $rasterCache, [$ref]);
+                if ($rasterCache) {
+                    $rasterizer->cleanup($rasterCache);
+                    $rasterCache = null;
+                }
+                if ($base64 === null) {
                     continue;
                 }
+                $bytes = base64_decode($base64, true);
+                if ($bytes === false || ! $planner->useful($bytes)) {
+                    continue;
+                }
+                $hash = hash('sha256', $bytes);
+                if (isset($seen[$hash])) {
+                    continue;
+                }
+                $seen[$hash] = true;
+                $identity = 'visual:'.$hash;
+                if (DocumentChunk::where('document_id', $document->id)->where('pipeline_key', $key)->where('identity', $identity)->exists()) {
+                    continue;
+                }
+                $path = 'ai-visuals/'.$document->workspace_id.'/'.$document->id.'/'.$hash;
+                Storage::disk('documents')->put($path, $bytes);
+                DocumentChunk::firstOrCreate(['document_id' => $document->id, 'pipeline_key' => $key, 'identity' => $identity],
+                    ['workspace_id' => $document->workspace_id, 'stage' => 'visual', 'input_hash' => $hash,
+                        'pipeline_version' => config('document_intelligence.pipeline_version'), 'prompt_version' => '1',
+                        'result' => ['path' => $path, 'media_type' => $mediaType, 'page' => $ref->pageNumber]]);
+                if ($rasterCache) {
+                    $rasterizer->cleanup($rasterCache);
+                    $rasterCache = null;
+                }
             }
+            $plan->update(['status' => 'completed', 'completed_at' => now()]);
+            $planner->pump($document, $key);
 
-            if (! empty($extractedCharts)) {
-                $this->mergeCharts($document, $extractedCharts);
-            }
         } catch (\Throwable $e) {
+            $plan->update(['status' => 'failed', 'failure_class' => 'visual_planning', 'completed_at' => now()]);
             Log::error('AnalyzeEmbeddedVisualsJob failed for document', [
                 'document_id' => $document->id,
-                'error' => $e->getMessage(),
+                'error_type' => $e::class,
             ]);
         } finally {
-            @unlink($absolutePath);
+            if ($absolutePath) {
+                @unlink($absolutePath);
+            }
+            app(VisualPlanner::class)->pump($document, $key);
             if ($rasterCache) {
                 $rasterizer->cleanup($rasterCache);
             }
@@ -139,7 +170,7 @@ class AnalyzeEmbeddedVisualsJob implements ShouldQueue
         return [null, null];
     }
 
-    private function mergeCharts(Document $document, array $charts): void
+    public function mergeCharts(Document $document, array $charts): void
     {
         $existingTitles = $document->charts()->pluck('title')
             ->map(fn ($t) => strtolower(trim($t)))

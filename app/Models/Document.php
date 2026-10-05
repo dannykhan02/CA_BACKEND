@@ -8,9 +8,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Document extends Model
 {
-    use SoftDeletes;
-
     use HasUuids;
+    use SoftDeletes;
 
     protected $fillable = [
         'matter_id', 'name', 'type', 'size_kb', 'status', 'classification', 'year',
@@ -23,6 +22,7 @@ class Document extends Model
     ];
 
     protected $casts = [
+        'ai_pipeline' => 'array',
         'has_structured_data' => 'boolean',
         'insights' => 'array',
         'extraction_started_at' => 'datetime',
@@ -66,6 +66,11 @@ class Document extends Model
     public function ocrResults()
     {
         return $this->hasMany(OcrResult::class)->orderBy('page_number');
+    }
+
+    public function processingChunks()
+    {
+        return $this->hasMany(DocumentChunk::class);
     }
 
     public function processingJobs()

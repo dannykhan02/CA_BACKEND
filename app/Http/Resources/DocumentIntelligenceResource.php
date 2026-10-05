@@ -2,7 +2,9 @@
 
 namespace App\Http\Resources;
 
+use App\Models\DocumentEvidence;
 use App\Services\DocumentIntelligenceService;
+use App\Services\Documents\EvidencePageLocator;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -18,12 +20,26 @@ class DocumentIntelligenceResource extends JsonResource
     public function toArray(Request $request): array
     {
         $service = app(DocumentIntelligenceService::class);
-        $locator = app(\App\Services\Documents\EvidencePageLocator::class);
+        $locator = app(EvidencePageLocator::class);
         $sourcePages = [];
         foreach (['risk' => ['risks', 'evidence'], 'deadline' => ['deadlines', 'evidence'], 'entity' => ['entities', 'context']] as $kind => [$relation, $field]) {
             foreach ($this->resource->$relation as $item) {
                 $page = $locator->locate($this->extracted_text, (int) $this->pages, $item->$field);
-                if ($page !== null) $sourcePages[$kind.':'.$item->id] = $page;
+                if ($page !== null) {
+                    $sourcePages[$kind.':'.$item->id] = $page;
+                }
+            }
+        }
+
+        $evidence = [];
+        if (isset($this->ai_pipeline['key'])) {
+            foreach (DocumentEvidence::where('document_id', $this->id)->where('workspace_id', $this->workspace_id)
+                ->where('pipeline_key', $this->ai_pipeline['key'])->cursor() as $item) {
+                $evidence[$item->source_id] = ['quote' => $item->data['quote'], 'sources' => $item->sources];
+                $pages = array_unique(array_filter(array_column($item->sources, 'page')));
+                if (count($pages) === 1) {
+                    $sourcePages[$item->source_id] = reset($pages);
+                }
             }
         }
 
@@ -34,7 +50,7 @@ class DocumentIntelligenceResource extends JsonResource
                 'errorMessage' => $this->error_message,
                 'type' => $this->type,
                 'status' => $this->status,
-                'processingFailure' => app(\App\Services\DocumentIntelligenceService::class)->getDocumentFailure($this->resource),
+                'processingFailure' => app(DocumentIntelligenceService::class)->getDocumentFailure($this->resource),
             ],
             'documentType' => $this->whenLoaded(
                 'documentTypeClassification',
@@ -56,6 +72,8 @@ class DocumentIntelligenceResource extends JsonResource
                     ? new DocumentIntelligenceSummaryResource($this->intelligenceSummary)
                     : null
             ),
+            'evidence' => (object) $evidence,
+            'processingDetails' => $service->processingDetails($this->resource),
             'processing' => $service->getProcessingStatus($this->resource),
             'sourcePages' => (object) $sourcePages,
         ];

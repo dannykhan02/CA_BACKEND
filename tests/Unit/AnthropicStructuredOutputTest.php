@@ -3,9 +3,9 @@
 namespace Tests\Unit;
 
 use App\Exceptions\AnthropicStructuredOutputException;
-use App\Services\AnthropicClient;
-use App\Services\AI\PromptManager;
 use App\Models\AiPrompt;
+use App\Services\AI\PromptManager;
+use App\Services\AnthropicClient;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
@@ -64,8 +64,10 @@ class AnthropicStructuredOutputTest extends TestCase
         }
         Log::shouldHaveReceived('warning')->once()->withArgs(function ($message, $context) {
             $this->assertArrayNotHasKey('raw_text', $context);
-            $this->assertSame(1000, mb_strlen($context['response_preview']));
+            $this->assertArrayNotHasKey('response_preview', $context);
+            $this->assertSame(5000, $context['response_characters']);
             $this->assertSame('Syntax error', $context['json_error']);
+
             return true;
         });
     }

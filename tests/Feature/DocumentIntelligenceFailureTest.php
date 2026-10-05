@@ -20,6 +20,7 @@ use App\Services\Documents\DocumentReprocessor;
 use App\Services\EntitlementService;
 use App\Services\Pipeline\PipelineStageRecorder;
 use App\Services\WorkspaceService;
+use Database\Seeders\DocumentRisksPromptSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
@@ -103,6 +104,7 @@ class DocumentIntelligenceFailureTest extends TestCase
         $client = $this->mock(AnthropicClient::class);
         $client->shouldReceive($method)->once()->andReturnUsing(function () use ($document) {
             $document->update(['status' => 'Failed', 'error_message' => 'Validation failed.']);
+
             return []; // No result should be read or persisted after abandonment.
         });
 
@@ -120,7 +122,8 @@ class DocumentIntelligenceFailureTest extends TestCase
     {
         Bus::fake();
         $document = $this->document();
-        $dispatcher = new class {
+        $dispatcher = new class
+        {
             use DispatchesIntelligenceChain { dispatchIntelligenceChain as public dispatch; }
         };
         $dispatcher->dispatch($document);
@@ -181,15 +184,18 @@ class DocumentIntelligenceFailureTest extends TestCase
     public function test_provider_retries_stop_if_document_fails_after_first_attempt(): void
     {
         $document = $this->document();
-        $this->seed(\Database\Seeders\DocumentRisksPromptSeeder::class);
+        $this->seed(DocumentRisksPromptSeeder::class);
         Http::fake(function () use ($document) {
             $document->update(['status' => 'Failed', 'error_message' => 'Validation failed.']);
+
             return Http::response([], 503);
         });
         (new DetectDocumentRisksJob($document->id, true))->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
         Http::assertSentCount(1);
         $this->assertSame('skipped', $document->processingJobs()->sole()->status);
-        $this->assertDatabaseCount('document_ai_runs', 0);
+        // The already-attempted request remains auditable even when the parent fails in flight.
+        $this->assertDatabaseHas('document_ai_runs', ['document_id' => $document->id, 'status' => 'provider_error']);
+        $this->assertDatabaseCount('document_ai_runs', 1);
     }
 
     public function test_inflight_insights_error_preserves_prerequisite_failure(): void
@@ -257,6 +263,26 @@ class DocumentIntelligenceFailureTest extends TestCase
             'intelligence_only' => true, 'stage' => 'deadlines',
         ])->assertStatus(422);
         $this->assertDatabaseCount('document_ai_runs', 0);
+        $this->assertDatabaseCount('billing_operations', 0);
+    }
+
+    public function test_targeted_summary_retry_passes_its_pending_attempt_id_to_the_queued_job(): void
+    {
+        $document = $this->document('Ready');
+        $document->update(['credit_accounted_at' => now()]);
+        $recorder = app(PipelineStageRecorder::class);
+        $recorder->fail($recorder->start($document, 'document_summary'), 'Earlier failure.');
+        Bus::fake();
+
+        $this->postJson("/api/documents/{$document->id}/reprocess", [
+            'intelligence_only' => true, 'stage' => 'document_summary',
+        ])->assertAccepted();
+
+        $pending = $document->processingJobs()->where('stage', 'document_summary')
+            ->where('status', 'pending')->sole();
+        Bus::assertDispatched(GenerateDocumentSummaryJob::class,
+            fn (GenerateDocumentSummaryJob $job) => $job->queuedStageId === $pending->id);
+        $this->assertSame(2, $document->processingJobs()->where('stage', 'document_summary')->count());
         $this->assertDatabaseCount('billing_operations', 0);
     }
 

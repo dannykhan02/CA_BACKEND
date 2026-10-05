@@ -9,3 +9,6 @@
 /.github export-ignore
 CHANGELOG.md export-ignore
 .styleci.yml export-ignore
+
+# Preserve the synthetic PDF xref byte offsets and binary diff semantics.
+tests/Fixtures/test_5page.pdf binary

@@ -30,9 +30,7 @@ class StructuredAssessmentValidatorTest extends TestCase
 
     private function assertInvalidAssessment(array $assessment, string $message): void
     {
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage($message);
-        $this->validate(['executive_assessment' => $assessment]);
+        self::assertNull($this->validate(['executive_assessment' => $assessment])['executive_assessment']);
     }
 
     public function test_valid_executive_assessment_and_basis_are_accepted(): void
@@ -111,18 +109,14 @@ class StructuredAssessmentValidatorTest extends TestCase
     {
         $finding = $this->finding('Debt rose.');
         $finding['category'] = str_repeat('x', 351);
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('material_findings[0].category: exceeds 350 characters');
-        $this->validate(['material_findings' => [$finding]]);
+        self::assertSame([], $this->validate(['material_findings' => [$finding]])['material_findings']);
     }
 
     public function test_normalized_prose_does_not_bypass_evidence_and_enum_checks(): void
     {
         $finding = $this->finding(str_repeat('word ', 70).'renewed warning here!');
         $finding['source_ids'] = ['risk:unknown'];
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('material_findings[0].source_ids[0]: unavailable source');
-        $this->validate(['material_findings' => [$finding]]);
+        self::assertSame([], $this->validate(['material_findings' => [$finding]])['material_findings']);
     }
 
     public function test_invalid_finding_source_still_fails_when_assessment_is_normalized_to_null(): void
@@ -131,9 +125,7 @@ class StructuredAssessmentValidatorTest extends TestCase
         $assessment['source_ids'] = [];
         $finding = $this->finding('Debt rose.');
         $finding['source_ids'] = ['risk:unknown'];
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('material_findings[0].source_ids[0]: unavailable source');
-        $this->validate(['executive_assessment' => $assessment, 'material_findings' => [$finding]]);
+        self::assertSame([], $this->validate(['executive_assessment' => $assessment, 'material_findings' => [$finding]])['material_findings']);
     }
 
     public function test_long_unbroken_prose_token_is_not_damaged(): void
@@ -243,11 +235,11 @@ class StructuredAssessmentValidatorTest extends TestCase
 
     public function test_oversized_structured_list_is_rejected(): void
     {
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Invalid structured assessment list: questions');
-        $this->validate([
+        $result = $this->validate([
             'questions' => array_fill(0, 4, ['question' => 'What changed?', 'reason' => 'Unclear.', 'source_ids' => ['risk:1']]),
         ]);
+        self::assertCount(3, $result['questions']);
+        self::assertSame(1, $result['_optional_items_dropped']['questions']);
     }
 
     public function test_legacy_summary_remains_readable(): void

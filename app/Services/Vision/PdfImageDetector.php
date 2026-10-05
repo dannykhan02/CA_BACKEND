@@ -16,7 +16,7 @@ class PdfImageDetector implements EmbeddedVisualDetector
     /** @return VisualReference[] one per page containing at least one image XObject */
     public function detect(string $absolutePath): array
     {
-        $pdf = (new PdfParser())->parseFile($absolutePath);
+        $pdf = (new PdfParser)->parseFile($absolutePath);
         $refs = [];
 
         foreach ($pdf->getPages() as $i => $page) {
@@ -27,11 +27,14 @@ class PdfImageDetector implements EmbeddedVisualDetector
                     break;
                 }
             }
-            if ($hasImage) {
-                $refs[] = new VisualReference(pageNumber: $i + 1);
+            if ($hasImage && preg_match('/\b(chart|figure|table|diagram|map|exhibit|graph)\b/i', $page->getText())) {
+                $refs[] = ['ref' => new VisualReference(pageNumber: $i + 1),
+                    'score' => preg_match_all('/\b(chart|figure|table|diagram|map|exhibit|graph)\b/i', $page->getText())];
             }
         }
 
-        return $refs;
+        usort($refs, fn ($a, $b) => $b['score'] <=> $a['score']);
+
+        return array_column($refs, 'ref');
     }
 }

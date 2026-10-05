@@ -22,6 +22,7 @@ class ResponseValidator
                 throw new \RuntimeException('AI response insight must be a non-empty string.');
             }
         }
+
         return $decoded;
     }
 
@@ -29,8 +30,12 @@ class ResponseValidator
     public function validateKpiIdentities(array $kpis): void
     {
         foreach ($kpis as $kpi) {
-            if (! isset($kpi['identity'])) continue;
-            if (! is_array($kpi['identity'])) throw new \RuntimeException('Invalid KPI identity metadata.');
+            if (! isset($kpi['identity'])) {
+                continue;
+            }
+            if (! is_array($kpi['identity'])) {
+                throw new \RuntimeException('Invalid KPI identity metadata.');
+            }
             foreach ($kpi['identity'] as $field => $value) {
                 if (! in_array($field, ['concept', 'scope', 'metric_type', 'quantity_kind', 'aggregation', 'value_basis', 'period'], true)
                     || ($value !== null && (! is_string($value) || mb_strlen($value) > 255))) {
@@ -67,36 +72,55 @@ class ResponseValidator
 
     public function validateComparison(array $decoded, array $context): array
     {
-        if (!isset($decoded['changes']) || !is_array($decoded['changes']) || !array_is_list($decoded['changes']) || count($decoded['changes']) > 20) {
+        if (! isset($decoded['changes']) || ! is_array($decoded['changes']) || ! array_is_list($decoded['changes']) || count($decoded['changes']) > 20) {
             throw new \RuntimeException('Invalid comparison changes.');
         }
         $changes = [];
         foreach ($decoded['changes'] as $change) {
             foreach (['label', 'description', 'category'] as $field) {
-                if (!is_string($change[$field] ?? null) || trim($change[$field]) === '' || mb_strlen($change[$field]) > 3000) throw new \RuntimeException('Invalid comparison field.');
+                if (! is_string($change[$field] ?? null) || trim($change[$field]) === '' || mb_strlen($change[$field]) > 3000) {
+                    throw new \RuntimeException('Invalid comparison field.');
+                }
             }
-            if (!in_array($change['category'], ['terms', 'requirements', 'amounts', 'obligations', 'dates', 'potential_conflict'], true)) throw new \RuntimeException('Invalid comparison category.');
+            if (! in_array($change['category'], ['terms', 'requirements', 'amounts', 'obligations', 'dates', 'potential_conflict'], true)) {
+                throw new \RuntimeException('Invalid comparison category.');
+            }
             $normalized = ['label' => $change['label'], 'category' => $change['category'], 'description' => $change['description'], 'method' => 'ai'];
             foreach (['before' => 'base', 'after' => 'compared'] as $side => $key) {
-                if (!array_key_exists($side, $change)) throw new \RuntimeException('Missing comparison side.');
+                if (! array_key_exists($side, $change)) {
+                    throw new \RuntimeException('Missing comparison side.');
+                }
                 $value = $change[$side];
                 $normalized[$side] = [];
-                if ($value === null) continue;
-                if (!is_array($value) || !is_string($value['value'] ?? null) || trim($value['value']) === '' || mb_strlen($value['value']) > 3000
-                    || !is_string($value['quote'] ?? null) || trim($value['quote']) === '' || !is_string($value['chunk_id'] ?? null)) throw new \RuntimeException('Invalid comparison source.');
+                if ($value === null) {
+                    continue;
+                }
+                if (! is_array($value) || ! is_string($value['value'] ?? null) || trim($value['value']) === '' || mb_strlen($value['value']) > 3000
+                    || ! is_string($value['quote'] ?? null) || trim($value['quote']) === '' || ! is_string($value['chunk_id'] ?? null)) {
+                    throw new \RuntimeException('Invalid comparison source.');
+                }
                 $chunk = collect($context[$key]['excerpts'])->firstWhere('chunk_id', $value['chunk_id']);
-                if (!$chunk || !str_contains($chunk['text'], $value['quote'])) throw new \RuntimeException('Unsupported comparison citation rejected.');
+                if (! $chunk || ! str_contains($chunk['text'], $value['quote'])) {
+                    throw new \RuntimeException('Unsupported comparison citation rejected.');
+                }
                 $normalized[$side][] = ['value' => ['state' => $value['value']], 'source' => [
                     'document_id' => $context[$key]['document_id'], 'document_name' => $context[$key]['document_name'],
                     'chunk_reference' => $value['chunk_id'], 'evidence' => $value['quote'],
                 ]];
             }
-            if (!$normalized['before'] && !$normalized['after']) throw new \RuntimeException('Comparison change has no evidence.');
-            if (!$normalized['before']) $normalized['description'] = 'Newly observed in selected excerpts; verify in both originals.';
-            elseif (!$normalized['after']) $normalized['description'] = 'Not observed in compared excerpts; removal is not confirmed.';
-            else $normalized['description'] = 'Potential change: '.$normalized['description'];
+            if (! $normalized['before'] && ! $normalized['after']) {
+                throw new \RuntimeException('Comparison change has no evidence.');
+            }
+            if (! $normalized['before']) {
+                $normalized['description'] = 'Newly observed in selected excerpts; verify in both originals.';
+            } elseif (! $normalized['after']) {
+                $normalized['description'] = 'Not observed in compared excerpts; removal is not confirmed.';
+            } else {
+                $normalized['description'] = 'Potential change: '.$normalized['description'];
+            }
             $changes[] = $normalized;
         }
+
         return ['changes' => $changes];
     }
 
@@ -155,7 +179,7 @@ class ResponseValidator
                 throw new \RuntimeException("AI response entities[{$i}] is not an object.");
             }
             if (! isset($entity['entity_type']) || ! in_array($entity['entity_type'], $allowedTypes, true)) {
-                throw new \RuntimeException("AI response entities[{$i}].entity_type '" . ($entity['entity_type'] ?? 'null') . "' is not in the controlled vocabulary.");
+                throw new \RuntimeException("AI response entities[{$i}].entity_type '".($entity['entity_type'] ?? 'null')."' is not in the controlled vocabulary.");
             }
             if (! isset($entity['value']) || ! is_string($entity['value']) || trim($entity['value']) === '') {
                 throw new \RuntimeException("AI response entities[{$i}] missing required non-empty string field: value");
@@ -191,7 +215,7 @@ class ResponseValidator
                 throw new \RuntimeException("AI response risks[{$i}] missing required non-empty string field: description");
             }
             if (! isset($risk['severity']) || ! in_array($risk['severity'], $allowedSeverities, true)) {
-                throw new \RuntimeException("AI response risks[{$i}].severity '" . ($risk['severity'] ?? 'null') . "' is not in the controlled vocabulary.");
+                throw new \RuntimeException("AI response risks[{$i}].severity '".($risk['severity'] ?? 'null')."' is not in the controlled vocabulary.");
             }
             if (! isset($risk['confidence']) || ! is_numeric($risk['confidence'])) {
                 throw new \RuntimeException("AI response risks[{$i}] missing required numeric field: confidence");
@@ -234,7 +258,7 @@ class ResponseValidator
                 throw new \RuntimeException("AI response deadlines[{$i}] missing required non-empty string field: description");
             }
             if (! isset($deadline['date_type']) || ! in_array($deadline['date_type'], $allowedDateTypes, true)) {
-                throw new \RuntimeException("AI response deadlines[{$i}].date_type '" . ($deadline['date_type'] ?? 'null') . "' is not in the controlled vocabulary.");
+                throw new \RuntimeException("AI response deadlines[{$i}].date_type '".($deadline['date_type'] ?? 'null')."' is not in the controlled vocabulary.");
             }
 
             $dueDate = $deadline['due_date'] ?? null;
@@ -276,15 +300,26 @@ class ResponseValidator
             throw new \RuntimeException('AI response missing required non-empty string field: executive_summary');
         }
 
+        $dropped = [];
         foreach (['key_findings', 'critical_risks', 'upcoming_deadlines', 'important_entities', 'recommended_attention'] as $field) {
-            if (! isset($decoded[$field]) || ! is_array($decoded[$field])) {
-                throw new \RuntimeException("AI response missing required array field: {$field}");
+            if (! isset($decoded[$field]) || ! is_array($decoded[$field]) || ! array_is_list($decoded[$field])) {
+                if ($field === 'key_findings') {
+                    throw new \RuntimeException("AI response missing required array field: {$field}");
+                }
+                if (isset($decoded[$field])) {
+                    $dropped[$field] = 1;
+                }
+                $decoded[$field] = [];
             }
-            foreach ($decoded[$field] as $i => $item) {
-                if (! is_string($item)) {
-                    throw new \RuntimeException("AI response {$field}[{$i}] is not a string.");
+            $valid = [];
+            foreach ($decoded[$field] as $item) {
+                if (is_string($item) && trim($item) !== '') {
+                    $valid[] = $item;
+                } else {
+                    $dropped[$field] = ($dropped[$field] ?? 0) + 1;
                 }
             }
+            $decoded[$field] = $valid;
         }
 
         $sourceValidationError = function (array $item, string $path) use ($availableSourceIds): ?string {
@@ -294,7 +329,7 @@ class ResponseValidator
             }
             foreach ($item['source_ids'] as $index => $sourceId) {
                 if (! is_string($sourceId)
-                    || ! preg_match('/\A(?:entity|risk|deadline|kpi):.+\z/', $sourceId)
+                    || ! preg_match('/\A(?:entity|risk|deadline|kpi|fact):.+\z/', $sourceId)
                     || ! in_array($sourceId, $availableSourceIds, true)) {
                     return "Invalid structured assessment field {$path}.source_ids[{$index}]: unavailable source.";
                 }
@@ -336,29 +371,48 @@ class ResponseValidator
             }
         };
         if (array_key_exists('executive_assessment', $decoded) && $decoded['executive_assessment'] !== null) {
-            if (! is_array($decoded['executive_assessment'])) throw new \RuntimeException('Invalid executive assessment.');
-            $validateText($decoded['executive_assessment'], 'executive_assessment', ['text'], false);
-            if ($sourceValidationError($decoded['executive_assessment'], 'executive_assessment') !== null) {
-                // The assessment is optional. Discard an ungrounded synthesis;
-                // never invent a citation or relax evidence checks elsewhere.
+            try {
+                if (! is_array($decoded['executive_assessment'])) {
+                    throw new \RuntimeException('Invalid executive assessment.');
+                }
+                $validateText($decoded['executive_assessment'], 'executive_assessment', ['text']);
+            } catch (\RuntimeException) {
                 $decoded['executive_assessment'] = null;
+                $dropped['executive_assessment'] = 1;
             }
         }
         foreach (['material_findings' => [4, ['title', 'category', 'explanation', 'why_it_matters', 'severity']],
             'trends' => [2, ['observation', 'significance']],
             'tensions' => [2, ['observation', 'significance']],
             'questions' => [3, ['question', 'reason']]] as $field => [$limit, $fields]) {
-            if (! array_key_exists($field, $decoded)) continue;
-            if (! is_array($decoded[$field]) || ! array_is_list($decoded[$field]) || count($decoded[$field]) > $limit) {
-                throw new \RuntimeException("Invalid structured assessment list: {$field}.");
+            if (! array_key_exists($field, $decoded)) {
+                continue;
             }
-            foreach ($decoded[$field] as $index => $item) {
-                if (! is_array($item)) throw new \RuntimeException("Invalid structured assessment item: {$field}.");
-                $validateText($decoded[$field][$index], "{$field}[{$index}]", $fields);
-                if ($field === 'material_findings' && ! in_array($item['severity'], ['low', 'medium', 'high', 'critical'], true)) {
-                    throw new \RuntimeException('Invalid finding severity.');
+            $items = $decoded[$field];
+            $decoded[$field] = [];
+            if (! is_array($items) || ! array_is_list($items)) {
+                $dropped[$field] = 1;
+
+                continue;
+            }
+            foreach ($items as $index => $item) {
+                try {
+                    if (! is_array($item) || count($decoded[$field]) >= $limit) {
+                        throw new \RuntimeException('Invalid optional item.');
+                    }
+                    $validateText($item, "{$field}[{$index}]", $fields);
+                    if ($field === 'material_findings' && ! in_array($item['severity'], ['low', 'medium', 'high', 'critical'], true)) {
+                        throw new \RuntimeException('Invalid severity.');
+                    }
+                    $decoded[$field][] = $item;
+                } catch (\RuntimeException) {
+                    $dropped[$field] = ($dropped[$field] ?? 0) + 1;
                 }
             }
+        }
+        // Metadata only, never log evidence or raw responses.
+        if ($dropped) {
+            $decoded['_optional_items_dropped'] = $dropped;
         }
 
         return $decoded;
@@ -404,7 +458,7 @@ class ResponseValidator
 
         if (! isset($decoded['confidence']) || ! in_array($decoded['confidence'], $allowedConfidence, true)) {
             throw new \RuntimeException(
-                "AI response confidence '" . ($decoded['confidence'] ?? 'null') . "' is not in the controlled vocabulary."
+                "AI response confidence '".($decoded['confidence'] ?? 'null')."' is not in the controlled vocabulary."
             );
         }
 
