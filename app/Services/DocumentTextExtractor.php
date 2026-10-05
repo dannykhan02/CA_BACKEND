@@ -22,41 +22,33 @@ class DocumentTextExtractor
         $pages = $parser->parseFile($path)->getPages();
         $this->pdfPageCounts[$path] = count($pages);
 
-        return implode(
+        $text = implode(
             "\f",
             array_map(
                 fn ($page) => $page->getText(),
                 $pages
             )
         );
+
+        return $this->sanitizeUtf8($text);
     }
 
     /**
-     * Make extracted document text safe for UTF-8 PostgreSQL storage
-     * and downstream AI processing.
+     * Make extracted document text safe for PostgreSQL UTF-8 storage and
+     * downstream processing.
      *
-     * Some PDF text layers contain malformed legacy bytes even when most
-     * of the document is valid UTF-8. PostgreSQL correctly rejects those
-     * malformed byte sequences.
+     * PDF parsers can return mostly valid UTF-8 containing isolated legacy
+     * bytes or control characters. PostgreSQL correctly rejects malformed
+     * UTF-8, so clean it at the extraction boundary.
      *
-     * Preserve structural characters used by DocIntel:
-     * - tab              \x09
-     * - newline          \x0A
-     * - form feed        \x0C
-     * - carriage return  \x0D
+     * Structural characters intentionally preserved:
+     * - tab:             \x09
+     * - newline:         \x0A
+     * - form feed:       \x0C
+     * - carriage return: \x0D
      */
     public function sanitizeUtf8(string $text): string
     {
-        /*
-         * If malformed UTF-8 bytes exist, discard only those invalid
-         * sequences instead of interpreting the entire document as a
-         * different encoding.
-         *
-         * This protects legitimate UTF-8 characters such as:
-         * Côte d’Ivoire
-         * €
-         * –
-         */
         if (! mb_check_encoding($text, 'UTF-8')) {
             $clean = @iconv(
                 'UTF-8',
@@ -67,24 +59,25 @@ class DocumentTextExtractor
             if ($clean !== false) {
                 $text = $clean;
             } else {
-                $text = mb_scrub($text, 'UTF-8');
+                $text = mb_scrub(
+                    $text,
+                    'UTF-8'
+                );
             }
         }
 
         /*
-         * PostgreSQL text fields cannot contain NUL bytes.
+         * PostgreSQL text values cannot contain NUL bytes.
          */
-        $text = str_replace("\0", '', $text);
+        $text = str_replace(
+            "\0",
+            '',
+            $text
+        );
 
         /*
-         * Remove meaningless ASCII control characters commonly emitted by
-         * PDF text extraction.
-         *
-         * Deliberately preserve:
-         * \x09 tab
-         * \x0A newline
-         * \x0C form feed
-         * \x0D carriage return
+         * Remove non-structural ASCII control characters sometimes emitted
+         * by PDF text layers.
          */
         $clean = preg_replace(
             '/[\x01-\x08\x0B\x0E-\x1F\x7F]/u',
@@ -166,7 +159,9 @@ class DocumentTextExtractor
             $zip->close();
         }
 
-        $previous = libxml_use_internal_errors(true);
+        $previous = libxml_use_internal_errors(
+            true
+        );
 
         try {
             $dom = new \DOMDocument;
@@ -183,9 +178,8 @@ class DocumentTextExtractor
                 );
             }
 
-            $namespace = $dom
-                ->documentElement
-                ?->namespaceURI;
+            $namespace =
+                $dom->documentElement?->namespaceURI;
 
             if (
                 $dom->documentElement?->localName
@@ -221,9 +215,13 @@ class DocumentTextExtractor
                 );
             }
 
-            return $this->extractWordXml(
+            $text = $this->extractWordXml(
                 $body,
                 $namespace
+            );
+
+            return $this->sanitizeUtf8(
+                $text
             );
         } finally {
             libxml_clear_errors();
@@ -279,16 +277,17 @@ class DocumentTextExtractor
 
         if ($node->namespaceURI === $namespace) {
             return match ($node->localName) {
-                'p', 'tr' => rtrim(
+                'p', 'tr' =>
+                    rtrim(
+                        $text,
+                        "\n |"
+                    )."\n",
+
+                'tc' =>
+                    trim($text).' | ',
+
+                default =>
                     $text,
-                    "\n |"
-                )."\n",
-
-                'tc' => trim(
-                    $text
-                ).' | ',
-
-                default => $text,
             };
         }
 
