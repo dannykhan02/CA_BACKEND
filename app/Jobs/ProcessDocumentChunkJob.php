@@ -42,8 +42,21 @@ class ProcessDocumentChunkJob implements ShouldQueue
             if (! in_array($unit->status, ['queued', 'pending'], true)) {
                 return false;
             }
-            $cost = app(AiPricing::class)->estimate(app(AiModels::class)->forTask('extraction'),
-                ['input_tokens' => strlen(mb_substr($locked->extracted_text, $unit->start_offset, $unit->end_offset - $unit->start_offset)) + 4000, 'output_tokens' => config('services.anthropic.max_tokens')]);
+            
+            
+            $cost = app(AiPricing::class)->estimate(
+                app(AiModels::class)->forTask('extraction'),
+                [
+                    'input_tokens' => strlen(
+                        mb_substr(
+                            $locked->extracted_text,
+                            $unit->start_offset,
+                            $unit->end_offset - $unit->start_offset
+                        )
+                    ) + 4000,
+                    'output_tokens' => config('services.anthropic.max_tokens'),
+                ]
+            );
             $spent = DocumentChunk::where('document_id', $document->id)->where('pipeline_key', $unit->pipeline_key)->sum('reserved_cost');
             if ($cost === null || $spent + $cost > ($locked->ai_pipeline['budget_usd'] ?? 0)) {
                 $unit->update(['status' => 'budget', 'failure_class' => 'budget_exceeded']);
@@ -67,11 +80,12 @@ class ProcessDocumentChunkJob implements ShouldQueue
                 throw new AiProcessingException('input_changed');
             }
             // Check actual tokens before generation. A conservative local estimate remains on endpoint failure.
-            try {
-                $tokens = $client->countTokens($text);
-            } catch (\Throwable) {
-                $tokens = strlen($text);
-            }
+           try {
+                    $tokens = $client->countTokens($text);
+                } catch (\Throwable) {
+                    $tokens = app(\App\Services\AI\Incremental\ChunkPlanner::class)
+                        ->estimate($text);
+                }
             if ($tokens > config('document_intelligence.chunk_max_tokens')) {
                 throw new AiProcessingException('context_overflow');
             }

@@ -35,47 +35,114 @@ PROMPT;
     }
 
     public static function validate(array $result, string $text): array
-    {
-        if (! is_array($result['records'] ?? null) || ! array_is_list($result['records'])) {
-            throw new AiProcessingException('invalid_schema');
-        }
-        $schema = self::extraction()['properties']['records']['items']['properties'];
-        foreach ($result['records'] as $record) {
-            if (! is_array($record)) {
+        {
+            if (! is_array($result['records'] ?? null) || ! array_is_list($result['records'])) {
                 throw new AiProcessingException('invalid_schema');
             }
-            foreach ($schema as $field => $rule) {
-                if (! array_key_exists($field, $record)) {
-                    throw new AiProcessingException('invalid_schema');
-                }
-                $v = $record[$field];
-                $valid = match ($rule['type']) {
-                    'string' => is_string($v), 'number' => is_int($v) || is_float($v),
-                    'array' => is_array($v) && array_is_list($v) && count(array_filter($v, 'is_string')) === count($v),
-                    default => $v === null || is_string($v),
-                };
-                if (! $valid || (isset($rule['enum']) && ! in_array($v, $rule['enum'], true))) {
-                    throw new AiProcessingException('invalid_schema');
-                }
-            }
-            if ($record['confidence'] < 0 || $record['confidence'] > 1 || trim($record['quote']) === ''
-                || ! str_contains($text, $record['quote']) || trim($record['label']) === '') {
-                throw new AiProcessingException('invalid_evidence');
-            }
-            if ($record['date_type'] === 'explicit' && $record['due_date'] === null) {
-                throw new AiProcessingException('invalid_date');
-            }
-            if ($record['due_date'] !== null) {
-                $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $record['due_date']);
-                if ($record['date_type'] !== 'explicit' || ! $date || $date->format('Y-m-d') !== $record['due_date']) {
-                    throw new AiProcessingException('invalid_date');
-                }
-            }
-            if (in_array($record['kind'], ['deadline', 'obligation']) && ! in_array($record['date_type'], ['explicit', 'relative', 'inferred'], true)) {
-                throw new AiProcessingException('invalid_date');
-            }
-        }
 
-        return $result;
-    }
+            $schema = self::extraction()['properties']['records']['items']['properties'];
+
+            $valid = [];
+            $dropped = [
+                'invalid_schema' => 0,
+                'invalid_evidence' => 0,
+                'invalid_date' => 0,
+            ];
+
+            foreach ($result['records'] as $record) {
+                try {
+                    if (! is_array($record)) {
+                        throw new AiProcessingException('invalid_schema');
+                    }
+
+                    foreach ($schema as $field => $rule) {
+                        if (! array_key_exists($field, $record)) {
+                            throw new AiProcessingException('invalid_schema');
+                        }
+
+                        $value = $record[$field];
+
+                        $fieldValid = match ($rule['type']) {
+                            'string' => is_string($value),
+
+                            'number' => is_int($value) || is_float($value),
+
+                            'array' => is_array($value)
+                                && array_is_list($value)
+                                && count(array_filter($value, 'is_string')) === count($value),
+
+                            default => $value === null || is_string($value),
+                        };
+
+                        if (! $fieldValid
+                            || (isset($rule['enum']) && ! in_array($value, $rule['enum'], true))) {
+                            throw new AiProcessingException('invalid_schema');
+                        }
+                    }
+
+                    if (
+                        $record['confidence'] < 0
+                        || $record['confidence'] > 1
+                        || trim($record['quote']) === ''
+                        || trim($record['label']) === ''
+                    ) {
+                        throw new AiProcessingException('invalid_evidence');
+                    }
+
+                    /*
+                    * Grounding remains strict.
+                    * Never invent or rewrite a quote just to make validation pass.
+                    */
+                    if (! str_contains($text, $record['quote'])) {
+                        throw new AiProcessingException('invalid_evidence');
+                    }
+
+                    if ($record['date_type'] === 'explicit' && $record['due_date'] === null) {
+                        throw new AiProcessingException('invalid_date');
+                    }
+
+                    if ($record['due_date'] !== null) {
+                        $date = \DateTimeImmutable::createFromFormat(
+                            '!Y-m-d',
+                            $record['due_date']
+                        );
+
+                        if (
+                            $record['date_type'] !== 'explicit'
+                            || ! $date
+                            || $date->format('Y-m-d') !== $record['due_date']
+                        ) {
+                            throw new AiProcessingException('invalid_date');
+                        }
+                    }
+
+                    if (
+                        in_array($record['kind'], ['deadline', 'obligation'], true)
+                        && ! in_array(
+                            $record['date_type'],
+                            ['explicit', 'relative', 'inferred'],
+                            true
+                        )
+                    ) {
+                        throw new AiProcessingException('invalid_date');
+                    }
+
+                    $valid[] = $record;
+
+                } catch (AiProcessingException $e) {
+                    $classification = $e->classification;
+
+                    if (array_key_exists($classification, $dropped)) {
+                        $dropped[$classification]++;
+                    } else {
+                        $dropped['invalid_evidence']++;
+                    }
+                }
+            }
+
+            return [
+                'records' => $valid,
+                '_dropped_records' => array_filter($dropped),
+            ];
+        }
 }
