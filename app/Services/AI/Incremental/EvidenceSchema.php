@@ -41,8 +41,11 @@ class EvidenceSchema
         foreach (['entity_type', 'unit', 'period', 'date_type', 'due_date', 'severity', 'metric_type', 'value_basis', 'aggregation', 'quantity_kind'] as $field) {
             $fields[$field] = ['type' => ['string', 'null']];
         }
-        // Scalar enums (including null) are supported by Anthropic's structured-output subset.
-        $fields['date_type']['enum'] = ['explicit', 'relative', 'inferred', null];
+        // Anthropic rejects an enum beside a type array; keep each anyOf branch single-typed.
+        $fields['date_type'] = ['anyOf' => [
+            ['type' => 'string', 'enum' => ['explicit', 'relative', 'inferred']],
+            ['type' => 'null'],
+        ]];
         $fields['kind'] = ['type' => 'string', 'enum' => ['entity', 'metric', 'deadline', 'obligation', 'risk', 'fact', 'definition', 'unresolved']];
         $fields['confidence'] = ['type' => 'number'];
         $fields['aliases'] = ['type' => 'array', 'items' => ['type' => 'string']];
@@ -195,7 +198,7 @@ PROMPT;
 
                     $value = $record[$field];
 
-                    $fieldValid = match ($rule['type']) {
+                    $fieldValid = match ($rule['type'] ?? null) {
                         'string' => is_string($value),
 
                         'number' => is_int($value) || is_float($value),

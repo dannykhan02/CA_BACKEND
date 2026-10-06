@@ -56,7 +56,12 @@ class EvidenceDateContractTest extends TestCase
         foreach ([EvidenceGrounding::SPANS, EvidenceGrounding::LEGACY] as $mode) {
             $schema = EvidenceSchema::extraction($mode);
             $date = $schema['properties']['records']['items']['properties']['date_type'];
-            self::assertSame(['type' => ['string', 'null'], 'enum' => ['explicit', 'relative', 'inferred', null]], $date);
+            self::assertArrayNotHasKey('type', $date);
+            self::assertSame(['anyOf' => [
+                ['type' => 'string', 'enum' => ['explicit', 'relative', 'inferred']],
+                ['type' => 'null'],
+            ]], $date);
+            self::assertNotContains('calendar', $date['anyOf'][0]['enum']);
             $this->assertSupportedSchema($schema);
         }
     }
@@ -64,21 +69,48 @@ class EvidenceDateContractTest extends TestCase
     private function assertSupportedSchema(array $schema): void
     {
         foreach ($schema as $key => $value) {
-            self::assertContains($key, ['type', 'properties', 'required', 'additionalProperties', 'items', 'minItems', 'enum',
+            self::assertContains($key, ['type', 'properties', 'required', 'additionalProperties', 'items', 'minItems', 'enum', 'anyOf',
                 'records', 'kind', 'label', 'value', 'subject', 'quote', 'reference', 'evidence_ids', 'entity_type', 'unit',
                 'period', 'date_type', 'due_date', 'severity', 'metric_type', 'value_basis', 'aggregation',
                 'quantity_kind', 'confidence', 'aliases']);
             if ($key === 'minItems') {
                 self::assertContains($value, [0, 1]);
             }
-            if (is_array($value) && ! array_is_list($value)) {
-                $this->assertSupportedSchema($value);
-            } elseif ($key === 'properties') {
-                foreach ($value as $property) {
-                    $this->assertSupportedSchema($property);
+            if ($key === 'anyOf') {
+                foreach ($value as $branch) {
+                    $this->assertSupportedSchema($branch);
                 }
+            } elseif (is_array($value) && ! array_is_list($value)) {
+                $this->assertSupportedSchema($value);
             }
         }
+    }
+
+    public function test_application_date_types_remain_accepted_where_allowed(): void
+    {
+        $cases = [
+            ['Payment is due on 31 March 2025.', ['kind' => 'deadline', 'date_type' => 'explicit', 'due_date' => '2025-03-31']],
+            ['Submit within 30 days after execution.', ['kind' => 'deadline', 'date_type' => 'relative']],
+            ['An obligation may arise from the agreement.', ['kind' => 'obligation', 'date_type' => 'inferred']],
+            ['Annual lending in FY2025 was substantial.', ['kind' => 'fact', 'date_type' => null, 'period' => 'FY2025']],
+        ];
+        foreach ($cases as [$source, $changes]) {
+            $result = $this->validate($source, [$this->record($changes)]);
+            self::assertSame($changes['date_type'], $result['records'][0]['date_type']);
+            self::assertSame($changes['due_date'] ?? null, $result['records'][0]['due_date']);
+            self::assertSame(0, $result['_validation']['records_dropped']);
+            self::assertSame(0, $result['_validation']['records_date_metadata_sanitized']);
+        }
+    }
+
+    public function test_application_still_rejects_a_non_string_non_null_date_type(): void
+    {
+        $result = $this->validate('Annual lending in FY2025 was substantial.', [
+            $this->record(), $this->record(['date_type' => 42]),
+        ]);
+        self::assertSame(1, $result['_validation']['records_kept']);
+        self::assertSame(['invalid_schema' => 1], $result['_validation']['rejections']);
+        self::assertSame(['wrong_field_type' => 1], $result['_validation']['rejection_reasons']);
     }
 
     public function test_complete_date_and_relative_deadline_keep_their_semantics(): void
