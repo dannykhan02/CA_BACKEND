@@ -16,6 +16,7 @@ use App\Jobs\MergeDocumentEvidenceJob;
 use App\Jobs\OcrPageBatchJob;
 use App\Jobs\ProcessDocumentChunkJob;
 use App\Jobs\ProcessDocumentVisualJob;
+use App\Jobs\ResumeAfterCreditConfirmationJob;
 use App\Jobs\RetryDeferredBillingEvent;
 use App\Jobs\ScanUploadedFileJob;
 use App\Jobs\SendTrackedDeadlineReminder;
@@ -57,6 +58,7 @@ final class QueueTopology
         GenerateEmbeddingsJob::class => self::DEFAULT, // Voyage, not Anthropic.
         RetryDeferredBillingEvent::class => self::DEFAULT,
         SendTrackedDeadlineReminder::class => self::DEFAULT,
+        ResumeAfterCreditConfirmationJob::class => self::DEFAULT, // Resumes after a large-credit confirmation; reserves credits first.
     ];
 
     public static function for(string $job): string

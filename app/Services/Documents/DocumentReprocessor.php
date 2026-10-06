@@ -15,6 +15,7 @@ use App\Models\Document;
 use App\Models\ProcessingJob;
 use App\Models\User;
 use App\Services\AI\Incremental\IncrementalPipeline;
+use App\Services\AiCredits\AiCreditAdmission;
 use App\Services\DocumentIntelligenceService;
 use App\Services\EntitlementService;
 use App\Support\QueueTopology;
@@ -44,6 +45,7 @@ class DocumentReprocessor
 
         if (($document->ai_pipeline['route'] ?? null) === 'incremental'
             && $document->extracted_text && $document->status !== 'Failed') {
+            app(AiCreditAdmission::class)->admitReanalysis($document, $requestedStage === 'document_summary', $actor->id);
             app(IncrementalPipeline::class)->reanalyze($document, $actor->id, $requestedStage === 'document_summary');
 
             return $document->fresh();

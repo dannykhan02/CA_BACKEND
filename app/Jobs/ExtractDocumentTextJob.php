@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Enums\WorkspaceType;
 use App\Jobs\Concerns\DispatchesIntelligenceChain;
 use App\Models\Document;
+use App\Services\AiCredits\AiCreditAdmission;
 use App\Services\Documents\DocumentStorageService;
 use App\Services\DocumentTextExtractor;
 use App\Services\EntitlementService;
@@ -202,6 +203,16 @@ class ExtractDocumentTextJob implements ShouldQueue
                 'status' => $document->workspace?->type === WorkspaceType::Personal ? 'Failed' : 'Needs Review',
                 'error_message' => 'OCR could not process this scanned document.',
             ])->save();
+
+            return null;
+        }
+
+        // AI credits: price OCR from the page count and enforce the page cap before any vision call.
+        if (! app(AiCreditAdmission::class)->admitOcr($document, count($imagePaths))) {
+            $recorder->skip($document, 'ocr_check', 'ocr not admitted: credits or page limit');
+            if ($document->type === 'PDF') {
+                $rasterizer->cleanup($imagePaths);
+            }
 
             return null;
         }

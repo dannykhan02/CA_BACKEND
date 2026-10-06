@@ -10,6 +10,8 @@ use App\Models\TrialGrant;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceCredit;
+use App\Services\AiCredits\CreditAccountant;
+use App\Services\AiCredits\QuoteService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -35,12 +37,16 @@ class WorkspaceCreditService
                 'email' => $email,
                 'ip_address' => $ip,
                 'fingerprint' => $fingerprint,
-                'initial_credits' => (int) config('billing.free_initial_credits'),
+                'initial_credits' => QuoteService::enabled() ? (int) config('ai_credits.grants.free_trial_credits') : (int) config('billing.free_initial_credits'),
                 'granted_at' => now(),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-            if ($inserted) {
+            if ($inserted && QuoteService::enabled()) {
+                // Non-renewable saved AI credits through the same variable-price system.
+                app(CreditAccountant::class)->grantSaved($workspace->id, (int) config('ai_credits.grants.free_trial_credits'), 'trial:'.$user->id,
+                    'trial_grant', 'user', $user->id, $user->id);
+            } elseif ($inserted) {
                 $this->addCredits($workspace->id, (int) config('billing.free_initial_credits'));
                 app(CreditLedger::class)->record($workspace->id, 'trial:'.$user->id, 'saved_document', 'credit',
                     (int) config('billing.free_initial_credits'), 'trial_grant', 'user', $user->id, $user->id,
@@ -105,10 +111,17 @@ class WorkspaceCreditService
             $workspace = app(WorkspaceService::class)->createPersonalWorkspaceFor($referrer, makeCurrent: false);
         }
         $documents = max(0, (int) config('credits.referral_reward_documents'));
-        $this->addCredits($workspace->id, $documents);
-        app(CreditLedger::class)->record($workspace->id, 'referral:'.$referral->id, 'saved_document', 'credit',
-            $documents, 'referral_grant', 'referral', (string) $referral->id, $referrer->id,
-            WorkspaceCredit::where('workspace_id', $workspace->id)->value('documents_remaining'));
+        if (QuoteService::enabled()) {
+            // Same value as the 10 legacy document units, expressed in AI credits (100 by default).
+            $credits = max(0, (int) config('ai_credits.grants.referral_reward_credits'));
+            app(CreditAccountant::class)->grantSaved($workspace->id, $credits, 'referral:'.$referral->id, 'referral_grant', 'referral', (string) $referral->id, $referrer->id);
+            $documents = intdiv($credits, max(1, (int) config('ai_credits.legacy_saved_credits_per_document')));
+        } else {
+            $this->addCredits($workspace->id, $documents);
+            app(CreditLedger::class)->record($workspace->id, 'referral:'.$referral->id, 'saved_document', 'credit',
+                $documents, 'referral_grant', 'referral', (string) $referral->id, $referrer->id,
+                WorkspaceCredit::where('workspace_id', $workspace->id)->value('documents_remaining'));
+        }
         $referral->update([
             'status' => 'rewarded',
             'reward_documents' => $documents,
@@ -129,8 +142,20 @@ class WorkspaceCreditService
     }
 
     /** Caller must hold the document row lock inside its Ready transaction. */
-    public function accountForReadyDocument(Document $document): void
+    public function accountForReadyDocument(Document $document, bool $ready = true): void
     {
+        if (QuoteService::enabled() && $this->hasAiOperation($document->id)) {
+            // AI credits are charged only for a delivered result: merged evidence alone ($ready = false) never debits.
+            if ($ready) {
+                app(CreditAccountant::class)->settleDocument($document->id, $document->uploaded_by);
+                if ($document->credit_accounted_at === null && DB::table('billing_operations')->where('kind', 'document')
+                    ->where('resource_id', $document->id)->where('status', 'completed')->exists()) {
+                    $document->forceFill(['credit_accounted_at' => now()]);
+                }
+            }
+
+            return;
+        }
         if ($document->credit_accounted_at !== null) {
             return;
         }
@@ -155,5 +180,11 @@ class WorkspaceCreditService
         // Persisted with Ready, including zero-balance completions, so retries
         // or later reprocessing cannot charge this document a second time.
         $document->forceFill(['credit_accounted_at' => now()]);
+    }
+
+    private function hasAiOperation(string $documentId): bool
+    {
+        return DB::table('billing_operations')->whereIn('kind', ['document', 'ocr', 'reanalysis'])->where('resource_id', $documentId)
+            ->whereNotNull('amount_reserved')->exists();
     }
 }

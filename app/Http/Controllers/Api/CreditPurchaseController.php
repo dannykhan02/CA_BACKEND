@@ -6,6 +6,7 @@ use App\Exceptions\PaystackInitializationException;
 use App\Http\Controllers\Controller;
 use App\Models\CreditPurchase;
 use App\Models\Workspace;
+use App\Services\AiCredits\QuoteService;
 use App\Services\EntitlementService;
 use App\Services\PaystackClient;
 use App\Services\SubscriptionService;
@@ -130,7 +131,9 @@ class CreditPurchaseController extends Controller
                 'currency' => config('billing.currency'), 'status' => 'pending',
                 'plan_key' => $validated['plan'], 'billing_interval' => $validated['interval'],
                 'renewal_type' => $validated['renewal'], 'provider_plan_code' => $code,
-                'billing_metadata' => Arr::only($plan, ['documents', 'comparisons', 'storage_bytes']),
+                'billing_metadata' => Arr::only($plan, ['documents', 'comparisons', 'storage_bytes'])
+                    // New contracts snapshot their monthly AI credits; earlier snapshots are never rewritten.
+                    + (QuoteService::enabled() ? ['ai_credits' => (int) config('ai_credits.plans.'.$validated['plan'].'.'.$validated['interval'])] : []),
             ]);
         }, 3);
 

@@ -10,6 +10,8 @@ use App\Models\SubscriptionUsagePeriod;
 use App\Models\TrialGrant;
 use App\Models\Workspace;
 use App\Models\WorkspaceCredit;
+use App\Services\AiCredits\CreditAccountant;
+use App\Services\AiCredits\QuoteService;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -92,12 +94,24 @@ class EntitlementService
     {
         DB::transaction(function () use ($workspace) {
             Workspace::whereKey($workspace)->lockForUpdate()->firstOrFail();
-            $stale = DB::table('billing_operations')->where('workspace_id', $workspace)->where('status', 'reserved')->where('kind', 'document')
+            $kinds = ['document', 'ocr', 'reanalysis'];
+            $stale = DB::table('billing_operations')->where('workspace_id', $workspace)->where('status', 'reserved')->whereIn('kind', $kinds)
                 ->where(function ($q) {
                     $q->where('updated_at', '<=', now()->subHours(config('billing.pipeline_hours')))->orWhereNotIn('resource_id', Document::select('id'))->orWhereIn('resource_id', Document::whereIn('status', ['Failed', 'Needs Review'])->select('id'));
                 })
                 ->get();
             foreach ($stale as $operation) {
+                if ($operation->amount_reserved !== null) {
+                    // Variable-price operation: Needs Review settles only when product policy says a partial result is paid.
+                    $status = Document::whereKey($operation->resource_id)->value('status');
+                    if ($status === 'Needs Review' && config('ai_credits.needs_review_policy') === 'settle') {
+                        app(CreditAccountant::class)->settle($operation->kind, $operation->resource_id);
+                    } else {
+                        app(CreditAccountant::class)->release($operation->kind, $operation->resource_id, $status === null ? 'document_removed' : ($status === 'Failed' ? 'document_failed' : ($status === 'Needs Review' ? 'needs_review' : 'reservation_expired')));
+                    }
+
+                    continue;
+                }
                 $changed = DB::table('billing_operations')->where('id', $operation->id)->where('status', 'reserved')
                     ->where('updated_at', $operation->updated_at)->update(['status' => 'released', 'updated_at' => now()]);
                 if ($changed) {
@@ -115,7 +129,7 @@ class EntitlementService
         $period = $this->paid($sub) ? $this->period($sub) : null;
         $credits = WorkspaceCredit::where('workspace_id', $workspace)->first();
         $this->releaseFailures($workspace);
-        $held = DB::table('billing_operations')->where('workspace_id', $workspace)->where('kind', 'document')->where('status', 'reserved');
+        $held = DB::table('billing_operations')->where('workspace_id', $workspace)->where('kind', 'document')->where('status', 'reserved')->whereNull('amount_reserved');
         $reserved = $period ? (clone $held)->where('usage_period_id', $period->id)->count() : (clone $held)->whereNull('usage_period_id')->count();
 
         return [
@@ -130,19 +144,50 @@ class EntitlementService
             'storage_used_bytes' => (int) Document::where('workspace_id', $workspace)->sum('size_kb') * 1024,
             'storage_allowed_bytes' => $period?->storage_bytes ?? ($this->legacy($workspace) ? null : config('billing.free_storage_bytes')),
             'paid_access' => $this->paid($sub),
+            'ai_credits' => $this->aiCreditSummary($workspace),
         ];
+    }
+
+    /** Additive API block. documents_remaining and friends keep their legacy meaning. */
+    public function aiCreditSummary(string $workspace): array
+    {
+        $quotes = app(QuoteService::class);
+        if (! QuoteService::enabled()) {
+            return ['enabled' => false];
+        }
+        $accountant = app(CreditAccountant::class);
+        $b = $accountant->balances($workspace);
+        $m = $b['monthly'];
+
+        return ['enabled' => true, 'mode' => $accountant->mode($workspace), 'monthlyCredits' => $m['allowed'] ?? null, 'monthlyCreditsUsed' => $m['used'] ?? null,
+            'monthlyCreditsReserved' => $m['reserved'] ?? null, 'monthlyCreditsRemaining' => $m['remaining'] ?? null, 'monthlyCreditsResetAt' => $m['period_end'] ?? null,
+            'savedCredits' => $b['saved'], 'savedCreditsReserved' => $b['saved_reserved'], 'savedCreditsAvailable' => $b['saved_available'],
+            'availableCredits' => $accountant->available($workspace), 'minimumRequiredCredits' => $quotes->minimumDocumentCredits(),
+            // Large analyses wait here until the customer accepts the quoted credits.
+            'pendingConfirmations' => Document::where('workspace_id', $workspace)->where('status', 'Processing')->where('ai_pipeline->awaiting_credit_confirmation', true)
+                ->get(['id', 'ai_pipeline'])->map(fn ($d) => ['documentId' => $d->id, 'credits' => $d->ai_pipeline['credit_quote']['credits'] ?? null, 'band' => $d->ai_pipeline['credit_quote']['band'] ?? null])->all()];
     }
 
     public function assertAiAccess(string $workspace): void
     {
         $state = $this->summary($workspace);
+        if ($state['ai_credits']['enabled'] && $state['ai_credits']['mode'] === 'credits') {
+            abort_unless($state['paid_access'] || $state['ai_credits']['availableCredits'] > 0 || $this->legacy($workspace), 402, 'Subscribe or renew to use AI. Your existing work remains available.');
+
+            return;
+        }
         abort_unless($state['paid_access'] || $state['documents_remaining'] > 0 || $this->legacy($workspace), 402, 'Subscribe or renew to use AI. Your existing work remains available.');
     }
 
     public function assertProcessing(string $workspace, int $bytes = 0): void
     {
         $state = $this->summary($workspace);
-        abort_if($state['documents_remaining'] <= 0, 402, 'No processing credits remain. Subscribe or renew to process new documents. Your existing work remains available.');
+        if ($state['ai_credits']['enabled'] && $state['ai_credits']['mode'] === 'credits') {
+            $need = $state['ai_credits']['minimumRequiredCredits'];
+            abort_if($state['ai_credits']['availableCredits'] < $need, 402, sprintf('Insufficient credits: %d available, %d required.', $state['ai_credits']['availableCredits'], $need));
+        } else {
+            abort_if($state['documents_remaining'] <= 0, 402, 'No processing credits remain. Subscribe or renew to process new documents. Your existing work remains available.');
+        }
         abort_if($bytes > 0 && $state['storage_allowed_bytes'] !== null && $state['storage_allowed_bytes'] < $state['storage_used_bytes'] + $bytes, 402, 'Your storage allowance would be exceeded.');
     }
 
@@ -152,6 +197,17 @@ class EntitlementService
         DB::transaction(function () use ($document, $newRequest) {
             Workspace::whereKey($document->workspace_id)->lockForUpdate()->firstOrFail();
             $operation = DB::table('billing_operations')->where('kind', 'document')->where('resource_id', $document->id)->first();
+            if (app(CreditAccountant::class)->mode($document->workspace_id) === 'credits' && ! $document->credit_accounted_at) {
+                // The price depends on the extracted text, so credits are reserved at admission (AiCreditAdmission),
+                // before the first paid call. Here only keep a live reservation alive and require some balance.
+                if ($operation && $operation->amount_reserved !== null && $operation->status === 'reserved') {
+                    DB::table('billing_operations')->where('id', $operation->id)->update(['updated_at' => now()]);
+                } elseif (! $operation || $operation->status !== 'completed') {
+                    $this->assertProcessing($document->workspace_id);
+                }
+
+                return;
+            }
             if ($operation && $operation->status !== 'released' && ! $newRequest && CarbonImmutable::parse($operation->updated_at)->addHours(config('billing.pipeline_hours'))->isFuture()) {
                 // A reserved/settled operation may finish its original pipeline. A new API retry must recheck current access.
                 return;
@@ -203,6 +259,12 @@ class EntitlementService
         }
         DB::transaction(function () use ($comparison, $newRequest) {
             Workspace::whereKey($comparison->workspace_id)->lockForUpdate()->firstOrFail();
+            $accountant = app(CreditAccountant::class);
+            if ($accountant->mode($comparison->workspace_id) === 'credits' && ! (! $this->paid($this->subscription($comparison->workspace_id)) && $this->legacy($comparison->workspace_id))) {
+                $accountant->reserve(app(QuoteService::class)->quoteComparison($comparison->workspace_id, $comparison->id, $newRequest), $comparison->created_by);
+
+                return;
+            }
             $operation = DB::table('billing_operations')->where('kind', 'comparison')->where('resource_id', $comparison->id)->first();
             if ($operation && ! $newRequest && CarbonImmutable::parse($operation->updated_at)->addHours(config('billing.pipeline_hours'))->isFuture()) {
                 return;
@@ -234,6 +296,11 @@ class EntitlementService
             Workspace::whereKey($comparison->workspace_id)->lockForUpdate()->firstOrFail();
             $operation = DB::table('billing_operations')->where('kind', 'comparison')->where('resource_id', $comparison->id)->lockForUpdate()->first();
             abort_if($operation && $operation->status === 'released', 409, 'This comparison reservation has been released. Retry the comparison.');
+            if ($operation && $operation->amount_reserved !== null) {
+                app(CreditAccountant::class)->settle('comparison', $comparison->id, $comparison->created_by);
+
+                return;
+            }
             $changed = DB::table('billing_operations')->where('kind', 'comparison')->where('resource_id', $comparison->id)
                 ->where('status', 'reserved')->update(['status' => 'completed', 'updated_at' => now()]);
             if ($changed) {
@@ -249,6 +316,11 @@ class EntitlementService
             Workspace::whereKey($comparison->workspace_id)->lockForUpdate()->firstOrFail();
             $operation = DB::table('billing_operations')->where('kind', 'comparison')->where('resource_id', $comparison->id)->lockForUpdate()->first();
             if (! $operation || $operation->status !== 'reserved') {
+                return;
+            }
+            if ($operation->amount_reserved !== null) {
+                app(CreditAccountant::class)->release('comparison', $comparison->id, 'comparison_failed', $comparison->created_by);
+
                 return;
             }
             if ($operation->usage_period_id) {
