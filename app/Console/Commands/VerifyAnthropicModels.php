@@ -17,8 +17,13 @@ class VerifyAnthropicModels extends Command
         $rows = [];
         $ok = true;
         $access = [];
-        foreach (['extraction', 'document_summary', 'context_resolution', 'ocr', 'chart_vision', 'document_qa', 'document_comparison', 'kpi_identity'] as $task) {
+        $approved = config('document_intelligence.approved_models', []);
+        foreach (['extraction', 'entities', 'risks', 'deadlines', 'document_type', 'insights', 'context_resolution', 'ocr',
+            'chart_vision', 'kpi_identity', 'document_summary', 'summary_repair', 'document_qa', 'document_comparison'] as $task) {
             $model = $models->forTask($task);
+            if (! in_array($model, $approved, true)) {
+                $ok = false;
+            }
             if ($this->option('check-access') && ! array_key_exists($model, $access)) {
                 try {
                     $access[$model] = $client->canAccessModel($model);
@@ -30,9 +35,13 @@ class VerifyAnthropicModels extends Command
             if ($available === false) {
                 $ok = false;
             }
-            $rows[] = [$task, $model, $available === null ? 'not checked' : ($available ? 'available' : 'unavailable or request failed')];
+            $rows[] = [$task, $model, in_array($model, $approved, true) ? 'yes' : 'NO',
+                $available === null ? 'not checked' : ($available ? 'available' : 'unavailable or request failed')];
         }
-        $this->table(['Task', 'Configured model', 'Account access'], $rows);
+        $this->table(['Task', 'Configured model', 'Approved', 'Account access'], $rows);
+        if (! $ok) {
+            $this->error('A task resolves to a model outside document_intelligence.approved_models, or a model is inaccessible. Check ANTHROPIC_MODEL, ANTHROPIC_EXTRACTION_MODEL and ANTHROPIC_SYNTHESIS_MODEL.');
+        }
 
         return $ok ? self::SUCCESS : self::FAILURE;
     }

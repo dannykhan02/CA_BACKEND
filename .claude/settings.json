@@ -1,0 +1,29 @@
+   {
+     "permissions": {
+       "allow": [
+         "Bash(php artisan test:*)",
+         "Bash(vendor/bin/pint:*)",
+         "Bash(git status:*)",
+         "Bash(git diff:*)",
+         "Bash(git log:*)",
+         "Bash(git add:*)",
+         "Bash(git commit:*)"
+       ],
+       "deny": [
+         "Read(./.env)",
+         "Read(./.env.*)",
+         "Edit(./.env)",
+         "Edit(./.env.*)",
+         "Bash(git push:*)",
+         "Bash(git reset --hard:*)",
+         "Bash(rm -rf:*)",
+         "Bash(sudo:*)",
+         "Bash(curl:*)",
+         "Bash(wget:*)",
+         "Bash(php artisan migrate:*)",
+         "Bash(php artisan db:*)",
+         "Bash(php artisan queue:*)",
+         "Bash(php artisan horizon:*)"
+       ]
+     }
+   }
