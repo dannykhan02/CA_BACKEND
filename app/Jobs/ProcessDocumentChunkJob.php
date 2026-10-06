@@ -11,6 +11,7 @@ use App\Models\DocumentChunk;
 use App\Services\AI\AiModels;
 use App\Services\AI\AiPricing;
 use App\Services\AI\Incremental\ChunkPlanner;
+use App\Services\AI\Incremental\EvidenceGrounding;
 use App\Services\AI\Incremental\EvidenceSchema;
 use App\Services\AI\Incremental\ExtractionCapacity;
 use App\Services\AI\Incremental\IncrementalPipeline;
@@ -72,17 +73,23 @@ class ProcessDocumentChunkJob implements ShouldQueue
     private function process(AnthropicClient $client, IncrementalPipeline $pipeline, DocumentChunk $chunk, Document $document): void
     {
         $text = mb_substr($document->extracted_text, $chunk->start_offset, $chunk->end_offset - $chunk->start_offset);
+        $grounding = app(EvidenceGrounding::class);
+        // What the provider actually receives: labeled evidence spans in span mode, the raw slice
+        // otherwise. Counting, admission and the context bound all apply to this, not to the raw
+        // slice, so span labels are paid for from the real budget rather than hidden from it.
+        $payload = $grounding->payload($document, $chunk, $text);
+        $mode = $grounding->mode($document);
         // Free provider token count before admission, so the reservation bounds the real input instead
         // of raw bytes (~3x tighter). A conservative byte bound remains when counting is unavailable.
         $counted = null;
         if (in_array($chunk->status, ['queued', 'pending'], true) && hash('sha256', $text) === $chunk->input_hash) {
             try {
-                $counted = $client->countTokens($text);
+                $counted = $client->countTokens($payload);
             } catch (\Throwable) {
                 $counted = null;
             }
         }
-        $claimed = DB::transaction(function () use ($chunk, $document, $pipeline, $counted) {
+        $claimed = DB::transaction(function () use ($chunk, $document, $pipeline, $counted, $grounding, $mode) {
             $locked = Document::whereKey($document->id)->lockForUpdate()->firstOrFail();
             $unit = DocumentChunk::whereKey($chunk->id)->lockForUpdate()->firstOrFail();
             if (! $locked->canGenerateIntelligence() || $unit->pipeline_key !== ($locked->ai_pipeline['key'] ?? null)) {
@@ -93,15 +100,16 @@ class ProcessDocumentChunkJob implements ShouldQueue
             }
             $envelope = ['document_name' => $locked->name, 'start_page' => $unit->start_page, 'end_page' => $unit->end_page, 'max_records' => 99999,
                 ...$pipeline->continuationContext($unit)];
-            $slice = mb_substr($locked->extracted_text, $unit->start_offset, $unit->end_offset - $unit->start_offset);
+            $slice = $grounding->payload($locked, $unit,
+                mb_substr($locked->extracted_text, $unit->start_offset, $unit->end_offset - $unit->start_offset));
             $escaped = strlen(json_encode($slice, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
             // The request carries the slice JSON-escaped: every escape byte is bounded as one more token.
             $source = $counted === null ? $escaped : $counted + max(0, $escaped - strlen($slice));
             $cost = app(AiPricing::class)->reserve(
                 app(AiModels::class)->forTask('extraction'),
                 $source + strlen(json_encode([...$envelope, 'source_text' => ''], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR))
-                    + strlen(json_encode(EvidenceSchema::extraction()))
-                    + strlen(EvidenceSchema::instructions()) + 512,
+                    + strlen(json_encode(EvidenceSchema::extraction($mode)))
+                    + strlen(EvidenceSchema::instructions($mode)) + 512,
                 app(ExtractionCapacity::class)->outputTokens(),
                 cacheWrite: true
             );
@@ -137,7 +145,7 @@ class ProcessDocumentChunkJob implements ShouldQueue
                 throw new AiProcessingException('input_changed');
             }
             // Actual tokens were counted before admission. A conservative local estimate remains on endpoint failure.
-            $tokens = $counted ?? app(ChunkPlanner::class)->estimate($text);
+            $tokens = $counted ?? app(ChunkPlanner::class)->estimate($payload);
             if ($tokens > app(ExtractionCapacity::class)->maxRequestInputTokens()) {
                 throw new AiProcessingException('context_overflow');
             }
@@ -209,6 +217,7 @@ class ProcessDocumentChunkJob implements ShouldQueue
             'records_dropped' => $validation['records_dropped'] ?? array_sum($chunk->result['_dropped_records'] ?? []),
             'rejections' => $validation['rejections'] ?? $chunk->result['_dropped_records'] ?? [],
             'rejection_reasons' => $validation['rejection_reasons'] ?? [],
+            'evidence_grounding_mode' => $validation['evidence_grounding_mode'] ?? null,
             'saturated' => $chunk->result['_saturated'] ?? false,
             'estimated_cost_usd' => $accounting['estimate'] ?? null, 'settled_cost_usd' => $accounting['cost'] ?? null,
             'actual_known' => $accounting['actual_known'] ?? null,

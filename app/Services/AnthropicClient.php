@@ -12,6 +12,7 @@ use App\Models\DocumentChunk;
 use App\Services\AI\AiModels;
 use App\Services\AI\AiPricing;
 use App\Services\AI\Incremental\EvidenceBudget;
+use App\Services\AI\Incremental\EvidenceGrounding;
 use App\Services\AI\Incremental\EvidenceSchema;
 use App\Services\AI\Incremental\ExtractionCapacity;
 use App\Services\AI\Incremental\IncrementalPipeline;
@@ -143,26 +144,36 @@ class AnthropicClient
         try {
             $this->throttle(wait: false);
             $model = $this->modelFor('extraction');
-            $schema = EvidenceSchema::extraction();
+            $schema = EvidenceSchema::extraction(app(EvidenceGrounding::class)->mode($document));
             if (! in_array($model, config('document_intelligence.structured_models'), true)) {
                 throw new AiProcessingException('unsupported_structured_model');
             }
             $limit = app(ExtractionCapacity::class)->recordLimit();
+            /*
+             * Span mode sends the slice as labeled evidence spans and expects span IDs back, so
+             * the response never reproduces source text. Legacy mode sends the raw slice and
+             * expects verbatim quotes. The grounding mode is the pipeline's, not the live flag.
+             */
+            $grounding = app(EvidenceGrounding::class);
+            $spans = $grounding->usesSpans($document) ? $grounding->chunkSpans($document, $chunk) : null;
+            $source = $spans === null
+                ? ['source_text' => $text]
+                : ['max_evidence_ids' => EvidenceSchema::maxEvidenceIds(), 'evidence_spans' => $spans->render()];
             // Continuations of a truncated response list what was already returned, so only the remainder is generated.
             $response = $this->callWithRetry([['role' => 'user', 'content' => json_encode(['document_name' => $document->name, 'start_page' => $chunk->start_page,
                 'end_page' => $chunk->end_page, 'max_records' => $limit, ...app(IncrementalPipeline::class)->continuationContext($chunk),
-                'source_text' => $text], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)]], options: [
+                ...$source], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)]], options: [
                     'model' => $model, 'max_attempts' => 1, 'timeout' => (int) config('document_intelligence.extraction_timeout_seconds'), 'connect_timeout' => 10,
                     'max_tokens' => app(ExtractionCapacity::class)->outputTokens(),
                     'intelligence_document' => $document, 'typed_errors' => true,
-                    'system' => [['type' => 'text', 'text' => EvidenceSchema::instructions(),
+                    'system' => [['type' => 'text', 'text' => EvidenceSchema::instructions($grounding->mode($document)),
                         'cache_control' => ['type' => 'ephemeral']]],
                     'output_config' => ['format' => ['type' => 'json_schema', 'schema' => $schema]],
                 ]);
 
             $decoded = $this->decodeJsonContent($response);
             $returned = is_array($decoded['records'] ?? null) ? count($decoded['records']) : 0;
-            $result = EvidenceSchema::validate($decoded, $text);
+            $result = EvidenceSchema::validate($decoded, $text, $spans, $grounding->pipelineVersion($document));
             // A response at the limit may have omitted lower-priority evidence: coverage must say so.
             $result['_returned_records'] = $returned;
             $result['_saturated'] = $returned >= $limit;
@@ -175,7 +186,10 @@ class AnthropicClient
                 // The truncated output is already paid for: keep every complete record that passes
                 // the same strict validation (verbatim quote, schema, dates). Never repair a partial one.
                 try {
-                    $salvaged = EvidenceSchema::validate(['records' => EvidenceSchema::salvage($this->responseText($response))], $text);
+                    $grounding = app(EvidenceGrounding::class);
+                    $salvaged = EvidenceSchema::validate(['records' => EvidenceSchema::salvage($this->responseText($response))], $text,
+                        $grounding->usesSpans($document) ? $grounding->chunkSpans($document, $chunk) : null,
+                        $grounding->pipelineVersion($document));
                     $partial = $salvaged['records'] === [] ? null : $salvaged + ['_salvaged_records' => count($salvaged['records'])];
                 } catch (AiProcessingException) {
                     $partial = null;

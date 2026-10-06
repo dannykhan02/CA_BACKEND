@@ -6,6 +6,7 @@ use App\Models\Document;
 use App\Models\Workspace;
 use App\Observers\DocumentObserver;
 use App\Observers\WorkspaceObserver;
+use App\Services\AI\Incremental\EvidenceGrounding;
 use App\Services\AI\ProviderGate;
 use App\Services\Ocr\OcrEngineResolver;
 use App\Support\QueueTopology;
@@ -25,6 +26,10 @@ class AppServiceProvider extends ServiceProvider
     {
         // One gate per process: it tracks the permit a job is already holding.
         $this->app->singleton(ProviderGate::class);
+
+        // One span set per process: a document's evidence spans are segmented once per
+        // extraction version and reused by every chunk, validation and merge in the same worker.
+        $this->app->singleton(EvidenceGrounding::class);
 
         // OCR provider list is config-driven (config/ocr.php) — adding
         // a provider means adding one line there, not touching this

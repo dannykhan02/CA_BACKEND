@@ -121,6 +121,17 @@ class IncrementalPipeline
         $version = (string) config('document_intelligence.pipeline_version');
         $prompt = (string) config('document_intelligence.prompt_version');
 
+        $grounding = app(EvidenceGrounding::class);
+        /*
+         * Evidence grounding is decided once, here, and then fixed for the life of this pipeline.
+         * A document with no segmentable content (whitespace only) keeps the legacy path rather
+         * than planning zero chunks.
+         */
+        $spans = $grounding->enabled() ? $grounding->spans($document) : null;
+        $mode = $spans !== null && ! $spans->isEmpty() ? EvidenceGrounding::SPANS : EvidenceGrounding::LEGACY;
+
+        // The mode is part of the key: flipping the flag starts a new pipeline instead of mixing
+        // quote-based and span-based records inside one.
         $key = hash(
             'sha256',
             implode('|', [
@@ -130,6 +141,7 @@ class IncrementalPipeline
                 $version,
                 $prompt,
                 app(AiModels::class)->forTask('extraction'),
+                $mode,
             ])
         );
 
@@ -157,12 +169,16 @@ class IncrementalPipeline
 
         $tokens = (int) ($document->ai_pipeline['tokens'] ?? $this->planner->estimate($document->extracted_text));
         $routing = $this->capacity->decide($tokens, $this->capacity->density($document->extracted_text, $document->type));
-        $plan = $this->planner->partition(
-            $document->extracted_text,
-            $routing['partition_tokens'],
-            $density
-        );
+        $plan = $mode === EvidenceGrounding::SPANS
+            ? $this->planner->planFromSpans($spans, $document->extracted_text, $routing['partition_tokens'], true, $density)
+            : $this->planner->partition(
+                $document->extracted_text,
+                $routing['partition_tokens'],
+                $density
+            );
         $routing['root_chunks'] = count($plan);
+        $routing['grounding'] = $mode;
+        $routing['source_spans'] = $spans?->count() ?? 0;
 
         DB::transaction(function () use (
             $document,
@@ -170,7 +186,9 @@ class IncrementalPipeline
             $plan,
             $routing,
             $version,
-            $prompt
+            $prompt,
+            $mode,
+            $spans
         ) {
             $locked = Document::whereKey($document->id)
                 ->lockForUpdate()
@@ -209,6 +227,10 @@ class IncrementalPipeline
 
             $metadata['key'] = $key;
             $metadata['route'] = 'incremental';
+            $metadata['grounding'] = $mode;
+            // Evidence IDs are only meaningful for the extraction version they were generated
+            // against; a re-extraction produces a new version rather than reusing these IDs.
+            $metadata['extraction_version'] = $mode === EvidenceGrounding::SPANS ? $spans->version : null;
             $metadata['mode'] = $routing['mode'];
             $metadata['routing'] = $routing;
             $metadata['recovery_complete'] = false;
@@ -242,7 +264,8 @@ class IncrementalPipeline
         });
 
         Log::info('Document intelligence partitions planned', ['document_id' => $document->id,
-            'mode' => $routing['mode'], 'root_chunks' => $routing['root_chunks'],
+            'mode' => $routing['mode'], 'grounding' => $mode, 'source_spans' => $routing['source_spans'],
+            'root_chunks' => $routing['root_chunks'],
             'partition_tokens' => $routing['partition_tokens'], 'document_tokens' => $routing['document_tokens'],
             'record_limit' => $routing['record_limit'], 'dense' => $routing['dense'], 'records_per_1k_tokens' => $routing['records_per_1k_tokens']]);
 
@@ -612,8 +635,12 @@ class IncrementalPipeline
         $records = [];
         foreach ($this->continuationAncestors($chunk) as $ancestor) {
             foreach ($ancestor->result['records'] ?? [] as $record) {
+                // Span-based records identify themselves by reference, which is both cheaper and
+                // unambiguous; legacy records keep sending a short quote.
                 $records[] = ['kind' => $record['kind'], 'label' => $record['label'], 'value' => mb_substr($record['value'], 0, 120),
-                    'quote' => mb_substr($record['quote'], 0, (int) config('document_intelligence.continuation_quote_chars'))];
+                    ...(is_array($record['evidence_ids'] ?? null)
+                        ? ['evidence_ids' => $record['evidence_ids']]
+                        : ['quote' => mb_substr((string) ($record['quote'] ?? ''), 0, (int) config('document_intelligence.continuation_quote_chars'))])];
             }
         }
 
@@ -741,13 +768,30 @@ class IncrementalPipeline
             (int) ceil(($chunk->token_count ?: $this->planner->estimate($text)) / 2)
         );
 
-        $children = $this->planner->plan(
-            $text,
-            $target,
-            $chunk->start_offset,
-            $chunk->start_page ?? 1,
-            false
-        );
+        $grounding = app(EvidenceGrounding::class);
+        if ($grounding->usesSpans($document)) {
+            $spans = $grounding->chunkSpans($document, $chunk);
+            // One span cannot be halved without cutting an evidence unit, which this architecture
+            // never does. That is a split limit, exactly as a too-small slice is.
+            if ($spans->count() < 2) {
+                $reason = $chunk->failure_class;
+                $chunk->update(['status' => 'failed', 'failure_class' => 'split_limit', 'completed_at' => now()]);
+                $this->logSplit($chunk, 'split_limit', 0, $reason);
+
+                return;
+            }
+            // Children keep their span IDs and their source order: the offsets are the same span
+            // boundaries, so every ID the parent showed still means the same text.
+            $children = $this->planner->planFromSpans($spans, $document->extracted_text, $target, false);
+        } else {
+            $children = $this->planner->plan(
+                $text,
+                $target,
+                $chunk->start_offset,
+                $chunk->start_page ?? 1,
+                false
+            );
+        }
 
         $outcome = DB::transaction(function () use ($chunk, $children) {
             // Document first, as every other admission path does, so the per-document
