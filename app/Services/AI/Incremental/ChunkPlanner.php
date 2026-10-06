@@ -49,26 +49,13 @@ class ChunkPlanner
             $weights[$index] = max(1, (int) ceil(($bytes + strlen($span['key']) + 5) * $tokensPerByte));
         }
         $total = array_sum($weights);
-        // Balanced partitions, exactly as partition() does, so no tiny trailing chunk is created.
+        // Fewest partitions of at most $target each, balanced so no tiny trailing chunk is created
+        // and so labeling the source never costs more provider calls than the packing requires.
         $count = max(1, (int) ceil($total / max(1, $target)));
-        $limit = max(1, (int) ceil($total / $count));
-        $overlapLimit = $overlap
-            ? min((int) (config('document_intelligence.chunk_overlap_tokens') * 1), (int) ($limit * 0.15))
-            : 0;
+        $limit = $this->balancedLimit($weights, $count, $target, $overlap);
         $chunks = [];
-        $cursor = 0;
         $previousEnd = 0;
-        $spanCount = count($all);
-        while ($cursor < $spanCount) {
-            $first = $cursor;
-            $used = 0;
-            // A single span heavier than the budget still forms one chunk: splitting it would
-            // break the one guarantee this planner exists to provide.
-            while ($cursor < $spanCount && ($used === 0 || $used + $weights[$cursor] <= $limit)) {
-                $used += $weights[$cursor];
-                $cursor++;
-            }
-            $last = $cursor - 1;
+        foreach ($this->bins($weights, $limit, $overlap) as [$first, $last, $used]) {
             $start = $all[$first]['start_offset'];
             $end = $all[$last]['end_offset'];
             $chunks[] = [
@@ -78,19 +65,75 @@ class ChunkPlanner
                 'input_hash' => hash('sha256', mb_substr($text, $start, $end - $start)),
                 'overlap_chars' => max(0, $previousEnd - $start),
             ];
-            if ($cursor >= $spanCount) {
+            $previousEnd = $end;
+        }
+
+        return $chunks;
+    }
+
+    /**
+     * Smallest per-chunk budget that still packs the spans into $count chunks.
+     *
+     * Rounding each span's own weight up, and carrying whole spans as overlap, both mean that a
+     * naive ceil($total / $count) can need a chunk more than the packing actually requires. That
+     * would turn labeled source into extra provider calls, which this architecture must not do.
+     *
+     * @param  list<int>  $weights
+     */
+    private function balancedLimit(array $weights, int $count, int $target, bool $overlap): int
+    {
+        $low = max(max($weights), (int) ceil(array_sum($weights) / $count));
+        $high = max($low, $target);
+        while ($low < $high) {
+            $middle = intdiv($low + $high, 2);
+            if (count($this->bins($weights, $middle, $overlap)) <= $count) {
+                $high = $middle;
+            } else {
+                $low = $middle + 1;
+            }
+        }
+
+        // Overlap cost does not have to fall monotonically with the budget, so a search result
+        // that still needs more chunks than the packing allows falls back to the full budget.
+        return count($this->bins($weights, $low, $overlap)) <= $count ? max(1, $low) : max(1, $high);
+    }
+
+    /**
+     * Greedy fill at this budget, as inclusive span index ranges with each chunk's token weight.
+     * A span heavier than the budget still occupies a chunk of its own rather than being cut, and
+     * whole trailing spans are carried into the next chunk as cross-boundary context.
+     *
+     * @param  list<int>  $weights
+     * @return list<array{0:int,1:int,2:int}>
+     */
+    private function bins(array $weights, int $limit, bool $overlap): array
+    {
+        $overlapLimit = $overlap
+            ? min((int) config('document_intelligence.chunk_overlap_tokens'), (int) ($limit * 0.15))
+            : 0;
+        $bins = [];
+        $cursor = 0;
+        $count = count($weights);
+        while ($cursor < $count) {
+            $first = $cursor;
+            $used = 0;
+            while ($cursor < $count && ($used === 0 || $used + $weights[$cursor] <= $limit)) {
+                $used += $weights[$cursor];
+                $cursor++;
+            }
+            $bins[] = [$first, $cursor - 1, $used];
+            if ($cursor >= $count) {
                 break;
             }
-            $previousEnd = $end;
-            // Carry whole trailing spans into the next chunk for cross-boundary context.
             $back = 0;
+            // The step back always leaves at least one span of forward progress.
             while ($cursor - 1 > $first && $back + $weights[$cursor - 1] <= $overlapLimit) {
                 $back += $weights[$cursor - 1];
                 $cursor--;
             }
         }
 
-        return $chunks;
+        return $bins;
     }
 
     public function plan(string $text, ?int $target = null, int $base = 0, int $firstPage = 1, bool $overlap = true, float $tokensPerByte = 1 / 3, ?int $maximum = null): array
