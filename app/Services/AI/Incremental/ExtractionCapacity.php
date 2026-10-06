@@ -132,7 +132,9 @@ class ExtractionCapacity
     /** Largest input slice whose expected output AND input both fit one request. */
     public function partitionTokens(?float $recordsPer1k = null): int
     {
-        $byOutput = (int) floor(max(0, $this->outputCapacity() - 64) / max(1, $this->outputPer1kInput($recordsPer1k)) * 1000);
+        // Whole records, matching expectedOutputTokens()' rounding: a full-size slice's expected
+        // output (ceil of its records) never exceeds the planned output capacity.
+        $byOutput = (int) floor($this->recordLimit() / max(0.001, $this->recordsPer1k($recordsPer1k)) * 1000);
         $tokens = min($this->inputCapacity(), $byOutput);
         // Optional operator ceiling (null by default): never larger than derived capacity.
         if (config('document_intelligence.chunk_max_tokens')) {

@@ -11,6 +11,7 @@ use App\Models\Document;
 use App\Models\DocumentAiRun;
 use App\Models\DocumentChunk;
 use App\Services\AI\AiModels;
+use App\Services\AI\AiPricing;
 use App\Services\AnthropicClient;
 use App\Services\Pipeline\DocumentProgress;
 use Illuminate\Support\Facades\DB;
@@ -568,6 +569,99 @@ class IncrementalPipeline
         }
 
         return ($children[$chunk->id] ?? collect())->every(fn ($child) => $this->subtreeFinished($child, $children));
+    }
+
+    /**
+     * Ancestors in a truncation-continuation chain: a continuation's parent is a
+     * completed leaf over the same text (a split parent has status "split").
+     */
+    private function continuationAncestors(DocumentChunk $chunk): array
+    {
+        $ancestors = [];
+        for ($parent = $chunk->parent_id ? DocumentChunk::find($chunk->parent_id) : null;
+            $parent && $parent->status === 'completed' && $parent->start_offset === $chunk->start_offset && $parent->end_offset === $chunk->end_offset;
+            $parent = $parent->parent_id ? DocumentChunk::find($parent->parent_id) : null) {
+            $ancestors[] = $parent;
+        }
+
+        return $ancestors;
+    }
+
+    /** Request fields for a continuation: records already returned for this slice (metadata, short quotes). */
+    public function continuationContext(DocumentChunk $chunk): array
+    {
+        $records = [];
+        foreach ($this->continuationAncestors($chunk) as $ancestor) {
+            foreach ($ancestor->result['records'] ?? [] as $record) {
+                $records[] = ['kind' => $record['kind'], 'label' => $record['label'], 'value' => mb_substr($record['value'], 0, 120),
+                    'quote' => mb_substr($record['quote'], 0, (int) config('document_intelligence.continuation_quote_chars'))];
+            }
+        }
+
+        return $records === [] ? [] : ['already_extracted' => $records];
+    }
+
+    /**
+     * Keep strictly validated records salvaged from a truncated response, then request
+     * only the remaining output for the same slice (bounded), instead of discarding the
+     * paid output and re-sending the text as split halves.
+     */
+    public function keepSalvaged(DocumentChunk $chunk, Document $document, array $partial, bool $affordable): void
+    {
+        $continuations = count($this->continuationAncestors($chunk));
+        $continue = $affordable && $continuations < (int) config('document_intelligence.max_truncation_continuations');
+        DB::transaction(function () use ($chunk, $partial, $continue) {
+            Document::whereKey($chunk->document_id)->lockForUpdate()->firstOrFail();
+            $locked = DocumentChunk::whereKey($chunk->id)->lockForUpdate()->firstOrFail();
+            if ($locked->status !== 'running') {
+                return;
+            }
+            if ($continue) {
+                DocumentChunk::firstOrCreate(['document_id' => $locked->document_id, 'pipeline_key' => $locked->pipeline_key,
+                    'identity' => $locked->identity.'.r'], [
+                        'workspace_id' => $locked->workspace_id, 'parent_id' => $locked->id, 'depth' => $locked->depth,
+                        'start_offset' => $locked->start_offset, 'end_offset' => $locked->end_offset,
+                        'start_page' => $locked->start_page, 'end_page' => $locked->end_page, 'token_count' => $locked->token_count,
+                        'input_hash' => $locked->input_hash, 'pipeline_version' => $locked->pipeline_version,
+                        'prompt_version' => $locked->prompt_version]);
+            }
+            // Without a continuation the unextracted remainder is disclosed as saturated coverage.
+            $locked->update(['status' => 'completed', 'completed_at' => now(), 'failure_class' => null,
+                'result' => $partial + ['_truncated' => true, '_continued' => $continue, '_saturated' => ! $continue]]);
+        });
+        Log::info('Document intelligence truncated response salvaged', ['document_id' => $chunk->document_id,
+            'chunk_id' => $chunk->id, 'salvaged_records' => count($partial['records']), 'continued' => $continue,
+            'continuation' => $continuations, 'affordable' => $affordable]);
+    }
+
+    /**
+     * Per-document hard ceiling for further extraction spend: true when at least one more
+     * minimal extraction request (prompt overhead + full output cap) fits the document budget
+     * without touching the synthesis/repair hold. Running siblings will settle below their
+     * reservations, so their presence defers the decision to admission instead.
+     */
+    public function canAffordMoreExtraction(Document $document, DocumentChunk $current): bool
+    {
+        return DB::transaction(function () use ($document, $current) {
+            $locked = Document::whereKey($document->id)->lockForUpdate()->firstOrFail();
+            if (DocumentChunk::where('document_id', $locked->id)->where('pipeline_key', $current->pipeline_key)
+                ->where('stage', 'extraction')->where('status', 'running')->whereKeyNot($current->id)->exists()) {
+                return true;
+            }
+            $capacity = app(ExtractionCapacity::class);
+            $cost = app(AiPricing::class)->reserve($capacity->model(), $capacity->promptOverheadTokens(), $capacity->outputTokens(), cacheWrite: true);
+
+            return $this->canReserve($locked, $cost);
+        });
+    }
+
+    /** Ceiling reached: no split, retry or continuation; coverage reports the leaf as incomplete. */
+    public function stopForBudget(DocumentChunk $chunk): void
+    {
+        $reason = $chunk->failure_class;
+        $chunk->update(['status' => 'budget', 'failure_class' => 'budget_exceeded', 'completed_at' => now()]);
+        Log::info('Document intelligence extraction stopped at spend ceiling', ['document_id' => $chunk->document_id,
+            'chunk_id' => $chunk->id, 'failure_class' => $reason]);
     }
 
     public function split(

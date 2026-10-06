@@ -408,7 +408,8 @@ class SynthesisFallbackAndThroughputTest extends TestCase
         $density = $capacity->density($prose, 'PDF');
         self::assertFalse($density['dense']);
         $decision = $capacity->decide(62125, $density);
-        self::assertSame(19893, $decision['partition_tokens']);
+        // Whole-record sizing: 79 records at 4 per 1k tokens (a full slice's ceil'd output stays under 12,000).
+        self::assertSame(19750, $decision['partition_tokens']);
         self::assertSame(4, $decision['planned_partitions']);
         self::assertSame('direct', $capacity->decide(15385, $density)['mode']);
         self::assertTrue($capacity->density("a\tb\tc\n1\t2\t3\n", 'PDF')['dense']);

@@ -48,6 +48,11 @@ return [
     // 2 per root still lets every root halve once. Further capacity failures end as split_limit
     // (existing partial-coverage semantics) instead of re-sending the text again.
     'max_split_parents_per_root' => 2,
+    // A truncated extraction keeps its validated complete records and re-requests only the
+    // remaining output for the same slice, listing what was already returned. At most this many
+    // continuations per slice; after that the remainder is disclosed as saturated coverage.
+    'max_truncation_continuations' => 2,
+    'continuation_quote_chars' => 160,
     // Outstanding extraction jobs per document. Effective parallelism is also capped globally by
     // the Horizon extraction supervisor's maxProcesses (HORIZON_EXTRACTION_MAX_PROCESSES).
     'concurrency' => max(1, (int) env('DOCINTEL_EXTRACTION_CONCURRENCY', 2)),

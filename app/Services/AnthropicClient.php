@@ -13,6 +13,7 @@ use App\Services\AI\AiPricing;
 use App\Services\AI\Incremental\EvidenceBudget;
 use App\Services\AI\Incremental\EvidenceSchema;
 use App\Services\AI\Incremental\ExtractionCapacity;
+use App\Services\AI\Incremental\IncrementalPipeline;
 use App\Services\AI\Incremental\SynthesisSchema;
 use App\Services\AI\PromptManager;
 use App\Services\AI\ResponseValidator;
@@ -127,8 +128,10 @@ class AnthropicClient
                 throw new AiProcessingException('unsupported_structured_model');
             }
             $limit = app(ExtractionCapacity::class)->recordLimit();
+            // Continuations of a truncated response list what was already returned, so only the remainder is generated.
             $response = $this->callWithRetry([['role' => 'user', 'content' => json_encode(['document_name' => $document->name, 'start_page' => $chunk->start_page,
-                'end_page' => $chunk->end_page, 'max_records' => $limit, 'source_text' => $text], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)]], options: [
+                'end_page' => $chunk->end_page, 'max_records' => $limit, ...app(IncrementalPipeline::class)->continuationContext($chunk),
+                'source_text' => $text], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)]], options: [
                     'model' => $model, 'max_attempts' => 1, 'timeout' => (int) config('document_intelligence.extraction_timeout_seconds'), 'connect_timeout' => 10,
                     'max_tokens' => app(ExtractionCapacity::class)->outputTokens(),
                     'intelligence_document' => $document, 'typed_errors' => true,
@@ -147,7 +150,18 @@ class AnthropicClient
             return $result;
         } catch (AnthropicStructuredOutputException $e) {
             $status = $e->outputStatus;
-            throw new AiProcessingException($status === 'truncated' ? 'max_tokens' : $status);
+            $partial = null;
+            if ($status === 'truncated') {
+                // The truncated output is already paid for: keep every complete record that passes
+                // the same strict validation (verbatim quote, schema, dates). Never repair a partial one.
+                try {
+                    $salvaged = EvidenceSchema::validate(['records' => EvidenceSchema::salvage($this->responseText($response))], $text);
+                    $partial = $salvaged['records'] === [] ? null : $salvaged + ['_salvaged_records' => count($salvaged['records'])];
+                } catch (AiProcessingException) {
+                    $partial = null;
+                }
+            }
+            throw new AiProcessingException($status === 'truncated' ? 'max_tokens' : $status, 0, $partial);
         } catch (AnthropicRateLimitException $e) {
             $status = 'transient';
             $response['usage'] = ['input_tokens' => 0, 'output_tokens' => 0];
@@ -789,14 +803,21 @@ PROMPT;
         ];
     }
 
-    private function decodeJsonContent(array $response): array
+    private function responseText(array $response): string
     {
         $blocks = is_array($response['content'] ?? null) ? $response['content'] : [];
-        $text = implode('', array_map(
+
+        return implode('', array_map(
             fn (array $block) => $block['text'],
             array_values(array_filter($blocks, fn ($block) => is_array($block)
                 && ($block['type'] ?? null) === 'text' && is_string($block['text'] ?? null)))
         ));
+    }
+
+    private function decodeJsonContent(array $response): array
+    {
+        $blocks = is_array($response['content'] ?? null) ? $response['content'] : [];
+        $text = $this->responseText($response);
         $metadata = [
             'operation' => $this->currentOperation ?? 'unknown',
             'document_id' => $this->currentDocumentId,
