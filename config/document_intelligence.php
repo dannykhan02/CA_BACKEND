@@ -84,6 +84,9 @@ return [
         // https://platform.claude.com/docs/en/models/sonnet-5-5/overview
         'claude-sonnet-5-5' => [2, 10, 2.50, 0.20],
     ],
+    // The only models DocIntel is meant to call: FAST (extraction) and SMART (synthesis).
+    // Requests are not blocked; any other model is logged and fails docintel:verify-models.
+    'approved_models' => ['claude-haiku-4-5-20251001', 'claude-sonnet-5-5'],
     'structured_models' => ['claude-haiku-4-5-20251001', 'claude-haiku-4-5', 'claude-sonnet-4-6', 'claude-sonnet-4-5-20250929', 'claude-sonnet-5-5'],
     'effort_models' => ['claude-sonnet-4-6', 'claude-sonnet-5-5'],
 ];

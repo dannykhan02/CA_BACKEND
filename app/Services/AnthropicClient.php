@@ -517,6 +517,11 @@ PROMPT;
 
         $maxAttempts = max(1, min(4, (int) ($options['max_attempts'] ?? 4)));
         $this->requestModel = $options['model'] ?? $this->modelFor($this->currentOperation ?? 'extraction');
+        if (! in_array($this->requestModel, config('document_intelligence.approved_models', []), true)) {
+            // Metadata only. Usually a deployment env override (ANTHROPIC_*_MODEL) pointing elsewhere.
+            Log::warning('Anthropic request uses an unapproved model', ['purpose' => $this->currentOperation,
+                'model' => $this->requestModel, 'document_id' => $document?->id]);
+        }
 
         $started = hrtime(true);
         try {
