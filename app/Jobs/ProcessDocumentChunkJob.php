@@ -62,7 +62,8 @@ class ProcessDocumentChunkJob implements ShouldQueue
             if (! in_array($unit->status, ['queued', 'pending'], true)) {
                 return false;
             }
-            $envelope = ['document_name' => $locked->name, 'start_page' => $unit->start_page, 'end_page' => $unit->end_page, 'max_records' => 99999];
+            $envelope = ['document_name' => $locked->name, 'start_page' => $unit->start_page, 'end_page' => $unit->end_page, 'max_records' => 99999,
+                ...$pipeline->continuationContext($unit)];
             $slice = mb_substr($locked->extracted_text, $unit->start_offset, $unit->end_offset - $unit->start_offset);
             $escaped = strlen(json_encode($slice, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
             // The request carries the slice JSON-escaped: every escape byte is bounded as one more token.
@@ -117,13 +118,23 @@ class ProcessDocumentChunkJob implements ShouldQueue
             $chunk->update(['status' => 'completed', 'result' => $result, 'completed_at' => now(), 'failure_class' => null]);
         } catch (AiProcessingException $e) {
             $chunk->update(['failure_class' => $e->classification]);
-            if (in_array($e->classification, IncrementalPipeline::SPLITTABLE_FAILURES, true)) {
+            $capacity = in_array($e->classification, IncrementalPipeline::SPLITTABLE_FAILURES, true);
+            $retry = $e->classification === 'transient' && $chunk->attempts < config('document_intelligence.attempts');
+            // Settle this attempt first, so the ceiling check sees real spend, not its upper bound.
+            $pipeline->settleCost($chunk, $providerCalled);
+            $affordable = ($capacity || $retry) && $pipeline->canAffordMoreExtraction($document, $chunk);
+            if ($e->classification === 'max_tokens' && $e->partial) {
+                $pipeline->keepSalvaged($chunk, $document, $e->partial, $affordable);
+            } elseif (($capacity || $retry) && ! $affordable) {
+                $pipeline->stopForBudget($chunk);
+            } elseif ($capacity) {
                 $pipeline->split($chunk, $document);
-            } elseif ($e->classification === 'transient' && $chunk->attempts < config('document_intelligence.attempts')) {
+            } elseif ($retry) {
                 $chunk->update(['status' => 'queued']);
                 self::dispatch($chunk->id)->onQueue('extraction')
                     ->delay(max($e->retryAfter, 2 ** $chunk->attempts * 5) + random_int(0, 5));
             } else {
+                // Terminal (invalid_evidence, invalid_schema, auth, billing, ...): never split or retried.
                 $chunk->update(['status' => 'failed', 'completed_at' => now()]);
             }
         } catch (\Throwable) {
