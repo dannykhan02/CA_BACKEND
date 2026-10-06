@@ -2,7 +2,7 @@
 
 ## Flow
 
-`EvidenceSchema::extraction()` supplies the Anthropic structured-output shape for each record. Span mode supplies `evidence_ids`; legacy mode supplies `quote`. The schema requires every field to be present, but nullable fields may be `null`. `date_type` is a nullable scalar enum: `explicit`, `relative`, `inferred`, or `null`. [Anthropic's structured-output schema](https://platform.claude.com/docs/en/build-with-claude/structured-outputs) supports scalar enums with `null`; the schema does not use unsupported array constraints such as `maxItems`. Conditional rules by `kind` remain in application validation.
+`EvidenceSchema::extraction()` supplies the Anthropic structured-output shape for each record. Span mode supplies `evidence_ids`; legacy mode supplies `quote`. The schema requires every field to be present, but nullable fields may be `null`. `date_type` uses `anyOf` with a string enum (`explicit`, `relative`, `inferred`) and a separate `null` branch. [Anthropic's structured-output schema](https://platform.claude.com/docs/en/build-with-claude/structured-outputs) supports these keywords; the schema does not use unsupported array constraints such as `maxItems`. Conditional rules by `kind` remain in application validation.
 
 `EvidenceSchema::instructions()` gives the model the semantic rules. Only the span prompt was revised for this change. A complete calendar date may be normalized to `YYYY-MM-DD`; a partial period stays in `period` without a `due_date`; a relative deadline or obligation keeps its timing expression in `value`. `inferred` is for an inferred deadline or obligation where the existing product contract allows one.
 

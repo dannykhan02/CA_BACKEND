@@ -165,6 +165,10 @@ class AnthropicProviderErrorDiagnosticsTest extends TestCase
             'The keyword that was rejected before inference must not reach the wire.');
         self::assertSame(['type' => 'array', 'items' => ['type' => 'string'], 'minItems' => 1],
             $fields['evidence_ids']);
+        self::assertSame(['anyOf' => [
+            ['type' => 'string', 'enum' => ['explicit', 'relative', 'inferred']],
+            ['type' => 'null'],
+        ]], $fields['date_type'], 'The posted schema must use separate string and null branches.');
         self::assertSame([], $this->unsupportedKeywords($fields));
 
         // Still the span-mode request in every other respect: labeled spans in, no quote field.
@@ -356,6 +360,9 @@ class AnthropicProviderErrorDiagnosticsTest extends TestCase
             }
             if (is_array($definition['properties'] ?? null)) {
                 $found = [...$found, ...$this->unsupportedKeywords($definition['properties'], "{$prefix}.{$name}")];
+            }
+            foreach (($definition['anyOf'] ?? []) as $index => $branch) {
+                $found = [...$found, ...$this->unsupportedKeywords(["branch{$index}" => $branch], "{$prefix}.{$name}.anyOf")];
             }
         }
 
