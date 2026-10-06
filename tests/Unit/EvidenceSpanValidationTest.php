@@ -100,7 +100,7 @@ class EvidenceSpanValidationTest extends TestCase
         self::assertStringContainsString('Never invent, guess, renumber or extrapolate an identifier', $instructions);
         self::assertStringContainsString('the application retrieves the exact source text', $instructions);
         // Task 20: the date contract is stated explicitly, consistent with the existing validator.
-        self::assertStringContainsString('complete calendar date in YYYY-MM-DD', $instructions);
+        self::assertStringContainsString('complete date in the cited span', $instructions);
         self::assertStringContainsString('FY2025', $instructions);
     }
 
@@ -231,10 +231,10 @@ class EvidenceSpanValidationTest extends TestCase
             [$this->record(['kind' => 'unknown']), 'invalid_schema', 'invalid_kind'],
             [$this->record(['confidence' => 1.5]), 'invalid_evidence', 'confidence_out_of_range'],
             [$this->record(['label' => ' ']), 'invalid_evidence', 'blank_label'],
-            [$this->record(['date_type' => 'explicit']), 'invalid_date', 'explicit_date_missing_due_date'],
+            [$this->record(['kind' => 'deadline', 'date_type' => 'explicit']), 'invalid_date', 'explicit_date_missing_due_date'],
             [$this->record(['date_type' => 'explicit', 'due_date' => '2024/02/01']), 'invalid_date', 'due_date_wrong_format'],
             [$this->record(['date_type' => 'explicit', 'due_date' => '2024-02-30']), 'invalid_date', 'due_date_invalid_calendar_date'],
-            [$this->record(['date_type' => 'relative', 'due_date' => '2024-02-01']), 'invalid_date', 'due_date_present_for_non_explicit_type'],
+            [$this->record(['kind' => 'deadline', 'date_type' => 'relative', 'due_date' => '2024-02-01']), 'invalid_date', 'due_date_present_for_non_explicit_type'],
             [$this->record(['kind' => 'deadline']), 'invalid_date', 'invalid_deadline_date_type'],
         ];
         foreach ($cases as [$record, $class, $reason]) {
@@ -261,7 +261,7 @@ class EvidenceSpanValidationTest extends TestCase
             $this->record(['evidence_ids' => ['E999']]),
             $this->record(['evidence_ids' => ['SECRET-ID-FROM-MODEL']]),
             $this->record(['evidence_ids' => 'E003']),
-            $this->record(['date_type' => 'explicit']),
+            $this->record(['kind' => 'deadline', 'date_type' => 'explicit']),
         ];
         $result = $this->validate([$this->record(), ...$invalid]);
         $diagnostics = $result['_validation'];
