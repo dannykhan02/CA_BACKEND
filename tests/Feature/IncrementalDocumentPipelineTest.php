@@ -644,7 +644,9 @@ class IncrementalDocumentPipelineTest extends TestCase
     {
         $document = $this->document('Revenue increased to USD 10 in 2024.');
         $chunk = $this->plan($document);
-        $reserved = $document->ai_pipeline['synthesis_reserved_usd'] + $document->ai_pipeline['repair_reserved_usd'];
+        // Extraction's allowance excludes the primary synthesis, one degraded retry and one repair.
+        $reserved = $document->ai_pipeline['synthesis_reserved_usd'] + $document->ai_pipeline['synthesis_degraded_reserved_usd']
+            + $document->ai_pipeline['repair_reserved_usd'];
         $chunk->update(['status' => 'completed', 'result' => ['records' => [$this->record()]],
             'reserved_cost' => $document->ai_pipeline['budget_usd'] - $reserved]);
         app(EvidenceMerger::class)->merge($document);

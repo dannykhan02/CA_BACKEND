@@ -224,7 +224,9 @@ return [
                 'connection' => 'redis',
                 'queue' => ['extraction'],
                 'balance' => 'simple',
-                'maxProcesses' => 2, // was 5 — right-sized for pre-real-users volume
+                // Global cap on concurrent extraction-queue jobs (and so Anthropic calls) across all
+                // documents. Default unchanged; see document_intelligence.concurrency for per-document.
+                'maxProcesses' => max(1, (int) env('HORIZON_EXTRACTION_MAX_PROCESSES', 2)),
                 'tries' => 3,
                 'timeout' => 360, // exceeds the 330s entity job, below Redis retry_after
             ],

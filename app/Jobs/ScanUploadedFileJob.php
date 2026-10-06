@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Exceptions\MalwareScannerUnavailableException;
 use App\Models\Document;
+use App\Services\Pipeline\DocumentProgress;
 use App\Services\Pipeline\PipelineStageRecorder;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -41,6 +42,7 @@ class ScanUploadedFileJob implements ShouldQueue
         }
 
         $scanStage = $recorder->start($document, 'virus_scan');
+        app(DocumentProgress::class)->record($document->id, 'scanning', 5);
 
         $tmpPath = tempnam(sys_get_temp_dir(), 'clamscan_');
 

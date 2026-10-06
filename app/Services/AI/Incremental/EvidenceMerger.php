@@ -5,6 +5,7 @@ namespace App\Services\AI\Incremental;
 use App\Models\Document;
 use App\Models\DocumentChunk;
 use App\Models\DocumentEvidence;
+use App\Models\KpiDefinition;
 use App\Services\AI\AiModels;
 use App\Services\Kpis\KpiIdentityResolver;
 use Illuminate\Support\Facades\DB;
@@ -20,9 +21,11 @@ use Illuminate\Support\Facades\DB;
  */
 class EvidenceMerger
 {
-    private const WRITE_BATCH = 100;
+    private const WRITE_BATCH = 500;
 
-    private const DERIVED_BATCH = 50;
+    // One transaction per batch. Every statement is a database round trip (~100ms+ when the worker
+    // and Postgres are in different regions), so derived rows are written in bulk, not per row.
+    private const DERIVED_BATCH = 250;
 
     public function normalize(string $value): string
     {
@@ -220,7 +223,8 @@ class EvidenceMerger
     /**
      * Derived KPI/entity/risk/deadline rows are created exactly once per evidence row:
      * the creation and the source_id link commit together, under a lock on that
-     * evidence row, and rows already linked are skipped.
+     * evidence row, and rows already linked are skipped. Rows are bulk inserted with
+     * preallocated sequence ids, so each link is deterministic without per-row queries.
      */
     private function persistDerived(Document $document, string $key, array $state, array &$stats): void
     {
@@ -234,11 +238,14 @@ class EvidenceMerger
                     return;
                 }
                 $known = $this->knownDerived($document, $rows);
+                $inserts = ['document_entities' => [], 'document_risks' => [], 'document_deadlines' => [], 'document_kpis' => []];
                 $links = [];
                 foreach ($rows as $evidence) {
-                    $links[$evidence->id] = $this->persist($document, $evidence, $state[$evidence->identity]['metric'] ?? null, $known);
+                    $links[$evidence->id] = $this->plan($document, $evidence, $state[$evidence->identity]['metric'] ?? null, $known, $inserts);
                     $stats['derived_created']++;
                 }
+                $ids = $this->insertDerived($document, $inserts);
+                $links = array_map(fn ($link) => is_array($link) ? $link[0].$ids[$link[1]][$link[2]] : $link, $links);
                 $cases = implode(' ', array_fill(0, count($links), 'WHEN ?::uuid THEN ?'));
                 $bindings = [];
                 foreach ($links as $id => $sourceId) {
@@ -274,46 +281,90 @@ class EvidenceMerger
         return $known;
     }
 
-    private function persist(Document $document, DocumentEvidence $evidence, ?array $metric, array &$known): string
+    /**
+     * Returns the final source_id, or [prefix, table, index] for a row queued in $inserts. Rows
+     * sharing a natural key (entity name, risk/deadline title+quote) share one derived row, exactly
+     * as the previous per-row firstOrCreate-style lookup did.
+     */
+    private function plan(Document $document, DocumentEvidence $evidence, ?array $metric, array &$known, array &$inserts): string|array
     {
         $r = $evidence->data;
-        $common = ['workspace_id' => $document->workspace_id, 'prompt_version' => config('document_intelligence.prompt_version'),
-            'provider' => 'anthropic', 'model' => app(AiModels::class)->forTask('extraction'), 'confidence' => $r['confidence']];
+        $now = now();
+        $common = ['document_id' => $document->id, 'workspace_id' => $document->workspace_id,
+            'prompt_version' => config('document_intelligence.prompt_version'), 'provider' => 'anthropic',
+            'model' => app(AiModels::class)->forTask('extraction'), 'confidence' => $r['confidence'],
+            'created_at' => $now, 'updated_at' => $now];
+        $queue = function (string $kind, string $table, string $lookup, array $row, string $prefix) use (&$known, &$inserts) {
+            if (! isset($known[$kind][$lookup])) {
+                $inserts[$table][] = $row;
+                $known[$kind][$lookup] = [$table, count($inserts[$table]) - 1];
+            }
+            $target = $known[$kind][$lookup];
+
+            return is_array($target) ? [$prefix, ...$target] : $prefix.$target;
+        };
         if ($r['kind'] === 'entity') {
             $type = in_array($r['entity_type'], ['organization', 'person', 'department', 'location', 'regulator', 'contract', 'reference', 'date', 'other'], true) ? $r['entity_type'] : 'other';
-            $lookup = $type."\0".$this->normalize($r['value']);
-            $known['entity'][$lookup] ??= $document->entities()->create(['entity_type' => $type, 'normalized_value' => $this->normalize($r['value'])]
-                + $common + ['value' => $r['value'], 'context' => $r['quote']])->id;
 
-            return 'entity:'.$known['entity'][$lookup];
+            return $queue('entity', 'document_entities', $type."\0".$this->normalize($r['value']), ['entity_type' => $type,
+                'normalized_value' => $this->normalize($r['value'])] + $common + ['value' => $r['value'], 'context' => $r['quote']], 'entity:');
         }
         if ($r['kind'] === 'risk') {
             $title = mb_substr($r['label'], 0, 255);
-            $known['risk'][$title."\0".$r['quote']] ??= $document->risks()->create(['title' => $title, 'evidence' => $r['quote']]
-                + $common + ['description' => $r['value'], 'severity' => in_array($r['severity'], ['low', 'medium', 'high', 'critical'], true) ? $r['severity'] : 'medium', 'status' => 'open'])->id;
 
-            return 'risk:'.$known['risk'][$title."\0".$r['quote']];
+            return $queue('risk', 'document_risks', $title."\0".$r['quote'], ['title' => $title, 'evidence' => $r['quote']] + $common
+                + ['description' => $r['value'], 'severity' => in_array($r['severity'], ['low', 'medium', 'high', 'critical'], true) ? $r['severity'] : 'medium',
+                    'status' => 'open'], 'risk:');
         }
         if (in_array($r['kind'], ['deadline', 'obligation'])) {
             $title = mb_substr($r['label'], 0, 255);
-            $known['deadline'][$title."\0".$r['quote']] ??= $document->deadlines()->create(['title' => $title, 'evidence' => $r['quote']]
-                + $common + ['deadline_type' => $r['kind'], 'description' => $r['value'], 'date_type' => $r['date_type'],
-                    'due_date' => $r['due_date'], 'relative_text' => $r['due_date'] ? null : $r['value'], 'status' => 'open'])->id;
 
-            return 'deadline:'.$known['deadline'][$title."\0".$r['quote']];
+            return $queue('deadline', 'document_deadlines', $title."\0".$r['quote'], ['title' => $title, 'evidence' => $r['quote']] + $common
+                + ['deadline_type' => $r['kind'], 'description' => $r['value'], 'date_type' => $r['date_type'],
+                    'due_date' => $r['due_date'], 'relative_text' => $r['due_date'] ? null : $r['value'], 'status' => 'open'], 'deadline:');
         }
         if ($r['kind'] === 'metric') {
             $number = rtrim(str_replace(',', '', $r['value']), '%');
-            $row = $document->kpis()->create(['workspace_id' => $document->workspace_id, 'label' => mb_substr($r['label'], 0, 255),
-                'kpi_definition_id' => $metric['definition_id'] ?? null, 'identity_metadata' => ['scope' => $r['subject'], 'metric_type' => $r['metric_type'] ?? null,
+            // Every metric evidence row gets its own KPI observation row.
+            $inserts['document_kpis'][] = ['document_id' => $document->id, 'workspace_id' => $document->workspace_id,
+                'label' => mb_substr($r['label'], 0, 255), 'kpi_definition_id' => $metric['definition_id'] ?? null,
+                'identity_metadata' => json_encode(['scope' => $r['subject'], 'metric_type' => $r['metric_type'] ?? null,
                     'value_basis' => $r['value_basis'] ?? null, 'aggregation' => $r['aggregation'] ?? null,
-                    'quantity_kind' => $r['quantity_kind'] ?? null],
+                    'quantity_kind' => $r['quantity_kind'] ?? null], JSON_THROW_ON_ERROR),
                 'period' => $metric['profile']['period'] ?? $r['period'], 'value' => mb_substr($r['value'], 0, 255),
-                'unit' => $r['unit'], 'value_numeric' => is_numeric($number) ? (float) $number : null]);
+                'unit' => $r['unit'], 'value_numeric' => is_numeric($number) ? (float) $number : null,
+                'created_at' => $now, 'updated_at' => $now];
 
-            return 'kpi:'.$row->id;
+            return ['kpi:', 'document_kpis', count($inserts['document_kpis']) - 1];
         }
 
         return 'fact:'.$evidence->id;
+    }
+
+    /** Preallocates ids from each table's own sequence, then one multi-row INSERT per table. */
+    private function insertDerived(Document $document, array $inserts): array
+    {
+        $definitions = array_values(array_unique(array_filter(array_column($inserts['document_kpis'], 'kpi_definition_id'))));
+        // Same invariant DocumentKpi::saving enforces per row, checked once for the batch.
+        if ($definitions && KpiDefinition::where('workspace_id', $document->workspace_id)->whereIn('id', $definitions)->count() !== count($definitions)) {
+            throw new \LogicException('KPI identity and observation must belong to the document workspace.');
+        }
+        $ids = [];
+        foreach ($inserts as $table => $rows) {
+            if (! $rows) {
+                continue;
+            }
+            $ids[$table] = array_map(fn ($row) => (int) $row->id, DB::select(
+                'SELECT nextval(pg_get_serial_sequence(?, ?)) AS id FROM generate_series(1, ?)', [$table, 'id', count($rows)]));
+            foreach ($rows as $index => &$row) {
+                $row = ['id' => $ids[$table][$index]] + $row;
+            }
+            unset($row);
+            foreach (array_chunk($rows, 500) as $chunk) {
+                DB::table($table)->insert($chunk);
+            }
+        }
+
+        return $ids;
     }
 }

@@ -8,6 +8,7 @@ use App\Services\AI\Incremental\ContextResolver;
 use App\Services\AI\Incremental\EvidenceBudget;
 use App\Services\AI\Incremental\EvidenceMerger;
 use App\Services\AI\Incremental\IncrementalPipeline;
+use App\Services\Pipeline\DocumentProgress;
 use App\Services\Pipeline\PipelineStageRecorder;
 use App\Services\WorkspaceCreditService;
 use Illuminate\Bus\Queueable;
@@ -123,6 +124,7 @@ class MergeDocumentEvidenceJob implements ShouldQueue
         if (! $claimed) {
             return;
         }
+        app(DocumentProgress::class)->record($document->id, 'merging', 86);
 
         try {
             /*
@@ -205,7 +207,7 @@ class MergeDocumentEvidenceJob implements ShouldQueue
                 ]);
 
                 $lockedDocument->forceFill([
-                    'progress' => 95,
+                    'progress' => max(95, (int) $lockedDocument->progress),
                     'has_structured_data' => $lockedDocument->kpis()->exists(),
                 ])->save();
             });
