@@ -117,11 +117,11 @@ class AnthropicProviderErrorDiagnosticsTest extends TestCase
     // ---------------------------------------------------------------- TASK 4: local reproduction
 
     /**
-     * The span request schema, checked against the JSON Schema subset Anthropic's structured
-     * outputs accept, with no live call. Array constraints beyond minItems 0 or 1 are rejected
-     * with a 400 before inference, which is exactly the observed failure shape.
+     * Both request schemas, checked against the JSON Schema subset Anthropic's structured outputs
+     * accept, with no live call. Array constraints beyond minItems 0 or 1 are rejected with a 400
+     * before inference; span mode used to carry a maxItems, which is what failed every call.
      */
-    public function test_span_schema_carries_an_unsupported_array_constraint(): void
+    public function test_neither_schema_uses_a_keyword_the_provider_subset_rejects(): void
     {
         $legacy = EvidenceSchema::extraction(EvidenceGrounding::LEGACY)['properties']['records']['items']['properties'];
         $spans = EvidenceSchema::extraction(EvidenceGrounding::SPANS)['properties']['records']['items']['properties'];
@@ -132,18 +132,18 @@ class AnthropicProviderErrorDiagnosticsTest extends TestCase
 
         // minItems is accepted only for the values 0 and 1; maxItems is not accepted at all.
         self::assertSame(1, $spans['evidence_ids']['minItems']);
-        self::assertSame(EvidenceSchema::maxEvidenceIds(), $spans['evidence_ids']['maxItems']);
+        self::assertArrayNotHasKey('maxItems', $spans['evidence_ids']);
         self::assertSame([], $this->unsupportedKeywords($legacy),
             'The legacy schema uses only supported keywords, which is why it still reaches inference.');
-        self::assertSame(['records.items.evidence_ids.maxItems'], $this->unsupportedKeywords($spans),
-            'maxItems is the only keyword span mode adds that the provider subset does not accept.');
+        self::assertSame([], $this->unsupportedKeywords($spans),
+            'Span mode must not add a keyword the provider subset does not accept.');
     }
 
     /**
-     * A synthetic span-mode request over harmless fixture text, proving the rejection is a property
-     * of the request the client builds and not of any particular document's content.
+     * A synthetic span-mode request over harmless fixture text: the body the client actually posts
+     * carries labeled spans and a schema the provider accepts, independent of any document content.
      */
-    public function test_synthetic_span_request_is_rejected_before_inference(): void
+    public function test_outgoing_span_request_carries_no_unsupported_schema_keyword(): void
     {
         $document = $this->document(spans: true);
         self::assertSame(EvidenceGrounding::SPANS, app(EvidenceGrounding::class)->mode($document));
@@ -153,32 +153,25 @@ class AnthropicProviderErrorDiagnosticsTest extends TestCase
         Http::fake(['api.anthropic.com/*' => function ($request) use (&$sent) {
             $sent = $request->data();
 
-            return Http::response(['type' => 'error', 'error' => ['type' => 'invalid_request_error',
-                'message' => 'output_config.format.schema: maxItems is not supported']], 400,
-                ['request-id' => 'req_011CQxSynthetic']);
+            return Http::response(['model' => 'claude-haiku-4-5-20251001', 'stop_reason' => 'end_turn',
+                'usage' => ['input_tokens' => 100, 'output_tokens' => 20],
+                'content' => [['type' => 'text', 'text' => json_encode(['records' => []])]]], 200);
         }]);
-        $handler = new TestHandler;
-        Log::swap(new Logger('test', [$handler]));
-        try {
-            app(AnthropicClient::class)->extractChunk($document, $chunk, substr((string) $document->extracted_text,
-                (int) $chunk->start_offset, (int) $chunk->end_offset - (int) $chunk->start_offset));
-            self::fail('Rejected request returned a result.');
-        } catch (AiProcessingException) {
-        }
+        app(AnthropicClient::class)->extractChunk($document, $chunk, substr((string) $document->extracted_text,
+            (int) $chunk->start_offset, (int) $chunk->end_offset - (int) $chunk->start_offset));
 
-        // The request that gets rejected is the span-mode one: labeled spans in, a maxItems schema out.
-        $schema = $sent['output_config']['format']['schema']['properties']['records']['items']['properties'];
-        self::assertArrayHasKey('maxItems', $schema['evidence_ids']);
+        $fields = $sent['output_config']['format']['schema']['properties']['records']['items']['properties'];
+        self::assertArrayNotHasKey('maxItems', $fields['evidence_ids'],
+            'The keyword that was rejected before inference must not reach the wire.');
+        self::assertSame(['type' => 'array', 'items' => ['type' => 'string'], 'minItems' => 1],
+            $fields['evidence_ids']);
+        self::assertSame([], $this->unsupportedKeywords($fields));
+
+        // Still the span-mode request in every other respect: labeled spans in, no quote field.
+        self::assertArrayNotHasKey('quote', $fields);
         self::assertStringContainsString('evidence_spans', json_encode($sent['messages']));
         self::assertMatchesRegularExpression('/\[E\d+\]/', json_encode($sent['messages']),
             'Span mode sends the slice as labeled spans.');
-
-        $context = $this->captureProviderError($handler);
-        self::assertSame(400, $context['status']);
-        self::assertSame('invalid_request_error', $context['error_type']);
-        self::assertStringContainsString('maxItems is not supported', $context['error_message']);
-        self::assertSame('entities', $context['purpose']);
-        self::assertSame($chunk->id, $context['chunk_id']);
     }
 
     // ------------------------------------------------------------------- TASK 5: the diagnostic

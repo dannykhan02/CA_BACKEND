@@ -60,12 +60,36 @@ class EvidenceSpanValidationTest extends TestCase
 
         self::assertArrayHasKey('evidence_ids', $fields);
         self::assertArrayNotHasKey('quote', $fields);
+        self::assertSame('array', $fields['evidence_ids']['type']);
+        self::assertSame(['type' => 'string'], $fields['evidence_ids']['items']);
         self::assertSame(1, $fields['evidence_ids']['minItems']);
-        self::assertSame(EvidenceSchema::maxEvidenceIds(), $fields['evidence_ids']['maxItems']);
+        /*
+         * Not maxItems. The provider's structured-output subset accepts minItems only for 0 and 1
+         * and rejects every other array constraint with a 400 before inference; the ceiling lives
+         * in the instructions and in ground(), which is where it is actually enforceable.
+         */
+        self::assertSame(['type', 'items', 'minItems'], array_keys($fields['evidence_ids']));
 
         $legacy = EvidenceSchema::extraction(EvidenceGrounding::LEGACY)['properties']['records']['items']['properties'];
         self::assertArrayHasKey('quote', $legacy);
+        self::assertSame(['type' => 'string'], $legacy['quote']);
         self::assertArrayNotHasKey('evidence_ids', $legacy);
+        // The legacy schema is untouched by the span correction: plain strings, no array constraints.
+        self::assertSame([], array_filter($legacy, fn ($rule) => isset($rule['minItems']) || isset($rule['maxItems'])));
+    }
+
+    /**
+     * The configured ceiling is three, and removing maxItems from the provider schema does not
+     * move it: the application validator is what rejects an over-cited record, exactly as before.
+     */
+    public function test_the_configured_maximum_of_three_evidence_ids_is_still_enforced(): void
+    {
+        self::assertSame(3, EvidenceSchema::maxEvidenceIds(), 'The shipped ceiling is three.');
+
+        self::assertCount(1, $this->validate([$this->record(['evidence_ids' => ['E003']])])['records']);
+        self::assertCount(1, $this->validate([$this->record(['evidence_ids' => ['E002', 'E003', 'E004']])])['records']);
+        self::assertSame(['invalid_evidence', 'too_many_evidence_ids'],
+            $this->rejection($this->record(['evidence_ids' => ['E002', 'E003', 'E004', 'E005']])));
     }
 
     public function test_span_mode_instructions_forbid_quoting_and_inventing_ids(): void
