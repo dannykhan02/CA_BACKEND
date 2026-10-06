@@ -146,6 +146,12 @@ class ProcessDocumentChunkJob implements ShouldQueue
             $result = $client->extractChunk($document, $chunk, $text);
             $chunk->update(['status' => 'completed', 'result' => $result, 'completed_at' => now(), 'failure_class' => null]);
         } catch (AiProcessingException $e) {
+            if (isset($e->diagnostics['records_returned'])) {
+                // An all-invalid response has no accepted records to persist. Keep only counts.
+                $chunk->update(['result' => ['records' => [], '_validation' => $e->diagnostics,
+                    '_returned_records' => $e->diagnostics['records_returned'],
+                    '_dropped_records' => $e->diagnostics['rejections']]]);
+            }
             $chunk->update(['failure_class' => $e->classification]);
             $capacity = in_array($e->classification, IncrementalPipeline::SPLITTABLE_FAILURES, true);
             $retry = $e->classification === 'transient' && $chunk->attempts < config('document_intelligence.attempts');
@@ -189,16 +195,21 @@ class ProcessDocumentChunkJob implements ShouldQueue
     {
         $accounting = $chunk->cost_accounting ?? [];
         $runs = DocumentAiRun::where('chunk_id', $chunk->id)->where('request_attempt', $chunk->attempts)->get();
-        Log::info('Document intelligence chunk finished', [
-            'document_id' => $chunk->document_id, 'chunk_id' => $chunk->id, 'identity' => $chunk->identity,
+        $validation = $chunk->result['_validation'] ?? [];
+        Log::info('Document intelligence validation summary', [
+            'document_id' => $chunk->document_id, 'chunk_id' => $chunk->id, 'chunk_key' => $chunk->identity,
             'depth' => $chunk->depth, 'attempt' => $chunk->attempts, 'status' => $chunk->status, 'failure_class' => $chunk->failure_class,
             'input_tokens_counted' => $chunk->token_count, 'queue_wait_ms' => $accounting['queue_wait_ms'] ?? null,
             'job_ms' => $chunk->started_at ? (int) $chunk->started_at->diffInMilliseconds(now(), true) : null,
             'provider_ms' => (int) $runs->sum('duration_ms'), 'input_tokens' => (int) $runs->sum('input_tokens'),
             'output_tokens' => (int) $runs->sum('output_tokens'), 'stop_reason' => $runs->last()?->stop_reason,
             'document_running' => $accounting['document_running'] ?? null, 'global_running' => $accounting['global_running'] ?? null,
-            'records_returned' => $chunk->result['_returned_records'] ?? null, 'records_kept' => count($chunk->result['records'] ?? []),
-            'records_dropped' => array_sum($chunk->result['_dropped_records'] ?? []), 'saturated' => $chunk->result['_saturated'] ?? false,
+            'records_returned' => $validation['records_returned'] ?? $chunk->result['_returned_records'] ?? null,
+            'records_kept' => $validation['records_kept'] ?? count($chunk->result['records'] ?? []),
+            'records_dropped' => $validation['records_dropped'] ?? array_sum($chunk->result['_dropped_records'] ?? []),
+            'rejections' => $validation['rejections'] ?? $chunk->result['_dropped_records'] ?? [],
+            'rejection_reasons' => $validation['rejection_reasons'] ?? [],
+            'saturated' => $chunk->result['_saturated'] ?? false,
             'estimated_cost_usd' => $accounting['estimate'] ?? null, 'settled_cost_usd' => $accounting['cost'] ?? null,
             'actual_known' => $accounting['actual_known'] ?? null,
         ]);
