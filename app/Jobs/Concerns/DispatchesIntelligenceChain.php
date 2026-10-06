@@ -9,6 +9,7 @@ use App\Jobs\ExtractDocumentEntitiesJob;
 use App\Jobs\GenerateDocumentSummaryJob;
 use App\Models\Document;
 use App\Services\AI\Incremental\IncrementalPipeline;
+use App\Support\QueueTopology;
 use Illuminate\Support\Facades\Bus;
 
 /**
@@ -59,14 +60,14 @@ trait DispatchesIntelligenceChain
             new DetectDocumentDeadlinesJob($documentId),
         ])
             ->name("document-intelligence:{$documentId}")
-            ->onQueue('extraction')
+            ->onQueue(QueueTopology::EXTRACTION)
             ->allowFailures()
             ->finally(function () use ($documentId) {
                 if (! Document::find($documentId)?->canGenerateIntelligence()) {
                     return;
                 }
                 GenerateDocumentSummaryJob::dispatch($documentId)
-                    ->onQueue('extraction');
+                    ->onQueue(QueueTopology::for(GenerateDocumentSummaryJob::class));
             })
             ->dispatch();
     }

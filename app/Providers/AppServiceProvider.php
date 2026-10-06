@@ -6,10 +6,13 @@ use App\Models\Document;
 use App\Models\Workspace;
 use App\Observers\DocumentObserver;
 use App\Observers\WorkspaceObserver;
+use App\Services\AI\ProviderGate;
 use App\Services\Ocr\OcrEngineResolver;
+use App\Support\QueueTopology;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -20,6 +23,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // One gate per process: it tracks the permit a job is already holding.
+        $this->app->singleton(ProviderGate::class);
+
         // OCR provider list is config-driven (config/ocr.php) — adding
         // a provider means adding one line there, not touching this
         // binding, ExtractDocumentTextJob, or anything else that consumes OCR.
@@ -37,6 +43,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Safety net: a dispatch without an explicit onQueue() still reaches its pool.
+        Queue::route(QueueTopology::ROUTES);
+
         if ($address = config('mail.reply_to.address')) {
             Mail::alwaysReplyTo($address, config('mail.reply_to.name'));
         }

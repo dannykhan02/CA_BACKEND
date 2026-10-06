@@ -34,7 +34,8 @@ class EntityTimeoutBudgetTest extends TestCase
     {
         $http = config('services.anthropic.entity_timeout');
         $job = new ExtractDocumentEntitiesJob('document-id');
-        $supervisor = config('horizon.environments.production.supervisor-extraction.timeout');
+        // Effective production supervisor: defaults overlaid with the production block.
+        $supervisor = array_replace_recursive(config('horizon.defaults'), config('horizon.environments.production'))['supervisor-extraction']['timeout'];
         $retryAfter = config('queue.connections.redis.retry_after');
 
         $this->assertSame(120, $http);

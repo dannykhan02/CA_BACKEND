@@ -3,6 +3,8 @@
 namespace App\Jobs;
 
 use App\Exceptions\AiProcessingException;
+use App\Exceptions\ProviderBusyException;
+use App\Jobs\Concerns\DefersWhenProviderBusy;
 use App\Models\Document;
 use App\Models\DocumentAiRun;
 use App\Models\DocumentChunk;
@@ -12,7 +14,9 @@ use App\Services\AI\Incremental\ChunkPlanner;
 use App\Services\AI\Incremental\EvidenceSchema;
 use App\Services\AI\Incremental\ExtractionCapacity;
 use App\Services\AI\Incremental\IncrementalPipeline;
+use App\Services\AI\ProviderGate;
 use App\Services\AnthropicClient;
+use App\Support\QueueTopology;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -23,7 +27,7 @@ use Illuminate\Support\Facades\Log;
 
 class ProcessDocumentChunkJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use DefersWhenProviderBusy, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 1;
 
@@ -32,7 +36,8 @@ class ProcessDocumentChunkJob implements ShouldQueue
 
     public bool $failOnTimeout = true;
 
-    public function __construct(public string $chunkId) {}
+    /** $dispatchToken identifies the dispatch this message belongs to (null: pre-token message). */
+    public function __construct(public string $chunkId, public ?string $dispatchToken = null) {}
 
     public function handle(AnthropicClient $client, IncrementalPipeline $pipeline): void
     {
@@ -42,6 +47,30 @@ class ProcessDocumentChunkJob implements ShouldQueue
             || $chunk->pipeline_key !== ($document->ai_pipeline['key'] ?? null)) {
             return;
         }
+        // A superseded dispatch (recovery re-issued this chunk) is dropped before any provider call.
+        if ($this->dispatchToken !== null && $chunk->dispatch_token !== null && ! hash_equals($chunk->dispatch_token, $this->dispatchToken)) {
+            Log::info('Superseded chunk delivery ignored', ['document_id' => $document->id, 'chunk_id' => $chunk->id]);
+
+            return;
+        }
+        if (! in_array($chunk->status, ['queued', 'pending'], true)) {
+            // Running/finished duplicate: the claim below rejects it without provider work.
+            $this->process($client, $pipeline, $chunk, $document);
+
+            return;
+        }
+        try {
+            // One global permit covers the token count and the extraction request; when none is
+            // free the chunk stays queued and a delayed copy of this message is enqueued.
+            app(ProviderGate::class)->hold($document->id, fn () => $this->process($client, $pipeline, $chunk, $document),
+                reserveForOthers: $pipeline->otherDocumentsQueued($chunk));
+        } catch (ProviderBusyException $e) {
+            $this->deferForProvider($e, ['document_id' => $document->id, 'chunk_id' => $chunk->id]);
+        }
+    }
+
+    private function process(AnthropicClient $client, IncrementalPipeline $pipeline, DocumentChunk $chunk, Document $document): void
+    {
         $text = mb_substr($document->extracted_text, $chunk->start_offset, $chunk->end_offset - $chunk->start_offset);
         // Free provider token count before admission, so the reservation bounds the real input instead
         // of raw bytes (~3x tighter). A conservative byte bound remains when counting is unavailable.
@@ -131,7 +160,7 @@ class ProcessDocumentChunkJob implements ShouldQueue
                 $pipeline->split($chunk, $document);
             } elseif ($retry) {
                 $chunk->update(['status' => 'queued']);
-                self::dispatch($chunk->id)->onQueue('extraction')
+                self::dispatch($chunk->id, $this->dispatchToken)->onQueue(QueueTopology::for(ProcessDocumentChunkJob::class))
                     ->delay(max($e->retryAfter, 2 ** $chunk->attempts * 5) + random_int(0, 5));
             } else {
                 // Terminal (invalid_evidence, invalid_schema, auth, billing, ...): never split or retried.

@@ -14,6 +14,8 @@ use App\Services\AI\AiModels;
 use App\Services\AI\AiPricing;
 use App\Services\AnthropicClient;
 use App\Services\Pipeline\DocumentProgress;
+use App\Support\QueueInspector;
+use App\Support\QueueTopology;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -27,6 +29,16 @@ class IncrementalPipeline
 
     /** Only capacity-type failures may be retried on smaller input. */
     public const SPLITTABLE_FAILURES = ['max_tokens', 'context_overflow', 'timeout'];
+
+    /**
+     * True when another document has extraction work waiting in the queue. A chunk that
+     * already shares the document's permits then leaves the last free provider permit to it.
+     */
+    public function otherDocumentsQueued(DocumentChunk $chunk): bool
+    {
+        return DocumentChunk::where('stage', 'extraction')->where('status', 'queued')
+            ->where('document_id', '!=', $chunk->document_id)->exists();
+    }
 
     public function route(Document $document): bool
     {
@@ -281,7 +293,8 @@ class IncrementalPipeline
         $running = fn () => DocumentChunk::where('stage', $unit->stage)->where('status', 'running');
 
         return [
-            'queue_wait_ms' => $unit->updated_at ? max(0, (int) $unit->updated_at->diffInMilliseconds(now(), true)) : null,
+            // From the original dispatch (deferrals keep it), so provider-capacity waits are visible.
+            'queue_wait_ms' => ($since = $unit->dispatched_at ?? $unit->updated_at) ? max(0, (int) $since->diffInMilliseconds(now(), true)) : null,
             'document_running' => $running()->where('document_id', $unit->document_id)->where('pipeline_key', $unit->pipeline_key)->count() + 1,
             'global_running' => $running()->count() + 1,
         ];
@@ -361,7 +374,7 @@ class IncrementalPipeline
             return;
         }
         if ($summaryOnly) {
-            GenerateDocumentSummaryJob::dispatch($document->id, true)->onQueue('extraction');
+            GenerateDocumentSummaryJob::dispatch($document->id, true)->onQueue(QueueTopology::for(GenerateDocumentSummaryJob::class));
         } else {
             $this->pump($document->id);
         }
@@ -430,8 +443,8 @@ class IncrementalPipeline
                     'status' => 'queued',
                 ]);
 
-                ProcessDocumentChunkJob::dispatch($chunk->id)
-                    ->onQueue('extraction')
+                ProcessDocumentChunkJob::dispatch($chunk->id, $chunk->issueDispatchToken())
+                    ->onQueue(QueueTopology::for(ProcessDocumentChunkJob::class))
                     ->afterCommit();
             }
 
@@ -526,7 +539,7 @@ class IncrementalPipeline
                 // Synthesis is required, even when only partial evidence survived.
                 $document->forceFill(['status' => 'Processing', 'progress' => max(95, (int) $document->progress), 'error_message' => null])->save();
                 app(DocumentProgress::class)->record($documentId, 'synthesizing', 95);
-                GenerateDocumentSummaryJob::dispatch($documentId)->onQueue('extraction')->afterCommit();
+                GenerateDocumentSummaryJob::dispatch($documentId)->onQueue(QueueTopology::for(GenerateDocumentSummaryJob::class))->afterCommit();
 
                 return;
             }
@@ -536,8 +549,8 @@ class IncrementalPipeline
                     'status' => 'queued',
                 ]);
 
-                MergeDocumentEvidenceJob::dispatch($merge->id)
-                    ->onQueue('extraction')
+                MergeDocumentEvidenceJob::dispatch($merge->id, $merge->issueDispatchToken())
+                    ->onQueue(QueueTopology::for(MergeDocumentEvidenceJob::class))
                     ->afterCommit();
             }
         });
@@ -824,31 +837,28 @@ class IncrementalPipeline
             ]);
 
         /*
-         * Recover a lost queue dispatch after the database commit.
-         * Duplicate deliveries are harmless because ProcessDocumentChunkJob
-         * claims the unit under a lock.
+         * Recover a lost queue dispatch (process died between commit and push, or Redis lost
+         * its data) without duplicating work that is merely waiting in a backed-up queue.
+         * A queued unit older than the minimum age is reset only when no queue message
+         * carrying its dispatch token remains. If the queue cannot be inspected, the age
+         * rule alone applies; that stays safe because the reset issues a new token and a
+         * surviving old message is then dropped as superseded before any provider call.
          */
+        $present = app(QueueInspector::class)->pendingDispatchTokens();
         DocumentChunk::where('document_id', $document->id)
             ->where('pipeline_key', $key)
-            ->where('stage', 'extraction')
+            ->whereIn('stage', ['extraction', 'merge'])
             ->where('status', 'queued')
-            ->where('updated_at', '<', now()->subMinutes(10))
-            ->update([
-                'status' => 'pending',
-            ]);
-
-        foreach (
-            DocumentChunk::where('document_id', $document->id)
-                ->where('pipeline_key', $key)
-                ->where('stage', 'merge')
-                ->where('status', 'queued')
-                ->where('updated_at', '<', now()->subMinutes(10))
-                ->get() as $merge
-        ) {
-            $merge->update([
-                'status' => 'pending',
-            ]);
-        }
+            ->where(fn ($q) => $q->where('dispatched_at', '<', now()->subMinutes((int) config('document_intelligence.recovery_queued_minutes')))
+                ->orWhere(fn ($legacy) => $legacy->whereNull('dispatched_at')
+                    ->where('updated_at', '<', now()->subMinutes((int) config('document_intelligence.recovery_queued_minutes')))))
+            ->get()
+            ->reject(fn (DocumentChunk $unit) => $present !== null && $unit->dispatch_token !== null && isset($present[$unit->dispatch_token]))
+            ->each(function (DocumentChunk $unit) use ($present) {
+                Log::info('Lost queue dispatch recovered', ['document_id' => $unit->document_id, 'chunk_id' => $unit->id,
+                    'stage' => $unit->stage, 'queue_inspected' => $present !== null]);
+                $unit->update(['status' => 'pending']);
+            });
 
         $this->pump($document->id);
 
@@ -882,13 +892,13 @@ class IncrementalPipeline
                 GenerateDocumentSummaryJob::dispatch(
                     $document->id,
                     true
-                )->onQueue('extraction');
+                )->onQueue(QueueTopology::for(GenerateDocumentSummaryJob::class));
             }
 
             if (! $units()->where('stage', 'visual_plan')->exists()) {
                 AnalyzeEmbeddedVisualsJob::dispatch(
                     $document->id
-                )->onQueue('extraction');
+                )->onQueue(QueueTopology::for(AnalyzeEmbeddedVisualsJob::class));
             }
 
             if (
@@ -898,7 +908,7 @@ class IncrementalPipeline
             ) {
                 GenerateEmbeddingsJob::dispatch(
                     $document->id
-                )->onQueue('extraction');
+                )->onQueue(QueueTopology::for(GenerateEmbeddingsJob::class));
             }
 
             if (

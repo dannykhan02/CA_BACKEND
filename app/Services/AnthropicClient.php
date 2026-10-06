@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Exceptions\AiProcessingException;
 use App\Exceptions\AnthropicRateLimitException;
 use App\Exceptions\AnthropicStructuredOutputException;
+use App\Exceptions\ProviderBusyException;
 use App\Models\Document;
 use App\Models\DocumentAiRun;
 use App\Models\DocumentChunk;
@@ -16,8 +17,10 @@ use App\Services\AI\Incremental\ExtractionCapacity;
 use App\Services\AI\Incremental\IncrementalPipeline;
 use App\Services\AI\Incremental\SynthesisSchema;
 use App\Services\AI\PromptManager;
+use App\Services\AI\ProviderGate;
 use App\Services\AI\ResponseValidator;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -72,9 +75,9 @@ class AnthropicClient
         $started = hrtime(true);
         $response = null;
         try {
-            $response = Http::withHeaders(['x-api-key' => $this->apiKey(),
+            $response = app(ProviderGate::class)->call(fn () => Http::withHeaders(['x-api-key' => $this->apiKey(),
                 'anthropic-version' => '2023-06-01'])->connectTimeout(5)->timeout(15)
-                ->get('https://api.anthropic.com/v1/models/'.rawurlencode($model));
+                ->get('https://api.anthropic.com/v1/models/'.rawurlencode($model)));
 
             return $response->successful();
         } finally {
@@ -91,11 +94,12 @@ class AnthropicClient
         $started = hrtime(true);
         $response = null;
         try {
-            $response = Http::withHeaders(['x-api-key' => $this->apiKey(),
+            // Never waits for a permit: callers fall back to a conservative local estimate when busy.
+            $response = app(ProviderGate::class)->call(fn () => Http::withHeaders(['x-api-key' => $this->apiKey(),
                 'anthropic-version' => '2023-06-01'])->connectTimeout(5)->timeout(15)
                 ->post('https://api.anthropic.com/v1/messages/count_tokens', [
                     'model' => $model, 'messages' => [['role' => 'user', 'content' => $text]],
-                ]);
+                ]), waitSeconds: 0);
             if (! $response->successful() || ! is_int($response->json('input_tokens'))) {
                 throw new AiProcessingException('token_count_unavailable');
             }
@@ -166,17 +170,23 @@ class AnthropicClient
             $status = 'transient';
             $response['usage'] = ['input_tokens' => 0, 'output_tokens' => 0];
             throw new AiProcessingException('transient', 30);
+        } catch (ProviderBusyException $e) {
+            $status = 'provider_busy';
+            throw $e;
         } catch (\Throwable $e) {
             $status = $e instanceof AiProcessingException ? $e->classification : 'deterministic';
             throw $e;
         } finally {
-            $response['_telemetry'] = [...($response['_telemetry'] ?? []), 'chunk_id' => $chunk->id, 'pipeline_version' => $chunk->pipeline_version,
-                'request_attempt' => $chunk->attempts, 'duration_ms' => (int) ((hrtime(true) - $start) / 1000000),
-                'failure_class' => $status === 'success' ? null : $status];
-            if (! $this->transportFailureRecorded || $response !== ['_telemetry' => $response['_telemetry']]) {
-                $this->recordAiRun($document, 'entities', $response, $status);
-            } else {
-                DocumentAiRun::whereKey($this->transportRunId)->update($response['_telemetry']);
+            // A provider-busy deferral sent nothing, so no run is recorded.
+            if ($status !== 'provider_busy') {
+                $response['_telemetry'] = [...($response['_telemetry'] ?? []), 'chunk_id' => $chunk->id, 'pipeline_version' => $chunk->pipeline_version,
+                    'request_attempt' => $chunk->attempts, 'duration_ms' => (int) ((hrtime(true) - $start) / 1000000),
+                    'failure_class' => $status === 'success' ? null : $status];
+                if (! $this->transportFailureRecorded || $response !== ['_telemetry' => $response['_telemetry']]) {
+                    $this->recordAiRun($document, 'entities', $response, $status);
+                } else {
+                    DocumentAiRun::whereKey($this->transportRunId)->update($response['_telemetry']);
+                }
             }
         }
     }
@@ -480,6 +490,8 @@ PROMPT;
                 $response = $this->callWithRetry($messages, options: array_merge($requestOptions, [
                     'intelligence_document' => $document, 'max_tokens' => $maxTokens,
                 ]));
+            } catch (ProviderBusyException $e) {
+                throw $e; // Admission control: nothing was sent, so nothing is recorded or billed.
             } catch (\Throwable $e) {
                 if (! $this->transportFailureRecorded && (! $document || $document->fresh()?->canGenerateIntelligence())) {
                     $this->recordAiRun($document, $purpose, [], 'provider_error');
@@ -515,6 +527,21 @@ PROMPT;
         throw new \LogicException('Structured response retry exhausted.');
     }
 
+    /** Retry-After as delta-seconds or an HTTP-date (RFC 9110); unparseable or past values mean 0. */
+    private function retryAfterSeconds(Response $response): int
+    {
+        $value = trim((string) $response->header('Retry-After'));
+        if ($value === '') {
+            return 0;
+        }
+        if (ctype_digit($value)) {
+            return (int) $value;
+        }
+        $at = strtotime($value);
+
+        return $at === false ? 0 : max(0, $at - time());
+    }
+
     private function callWithRetry(array $messages, int $attempt = 1, array $options = []): array
     {
         $document = $options['intelligence_document'] ?? $this->activeDocument;
@@ -548,11 +575,13 @@ PROMPT;
             if (isset($options['connect_timeout'])) {
                 $request->connectTimeout($options['connect_timeout']);
             }
-            $response = $request->post('https://api.anthropic.com/v1/messages', [
+            // Global admission at the HTTP boundary: one permit per request attempt, so retries and
+            // repairs re-acquire and no permit is held while sleeping between attempts.
+            $response = app(ProviderGate::class)->call(fn () => $request->post('https://api.anthropic.com/v1/messages', [
                 'model' => $this->requestModel,
                 'max_tokens' => $options['max_tokens'] ?? config('services.anthropic.max_tokens'),
                 'messages' => $messages,
-            ] + array_intersect_key($options, array_flip(['system', 'output_config'])));
+            ] + array_intersect_key($options, array_flip(['system', 'output_config']))), $document?->id);
         } catch (ConnectionException $e) {
             $kind = str_contains($e->getMessage(), '28') || str_contains(strtolower($e->getMessage()), 'timed out') ? 'timeout' : 'transient';
             $this->recordTransportFailure($document, $kind, $attempt, $started);
@@ -576,7 +605,7 @@ PROMPT;
             $kind = $this->classifyFailure($response->status(), (string) $response->json('error.message'));
             if (($options['typed_errors'] ?? false) || in_array($kind, ['authentication', 'billing', 'invalid_model'], true)) {
                 $this->recordTransportFailure($document, $kind, $attempt, $started, rejected: true);
-                throw new AiProcessingException($kind, max(0, min(120, (int) $response->header('Retry-After', 0))));
+                throw new AiProcessingException($kind, min(120, $this->retryAfterSeconds($response)));
             }
         }
         if (($response->status() === 429 || $response->serverError())) {
@@ -588,7 +617,7 @@ PROMPT;
                 $this->tagAndCapture($final);
                 throw $final;
             }
-            $retryAfter = (int) $response->header('Retry-After', 0);
+            $retryAfter = $this->retryAfterSeconds($response);
             $sleepSeconds = min(30, max(2 ** $attempt, $retryAfter));
             sleep($sleepSeconds);
 

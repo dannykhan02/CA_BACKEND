@@ -75,3 +75,6 @@ if (env('APP_DEMO_MODE') === '1') {
 
 // Recover a lost queue dispatch; ambiguous provider attempts require explicit review.
 Schedule::command('docintel:resume')->everyFiveMinutes()->withoutOverlapping();
+
+// Horizon's per-queue throughput/runtime metrics (and wait history) need periodic snapshots.
+Schedule::command('horizon:snapshot')->everyFiveMinutes();

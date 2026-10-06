@@ -17,6 +17,7 @@ use App\Models\User;
 use App\Services\AI\Incremental\IncrementalPipeline;
 use App\Services\DocumentIntelligenceService;
 use App\Services\EntitlementService;
+use App\Support\QueueTopology;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 
@@ -102,13 +103,13 @@ class DocumentReprocessor
             if ($jobs) {
                 $documentId = $document->id;
                 Bus::batch($jobs)->name("document-intelligence-retry:{$documentId}")
-                    ->onQueue('extraction')->allowFailures()->finally(function () use ($documentId, $attemptIds) {
+                    ->onQueue(QueueTopology::EXTRACTION)->allowFailures()->finally(function () use ($documentId, $attemptIds) {
                         if (Document::find($documentId)?->canGenerateIntelligence()) {
-                            GenerateDocumentSummaryJob::dispatch($documentId, true, $attemptIds['document_summary'])->onQueue('extraction');
+                            GenerateDocumentSummaryJob::dispatch($documentId, true, $attemptIds['document_summary'])->onQueue(QueueTopology::for(GenerateDocumentSummaryJob::class));
                         }
                     })->dispatch();
             } else {
-                GenerateDocumentSummaryJob::dispatch($document->id, true, $attemptIds['document_summary'])->onQueue('extraction');
+                GenerateDocumentSummaryJob::dispatch($document->id, true, $attemptIds['document_summary'])->onQueue(QueueTopology::for(GenerateDocumentSummaryJob::class));
             }
 
             return $document->fresh();
@@ -129,10 +130,10 @@ class DocumentReprocessor
             });
 
             ScanUploadedFileJob::withChain([
-                (new ExtractDocumentTextJob($document->id))->onQueue('extraction'),
-                (new GenerateInsightsJob($document->id, true))->onQueue('extraction'),
-                (new GenerateEmbeddingsJob($document->id))->onQueue('extraction'),
-            ])->onQueue('default')->dispatch($document->id);
+                (new ExtractDocumentTextJob($document->id))->onQueue(QueueTopology::for(ExtractDocumentTextJob::class)),
+                (new GenerateInsightsJob($document->id, true))->onQueue(QueueTopology::for(GenerateInsightsJob::class)),
+                (new GenerateEmbeddingsJob($document->id))->onQueue(QueueTopology::for(GenerateEmbeddingsJob::class)),
+            ])->onQueue(QueueTopology::for(ScanUploadedFileJob::class))->dispatch($document->id);
 
             return $document->fresh();
         }
@@ -143,7 +144,7 @@ class DocumentReprocessor
                 'status' => 'Processing', 'progress' => 60, 'error_message' => null,
                 'last_updated_by' => $actor->id,
             ])->save();
-            GenerateInsightsJob::dispatch($document->id, true)->onQueue('extraction');
+            GenerateInsightsJob::dispatch($document->id, true)->onQueue(QueueTopology::for(GenerateInsightsJob::class));
         }
 
         if (! $document->fresh()?->canGenerateIntelligence()) {
@@ -159,14 +160,14 @@ class DocumentReprocessor
             new DetectDocumentDeadlinesJob($documentId, true),
         ])
             ->name("document-reprocess:{$documentId}")
-            ->onQueue('extraction')
+            ->onQueue(QueueTopology::EXTRACTION)
             ->allowFailures()
             ->finally(function () use ($documentId) {
                 if (! Document::find($documentId)?->canGenerateIntelligence()) {
                     return;
                 }
                 GenerateDocumentSummaryJob::dispatch($documentId, true)
-                    ->onQueue('extraction');
+                    ->onQueue(QueueTopology::for(GenerateDocumentSummaryJob::class));
             })
             ->dispatch();
 

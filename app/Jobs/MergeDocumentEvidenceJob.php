@@ -40,7 +40,8 @@ class MergeDocumentEvidenceJob implements ShouldQueue
 
     public bool $failOnTimeout = true;
 
-    public function __construct(public string $chunkId) {}
+    /** $dispatchToken identifies the dispatch this message belongs to (null: pre-token message). */
+    public function __construct(public string $chunkId, public ?string $dispatchToken = null) {}
 
     public function middleware(): array
     {
@@ -52,6 +53,9 @@ class MergeDocumentEvidenceJob implements ShouldQueue
         PipelineStageRecorder $recorder
     ): void {
         $unit = DocumentChunk::find($this->chunkId);
+        if ($unit && $this->dispatchToken !== null && $unit->dispatch_token !== null && ! hash_equals($unit->dispatch_token, $this->dispatchToken)) {
+            return; // Superseded by a newer dispatch of this merge unit.
+        }
         $document = $unit?->document;
 
         if (
@@ -142,6 +146,9 @@ class MergeDocumentEvidenceJob implements ShouldQueue
             app(ContextResolver::class)->resolve($document);
             $diagnostics['context_ms'] = round((hrtime(true) - $clock) / 1e6, 1);
             $diagnostics += $this->chunkTree($unit);
+            $unit->refresh();
+            $diagnostics['queue_wait_ms'] = $unit->dispatched_at && $unit->started_at
+                ? max(0, (int) $unit->dispatched_at->diffInMilliseconds($unit->started_at, true)) : null;
             // Counts and timings only: never quotes, evidence content or prompts.
             Log::info('Document evidence merge completed', ['document_id' => $document->id,
                 'attempt' => $unit->fresh()?->attempts, ...$diagnostics]);

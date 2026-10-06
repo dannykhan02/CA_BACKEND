@@ -4,6 +4,8 @@ namespace App\Jobs;
 
 use App\Exceptions\AiProcessingException;
 use App\Exceptions\AnthropicStructuredOutputException;
+use App\Exceptions\ProviderBusyException;
+use App\Jobs\Concerns\DefersWhenProviderBusy;
 use App\Jobs\Concerns\GuardsDocumentIntelligence;
 use App\Jobs\Concerns\SkipsUnchangedDocuments;
 use App\Models\Document;
@@ -14,9 +16,11 @@ use App\Services\AI\AiModels;
 use App\Services\AI\Incremental\EvidenceBudget;
 use App\Services\AI\Incremental\IncrementalPipeline;
 use App\Services\AI\Incremental\SynthesisCheckpoint;
+use App\Services\AI\ProviderGate;
 use App\Services\AnthropicClient;
 use App\Services\Pipeline\DocumentProgress;
 use App\Services\Pipeline\PipelineStageRecorder;
+use App\Support\QueueTopology;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -44,7 +48,7 @@ use Illuminate\Support\Facades\Log;
  */
 class GenerateDocumentSummaryJob implements ShouldQueue
 {
-    use Batchable, Dispatchable, GuardsDocumentIntelligence, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments;
+    use Batchable, DefersWhenProviderBusy, Dispatchable, GuardsDocumentIntelligence, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments;
 
     public int $tries = 2;
 
@@ -57,6 +61,19 @@ class GenerateDocumentSummaryJob implements ShouldQueue
     public function __construct(public string $documentId, public bool $forceReprocess = false, public ?string $queuedStageId = null) {}
 
     public function handle(AnthropicClient $client, PipelineStageRecorder $recorder): void
+    {
+        // One global permit covers synthesis and its bounded repair; without one, a delayed copy
+        // of this message is enqueued before any checkpoint claim or stage reservation.
+        try {
+            // Priority: finished extraction must not wait behind bulk extraction for a permit.
+            app(ProviderGate::class)->hold($this->documentId, fn () => $this->process($client, $recorder),
+                priority: true, waiter: 'synthesis:'.$this->documentId);
+        } catch (ProviderBusyException $e) {
+            $this->deferForProvider($e, ['document_id' => $this->documentId]);
+        }
+    }
+
+    private function process(AnthropicClient $client, PipelineStageRecorder $recorder): void
     {
         $document = Document::find($this->documentId);
 
@@ -220,8 +237,8 @@ class GenerateDocumentSummaryJob implements ShouldQueue
                 'coverage' => $extractedData['coverage'],
                 'synthesis_coverage_warning' => $extractedData['coverage']['warning'] ?? null],
                 'status' => 'Ready', 'progress' => 100, 'error_message' => null])->save();
-            AnalyzeEmbeddedVisualsJob::dispatch($document->id)->onQueue('extraction');
-            GenerateEmbeddingsJob::dispatch($document->id)->onQueue('extraction');
+            AnalyzeEmbeddedVisualsJob::dispatch($document->id)->onQueue(QueueTopology::for(AnalyzeEmbeddedVisualsJob::class));
+            GenerateEmbeddingsJob::dispatch($document->id)->onQueue(QueueTopology::for(GenerateEmbeddingsJob::class));
         }
     }
 
@@ -241,7 +258,7 @@ class GenerateDocumentSummaryJob implements ShouldQueue
                 'synthesis_degradations' => [...($document->ai_pipeline['synthesis_degradations'] ?? []),
                     ['from' => $level, 'to' => $level + 1, 'reason' => $failure === 'truncated' ? 'max_tokens' : $failure]]]])->save();
             app(DocumentProgress::class)->record($document->id, 'synthesis_retry', 96 + min(2, $level), ['level' => $level + 1]);
-            self::dispatch($document->id, true)->onQueue('extraction');
+            self::dispatch($document->id, true)->onQueue(QueueTopology::for(GenerateDocumentSummaryJob::class));
 
             return true;
         }
@@ -249,7 +266,7 @@ class GenerateDocumentSummaryJob implements ShouldQueue
             && $checkpoint->attempts < config('document_intelligence.attempts')) {
             $checkpoint->update(['status' => 'pending']);
             $document->forceFill(['status' => 'Processing'])->save();
-            self::dispatch($document->id, true)->onQueue('extraction')->delay(max(2 ** $checkpoint->attempts * 5, $e->retryAfter) + random_int(0, 5));
+            self::dispatch($document->id, true)->onQueue(QueueTopology::for(GenerateDocumentSummaryJob::class))->delay(max(2 ** $checkpoint->attempts * 5, $e->retryAfter) + random_int(0, 5));
 
             return true;
         }

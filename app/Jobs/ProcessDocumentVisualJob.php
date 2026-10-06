@@ -3,12 +3,15 @@
 namespace App\Jobs;
 
 use App\Exceptions\AiProcessingException;
+use App\Exceptions\ProviderBusyException;
+use App\Jobs\Concerns\DefersWhenProviderBusy;
 use App\Models\Document;
 use App\Models\DocumentChunk;
 use App\Services\AI\AiModels;
 use App\Services\AI\AiPricing;
 use App\Services\AI\Incremental\IncrementalPipeline;
 use App\Services\AI\Incremental\VisualPlanner;
+use App\Services\AI\ProviderGate;
 use App\Services\AnthropicClient;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -20,7 +23,7 @@ use Illuminate\Support\Facades\Storage;
 
 class ProcessDocumentVisualJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use DefersWhenProviderBusy, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 1;
 
@@ -28,9 +31,23 @@ class ProcessDocumentVisualJob implements ShouldQueue
 
     public bool $failOnTimeout = true;
 
-    public function __construct(public string $chunkId) {}
+    public function __construct(public string $chunkId, public ?string $dispatchToken = null) {}
 
     public function handle(AnthropicClient $client, VisualPlanner $planner): void
+    {
+        $unit = DocumentChunk::find($this->chunkId);
+        if (! $unit || $unit->status !== 'queued'
+            || ($this->dispatchToken !== null && $unit->dispatch_token !== null && ! hash_equals($unit->dispatch_token, $this->dispatchToken))) {
+            return; // Finished, claimed elsewhere, or superseded by a newer dispatch.
+        }
+        try {
+            app(ProviderGate::class)->hold($unit->document_id, fn () => $this->process($client, $planner));
+        } catch (ProviderBusyException $e) {
+            $this->deferForProvider($e, ['document_id' => $unit->document_id, 'chunk_id' => $unit->id]);
+        }
+    }
+
+    private function process(AnthropicClient $client, VisualPlanner $planner): void
     {
         $unit = DocumentChunk::find($this->chunkId);
         $document = $unit?->document;

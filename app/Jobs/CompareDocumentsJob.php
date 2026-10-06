@@ -2,8 +2,11 @@
 
 namespace App\Jobs;
 
+use App\Exceptions\ProviderBusyException;
+use App\Jobs\Concerns\DefersWhenProviderBusy;
 use App\Models\DocumentComparison;
 use App\Models\Workspace;
+use App\Services\AI\ProviderGate;
 use App\Services\AnthropicClient;
 use App\Services\DocumentComparisonService;
 use App\Services\EntitlementService;
@@ -17,7 +20,7 @@ use Illuminate\Support\Facades\DB;
 
 class CompareDocumentsJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use DefersWhenProviderBusy, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 2;
 
@@ -31,6 +34,21 @@ class CompareDocumentsJob implements ShouldQueue
     }
 
     public function handle(DocumentComparisonService $service): void
+    {
+        // Only a terms comparison calls Anthropic; it waits for a global permit before reserving.
+        if (! isset(DocumentComparison::find($this->comparisonId)?->metadata['ai_context'])) {
+            $this->process($service);
+
+            return;
+        }
+        try {
+            app(ProviderGate::class)->hold(null, fn () => $this->process($service));
+        } catch (ProviderBusyException $e) {
+            $this->deferForProvider($e, ['comparison_id' => $this->comparisonId]);
+        }
+    }
+
+    private function process(DocumentComparisonService $service): void
     {
         $item = DocumentComparison::with(['baseDocument', 'comparedDocument'])->find($this->comparisonId);
         if (! $item || $item->status === 'completed') {

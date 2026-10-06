@@ -8,6 +8,7 @@ use App\Models\Document;
 use App\Models\DocumentComparison;
 use App\Models\User;
 use App\Services\AI\PromptManager;
+use App\Support\QueueTopology;
 use Illuminate\Support\Facades\DB;
 
 class DocumentComparisonService
@@ -87,7 +88,7 @@ class DocumentComparisonService
             if ($comparison->wasRecentlyCreated || $comparison->status === 'failed') {
                 app(EntitlementService::class)->reserveComparison($comparison, true);
                 $comparison->update(['status' => 'queued', 'error_message' => null]);
-                CompareDocumentsJob::dispatch($comparison->id)->onQueue('extraction')->afterCommit();
+                CompareDocumentsJob::dispatch($comparison->id)->onQueue(QueueTopology::for(CompareDocumentsJob::class))->afterCommit();
             }
 
             return $comparison;

@@ -5,6 +5,8 @@ namespace App\Services\AI\Incremental;
 use App\Jobs\ProcessDocumentVisualJob;
 use App\Models\Document;
 use App\Models\DocumentChunk;
+use App\Support\QueueInspector;
+use App\Support\QueueTopology;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -46,7 +48,7 @@ class VisualPlanner
             $slots = max(0, config('document_intelligence.concurrency') - $query()->whereIn('status', ['queued', 'running'])->count());
             foreach ($query()->where('status', 'pending')->limit($slots)->get() as $unit) {
                 $unit->update(['status' => 'queued']);
-                ProcessDocumentVisualJob::dispatch($unit->id)->onQueue('extraction')->afterCommit();
+                ProcessDocumentVisualJob::dispatch($unit->id, $unit->issueDispatchToken())->onQueue(QueueTopology::for(ProcessDocumentVisualJob::class))->afterCommit();
             }
         });
     }
@@ -61,7 +63,15 @@ class VisualPlanner
             }
             $unit->update(['status' => 'uncertain', 'failure_class' => 'visual_interrupted']);
         }
-        $query()->where('status', 'queued')->where('updated_at', '<', now()->subMinutes(10))->update(['status' => 'pending']);
+        // Lost dispatch vs. backed-up queue: reset only when no message with the unit's token remains.
+        $present = app(QueueInspector::class)->pendingDispatchTokens();
+        $minutes = (int) config('document_intelligence.recovery_queued_minutes');
+        $query()->where('status', 'queued')
+            ->where(fn ($q) => $q->where('dispatched_at', '<', now()->subMinutes($minutes))
+                ->orWhere(fn ($legacy) => $legacy->whereNull('dispatched_at')->where('updated_at', '<', now()->subMinutes($minutes))))
+            ->get()
+            ->reject(fn (DocumentChunk $unit) => $present !== null && $unit->dispatch_token !== null && isset($present[$unit->dispatch_token]))
+            ->each(fn (DocumentChunk $unit) => $unit->update(['status' => 'pending']));
         foreach ($query()->whereIn('status', ['pending', 'queued'])->distinct()->pluck('pipeline_key') as $key) {
             $this->pump($document, $key);
         }

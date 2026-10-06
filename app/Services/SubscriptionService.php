@@ -6,9 +6,12 @@ use App\Jobs\RetryDeferredBillingEvent;
 use App\Models\CreditPurchase;
 use App\Models\Subscription;
 use App\Models\Workspace;
+use App\Support\QueueTopology;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class SubscriptionService
 {
@@ -139,7 +142,7 @@ class SubscriptionService
                         $verified = app(PaystackClient::class)->verify($reference);
                         abort_unless(($verified['data']['reference'] ?? null) === $reference, 422, 'Invoice verification reference mismatch.');
                         $invoiceCharge = ['event' => 'charge.success', 'data' => [...$verified['data'], 'plan' => $verified['data']['plan'] ?? $sub->provider_plan_code, 'subscription' => ['subscription_code' => $sub->provider_subscription_code], 'customer' => ['customer_code' => $sub->provider_customer_code]]];
-                    } catch (\Illuminate\Http\Exceptions\HttpResponseException|\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+                    } catch (HttpResponseException|HttpException $e) {
                         throw $e;
                     } catch (\Throwable $e) {
                         $verificationUnavailable = true;
@@ -162,7 +165,7 @@ class SubscriptionService
                 'deferral_reason' => $done ? null : $reason, 'updated_at' => now(),
             ]);
             if (! $done && ! $fromRetry && $event->status !== 'requires_review') {
-                DB::afterCommit(fn () => RetryDeferredBillingEvent::dispatch($event->id)->delay(now()->addMinute())->onQueue('default'));
+                DB::afterCommit(fn () => RetryDeferredBillingEvent::dispatch($event->id)->delay(now()->addMinute())->onQueue(QueueTopology::for(RetryDeferredBillingEvent::class)));
             }
         }, 3);
     }
@@ -182,7 +185,7 @@ class SubscriptionService
                         $query->orWhere('payload->data->subscription->subscription_code', $subscription->provider_subscription_code)
                             ->orWhere('payload->data->subscription_code', $subscription->provider_subscription_code);
                     }
-                })->limit(100)->pluck('id')->each(fn ($id) => RetryDeferredBillingEvent::dispatch($id)->onQueue('default'));
+                })->limit(100)->pluck('id')->each(fn ($id) => RetryDeferredBillingEvent::dispatch($id)->onQueue(QueueTopology::for(RetryDeferredBillingEvent::class)));
         });
     }
 
