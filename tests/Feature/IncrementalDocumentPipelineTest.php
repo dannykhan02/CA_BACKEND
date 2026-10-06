@@ -32,6 +32,7 @@ use App\Services\WorkspaceCreditService;
 use App\Services\WorkspaceService;
 use Database\Seeders\DocumentSummaryPromptSeederV3;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -240,7 +241,8 @@ class IncrementalDocumentPipelineTest extends TestCase
         $chunk = $this->plan($this->document());
         $this->executeChunk($chunk);
         self::assertSame('failed', $chunk->fresh()->status);
-        self::assertNull($chunk->fresh()->result);
+        self::assertSame([], $chunk->fresh()->result['records']);
+        self::assertSame(['missing_required_field' => 1], $chunk->fresh()->result['_validation']['rejection_reasons']);
     }
 
     public function test_success_telemetry_contains_tokens_cache_and_cost(): void
@@ -763,6 +765,8 @@ class IncrementalDocumentPipelineTest extends TestCase
         self::assertSame('completed', $chunk->fresh()->status);
         self::assertEquals([$this->record()], $chunk->fresh()->result['records']);
         self::assertSame(2, array_sum($chunk->fresh()->result['_dropped_records']));
+        self::assertSame(['invalid_schema' => 1, 'invalid_evidence' => 1], $chunk->fresh()->result['_validation']['rejections']);
+        self::assertEqualsCanonicalizing(['quote_not_found_in_source' => 1, 'missing_required_field' => 1], $chunk->fresh()->result['_validation']['rejection_reasons']);
         self::assertSame(0, DocumentChunk::whereNotNull('parent_id')->count());
     }
 
@@ -773,9 +777,71 @@ class IncrementalDocumentPipelineTest extends TestCase
         $this->executeChunk($chunk);
         self::assertSame('failed', $chunk->fresh()->status);
         self::assertSame('invalid_evidence', $chunk->fresh()->failure_class);
+        self::assertSame(1, $chunk->fresh()->result['_validation']['records_returned']);
+        self::assertSame(1, $chunk->fresh()->result['_validation']['records_dropped']);
+        self::assertSame(['quote_not_found_in_source' => 1], $chunk->fresh()->result['_validation']['rejection_reasons']);
+        self::assertSame([], $chunk->fresh()->result['records']);
         self::assertSame(0, DocumentChunk::whereNotNull('parent_id')->count());
         self::assertSame('Needs Review', $chunk->document->status);
         Bus::assertNotDispatched(GenerateDocumentSummaryJob::class);
+    }
+
+    public function test_all_invalid_leaf_stores_only_safe_counts_and_emits_one_summary_log(): void
+    {
+        $handler = new TestHandler;
+        Log::swap(new Logger('validation-test', [$handler]));
+        $secret = 'SECRET REJECTED QUOTE';
+        $this->fakeProvider($this->response(['records' => [
+            $this->record(['quote' => $secret]), $this->record(['date_type' => 'explicit']),
+        ]]));
+        $chunk = $this->plan($this->document('Revenue increased to USD 10 in 2024.'));
+        $this->executeChunk($chunk);
+        $fresh = $chunk->fresh();
+        self::assertSame('failed', $fresh->status);
+        self::assertSame(2, $fresh->result['_validation']['records_returned']);
+        self::assertSame(2, $fresh->result['_validation']['records_dropped']);
+        self::assertStringNotContainsString($secret, $fresh->toJson());
+        $summaries = collect($handler->getRecords())->filter(fn ($entry) => $entry['message'] === 'Document intelligence validation summary');
+        self::assertCount(1, $summaries);
+        $context = $summaries->first()['context'];
+        self::assertSame(2, $context['records_returned']);
+        self::assertSame(0, $context['records_kept']);
+        self::assertEqualsCanonicalizing(['invalid_evidence' => 1, 'invalid_date' => 1], $context['rejections']);
+        self::assertStringNotContainsString($secret, json_encode($handler->getRecords()));
+    }
+
+    public function test_validation_report_aggregates_leaves_and_identifies_legacy_unknowns(): void
+    {
+        $document = $this->document('Revenue increased to USD 10 in 2024.');
+        $chunk = $this->plan($document);
+        $chunk->update(['status' => 'completed', 'result' => EvidenceSchema::validate(['records' => [
+            $this->record(), $this->record(['quote' => 'Missing quote']),
+        ]], $document->extracted_text)]);
+        $failed = $chunk->replicate();
+        $failed->identity = 'report-failed';
+        $failed->status = 'failed';
+        $failed->result = ['records' => [], '_validation' => [
+            'records_returned' => 2, 'records_kept' => 0, 'records_dropped' => 2,
+            'rejections' => ['invalid_date' => 2], 'rejection_reasons' => ['due_date_wrong_format' => 2],
+        ]];
+        $failed->save();
+        $legacy = $chunk->replicate();
+        $legacy->identity = 'report-legacy';
+        $legacy->status = 'failed';
+        $legacy->result = null;
+        $legacy->save();
+
+        self::assertSame(0, Artisan::call('docintel:validation-report', ['document' => $document->id, '--json' => true]));
+        $report = json_decode(Artisan::output(), true, flags: JSON_THROW_ON_ERROR);
+        self::assertSame(3, $report['total_leaves']);
+        self::assertSame(1, $report['chunks_without_diagnostics']);
+        self::assertSame(4, $report['records_returned']);
+        self::assertSame(1, $report['records_accepted']);
+        self::assertSame(3, $report['records_rejected']);
+        self::assertSame(['invalid_date' => 2, 'invalid_evidence' => 1], $report['rejection_classes']);
+        self::assertSame(['due_date_wrong_format' => 2, 'quote_not_found_in_source' => 1], $report['rejection_reasons']);
+        self::assertSame('report-failed', $report['worst_chunks'][0]['chunk_key']);
+        self::assertStringNotContainsString('Revenue increased', Artisan::output());
     }
 
     public function test_provider_auth_model_and_credit_errors_are_terminal_and_safe(): void

@@ -107,6 +107,7 @@ PROMPT;
             return [
                 'records' => [],
                 '_dropped_records' => [],
+                '_validation' => self::diagnostics(0, 0, [], []),
             ];
         }
 
@@ -121,16 +122,17 @@ PROMPT;
         ];
 
         $firstFailure = null;
+        $reasons = [];
 
         foreach ($result['records'] as $record) {
             try {
                 if (! is_array($record)) {
-                    throw new AiProcessingException('invalid_schema');
+                    self::reject('invalid_schema', 'malformed_record');
                 }
 
                 foreach ($schema as $field => $rule) {
                     if (! array_key_exists($field, $record)) {
-                        throw new AiProcessingException('invalid_schema');
+                        self::reject('invalid_schema', 'missing_required_field');
                     }
 
                     $value = $record[$field];
@@ -147,24 +149,22 @@ PROMPT;
                         default => $value === null || is_string($value),
                     };
 
-                    if (
-                        ! $fieldValid
-                        || (
-                            isset($rule['enum'])
-                            && ! in_array($value, $rule['enum'], true)
-                        )
-                    ) {
-                        throw new AiProcessingException('invalid_schema');
+                    if (! $fieldValid) {
+                        self::reject('invalid_schema', 'wrong_field_type');
+                    }
+                    if (isset($rule['enum']) && ! in_array($value, $rule['enum'], true)) {
+                        self::reject('invalid_schema', 'invalid_kind');
                     }
                 }
 
-                if (
-                    $record['confidence'] < 0
-                    || $record['confidence'] > 1
-                    || trim($record['quote']) === ''
-                    || trim($record['label']) === ''
-                ) {
-                    throw new AiProcessingException('invalid_evidence');
+                if ($record['confidence'] < 0 || $record['confidence'] > 1) {
+                    self::reject('invalid_evidence', 'confidence_out_of_range');
+                }
+                if (trim($record['quote']) === '') {
+                    self::reject('invalid_evidence', 'blank_quote');
+                }
+                if (trim($record['label']) === '') {
+                    self::reject('invalid_evidence', 'blank_label');
                 }
 
                 /*
@@ -172,14 +172,14 @@ PROMPT;
                 * Quotes must actually exist in the supplied chunk.
                 */
                 if (! str_contains($text, $record['quote'])) {
-                    throw new AiProcessingException('invalid_evidence');
+                    self::reject('invalid_evidence', 'quote_not_found_in_source');
                 }
 
                 if (
                     $record['date_type'] === 'explicit'
                     && $record['due_date'] === null
                 ) {
-                    throw new AiProcessingException('invalid_date');
+                    self::reject('invalid_date', 'explicit_date_missing_due_date');
                 }
 
                 if ($record['due_date'] !== null) {
@@ -188,12 +188,13 @@ PROMPT;
                         $record['due_date']
                     );
 
-                    if (
-                        $record['date_type'] !== 'explicit'
-                        || ! $date
-                        || $date->format('Y-m-d') !== $record['due_date']
-                    ) {
-                        throw new AiProcessingException('invalid_date');
+                    if ($record['date_type'] !== 'explicit') {
+                        self::reject('invalid_date', 'due_date_present_for_non_explicit_type');
+                    }
+                    if (! $date || $date->format('Y-m-d') !== $record['due_date']) {
+                        $reason = preg_match('/^\d{4}-\d{2}-\d{2}$/D', $record['due_date'])
+                            ? 'due_date_invalid_calendar_date' : 'due_date_wrong_format';
+                        self::reject('invalid_date', $reason);
                     }
                 }
 
@@ -209,22 +210,26 @@ PROMPT;
                         true
                     )
                 ) {
-                    throw new AiProcessingException('invalid_date');
+                    self::reject('invalid_date', 'invalid_deadline_date_type');
                 }
 
                 $valid[] = $record;
             } catch (AiProcessingException $e) {
                 $classification = $e->classification;
+                $reason = $e->diagnostics['reason'] ?? null;
 
                 $firstFailure ??= $classification;
 
                 if (array_key_exists($classification, $dropped)) {
                     $dropped[$classification]++;
-                } else {
-                    $dropped['invalid_evidence']++;
+                }
+                if ($reason !== null) {
+                    $reasons[$reason] = ($reasons[$reason] ?? 0) + 1;
                 }
             }
         }
+
+        $diagnostics = self::diagnostics(count($result['records']), count($valid), array_filter($dropped), $reasons);
 
         /*
         * Important distinction:
@@ -236,13 +241,26 @@ PROMPT;
         */
         if ($valid === []) {
             throw new AiProcessingException(
-                $firstFailure ?? 'invalid_evidence'
+                $firstFailure ?? 'invalid_evidence', diagnostics: $diagnostics
             );
         }
 
         return [
             'records' => $valid,
             '_dropped_records' => array_filter($dropped),
+            '_validation' => $diagnostics,
         ];
+    }
+
+    private static function reject(string $classification, string $reason): never
+    {
+        throw new AiProcessingException($classification, diagnostics: ['reason' => $reason]);
+    }
+
+    private static function diagnostics(int $returned, int $kept, array $classes, array $reasons): array
+    {
+        return ['records_returned' => $returned, 'records_kept' => $kept,
+            'records_dropped' => $returned - $kept, 'rejections' => $classes,
+            'rejection_reasons' => $reasons];
     }
 }
