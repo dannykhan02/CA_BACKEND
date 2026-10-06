@@ -52,6 +52,7 @@ class EvidenceMerger
         $started = hrtime(true);
         $key = $document->ai_pipeline['key'];
         $stats = ['chunks' => 0, 'candidate_records' => 0, 'accepted_records' => 0, 'rejected_quote' => 0,
+            'span_records' => 0, 'legacy_quote_records' => 0,
             'existing_evidence' => 0, 'existing_hits' => 0, 'inserted' => 0, 'updated' => 0, 'unchanged' => 0,
             'derived_created' => 0, 'kpi_resolutions' => 0, 'kpi_alias_fast_path' => 0, 'kpi_cache_hits' => 0,
             'kpi_ms' => 0.0, 'entity_ms' => 0.0, 'persist_ms' => 0.0, 'derived_ms' => 0.0];
@@ -78,12 +79,21 @@ class EvidenceMerger
             $chunkText = mb_substr($text, $chunk->start_offset, $chunk->end_offset - $chunk->start_offset);
             foreach ($chunk->result['records'] ?? [] as $record) {
                 $stats['candidate_records']++;
-                $localOffset = mb_strpos($chunkText, $record['quote']);
-                if ($localOffset === false) {
+                /*
+                 * Span-based records already carry evidence DocIntel resolved itself: exact
+                 * original text with its offsets and page. There is nothing to search for, so
+                 * formatting can never reject it here either.
+                 *
+                 * Legacy records still locate their verbatim quote inside the chunk, as defense
+                 * in depth against corrupted checkpoint evidence.
+                 */
+                $resolved = $this->sources($record, $chunk, $chunkText, $text);
+                if ($resolved === null) {
                     $stats['rejected_quote']++;
 
                     continue;
-                } // Defense in depth against corrupted checkpoint evidence.
+                }
+                $stats[isset($record['evidence']) ? 'span_records' : 'legacy_quote_records']++;
                 $metric = null;
                 if ($record['kind'] === 'metric') {
                     $clock = hrtime(true);
@@ -113,9 +123,6 @@ class EvidenceMerger
                     $stats['entity_ms'] += (hrtime(true) - $clock) / 1e6;
                 }
                 $identity = $this->identity($record, $metric['definition_id'] ?? null);
-                $source = ['chunk_id' => $chunk->id, 'start_offset' => $chunk->start_offset + $localOffset,
-                    'end_offset' => $chunk->start_offset + $localOffset + mb_strlen($record['quote']),
-                    'quote' => $record['quote'], 'page' => $chunk->start_page === null ? null : $chunk->start_page + substr_count(mb_substr($chunkText, 0, $localOffset), "\f")];
                 $stats['accepted_records']++;
 
                 if (! isset($state[$identity])) {
@@ -130,11 +137,16 @@ class EvidenceMerger
                     $state[$identity]['source_id'] = $known?->source_id;
                 }
                 $entry = &$state[$identity];
-                // jsonb reorders object keys, so compare sources by canonical form.
-                $signature = $this->sourceSignature($source);
-                if (! in_array($signature, array_map(fn ($s) => $this->sourceSignature($s), $entry['sources']), true)) {
-                    $entry['sources'][] = $source;
-                    $entry['dirty'] = true;
+                // jsonb reorders object keys, so compare sources by canonical form. Each evidence
+                // span stays a separate source: they are only ever combined for display.
+                $known = array_map(fn ($s) => $this->sourceSignature($s), $entry['sources']);
+                foreach ($resolved as $source) {
+                    $signature = $this->sourceSignature($source);
+                    if (! in_array($signature, $known, true)) {
+                        $entry['sources'][] = $source;
+                        $known[] = $signature;
+                        $entry['dirty'] = true;
+                    }
                 }
                 $aliases = array_values(array_unique([...($entry['data']['aliases'] ?? []),
                     ...array_filter($record['aliases'], fn ($alias) => str_contains($record['quote'], $alias))]));
@@ -163,6 +175,38 @@ class EvidenceMerger
         $stats['total_ms'] = round((hrtime(true) - $started) / 1e6, 1);
 
         return $stats;
+    }
+
+    /**
+     * Source links for one record, or null when a legacy quote cannot be located in its chunk.
+     *
+     * Span records are authoritative: DocIntel resolved their offsets, page and exact text from
+     * the document itself, so each cited span becomes one source link.
+     *
+     * @return list<array{chunk_id:string,start_offset:int,end_offset:int,quote:string,page:int|null,span_id?:string}>|null
+     */
+    private function sources(array $record, DocumentChunk $chunk, string $chunkText, string $text): ?array
+    {
+        if (isset($record['evidence']) && is_array($record['evidence']) && $record['evidence'] !== []) {
+            $sources = [];
+            foreach ($record['evidence'] as $span) {
+                $sources[] = ['chunk_id' => $chunk->id, 'span_id' => $span['span_id'],
+                    'start_offset' => $span['start_offset'], 'end_offset' => $span['end_offset'],
+                    'quote' => mb_substr($text, $span['start_offset'], $span['end_offset'] - $span['start_offset']),
+                    'page' => $span['page']];
+            }
+
+            return $sources;
+        }
+        $localOffset = mb_strpos($chunkText, (string) ($record['quote'] ?? ''));
+        if ($localOffset === false) {
+            return null;
+        }
+
+        return [['chunk_id' => $chunk->id, 'start_offset' => $chunk->start_offset + $localOffset,
+            'end_offset' => $chunk->start_offset + $localOffset + mb_strlen($record['quote']),
+            'quote' => $record['quote'],
+            'page' => $chunk->start_page === null ? null : $chunk->start_page + substr_count(mb_substr($chunkText, 0, $localOffset), "\f")]];
     }
 
     private function sourceSignature(array $source): string

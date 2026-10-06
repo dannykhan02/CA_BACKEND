@@ -6,6 +6,26 @@ return [
     'pipeline_version' => '1',
     // 2: extraction requests carry a per-request record limit (max_records).
     'prompt_version' => '2',
+    // Evidence grounding. Legacy: the model returns a verbatim quote that must occur in the slice.
+    // Span reference: DocIntel labels the source with stable span IDs, the model returns only those
+    // IDs, and DocIntel retrieves the exact original text itself. Off by default; a document's mode
+    // is fixed for the life of its pipeline (the mode is part of the pipeline key).
+    'evidence_spans' => (bool) env('DOCINTEL_EVIDENCE_SPANS_ENABLED', false),
+    // Bumping this invalidates every persisted span set: segmentation output would otherwise change
+    // meaning under IDs that findings already reference.
+    'span_segmenter_version' => '1',
+    // Target span sizes for ordinary prose. Content structure wins: a table row, a list item or a
+    // heading stays one span even when it is shorter than the minimum, and no span is split through
+    // a monetary value, a date or a table row label.
+    'span_min_chars' => 50,
+    'span_max_chars' => 400,
+    // A single sentence longer than this is split at safe internal punctuation.
+    'span_hard_max_chars' => 1200,
+    // Evidence IDs a single record may cite. Conservative on purpose: a finding that needs more than
+    // this is combining unrelated source.
+    'max_evidence_ids' => 3,
+    // Multi-span locality: referenced spans must lie within this many spans of each other (0 = off).
+    'evidence_span_locality' => 12,
     // Eligibility for the legacy four-job path only: it truncates at
     // document_processing.max_extraction_chars, so it is used only when that is lossless.
     // It is NOT a chunking threshold; incremental routing is ExtractionCapacity::decide().
