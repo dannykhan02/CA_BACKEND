@@ -56,6 +56,34 @@ return [
     // Outstanding extraction jobs per document. Effective parallelism is also capped globally by
     // the Horizon extraction supervisor's maxProcesses (HORIZON_EXTRACTION_MAX_PROCESSES).
     'concurrency' => max(1, (int) env('DOCINTEL_EXTRACTION_CONCURRENCY', 2)),
+    // Global cap on simultaneous Anthropic HTTP calls across every worker, replica and web request
+    // (atomic Redis leases). Distinct from `concurrency` above, which bounds one document's
+    // outstanding chunk dispatches. Raise in measured steps (2 -> 4 -> 6 -> 8), never by
+    // adding Horizon processes or replicas alone.
+    // Minimum age before recovery even checks a queued unit; the decision itself is whether
+    // its dispatch token is still in Redis (lost dispatch vs. backed-up queue).
+    'recovery_queued_minutes' => 10,
+    'provider_gate' => [
+        'max_inflight' => max(1, (int) env('ANTHROPIC_MAX_INFLIGHT', 2)),
+        'driver' => 'redis',
+        // Same Redis the queue uses, so web and every worker replica share one semaphore.
+        'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
+        'prefix' => 'docintel:anthropic-gate',
+        // Must exceed the longest permit hold: whole-job holds are bounded by job timeouts
+        // (chunk 180s, summary 200s, comparison 120s, visual 90s); a crashed holder's permit
+        // expires after this instead of leaking.
+        'lease_seconds' => 240,
+        // Calls not pre-admitted by their job (legacy batch jobs, OCR pages, merge context)
+        // wait at most this long in a worker; web Q&A waits less and then answers "busy".
+        'job_wait_seconds' => 10,
+        'web_wait_seconds' => 4,
+        // Deferred jobs re-enqueue after this delay plus jitter (no retry attempt consumed).
+        'busy_retry_seconds' => 15,
+        'busy_retry_jitter_seconds' => 15,
+        // A document denied a permit stays "waiting" this long, so the last free permit is
+        // kept for it rather than given to a document that already holds one.
+        'waiter_seconds' => 60,
+    ],
     'attempts' => 3,
     'synthesis_token_budget' => 16000,
     // Original source text offered to synthesis when it fits; otherwise evidence-anchored excerpts.

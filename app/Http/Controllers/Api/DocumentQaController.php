@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\ProviderBusyException;
 use App\Http\Controllers\Controller;
 use App\Services\AI\DocumentContextRetriever;
 use App\Services\AnthropicClient;
@@ -47,6 +48,12 @@ class DocumentQaController extends Controller
                 $context->toPromptContext(),
                 $context->documentIds(),
             );
+        } catch (ProviderBusyException $e) {
+            // Shared AI capacity is full: a short, retryable answer instead of a failure.
+            return response()->json([
+                'success' => false,
+                'message' => 'AI is busy right now. Please try again in a moment.',
+            ], 503)->header('Retry-After', (string) $e->retryAfterSeconds);
         } catch (\Throwable $e) {
             Log::error('Document Q&A failed.', SafeExceptionContext::for($e, [
                 'user_id' => $user->id,

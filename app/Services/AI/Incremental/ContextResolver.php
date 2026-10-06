@@ -2,6 +2,7 @@
 
 namespace App\Services\AI\Incremental;
 
+use App\Exceptions\ProviderBusyException;
 use App\Models\Document;
 use App\Models\DocumentChunk;
 use App\Models\DocumentEvidence;
@@ -81,6 +82,12 @@ class ContextResolver
                 $client->setRunContext(['chunk_id' => $unit->id, 'pipeline_version' => $unit->pipeline_version, 'request_attempt' => 1]);
                 $result = $client->resolveEvidenceReferences($document, $requests);
                 $unit->update(['result' => $result, 'status' => 'completed', 'completed_at' => now()]);
+            } catch (ProviderBusyException) {
+                // Optional and nothing was sent: settle at zero; references stay disclosed as unresolved.
+                app(IncrementalPipeline::class)->settleCost($unit, false);
+                $unit->update(['status' => 'failed', 'failure_class' => 'provider_busy']);
+
+                return;
             } catch (\Throwable) {
                 $unit->update(['status' => 'failed', 'failure_class' => 'optional_resolution']);
 

@@ -3,6 +3,8 @@
 namespace App\Jobs;
 
 use App\Enums\WorkspaceType;
+use App\Exceptions\ProviderBusyException;
+use App\Jobs\Concerns\DefersWhenProviderBusy;
 use App\Jobs\Concerns\DispatchesIntelligenceChain;
 use App\Models\Document;
 use App\Models\OcrResult;
@@ -41,7 +43,7 @@ use Illuminate\Support\Facades\Storage;
  */
 class OcrPageBatchJob implements ShouldQueue
 {
-    use Dispatchable, DispatchesIntelligenceChain, InteractsWithQueue, Queueable, SerializesModels;
+    use DefersWhenProviderBusy, Dispatchable, DispatchesIntelligenceChain, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 2;
 
@@ -132,6 +134,15 @@ class OcrPageBatchJob implements ShouldQueue
                     Storage::disk('documents')->delete($imagePath);
                 }
             }
+        } catch (ProviderBusyException $e) {
+            // Completed pages are checkpointed; a delayed copy (same chain) resumes the rest.
+            if ($fetchedSourcePath) {
+                @unlink($fetchedSourcePath);
+            }
+            $recorder->complete($batchStage, ['deferred_for_provider_capacity' => true]);
+            $this->deferForProvider($e, ['document_id' => $document->id]);
+
+            return;
         } catch (\Throwable $e) {
             if ($fetchedSourcePath) {
                 @unlink($fetchedSourcePath);

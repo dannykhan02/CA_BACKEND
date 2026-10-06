@@ -16,6 +16,7 @@ use App\Services\AuditLogger;
 use App\Services\Documents\DocumentStorageService;
 use App\Services\Documents\SupportedDocumentTypes;
 use App\Services\EntitlementService;
+use App\Support\QueueTopology;
 use App\Support\SafeExceptionContext;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -165,11 +166,11 @@ class DocumentUploadController extends Controller
         // 4. Analyze embedded visual content (charts, images) not captured in text extraction
         // 5. Generate embeddings for vector search
         ScanUploadedFileJob::withChain([
-            (new ExtractDocumentTextJob($document->id))->onQueue('extraction'),
-            (new GenerateInsightsJob($document->id))->onQueue('extraction'),
-            (new AnalyzeEmbeddedVisualsJob($document->id))->onQueue('extraction'),
-            (new GenerateEmbeddingsJob($document->id))->onQueue('extraction'),
-        ])->onQueue('default')->dispatch($document->id);
+            (new ExtractDocumentTextJob($document->id))->onQueue(QueueTopology::for(ExtractDocumentTextJob::class)),
+            (new GenerateInsightsJob($document->id))->onQueue(QueueTopology::for(GenerateInsightsJob::class)),
+            (new AnalyzeEmbeddedVisualsJob($document->id))->onQueue(QueueTopology::for(AnalyzeEmbeddedVisualsJob::class)),
+            (new GenerateEmbeddingsJob($document->id))->onQueue(QueueTopology::for(GenerateEmbeddingsJob::class)),
+        ])->onQueue(QueueTopology::for(ScanUploadedFileJob::class))->dispatch($document->id);
 
         return response()->json([
             'message' => 'Upload accepted, processing started.',

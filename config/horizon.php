@@ -96,8 +96,12 @@ return [
     |
     */
 
+    // LongWaitDetected thresholds (seconds) per queue, from the Stage A investigation triggers:
+    // scan/billing/mail must stay snappy; synthesis is completion work; extraction is bulk.
     'waits' => [
-        'redis:default' => 60,
+        'redis:default' => 30,
+        'redis:synthesis' => 60,
+        'redis:extraction' => 120,
     ],
 
     /*
@@ -196,6 +200,19 @@ return [
     |
     */
 
+    /*
+     * Three pools: extraction (per-document Anthropic work), synthesis (merge + summary,
+     * so finished extraction never waits behind new extraction), default (scan, parsing,
+     * embeddings, billing, mail). Every queue must have a listener here.
+     *
+     * Timeout ordering per pool: job $timeout < worker timeout < Redis retry_after (390s):
+     *   default    longest job 120s (text extraction, visual planning) -> worker 180s
+     *   synthesis  longest job 330s (merge)                            -> worker 360s
+     *   extraction longest job 330s (legacy entities)                  -> worker 360s
+     *
+     * maxProcesses is per Horizon master. Each extra worker replica starts all three pools
+     * again, so totals multiply; ANTHROPIC_MAX_INFLIGHT (Redis) is the global provider cap.
+     */
     'defaults' => [
         'supervisor-1' => [
             'connection' => 'redis',
@@ -207,7 +224,27 @@ return [
             'maxJobs' => 0,
             'memory' => 128,
             'tries' => 1,
-            'timeout' => 60,
+            'timeout' => 180,
+            'nice' => 0,
+        ],
+        'supervisor-extraction' => [
+            'connection' => 'redis',
+            'queue' => ['extraction'],
+            'balance' => 'simple',
+            'maxProcesses' => 1,
+            'memory' => 128,
+            'tries' => 3,
+            'timeout' => 360,
+            'nice' => 0,
+        ],
+        'supervisor-synthesis' => [
+            'connection' => 'redis',
+            'queue' => ['synthesis'],
+            'balance' => 'simple',
+            'maxProcesses' => 1,
+            'memory' => 128,
+            'tries' => 3,
+            'timeout' => 360,
             'nice' => 0,
         ],
     ],
@@ -215,37 +252,29 @@ return [
     'environments' => [
         'production' => [
             'supervisor-1' => [
-                'maxProcesses' => 3, // was 10 — right-sized for pre-real-users volume
+                'maxProcesses' => max(1, (int) env('HORIZON_DEFAULT_MAX_PROCESSES', 2)),
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
             ],
-
+            // Per-replica extraction job slots; not the provider cap (see ANTHROPIC_MAX_INFLIGHT).
             'supervisor-extraction' => [
-                'connection' => 'redis',
-                'queue' => ['extraction'],
-                'balance' => 'simple',
-                // Global cap on concurrent extraction-queue jobs (and so Anthropic calls) across all
-                // documents. Default unchanged; see document_intelligence.concurrency for per-document.
                 'maxProcesses' => max(1, (int) env('HORIZON_EXTRACTION_MAX_PROCESSES', 2)),
-                'tries' => 3,
-                'timeout' => 360, // exceeds the 330s entity job, below Redis retry_after
+            ],
+            // Two slots: one long merge cannot block every summary.
+            'supervisor-synthesis' => [
+                'maxProcesses' => max(1, (int) env('HORIZON_SYNTHESIS_MAX_PROCESSES', 2)),
             ],
         ],
 
         'local' => [
             'supervisor-1' => [
-                'queue' => ['default'],
-                'maxProcesses' => 3,
+                'maxProcesses' => 2,
             ],
             'supervisor-extraction' => [
-                'connection' => 'redis',
-                'queue' => ['extraction'],
-                'balance' => 'simple',
-                // Caps concurrent Anthropic calls independently of default-queue
-                // throughput — this is the actual enforcement point, more reliable
-                // than AnthropicClient's in-code throttle counter alone.
                 'maxProcesses' => 2,
-                'timeout' => 360, // exceeds the 330s entity job, below Redis retry_after
+            ],
+            'supervisor-synthesis' => [
+                'maxProcesses' => 2,
             ],
         ],
     ],

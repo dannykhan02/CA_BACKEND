@@ -724,11 +724,13 @@ class DocumentRoutingAndMergeScaleTest extends TestCase
         self::assertNull($middleware->releaseAfter);
         // Lock outlives the job; the queue never re-delivers a job a worker may still run.
         self::assertGreaterThan($job->timeout, $middleware->expiresAfter);
-        $worker = config('horizon.environments.production.supervisor-extraction.timeout');
-        foreach ([$job->timeout, (new ProcessDocumentChunkJob('x'))->timeout, (new GenerateDocumentSummaryJob('x'))->timeout] as $timeout) {
-            self::assertLessThan($worker, $timeout);
+        // Effective production pools; merge and summary run on synthesis, chunks on extraction.
+        $pools = array_replace_recursive(config('horizon.defaults'), config('horizon.environments.production'));
+        foreach ([[$job->timeout, 'supervisor-synthesis'], [(new GenerateDocumentSummaryJob('x'))->timeout, 'supervisor-synthesis'],
+            [(new ProcessDocumentChunkJob('x'))->timeout, 'supervisor-extraction']] as [$timeout, $pool]) {
+            self::assertLessThan($pools[$pool]['timeout'], $timeout);
+            self::assertLessThan(config('queue.connections.redis.retry_after'), $pools[$pool]['timeout']);
         }
-        self::assertLessThan(config('queue.connections.redis.retry_after'), $worker);
 
         $lock = Cache::lock($middleware->getLockKey($job), $middleware->expiresAfter);
         self::assertTrue($lock->get());

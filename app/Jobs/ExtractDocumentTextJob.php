@@ -13,6 +13,7 @@ use App\Services\Ocr\OcrEngineResolver;
 use App\Services\Ocr\PdfRasterizer;
 use App\Services\Pipeline\DocumentProgress;
 use App\Services\Pipeline\PipelineStageRecorder;
+use App\Support\QueueTopology;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -256,7 +257,7 @@ class ExtractDocumentTextJob implements ShouldQueue
                 tempDir: $isLastBatch ? $tempDir : null,
                 fetchPageFromSourceDisk: $fetchFromSourceDisk,
                 storedPageImages: $storedPageImages,
-            ))->onQueue('extraction');
+            ))->onQueue(QueueTopology::for(OcrPageBatchJob::class));
             $startingPage += count($batchPaths);
         }
 
