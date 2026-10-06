@@ -270,7 +270,7 @@ class MergeDocumentEvidenceJob implements ShouldQueue
         if ($coverage['evidence_total'] > $coverage['evidence_omitted']) {
             DB::transaction(function () use ($fresh) {
                 $locked = Document::whereKey($fresh->id)->lockForUpdate()->firstOrFail();
-                app(WorkspaceCreditService::class)->accountForReadyDocument($locked);
+                app(WorkspaceCreditService::class)->accountForReadyDocument($locked, false);
                 if ($locked->status === 'Needs Review' && ($locked->ai_pipeline['synthesis'] ?? 'pending') === 'pending') {
                     $locked->forceFill(['status' => 'Processing', 'progress' => 95, 'error_message' => null]);
                 }

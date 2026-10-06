@@ -6,6 +6,7 @@ use App\Jobs\RetryDeferredBillingEvent;
 use App\Models\CreditPurchase;
 use App\Models\Subscription;
 use App\Models\Workspace;
+use App\Services\AiCredits\QuoteService;
 use App\Support\QueueTopology;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -21,10 +22,10 @@ class SubscriptionService
         foreach (config('billing.plans') as $key => $plan) {
             $codes = $plan['plan_codes'];
             unset($plan['plan_codes']);
-            $plans[] = ['key' => $key, ...$plan, 'automatic_available' => array_map(fn ($code) => (bool) $code, $codes)];
+            $plans[] = ['key' => $key, ...$plan, 'ai_credits' => config('ai_credits.plans.'.$key), 'automatic_available' => array_map(fn ($code) => (bool) $code, $codes)];
         }
 
-        return ['free_initial_credits' => config('billing.free_initial_credits'), 'currency' => config('billing.currency'), 'plans' => $plans];
+        return ['ai_credits_enabled' => QuoteService::enabled(), 'free_initial_ai_credits' => config('ai_credits.grants.free_trial_credits'), 'free_initial_credits' => config('billing.free_initial_credits'), 'currency' => config('billing.currency'), 'plans' => $plans];
     }
 
     public function assertProviderPlan(CreditPurchase $purchase, array $data): void
@@ -92,18 +93,23 @@ class SubscriptionService
             $usage = $subscription->periods()->firstOrCreate(['period_start' => $start->addMonthsNoOverflow($i)], [
                 'period_end' => $start->addMonthsNoOverflow($i + 1)->min($end),
                 'documents_allowed' => $snapshot['documents'], 'comparisons_allowed' => $snapshot['comparisons'],
-                'storage_bytes' => $snapshot['storage_bytes'],
+                'storage_bytes' => $snapshot['storage_bytes'], 'ai_credits_allowed' => $snapshot['ai_credits'] ?? null,
             ]);
             if ($usage->wasRecentlyCreated) {
                 app(CreditLedger::class)->record($purchase->workspace_id, 'period_documents:'.$usage->id,
                     'subscription_document', 'credit', $usage->documents_allowed, 'monthly_allowance_created',
                     'usage_period', (string) $usage->id, $purchase->user_id, $usage->documents_allowed);
+                if ($usage->ai_credits_allowed !== null) {
+                    app(CreditLedger::class)->record($purchase->workspace_id, 'period_ai_credits:'.$usage->id,
+                        'subscription_ai_credit', 'credit', $usage->ai_credits_allowed, 'monthly_allowance_created',
+                        'usage_period', (string) $usage->id, $purchase->user_id, $usage->ai_credits_allowed);
+                }
                 app(CreditLedger::class)->record($purchase->workspace_id, 'period_comparisons:'.$usage->id,
                     'subscription_comparison', 'credit', $usage->comparisons_allowed, 'monthly_allowance_created',
                     'usage_period', (string) $usage->id, $purchase->user_id, $usage->comparisons_allowed);
             }
             if ($wasGrandfathered && ! $usage->wasRecentlyCreated) {
-                $usage->update(['period_end' => $end, 'documents_allowed' => $snapshot['documents'], 'comparisons_allowed' => $snapshot['comparisons'], 'storage_bytes' => $snapshot['storage_bytes']]);
+                $usage->update(['period_end' => $end, 'documents_allowed' => $snapshot['documents'], 'comparisons_allowed' => $snapshot['comparisons'], 'storage_bytes' => $snapshot['storage_bytes'], 'ai_credits_allowed' => $snapshot['ai_credits'] ?? null]);
             }
         }
         // subscription.create may arrive before charge.success/verification.

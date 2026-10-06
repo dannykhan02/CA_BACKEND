@@ -12,6 +12,7 @@ use App\Models\DocumentAiRun;
 use App\Models\DocumentChunk;
 use App\Services\AI\AiModels;
 use App\Services\AI\AiPricing;
+use App\Services\AiCredits\OperationSpend;
 use App\Services\AnthropicClient;
 use App\Services\Pipeline\DocumentProgress;
 use App\Support\QueueInspector;
@@ -225,6 +226,11 @@ class IncrementalPipeline
                         'document_intelligence.budget_per_1000_tokens_usd'
                     )
             );
+
+            // AI credits: the quoted provider ceiling can only lower the document budget, never raise it.
+            if ($cap = app(OperationSpend::class)->activeQuote($locked, null)?->provider_cost_cap_usd) {
+                $metadata['budget_usd'] = min($metadata['budget_usd'], $cap);
+            }
 
             // A new pipeline starts at the top of the synthesis fallback ladder.
             $metadata = [...$metadata, ...$this->client->synthesisReservation($locked, null, 0), 'synthesis' => 'pending',

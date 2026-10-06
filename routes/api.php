@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\DocumentApproveController;
 use App\Http\Controllers\Api\DocumentComparisonController;
 use App\Http\Controllers\Api\DocumentContextController;
 use App\Http\Controllers\Api\DocumentController;
+use App\Http\Controllers\Api\DocumentCreditConfirmationController;
 use App\Http\Controllers\Api\DocumentDownloadController;
 use App\Http\Controllers\Api\DocumentIntelligenceController;
 use App\Http\Controllers\Api\DocumentQaController;
@@ -155,6 +156,8 @@ Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(functio
 
     Route::post('/documents/{document}/reprocess', [DocumentReprocessController::class, 'store'])
         ->name('documents.reprocess');
+    Route::post('/documents/{document}/confirm-credits', [DocumentCreditConfirmationController::class, 'store'])
+        ->name('documents.confirm-credits');
     Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])
         ->name('documents.destroy');
 

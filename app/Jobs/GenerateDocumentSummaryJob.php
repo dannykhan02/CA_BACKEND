@@ -17,9 +17,11 @@ use App\Services\AI\Incremental\EvidenceBudget;
 use App\Services\AI\Incremental\IncrementalPipeline;
 use App\Services\AI\Incremental\SynthesisCheckpoint;
 use App\Services\AI\ProviderGate;
+use App\Services\AiCredits\QuoteService;
 use App\Services\AnthropicClient;
 use App\Services\Pipeline\DocumentProgress;
 use App\Services\Pipeline\PipelineStageRecorder;
+use App\Services\WorkspaceCreditService;
 use App\Support\QueueTopology;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
@@ -230,7 +232,12 @@ class GenerateDocumentSummaryJob implements ShouldQueue
                 ->whereIn('status', ['failed', 'budget', 'uncertain'])->update(['status' => 'superseded']);
             $otherFailures = DocumentChunk::where('document_id', $document->id)->where('pipeline_key', $checkpoint->pipeline_key)
                 ->whereIn('status', ['failed', 'budget', 'uncertain'])->exists();
-            $document->refresh()->forceFill(['ai_pipeline' => [...$document->ai_pipeline,
+            $document->refresh();
+            if (QuoteService::enabled()) {
+                // The contracted result is delivered: settle the quoted credits (once; a re-analysis settles its own quote).
+                app(WorkspaceCreditService::class)->accountForReadyDocument($document);
+            }
+            $document->forceFill(['ai_pipeline' => [...$document->ai_pipeline,
                 'partial' => $otherFailures || ! empty($result['_optional_items_dropped'])
                     || ! ($extractedData['coverage']['comprehensive'] ?? false),
                 'synthesis' => 'completed', 'summary_stale' => false,

@@ -19,6 +19,8 @@ use App\Services\AI\Incremental\SynthesisSchema;
 use App\Services\AI\PromptManager;
 use App\Services\AI\ProviderGate;
 use App\Services\AI\ResponseValidator;
+use App\Services\AiCredits\OperationSpend;
+use App\Services\AiCredits\QuoteService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
@@ -55,6 +57,12 @@ class AnthropicClient
 
     private ?string $requestModel = null;
 
+    private ?string $operationQuoteId = null;
+
+    private ?string $operationUserId = null;
+
+    private ?string $operationComparisonId = null;
+
     private function apiKey(): string
     {
         return trim((string) config('services.anthropic.api_key'));
@@ -63,6 +71,14 @@ class AnthropicClient
     public function setRunContext(array $context): void
     {
         $this->runContext = array_intersect_key($context, array_flip(['chunk_id', 'pipeline_version', 'request_attempt', 'evidence_trimmed']));
+    }
+
+    /** Attributes every following paid call to one billable operation (comparison, Q&A). Pass nulls to clear. */
+    public function forOperation(?string $quoteId, ?string $userId = null, ?string $comparisonId = null): static
+    {
+        [$this->operationQuoteId, $this->operationUserId, $this->operationComparisonId] = [$quoteId, $userId, $comparisonId];
+
+        return $this;
     }
 
     public function modelFor(string $task): string
@@ -444,6 +460,7 @@ PROMPT;
 
         return DocumentAiRun::create([
             ...$this->runContext,
+            ...$this->operationAttribution($document, $purpose),
             ...($response['_telemetry'] ?? []),
             'request_attempt' => max($this->runContext['request_attempt'] ?? 1, $response['_telemetry']['request_attempt'] ?? 1),
             'process_peak_memory_bytes' => memory_get_peak_usage(true),
@@ -464,6 +481,17 @@ PROMPT;
             'status' => $status,
             'created_at' => now(),
         ]);
+    }
+
+    /** Durable run-to-operation attribution (never inferred later from time or context). */
+    private function operationAttribution(Document $document, string $purpose): array
+    {
+        if (! QuoteService::enabled()) {
+            return [];
+        }
+        $quoteId = $this->operationQuoteId ?? app(OperationSpend::class)->activeQuote($document, $purpose)?->id;
+
+        return array_filter(['operation_quote_id' => $quoteId, 'user_id' => $this->operationUserId, 'comparison_id' => $this->operationComparisonId], fn ($v) => $v !== null);
     }
 
     private function recordTransportFailure(?Document $document, string $kind, int $attempt, int $started, bool $rejected = false): void
@@ -555,6 +583,9 @@ PROMPT;
         )) {
             throw new \RuntimeException('Document processing no longer permits intelligence.');
         }
+
+        // AI credits: no reservation or no cap left means no paid call, whichever path got here.
+        app(OperationSpend::class)->assertCallAllowed($document, $this->currentOperation, $this->operationQuoteId);
 
         $maxAttempts = max(1, min(4, (int) ($options['max_attempts'] ?? 4)));
         $this->requestModel = $options['model'] ?? $this->modelFor($this->currentOperation ?? 'extraction');

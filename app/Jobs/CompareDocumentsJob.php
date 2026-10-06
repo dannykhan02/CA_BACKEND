@@ -5,8 +5,10 @@ namespace App\Jobs;
 use App\Exceptions\ProviderBusyException;
 use App\Jobs\Concerns\DefersWhenProviderBusy;
 use App\Models\DocumentComparison;
+use App\Models\OperationQuote;
 use App\Models\Workspace;
 use App\Services\AI\ProviderGate;
+use App\Services\AiCredits\QuoteService;
 use App\Services\AnthropicClient;
 use App\Services\DocumentComparisonService;
 use App\Services\EntitlementService;
@@ -65,7 +67,13 @@ class CompareDocumentsJob implements ShouldQueue
         $metadata = $item->metadata;
         if (isset($metadata['ai_context'])) {
             app(EntitlementService::class)->reserveComparison($item);
-            $result = app(AnthropicClient::class)->compareDocumentIntelligence($metadata['ai_context'], $item->baseDocument);
+            $client = app(AnthropicClient::class);
+            if (QuoteService::enabled()) {
+                // Durable attribution: every paid call is stamped with this comparison and its quote.
+                $quoteId = OperationQuote::where('kind', 'comparison')->where('resource_id', $item->id)->where('status', 'reserved')->value('id');
+                $client->forOperation($quoteId, $item->created_by, $item->id);
+            }
+            $result = $client->compareDocumentIntelligence($metadata['ai_context'], $item->baseDocument);
             $changes = [...$changes, ...$result['changes']];
             $metadata['model'] = $result['model'];
             $metadata['prompt_version'] = $result['prompt_version'];

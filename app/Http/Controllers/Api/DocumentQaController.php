@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Exceptions\ProviderBusyException;
 use App\Http\Controllers\Controller;
+use App\Models\Document;
 use App\Services\AI\DocumentContextRetriever;
+use App\Services\AiCredits\QaGuard;
+use App\Services\AiCredits\QuoteService;
 use App\Services\AnthropicClient;
 use App\Services\AuditLogger;
 use App\Services\EntitlementService;
@@ -24,6 +27,7 @@ class DocumentQaController extends Controller
 
         $user = $request->user();
         app(EntitlementService::class)->assertAiAccess($user->current_workspace_id);
+        $quote = app(QaGuard::class)->admit($user);
 
         // Authorization lives inside the retriever (Day 9 Batch 2) — the
         // controller never touches document_embeddings/documents directly,
@@ -31,6 +35,8 @@ class DocumentQaController extends Controller
         $context = $retriever->retrieve($validated['question'], $user, $validated['top_k'] ?? 5);
 
         if ($context->isEmpty()) {
+            app(QaGuard::class)->finish($quote, false, $user->id);
+
             return response()->json([
                 'success' => true,
                 'message' => 'No answer.',
@@ -43,18 +49,25 @@ class DocumentQaController extends Controller
         }
 
         try {
-            $result = $client->answerDocumentQuestion(
+            // The first cited document carries the run record, so every Q&A call is attributable
+            // to a workspace, user and (when metered) quote.
+            $result = (QuoteService::enabled() ? $client->forOperation($quote?->id, $user->id) : $client)->answerDocumentQuestion(
                 $validated['question'],
                 $context->toPromptContext(),
                 $context->documentIds(),
+                QuoteService::enabled() ? Document::find($context->documentIds()[0] ?? null) : null,
             );
+            app(QaGuard::class)->finish($quote, true, $user->id);
         } catch (ProviderBusyException $e) {
+            app(QaGuard::class)->finish($quote, false, $user->id);
+
             // Shared AI capacity is full: a short, retryable answer instead of a failure.
             return response()->json([
                 'success' => false,
                 'message' => 'AI is busy right now. Please try again in a moment.',
             ], 503)->header('Retry-After', (string) $e->retryAfterSeconds);
         } catch (\Throwable $e) {
+            app(QaGuard::class)->finish($quote, false, $user->id);
             Log::error('Document Q&A failed.', SafeExceptionContext::for($e, [
                 'user_id' => $user->id,
                 'workspace_id' => $user->current_workspace_id,

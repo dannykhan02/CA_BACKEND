@@ -9,6 +9,7 @@ use App\Jobs\ExtractDocumentEntitiesJob;
 use App\Jobs\GenerateDocumentSummaryJob;
 use App\Models\Document;
 use App\Services\AI\Incremental\IncrementalPipeline;
+use App\Services\AiCredits\AiCreditAdmission;
 use App\Support\QueueTopology;
 use Illuminate\Support\Facades\Bus;
 
@@ -44,6 +45,11 @@ trait DispatchesIntelligenceChain
     private function dispatchIntelligenceChain(Document $document): void
     {
         if (! $document->fresh()?->canGenerateIntelligence()) {
+            return;
+        }
+
+        // AI credits: price from local signals and reserve before the first paid call.
+        if (! app(AiCreditAdmission::class)->admitDocument($document->fresh())) {
             return;
         }
 
