@@ -44,10 +44,10 @@ class EvidenceSchemaDiagnosticsTest extends TestCase
             [$this->record(['quote' => ' ']), 'invalid_evidence', 'blank_quote'],
             [$this->record(['label' => ' ']), 'invalid_evidence', 'blank_label'],
             [$this->record(['quote' => 'SECRET REJECTED QUOTE']), 'invalid_evidence', 'quote_not_found_in_source'],
-            [$this->record(['date_type' => 'explicit']), 'invalid_date', 'explicit_date_missing_due_date'],
+            [$this->record(['kind' => 'deadline', 'date_type' => 'explicit']), 'invalid_date', 'explicit_date_missing_due_date'],
             [$this->record(['date_type' => 'explicit', 'due_date' => '2024/02/01']), 'invalid_date', 'due_date_wrong_format'],
             [$this->record(['date_type' => 'explicit', 'due_date' => '2024-02-30']), 'invalid_date', 'due_date_invalid_calendar_date'],
-            [$this->record(['date_type' => 'relative', 'due_date' => '2024-02-01']), 'invalid_date', 'due_date_present_for_non_explicit_type'],
+            [$this->record(['kind' => 'deadline', 'date_type' => 'relative', 'due_date' => '2024-02-01']), 'invalid_date', 'due_date_present_for_non_explicit_type'],
             [$this->record(['kind' => 'deadline']), 'invalid_date', 'invalid_deadline_date_type'],
         ];
         $result = EvidenceSchema::validate(['records' => [$this->record(), ...array_column($invalid, 0)]], self::SOURCE);
@@ -74,7 +74,7 @@ class EvidenceSchemaDiagnosticsTest extends TestCase
         try {
             EvidenceSchema::validate(['records' => [
                 $this->record(['quote' => 'SECRET REJECTED QUOTE']),
-                $this->record(['date_type' => 'explicit']),
+                $this->record(['kind' => 'deadline', 'date_type' => 'explicit']),
                 $this->record(['kind' => 'unknown']),
             ]], self::SOURCE);
             self::fail('Expected all-invalid extraction to fail.');

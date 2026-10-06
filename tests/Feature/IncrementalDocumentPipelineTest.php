@@ -41,6 +41,7 @@ use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
+use Symfony\Component\Console\Output\BufferedOutput;
 use Tests\TestCase;
 
 class IncrementalDocumentPipelineTest extends TestCase
@@ -792,7 +793,7 @@ class IncrementalDocumentPipelineTest extends TestCase
         Log::swap(new Logger('validation-test', [$handler]));
         $secret = 'SECRET REJECTED QUOTE';
         $this->fakeProvider($this->response(['records' => [
-            $this->record(['quote' => $secret]), $this->record(['date_type' => 'explicit']),
+            $this->record(['quote' => $secret]), $this->record(['kind' => 'deadline', 'date_type' => 'explicit']),
         ]]));
         $chunk = $this->plan($this->document('Revenue increased to USD 10 in 2024.'));
         $this->executeChunk($chunk);
@@ -815,7 +816,8 @@ class IncrementalDocumentPipelineTest extends TestCase
         $document = $this->document('Revenue increased to USD 10 in 2024.');
         $chunk = $this->plan($document);
         $chunk->update(['status' => 'completed', 'result' => EvidenceSchema::validate(['records' => [
-            $this->record(), $this->record(['quote' => 'Missing quote']),
+            $this->record(), $this->record(['kind' => 'fact', 'date_type' => 'explicit', 'period' => 'FY2024']),
+            $this->record(['quote' => 'Missing quote']),
         ]], $document->extracted_text)]);
         $failed = $chunk->replicate();
         $failed->identity = 'report-failed';
@@ -823,6 +825,7 @@ class IncrementalDocumentPipelineTest extends TestCase
         $failed->result = ['records' => [], '_validation' => [
             'records_returned' => 2, 'records_kept' => 0, 'records_dropped' => 2,
             'rejections' => ['invalid_date' => 2], 'rejection_reasons' => ['due_date_wrong_format' => 2],
+            'date_rejection_reasons_by_kind' => ['due_date_wrong_format' => ['deadline' => 1, 'obligation' => 1]],
         ]];
         $failed->save();
         $legacy = $chunk->replicate();
@@ -835,13 +838,23 @@ class IncrementalDocumentPipelineTest extends TestCase
         $report = json_decode(Artisan::output(), true, flags: JSON_THROW_ON_ERROR);
         self::assertSame(3, $report['total_leaves']);
         self::assertSame(1, $report['chunks_without_diagnostics']);
-        self::assertSame(4, $report['records_returned']);
-        self::assertSame(1, $report['records_accepted']);
+        self::assertSame(5, $report['records_returned']);
+        self::assertSame(2, $report['records_accepted']);
         self::assertSame(3, $report['records_rejected']);
         self::assertSame(['invalid_date' => 2, 'invalid_evidence' => 1], $report['rejection_classes']);
         self::assertSame(['due_date_wrong_format' => 2, 'quote_not_found_in_source' => 1], $report['rejection_reasons']);
+        self::assertSame(['due_date_wrong_format' => 2], $report['date_handling']['rejected']);
+        self::assertSame(1, $report['date_handling']['records_sanitized']);
+        self::assertSame(1, $report['date_handling']['sanitized']['explicit_without_due_date_noncritical']);
+        self::assertSame(['deadline' => 1, 'obligation' => 1], $report['date_handling']['rejected_by_kind']['due_date_wrong_format']);
+        self::assertSame(['fact' => 1], $report['date_handling']['sanitized_by_kind']['explicit_without_due_date_noncritical']);
         self::assertSame('report-failed', $report['worst_chunks'][0]['chunk_key']);
         self::assertStringNotContainsString('Revenue increased', Artisan::output());
+        $output = new BufferedOutput;
+        self::assertSame(0, Artisan::call('docintel:validation-report', ['document' => $document->id], $output));
+        $text = $output->fetch();
+        self::assertStringContainsString('Date handling', $text);
+        self::assertStringContainsString('fact: 1', $text);
     }
 
     public function test_provider_auth_model_and_credit_errors_are_terminal_and_safe(): void
