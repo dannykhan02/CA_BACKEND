@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\DocumentAiRun;
 use App\Models\OperationQuote;
+use App\Services\AiCredits\QuoteService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -20,12 +21,22 @@ class CreditEconomicsReport extends Command
         {--margin= : Contribution margin target (default ai_credits.margin_target)}
         {--cost-stress=1.25 : Provider-cost multiplier for the stress scenario}
         {--fx-stress=1.10 : FX multiplier for the stress scenario}
-        {--json : Emit JSON instead of tables}';
+        {--json : Emit JSON instead of tables}
+        {--what-if : Print credit prices and documents per month for 5k/20k/60k/150k-token documents instead of the report}
+        {--floor-share=1 : With --what-if, the share of the documented synthesis reservation the quote gate must fit (1 = today)}
+        {--per-credit= : With --what-if, provider USD ceiling per credit (default config)}
+        {--bands= : With --what-if, credits:maxTokens pairs in ascending order, e.g. 4:6000,15:30000,30:90000,60:250000}';
 
     protected $description = 'Read-only AI-credit unit economics: plan margins, per-operation provider cost quantiles, release counts.';
 
+    /** Documented synthesis reservations by document size (incremental route above 14k tokens; legacy route below). */
+    private const FLOORS = [5000 => 0.0, 20000 => 0.50, 60000 => 0.85, 150000 => 1.05];
+
     public function handle(): int
     {
+        if ($this->option('what-if')) {
+            return $this->whatIf();
+        }
         $fx = (float) ($this->option('fx') ?: config('ai_credits.fx_kes_per_usd'));
         $fee = (float) ($this->option('fee') ?? config('ai_credits.payment_fee_rate'));
         $target = (float) ($this->option('margin') ?? config('ai_credits.margin_target'));
@@ -56,6 +67,49 @@ class CreditEconomicsReport extends Command
             array_map(fn ($o) => array_values($o), $report['operations']));
         $this->line('Documents without a quote (pre-rollout): '.json_encode($report['unquoted_documents']));
         $this->line('Releases: '.json_encode($report['releases']));
+
+        return self::SUCCESS;
+    }
+
+    /** Read-only scenario table. Overrides config in memory only, and restores it. */
+    private function whatIf(): int
+    {
+        $original = config('ai_credits');
+        try {
+            if ($this->option('per-credit')) {
+                config(['ai_credits.provider_cost_usd_per_credit' => (float) $this->option('per-credit')]);
+            }
+            if ($this->option('bands')) {
+                $names = array_keys($original['bands']);
+                $pairs = array_map(fn ($p) => array_map('intval', explode(':', $p)), explode(',', (string) $this->option('bands')));
+                if (count($pairs) !== count($names)) {
+                    $this->error('--bands needs '.count($names).' credits:maxTokens pairs.');
+
+                    return self::INVALID;
+                }
+                foreach ($names as $i => $name) {
+                    config(["ai_credits.bands.{$name}" => ['credits' => $pairs[$i][0], 'max_tokens' => $pairs[$i][1]]]);
+                }
+            }
+            $quotes = app(QuoteService::class);
+            $share = (float) $this->option('floor-share');
+            $rows = [];
+            foreach (self::FLOORS as $tokens => $floor) {
+                $c = $quotes->classify($tokens, false, $floor * $share);
+                $rows[] = ['tokens' => $tokens, 'band' => $c['declined'] ? 'declined' : $c['band'], 'credits' => $c['declined'] ? null : $c['credits'],
+                    'cap_usd' => $c['declined'] ? null : $c['cap'],
+                    'starter_docs_per_month' => $c['declined'] ? 0 : intdiv((int) config('ai_credits.plans.starter.monthly'), $c['credits']),
+                    'professional_docs_per_month' => $c['declined'] ? 0 : intdiv((int) config('ai_credits.plans.professional.monthly'), $c['credits'])];
+            }
+        } finally {
+            config(['ai_credits' => $original]);
+        }
+        if ($this->option('json')) {
+            $this->line(json_encode($rows, JSON_PRETTY_PRINT));
+        } else {
+            $this->table(['tokens', 'band', 'credits', 'cap USD', 'Starter docs/month', 'Professional docs/month'], array_map('array_values', $rows));
+            $this->line('Nothing was changed. Floors are the documented reservations x --floor-share; not measured costs.');
+        }
 
         return self::SUCCESS;
     }

@@ -155,9 +155,9 @@ Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(functio
         ->name('documents.download');
 
     Route::post('/documents/{document}/reprocess', [DocumentReprocessController::class, 'store'])
-        ->name('documents.reprocess');
+        ->middleware('throttle:20,1')->name('documents.reprocess');
     Route::post('/documents/{document}/confirm-credits', [DocumentCreditConfirmationController::class, 'store'])
-        ->name('documents.confirm-credits');
+        ->middleware('throttle:30,1')->name('documents.confirm-credits');
     Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])
         ->name('documents.destroy');
 

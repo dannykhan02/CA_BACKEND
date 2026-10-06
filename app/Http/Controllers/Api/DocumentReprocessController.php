@@ -15,8 +15,10 @@ class DocumentReprocessController extends Controller
     {
         $this->authorize('reprocess', $document);
         $request->validate(['intelligence_only' => 'sometimes|boolean',
-            'stage' => 'sometimes|string|in:document_type,entities,risks,deadlines,document_summary']);
-        $document = $reprocessor->reprocess($document, $request->user(), $request->boolean('intelligence_only'), $request->input('stage'));
+            'stage' => 'sometimes|string|in:document_type,entities,risks,deadlines,document_summary',
+            'confirm_credits' => 'sometimes|integer|min:0']);
+        $document = $reprocessor->reprocess($document, $request->user(), $request->boolean('intelligence_only'), $request->input('stage'),
+            (int) $request->input('confirm_credits', 0));
 
         return response()->json([
             'message' => 'Reprocessing started.',

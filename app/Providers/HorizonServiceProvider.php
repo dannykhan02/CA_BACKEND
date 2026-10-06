@@ -36,7 +36,7 @@ class HorizonServiceProvider extends HorizonApplicationServiceProvider
         Gate::define('viewHorizon', function ($user = null) {
             $authorized = array_filter(array_map(
                 'trim',
-                explode(',', (string) env('HORIZON_AUTHORIZED_EMAILS', ''))
+                explode(',', (string) config('horizon.authorized_emails', ''))
             ));
 
             return in_array(optional($user)->email, $authorized, true);

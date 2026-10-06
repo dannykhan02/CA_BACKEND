@@ -17,14 +17,16 @@ class QaGuard
     /** Aborts 429 over a cap. Returns a reserved quote when Q&A is metered, otherwise null. */
     public function admit(User $user): ?OperationQuote
     {
+        $workspaceId = $user->current_workspace_id;
         if (! QuoteService::enabled()) {
+            // Credits off: no counters and no customer debit, but the daily provider-spend ceiling still applies.
+            $this->assertDailySpendBelowCeiling($workspaceId);
+
             return null;
         }
-        $workspaceId = $user->current_workspace_id;
         $this->hit('qa:ws:'.$workspaceId.':'.now()->format('Ymd'), (int) config('ai_credits.qa.max_per_workspace_per_day'), 90000);
         $this->hit('qa:user:'.$user->id.':'.now()->format('YmdH'), (int) config('ai_credits.qa.max_per_user_per_hour'), 4000);
-        $spent = (float) DocumentAiRun::where('workspace_id', $workspaceId)->where('purpose', 'document_qa')->where('created_at', '>=', now()->startOfDay())->sum('estimated_cost_usd');
-        abort_if($spent >= (float) config('ai_credits.qa.max_cost_usd_per_workspace_per_day'), 429, 'Daily question limit reached. Please try again tomorrow.');
+        $this->assertDailySpendBelowCeiling($workspaceId);
 
         $credits = (int) config('ai_credits.qa.credits');
         $accountant = app(CreditAccountant::class);
@@ -45,6 +47,12 @@ class QaGuard
         }
         $answered ? app(CreditAccountant::class)->settle('qa', $quote->resource_id, $userId)
             : app(CreditAccountant::class)->release('qa', $quote->resource_id, 'qa_failed', $userId);
+    }
+
+    private function assertDailySpendBelowCeiling(?string $workspaceId): void
+    {
+        $spent = (float) DocumentAiRun::where('workspace_id', $workspaceId)->where('purpose', 'document_qa')->where('created_at', '>=', now()->startOfDay())->sum('estimated_cost_usd');
+        abort_if($spent >= (float) config('ai_credits.qa.max_cost_usd_per_workspace_per_day'), 429, 'Daily question limit reached. Please try again tomorrow.');
     }
 
     private function hit(string $key, int $limit, int $ttlSeconds): void

@@ -4,6 +4,7 @@ namespace App\Services\AiCredits;
 
 use App\Models\Document;
 use App\Models\DocumentChunk;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -19,6 +20,11 @@ class AiCreditAdmission
     public function admitDocument(Document $document): bool
     {
         if (! QuoteService::enabled() || $this->accountant->mode($document->workspace_id) === 'legacy' || $document->credit_accounted_at) {
+            // A document that waited for a confirmation while credits were on proceeds under the other rules; stop waiting.
+            if ($document->ai_pipeline['awaiting_credit_confirmation'] ?? false) {
+                $document->forceFill(['ai_pipeline' => [...$document->ai_pipeline, 'awaiting_credit_confirmation' => false]])->save();
+            }
+
             return true;
         }
         $priced = $this->quotes->quoteDocument($document);
@@ -51,9 +57,17 @@ class AiCreditAdmission
     }
 
     /** The customer accepts the quoted credits for a large analysis; the caller then resumes the pipeline. */
-    public function confirmDocument(Document $document): void
+    public function confirmDocument(Document $document): bool
     {
-        $document->forceFill(['ai_pipeline' => [...($document->ai_pipeline ?? []), 'credit_quote_confirmed' => true]])->save();
+        return DB::transaction(function () use ($document) {
+            $locked = Document::whereKey($document->id)->lockForUpdate()->firstOrFail();
+            if ($locked->ai_pipeline['credit_quote_confirmed'] ?? false) {
+                return false; // already confirmed: a repeated click or a duplicate request
+            }
+            $locked->forceFill(['ai_pipeline' => [...($locked->ai_pipeline ?? []), 'credit_quote_confirmed' => true]])->save();
+
+            return true;
+        });
     }
 
     /** OCR is priced from the page count and refused above the page cap, before any vision call. */
@@ -99,7 +113,7 @@ class AiCreditAdmission
      * contract was never delivered (credits released) is re-admitted as a normal analysis; a delivered one is
      * charged once as a re-analysis, with its own provider ceiling. Aborts 402/422 before any state changes.
      */
-    public function admitReanalysis(Document $document, bool $summaryOnly, ?string $userId = null): void
+    public function admitReanalysis(Document $document, bool $summaryOnly, ?string $userId = null, ?int $confirmCredits = null): void
     {
         if (! QuoteService::enabled() || $this->accountant->mode($document->workspace_id) === 'legacy' || $summaryOnly) {
             return; // a summary refresh costs no credits; the settled quote's ceiling still bounds its spend
@@ -109,6 +123,11 @@ class AiCreditAdmission
         $priced = $this->quotes->quoteDocument($document, $delivered ? 'reanalysis' : 'document', $delivered);
         abort_if($priced['declined'], 422, 'This document cannot be re-analysed within its credit allowance.');
         $quote = $priced['quote'];
+        if ($confirmCredits !== null && $this->quotes->requiresConfirmation($quote->band) && $confirmCredits !== $quote->credits) {
+            // A customer re-run of a large document shows its exact price first; nothing is reserved until it is accepted.
+            throw new HttpResponseException(response()->json(['message' => sprintf('This re-analysis will use %d credits. Confirm to continue.', $quote->credits),
+                'data' => ['confirmation_required' => true, 'credits' => $quote->credits, 'band' => $quote->band]], 409));
+        }
         $this->accountant->reserve($quote, $userId);
         // The re-run gets its own ceiling on top of what the pipeline already committed (incremental route only).
         if (($document->ai_pipeline['route'] ?? null) !== 'incremental') {
