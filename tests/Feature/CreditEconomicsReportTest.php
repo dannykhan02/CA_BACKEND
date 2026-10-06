@@ -74,4 +74,19 @@ class CreditEconomicsReportTest extends TestCase
         $this->assertSame('document_failed', $report['releases'][0]['release_reason']);
         $this->assertStringNotContainsString('SECRET', $json);
     }
+
+    public function test_what_if_mode_prints_scenarios_without_changing_config_or_data(): void
+    {
+        $before = config('ai_credits');
+        $this->artisan('docintel:credit-economics-report', ['--what-if' => true, '--json' => true])->assertSuccessful();
+        Artisan::call('docintel:credit-economics-report', ['--what-if' => true, '--json' => true, '--floor-share' => '0.5', '--bands' => '4:6000,15:30000,30:90000,60:250000']);
+        $rows = json_decode(Artisan::output(), true);
+        $this->assertSame([4, 15, 30, 60], array_column($rows, 'credits'));
+        $this->assertSame([25, 6, 3, 1], array_column($rows, 'starter_docs_per_month'));
+        Artisan::call('docintel:credit-economics-report', ['--what-if' => true, '--json' => true]);
+        $today = json_decode(Artisan::output(), true);
+        $this->assertSame([4, 30, 80, 80], array_column($today, 'credits')); // the memo's baseline
+        $this->assertSame($before, config('ai_credits'));
+        $this->assertSame(0, OperationQuote::count());
+    }
 }

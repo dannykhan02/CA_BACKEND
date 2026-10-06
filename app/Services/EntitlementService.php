@@ -90,6 +90,12 @@ class EntitlementService
         return config('billing.preserve_unknown_legacy_access') && CreditPurchase::where('workspace_id', $workspace)->whereNull('plan_key')->where('status', 'completed')->whereNull('paystack_response->data->domain')->exists();
     }
 
+    /** Scheduler entry point: the same lazy release summary() performs, so dormant workspaces do not hold reservations forever. */
+    public function releaseStaleReservations(string $workspace): void
+    {
+        $this->releaseFailures($workspace);
+    }
+
     private function releaseFailures(string $workspace): void
     {
         DB::transaction(function () use ($workspace) {

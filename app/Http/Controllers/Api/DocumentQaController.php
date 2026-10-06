@@ -15,6 +15,7 @@ use App\Support\SafeExceptionContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class DocumentQaController extends Controller
 {
@@ -51,11 +52,12 @@ class DocumentQaController extends Controller
         try {
             // The first cited document carries the run record, so every Q&A call is attributable
             // to a workspace, user and (when metered) quote.
+            // Recorded whether or not credits are on, so Q&A spend is never invisible to the usage report.
             $result = (QuoteService::enabled() ? $client->forOperation($quote?->id, $user->id) : $client)->answerDocumentQuestion(
                 $validated['question'],
                 $context->toPromptContext(),
                 $context->documentIds(),
-                QuoteService::enabled() ? Document::find($context->documentIds()[0] ?? null) : null,
+                Str::isUuid($first = $context->documentIds()[0] ?? null) ? Document::find($first) : null,
             );
             app(QaGuard::class)->finish($quote, true, $user->id);
         } catch (ProviderBusyException $e) {

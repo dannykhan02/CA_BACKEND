@@ -31,7 +31,8 @@ class DocumentReprocessor
         'deadlines' => DetectDocumentDeadlinesJob::class,
     ];
 
-    public function reprocess(Document $document, User $actor, bool $intelligenceOnly = false, ?string $requestedStage = null): Document
+    /** $confirmCredits: null = internal/operator call; an int (0 = none yet) = a customer request that must accept any large quote. */
+    public function reprocess(Document $document, User $actor, bool $intelligenceOnly = false, ?string $requestedStage = null, ?int $confirmCredits = null): Document
     {
         $document->refresh();
         abort_if($document->status === 'Failed'
@@ -45,7 +46,7 @@ class DocumentReprocessor
 
         if (($document->ai_pipeline['route'] ?? null) === 'incremental'
             && $document->extracted_text && $document->status !== 'Failed') {
-            app(AiCreditAdmission::class)->admitReanalysis($document, $requestedStage === 'document_summary', $actor->id);
+            app(AiCreditAdmission::class)->admitReanalysis($document, $requestedStage === 'document_summary', $actor->id, $confirmCredits);
             app(IncrementalPipeline::class)->reanalyze($document, $actor->id, $requestedStage === 'document_summary');
 
             return $document->fresh();

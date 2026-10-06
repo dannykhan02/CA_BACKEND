@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Notifications\Concerns\RetriesMail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -21,7 +22,7 @@ use Illuminate\Support\HtmlString;
  */
 class VerificationCodeNotification extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, RetriesMail;
 
     public function __construct(public string $code) {}
 

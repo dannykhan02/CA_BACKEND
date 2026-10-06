@@ -233,8 +233,9 @@ class GenerateDocumentSummaryJob implements ShouldQueue
             $otherFailures = DocumentChunk::where('document_id', $document->id)->where('pipeline_key', $checkpoint->pipeline_key)
                 ->whereIn('status', ['failed', 'budget', 'uncertain'])->exists();
             $document->refresh();
-            if (QuoteService::enabled()) {
+            if (QuoteService::enabled() || app(WorkspaceCreditService::class)->hasAiOperation($document->id)) {
                 // The contracted result is delivered: settle the quoted credits (once; a re-analysis settles its own quote).
+                // A reservation that outlived a flag flip to off still settles here.
                 app(WorkspaceCreditService::class)->accountForReadyDocument($document);
             }
             $document->forceFill(['ai_pipeline' => [...$document->ai_pipeline,

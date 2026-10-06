@@ -4,6 +4,10 @@ use Illuminate\Support\Str;
 
 return [
 
+    // Comma-separated operator emails allowed into Horizon and Pulse. Read here, not with env() in a provider,
+    // so the gates still work when the config is cached.
+    'authorized_emails' => env('HORIZON_AUTHORIZED_EMAILS', ''),
+
     /*
     |--------------------------------------------------------------------------
     | Horizon Name

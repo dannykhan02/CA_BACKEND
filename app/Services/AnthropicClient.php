@@ -1109,7 +1109,9 @@ PROMPT;
         ?Document $document = null,
     ): array {
         $this->currentOperation = 'document_qa';
-        $this->activeDocument = $document;
+        // The document only labels the usage record. It must not gate the call: a question over several documents
+        // is not blocked because the first cited one is no longer Ready.
+        $this->activeDocument = null;
         $this->throttle();
         $prompt = $this->buildDocumentQaPrompt($question, $contextJson);
         $response = $this->callWithRetry([['role' => 'user', 'content' => $prompt]]);

@@ -55,7 +55,7 @@ class ProviderGate
             return $work();
         } finally {
             $this->ambient = null;
-            $this->store()->release($member);
+            $this->releaseQuietly($member);
         }
     }
 
@@ -73,7 +73,20 @@ class ProviderGate
         try {
             return $request();
         } finally {
+            $this->releaseQuietly($member);
+        }
+    }
+
+    /**
+     * A permit is a lease that expires on its own. If Redis is unreachable at release time the work has already
+     * run (and been paid for), so the failure must not replace its result or lose its usage record.
+     */
+    private function releaseQuietly(string $member): void
+    {
+        try {
             $this->store()->release($member);
+        } catch (\Throwable $e) {
+            Log::warning('Anthropic permit release failed; the lease will expire on its own', ['error_type' => $e::class]);
         }
     }
 

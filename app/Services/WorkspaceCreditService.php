@@ -144,7 +144,8 @@ class WorkspaceCreditService
     /** Caller must hold the document row lock inside its Ready transaction. */
     public function accountForReadyDocument(Document $document, bool $ready = true): void
     {
-        if (QuoteService::enabled() && $this->hasAiOperation($document->id)) {
+        // Not gated on the flag: a reservation made while credits were on must settle the same way after the flag is turned off.
+        if ($this->hasAiOperation($document->id)) {
             // AI credits are charged only for a delivered result: merged evidence alone ($ready = false) never debits.
             if ($ready) {
                 app(CreditAccountant::class)->settleDocument($document->id, $document->uploaded_by);
@@ -182,7 +183,7 @@ class WorkspaceCreditService
         $document->forceFill(['credit_accounted_at' => now()]);
     }
 
-    private function hasAiOperation(string $documentId): bool
+    public function hasAiOperation(string $documentId): bool
     {
         return DB::table('billing_operations')->whereIn('kind', ['document', 'ocr', 'reanalysis'])->where('resource_id', $documentId)
             ->whereNotNull('amount_reserved')->exists();
