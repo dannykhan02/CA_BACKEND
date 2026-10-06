@@ -136,6 +136,7 @@ class AnthropicClient
         $this->currentOperation = 'entities';
         $this->activeDocument = $document; // Existing durable AI-purpose vocabulary.
         $this->currentDocumentId = $document->id;
+        $this->currentChunkId = $chunk->id;
         $this->lastResolvedPromptVersion = (int) $chunk->prompt_version;
         $response = [];
         $this->transportFailureRecorded = false;
@@ -508,11 +509,14 @@ PROMPT;
         return array_filter(['operation_quote_id' => $quoteId, 'user_id' => $this->operationUserId, 'comparison_id' => $this->operationComparisonId], fn ($v) => $v !== null);
     }
 
-    private function recordTransportFailure(?Document $document, string $kind, int $attempt, int $started, bool $rejected = false): void
+    private function recordTransportFailure(?Document $document, string $kind, int $attempt, int $started, bool $rejected = false, ?string $requestId = null): void
     {
         $purpose = $this->currentOperation === 'context_resolution' ? 'document_summary' : ($this->currentOperation ?? 'insights');
+        // A rejected request is the only trace of itself: the provider request id is what support
+        // and the Anthropic console can both be pointed at, so it is persisted, not only logged.
         $this->transportRunId = $this->recordAiRun($document, $purpose, ($rejected ? ['usage' => ['input_tokens' => 0, 'output_tokens' => 0]] : []) + ['_telemetry' => ['failure_class' => $kind,
-            'request_attempt' => $attempt, 'duration_ms' => (int) ((hrtime(true) - $started) / 1000000)]], 'provider_error')?->id;
+            'request_attempt' => $attempt, 'duration_ms' => (int) ((hrtime(true) - $started) / 1000000)]
+            + ($requestId === null ? [] : ['provider_request_id' => $requestId])], 'provider_error')?->id;
         $this->transportFailureRecorded = true;
     }
 
@@ -520,6 +524,7 @@ PROMPT;
     private function structuredCall(string $prompt, ?Document $document, string $purpose, callable $parser, array $requestOptions = []): array
     {
         $this->currentDocumentId = $document?->id;
+        $this->currentChunkId = null;
         $maxTokens = (int) ($requestOptions['max_tokens'] ?? config('services.anthropic.max_tokens'));
         $ceiling = max($maxTokens, (int) config('services.anthropic.structured_max_tokens_ceiling'));
         for ($attempt = 0; $attempt < (($requestOptions['single_response'] ?? false) ? 1 : 2); $attempt++) {
@@ -646,15 +651,26 @@ PROMPT;
             return $this->callWithRetry($messages, $attempt + 1, $options);
         }
 
+        $providerRequestId = null;
         if ($response->failed()) {
             $kind = $this->classifyFailure($response->status(), (string) $response->json('error.message'));
-            if (($options['typed_errors'] ?? false) || in_array($kind, ['authentication', 'billing', 'invalid_model'], true)) {
-                $this->recordTransportFailure($document, $kind, $attempt, $started, rejected: true);
+            $typed = ($options['typed_errors'] ?? false) || in_array($kind, ['authentication', 'billing', 'invalid_model'], true);
+            /*
+             * One diagnostic per rejected response, emitted before the branches below so that every
+             * non-2xx path is covered exactly once. The failure class logged here is the one the run
+             * row will actually carry, which is not always classifyFailure()'s answer: an untyped
+             * caller records 'transient' or 'deterministic' regardless of how the status classified.
+             */
+            $providerRequestId = $this->logProviderError($response, $document, $typed
+                ? $kind
+                : (($response->status() === 429 || $response->serverError()) ? 'transient' : 'deterministic'), $attempt, $started);
+            if ($typed) {
+                $this->recordTransportFailure($document, $kind, $attempt, $started, rejected: true, requestId: $providerRequestId);
                 throw new AiProcessingException($kind, min(120, $this->retryAfterSeconds($response)));
             }
         }
         if (($response->status() === 429 || $response->serverError())) {
-            $this->recordTransportFailure($document, 'transient', $attempt, $started, rejected: true);
+            $this->recordTransportFailure($document, 'transient', $attempt, $started, rejected: true, requestId: $providerRequestId);
             if ($attempt >= $maxAttempts) {
                 $final = new \RuntimeException(
                     "Anthropic API request failed with status {$response->status()} after {$maxAttempts} attempts."
@@ -670,7 +686,7 @@ PROMPT;
         }
 
         if ($response->failed()) {
-            $this->recordTransportFailure($document, 'deterministic', $attempt, $started, rejected: true);
+            $this->recordTransportFailure($document, 'deterministic', $attempt, $started, rejected: true, requestId: $providerRequestId);
             Log::error('Anthropic API error', ['status' => $response->status(), 'operation' => $this->currentOperation]);
             $e = new \RuntimeException("Anthropic API request failed with status {$response->status()}.");
             $this->tagAndCapture($e);
@@ -683,9 +699,71 @@ PROMPT;
         ]];
     }
 
+    /**
+     * The provider's own account of a rejected request. Before this, a non-2xx response was
+     * collapsed into a classification string and the body was read only to classify, so a
+     * deterministic rejection reached the logs as nothing but result=provider_error.
+     *
+     * Deliberately excluded: the API key, request headers, the request body, the prompt, the
+     * source text and the raw response body. error.message is provider-authored but can quote
+     * the offending part of the request, so it is redacted, flattened and capped; error.type
+     * and the request id are accepted only in their documented shapes.
+     *
+     * @return string|null the provider request id, for the run row
+     */
+    private function logProviderError(Response $response, ?Document $document, string $failureClass, int $attempt, int $started): ?string
+    {
+        $requestId = $this->providerRequestId($response);
+        $type = $response->json('error.type');
+        Log::error('Anthropic provider error', [
+            'status' => $response->status(),
+            'error_type' => is_string($type) && preg_match('/\A[a-z0-9_]{1,64}\z/i', $type) === 1 ? $type : null,
+            'error_message' => $this->sanitizeProviderMessage($response->json('error.message')),
+            'request_id' => $requestId,
+            'purpose' => $this->currentOperation,
+            'model' => $this->requestModel,
+            'document_id' => $document?->id,
+            'chunk_id' => $this->currentChunkId ?? $this->runContext['chunk_id'] ?? null,
+            'failure_class' => $failureClass,
+            'request_attempt' => $attempt,
+            'duration_ms' => (int) ((hrtime(true) - $started) / 1000000),
+        ]);
+
+        return $requestId;
+    }
+
+    /** Anthropic returns `request-id`; accept the proxy spelling too, and only an opaque token. */
+    private function providerRequestId(Response $response): ?string
+    {
+        foreach (['request-id', 'x-request-id'] as $header) {
+            $value = trim((string) $response->header($header));
+            if (preg_match('/\A[A-Za-z0-9_\-]{1,128}\z/', $value) === 1) {
+                return $value;
+            }
+        }
+
+        return null;
+    }
+
+    private const PROVIDER_MESSAGE_MAX_CHARS = 400;
+
+    private function sanitizeProviderMessage(mixed $message): ?string
+    {
+        if (! is_string($message) || trim($message) === '') {
+            return null;
+        }
+        // Never let a credential survive into a log, whichever side of the call echoed it back.
+        $clean = preg_replace('/sk-(?:ant|live|test)-[A-Za-z0-9_\-]+/i', '[redacted]', $message);
+        $clean = trim((string) preg_replace('/\s+/', ' ', (string) $clean));
+
+        return mb_strlen($clean) > self::PROVIDER_MESSAGE_MAX_CHARS
+            ? mb_substr($clean, 0, self::PROVIDER_MESSAGE_MAX_CHARS).'...[truncated]'
+            : $clean;
+    }
+
     private function classifyFailure(int $status, string $message): string
     {
-        // Inspect provider text for classification only; never retain it in diagnostics.
+        // Classification only. logProviderError() owns what of the provider text is retained.
         return match (true) {
             in_array($status, [401, 403], true) => 'authentication',
             $status === 402 || preg_match('/credit balance|insufficient.*credit|billing|purchase credits/i', $message) === 1 => 'billing',
@@ -925,6 +1003,8 @@ PROMPT;
     }
 
     private ?string $currentDocumentId = null;
+
+    private ?string $currentChunkId = null;
 
     private function structuredOutputFailure(string $status, string $detail, array $metadata, string $text, ?\Throwable $previous = null): never
     {

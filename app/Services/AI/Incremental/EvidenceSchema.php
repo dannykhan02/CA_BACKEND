@@ -29,8 +29,14 @@ class EvidenceSchema
             $fields[$field] = ['type' => 'string'];
         }
         if ($spans) {
-            $fields['evidence_ids'] = ['type' => 'array', 'items' => ['type' => 'string'],
-                'minItems' => 1, 'maxItems' => self::maxEvidenceIds()];
+            /*
+             * Anthropic's structured-output schema subset accepts minItems only for 0 and 1, and no
+             * other array constraint. A maxItems here was rejected with a 400 before inference, so
+             * every span-mode extraction failed deterministically at zero tokens. The ceiling is not
+             * lost by removing it: spanInstructions() still states it to the model, and ground()
+             * enforces it on the response, which is where it was always actually enforced.
+             */
+            $fields['evidence_ids'] = ['type' => 'array', 'items' => ['type' => 'string'], 'minItems' => 1];
         }
         foreach (['entity_type', 'unit', 'period', 'date_type', 'due_date', 'severity', 'metric_type', 'value_basis', 'aggregation', 'quantity_kind'] as $field) {
             $fields[$field] = ['type' => ['string', 'null']];
