@@ -636,13 +636,35 @@ class IncrementalPipeline
             false
         );
 
-        DB::transaction(function () use ($chunk, $children) {
+        $outcome = DB::transaction(function () use ($chunk, $children) {
+            // Document first, as every other admission path does, so the per-document
+            // split budget below is checked serially across concurrent leaves.
+            Document::whereKey($chunk->document_id)->lockForUpdate()->firstOrFail();
             $locked = DocumentChunk::whereKey($chunk->id)
                 ->lockForUpdate()
                 ->firstOrFail();
 
             if ($locked->status === 'split') {
-                return;
+                return 'split';
+            }
+
+            /*
+             * Per-document split budget. Depth and minimum child size bound one
+             * branch; this bounds the whole tree, so a document whose output was
+             * badly underestimated cannot fan out into dozens of re-sent requests.
+             */
+            $units = fn () => DocumentChunk::where('document_id', $chunk->document_id)
+                ->where('pipeline_key', $chunk->pipeline_key)->where('stage', 'extraction');
+            $budget = $units()->whereNull('parent_id')->count()
+                * (int) config('document_intelligence.max_split_parents_per_root');
+            if ($units()->where('status', 'split')->count() >= $budget) {
+                $locked->update([
+                    'status' => 'failed',
+                    'failure_class' => 'split_limit',
+                    'completed_at' => now(),
+                ]);
+
+                return 'split_budget';
             }
 
             foreach ($children as $index => $range) {
@@ -671,7 +693,14 @@ class IncrementalPipeline
                 'status' => 'split',
                 'completed_at' => now(),
             ]);
+
+            return 'split';
         });
+        if ($outcome === 'split_budget') {
+            $this->logSplit($chunk, 'split_budget', 0, $chunk->failure_class);
+
+            return;
+        }
         $this->logSplit($chunk, 'split', count($children));
     }
 

@@ -43,6 +43,11 @@ return [
     // Splitting is recovery, not planning. Production depth-3/4 children (~2-4k tokens) still hit
     // max_tokens, so deeper recursion only spent budget. Requests now carry a record limit.
     'max_split_depth' => 2,
+    // Whole-tree bound: at most this many split parents per root partition. sector_report.pdf
+    // reached 32 split parents on about 5 roots (6 per root). Depth 2 alone allows 3 per root;
+    // 2 per root still lets every root halve once. Further capacity failures end as split_limit
+    // (existing partial-coverage semantics) instead of re-sending the text again.
+    'max_split_parents_per_root' => 2,
     // Outstanding extraction jobs per document. Effective parallelism is also capped globally by
     // the Horizon extraction supervisor's maxProcesses (HORIZON_EXTRACTION_MAX_PROCESSES).
     'concurrency' => max(1, (int) env('DOCINTEL_EXTRACTION_CONCURRENCY', 2)),
