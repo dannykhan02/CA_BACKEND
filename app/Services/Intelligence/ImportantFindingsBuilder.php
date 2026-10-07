@@ -7,31 +7,52 @@ use App\Models\DocumentIntelligenceSummary;
 use Illuminate\Support\Collection;
 
 /**
- * High-value findings that belong neither in a chart nor in a takeaway, ranked with the mechanisms
- * the repository already uses rather than a new scoring scheme.
+ * High-value findings that belong neither in a chart nor in a takeaway, ranked by how much a
+ * reader is likely to need them rather than by how sure the extractor was about them.
  *
- * The order uses signals that are already recorded: first whether the document's own synthesis
- * cited the finding, which is the repository's existing statement that it mattered; then the
- * extraction confidence stored on the finding; then EvidenceBudget's own materiality tiers, the
- * same priority that decides which evidence reaches synthesis at all.
+ * Extraction confidence is a poor headline signal: a row-level table figure is read with near
+ * certainty, which used to let routine metrics outrank a critical risk or an obligation falling
+ * due. So the order is decided first by a small table of usefulness tiers, built only from
+ * information the finding already carries - its kind, a risk's severity, whether an obligation
+ * has a real date and whether that date is still ahead. Confidence is only a tie-break inside a
+ * tier.
  *
- * At most two findings may share a label stem. A rich report's accepted evidence usually ends in a
- * long run of equally confident table rows ("Line item 80", "Line item 81", ...); without this the
- * section would fill with one table instead of showing the reader eight different things.
+ * One deliberate adjustment sits on top: a finding the document's own synthesis cited moves up a
+ * single tier. That is the repository's existing statement that the finding mattered, and one
+ * tier is enough to let it overtake its neighbours without letting it jump the whole table.
  *
- * Risks, obligations and deadlines are excluded: they have their own sections. So is anything a
- * chart or takeaway already states, so this section adds to the page instead of repeating it. The
- * analysis groups are not excluded - those are a browse-by-category view of everything, and a
- * highlight the reader can also find by browsing is still the highlight.
+ * Two caps keep the section varied rather than letting one table or one kind fill it. Anything a
+ * chart or takeaway already states is excluded, so the most consequential risks and obligations -
+ * the ones promoted into takeaways - are not repeated here.
  */
 class ImportantFindingsBuilder
 {
     private const MAX = 8;
 
+    /** A rich report ends in long runs of near-identical table rows; two of any one is plenty. */
     private const MAX_PER_STEM = 2;
 
-    /** EvidenceBudget::forDocument()'s materiality tiers, reused so one ranking governs both. */
-    private const TIERS = ['metric' => 1, 'definition' => 3, 'entity' => 3];
+    /** No single kind of finding may fill the section. */
+    private const MAX_PER_KIND = 3;
+
+    /**
+     * Usefulness tiers, lowest first. Readable on purpose: every entry is a plain statement about
+     * what kind of finding it is, and there is no arithmetic beyond the single-tier promotion for
+     * a synthesis citation.
+     */
+    private const TIERS = [
+        'critical_risk' => 0,
+        'high_risk' => 1,
+        'upcoming_obligation' => 1,
+        'dated_obligation' => 2,
+        'undated_obligation' => 3,
+        'risk' => 3,
+        'metric' => 4,
+        'fact' => 4,
+        'definition' => 5,
+        'entity' => 5,
+        'other' => 6,
+    ];
 
     /**
      * @param  Collection<int,DocumentEvidence>  $evidence
@@ -42,51 +63,60 @@ class ImportantFindingsBuilder
     {
         $cited = array_fill_keys($this->citedSourceIds($summary), true);
         $shown = array_fill_keys($alreadyShown, true);
+        $today = now()->startOfDay();
 
         $candidates = [];
         foreach ($evidence as $row) {
             $reference = $row->source_id ?: 'evidence:'.$row->id;
-            if (isset($shown[$reference]) || in_array($row->kind, ['risk', 'deadline', 'obligation', 'unresolved'], true)) {
+            // `unresolved` findings are an internal extraction state, never a reader's finding.
+            if (isset($shown[$reference]) || $row->kind === 'unresolved') {
                 continue;
             }
             $data = is_array($row->data) ? $row->data : [];
             if (trim((string) ($data['value'] ?? '')) === '' && trim((string) ($data['label'] ?? '')) === '') {
                 continue;
             }
+            $isCited = isset($cited[$reference]);
             $candidates[] = [
-                'tier' => self::TIERS[$row->kind] ?? 4,
-                'cited' => isset($cited[$reference]),
+                'tier' => max(0, self::TIERS[$this->classify($row->kind, $data, $today)] - ($isCited ? 1 : 0)),
                 'confidence' => round((float) ($data['confidence'] ?? 0), 2),
                 'row' => $row,
+                'data' => $data,
+                'cited' => $isCited,
                 'reference' => $reference,
             ];
         }
 
-        usort($candidates, fn ($a, $b) => [$b['cited'], $b['confidence'], $a['tier'], $a['reference']]
-            <=> [$a['cited'], $a['confidence'], $b['tier'], $b['reference']]);
+        usort($candidates, fn ($a, $b) => [$a['tier'], $b['confidence'], $a['reference']]
+            <=> [$b['tier'], $a['confidence'], $b['reference']]);
 
         $findings = [];
         $stems = [];
+        $kinds = [];
         foreach ($candidates as $candidate) {
             if (count($findings) >= self::MAX) {
                 break;
             }
-            $row = $candidate['row'];
-            $stem = $this->stem((string) ($row->data['label'] ?? ''));
-            if (($stems[$stem] ?? 0) >= self::MAX_PER_STEM) {
+            $data = $candidate['data'];
+            $stem = $this->stem((string) ($data['label'] ?? ''));
+            $kind = $this->group($candidate['row']->kind);
+            if (($stems[$stem] ?? 0) >= self::MAX_PER_STEM || ($kinds[$kind] ?? 0) >= self::MAX_PER_KIND) {
                 continue;
             }
             $stems[$stem] = ($stems[$stem] ?? 0) + 1;
-            $data = is_array($row->data) ? $row->data : [];
-            $pages = array_values(array_unique(array_filter(array_column($row->sources ?? [], 'page'), fn ($page) => $page !== null)));
+            $kinds[$kind] = ($kinds[$kind] ?? 0) + 1;
+            $pages = array_values(array_unique(array_filter(array_column($candidate['row']->sources ?? [], 'page'),
+                fn ($page) => $page !== null)));
             $findings[] = [
                 'sourceId' => $candidate['reference'],
-                'kind' => $row->kind,
+                'kind' => $candidate['row']->kind,
                 'label' => (string) ($data['label'] ?? ''),
                 'value' => (string) ($data['value'] ?? ''),
                 'unit' => $data['unit'] ?? null,
                 'period' => $data['period'] ?? null,
                 'subject' => (string) ($data['subject'] ?? ''),
+                'severity' => $this->severity($data),
+                'dueDate' => $this->dueDate($data),
                 'confidence' => $candidate['confidence'],
                 'citedBySynthesis' => $candidate['cited'],
                 'page' => count($pages) === 1 ? (int) reset($pages) : null,
@@ -94,6 +124,56 @@ class ImportantFindingsBuilder
         }
 
         return $findings;
+    }
+
+    /**
+     * Which usefulness tier this finding falls in. Only facts the finding states: nothing is
+     * guessed from wording, and an obligation without a real date is never treated as dated.
+     *
+     * @param  array<string,mixed>  $data
+     */
+    private function classify(string $kind, array $data, \DateTimeInterface $today): string
+    {
+        if ($kind === 'risk') {
+            return match ($this->severity($data)) {
+                'critical' => 'critical_risk',
+                'high' => 'high_risk',
+                default => 'risk',
+            };
+        }
+        if ($kind === 'deadline' || $kind === 'obligation') {
+            $due = $this->dueDate($data);
+            if ($due === null) {
+                // Relative or inferred timing is still an obligation; it just has no calendar date.
+                return 'undated_obligation';
+            }
+
+            return $due >= $today->format('Y-m-d') ? 'upcoming_obligation' : 'dated_obligation';
+        }
+
+        return array_key_exists($kind, self::TIERS) ? $kind : 'other';
+    }
+
+    /** @param array<string,mixed> $data */
+    private function severity(array $data): ?string
+    {
+        $severity = is_string($data['severity'] ?? null) ? strtolower(trim($data['severity'])) : null;
+
+        return in_array($severity, ['low', 'medium', 'high', 'critical'], true) ? $severity : null;
+    }
+
+    /** An explicit calendar date only, exactly as the extraction schema guarantees it. */
+    private function dueDate(array $data): ?string
+    {
+        $due = is_string($data['due_date'] ?? null) ? trim($data['due_date']) : '';
+
+        return ($data['date_type'] ?? null) === 'explicit' && preg_match('/^\d{4}-\d{2}-\d{2}$/D', $due) ? $due : null;
+    }
+
+    /** Obligations and deadlines are one kind for the diversity cap: they read the same. */
+    private function group(string $kind): string
+    {
+        return $kind === 'obligation' ? 'deadline' : $kind;
     }
 
     /** A label with its numbering removed, so the rows of one table share a stem. */

@@ -104,7 +104,7 @@ trait BuildsIntelligenceFixtures
     /** @param array<string,mixed> $attributes */
     protected function synthesis(Document $document, array $attributes = []): DocumentIntelligenceSummary
     {
-        return DocumentIntelligenceSummary::create([
+        return DocumentIntelligenceSummary::create($attributes + [
             'workspace_id' => $document->workspace_id,
             'document_id' => $document->id,
             'executive_summary' => 'The group grew its financing book while concentrating exposure in a few markets.',
@@ -112,7 +112,7 @@ trait BuildsIntelligenceFixtures
             'critical_risks' => [], 'upcoming_deadlines' => [], 'important_entities' => [],
             'recommended_attention' => [],
             'prompt_version' => '3',
-        ] + $attributes);
+        ]);
     }
 
     protected function riskFinding(Document $document, string $title, string $severity): DocumentRisk

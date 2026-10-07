@@ -41,6 +41,7 @@ class DocumentAnalysisComposer
         $derived = $this->charts->build($collected['observations'], $cited);
         $charts = array_slice($derived['candidates'], 0, self::MAX_CHARTS);
         $takeaways = $this->takeaways->build($document, $summary, $charts);
+        $notes = $this->takeaways->notes($summary, $takeaways);
         $groups = $this->groups->build($evidence);
 
         $shown = [];
@@ -53,7 +54,7 @@ class DocumentAnalysisComposer
         $important = $this->findings->build($evidence, $summary, array_values(array_unique($shown)));
 
         return [
-            'overview' => ['takeaways' => $takeaways],
+            'overview' => ['takeaways' => $takeaways, 'summaryNotes' => $notes],
             'visualAnalysis' => [
                 'charts' => $charts,
                 'omitted' => max(0, count($derived['candidates']) - count($charts)),
@@ -67,6 +68,7 @@ class DocumentAnalysisComposer
                 'chartableFindings' => $collected['stats']['chartable'],
                 'chartCandidates' => count($derived['candidates']),
                 'takeaways' => count($takeaways),
+                'summaryNotes' => count($notes),
                 'analysisGroups' => count($groups),
                 'importantFindings' => count($important),
                 'groundedSources' => $evidence->sum(fn (DocumentEvidence $row) => count($row->sources ?? [])),

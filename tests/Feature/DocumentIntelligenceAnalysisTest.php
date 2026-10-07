@@ -9,6 +9,7 @@ use App\Models\DocumentKpi;
 use App\Models\KpiDefinition;
 use App\Models\User;
 use App\Services\Intelligence\DocumentAnalysisComposer;
+use App\Services\Intelligence\ImportantFindingsBuilder;
 use App\Services\WorkspaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -325,6 +326,59 @@ class DocumentIntelligenceAnalysisTest extends TestCase
         }
     }
 
+    public function test_an_ungrounded_summary_finding_is_never_presented_as_a_takeaway(): void
+    {
+        $document = $this->intelligenceDocument();
+        $this->synthesis($document, ['key_findings' => [
+            'Total financing grew across the reporting period and is expected to continue.',
+            'The portfolio remains concentrated in a small number of regional markets.',
+        ]]);
+
+        $analysis = $this->analyze($document);
+        $this->assertSame([], $analysis['overview']['takeaways'], 'nothing grounded exists, so there are no takeaways');
+        // The only overview this document has is still offered, but as unsupported summary text.
+        $notes = $analysis['overview']['summaryNotes'];
+        $this->assertCount(2, $notes);
+        foreach ($notes as $note) {
+            $this->assertFalse($note['supported']);
+            $this->assertArrayNotHasKey('sourceIds', $note);
+        }
+        $this->assertSame(2, $analysis['stats']['summaryNotes']);
+    }
+
+    public function test_every_takeaway_a_rich_document_produces_is_grounded(): void
+    {
+        $document = $this->annualReport();
+        $document->intelligenceSummary->update(['key_findings' => [
+            'An unsupported sentence the synthesis wrote without citing anything at all.',
+        ]]);
+
+        $analysis = $this->analyze($document);
+        $this->assertGreaterThanOrEqual(3, count($analysis['overview']['takeaways']));
+        foreach ($analysis['overview']['takeaways'] as $takeaway) {
+            $this->assertNotSame([], $takeaway['sourceIds'], $takeaway['text']);
+        }
+        $texts = array_column($analysis['overview']['takeaways'], 'text');
+        $this->assertNotContains('An unsupported sentence the synthesis wrote without citing anything at all.', $texts);
+        // Grounded takeaways are plentiful here, so the unsupported text is not offered at all.
+        $this->assertSame([], $analysis['overview']['summaryNotes']);
+    }
+
+    public function test_unsupported_notes_never_repeat_a_grounded_takeaway(): void
+    {
+        $document = $this->intelligenceDocument();
+        $this->riskFinding($document, 'Concentration risk in two markets', 'high');
+        $this->synthesis($document, ['key_findings' => [
+            'Concentration risk in two markets was identified.',
+            'Separately, the group reported a material change in its funding mix this year.',
+        ]]);
+
+        $analysis = $this->analyze($document);
+        $this->assertCount(1, $analysis['overview']['takeaways']);
+        $this->assertSame(['Separately, the group reported a material change in its funding mix this year.'],
+            array_column($analysis['overview']['summaryNotes'], 'text'));
+    }
+
     // ---------------------------------------------------------------- groups, findings, stats
 
     public function test_analysis_groups_are_derived_from_the_findings_present(): void
@@ -349,13 +403,120 @@ class DocumentIntelligenceAnalysisTest extends TestCase
     {
         $analysis = $this->analyze($this->annualReport());
         $charted = array_merge(...array_column($analysis['visualAnalysis']['charts'], 'sourceIds'));
+        $stated = array_merge(...array_column($analysis['overview']['takeaways'], 'sourceIds'));
 
         $this->assertNotSame([], $analysis['importantFindings']);
         foreach ($analysis['importantFindings'] as $finding) {
             $this->assertNotSame('', $finding['sourceId']);
             $this->assertNotContains($finding['sourceId'], $charted);
-            $this->assertNotContains($finding['kind'], ['risk', 'deadline', 'obligation']);
+            $this->assertNotContains($finding['sourceId'], $stated);
+            $this->assertNotSame('unresolved', $finding['kind']);
         }
+    }
+
+    public function test_usefulness_decides_the_order_rather_than_extraction_confidence(): void
+    {
+        // The ranking table is exercised directly: at composer level the most consequential risks
+        // and obligations are promoted into takeaways first, so they never reach this section.
+        $document = $this->intelligenceDocument();
+        $rows = [
+            'Line item 1' => ['metric', ['value' => '101', 'unit' => 'USD thousand', 'confidence' => 0.99]],
+            'Supplier concentration' => ['risk', ['value' => 'Two suppliers dominate.', 'severity' => 'medium', 'confidence' => 0.5]],
+            'Covenant breach exposure' => ['risk', ['value' => 'A breach is possible.', 'severity' => 'critical', 'confidence' => 0.4]],
+            'Control weakness' => ['risk', ['value' => 'A control is weak.', 'severity' => 'high', 'confidence' => 0.45]],
+            'Facility refinancing' => ['obligation', ['value' => 'The facility must be refinanced.',
+                'date_type' => 'explicit', 'due_date' => now()->addYear()->toDateString(), 'confidence' => 0.3]],
+            'Office relocation' => ['fact', ['value' => 'The head office moved.', 'confidence' => 0.97]],
+        ];
+        foreach ($rows as $label => [$kind, $data]) {
+            $this->evidenceRow($document, $kind, ['label' => $label] + $data, null);
+        }
+
+        $findings = app(ImportantFindingsBuilder::class)->build(
+            DocumentEvidence::where('document_id', $document->id)->orderBy('identity')->get(), null, []);
+        $labels = array_column($findings, 'label');
+
+        $this->assertSame([
+            'Covenant breach exposure',  // critical risk
+            'Control weakness',          // high risk
+            'Facility refinancing',      // an obligation still ahead, on the lowest confidence here
+            'Supplier concentration',    // medium risk
+            'Line item 1',               // a metric, however certain
+            'Office relocation',
+        ], $labels);
+        $this->assertSame('critical', $findings[0]['severity']);
+        $this->assertSame(now()->addYear()->toDateString(), $findings[2]['dueDate']);
+    }
+
+    public function test_an_obligation_that_has_already_passed_ranks_below_one_still_ahead(): void
+    {
+        $document = $this->intelligenceDocument();
+        foreach ([['Historic filing', '-2 years'], ['Upcoming filing', '+2 years']] as [$title, $offset]) {
+            $this->evidenceRow($document, 'obligation', ['label' => $title, 'value' => $title.' is required.',
+                'date_type' => 'explicit', 'due_date' => now()->modify($offset)->toDateString()], null);
+        }
+        $this->evidenceRow($document, 'obligation', ['label' => 'Undated covenant',
+            'value' => 'Reporting is required within 30 days.', 'date_type' => 'relative', 'due_date' => null], null);
+
+        $labels = array_column(app(ImportantFindingsBuilder::class)->build(
+            DocumentEvidence::where('document_id', $document->id)->orderBy('identity')->get(), null, []), 'label');
+
+        $this->assertSame(['Upcoming filing', 'Historic filing', 'Undated covenant'], $labels);
+    }
+
+    public function test_a_synthesis_citation_promotes_a_finding_by_one_tier_only(): void
+    {
+        $document = $this->intelligenceDocument();
+        $this->riskFinding($document, 'Supplier concentration', 'medium');
+        $fact = $this->evidenceRow($document, 'fact', ['label' => 'Funding mix',
+            'value' => 'Wholesale funding rose to a third of the balance sheet.', 'confidence' => 0.5], 'fact:cited');
+        $this->evidenceRow($document, 'fact', ['label' => 'Office relocation',
+            'value' => 'The head office moved during the year.', 'confidence' => 0.95], null);
+        // A tension is cited evidence that never becomes a takeaway, so the promotion is visible.
+        $this->synthesis($document, ['tensions' => [[
+            'observation' => 'Funding mix shifted towards wholesale sources',
+            'significance' => 'Wholesale funding is more expensive and less stable.',
+            'basis' => 'explicit', 'source_ids' => [$fact->source_id],
+        ]]]);
+
+        $findings = $this->analyze($document)['importantFindings'];
+        $labels = array_column($findings, 'label');
+
+        // The cited fact overtakes the more confident uncited one, but not the risk above its tier.
+        $this->assertSame(['Supplier concentration', 'Funding mix', 'Office relocation'], $labels);
+        $this->assertTrue($findings[1]['citedBySynthesis']);
+        $this->assertFalse($findings[2]['citedBySynthesis']);
+    }
+
+    public function test_no_single_kind_or_table_may_fill_the_section(): void
+    {
+        $document = $this->intelligenceDocument();
+        foreach (['Supplier concentration', 'Currency volatility', 'Staff attrition', 'Vendor lock in'] as $title) {
+            $this->riskFinding($document, $title, 'medium');
+        }
+        foreach (['Processing fee', 'Settlement amount', 'Advisory charge', 'Custody charge'] as $index => $label) {
+            $this->metricFinding($document, $label, (string) (100 + $index), 'USD thousand', '2024');
+        }
+        foreach (['Office relocation', 'Policy refresh', 'Committee renewal', 'Vendor review'] as $label) {
+            $this->evidenceRow($document, 'fact', ['label' => $label, 'value' => $label.' took place during the year.'], null);
+        }
+        // Twelve rows of one table: eligible, but never more than two of them.
+        foreach (range(1, 12) as $index) {
+            $this->metricFinding($document, 'Line item '.$index, (string) (200 + $index), 'USD thousand', '2023');
+        }
+
+        $findings = $this->analyze($document)['importantFindings'];
+        $counts = array_count_values(array_column($findings, 'kind'));
+        $stems = array_count_values(array_map(fn ($finding) => preg_replace('/\d+/', '', $finding['label']), $findings));
+
+        $this->assertCount(8, $findings);
+        foreach ($counts as $kind => $count) {
+            $this->assertLessThanOrEqual(3, $count, $kind);
+        }
+        foreach ($stems as $stem => $count) {
+            $this->assertLessThanOrEqual(2, $count, $stem);
+        }
+        $this->assertGreaterThanOrEqual(3, count($counts), 'the section must show more than one kind of finding');
     }
 
     public function test_a_rich_report_reports_its_own_derivation_counts(): void

@@ -17,8 +17,14 @@ use App\Models\DocumentIntelligenceSummary;
  * reporting year. Each restates figures DocIntel already accepted and carries the same source
  * references, so a takeaway can always be opened back to the document.
  *
- * Nothing is inferred beyond that, and no takeaway is written from text the synthesis did not
- * ground, except as a last resort when there would otherwise be too few to be useful.
+ * Every takeaway carries source references. Nothing ungrounded is ever presented as a takeaway:
+ * fewer grounded conclusions is the better outcome, because a takeaway the reader cannot open back
+ * to the document is not evidence, it is a claim.
+ *
+ * The synthesis also writes `key_findings`, plain strings with no references at all. Those are not
+ * takeaways and never enter the list. They are returned separately by notes(), clearly as
+ * unsupported summary text, and only for a document too thin to produce three grounded takeaways -
+ * where suppressing them entirely would lose the only overview the document has.
  */
 class TakeawayBuilder
 {
@@ -30,6 +36,11 @@ class TakeawayBuilder
     private const DUPLICATE_OVERLAP = 0.6;
 
     private const QUOTAS = ['synthesis' => 4, 'metric' => 3, 'trend' => 2, 'risk' => 2, 'obligation' => 1];
+
+    /** Below this many grounded takeaways, unsupported summary text is offered separately. */
+    private const MIN_GROUNDED = 3;
+
+    private const MAX_NOTES = 3;
 
     /**
      * @param  list<array<string,mixed>>  $charts
@@ -55,6 +66,10 @@ class TakeawayBuilder
             if (($used[$origin] ?? 0) >= self::QUOTAS[$origin]) {
                 continue;
             }
+            // A candidate that lost its references on the way here is not a takeaway.
+            if ($candidate['sourceIds'] === []) {
+                continue;
+            }
             if (mb_strlen($candidate['text']) < self::MIN_USEFUL_CHARS || $this->duplicates($candidate['text'], $taken)) {
                 continue;
             }
@@ -62,25 +77,44 @@ class TakeawayBuilder
             $taken[] = $candidate;
         }
 
-        // Only when the grounded material genuinely cannot fill the section: the synthesis'
-        // own key findings carry no source references, so they are a visible last resort.
-        if (count($taken) < 3 && $summary) {
-            foreach ($summary->key_findings ?? [] as $finding) {
-                if (count($taken) >= 3) {
-                    break;
-                }
-                if (is_string($finding) && mb_strlen(trim($finding)) >= self::MIN_USEFUL_CHARS && ! $this->duplicates($finding, $taken)) {
-                    $taken[] = ['origin' => 'summary', 'text' => trim($finding), 'detail' => null,
-                        'basis' => null, 'severity' => null, 'sourceIds' => [], 'chartId' => null];
-                }
-            }
-        }
-
         foreach ($taken as $index => $takeaway) {
             $taken[$index]['id'] = 'takeaway-'.($index + 1);
         }
 
         return $taken;
+    }
+
+    /**
+     * Unsupported summary text, kept apart from the takeaways and labelled as such.
+     *
+     * The synthesis' `key_findings` are prose without source references, so they cannot be shown
+     * as evidence-backed. They are surfaced only when the grounded takeaways number fewer than
+     * MIN_GROUNDED: for a document that produced little else, this is the only overview it has,
+     * and dropping it silently would be a worse answer than showing it for what it is.
+     *
+     * @param  list<array<string,mixed>>  $takeaways  the grounded takeaways build() returned
+     * @return list<array<string,mixed>>
+     */
+    public function notes(?DocumentIntelligenceSummary $summary, array $takeaways): array
+    {
+        if ($summary === null || count($takeaways) >= self::MIN_GROUNDED) {
+            return [];
+        }
+        $notes = [];
+        foreach ($summary->key_findings ?? [] as $finding) {
+            if (count($notes) >= self::MAX_NOTES) {
+                break;
+            }
+            if (! is_string($finding) || mb_strlen(trim($finding)) < self::MIN_USEFUL_CHARS) {
+                continue;
+            }
+            if ($this->duplicates($finding, [...$takeaways, ...$notes])) {
+                continue;
+            }
+            $notes[] = ['id' => 'note-'.(count($notes) + 1), 'text' => trim($finding), 'supported' => false];
+        }
+
+        return $notes;
     }
 
     /** @return list<array<string,mixed>> */
