@@ -3,11 +3,12 @@
 namespace App\Services\Intelligence\Values;
 
 use App\Models\DocumentEvidence;
+use App\Services\Intelligence\ProvenanceProjector;
 
 /** Adds V2 typing to a read model; stored evidence and identity remain untouched. */
 class TypedEvidenceProjector
 {
-    public function __construct(private ValueParser $parser) {}
+    public function __construct(private ValueParser $parser, private ProvenanceProjector $provenance) {}
 
     /** @return array<string,mixed> */
     public function project(DocumentEvidence $row, ?string $confirmedEntityId = null): array
@@ -23,6 +24,7 @@ class TypedEvidenceProjector
             $quotes[] = $data['quote'];
         }
         $data['typed'] = $this->parser->parse($data, $quotes, $confirmedEntityId);
+        $data['provenance'] = $this->provenance->project($row);
 
         return $data;
     }
