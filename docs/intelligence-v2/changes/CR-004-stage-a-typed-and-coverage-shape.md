@@ -4,9 +4,9 @@
 |---|---|
 | **Author** | Backend implementation |
 | **Date** | 2026-10-07 |
-| **Status** | draft |
-| **Approver** | Pending |
-| **Approved on** | Pending |
+| **Status** | approved |
+| **Approver** | Stage A contract approver |
+| **Approved on** | 2026-10-07 |
 | **Supersedes** | none |
 
 ## 1. Contract sections affected
@@ -36,7 +36,7 @@ The Stage A task also names `entity` and actual/forecast/target within a typed v
 
 > Add explicit nullable `entity_ref` and `measure_status: "actual" | "forecast" | "target" | null` to `TypedValue`, populated only from stored, grounded record metadata. Extend `scale` to `1e12` to match the existing parser. Add `CoverageState.stages` with named `ingestion`, `extraction` and `synthesis` entries, each carrying a status and `unknown_facts`; reserve `review` without emitting it. Unknown facts never permit `complete` or an absence claim.
 
-The exact stage statuses, which source facts qualify each status, and the initial parser version need approval before implementation. This draft deliberately does not invent an enum, threshold or version string.
+The approved stage statuses, precedence, field shape and initial parser version are recorded in contract §§1, 9 and 10 and the approver notes below. The earlier open proposal is superseded.
 
 ## 3. Why
 
@@ -100,7 +100,7 @@ Without the typed qualifiers, consumers must re-read free-text subject and `metr
 
 ## 13. Conformance fixtures
 
-- [x] No golden file changed in this draft. Approval needs new trillion, target/actual and unknown-stage cases under §22; existing goldens require explicit approval to change.
+- [x] No golden file changed in this contract amendment. Implementation needs new trillion, target/actual and unknown-stage cases under §22; existing goldens require explicit approval to change.
 
 ## 14. Rollout and rollback
 
@@ -108,12 +108,12 @@ Rollout and rollback use the V2 flag. Any cached derived metadata is inert while
 
 ## 15. Open questions
 
-Approve the exact qualifier names, the initial parser version, and the stage ledger status/unknown-fact shape. Decide whether `entity_ref` is a source ID only or may carry a source string when no entity record exists. Until the parser version is set, the period-only record retains its source period and legacy mapping but cannot carry a versioned `data.typed.dates.due_date` artefact.
+Resolved: `entity_ref.id` requires a confirmed entity record and `entity_ref.text` carries the text; `values.parser_version` is `values.v1`. The exact stage shape is in §10.
 
 ## 16. Approval
 
-- [ ] Contract §§1, 9 and 10 updated in the same approved change.
-- [ ] Exact API shape and conformance fixtures reviewed.
-- [ ] Provider-call impact acknowledged: zero.
+- [x] Contract §§1, 9 and 10 updated in the same approved change.
+- [ ] Conformance fixtures remain an implementation gate.
+- [x] Provider-call impact acknowledged: zero.
 
-**Approver notes:** Pending.
+**Approver notes:** Approved `TypedValue.scale` through `1e12`, nullable `measure_status` (`actual|forecast|target`) populated only from stored `metric_type`/`value_basis`, `entity_ref: {id: string|null, text: string}` with an id only for confirmed entity records, and `values.parser_version = "values.v1"`. Top-level coverage remains exactly `complete|bounded|partial|unavailable`; existing V1 counters retain integer types. Add `stages.ingestion`, `.extraction`, `.synthesis` with stage status `complete|bounded|partial|unavailable|unknown`, `unknown_facts`, and nullable unknown numeric diagnostics. Reserve but do not emit `review`. Apply the approved stage precedence and make unknown required facts prevent top-level complete with stable `<fact>_unknown` reasons. Use only currently observable builder facts and do not instrument extraction. Contract §§1, 9 and 10 were amended on approval.

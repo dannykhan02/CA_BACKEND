@@ -4,9 +4,9 @@
 |---|---|
 | **Author** | Backend implementation |
 | **Date** | 2026-10-07 |
-| **Status** | draft |
-| **Approver** | Pending |
-| **Approved on** | Pending |
+| **Status** | approved |
+| **Approver** | Stage A contract approver |
+| **Approved on** | 2026-10-07 |
 | **Supersedes** | none |
 
 ## 1. Contract sections affected
@@ -36,9 +36,9 @@ The contract has no fallback when an accepted extraction row has grounded eviden
 
 **Proposed:**
 
-> `origin: unknown` means that accepted source evidence exists but stored evidence and extraction metadata do not establish whether the record's statement was directly asserted. Such a record has `assertion: inferred`, `attribution: unattributed`, and cannot support a `stated` Brief block or an absence claim. Its V1 `basis` maps to `inferred`. Analysts still receive the record and its original source evidence.
+> `origin: unknown` means that accepted source evidence exists but stored evidence and extraction metadata do not establish whether the record's statement was directly asserted. Such a record has `assertion: unspecified`, `attribution: unattributed`, and cannot support a `stated` Brief block or an absence claim. Its V1 `basis` maps to `inferred`. Analysts still receive the record and its original source evidence.
 
-The exact API exposure and labelling of this fallback need approval before implementation.
+The approved exact origin test and API mapping are recorded in the approver notes below and contract §§2–3.
 
 ## 3. Why
 
@@ -103,7 +103,7 @@ The exact API exposure and labelling of this fallback need approval before imple
 
 ## 13. Conformance fixtures
 
-- [x] No golden file changes in this draft. An approved implementation needs a new unknown-origin case; existing goldens must remain unchanged unless a separate contract approval names them.
+- [x] No golden file changes in this contract amendment. Implementation needs a new unknown-origin case; existing goldens must remain unchanged unless a separate contract approval names them.
 
 ## 14. Rollout and rollback
 
@@ -111,12 +111,12 @@ Rollout and rollback use the V2 flag. Additive JSON provenance, if cached, remai
 
 ## 15. Open questions
 
-Approve the fallback enum and its display label, or specify a different contract representation that does not overstate source directness.
+Resolved by the approved `unknown` / `unspecified` contract.
 
 ## 16. Approval
 
-- [ ] Contract §§2–3 updated in the same approved change.
-- [ ] Existing implementation and API impact reviewed.
-- [ ] Provider-call impact acknowledged: zero.
+- [x] Contract §§2–3 updated in the same approved change.
+- [x] Existing implementation and API impact reviewed.
+- [x] Provider-call impact acknowledged: zero.
 
-**Approver notes:** Pending.
+**Approver notes:** Approved with `origin: unknown`, `assertion: unspecified`, unattributed attribution and V1 `basis: inferred`. Assign document origin only when a **non-empty** normalized `value` is a substring of the normalized cited quote, any normalized `period` is also a substring, and any `due_date` passed the existing `EvidenceSchema` grounding check. Use `EvidenceMerger::normalize` semantics; never use model-reported origin. Unknown-origin records remain stored, tiered and analyst-visible but cannot support `stated` or absence claims. Contract §§2–3 and affected mappings were amended on approval.

@@ -4,9 +4,9 @@
 |---|---|
 | **Author** | Backend implementation |
 | **Date** | 2026-10-07 |
-| **Status** | draft |
-| **Approver** | Pending |
-| **Approved on** | Pending |
+| **Status** | approved |
+| **Approver** | Stage A contract approver |
+| **Approved on** | 2026-10-07 |
 | **Supersedes** | none |
 
 ## 1. Contract sections affected
@@ -30,9 +30,9 @@ The current text would label a past earthquake as needing attention solely becau
 
 **Proposed:**
 
-> A risk record whose `observed_date` role is a grounded calendar date before `as_of`, with no separately grounded open or future consequence, remains a risk record and may retain its materiality tier; its attention state is `informational` with reason `historical_context`. A missing or unresolved observed date does not trigger this exception.
+> A risk record whose `observed_date` resolves to a past calendar date or an anchored period ending before `asOf`, and for which no other same-span record has a future date role or open status, remains a risk record, retains its scored tier, is not forced by the critical/high risk rules, and has `informational` attention with reason `historical_context`. A missing or unresolved observed date does not trigger this exception.
 
-Whether such a record still consumes the forced Tier 1 budget, or instead stays in its scored tier, is an open product decision below. No implementation is made until that decision is approved.
+The approved exception does not consume a forced Tier 1 slot. A continuing consequence grounded only in a different span may not suppress it in V1.
 
 ## 3. Why
 
@@ -97,7 +97,7 @@ The contract treats severity as a forced attention rule but does not distinguish
 
 ## 13. Conformance fixtures
 
-- [x] No golden changes in this draft. Approval requires a new fixed-clock past-earthquake case and an explicit review of any changed Tier 1 golden.
+- [x] No golden changes in this contract amendment. Implementation requires a new fixed-clock past-earthquake case and an explicit review of any changed Tier 1 golden.
 
 ## 14. Rollout and rollback
 
@@ -105,12 +105,12 @@ Rollout and rollback use the V2 flag. No legacy data is rewritten.
 
 ## 15. Open questions
 
-Should a historical critical risk remain a forced Tier 1 item with `informational` attention, or remain in the scorer's ordinary tier? The contract must choose one so T4 and the forced-item budget remain deterministic.
+Resolved: it remains in its scored tier and is exempt from critical/high risk forced rules.
 
 ## 16. Approval
 
-- [ ] Contract §§7 and 11 updated in the same approved change.
-- [ ] T9 ranking impact reviewed.
-- [ ] Provider-call impact acknowledged: zero.
+- [x] Contract §§7 and 11 updated in the same approved change.
+- [x] T9 ranking impact is subject to fixture 25.
+- [x] Provider-call impact acknowledged: zero.
 
-**Approver notes:** Pending.
+**Approver notes:** Approved conservative V1 rule. A risk with an `observed_date` resolving to a past calendar date or anchored period ending before injectable `asOf`, with no other same-span record carrying a future date role or open status, retains its risk kind and scored tier, is exempt from critical/high-risk forced Tier 1 rules, and has `informational` attention with reason `historical_context`. Missing or unresolved observed dates do not qualify. A consequence grounded only in a different span may not suppress this exception; no semantic or cross-span inference is authorized. Contract §§7.3 and 11.1 were amended on approval.

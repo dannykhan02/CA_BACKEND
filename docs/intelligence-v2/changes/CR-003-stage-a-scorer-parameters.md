@@ -4,9 +4,9 @@
 |---|---|
 | **Author** | Backend implementation |
 | **Date** | 2026-10-07 |
-| **Status** | draft; product values required |
-| **Approver** | Pending |
-| **Approved on** | Pending |
+| **Status** | approved |
+| **Approver** | Stage A contract approver |
+| **Approved on** | 2026-10-07 |
 | **Supersedes** | none |
 
 ## 1. Contract sections affected
@@ -38,7 +38,7 @@ The contract gives the tier bands, budgets, and `imminent_days` proposed value, 
 
 > `config/intelligence_v2.php` contains an approved numeric weight for each §9.3 signal, any signal-specific parameters, a normalization rule that yields a score comparable with §9.2's 0.72/0.45/0.18 bands, and the exact versioned date-role and penalty/consequence pattern lists. No parameter is inferred from code defaults.
 
-The concrete values and patterns must be supplied by the contract approver before this CR can be approved or implemented.
+The concrete values and patterns are now supplied by the Stage A Part 2 approval and transcribed in contract §§4.4, 7.3 and 9. The earlier placeholder proposal is superseded by those exact values.
 
 ## 3. Why
 
@@ -104,7 +104,7 @@ Stage A requires one deterministic scorer and machine-readable contributions. Mu
 
 ## 13. Conformance fixtures
 
-- [x] No golden files changed in this draft. Approval must specify the exact `config.json` values for scorer, date-role, forced-rule and deterministic-tiebreak cases, including fixture 25 and 26.
+- [x] No golden files changed in this contract amendment. Implementation must use the approved exact values in conformance cases, including fixtures 25 and 26.
 
 ## 14. Rollout and rollback
 
@@ -112,12 +112,12 @@ The V2 flag controls rollout and rollback. Parameter version bumps recompute det
 
 ## 15. Open questions
 
-Provide the full weight table, score normalization, signal parameters, date-role patterns, penalty patterns and the Tier ≤ 2 neighbourhood definition. The `imminent_days` proposed value of 90 is already defined by §7.3 and is not requested again.
+Resolved by the Stage A Part 2 specification. Fixture 25 and 26 remain implementation gates.
 
 ## 16. Approval
 
-- [ ] Concrete values and patterns supplied and contract §§4, 7 and 9 updated in the same change.
+- [x] Concrete values and patterns supplied and contract §§4, 7 and 9 updated in the same change.
 - [ ] T9 ranking effects and any approved difference reviewed.
-- [ ] Provider-call impact acknowledged: zero.
+- [x] Provider-call impact acknowledged: zero.
 
-**Approver notes:** Pending.
+**Approver notes:** Approved the exact Stage A Part 2 specification dated 2026-10-07, now transcribed into contract §§4.4, 7.3 and 9: class bases, signed weights, signal value rules, clamp/reason accounting, 0.72/0.45/0.18 bands, one-tier synthesis-citation promotion, 90/365-day proximity, English word-boundary date and consequence patterns, forced priorities and budgets, pre-forcing Tier ≤ 2 neighbourhood and §9.5 tiebreak. `headline_measure` is currency-only. Confidence does not affect score, tier or forcing. No unlisted values are approved; fixtures 25 and 26 remain gates. The approval does not waive the instruction to stop and request a change if configured span type names are absent from stored span vocabulary.
