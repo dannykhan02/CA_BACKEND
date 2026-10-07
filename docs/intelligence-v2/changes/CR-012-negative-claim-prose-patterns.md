@@ -19,3 +19,5 @@
 **Accepted conservative false positives:** `lack of clarity` can describe uncertainty rather than document-wide absence; `not addressed in this section` may describe only a section; `complete coverage` may describe insurance coverage rather than evidence completeness. These are intentionally rejected on V2 AI surfaces under version 1. The screen does not attempt negation-scope analysis.
 
 **Approver notes:** CR-012 approved as specified by the user. No scorer, tier, forced-rule, formatter, dedupe or chart value changes are authorized.
+
+**Stage A implementation note:** The named `absence.high_critical_risks` template renders the §12.1 example predicate without AI text. Current synthesis takeaway rows declare no predicate, so a match is omitted before quota/dedupe selection and counted; a match by itself never requests this template. Existing `key_findings` mirrored as unsupported summary notes remain a legacy-array exception.

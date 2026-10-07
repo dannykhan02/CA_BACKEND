@@ -721,6 +721,8 @@ Before any `origin: docintel_ai` block is accepted, it is screened against `inte
 
 A match is a conservative trigger, never proof that an absence assertion is valid. A separately declared deterministic predicate must pass §12.1's complete-coverage, zero-match and provenance conditions before its approved absence template may be emitted. A match alone never creates a template. If the guard fails, emit no absence block. A rejected block with a separately available **non-absence** deterministic template over the same cited records follows §14.4; otherwise omit it and count `brief.ai_blocks_rejected`. Never repair by provider call. Log only block type, reason and count, without text. The five legacy summary arrays remain unchanged (§12.4). Accepted false positives include `lack of clarity`, `not addressed in this section` and `complete coverage` used for insurance; see CR-012. No negation-scope analysis is attempted.
 
+Stage A's existing `material_findings` and `trends` have no declared deterministic absence predicate, so a match on their V2 takeaway presentation is omitted before selection and counted in the additive `analysis.stats.briefAiBlocksRejected` diagnostic. `key_findings` mirrored into `summaryNotes` is one of the unchanged legacy arrays. The only Stage A named absence template is `absence.high_critical_risks`: the separately declared predicate `risk_severity_in(high,critical)` yields “No high or critical risks were identified.” only after the guard passes. No AI wording is reused.
+
 ### 12.4 Scope of the guard
 
 The guard applies to V2 blocks and V2 surfaces. The five legacy summary arrays (§3.3) are not screened — they are V1 content, unchanged, and screening them would be a modification. They stay labelled as ungrounded AI prose.
