@@ -178,7 +178,9 @@ Attribution {
 
 - `role` defaults to `unattributed`, **never** to `author`. An unattributed statement is not the same as a statement by the document's author, and V2 must not silently promote one to the other.
 - `reported: true` forbids a Brief block from presenting the claim as the document's own position; the block must name the speaker or the role.
-- `attribution` is derived deterministically where the span contains a reporting pattern DocIntel recognises ("the auditor noted", "the Authority alleges", "management believes"); otherwise it stays `unattributed` with `speaker: null`. **No provider call is made to determine attribution.** A model-proposed attribution is out of scope for V2 and requires a change request.
+- Attribution matching is English-only, case-insensitive, and driven by the versioned `config/intelligence_v2.php` pattern map approved in CR-007. The nearest approved lexical pattern to the claim wins. An exact tie or no match yields `role: unattributed`, `speaker: null`, `reported: false`. `reported` is true only for `counterparty`, `quoted`, and `third_party`; auditor and regulator remain false in V1. Management statements remain unattributed; never infer `author` from “management”. **No provider call is made to determine attribution.** A model-proposed attribution is out of scope.
+
+The approved literal phrases are in CR-007 and config. The `quoted` templates are `according to <named speaker>`, `<named speaker> said`, and `<named speaker> stated that`. A speaker ID is present only when a matching confirmed entity record exists; otherwise it is null. The cited span establishing the pattern supplies `evidence_ref`.
 
 ### 2.4 Combination rules
 
@@ -342,7 +344,7 @@ The invariant "a non-null `document_deadlines.due_date` is a complete calendar d
 
 ## 5. Materiality tiers
 
-> **Revised (clarification pass).** A materiality model already exists: `ImportantFindingsBuilder::TIERS` (seven usefulness tiers), plus `TakeawayBuilder`'s quotas and `ChartCandidateBuilder::score()` — three independent mechanisms (audit §9.3, R16). V2 unifies them. **The unified model must reproduce their current decisions**; a refactor that changes what users see is a product change, and needs a change request.
+> **Revised (CR-006).** A materiality model already exists: `ImportantFindingsBuilder::TIERS` (seven usefulness tiers), plus `TakeawayBuilder`'s quotas and `ChartCandidateBuilder::score()` — three independent mechanisms (audit §9.3, R16). V2 unifies them. Selected membership, tier membership, takeaway selection and chart order remain calibration gates; exact-score V1 confidence/reference tie order is deliberately replaced by §9.5.
 
 ### 5.0 Mapping onto the existing seven tiers
 
@@ -474,7 +476,7 @@ Rules 20 and 30 depend on "now", so a tier assignment has a validity window. A T
 - **T6** Tier 1 is never padded above the number of qualifying records.
 - **T7** Tier 1 ordering is fully determined by (forced-rule priority, score, tiebreak) — no randomness, no insertion order.
 - **T8** `per_kind`, `per_stem` and `origin_quotas` never exclude a forced item.
-- **T9** For the existing test corpus, Tier 1 contains every item today's `ImportantFindingsBuilder` and `TakeawayBuilder` would surface, unless a change request records the difference. Regression, not just invariance, is what R16 asks for.
+- **T9** Fixture 25 asserts selected set and tier membership strictly, and asserts order strictly wherever materiality scores differ. Exact-score ties follow §9.5. V1 confidence/reference tie order is deliberately not preserved (CR-006). Takeaway selection and chart candidate order remain strict calibration checks.
 
 ---
 
@@ -495,7 +497,7 @@ app/Services/Intelligence/Materiality/Signals/                  # one class per 
 config/intelligence_v2.php                                      # every weight and threshold
 ```
 
-The three existing ranking mechanisms become callers of this service, keeping their current outputs (§5.0, §7.1, T9):
+The three existing ranking mechanisms become callers of this service, subject to the CR-006 exact-score tie-order exception (§5.0, §7.1, T9):
 
 | Existing | After |
 |---|---|
@@ -580,7 +582,7 @@ None of these is part of `pipeline_key`. **Bumping any of them must never re-ext
 
 ### 9.5 Determinism and tiebreaks
 
-Ties in score are broken by, in order: forced-rule priority (absent = 999), tier band, `kind` in the fixed order `[obligation, deadline, risk, metric, fact, definition, entity, unresolved]`, earliest `sources[0].start_offset`, then `identity` ascending. `identity` is a sha256 and total, so the order is total.
+The V2 total order is, in sequence: (1) forced-rule priority (absent = 999), (2) tier band, (3) `kind` in `[obligation, deadline, risk, metric, fact, definition, entity, unresolved]`, (4) earliest `sources[0].start_offset`, (5) `identity` ascending. `identity` is a sha256 and total. Confidence never participates in materiality score, tier assignment, forced rules, or this tiebreak. V1's confidence/reference order for exact-score ties is deliberately not preserved (CR-006).
 
 ### 9.6 Testability
 
@@ -1330,7 +1332,7 @@ tests/Fixtures/IntelligenceV2/
 | `16-legacy-normal-route` | §21.2: adapter, skipped signals, `page_only`/`none` highlighting, charts suppressed, `bounded` coverage, deterministic-only Brief |
 | `17-superseded-pipeline-key` | old evidence rows invisible (§21.3) |
 | `18-flag-off` | `intelligence-off.json` is byte-identical to the merged pre-V2 baseline; new keys **absent**, not null; `analysis` still present, since it predates V2 (§20.2, A6) |
-| `25-preserves-existing-ranking` | T9: for the existing `DocumentIntelligenceAnalysisTest` corpus, the unified scorer reproduces today's `importantFindings` order, `takeaways` selection and chart candidate order (R16) |
+| `25-preserves-existing-ranking` | T9: for the existing `DocumentIntelligenceAnalysisTest` corpus, selected set, tier membership, takeaway selection and chart candidate order are strict. Ordering is strict where scores differ; exact-score ties use §9.5 rather than V1 confidence/reference order (CR-006). |
 | `26-forced-item-beats-per-kind-cap` | four critical risks: all four forced into Tier 1, `per_kind = 3` not applied to forced items (T8) — the behaviour today's `MAX_PER_KIND` does not provide |
 | `19-no-bounding-boxes` | every highlight is `offset`, `text_match`, `page_only` or `none`; no case produces a box (§15.2) |
 | `20-text-match-fallback` | offsets exist but the consumer is not `extracted_text` → `text_match` with `needle`, `occurrence`, `occurrences` |
@@ -1378,7 +1380,7 @@ The visualization branch created exactly that namespace with 11 classes, all pro
 `CA_BACKEND/docs/` is the established home for this architecture — `docintel-date-contract.md`, `architecture/evidence-span-grounding.md`, `architecture/large-document-processing.md`, `tasks/docintel-*`. `/home/collins/boys/docs/` is empty, is not inside either git repository, and would therefore not be version-controlled at all. Keeping these files in `CA_BACKEND/docs/intelligence-v2/` is the only option that versions them.
 
 **Q8 (new) — Does V2 need a new scorer at all, given three already exist? RESOLVED: yes, but as unification.**
-`ImportantFindingsBuilder`, `TakeawayBuilder` and `ChartCandidateBuilder` each rank and cap independently via `private const`s (audit R16). None is versioned, configurable or testable as a unit, and none provides a forced-item guarantee — a fourth critical risk is excluded today by `MAX_PER_KIND = 3`. V2 unifies them at their current values (§5.0, §7.1, T9, fixture `25`) and adds the guarantee (§7.3, fixture `26`).
+`ImportantFindingsBuilder`, `TakeawayBuilder` and `ChartCandidateBuilder` each rank and cap independently via `private const`s (audit R16). None is versioned, configurable or testable as a unit, and none provides a forced-item guarantee — a fourth critical risk is excluded today by `MAX_PER_KIND = 3`. V2 unifies them under T9's calibrated membership and selection rules, with the CR-006 exact-score tie exception, and adds the guarantee (§7.3, fixture `26`).
 
 ### Still open — product decisions
 
@@ -1386,7 +1388,7 @@ The visualization branch created exactly that namespace with 11 classes, all pro
 
 **Q4 — Synthesis output pressure** (§19.4, audit §12.4). `synthesis_max_tokens` is 8192 for one call plus one bounded repair. Brief blocks would compete with `executive_summary` and `key_findings`, and the visualization branch has made `material_findings` and `trends` load-bearing for the takeaway list while they remain the first fields dropped under pressure. The options — a smaller Brief cap, a raised `synthesis_max_tokens` (cost, no new call), or splitting Brief generation out — trade cost against completeness. **Needs measurement first, then a product decision.** This is the one place V2 could degrade existing behaviour, so it should be settled before the prompt changes.
 
-**Q5 — `attribution` pattern set** (§2.3). Deterministic reporting-pattern detection will have modest recall, so most records will stay `unattributed`. Whether that is acceptable, or whether attribution should wait for a design that can do better, is a product call. A model-proposed attribution remains out of scope under §19.3.
+**Q5 — `attribution` pattern set. RESOLVED by CR-007:** English-only, versioned, config-driven patterns and nearest-match rules are in §2.3 and CR-007. A model-proposed attribution remains out of scope under §19.3.
 
 **Q9 — Scope of Stage A Part 2. RESOLVED:** The Stage A Part 2 instruction authorizes typed values, provenance, materiality, attention, coverage, negative-claim guard integration and explainability. Stage B is not authorized by this instruction.
 
@@ -1398,6 +1400,8 @@ The visualization branch created exactly that namespace with 11 classes, all pro
 
 CR-001 through CR-004 are approved as amended above: unknown/unspecified provenance, conservative historical-risk attention, exact scorer and role-pattern parameters, and typed-value/coverage shapes. A8 records the already-committed period-only validator exception. The Stage A Part 2 instruction is authoritative where earlier contract text differs.
 
+CR-006 approves §9.5 tie ordering over V1 confidence/reference order for exact-score ties and keeps all other fixture 25 checks strict. CR-007 approves the exact attribution pattern map and tie/default/reported rules. Neither changes scorer weights, bands, class bases, signals, promotion, or forced rules.
+
 ### 2026-10-07 — clarification pass
 
 Prompted by a review of the audit's branch provenance. The corrections below all follow from one root cause: the first draft was written against a backend tree that did not contain the intelligence visualization work, while the frontend tree it was compared against did (audit §0.2, §5.3).
@@ -1406,8 +1410,8 @@ Prompted by a review of the audit's branch provenance. The corrections below all
 |---|---|---|
 | 1 | **New §0a** | V2 is an extension of `App\Services\Intelligence\*`, not greenfield. Prerequisite merge, inventory of what exists, and the seven things V2 genuinely adds. |
 | 2 | §1 | `TypedValue` wraps the existing `MeasurementParser` / `Measurement` / `PeriodParser` / `ReportingPeriod` and delegates to them; existing ambiguity rejections are authoritative. |
-| 3 | **New §5.0** | V2's four tiers mapped onto the existing seven `ImportantFindingsBuilder::TIERS`. Confidence-as-tiebreak and one-tier citation promotion inherited verbatim. |
-| 4 | §7.1 | Budget reconciled with the two existing caps of 8. Added `per_kind`, `per_stem`, `origin_quotas` at current values. Added **T8** (forced items escape all caps) and **T9** (reproduce today's ranking). |
+| 3 | **New §5.0** | V2's four tiers mapped onto the existing seven `ImportantFindingsBuilder::TIERS`. One-tier citation promotion retained; CR-006 later replaced confidence-based exact-score ties with §9.5. |
+| 4 | §7.1 | Budget reconciled with the two existing caps of 8. Added `per_kind`, `per_stem`, `origin_quotas` at current values. Added **T8** (forced items escape all caps) and **T9** (strict calibration with the later CR-006 tie exception). |
 | 5 | §9.1 | Scorer sits inside the existing namespace; the three existing mechanisms become its callers at their current values. |
 | 6 | §16 | **Rewritten.** Replaced invented eligibility rules, thresholds and reason codes with `ChartCandidateBuilder`'s actual ones (2 min points not 3; 12/5 caps not 24/3; the five real rejection codes; the real `score()`). Added §16.3a for the little V2 may change. |
 | 7 | §16.5 | Caps corrected to 12 / 12 / 5 / 2. The first draft's 6 / 24 / 3 / 3 were invented and are withdrawn. |

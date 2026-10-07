@@ -4,9 +4,9 @@
 |---|---|
 | **Author** | Backend implementation |
 | **Date** | 2026-10-07 |
-| **Status** | draft; approval required |
-| **Approver** | Pending |
-| **Approved on** | Pending |
+| **Status** | approved |
+| **Approver** | Stage A approver |
+| **Approved on** | 2026-10-07 |
 | **Supersedes** | none |
 
 ## 1. Contract sections affected
@@ -21,7 +21,17 @@ The committed provenance projector therefore uses the contract's safe default, `
 
 ## 3. Decision requested
 
-Approve an exact versioned list of quoted reporting patterns with each pattern's role, `reported` value, speaker resolution rule and evidence reference rule; or explicitly approve an unattributed-only Stage A V1 and defer the forced regulator rule with corresponding amendments to §§2.3, 7.3 and 9.3. The latter changes an approved forced rule and needs explicit sign-off. No phrase-to-role mapping is proposed or implemented by this CR.
+**Approved decision:** English-only, config-driven and versioned attribution matching. The nearest approved lexical pattern to the claim wins. Exact tie or no match yields `role=unattributed`, `speaker=null`, `reported=false`. Management statements stay unattributed; do not infer `author`. All literal patterns live in config, never implementation code.
+
+| Role | Approved patterns | `reported` |
+|---|---|---|
+| auditor | `the auditor noted`; `the auditors noted`; `the auditor found`; `the auditors found`; `the auditor reported`; `the auditors reported`; `the auditor concluded`; `the auditors concluded`; `audit found` | false |
+| regulator | `the regulator alleges`; `the regulator found`; `the regulator requires`; `the regulator stated`; `the authority alleges`; `the authority found`; `the authority requires`; `the authority stated`; `the commission alleges`; `the commission found`; `the commission requires`; `the commission stated` | false |
+| counterparty | `the counterparty states`; `the counterparty claims`; `the counterparty asserts`; `the supplier states`; `the supplier claims`; `the supplier asserts`; `the customer states`; `the customer claims`; `the customer asserts`; `the lender states`; `the lender claims`; `the lender asserts` | true |
+| quoted | `according to <named speaker>`; `<named speaker> said`; `<named speaker> stated that` | true |
+| third_party | `analysts suggest`; `analysts estimate`; `media suggest`; `media estimate`; `reports suggest`; `reports estimate` | true |
+
+The cited span that contains the winning pattern establishes the attribution evidence reference. A speaker ID requires a confirmed, matching stored entity record; otherwise it is null.
 
 ## 4. Alternatives considered
 
@@ -40,8 +50,8 @@ Approve an exact versioned list of quoted reporting patterns with each pattern's
 
 ## 6. Approval
 
-- [ ] Exact patterns and mappings supplied, or an explicit deferral of attribution-based forcing approved.
-- [ ] Contract §§2.3, 7.3, 9.3 and Q5 reconciled.
+- [x] Exact patterns and mappings supplied.
+- [x] Contract §§2.3, 7.3, 9.3 and Q5 reconciled.
 - [ ] New fixed-clock and source-grounded conformance tests specified.
 
-**Approver notes:** Pending.
+**Approver notes:** Approved pattern map and nearest-match/default/reported rules above. Scorer constants and forced rules remain unchanged.

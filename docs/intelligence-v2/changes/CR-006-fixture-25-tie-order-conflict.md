@@ -4,14 +4,14 @@
 |---|---|
 | **Author** | Backend implementation |
 | **Date** | 2026-10-07 |
-| **Status** | draft; approval required |
-| **Approver** | Pending |
-| **Approved on** | Pending |
+| **Status** | approved |
+| **Approver** | Stage A approver |
+| **Approved on** | 2026-10-07 |
 | **Supersedes** | none |
 
 ## 1. Contract sections affected
 
-§5.0 and §7.4 T9 require existing `ImportantFindingsBuilder` order to be preserved. §9.5 prescribes a different total tiebreak. §22.3 fixture 25 requires both. A choice between these requirements needs approval; no change to either has been made.
+§5.0 and §7.4 T9 formerly required existing `ImportantFindingsBuilder` order to be preserved. §9.5 prescribed a different total tiebreak. The approver resolved the conflict below.
 
 ## 2. Observed fixture 25 failure
 
@@ -42,12 +42,7 @@ For the reordered pairs, the difference comes from **§9.5 tiebreak**, not a bas
 
 ## 4. Decision requested
 
-Choose an explicit contract resolution before materiality integration resumes:
-
-1. Preserve T9's exact existing order by approving a narrowly specified V2 presentation tiebreak for equal-score findings, with its scope and interaction with §9.5 stated; or
-2. Approve the observed ranking change and amend T9/fixture 25 and affected compatibility language, including exactly which outputs may differ.
-
-Do not silently choose an option. The Stage A instruction forbids tuning weights, bands or class bases, weakening fixture 25, or modifying protected baseline tests. No such change was made.
+**Approved decision:** §9.5 orders by forced-rule priority (absent 999), tier band, kind order `[obligation, deadline, risk, metric, fact, definition, entity, unresolved]`, earliest `sources[0].start_offset`, then identity ascending. Confidence never participates in score, tier assignment, forced rules or the V2 tiebreak. V1 tie ordering was confidence/reference-derived and is deliberately **not** preserved for exact-score ties. T9/fixture 25 asserts selected set and tier membership strictly; ordering is strict where scores differ, while exact-score ties follow §9.5. Takeaway selection and chart candidate order remain strict gates. No weights, bands, class bases, signal rules, promotion rules or forced rules change.
 
 ## 5. Impact and alternatives
 
@@ -58,10 +53,10 @@ Do not silently choose an option. The Stage A instruction forbids tuning weights
 
 ## 6. Conformance and approval
 
-After approval, rerun fixture 25 across the full existing corpus, fixture 26, focused scorer tests and the full PostgreSQL suite. Any approved ranking difference must be recorded case by case. No scorer integration is authorized by this draft.
+Rerun fixture 25 across the full existing corpus, fixture 26, focused scorer tests and the full PostgreSQL suite. Any difference outside the approved exact-score tie order still stops integration; no tuning is authorized.
 
-- [ ] Contract §§5, 7, 9 and 22 reconciled.
-- [ ] Every approved ranking difference enumerated, or an approved exact tiebreak preserves the old order.
+- [x] Contract §§5, 7, 9 and 22 reconciled.
+- [x] Exact-score tie differences approved as described above.
 - [ ] Fixture 25 and 26 pass without changing weights, bands or class bases.
 
-**Approver notes:** Pending.
+**Approver notes:** Approved exact-score tie exception as stated in §4. Any non-approved fixture 25 difference remains a stop condition.
