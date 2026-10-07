@@ -4,6 +4,7 @@ namespace App\Services\Intelligence;
 
 use App\Models\Document;
 use App\Models\DocumentIntelligenceSummary;
+use App\Services\Intelligence\Values\ValueFormatter;
 
 /**
  * Builds the document's key takeaways without a provider call.
@@ -28,6 +29,8 @@ use App\Models\DocumentIntelligenceSummary;
  */
 class TakeawayBuilder
 {
+    public function __construct(private ValueFormatter $valueFormatter) {}
+
     private const MAX = 8;
 
     private const MIN_USEFUL_CHARS = 25;
@@ -290,6 +293,10 @@ class TakeawayBuilder
     /** Readable amount for takeaway prose, using the chart's own already-scaled values. */
     private function amount(float|int|string $value, string $unit): string
     {
+        if (config('intelligence_v2.enabled')) {
+            return $this->valueFormatter->number($value, $unit);
+        }
+
         $value = (float) $value;
         $decimals = abs($value) >= 100 ? 0 : (abs($value) >= 10 ? 1 : 2);
         $formatted = rtrim(rtrim(number_format($value, $decimals), '0'), '.');

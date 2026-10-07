@@ -8,6 +8,7 @@ use App\Models\DocumentEvidence;
 use App\Models\DocumentKpi;
 use App\Models\KpiDefinition;
 use App\Models\User;
+use App\Services\AnthropicClient;
 use App\Services\Intelligence\DocumentAnalysisComposer;
 use App\Services\Intelligence\ImportantFindingsBuilder;
 use App\Services\WorkspaceService;
@@ -106,6 +107,21 @@ class DocumentIntelligenceAnalysisTest extends TestCase
         $this->assertSame('USD billion', $charts[0]['unit']);
         $this->assertSame(['2022', '2023', '2024'], array_column($charts[0]['points'], 'label'));
         $this->assertSame([9.8, 10.7, 12.4], array_column($charts[0]['points'], 'value'));
+    }
+
+    public function test_v2_chart_takeaway_uses_one_formatter_and_never_reaches_a_provider_client(): void
+    {
+        config(['intelligence_v2.enabled' => true]);
+        app()->bind(AnthropicClient::class, fn () => throw new \LogicException('Stage A reached a provider client'));
+        $document = $this->intelligenceDocument();
+        $this->metricFinding($document, 'Total financing', '100', 'USD billion', '2023');
+        $this->metricFinding($document, 'Total financing', '110', 'USD billion', '2024');
+
+        $takeaways = $this->analyze($document)['overview']['takeaways'];
+        $metric = collect($takeaways)->firstWhere('origin', 'metric');
+        self::assertNotNull($metric);
+        self::assertStringContainsString('USD 100 billion', $metric['text']);
+        self::assertStringNotContainsString('USD billion USD', $metric['text']);
     }
 
     public function test_a_canonical_kpi_identity_groups_differently_worded_labels(): void
