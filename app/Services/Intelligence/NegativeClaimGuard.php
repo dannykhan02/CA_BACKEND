@@ -7,7 +7,7 @@ class NegativeClaimGuard
 {
     /**
      * @param  list<array<string,mixed>>  $records  all records under the current pipeline key
-     * @return array<string,mixed>|null  null means no absence statement may be emitted
+     * @return array<string,mixed>|null null means no absence statement may be emitted
      */
     public function absenceCheck(array $coverage, string $predicateId, string $scope,
         array $records, callable $matches): ?array
@@ -16,6 +16,9 @@ class NegativeClaimGuard
             return null;
         }
         foreach ($records as $record) {
+            if (($record['provenance']['origin'] ?? null) === 'unknown') {
+                return null;
+            }
             if ($matches($record)) {
                 return null;
             }
