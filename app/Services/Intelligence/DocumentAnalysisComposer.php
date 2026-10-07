@@ -9,6 +9,7 @@ use App\Services\Intelligence\Attention\HistoricalRiskRule;
 use App\Services\Intelligence\Materiality\MaterialityReadModel;
 use App\Services\Intelligence\Materiality\MaterialityScorer;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Assembles the derived, presentation-ready intelligence for one document from evidence that is
@@ -52,10 +53,16 @@ class DocumentAnalysisComposer
         $v2 = (bool) config('intelligence_v2.enabled');
         $materiality = null;
         $records = [];
+        $coverage = null;
+        $overflow = 0;
         if ($v2) {
             $read = $this->materialityRecords->build($document, $evidence, $derived['candidates'], $cited);
             $records = $read['records'];
             $materiality = $this->materialityScorer->assign($records, $read['context'], $asOf);
+            $overflow = count(array_filter($materiality, fn ($item) => $item['overflow_from_forced']));
+            $truncated = $overflow > 0 || count(array_filter($materiality,
+                fn ($item) => $item['band_qualified'] && $item['tier'] !== 1)) > 0;
+            $coverage = $this->coverageStates->build($document->ai_pipeline ?? [], $summary !== null, $truncated);
         }
         $materialityBySource = null;
         if ($v2) {
@@ -64,8 +71,15 @@ class DocumentAnalysisComposer
                 $materialityBySource[$record['source_id']] = $materiality[$record['identity']];
             }
         }
-        $takeaways = $this->takeaways->build($document, $summary, $charts, $materialityBySource);
+        $takeaways = $this->takeaways->build($document, $summary, $charts, $materialityBySource,
+            $v2 ? ['coverage' => $coverage, 'records' => $records] : null);
         $notes = $this->takeaways->notes($summary, $takeaways);
+        $negativeClaimRejections = $v2 ? $this->takeaways->negativeClaimRejections() : [];
+        foreach ($negativeClaimRejections as $blockType => $count) {
+            Log::info('docintel.v2.negative_claim_rejected', [
+                'block_type' => $blockType, 'reason' => 'negative_claim', 'count' => $count,
+            ]);
+        }
         $groups = $this->groups->build($evidence);
 
         $shown = [];
@@ -99,6 +113,7 @@ class DocumentAnalysisComposer
             ],
         ];
         if ($v2) {
+            $analysis['stats']['briefAiBlocksRejected'] = array_sum($negativeClaimRejections);
             $byId = collect($records)->keyBy('identity');
             $tier1Items = [];
             $attentionBuilder = new AttentionStateBuilder($this->historicalRisks, config('intelligence_v2.attention'));
@@ -129,9 +144,6 @@ class DocumentAnalysisComposer
                 'forced' => $item['assignment']['forced'], 'forcedRule' => $item['assignment']['forced_rule'],
                 'tierReasons' => $item['assignment']['reasons'], 'attention' => $item['attention'],
             ], $tier1Items);
-            $overflow = count(array_filter($materiality, fn ($item) => $item['overflow_from_forced']));
-            $truncated = $overflow > 0 || count(array_filter($materiality, fn ($item) => $item['band_qualified'] && $item['tier'] !== 1)) > 0;
-            $coverage = $this->coverageStates->build($document->ai_pipeline ?? [], $summary !== null, $truncated);
             $analysis['tier1'] = $tier1;
             $analysis['attention'] = $attentionBuilder->summary($attentionStates, $coverage, $overflow, $asOf);
         }

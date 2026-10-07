@@ -6,6 +6,31 @@ return [
     'brief' => (bool) env('DOCINTEL_V2_BRIEF', true),
     'charts' => (bool) env('DOCINTEL_V2_CHARTS', true),
     'values' => ['parser_version' => 'values.v1'],
+    'negative_claim' => [
+        'version' => '1',
+        // Regex fragments; NegativeClaimGuard supplies Unicode word boundaries and /iu.
+        'patterns' => [
+            'existence_negation' => [
+                'no\s+\p{L}+(?:\s+\p{L}+)*\s+(?:(?:was|were|has\s+been|have\s+been)\s+)?(?:identified|found|disclosed|reported|noted|recorded|provided|mentioned)',
+                'none\s+(?:(?:was|were|has\s+been)\s+)?(?:identified|found|disclosed|reported)',
+                'not\s+(?:identified|found|disclosed|reported|mentioned|provided|stated|addressed)',
+                '(?:does|do|did)\s+not\s+(?:disclose|identify|mention|state|contain|include|report|address)',
+                'without\s+(?:any\s+)?(?:material\s+|significant\s+)?(?:risk|issue|finding|deadline|obligation|penalty)',
+                '(?:there\s+is|there\s+are|there\s+was|there\s+were)\s+no',
+                'lack(?:s|ed)?(?:\s+of)?',
+                'absence\s+of',
+                'nothing\s+(?:material|significant|to\s+report)',
+                'fails?\s+to\s+(?:disclose|identify|mention)',
+                'never\s+(?:disclosed|mentioned|reported)',
+            ],
+            'clean_bill' => [
+                'all\s+(?:obligations|risks|deadlines|items)\s+(?:are|were)\s+(?:met|resolved|closed|addressed)',
+                'no\s+(?:outstanding|open|unresolved|pending|overdue)',
+                'fully\s+(?:compliant|resolved|addressed)',
+                '(?:complete|comprehensive)\s+coverage',
+            ],
+        ],
+    ],
     'attribution' => [
         'version' => '1',
         'patterns' => [

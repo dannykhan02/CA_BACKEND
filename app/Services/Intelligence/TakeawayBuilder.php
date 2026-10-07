@@ -29,7 +29,16 @@ use App\Services\Intelligence\Values\ValueFormatter;
  */
 class TakeawayBuilder
 {
-    public function __construct(private ValueFormatter $valueFormatter) {}
+    public function __construct(private ValueFormatter $valueFormatter, private NegativeClaimGuard $negativeClaims) {}
+
+    /** @var array<string,int> */
+    private array $negativeClaimRejections = [];
+
+    /** @return array<string,int> */
+    public function negativeClaimRejections(): array
+    {
+        return $this->negativeClaimRejections;
+    }
 
     private const MAX = 8;
 
@@ -50,8 +59,9 @@ class TakeawayBuilder
      * @return list<array<string,mixed>>
      */
     public function build(Document $document, ?DocumentIntelligenceSummary $summary, array $charts,
-        ?array $materialityBySource = null): array
+        ?array $materialityBySource = null, ?array $negativeClaimContext = null): array
     {
+        $this->negativeClaimRejections = [];
         $candidates = [
             ...$this->fromSynthesis($summary),
             ...$this->fromCharts($charts),
@@ -63,6 +73,20 @@ class TakeawayBuilder
         $taken = [];
         $used = [];
         foreach ($candidates as $candidate) {
+            if ($negativeClaimContext !== null && in_array($candidate['origin'], ['synthesis', 'trend'], true)) {
+                $screened = $this->negativeClaims->screenAiBlock([
+                    'type' => 'takeaway', 'origin' => 'docintel_ai',
+                    'text' => $candidate['text'], 'detail' => $candidate['detail'],
+                ], $negativeClaimContext['coverage'], $negativeClaimContext['records']);
+                if ($screened['rejected']) {
+                    $this->negativeClaimRejections[$candidate['origin']] =
+                        ($this->negativeClaimRejections[$candidate['origin']] ?? 0) + 1;
+
+                    // These legacy synthesis rows declare no deterministic absence predicate or
+                    // non-absence template. A lexical match cannot create either one.
+                    continue;
+                }
+            }
             if (count($taken) >= ($materialityBySource === null ? self::MAX : config('intelligence_v2.tier1.target'))) {
                 break;
             }
