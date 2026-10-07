@@ -4,9 +4,9 @@
 |---|---|
 | **Author** | Backend implementation |
 | **Date** | 2026-10-07 |
-| **Status** | draft; approval required |
-| **Approver** | Pending |
-| **Approved on** | Pending |
+| **Status** | approved |
+| **Approver** | Stage A approver |
+| **Approved on** | 2026-10-07 |
 | **Supersedes** | none |
 
 ## Contract sections affected
@@ -31,14 +31,14 @@ For all seven, structural prominence was skipped because the fixture has no span
 
 The current takeaways' source IDs span many chart points. A separate diagnostic counted 21 distinct source IDs across important findings and takeaways, but that count is **not** treated as a Tier 1 requirement here because a takeaway may cite multiple records. The six important-finding mismatches above suffice to establish the conflict.
 
-## Decision requested
+## Approved resolution
 
-Specify precisely whether fixture 25 requires V1 important findings to be Tier 1 records, or whether important findings may remain selected and visible in lower V2 tiers. If the latter, amend T9, §5.0 and the fixture's expected tier membership explicitly. If the former, provide an approved rule reconciling those six records with §7.2/§9.2 without tuning approved values or silently adding forced rules. Also specify how a takeaway with multiple cited source IDs maps to tier membership. No option is assumed or implemented by this draft.
+The earlier T9 wording was inconsistent with the already-approved `class_base` values and tier bands. `importantFindings` and Tier 1 are separate. The former keeps its legacy-surface meaning: top `MAX` by score, `MAX_PER_STEM`, and per-kind rules for non-forced items, independent of Tier 1. Fixture 25 checks its selected set and order strictly, except exact-score ties use §9.5. Takeaway selection and chart candidate order remain strict. Tier 1 must contain every record V1 classifies as `critical_risk`, `high_risk` or `upcoming_obligation`; it may otherwise be smaller than `importantFindings` and is never padded. T9 does not constrain tier membership for metrics, facts, definitions or entities. No approved weight, band, class base, signal, promotion, pattern or forced rule changes.
 
 ## Impact and stop condition
 
-- MaterialityScorer, ForcedItemRules, ImportantFindingsBuilder, TakeawayBuilder, EvidenceBudget and ChartCandidateBuilder integration remains stopped by the user-mandated fixture 25 gate.
+- MaterialityScorer, ForcedItemRules, ImportantFindingsBuilder, TakeawayBuilder, EvidenceBudget and ChartCandidateBuilder integration may resume under the amended fixture 25 gate; any selected-set or non-tie-order difference remains a stop condition.
 - The approved CR-007 attribution matcher remains independently committed and tested.
 - Flag-off behavior, provider requests, extraction, span sets, evidence budget, billing, migrations, frontend and Power BI remain unchanged.
 
-**Approver notes:** Pending.
+**Approver notes:** Approved T9a/T9b separation above. The approved scorer values remain fixed.

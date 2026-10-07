@@ -344,11 +344,11 @@ The invariant "a non-null `document_deadlines.due_date` is a complete calendar d
 
 ## 5. Materiality tiers
 
-> **Revised (CR-006).** A materiality model already exists: `ImportantFindingsBuilder::TIERS` (seven usefulness tiers), plus `TakeawayBuilder`'s quotas and `ChartCandidateBuilder::score()` — three independent mechanisms (audit §9.3, R16). V2 unifies them. Selected membership, tier membership, takeaway selection and chart order remain calibration gates; exact-score V1 confidence/reference tie order is deliberately replaced by §9.5.
+> **Revised (CR-006 and CR-008).** A materiality model already exists: `ImportantFindingsBuilder::TIERS` (seven usefulness tiers), plus `TakeawayBuilder`'s quotas and `ChartCandidateBuilder::score()` — three independent mechanisms (audit §9.3, R16). V2 unifies them. The existing `importantFindings` selected set, non-tie order, takeaway selection and chart order remain calibration gates; exact-score V1 confidence/reference tie order is deliberately replaced by §9.5. Tier 1 has the separate attention compatibility rule in T9.
 
 ### 5.0 Mapping onto the existing seven tiers
 
-V2's four presentation tiers are a banding of the existing usefulness classes, not a replacement:
+V2's four presentation tiers are a banding of the existing usefulness classes. This mapping does **not** mean `importantFindings == Tier 1`. `importantFindings` remains the top-ranked findings selected for the legacy surface: top `MAX` by materiality score, subject to `MAX_PER_STEM` and per-kind rules for non-forced items. It is selected independently of Tier 1 membership. Tier 1 is a separate materiality/attention concept.
 
 | Existing `ImportantFindingsBuilder` class | Existing value | V2 tier |
 |---|---|---|
@@ -360,9 +360,9 @@ V2's four presentation tiers are a banding of the existing usefulness classes, n
 | `definition`, `entity` | 5 | 3 `detail` |
 | `other` | 6 | 4 `background` |
 
-Two existing behaviours are inherited verbatim:
+Two behaviours remain:
 
-- **Confidence is a tie-break inside a tier, never a tier signal** (§5.3) — this is already the implementation's stated position.
+- **Confidence is never a V2 score, tier, forced-rule or §9.5 tiebreak input.** The approved §9.5 order replaces V1 confidence/reference order on exact-score ties.
 - **A finding the document's own synthesis cited is promoted exactly one tier**, and no further. Preserved as the `cited_by_synthesis` signal, capped at one tier of movement.
 
 ### 5.1 Tiers
@@ -476,7 +476,8 @@ Rules 20 and 30 depend on "now", so a tier assignment has a validity window. A T
 - **T6** Tier 1 is never padded above the number of qualifying records.
 - **T7** Tier 1 ordering is fully determined by (forced-rule priority, score, tiebreak) — no randomness, no insertion order.
 - **T8** `per_kind`, `per_stem` and `origin_quotas` never exclude a forced item.
-- **T9** Fixture 25 asserts selected set and tier membership strictly, and asserts order strictly wherever materiality scores differ. Exact-score ties follow §9.5. V1 confidence/reference tie order is deliberately not preserved (CR-006). Takeaway selection and chart candidate order remain strict calibration checks.
+- **T9a — importantFindings compatibility.** For the existing corpus, the V2 `importantFindings` list preserves the V1 selected set and order, except exact materiality-score ties, which follow §9.5. The list is top `MAX` by score, subject to `MAX_PER_STEM` and per-kind rules for non-forced items, independently of Tier 1 membership.
+- **T9b — attention compatibility.** Tier 1 contains every record V1 classifies as `critical_risk`, `high_risk` or `upcoming_obligation`. Tier 1 may be smaller than `importantFindings` and is never padded (T6). T9 places no tier-membership constraint on metrics, facts, definitions or entities. Takeaway selection and chart candidate order remain strict fixture-25 checks.
 
 ---
 
@@ -1332,7 +1333,7 @@ tests/Fixtures/IntelligenceV2/
 | `16-legacy-normal-route` | §21.2: adapter, skipped signals, `page_only`/`none` highlighting, charts suppressed, `bounded` coverage, deterministic-only Brief |
 | `17-superseded-pipeline-key` | old evidence rows invisible (§21.3) |
 | `18-flag-off` | `intelligence-off.json` is byte-identical to the merged pre-V2 baseline; new keys **absent**, not null; `analysis` still present, since it predates V2 (§20.2, A6) |
-| `25-preserves-existing-ranking` | T9: for the existing `DocumentIntelligenceAnalysisTest` corpus, selected set, tier membership, takeaway selection and chart candidate order are strict. Ordering is strict where scores differ; exact-score ties use §9.5 rather than V1 confidence/reference order (CR-006). |
+| `25-preserves-existing-ranking` | T9a: existing-corpus `importantFindings` selected set and non-tie order stay strict; exact-score ties use §9.5. T9b: Tier 1 includes all V1 `critical_risk`, `high_risk` and `upcoming_obligation` records. Takeaway selection and chart candidate order stay strict. Metrics, facts, definitions and entities need not enter Tier 1 (CR-008). |
 | `26-forced-item-beats-per-kind-cap` | four critical risks: all four forced into Tier 1, `per_kind = 3` not applied to forced items (T8) — the behaviour today's `MAX_PER_KIND` does not provide |
 | `19-no-bounding-boxes` | every highlight is `offset`, `text_match`, `page_only` or `none`; no case produces a box (§15.2) |
 | `20-text-match-fallback` | offsets exist but the consumer is not `extracted_text` → `text_match` with `needle`, `occurrence`, `occurrences` |
@@ -1400,7 +1401,7 @@ The visualization branch created exactly that namespace with 11 classes, all pro
 
 CR-001 through CR-004 are approved as amended above: unknown/unspecified provenance, conservative historical-risk attention, exact scorer and role-pattern parameters, and typed-value/coverage shapes. A8 records the already-committed period-only validator exception. The Stage A Part 2 instruction is authoritative where earlier contract text differs.
 
-CR-006 approves §9.5 tie ordering over V1 confidence/reference order for exact-score ties and keeps all other fixture 25 checks strict. CR-007 approves the exact attribution pattern map and tie/default/reported rules. Neither changes scorer weights, bands, class bases, signals, promotion, or forced rules.
+CR-006 approves §9.5 tie ordering over V1 confidence/reference order for exact-score ties. CR-007 approves the exact attribution pattern map and tie/default/reported rules. CR-008 clarifies that `importantFindings` is independent of Tier 1 and replaces the inconsistent old T9 membership requirement with T9a/T9b. None changes scorer weights, bands, class bases, signals, promotion, patterns, or forced rules.
 
 ### 2026-10-07 — clarification pass
 
