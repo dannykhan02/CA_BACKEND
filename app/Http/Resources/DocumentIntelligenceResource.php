@@ -5,6 +5,8 @@ namespace App\Http\Resources;
 use App\Models\DocumentEvidence;
 use App\Services\DocumentIntelligenceService;
 use App\Services\Documents\EvidencePageLocator;
+use App\Services\Intelligence\DocumentAnalysisComposer;
+use App\Services\Intelligence\ImportantFindingsBuilder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -14,6 +16,19 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * DocumentIntelligenceSummaryResource for consistency with the dedicated
  * single-purpose endpoints — same field shapes everywhere, not a second
  * formatting convention.
+ *
+ * `analysis` is the derived, presentation-ready view of the same stored evidence:
+ * key takeaways, chart candidates, analysis groups and important findings, all
+ * produced by DocumentAnalysisComposer from evidence the document already has.
+ * It is present once a document has finished processing; while a document is
+ * still being analyzed the page shows processing state instead, so deriving it
+ * on every poll would be work nobody reads.
+ *
+ * `evidence` carries source excerpts only for the references this response
+ * actually points at: every risk, deadline and entity it returns, the synthesis'
+ * own citations, and what `analysis` renders. Before that restriction a rich
+ * document also shipped the full quote of every metric finding — commonly over a
+ * hundred row-level table figures that nothing on the page references.
  */
 class DocumentIntelligenceResource extends JsonResource
 {
@@ -31,10 +46,29 @@ class DocumentIntelligenceResource extends JsonResource
             }
         }
 
+        $composer = app(DocumentAnalysisComposer::class);
+        $analysis = in_array($this->status, ['Ready', 'Needs Review'], true)
+            ? $composer->compose($this->resource)
+            : null;
+        $referenced = array_fill_keys($analysis === null ? [] : $composer->referencedSourceIds($analysis), true);
+        foreach (app(ImportantFindingsBuilder::class)->citedSourceIds($this->resource->intelligenceSummary) as $cited) {
+            $referenced[$cited] = true;
+        }
+        // The risks, deadlines and entities this response returns are all rendered, so their
+        // evidence - including its span locations - stays available exactly as before.
+        foreach (['risk' => 'risks', 'deadline' => 'deadlines', 'entity' => 'entities'] as $kind => $relation) {
+            foreach ($this->resource->$relation as $item) {
+                $referenced[$kind.':'.$item->id] = true;
+            }
+        }
+
         $evidence = [];
         if (isset($this->ai_pipeline['key'])) {
             foreach (DocumentEvidence::where('document_id', $this->id)->where('workspace_id', $this->workspace_id)
                 ->where('pipeline_key', $this->ai_pipeline['key'])->cursor() as $item) {
+                if ($item->source_id === null || ! isset($referenced[$item->source_id])) {
+                    continue;
+                }
                 $evidence[$item->source_id] = ['quote' => $item->data['quote'], 'sources' => $item->sources];
                 $pages = array_unique(array_filter(array_column($item->sources, 'page')));
                 if (count($pages) === 1) {
@@ -72,6 +106,7 @@ class DocumentIntelligenceResource extends JsonResource
                     ? new DocumentIntelligenceSummaryResource($this->intelligenceSummary)
                     : null
             ),
+            'analysis' => $analysis,
             'evidence' => (object) $evidence,
             'processingDetails' => $service->processingDetails($this->resource),
             'processing' => $service->getProcessingStatus($this->resource),
