@@ -714,7 +714,12 @@ If any condition fails, the block is not emitted. There is no softened variant, 
 
 ### 12.3 AI prose screening
 
-Before any `origin: docintel_ai` block is accepted, it is screened for negation-of-existence patterns against a versioned pattern set (`intelligence_v2.negative_claim.patterns`). A match causes verification failure with reason `negative_claim`, which triggers the deterministic fallback (§14.4). The screen is lexical and conservative: a false positive costs one AI sentence replaced by a template; a false negative is an unfounded absence claim shipped to a user. **The screen errs toward rejection.**
+Before any `origin: docintel_ai` block is accepted, it is screened against `intelligence_v2.negative_claim.patterns`, version `1` (CR-012). Matching is English-only, case-insensitive and word-boundary based; any single match rejects the AI block with reason `negative_claim`. The version-1 groups are:
+
+- **Existence negation:** `no <noun> (was|were|has been|have been)? (identified|found|disclosed|reported|noted|recorded|provided|mentioned)`; `none (was|were|has been)? (identified|found|disclosed|reported)`; `not (identified|found|disclosed|reported|mentioned|provided|stated|addressed)`; `(does|do|did) not (disclose|identify|mention|state|contain|include|report|address)`; `without (any )?(material |significant )?(risk|issue|finding|deadline|obligation|penalty)`; `(there is|there are|there was|there were) no`; `lack(s|ed)? (of )?`; `absence of`; `nothing (material|significant|to report)`; `fails? to (disclose|identify|mention)`; `never (disclosed|mentioned|reported)`.
+- **Clean-bill phrases:** `all (obligations|risks|deadlines|items) (are|were) (met|resolved|closed|addressed)`; `no (outstanding|open|unresolved|pending|overdue)`; `fully (compliant|resolved|addressed)`; `(complete|comprehensive) coverage`.
+
+A match is a conservative trigger, never proof that an absence assertion is valid. A separately declared deterministic predicate must pass §12.1's complete-coverage, zero-match and provenance conditions before its approved absence template may be emitted. A match alone never creates a template. If the guard fails, emit no absence block. A rejected block with a separately available **non-absence** deterministic template over the same cited records follows §14.4; otherwise omit it and count `brief.ai_blocks_rejected`. Never repair by provider call. Log only block type, reason and count, without text. The five legacy summary arrays remain unchanged (§12.4). Accepted false positives include `lack of clarity`, `not addressed in this section` and `complete coverage` used for insurance; see CR-012. No negation-scope analysis is attempted.
 
 ### 12.4 Scope of the guard
 
@@ -1393,7 +1398,7 @@ The visualization branch created exactly that namespace with 11 classes, all pro
 
 **Deferred — presentation-independent takeaway deduplication (CR-011).** V2 currently deduplicates rendered text, so future formatter changes may affect selection again. A later design should evaluate a canonical selection key; it is outside CR-010 and Stage A Part 2.
 
-**Open — negative-claim prose pattern set (CR-012).** §12.3 requires versioned lexical patterns, but none have been approved. Stage A Part 2 prose-screening integration waits for the exact pattern set and matching policy; no literals may be invented.
+**Resolved — negative-claim prose pattern set (CR-012).** The version-1 English patterns and match policy are in §12.3; the Stage A Part 2 screen uses them without changing legacy summary arrays.
 
 **Q5 — `attribution` pattern set. RESOLVED by CR-007:** English-only, versioned, config-driven patterns and nearest-match rules are in §2.3 and CR-007. A model-proposed attribution remains out of scope under §19.3.
 
