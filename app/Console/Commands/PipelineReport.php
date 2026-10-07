@@ -54,6 +54,29 @@ class PipelineReport extends Command
         $leaves = $extraction->where('status', '!=', 'split');
         $stages = ProcessingJob::where('document_id', $document->id)->get();
         $durations = $runs->pluck('duration_ms')->filter()->sort()->values();
+        $extractionRuns = $runs->whereIn('chunk_id', $extraction->pluck('id')->all());
+        $concurrency = $this->providerConcurrency($extractionRuns);
+        $splitParents = $extraction->where('status', 'split');
+        $splitRuns = $runs->whereIn('chunk_id', $splitParents->pluck('id')->all());
+        $splitDetails = $splitParents->map(function ($parent) use ($extraction, $runs) {
+            $parentRuns = $runs->where('chunk_id', $parent->id);
+            $children = $extraction->where('parent_id', $parent->id);
+            $childRuns = $runs->whereIn('chunk_id', $children->pluck('id')->all());
+
+            return ['chunk_id' => $parent->id, 'chunk_key' => $parent->identity,
+                'reason' => $parent->failure_class, 'parent_input_tokens_counted' => $parent->token_count,
+                'parent_output_usable' => count($parent->result['records'] ?? []) > 0,
+                'parent_provider_ms' => (int) $parentRuns->sum('duration_ms'),
+                'parent_input_tokens' => (int) $parentRuns->sum('input_tokens'),
+                'parent_output_tokens' => (int) $parentRuns->sum('output_tokens'),
+                'parent_cost_usd' => round((float) $parentRuns->sum('estimated_cost_usd'), 6),
+                'parent_unpriced_calls' => $parentRuns->whereNull('estimated_cost_usd')->count(),
+                'children' => $children->pluck('identity')->values()->all(),
+                'child_calls' => $childRuns->count(), 'child_cost_usd' => round((float) $childRuns->sum('estimated_cost_usd'), 6)];
+        })->values()->all();
+        $queueTimings = $extraction->map(fn ($chunk) => $chunk->cost_accounting['queue_timing'] ?? null)->filter();
+        $queueSum = fn (string $field) => $queueTimings->isEmpty() ? null
+            : (int) $queueTimings->sum(fn ($timing) => $timing[$field] ?? 0);
 
         $returned = 0;
         $accepted = 0;
@@ -108,8 +131,13 @@ class PipelineReport extends Command
                 'merge' => $this->spanMs($chunks->where('stage', 'merge')),
                 'synthesis' => $this->spanMs($chunks->where('stage', 'synthesis')) ?? $this->stageMs($stages, ['document_summary']),
                 'provider_total' => (int) $runs->sum('duration_ms'),
+                'provider_extraction_sum' => (int) $extractionRuns->sum('duration_ms'),
                 'provider_slowest' => (int) $runs->max('duration_ms'),
                 'provider_median' => $durations->isEmpty() ? null : (int) $durations[intdiv($durations->count(), 2)],
+                'provider_wall_clock_interval' => $concurrency['wall_ms'],
+                'queue_worker_wait' => $queueSum('worker_wait_ms'),
+                'fairness_wait' => $queueSum('fairness_wait_ms'),
+                'provider_admission_wait' => $queueSum('provider_admission_wait_ms'),
             ],
             'provider' => [
                 'calls' => $runs->count(),
@@ -122,6 +150,24 @@ class PipelineReport extends Command
                 'cost_usd' => round((float) $runs->sum('estimated_cost_usd'), 4),
                 'unpriced_calls' => $runs->whereNull('estimated_cost_usd')->count(),
                 'output_tokens_per_accepted_record' => $accepted > 0 ? round($runs->sum('output_tokens') / $accepted, 1) : null,
+                'effective_parallelism' => $concurrency['average'],
+                'peak_concurrency' => $concurrency['peak'],
+                'wall_time_at_concurrency_1_percent' => $concurrency['one_percent'],
+                'wall_time_at_concurrency_2_plus_percent' => $concurrency['two_plus_percent'],
+                'useful_successful_leaf_calls' => $runs->where('status', 'success')->whereIn('chunk_id', $leaves->pluck('id')->all())->count(),
+                'split_parent_calls' => $splitRuns->count(),
+                'wasted_split_provider_ms' => (int) $splitRuns->sum('duration_ms'),
+                'wasted_split_input_tokens' => (int) $splitRuns->sum('input_tokens'),
+                'wasted_split_output_tokens' => (int) $splitRuns->sum('output_tokens'),
+                'wasted_split_cost_usd' => round((float) $splitRuns->sum('estimated_cost_usd'), 6),
+                'wasted_split_unpriced_calls' => $splitRuns->whereNull('estimated_cost_usd')->count(),
+                'requests' => $runs->map(fn ($run) => ['document_id' => $run->document_id,
+                    'chunk_id' => $run->chunk_id, 'status' => $run->status,
+                    'started_at_estimate' => $run->created_at && $run->duration_ms !== null
+                        ? $run->created_at->copy()->subMilliseconds((int) $run->duration_ms)->toISOString() : null,
+                    'finished_at' => $run->created_at?->toISOString(), 'duration_ms' => $run->duration_ms,
+                    'input_tokens' => $run->input_tokens, 'output_tokens' => $run->output_tokens,
+                    'cost_usd' => $run->estimated_cost_usd])->values()->all(),
             ],
             'chunks' => [
                 'roots' => $extraction->whereNull('parent_id')->count(),
@@ -131,6 +177,9 @@ class PipelineReport extends Command
                 'source_spans' => $document->ai_pipeline['routing']['source_spans'] ?? null,
                 'by_status' => $leaves->groupBy('status')->map->count()->sortKeys()->all(),
                 'failure_classes' => $leaves->whereNotNull('failure_class')->groupBy('failure_class')->map->count()->sortKeys()->all(),
+                'split_reasons' => $splitParents->groupBy('failure_class')->map->count()->sortKeys()->all(),
+                'split_details' => $splitDetails,
+                'queue_timing_observed_chunks' => $queueTimings->count(),
             ],
             'records' => [
                 'returned' => $returned,
@@ -153,6 +202,45 @@ class PipelineReport extends Command
                     - array_sum(array_intersect_key($rejectionReasons, array_fill_keys($groundingReasons, true)))),
             ],
         ];
+    }
+
+    /** Run rows are written at completion; their starts are reconstructed from duration_ms. */
+    private function providerConcurrency($runs): array
+    {
+        $events = [];
+        $sum = 0;
+        foreach ($runs as $run) {
+            if (! $run->created_at || ! $run->duration_ms || $run->duration_ms < 0) {
+                continue;
+            }
+            $end = $run->created_at->getTimestampMs();
+            $start = $end - (int) $run->duration_ms;
+            $events[] = [$start, 1];
+            $events[] = [$end, -1];
+            $sum += (int) $run->duration_ms;
+        }
+        if ($events === []) {
+            return ['wall_ms' => null, 'average' => null, 'peak' => 0, 'one_percent' => null, 'two_plus_percent' => null];
+        }
+        usort($events, fn ($a, $b) => $a[0] <=> $b[0] ?: $a[1] <=> $b[1]);
+        $first = $events[0][0];
+        $last = $first;
+        $active = $peak = $one = $two = 0;
+        foreach ($events as [$at, $change]) {
+            $elapsed = max(0, $at - $last);
+            if ($active === 1) {
+                $one += $elapsed;
+            } elseif ($active >= 2) {
+                $two += $elapsed;
+            }
+            $active += $change;
+            $peak = max($peak, $active);
+            $last = $at;
+        }
+        $wall = max(1, $last - $first);
+
+        return ['wall_ms' => $wall, 'average' => round($sum / $wall, 2), 'peak' => $peak,
+            'one_percent' => round($one / $wall * 100, 1), 'two_plus_percent' => round($two / $wall * 100, 1)];
     }
 
     /** Wall-clock span of a set of processing-job attempts. */
@@ -182,7 +270,10 @@ class PipelineReport extends Command
         $this->line('Time:');
         foreach (['scan' => 'scan', 'extraction' => 'extraction', 'incremental_analysis' => 'incremental analysis',
             'merge' => 'merge', 'synthesis' => 'synthesis', 'provider_total' => 'provider (sum of calls)',
-            'provider_slowest' => 'slowest provider call', 'provider_median' => 'median provider call'] as $field => $label) {
+            'provider_extraction_sum' => 'extraction provider sum', 'provider_wall_clock_interval' => 'extraction provider wall',
+            'provider_slowest' => 'slowest provider call',
+            'provider_median' => 'median provider call', 'queue_worker_wait' => 'queue worker wait (sum)',
+            'fairness_wait' => 'fairness delay (sum)', 'provider_admission_wait' => 'capacity delay (sum)'] as $field => $label) {
             $this->line('  '.str_pad($label.':', 26).$this->duration($report['timing_ms'][$field]));
         }
         $this->newLine();
@@ -195,12 +286,27 @@ class PipelineReport extends Command
         $this->line('Provider cost: $'.number_format($report['provider']['cost_usd'], 4)
             .($report['provider']['unpriced_calls'] ? ' ('.$report['provider']['unpriced_calls'].' unpriced)' : ''));
         $this->line('Output tokens / accepted record: '.($report['provider']['output_tokens_per_accepted_record'] ?? 'n/a'));
+        $this->line('Effective provider parallelism: '.($report['provider']['effective_parallelism'] ?? 'n/a')
+            .' (peak '.$report['provider']['peak_concurrency'].')');
+        $this->line('Provider wall time at 1 / 2+ calls: '.($report['provider']['wall_time_at_concurrency_1_percent'] ?? 'n/a')
+            .'% / '.($report['provider']['wall_time_at_concurrency_2_plus_percent'] ?? 'n/a').'%');
+        $this->line('Useful leaf / split-parent calls: '.$report['provider']['useful_successful_leaf_calls']
+            .' / '.$report['provider']['split_parent_calls']);
+        $this->line('Wasted split work: '.$this->duration($report['provider']['wasted_split_provider_ms'])
+            .', '.number_format($report['provider']['wasted_split_input_tokens']).' input, '
+            .number_format($report['provider']['wasted_split_output_tokens']).' output tokens, $'
+            .number_format($report['provider']['wasted_split_cost_usd'], 4)
+            .($report['provider']['wasted_split_unpriced_calls'] ? ' + '.$report['provider']['wasted_split_unpriced_calls'].' unpriced calls' : ''));
         $this->newLine();
         $this->line('Chunks:');
         $this->line('  roots: '.$report['chunks']['roots']);
         $this->line('  final leaves: '.$report['chunks']['final_leaves']);
         $this->line('  splits: '.$report['chunks']['splits']);
         $this->line('  retries: '.$report['chunks']['retries']);
+        $this->line('  queue timing observed: '.$report['chunks']['queue_timing_observed_chunks'].' chunks');
+        foreach ($report['chunks']['split_reasons'] as $reason => $count) {
+            $this->line('  split '.$reason.': '.$count);
+        }
         if ($report['chunks']['source_spans'] !== null) {
             $this->line('  source spans: '.$report['chunks']['source_spans']);
         }

@@ -31,16 +31,6 @@ class IncrementalPipeline
     /** Only capacity-type failures may be retried on smaller input. */
     public const SPLITTABLE_FAILURES = ['max_tokens', 'context_overflow', 'timeout'];
 
-    /**
-     * True when another document has extraction work waiting in the queue. A chunk that
-     * already shares the document's permits then leaves the last free provider permit to it.
-     */
-    public function otherDocumentsQueued(DocumentChunk $chunk): bool
-    {
-        return DocumentChunk::where('stage', 'extraction')->where('status', 'queued')
-            ->where('document_id', '!=', $chunk->document_id)->exists();
-    }
-
     public function route(Document $document): bool
     {
         if (
@@ -321,9 +311,13 @@ class IncrementalPipeline
     {
         $running = fn () => DocumentChunk::where('stage', $unit->stage)->where('status', 'running');
 
+        $timing = $unit->cost_accounting['queue_timing'] ?? [];
+
         return [
             // From the original dispatch (deferrals keep it), so provider-capacity waits are visible.
-            'queue_wait_ms' => ($since = $unit->dispatched_at ?? $unit->updated_at) ? max(0, (int) $since->diffInMilliseconds(now(), true)) : null,
+            'queue_wait_ms' => isset($timing['dispatch_at_ms']) ? max(0, now()->getTimestampMs() - $timing['dispatch_at_ms'])
+                : (($since = $unit->dispatched_at ?? $unit->updated_at) ? max(0, (int) $since->diffInMilliseconds(now(), true)) : null),
+            'queue_timing' => $timing,
             'document_running' => $running()->where('document_id', $unit->document_id)->where('pipeline_key', $unit->pipeline_key)->count() + 1,
             'global_running' => $running()->count() + 1,
         ];

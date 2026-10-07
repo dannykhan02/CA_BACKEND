@@ -15,9 +15,10 @@ use Illuminate\Support\Facades\Log;
  */
 trait DefersWhenProviderBusy
 {
-    protected function deferForProvider(ProviderBusyException $e, array $context = []): void
+    protected function deferForProvider(ProviderBusyException $e, array $context = [], ?callable $onScheduled = null): void
     {
         $delay = $e->retryAfterSeconds + random_int(0, max(0, (int) config('document_intelligence.provider_gate.busy_retry_jitter_seconds')));
+        $onScheduled?->__invoke($delay);
         $copy = clone $this;
         $copy->job = null;
         $copy->delay($delay);

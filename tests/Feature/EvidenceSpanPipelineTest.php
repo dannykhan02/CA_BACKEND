@@ -546,6 +546,15 @@ class EvidenceSpanPipelineTest extends TestCase
         self::assertGreaterThan(0, $report['grounding']['span_reference_sources']);
         self::assertSame(0, $report['grounding']['legacy_quote_sources']);
         self::assertSame(1, $report['provider']['extraction_calls']);
+        self::assertSame(1, $report['provider']['useful_successful_leaf_calls']);
+        self::assertSame(0, $report['provider']['split_parent_calls']);
+        self::assertSame(0, $report['provider']['wasted_split_input_tokens']);
+        self::assertSame(1, $report['chunks']['queue_timing_observed_chunks']);
+        self::assertArrayHasKey('queue_worker_wait', $report['timing_ms']);
+        self::assertArrayHasKey('fairness_wait', $report['timing_ms']);
+        self::assertArrayHasKey('provider_admission_wait', $report['timing_ms']);
+        self::assertCount(1, $report['provider']['requests']);
+        self::assertSame($chunk->id, $report['provider']['requests'][0]['chunk_id']);
     }
 
     // --- full pipeline semantics -----------------------------------------------------------

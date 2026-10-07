@@ -63,11 +63,60 @@ class ProcessDocumentChunkJob implements ShouldQueue
         try {
             // One global permit covers the token count and the extraction request; when none is
             // free the chunk stays queued and a delayed copy of this message is enqueued.
-            app(ProviderGate::class)->hold($document->id, fn () => $this->process($client, $pipeline, $chunk, $document),
-                reserveForOthers: $pipeline->otherDocumentsQueued($chunk));
+            try {
+                $this->recordWorkerArrival($chunk);
+            } catch (\Throwable $e) {
+                Log::warning('Chunk queue timing unavailable', ['chunk_id' => $chunk->id, 'error_type' => $e::class]);
+            }
+            // The gate reserves capacity for documents that actually attempted admission.
+            // A queued DB row alone may have no runnable worker (or belong to stale work).
+            app(ProviderGate::class)->hold($document->id, fn () => $this->process($client, $pipeline, $chunk, $document));
         } catch (ProviderBusyException $e) {
-            $this->deferForProvider($e, ['document_id' => $document->id, 'chunk_id' => $chunk->id]);
+            $this->deferForProvider($e, ['document_id' => $document->id, 'chunk_id' => $chunk->id], function (int $delay) use ($chunk, $e) {
+                try {
+                    $this->recordAdmissionDeferral($chunk, $e->reason, $delay);
+                } catch (\Throwable $error) {
+                    Log::warning('Chunk admission timing unavailable', ['chunk_id' => $chunk->id, 'error_type' => $error::class]);
+                }
+            });
         }
+    }
+
+    /** Persist metadata only; the original dispatch timestamp is retained across deferrals. */
+    private function recordWorkerArrival(DocumentChunk $chunk): void
+    {
+        $now = (int) floor(microtime(true) * 1000);
+        $accounting = $chunk->cost_accounting ?? [];
+        $timing = $accounting['queue_timing'] ?? [];
+        if (! array_key_exists('dispatch_at_ms', $timing) || ($timing['dispatch_token'] ?? null) !== $chunk->dispatch_token) {
+            $timing = ['dispatch_token' => $chunk->dispatch_token,
+                'dispatch_at_ms' => ($chunk->dispatched_at ?? $chunk->updated_at)?->getTimestampMs()];
+        }
+        if (! isset($timing['first_worker_at_ms'])) {
+            $timing['first_worker_at_ms'] = $now;
+            $timing['worker_wait_ms'] = isset($timing['dispatch_at_ms'])
+                ? max(0, $now - $timing['dispatch_at_ms']) : 0;
+        }
+        if (isset($timing['deferred_at_ms'], $timing['not_before_ms'], $timing['reason'])) {
+            $scheduled = max(0, min($now, $timing['not_before_ms']) - $timing['deferred_at_ms']);
+            $field = $timing['reason'] === 'fairness' ? 'fairness_wait_ms' : 'provider_admission_wait_ms';
+            $timing[$field] = ($timing[$field] ?? 0) + $scheduled;
+            $timing['worker_wait_ms'] += max(0, $now - $timing['not_before_ms']);
+            unset($timing['deferred_at_ms'], $timing['not_before_ms'], $timing['reason']);
+        }
+        $chunk->update(['cost_accounting' => [...$accounting, 'queue_timing' => $timing]]);
+    }
+
+    private function recordAdmissionDeferral(DocumentChunk $chunk, string $reason, int $delay): void
+    {
+        $accounting = $chunk->fresh()->cost_accounting ?? [];
+        $now = (int) floor(microtime(true) * 1000);
+        $timing = $accounting['queue_timing'] ?? [];
+        $timing['deferred_at_ms'] = $now;
+        $timing['not_before_ms'] = $now + $delay * 1000;
+        $timing['reason'] = $reason;
+        $timing['deferrals'] = ($timing['deferrals'] ?? 0) + 1;
+        $chunk->update(['cost_accounting' => [...$accounting, 'queue_timing' => $timing]]);
     }
 
     private function process(AnthropicClient $client, IncrementalPipeline $pipeline, DocumentChunk $chunk, Document $document): void

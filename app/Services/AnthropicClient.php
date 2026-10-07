@@ -211,12 +211,15 @@ class AnthropicClient
             // A provider-busy deferral sent nothing, so no run is recorded.
             if ($status !== 'provider_busy') {
                 $response['_telemetry'] = [...($response['_telemetry'] ?? []), 'chunk_id' => $chunk->id, 'pipeline_version' => $chunk->pipeline_version,
-                    'request_attempt' => $chunk->attempts, 'duration_ms' => (int) ((hrtime(true) - $start) / 1000000),
+                    'request_attempt' => $chunk->attempts,
+                    // Keep transport duration when a request was sent; validation after the HTTP
+                    // response is local work and must not inflate provider concurrency metrics.
+                    'duration_ms' => $response['_telemetry']['duration_ms'] ?? (int) ((hrtime(true) - $start) / 1000000),
                     'failure_class' => $status === 'success' ? null : $status];
                 if (! $this->transportFailureRecorded || $response !== ['_telemetry' => $response['_telemetry']]) {
                     $this->recordAiRun($document, 'entities', $response, $status);
                 } else {
-                    DocumentAiRun::whereKey($this->transportRunId)->update($response['_telemetry']);
+                    DocumentAiRun::whereKey($this->transportRunId)->update(array_diff_key($response['_telemetry'], ['duration_ms' => true]));
                 }
             }
         }
@@ -494,7 +497,8 @@ PROMPT;
             'output_tokens' => $response['usage']['output_tokens'] ?? null,
             'stop_reason' => $response['stop_reason'] ?? null,
             'status' => $status,
-            'created_at' => now(),
+            // The run marks request completion, before any local structured-output validation.
+            'created_at' => $response['_telemetry']['created_at'] ?? now(),
         ]);
     }
 
@@ -695,6 +699,7 @@ PROMPT;
 
         return array_replace($response->json() ?? [], ['model' => $this->requestModel]) + ['_telemetry' => [
             'duration_ms' => (int) ((hrtime(true) - $started) / 1000000),
+            'created_at' => now(),
             'request_attempt' => $attempt, 'provider_request_id' => $response->header('request-id'),
         ]];
     }
