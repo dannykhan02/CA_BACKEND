@@ -530,8 +530,9 @@ intelligence_v2.materiality = [
   'bands'      => ['tier1' => 0.72, 'tier2' => 0.45, 'tier3' => 0.18],  # score >= band
   'signals'    => ['date_proximity' => ['imminent_days' => 90,
                    'horizon_days' => 365, 'floor_value' => 0.2],
-                   'structural_prominence' => ['heading_span_types' => ['heading', 'table_header']],
-                   'boilerplate_penalty' => ['boilerplate_span_types' => ['header', 'footer']]],
+                   'structural_prominence' => ['heading_span_types' => ['heading'],
+                                               'ordinal_first_fraction' => 0.10],
+                   'boilerplate_penalty' => ['boilerplate_span_types' => []]],
 ]
 ```
 
@@ -541,7 +542,9 @@ Bands are score thresholds; Tier 1 membership additionally requires passing §7'
 
 Each signal yields a value in `[0, 1]` before multiplication by its configured signed weight. The initial signal set (ids are contract; values are config):
 
-`kind_class`, `severity`, `date_proximity`, `date_resolution`, `monetary_magnitude`, `relative_magnitude`, `attribution_authority`, `obligation_consequence`, `structural_prominence` (heading / early-page / table-header position from the span's `type` and `ordinal`), `repetition_penalty`, `boilerplate_penalty`, `cited_by_synthesis`, `comparability` (participates in a valid comparison group), `unresolved_penalty`.
+`kind_class`, `severity`, `date_proximity`, `date_resolution`, `monetary_magnitude`, `relative_magnitude`, `attribution_authority`, `obligation_consequence`, `structural_prominence` (heading type / early document ordinal), `repetition_penalty`, `boilerplate_penalty`, `cited_by_synthesis`, `comparability` (participates in a valid comparison group), `unresolved_penalty`.
+
+The exact persisted `SourceSpanBuilder` type vocabulary is `heading`, `section`, `table_row`, `list_item`, `sentence`. Its intermediate `prose` classification becomes `sentence` before persistence; no aliases are inferred. Only `heading` is unambiguously heading-like. Materiality v1 has no explicit table-header, header, or footer type. Table-header prominence is unavailable; `boilerplate_penalty` is inactive until a later config/materiality version because the current vocabulary cannot represent header/footer semantics. Unavailable span-derived branches are skipped rather than guessed.
 
 `confidence` is deliberately **not** a signal, tier or forced-rule input (§5.3). Reasons list `kind_class` first with its base contribution, then non-zero contributing signals and skipped unavailable signals (contribution 0, `skipped: true`), then a non-zero `clamp` contribution (`score - raw`), then `tier_adjustment` (contribution 0) when applicable. Their contributions sum to the stored score within 1e-9.
 
@@ -554,12 +557,12 @@ Signal values are deterministic:
 | `date_resolution` | calendar 1.0; period 0.6; relative 0.3; unknown 0. |
 | `attribution_authority` | regulator/auditor 1.0; counterparty 0.6; quoted/third_party 0.3; otherwise 0. |
 | `obligation_consequence` | 1.0 only for an obligation whose cited quote both matches a §7.3 penalty pattern and yields a money or percent `TypedValue` via `ValueParser`; otherwise 0. |
-| `structural_prominence` | Cited span type `heading` or `table_header`: 1.0; otherwise ordinal within first 10% of document spans: 0.5; otherwise 0. Missing span data: skipped. |
+| `structural_prominence` | Cited span type `heading`: 1.0; ordinal within first 10% of document spans: 0.5. When both apply use the maximum, 1.0, never their sum. If no heading-like emitted type exists, skip that branch with `reason: span_type_unavailable` while keeping the ordinal rule available. No span data at all skips the entire signal. No table-header inference. |
 | `monetary_magnitude` | Currency metrics only, grouped by unit_kind + currency. Rank by canonical magnitude after scale, counting strictly smaller group members; value `rank / (group_size - 1)`, or 0.5 for a singleton. |
 | `relative_magnitude` | Numeric metrics grouped by unit_kind + currency: `abs(number) / max(abs(number))` in group; 0 if maximum is 0. |
 | `comparability` | 1.0 if the record participates in a valid group under existing `ChartCandidateBuilder` rules; otherwise 0. Eligibility and candidate construction stay unchanged. |
 | `repetition_penalty` | 1.0 for every duplicate after the first in §9.5 order, grouped by normalized kind + label + value + period; otherwise 0. |
-| `boilerplate_penalty` | 1.0 for cited span type `header` or `footer`; otherwise 0. |
+| `boilerplate_penalty` | Materiality v1 config has `boilerplate_span_types: []`; contribution 0.0, `skipped: true`, `reason: span_type_unavailable`. No replacement heuristic. Deferred to a later config/materiality version. |
 | `unresolved_penalty` | 1.0 for an unresolved record with no `resolved_evidence_id`; otherwise 0. |
 | `cited_by_synthesis` | 0 in score sum; one post-banding tier promotion when the document's own synthesis cites the record's `source_id`. |
 
@@ -1246,7 +1249,7 @@ IntelligenceRecord (adapted) {
 
 Rules:
 
-- **L1** Tiering runs. Signals that need data the adapter cannot supply (`structural_prominence`, `comparability` when offsets are needed) contribute **0** and are recorded as `skipped` in `reasons`. The tier is lower-fidelity, not absent.
+- **L1** Tiering runs. Signals that need span data the adapter cannot supply (`structural_prominence`, `comparability` when offsets are needed) contribute **0** and are recorded as `skipped` in `reasons`. A normal-route record has no span ordinal, so the entire structural signal is skipped; it does not acquire a guessed heading or table-header type. `boilerplate_penalty` is skipped with `span_type_unavailable` on every route in materiality v1. The tier is lower-fidelity, not absent.
 - **L2** Highlighting is `mode: page_only` when `EvidencePageLocator` yields a page, else `mode: none`. **Never** `text_match` fabricated from a quote whose offsets are unknown — a search with no anchor can match the wrong occurrence silently.
 - **L3** A Brief is deterministic-only. No synthesis re-run, no provider call. `brief.ai_blocks_available: false`.
 - **L4** `coverageState.state` is `bounded` (adapted, chunk counters unavailable) with `reasons: ["legacy_route"]`. It is **never `complete`**, so §12 forbids every absence claim on a legacy document.

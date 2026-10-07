@@ -4,14 +4,14 @@
 |---|---|
 | **Author** | Backend implementation |
 | **Date** | 2026-10-07 |
-| **Status** | draft; approval required |
-| **Approver** | Pending |
-| **Approved on** | Pending |
+| **Status** | approved |
+| **Approver** | Stage A contract approver |
+| **Approved on** | 2026-10-07 |
 | **Supersedes** | none |
 
 ## 1. Contract sections affected
 
-§9.2–9.3 (`structural_prominence` and `boilerplate_penalty` signal configuration/value rules); possibly §7.3 rule 80 if section semantics are clarified. No change is approved yet.
+§9.2–9.3 (`structural_prominence` and `boilerplate_penalty` signal configuration/value rules) and §21.2 L1. Rule 80 and all other scorer values remain unchanged.
 
 ## 2. Current contract and observed implementation
 
@@ -21,17 +21,15 @@
 
 > If the actual stored span `type` vocabulary does not contain these names, STOP and write a change request. Do not silently map names.
 
-`SourceSpanBuilder::classify()` emits `table_row`, `heading`, `list_item`, or `prose`; prose is segmented into `sentence`, and short heading content can become `section`. Persisted span types therefore include `table_row`, `heading`, `list_item`, `sentence`, and `section`. It never emits `table_header`, `header`, or `footer`. `EvidenceGrounding` persists builder output without a type remapping. The existing `SourceSpanBuilderTest` asserts these emitted names.
+`SourceSpanBuilder::classify()` emits `table_row`, `heading`, `list_item`, or intermediate `prose`; prose is segmented into `sentence`, and short heading content can become `section`. The exact persisted type vocabulary is `heading`, `section`, `table_row`, `list_item`, `sentence`. It never emits `table_header`, `header`, or `footer`. `EvidenceGrounding` persists builder output without a type remapping. The existing `SourceSpanBuilderTest` asserts these emitted names.
 
 ## 3. Decision requested
 
-Approve an explicit replacement for the configured type lists and the exact signal behavior when a named type cannot exist. A contract-only change can use the current vocabulary, but must state whether `table_row` or `section` is ever prominent, whether boilerplate detection is disabled, and how skipped/zero contributions are represented. Alternatively, approve a separate extraction/span-classification change with its effects on span versions, pipeline keys, existing evidence, and provider cost. The present Stage A instruction forbids such an extraction change, so that alternative requires new authorization.
-
-No default mapping or replacement list is proposed or implemented here.
+Approved: `heading_span_types = ['heading']` and `boilerplate_span_types = []` in materiality version `1`. For structural prominence, the heading branch is 1.0, the first-10%-ordinal branch is 0.5, and their maximum applies when both qualify. If no heading-like emitted type exists, skip that branch with `span_type_unavailable`; the ordinal branch remains available. No span data skips the entire structural signal. Boilerplate always contributes 0.0 with `skipped: true` and `reason: span_type_unavailable`, deferred to a later materiality version. No table-header or header/footer inference is authorized.
 
 ## 4. Why this blocks implementation
 
-The approved scorer assigns positive prominence and negative boilerplate weights using names that never occur in the stored span type vocabulary. Implementing the configured rules unchanged would silently make parts of both signals unreachable and could alter Tier 1 membership and fixture 25. Changing the type lists in code would invent a scorer parameter expressly prohibited by Stage A Part 2.
+The original scorer type lists included names that never occur in the stored span vocabulary. The approved replacement resolves this without changing extraction or persisted spans. Fixture 25 remains an unchanged calibration gate.
 
 ## 5. Alternatives considered
 
@@ -45,17 +43,17 @@ The approved scorer assigns positive prominence and negative boilerplate weights
 
 - Provider calls, request size, evidence budget, billing, and Power BI: no change from writing this CR.
 - Existing API and database columns: no change from writing this CR.
-- Existing scorer code and fixtures: no change; scorer integration is stopped.
+- Existing scorer weights, bands, class bases, budgets, forced rules, date patterns, penalty patterns, normalization, tiebreaks, version and fixture gates: unchanged.
 - Feature flag: no change; flag-off behaviour remains as committed.
 
 ## 7. Conformance and rollout
 
-After approval, test each configured type against real builder output, assert signal positive and zero/skipped cases, rerun fixtures 25 and 26, and run the full backend suite. No rollout or migration is authorized by this draft.
+Implementation must test the configured type against real builder output, assert structural maximum and ordinal cases and boilerplate skipped/zero cases, run fixtures 25 and 26, and run the full backend suite. No rollout or migration is authorized here.
 
 ## 8. Approval
 
-- [ ] Contract §§9.2–9.3 updated with the approved replacement.
+- [x] Contract §§9.2–9.3 and §21.2 L1 updated with the approved replacement.
 - [ ] Fixture 25 ranking effects reviewed without retuning weights or bands.
-- [ ] Any extraction change separately authorized, if selected.
+- [x] No extraction, persisted-span or span-version change authorized or made.
 
-**Approver notes:** Pending.
+**Approver notes:** Approved the real persisted vocabulary `heading`, `section`, `table_row`, `list_item`, `sentence`; only `heading` is unambiguously heading-like. Use `heading_span_types=['heading']`, first 10% ordinal value 0.5, and the maximum applicable prominence value. Set `boilerplate_span_types=[]`; skip its zero contribution with `span_type_unavailable` and defer the signal. Do not alter `SourceSpanBuilder`, `EvidenceGrounding`, span versions, or any other scorer parameter or calibration gate.
