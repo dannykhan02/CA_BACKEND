@@ -177,7 +177,7 @@ class IncrementalDocumentPipelineTest extends TestCase
         $this->executeChunk($chunk);
         self::assertSame('split', $chunk->fresh()->status);
         self::assertGreaterThanOrEqual(2, DocumentChunk::where('parent_id', $chunk->id)->count());
-        self::assertSame($siblings->all(), DocumentChunk::whereIn('id', $siblings->keys())->pluck('input_hash', 'id')->all());
+        self::assertSame($siblings->sortKeys()->all(), DocumentChunk::whereIn('id', $siblings->keys())->pluck('input_hash', 'id')->sortKeys()->all());
         Http::assertSentCount(2);
     }
 

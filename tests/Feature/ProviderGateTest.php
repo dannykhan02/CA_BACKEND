@@ -222,9 +222,28 @@ class ProviderGateTest extends TestCase
         $chunk->refresh();
         self::assertSame(['queued', 0, 0.0], [$chunk->status, $chunk->attempts, (float) $chunk->reserved_cost]);
         self::assertSame(0, DocumentAiRun::count());
+        self::assertSame(1, $chunk->cost_accounting['queue_timing']['deferrals']);
+        self::assertSame('global', $chunk->cost_accounting['queue_timing']['reason']);
         Http::assertNothingSent(); // Not even the free token count.
         Bus::assertDispatched(ProcessDocumentChunkJob::class, fn ($job) => $job->delay !== null && $job->dispatchToken === $chunk->dispatch_token
             && $job->queue === 'extraction' && $job->job === null);
+    }
+
+    public function test_queued_other_document_does_not_idle_a_free_provider_permit(): void
+    {
+        $chunk = $this->queuedChunk();
+        $other = $this->queuedChunk();
+        self::assertSame('queued', $other->status);
+        $this->occupy(1, $chunk->document_id);
+        Http::fake(['*/count_tokens' => Http::response(['input_tokens' => 30]),
+            '*/messages' => Http::response($this->response(['records' => []]))]);
+
+        $this->runChunk($chunk);
+
+        self::assertSame('completed', $chunk->fresh()->status);
+        self::assertSame(2, $this->gate()->snapshot()['counters']['acquired']);
+        self::assertSame(1, $this->gate()->snapshot()['active']); // The simulated sibling remains in flight.
+        self::assertSame(0, $chunk->fresh()->cost_accounting['queue_timing']['deferrals'] ?? 0);
     }
 
     public function test_admitted_chunk_job_holds_one_permit_and_releases_it_on_timeout(): void
