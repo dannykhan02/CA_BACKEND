@@ -476,7 +476,7 @@ Rules 20 and 30 depend on "now", so a tier assignment has a validity window. A T
 - **T6** Tier 1 is never padded above the number of qualifying records.
 - **T7** Tier 1 ordering is fully determined by (forced-rule priority, score, tiebreak) — no randomness, no insertion order.
 - **T8** `per_kind`, `per_stem` and `origin_quotas` never exclude a forced item.
-- **T9a — importantFindings compatibility.** For the existing corpus, the V2 `importantFindings` list preserves the V1 selected set and order, except exact materiality-score ties, which follow §9.5. The list is top `MAX` by score, subject to `MAX_PER_STEM` and per-kind rules for non-forced items, independently of Tier 1 membership.
+- **T9a — importantFindings compatibility.** For the existing corpus, the V2 `importantFindings` list preserves the V1 selected set and order except at an exact-score tie group crossing a `MAX`, `MAX_PER_STEM` or per-kind selection boundary. A tie group remains tied through materiality score and all higher-priority selection semantics. Select the first N under §9.5 and require the same number from that tied group, but do not require V1 identities chosen by confidence/reference ordering. No lower-scoring record may displace a higher-scoring record. Outside this exception, selected set and order are strict. The list is top `MAX` by score, subject to `MAX_PER_STEM` and per-kind rules for non-forced items, independently of Tier 1 membership.
 - **T9b — attention compatibility.** Tier 1 contains every record V1 classifies as `critical_risk`, `high_risk` or `upcoming_obligation`. Tier 1 may be smaller than `importantFindings` and is never padded (T6). T9 places no tier-membership constraint on metrics, facts, definitions or entities. Takeaway selection and chart candidate order remain strict fixture-25 checks.
 
 ---
@@ -583,7 +583,7 @@ None of these is part of `pipeline_key`. **Bumping any of them must never re-ext
 
 ### 9.5 Determinism and tiebreaks
 
-The V2 total order is, in sequence: (1) forced-rule priority (absent = 999), (2) tier band, (3) `kind` in `[obligation, deadline, risk, metric, fact, definition, entity, unresolved]`, (4) earliest `sources[0].start_offset`, (5) `identity` ascending. `identity` is a sha256 and total. Confidence never participates in materiality score, tier assignment, forced rules, or this tiebreak. V1's confidence/reference order for exact-score ties is deliberately not preserved (CR-006).
+The V2 total order is, in sequence: (1) forced-rule priority (absent = 999), (2) tier band, (3) `kind` in `[obligation, deadline, risk, metric, fact, definition, entity, unresolved]`, (4) earliest `sources[0].start_offset`, (5) earliest `sources[0].page`, null last, (6) `sources[0].end_offset`, (7) normalized label ascending using `EvidenceMerger::normalize`, (8) `identity` ascending. Identity is a sha256 and makes the order total. Unavailable offsets sort last. Confidence never participates in materiality score, tier assignment, forced rules, or this tiebreak. V1's confidence/reference order for exact-score ties is deliberately not preserved (CR-006/CR-009). Literal patterns remain config-driven.
 
 ### 9.6 Testability
 
@@ -1333,7 +1333,7 @@ tests/Fixtures/IntelligenceV2/
 | `16-legacy-normal-route` | §21.2: adapter, skipped signals, `page_only`/`none` highlighting, charts suppressed, `bounded` coverage, deterministic-only Brief |
 | `17-superseded-pipeline-key` | old evidence rows invisible (§21.3) |
 | `18-flag-off` | `intelligence-off.json` is byte-identical to the merged pre-V2 baseline; new keys **absent**, not null; `analysis` still present, since it predates V2 (§20.2, A6) |
-| `25-preserves-existing-ranking` | T9a: existing-corpus `importantFindings` selected set and non-tie order stay strict; exact-score ties use §9.5. T9b: Tier 1 includes all V1 `critical_risk`, `high_risk` and `upcoming_obligation` records. Takeaway selection and chart candidate order stay strict. Metrics, facts, definitions and entities need not enter Tier 1 (CR-008). |
+| `25-preserves-existing-ranking` | T9a: existing-corpus `importantFindings` selected set and order stay strict outside exact-score selection-cap boundaries; at such a boundary select the same number from the tied group under §9.5, never allowing a lower score to displace a higher one (CR-009). T9b: Tier 1 includes all V1 `critical_risk`, `high_risk` and `upcoming_obligation` records. Takeaway selection and chart candidate order stay strict. Metrics, facts, definitions and entities need not enter Tier 1 (CR-008). |
 | `26-forced-item-beats-per-kind-cap` | four critical risks: all four forced into Tier 1, `per_kind = 3` not applied to forced items (T8) — the behaviour today's `MAX_PER_KIND` does not provide |
 | `19-no-bounding-boxes` | every highlight is `offset`, `text_match`, `page_only` or `none`; no case produces a box (§15.2) |
 | `20-text-match-fallback` | offsets exist but the consumer is not `extracted_text` → `text_match` with `needle`, `occurrence`, `occurrences` |
@@ -1402,6 +1402,8 @@ The visualization branch created exactly that namespace with 11 classes, all pro
 CR-001 through CR-004 are approved as amended above: unknown/unspecified provenance, conservative historical-risk attention, exact scorer and role-pattern parameters, and typed-value/coverage shapes. A8 records the already-committed period-only validator exception. The Stage A Part 2 instruction is authoritative where earlier contract text differs.
 
 CR-006 approves §9.5 tie ordering over V1 confidence/reference order for exact-score ties. CR-007 approves the exact attribution pattern map and tie/default/reported rules. CR-008 clarifies that `importantFindings` is independent of Tier 1 and replaces the inconsistent old T9 membership requirement with T9a/T9b. None changes scorer weights, bands, class bases, signals, promotion, patterns, or forced rules.
+
+CR-009 extends §9.5 with page, end offset and normalized label before identity, and permits a different V1 selected identity only when an exact-score tie crosses an `importantFindings` selection cap while preserving the number selected from the tied group. The existing fixture uses placeholder positions for every evidence row and offers no independent source positions for a correction. See CR-009 for the read-only diagnostic. No scorer parameter changed.
 
 ### 2026-10-07 — clarification pass
 
