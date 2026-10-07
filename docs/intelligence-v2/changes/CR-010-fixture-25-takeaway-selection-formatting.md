@@ -4,9 +4,9 @@
 |---|---|
 | **Author** | Backend implementation |
 | **Date** | 2026-10-08 |
-| **Status** | draft; approval required |
-| **Approver** | Pending |
-| **Approved on** | Pending |
+| **Status** | approved |
+| **Approver** | User |
+| **Approved on** | 2026-10-08 |
 | **Supersedes** | none |
 
 ## Affected contract
@@ -31,12 +31,16 @@ The selected references for the differing item were the four Portfolio exposure 
 
 The approved V2 formatter preserves `1,240` and `1,310`; their `240` and `310` tokens raise the Employees set to seven retained words, so the same shared three words yield **3/7 ≈ 0.429**. V2 accepts Employees. It consumes the third metric-origin quota slot, leaving Portfolio exposure out. The difference is therefore a deterministic side effect of correcting display formatting while deduplicating on display text.
 
-## Decision requested
+## Approved decision
 
-Approve one exact policy for the fixture 25 gate: either explicitly permit this documented V2 takeaway selection change, or define a selection-time duplicate key independent of display formatting that preserves V1 selection while retaining the approved V2 display text. A key policy must specify the exact tokenization and precedence; no such rule is inferred or implemented here. The scorer values, patterns, chart rules, provider budget, and existing duplicate threshold must not be silently changed.
+Fixture 25 compares V2 takeaway selection strictly against the existing V1 selection logic applied to V2-formatted candidate text, with the same dedupe rules, quotas and minimum useful length. The V2 golden is `tests/Fixtures/intelligence-v2/expected/25-takeaways-v2.json`: Employees is selected and Portfolio exposure is not. This is a §22.5 golden change caused by the already-approved formatter fix. Chart order, importantFindings under CR-009 and Tier 1 attention compatibility remain strict. The formatter and all selection constants remain unchanged.
+
+The flag-off V1 formatter and its `1,240` → `1,24` / `1,310` → `1,31` defect remain unchanged. **Separate legacy backlog item:** repair that V1 integer-formatting defect only under a future, separately approved compatibility decision.
+
+The presentation-dependent V2 takeaway deduplication design is a separate deferred item, [CR-011](CR-011-presentation-independent-takeaway-deduplication.md). No canonical key is defined or implemented by this approval.
 
 ## Stop and scope
 
 The temporary MaterialityScorer, ForcedItemRules, read model, builder integration and calibration tests were removed after this non-approved fixture 25 difference. No application-code change from this attempt was committed. The protected T9 baseline tests were not edited. No provider call, queue job, embedding call, extraction/OCR/chunking change, migration, frontend, billing, security, tenant-isolation or Power BI change was made. The synthesis evidence bound remains 16,000 bytes. Fixture 26, the final T9a finding-list comparison and the synthetic ADB diagnostic were not reached after the stop.
 
-**Approver notes:** Pending.
+**Approver notes:** CR-010 approved as specified by the user on 2026-10-08. The earlier stop description records the state at proposal time; implementation may now resume under this resolution. No formatter, threshold, quota, scorer or forced-rule change was authorized.
