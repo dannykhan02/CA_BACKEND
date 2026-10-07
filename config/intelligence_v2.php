@@ -6,6 +6,11 @@ return [
     'brief' => (bool) env('DOCINTEL_V2_BRIEF', true),
     'charts' => (bool) env('DOCINTEL_V2_CHARTS', true),
     'values' => ['parser_version' => 'values.v1'],
+    'attention' => [
+        'needs_attention_forced_rules' => ['critical_risk', 'overdue_dated_obligation',
+            'imminent_dated_obligation', 'penalised_obligation'],
+        'terminal_statuses' => ['mitigated', 'closed', 'met', 'missed'],
+    ],
     'tier1' => [
         'min' => 5, 'target' => 8, 'max' => 10, 'forced_max' => 8, 'hard_cap' => 18,
         'per_kind' => 3, 'per_stem' => 2, 'imminent_days' => 90, 'recompute_after_hours' => 24,
