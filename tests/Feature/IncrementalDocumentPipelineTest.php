@@ -612,6 +612,65 @@ class IncrementalDocumentPipelineTest extends TestCase
         self::assertSame('split', $chunk->fresh()->status);
         self::assertSame(1, $chunk->fresh()->attempts);
         self::assertSame('timeout', DocumentAiRun::where('chunk_id', $chunk->id)->sole()->failure_class);
+        self::assertSame('http_connect_or_transport', DocumentAiRun::where('chunk_id', $chunk->id)->sole()->timeout_source);
+        self::assertFalse(DocumentAiRun::where('chunk_id', $chunk->id)->sole()->provider_response_received);
+    }
+
+    public function test_dense_root_splits_before_extraction_and_children_complete(): void
+    {
+        config(['document_intelligence.evidence_spans' => true,
+            'document_intelligence.chunk_max_tokens' => 20000]);
+        $text = "1. FINANCIAL RESULTS\n\n".str_repeat("Revenue | 2024 | 2023 | 2022\n", 45)
+            ."\n2. OPERATING RESULTS\n\n".str_repeat("Capital | 2024 | 2023 | 2022\n", 45);
+        $document = $this->document($text);
+        $chunk = $this->plan($document);
+        Http::fake(['*/count_tokens' => Http::response(['input_tokens' => 12000]),
+            '*/messages' => Http::response($this->response(['records' => []]))]);
+
+        $this->executeChunk($chunk);
+
+        self::assertSame('split', $chunk->fresh()->status);
+        self::assertSame(0, $chunk->fresh()->attempts);
+        self::assertSame('proactive', $chunk->fresh()->cost_accounting['split_kind']);
+        self::assertSame(0, DocumentAiRun::where('chunk_id', $chunk->id)->count());
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'count_tokens'));
+        Http::assertNotSent(fn ($request) => str_ends_with($request->url(), '/messages'));
+        self::assertCount(2, DocumentChunk::where('parent_id', $chunk->id)->get());
+
+        foreach (DocumentChunk::where('parent_id', $chunk->id)->get() as $child) {
+            $this->executeChunk($child);
+            self::assertSame('completed', $child->fresh()->status);
+        }
+        self::assertSame(2, DocumentAiRun::where('document_id', $document->id)->whereNotNull('chunk_id')->count());
+        $runs = DocumentAiRun::where('document_id', $document->id)->whereNotNull('chunk_id')->get();
+        self::assertCount(2, $runs->pluck('id')->unique());
+        self::assertTrue($runs->every(fn ($run) => $run->dispatch_reason === 'proactive_child'
+            && $run->provider_started_at !== null && $run->lease_released_at !== null));
+        self::assertSame(0, Artisan::call('docintel:pipeline-report', ['document' => $document->id, '--json' => true]));
+        $report = json_decode(Artisan::output(), true, flags: JSON_THROW_ON_ERROR);
+        self::assertSame(1, $report['chunks']['proactive_splits']);
+        self::assertSame(0, $report['provider']['split_parent_calls']);
+    }
+
+    public function test_recovered_split_is_historical_failure_without_missing_leaf_coverage(): void
+    {
+        Http::fake(['*/count_tokens' => Http::response(['input_tokens' => 50]),
+            '*/messages' => Http::failedConnection('cURL error 28: Operation timed out')]);
+        $document = $this->document();
+        $parent = $this->plan($document);
+        $this->executeChunk($parent);
+        self::assertSame('split', $parent->fresh()->status);
+        DocumentChunk::where('document_id', $document->id)->where('status', '!=', 'split')
+            ->update(['status' => 'completed', 'result' => json_encode(['records' => []])]);
+        $coverage = app(EvidenceBudget::class)->forDocument($document->fresh())['coverage'];
+        self::assertSame(0, $coverage['failed_chunks']);
+        self::assertTrue($coverage['comprehensive']);
+        self::assertSame(1, DocumentAiRun::where('chunk_id', $parent->id)->where('failure_class', 'timeout')->count());
+        self::assertSame(0, Artisan::call('docintel:pipeline-report', ['document' => $document->id, '--json' => true]));
+        $report = json_decode(Artisan::output(), true, flags: JSON_THROW_ON_ERROR);
+        self::assertSame(1, $report['chunks']['reactive_splits']);
+        self::assertSame(1, $report['provider']['timeout_calls']);
+        self::assertSame($parent->identity, $report['chunks']['split_details'][0]['chunk_key']);
     }
 
     public function test_missing_optional_summary_fields_do_not_discard_valid_core(): void

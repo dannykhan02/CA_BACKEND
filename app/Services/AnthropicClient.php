@@ -24,6 +24,7 @@ use App\Services\AiCredits\OperationSpend;
 use App\Services\AiCredits\QuoteService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -460,6 +461,8 @@ PROMPT;
         Log::info('Anthropic request result', [
             'purpose' => $purpose, 'model' => $response['model'] ?? $this->requestModel ?? $this->modelFor($purpose),
             'input_tokens' => $response['usage']['input_tokens'] ?? null,
+            'input_tokens_counted' => $purpose === 'entities' && $this->currentChunkId
+                ? DocumentChunk::whereKey($this->currentChunkId)->value('token_count') : null,
             'output_tokens' => $response['usage']['output_tokens'] ?? null,
             'duration_ms' => $response['_telemetry']['duration_ms'] ?? null,
             'result' => $status, 'failure_class' => $response['_telemetry']['failure_class'] ?? null,
@@ -475,6 +478,11 @@ PROMPT;
 
         $usage = $response['usage'] ?? [];
         $model = $response['model'] ?? $this->requestModel ?? $this->modelFor($purpose);
+        $chunk = $purpose === 'entities' && $this->currentChunkId ? DocumentChunk::find($this->currentChunkId) : null;
+        $queue = $chunk?->cost_accounting['queue_timing'] ?? [];
+        $parent = $chunk?->parent_id ? DocumentChunk::find($chunk->parent_id) : null;
+        $dispatchReason = $chunk === null ? null : ($chunk->attempts > 1 ? 'retry'
+            : ($parent === null ? 'root' : (($parent->cost_accounting['split_kind'] ?? 'reactive').'_child')));
 
         return DocumentAiRun::create([
             ...$this->runContext,
@@ -494,6 +502,14 @@ PROMPT;
             'model' => $model,
             'prompt_version' => $promptVersion,
             'input_tokens' => $response['usage']['input_tokens'] ?? null,
+            'input_tokens_counted' => $purpose === 'entities' && $this->currentChunkId
+                ? $chunk?->token_count : null,
+            'dispatched_at' => $chunk?->dispatched_at,
+            'worker_started_at' => isset($queue['first_worker_at_ms']) ? Carbon::createFromTimestampMs($queue['first_worker_at_ms']) : null,
+            'worker_wait_ms' => $queue['worker_wait_ms'] ?? null,
+            'fairness_wait_ms' => $queue['fairness_wait_ms'] ?? null,
+            'admission_wait_ms' => $queue['provider_admission_wait_ms'] ?? null,
+            'dispatch_reason' => $dispatchReason,
             'output_tokens' => $response['usage']['output_tokens'] ?? null,
             'stop_reason' => $response['stop_reason'] ?? null,
             'status' => $status,
@@ -513,13 +529,16 @@ PROMPT;
         return array_filter(['operation_quote_id' => $quoteId, 'user_id' => $this->operationUserId, 'comparison_id' => $this->operationComparisonId], fn ($v) => $v !== null);
     }
 
-    private function recordTransportFailure(?Document $document, string $kind, int $attempt, int $started, bool $rejected = false, ?string $requestId = null): void
+    private function recordTransportFailure(?Document $document, string $kind, int $attempt, int $started, bool $rejected = false, ?string $requestId = null, ?string $timeoutSource = null): void
     {
         $purpose = $this->currentOperation === 'context_resolution' ? 'document_summary' : ($this->currentOperation ?? 'insights');
         // A rejected request is the only trace of itself: the provider request id is what support
         // and the Anthropic console can both be pointed at, so it is persisted, not only logged.
+        $duration = (int) ((hrtime(true) - $started) / 1000000);
         $this->transportRunId = $this->recordAiRun($document, $purpose, ($rejected ? ['usage' => ['input_tokens' => 0, 'output_tokens' => 0]] : []) + ['_telemetry' => ['failure_class' => $kind,
-            'request_attempt' => $attempt, 'duration_ms' => (int) ((hrtime(true) - $started) / 1000000)]
+            'request_attempt' => $attempt, 'duration_ms' => $duration,
+            'provider_started_at' => now()->subMilliseconds($duration), 'provider_finished_at' => now(),
+            'provider_response_received' => $rejected, 'timeout_source' => $timeoutSource]
             + ($requestId === null ? [] : ['provider_request_id' => $requestId])], 'provider_error')?->id;
         $this->transportFailureRecorded = true;
     }
@@ -638,7 +657,13 @@ PROMPT;
             ] + array_intersect_key($options, array_flip(['system', 'output_config']))), $document?->id);
         } catch (ConnectionException $e) {
             $kind = str_contains($e->getMessage(), '28') || str_contains(strtolower($e->getMessage()), 'timed out') ? 'timeout' : 'transient';
-            $this->recordTransportFailure($document, $kind, $attempt, $started);
+            $elapsed = (int) ((hrtime(true) - $started) / 1000000);
+            $timeoutSource = $kind === 'timeout'
+                ? ($elapsed >= ((int) ($options['timeout'] ?? config('services.anthropic.timeout')) - 2) * 1000
+                    ? 'laravel_http_total' : ($elapsed <= ((int) ($options['connect_timeout'] ?? 0) + 2) * 1000
+                        ? 'http_connect_or_transport' : 'transport_unknown'))
+                : null;
+            $this->recordTransportFailure($document, $kind, $attempt, $started, timeoutSource: $timeoutSource);
             if ($options['typed_errors'] ?? false) {
                 throw new AiProcessingException($kind);
             }
@@ -697,9 +722,12 @@ PROMPT;
             throw $e;
         }
 
+        $duration = (int) ((hrtime(true) - $started) / 1000000);
+
         return array_replace($response->json() ?? [], ['model' => $this->requestModel]) + ['_telemetry' => [
-            'duration_ms' => (int) ((hrtime(true) - $started) / 1000000),
-            'created_at' => now(),
+            'duration_ms' => $duration,
+            'created_at' => now(), 'provider_started_at' => now()->subMilliseconds($duration),
+            'provider_finished_at' => now(), 'provider_response_received' => true,
             'request_attempt' => $attempt, 'provider_request_id' => $response->header('request-id'),
         ]];
     }

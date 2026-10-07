@@ -5,6 +5,68 @@ namespace App\Services\AI\Incremental;
 /** Offsets are Unicode characters, never bytes. Text stays on documents. */
 class ChunkPlanner
 {
+    /** Two non-overlapping children, selected at a complete evidence or semantic boundary. */
+    public function splitAtBoundary(string $documentText, int $start, int $end, int $minimum, ?EvidenceSpanSet $spans = null, ?int $startPage = null): array
+    {
+        $length = $end - $start;
+        if ($length < 2 * $minimum) {
+            return [];
+        }
+        $low = $start + $minimum;
+        $high = $end - $minimum;
+        $middle = ($start + $end) / 2;
+        $candidates = [];
+        if ($spans !== null) {
+            $all = $spans->all();
+            for ($i = 1; $i < count($all); $i++) {
+                $offset = $all[$i]['start_offset'];
+                if ($offset < $low || $offset > $high) {
+                    continue;
+                }
+                $previous = $all[$i - 1];
+                $type = $all[$i]['type'];
+                $priority = $type === 'heading' || $type === 'section' ? 0
+                    : (($previous['page'] !== $all[$i]['page']) ? 1
+                    : (($type === 'table_row' || $previous['type'] === 'table_row') ? 3 : 2));
+                // Never divide a heading from its immediately following body when a peer
+                // boundary is available; split before the heading instead.
+                $candidates[] = [$priority, abs($offset - $middle), $offset];
+            }
+        } else {
+            $slice = mb_substr($documentText, $start, $length);
+            foreach (['/\n(?=(?:[A-Z][A-Z \d:.-]{5,100}|\d+(?:\.\d+)*\.?[ \t]+[A-Z][^\n]{2,100})\n)/u', '/\f/u', '/\n[ \t]*\n/u', '/[.!?][ \t]+(?=[A-Z])/u', '/\n/u', '/[^\S\n]+/u'] as $priority => $pattern) {
+                preg_match_all($pattern, $slice, $matches, PREG_OFFSET_CAPTURE);
+                foreach ($matches[0] as [$match, $byte]) {
+                    $offset = $start + mb_strlen(substr($slice, 0, $byte + strlen($match)));
+                    if ($offset >= $low && $offset <= $high) {
+                        $candidates[] = [$priority, abs($offset - $middle), $offset];
+                    }
+                }
+            }
+        }
+        if ($candidates === []) {
+            if ($spans !== null) {
+                return []; // A single indivisible evidence span cannot be cut.
+            }
+            $candidates[] = [6, 0, (int) floor($middle)];
+        }
+        usort($candidates, fn ($a, $b) => $a <=> $b);
+        $cut = $candidates[0][2];
+        $ranges = [[$start, $cut], [$cut, $end]];
+
+        return array_map(function ($range) use ($documentText, $start, $startPage, $spans) {
+            [$first, $last] = $range;
+            $body = mb_substr($documentText, $first, $last - $first);
+            $covered = $spans?->forRange($first, $last)->all();
+            $firstPage = $covered ? $covered[0]['page'] : ($startPage === null ? null : $startPage + substr_count(mb_substr($documentText, $start, $first - $start), "\f"));
+            $lastPage = $covered ? end($covered)['page'] : ($startPage === null ? null : $firstPage + substr_count($body, "\f"));
+
+            return ['start_offset' => $first, 'end_offset' => $last, 'start_page' => $firstPage,
+                'end_page' => $lastPage, 'token_count' => $this->estimate($body),
+                'input_hash' => hash('sha256', $body), 'overlap_chars' => 0];
+        }, $ranges);
+    }
+
     public function estimate(string $text): int
     {
         // Conservative fallback, explicitly labelled as estimated in preflight.

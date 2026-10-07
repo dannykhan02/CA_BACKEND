@@ -623,6 +623,12 @@ class DocumentRoutingAndMergeScaleTest extends TestCase
         app(IncrementalPipeline::class)->route($document);
         $chunk = DocumentChunk::where('stage', 'extraction')->firstOrFail();
         (new ProcessDocumentChunkJob($chunk->id))->handle(app(AnthropicClient::class), app(IncrementalPipeline::class));
+        if ($chunk->fresh()->status === 'split') {
+            // With the lower output cap, the new preflight may split this root before
+            // extraction. The child request must still use the dedicated cap.
+            $child = DocumentChunk::where('parent_id', $chunk->id)->firstOrFail();
+            (new ProcessDocumentChunkJob($child->id))->handle(app(AnthropicClient::class), app(IncrementalPipeline::class));
+        }
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/messages') && $request['max_tokens'] === 9000);
         // The legacy four-job path still sends ANTHROPIC_MAX_TOKENS.
         $this->seed(DocumentEntitiesPromptSeeder::class);

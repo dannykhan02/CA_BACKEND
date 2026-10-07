@@ -706,7 +706,9 @@ class IncrementalPipeline
 
     public function split(
         DocumentChunk $chunk,
-        Document $document
+        Document $document,
+        bool $proactive = false,
+        ?array $plannedChildren = null
     ): void {
         /*
          * Only failures that can actually benefit from smaller input may
@@ -716,7 +718,7 @@ class IncrementalPipeline
          * contract failures. Splitting those recursively creates smaller and
          * smaller requests without fixing the underlying problem.
          */
-        if (! in_array($chunk->failure_class, self::SPLITTABLE_FAILURES, true)) {
+        if (! $proactive && ! in_array($chunk->failure_class, self::SPLITTABLE_FAILURES, true)) {
             $chunk->update([
                 'status' => 'failed',
                 'completed_at' => now(),
@@ -763,7 +765,9 @@ class IncrementalPipeline
         );
 
         $grounding = app(EvidenceGrounding::class);
-        if ($grounding->usesSpans($document)) {
+        if ($plannedChildren !== null) {
+            $children = $plannedChildren;
+        } elseif ($grounding->usesSpans($document)) {
             $spans = $grounding->chunkSpans($document, $chunk);
             // One span cannot be halved without cutting an evidence unit, which this architecture
             // never does. That is a split limit, exactly as a too-small slice is.
@@ -787,7 +791,7 @@ class IncrementalPipeline
             );
         }
 
-        $outcome = DB::transaction(function () use ($chunk, $children) {
+        $outcome = DB::transaction(function () use ($chunk, $children, $proactive) {
             // Document first, as every other admission path does, so the per-document
             // split budget below is checked serially across concurrent leaves.
             Document::whereKey($chunk->document_id)->lockForUpdate()->firstOrFail();
@@ -797,6 +801,9 @@ class IncrementalPipeline
 
             if ($locked->status === 'split') {
                 return 'split';
+            }
+            if ($proactive && ! in_array($locked->status, ['queued', 'pending'], true)) {
+                return 'ignored';
             }
 
             /*
@@ -809,6 +816,9 @@ class IncrementalPipeline
             $budget = $units()->whereNull('parent_id')->count()
                 * (int) config('document_intelligence.max_split_parents_per_root');
             if ($units()->where('status', 'split')->count() >= $budget) {
+                if ($proactive) {
+                    return 'budget_unavailable';
+                }
                 $locked->update([
                     'status' => 'failed',
                     'failure_class' => 'split_limit',
@@ -840,15 +850,18 @@ class IncrementalPipeline
                 );
             }
 
-            $locked->update([
-                'status' => 'split',
-                'completed_at' => now(),
-            ]);
+            $locked->update(['status' => 'split', 'completed_at' => now(),
+                'cost_accounting' => [...($locked->cost_accounting ?? []), 'split_kind' => $proactive ? 'proactive' : 'reactive']]);
 
             return 'split';
         });
         if ($outcome === 'split_budget') {
             $this->logSplit($chunk, 'split_budget', 0, $chunk->failure_class);
+
+            return;
+        }
+        if ($outcome !== 'split') {
+            $this->logSplit($chunk, $outcome, 0);
 
             return;
         }
