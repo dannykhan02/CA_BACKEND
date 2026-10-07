@@ -4,6 +4,7 @@ namespace App\Services\Intelligence;
 
 use App\Models\Document;
 use App\Models\DocumentIntelligenceSummary;
+use App\Services\Intelligence\Values\ValueFormatter;
 
 /**
  * Builds the document's key takeaways without a provider call.
@@ -28,6 +29,17 @@ use App\Models\DocumentIntelligenceSummary;
  */
 class TakeawayBuilder
 {
+    public function __construct(private ValueFormatter $valueFormatter, private NegativeClaimGuard $negativeClaims) {}
+
+    /** @var array<string,int> */
+    private array $negativeClaimRejections = [];
+
+    /** @return array<string,int> */
+    public function negativeClaimRejections(): array
+    {
+        return $this->negativeClaimRejections;
+    }
+
     private const MAX = 8;
 
     private const MIN_USEFUL_CHARS = 25;
@@ -46,8 +58,10 @@ class TakeawayBuilder
      * @param  list<array<string,mixed>>  $charts
      * @return list<array<string,mixed>>
      */
-    public function build(Document $document, ?DocumentIntelligenceSummary $summary, array $charts): array
+    public function build(Document $document, ?DocumentIntelligenceSummary $summary, array $charts,
+        ?array $materialityBySource = null, ?array $negativeClaimContext = null): array
     {
+        $this->negativeClaimRejections = [];
         $candidates = [
             ...$this->fromSynthesis($summary),
             ...$this->fromCharts($charts),
@@ -59,11 +73,27 @@ class TakeawayBuilder
         $taken = [];
         $used = [];
         foreach ($candidates as $candidate) {
-            if (count($taken) >= self::MAX) {
+            if ($negativeClaimContext !== null && in_array($candidate['origin'], ['synthesis', 'trend'], true)) {
+                $screened = $this->negativeClaims->screenAiBlock([
+                    'type' => 'takeaway', 'origin' => 'docintel_ai',
+                    'text' => $candidate['text'], 'detail' => $candidate['detail'],
+                ], $negativeClaimContext['coverage'], $negativeClaimContext['records']);
+                if ($screened['rejected']) {
+                    $this->negativeClaimRejections[$candidate['origin']] =
+                        ($this->negativeClaimRejections[$candidate['origin']] ?? 0) + 1;
+
+                    // These legacy synthesis rows declare no deterministic absence predicate or
+                    // non-absence template. A lexical match cannot create either one.
+                    continue;
+                }
+            }
+            if (count($taken) >= ($materialityBySource === null ? self::MAX : config('intelligence_v2.tier1.target'))) {
                 break;
             }
             $origin = $candidate['origin'];
-            if (($used[$origin] ?? 0) >= self::QUOTAS[$origin]) {
+            $quota = $materialityBySource === null ? self::QUOTAS[$origin]
+                : config('intelligence_v2.tier1.origin_quotas')[$origin];
+            if (($used[$origin] ?? 0) >= $quota) {
                 continue;
             }
             // A candidate that lost its references on the way here is not a takeaway.
@@ -74,6 +104,13 @@ class TakeawayBuilder
                 continue;
             }
             $used[$origin] = ($used[$origin] ?? 0) + 1;
+            if ($materialityBySource !== null) {
+                $linked = array_values(array_filter(array_map(fn ($id) => $materialityBySource[$id] ?? null,
+                    $candidate['sourceIds'])));
+                usort($linked, fn ($a, $b) => [$a['tier'], -$a['score']] <=> [$b['tier'], -$b['score']]);
+                $candidate['materialityTier'] = $linked[0]['tier'] ?? null;
+                $candidate['tierReasons'] = $linked[0]['reasons'] ?? [];
+            }
             $taken[] = $candidate;
         }
 
@@ -290,6 +327,10 @@ class TakeawayBuilder
     /** Readable amount for takeaway prose, using the chart's own already-scaled values. */
     private function amount(float|int|string $value, string $unit): string
     {
+        if (config('intelligence_v2.enabled')) {
+            return $this->valueFormatter->number($value, $unit);
+        }
+
         $value = (float) $value;
         $decimals = abs($value) >= 100 ? 0 : (abs($value) >= 10 ? 1 : 2);
         $formatted = rtrim(rtrim(number_format($value, $decimals), '0'), '.');

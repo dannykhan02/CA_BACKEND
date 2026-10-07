@@ -4,6 +4,7 @@ namespace App\Services\Intelligence;
 
 use App\Models\DocumentEvidence;
 use App\Models\DocumentIntelligenceSummary;
+use App\Services\Intelligence\Materiality\MaterialityScorer;
 use Illuminate\Support\Collection;
 
 /**
@@ -59,8 +60,12 @@ class ImportantFindingsBuilder
      * @param  list<string>  $alreadyShown
      * @return list<array<string,mixed>>
      */
-    public function build(Collection $evidence, ?DocumentIntelligenceSummary $summary, array $alreadyShown): array
+    public function build(Collection $evidence, ?DocumentIntelligenceSummary $summary, array $alreadyShown,
+        ?array $materiality = null): array
     {
+        if ($materiality !== null && config('intelligence_v2.enabled')) {
+            return $this->buildV2($evidence, $summary, $alreadyShown, $materiality);
+        }
         $cited = array_fill_keys($this->citedSourceIds($summary), true);
         $shown = array_fill_keys($alreadyShown, true);
         $today = now()->startOfDay();
@@ -120,6 +125,74 @@ class ImportantFindingsBuilder
                 'confidence' => $candidate['confidence'],
                 'citedBySynthesis' => $candidate['cited'],
                 'page' => count($pages) === 1 ? (int) reset($pages) : null,
+            ];
+        }
+
+        return $findings;
+    }
+
+    /** @param Collection<int,DocumentEvidence> $evidence @param list<string> $alreadyShown @param array<string,array<string,mixed>> $materiality @return list<array<string,mixed>> */
+    private function buildV2(Collection $evidence, ?DocumentIntelligenceSummary $summary, array $alreadyShown,
+        array $materiality): array
+    {
+        $shown = array_fill_keys($alreadyShown, true);
+        $cited = array_fill_keys($this->citedSourceIds($summary), true);
+        $candidates = [];
+        foreach ($evidence as $row) {
+            $reference = $row->source_id ?: 'evidence:'.$row->id;
+            $data = is_array($row->data) ? $row->data : [];
+            if (isset($shown[$reference]) || $row->kind === 'unresolved'
+                || (trim((string) ($data['value'] ?? '')) === '' && trim((string) ($data['label'] ?? '')) === '')) {
+                continue;
+            }
+            if (isset($materiality[$row->identity])) {
+                $candidates[] = ['row' => $row, 'data' => $data, 'reference' => $reference,
+                    'assignment' => $materiality[$row->identity]];
+            }
+        }
+        usort($candidates, static function ($a, $b) {
+            $score = $b['assignment']['score'] <=> $a['assignment']['score'];
+            if ($score !== 0) {
+                return $score;
+            }
+            $record = static fn ($candidate) => ['identity' => $candidate['row']->identity,
+                'kind' => $candidate['row']->kind, 'data' => $candidate['data'],
+                'sources' => $candidate['row']->sources ?? []];
+
+            return MaterialityScorer::compareTiebreak($record($a), $record($b), $a['assignment'], $b['assignment']);
+        });
+        $findings = [];
+        $stems = [];
+        $kinds = [];
+        foreach ($candidates as $candidate) {
+            if (count($findings) >= config('intelligence_v2.tier1.target')) {
+                break;
+            }
+            $data = $candidate['data'];
+            $row = $candidate['row'];
+            $forced = $candidate['assignment']['forced'];
+            $stem = $this->stem((string) ($data['label'] ?? ''));
+            $kind = $this->group($row->kind);
+            if (! $forced && (($stems[$stem] ?? 0) >= config('intelligence_v2.tier1.per_stem')
+                || ($kinds[$kind] ?? 0) >= config('intelligence_v2.tier1.per_kind'))) {
+                continue;
+            }
+            $stems[$stem] = ($stems[$stem] ?? 0) + 1;
+            $kinds[$kind] = ($kinds[$kind] ?? 0) + 1;
+            $pages = array_values(array_unique(array_filter(array_column($row->sources ?? [], 'page'),
+                fn ($page) => $page !== null)));
+            $findings[] = [
+                'sourceId' => $candidate['reference'], 'kind' => $row->kind,
+                'label' => (string) ($data['label'] ?? ''), 'value' => (string) ($data['value'] ?? ''),
+                'unit' => $data['unit'] ?? null, 'period' => $data['period'] ?? null,
+                'subject' => (string) ($data['subject'] ?? ''), 'severity' => $this->severity($data),
+                'dueDate' => $this->dueDate($data),
+                'confidence' => round((float) ($data['confidence'] ?? 0), 2),
+                'citedBySynthesis' => isset($cited[$candidate['reference']]),
+                'page' => count($pages) === 1 ? (int) reset($pages) : null,
+                'materialityTier' => $candidate['assignment']['tier'],
+                'forced' => $forced, 'forcedRule' => $candidate['assignment']['forced_rule'],
+                'tierReasons' => $candidate['assignment']['reasons'],
             ];
         }
 

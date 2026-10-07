@@ -79,13 +79,15 @@ TypedValue {
 
   # numeric family (number, money, percent, ratio, count)
   number: float | null        # canonical magnitude, scale already applied
-  scale: 1 | 1e3 | 1e6 | 1e9 | null   # the multiplier stated by the document
+  scale: 1 | 1e3 | 1e6 | 1e9 | 1e12 | null   # the multiplier stated by the document
   scale_source: "stated" | "unit" | null  # "stated" = "2.1 billion"; "unit" = "USD m" column header
   currency: string | null     # ISO-4217 when the document names one, else null
   unit: string | null         # the document's own words, unchanged: "USD billion", "%", "employees"
   unit_kind: "currency" | "percent" | "ratio" | "count" | "duration" | "other"
   sign: -1 | 0 | 1 | null
   precision: "exact" | "rounded" | "approximate"   # "approximate" for "about", "~", "circa"
+  measure_status: "actual" | "forecast" | "target" | null # stored metric_type/value_basis only
+  entity_ref: { id: string | null, text: string } # id only for a confirmed entity record
 
   # temporal family
   date: "YYYY-MM-DD" | null   # a complete calendar date, literally stated (see §4.2)
@@ -93,7 +95,7 @@ TypedValue {
   duration: Duration | null
 
   # provenance of the parse itself
-  parser_version: string      # see §9.4
+  parser_version: "values.v1" # see §9.4
 }
 
 Period {
@@ -148,6 +150,7 @@ V1 conflates three independent questions into `date_type`, `basis` and `confiden
 | Value | Meaning |
 |---|---|
 | `document` | The document states it. DocIntel only located and typed it. |
+| `unknown` | Accepted source evidence exists, but stored evidence and extraction metadata do not establish that the record's wording was directly asserted by the document. |
 | `docintel_deterministic` | DocIntel computed it from `document`-origin records by code: an arithmetic delta, a sort, a count, a template sentence. No model involved. |
 | `docintel_ai` | A model wrote it. Always carries `verification` (§14) and is always labelled as an AI summary in any surface that shows it (§13.6). |
 
@@ -159,6 +162,7 @@ V1 conflates three independent questions into `date_type`, `basis` and `confiden
 | `derived` | Follows from cited evidence by a stated deterministic rule (e.g. "down 3 pp" from two cited percentages). |
 | `inferred` | A reading that goes beyond what the cited evidence states. |
 | `absent` | A claim that the document does **not** state something. Permitted only under §12. |
+| `unspecified` | Direct assertion cannot be established from stored evidence and metadata. |
 
 ### 2.3 `attribution` — who inside the document asserts it
 
@@ -174,18 +178,23 @@ Attribution {
 
 - `role` defaults to `unattributed`, **never** to `author`. An unattributed statement is not the same as a statement by the document's author, and V2 must not silently promote one to the other.
 - `reported: true` forbids a Brief block from presenting the claim as the document's own position; the block must name the speaker or the role.
-- `attribution` is derived deterministically where the span contains a reporting pattern DocIntel recognises ("the auditor noted", "the Authority alleges", "management believes"); otherwise it stays `unattributed` with `speaker: null`. **No provider call is made to determine attribution.** A model-proposed attribution is out of scope for V2 and requires a change request.
+- Attribution matching is English-only, case-insensitive, and driven by the versioned `config/intelligence_v2.php` pattern map approved in CR-007. The nearest approved lexical pattern to the claim wins. An exact tie or no match yields `role: unattributed`, `speaker: null`, `reported: false`. `reported` is true only for `counterparty`, `quoted`, and `third_party`; auditor and regulator remain false in V1. Management statements remain unattributed; never infer `author` from “management”. **No provider call is made to determine attribution.** A model-proposed attribution is out of scope.
+
+The approved literal phrases are in CR-007 and config. The `quoted` templates are `according to <named speaker>`, `<named speaker> said`, and `<named speaker> stated that`. A speaker ID is present only when a matching confirmed entity record exists; otherwise it is null. The cited span establishing the pattern supplies `evidence_ref`.
 
 ### 2.4 Combination rules
 
 - `origin: document` ⇒ `assertion ∈ {stated}`.
+- `origin: unknown` ⇒ `assertion: unspecified`, `attribution.role: unattributed`. It cannot back a `stated` block or support any absence claim; the record remains stored, tiered and visible to analysts.
 - `origin: docintel_deterministic` ⇒ `assertion ∈ {derived, absent}`.
 - `origin: docintel_ai` ⇒ `assertion ∈ {stated, derived, inferred}`; `stated` requires verification to have passed (§14).
 - `assertion: absent` ⇒ `origin: docintel_deterministic` **and** §12 satisfied. No other combination may assert absence.
 
+Origin is assigned from stored evidence alone, never model-reported origin fields. Normalize using `EvidenceMerger::normalize` semantics. Assign `document` only when the normalized `value` is **non-empty** and is a substring of the normalized cited quote, the normalized `period` (when present) is also a substring of that quote, and `due_date` (when present) passed the existing `EvidenceSchema` date-grounding check. Empty or whitespace-only values never satisfy the substring rule. Otherwise assign `unknown`.
+
 ### 2.5 Storage
 
-Additively, per record: `data.provenance = {origin, assertion, attribution}`. Per Brief block: fields on the block (§13.2).
+Additively, per record: `data.provenance = {origin, assertion, attribution}`, including `unknown` / `unspecified` when directness cannot be established. Per Brief block: fields on the block (§13.2).
 
 ---
 
@@ -213,6 +222,7 @@ A legacy row carries no attribution information, so attribution is `unattributed
 | `docintel_ai` | `stated` | `explicit` |
 | `docintel_ai` | `derived` | `inferred` |
 | `docintel_ai` | `inferred` | `inferred` |
+| `unknown` | `unspecified` | `inferred` |
 
 The rule is: **`explicit` means "a reader can check this against the cited records"; `inferred` means "this is a reading".** `docintel_deterministic` maps to `explicit` because a derived delta is checkable arithmetic over cited numbers.
 
@@ -263,26 +273,41 @@ Each date-role `TypedValue` carries a resolution, derived from which temporal fi
 | `relative` | `duration` non-null, `date` null. "within 30 days after execution". |
 | `unknown` | The role is asserted but no temporal value could be typed. |
 
-`resolution` is a property of the **date**, not of the record's epistemics. A period-resolved due date is still a `stated` assertion of `document` origin.
+`resolution` is a property of the **date**, not of the record's epistemics. A period-resolved due date may be `document` / `stated` when §2.4 establishes directness; otherwise its record is `unknown` / `unspecified`.
 
 ### 4.3 The period-only obligation (closing audit §3.2 / R10)
 
-V1 rejects a `deadline`/`obligation` record whose `date_type` is null, so "payment is due in Q3 2026" is **dropped**. V2 represents it:
+Before the Stage A validator fix, V1 rejected a `deadline`/`obligation` record whose `date_type` was null. Newly extracted incremental-route documents now retain grounded period-only obligations regardless of the V2 flag. V2 represents one as:
 
 ```
 kind: "obligation"
 data.typed.dates.due_date = { type: "period", resolution: "period",
                               period: {text: "Q3 2026", grain: "quarter", ...} }
-data.provenance = { origin: "document", assertion: "stated", ... }
+data.provenance = { origin: "document", assertion: "stated", ... } # only when §2.4 directness passes
 ```
 
 **Compatibility:** the derived `document_deadlines` row for such a record is written with `date_type = 'relative'`, `due_date = NULL`, `relative_text = <period text>`. This satisfies the existing `NOT NULL` + three-value CHECK without a migration and without changing what `due_date` means. The V2 record carries the accurate `resolution: "period"`; the legacy row carries the closest representable value. The imprecision is confined to the legacy row, and is disclosed in the record's `legacy_mapping` note.
 
-This is a **behaviour change visible to users**: documents re-analysed under V2 will show obligations V1 discarded. It is disclosed through the coverage state (§10) rather than appearing as unexplained drift.
+This is a deliberate correctness fix to legacy behaviour, independent of the V2 flag and limited to newly extracted incremental-route documents. The normal route still does not retain period-only obligations. Flag-off conformance snapshots must use post-fix code or fixtures without period-only records.
 
 ### 4.4 Role inference rules
 
 Roles are assigned deterministically from the cited span's surrounding text using a fixed, versioned pattern set owned by the same config as the scorer (§9). No provider call. When no pattern matches:
+
+Match the cited quote case-insensitively with English word boundaries. The pattern nearest the date mention in characters wins; an exact distance tie yields role `unresolved`. `unresolved` never counts as a deadline, defaults to `due_date`, or triggers a date forced rule. The V1 patterns are:
+
+| Role | Literal patterns |
+|---|---|
+| `effective_date` | `effective from`; `effective on`; `with effect from`; `takes effect`; `comes into force` |
+| `due_date` | `due by`; `due on`; `due in`; `deadline`; `no later than`; `must be ... by` with up to 6 intervening words |
+| `expiry_date` | `expires`; `valid until`; `terminates on` |
+| `issued_date` | `signed on`; `executed on`; `issued on` |
+| `as_of_date` | `as at`; `as of` |
+| `period_covered` | `for the year ended`; `for the period` |
+| `observed_date` | `occurred`; `struck`; `was held`; `took place` |
+| `review_date` | `review date`; `to be reviewed` |
+
+Only when no pattern matches, use the following fallback:
 
 - `kind ∈ {deadline, obligation}` → the record's primary date takes role `due_date`;
 - `kind = metric` → `period_covered` if a period was typed, else `as_of_date` if a calendar date was typed;
@@ -294,8 +319,8 @@ Roles are assigned deterministically from the cited span's surrounding text usin
 
 | V1 `date_type` | V1 `due_date` | V2 role | `resolution` | `origin` / `assertion` |
 |---|---|---|---|---|
-| `explicit` | set | `due_date` | `calendar` | `document` / `stated` |
-| `relative` | null | `due_date` | `relative` (if a duration parses from `relative_text`) else `unknown` | `document` / `stated` |
+| `explicit` | set | `due_date` | `calendar` | `document` / `stated` only if §2.4 directness passes; otherwise `unknown` / `unspecified` |
+| `relative` | null | `due_date` | `relative` (if a duration parses from `relative_text`) else `unknown` | `document` / `stated` only if §2.4 directness passes; otherwise `unknown` / `unspecified` |
 | `inferred` | null | `due_date` | `relative` or `unknown` | `docintel_ai` / `inferred` |
 
 Note that V1's `inferred` carries epistemic information that V2 moves onto the `assertion` axis; the *date* is simply unresolved. This is the conflation §2 exists to undo.
@@ -306,9 +331,11 @@ Note that V1's `inferred` carries epistemic information that V2 moves onto the `
 |---|---|---|---|
 | `calendar` | `stated` or `derived` | `explicit` | the date |
 | `calendar` | `inferred` | `inferred` | `NULL` — V1 forbids a `due_date` on a non-explicit row |
+| `calendar` | `unspecified` | `inferred` | `NULL` — direct assertion is unestablished |
 | `period` | any | `relative` | `NULL` |
 | `relative` | `stated` or `derived` | `relative` | `NULL` |
 | `relative` | `inferred` | `inferred` | `NULL` |
+| `relative` | `unspecified` | `inferred` | `NULL` |
 | `unknown` | any | `inferred` | `NULL` |
 
 The invariant "a non-null `document_deadlines.due_date` is a complete calendar date literally stated in the cited evidence" is preserved by every row of this table.
@@ -317,11 +344,11 @@ The invariant "a non-null `document_deadlines.due_date` is a complete calendar d
 
 ## 5. Materiality tiers
 
-> **Revised (clarification pass).** A materiality model already exists: `ImportantFindingsBuilder::TIERS` (seven usefulness tiers), plus `TakeawayBuilder`'s quotas and `ChartCandidateBuilder::score()` — three independent mechanisms (audit §9.3, R16). V2 unifies them. **The unified model must reproduce their current decisions**; a refactor that changes what users see is a product change, and needs a change request.
+> **Revised (CR-006 and CR-008).** A materiality model already exists: `ImportantFindingsBuilder::TIERS` (seven usefulness tiers), plus `TakeawayBuilder`'s quotas and `ChartCandidateBuilder::score()` — three independent mechanisms (audit §9.3, R16). V2 unifies them. The existing `importantFindings` selected set, non-tie order, takeaway selection and chart order remain calibration gates; exact-score V1 confidence/reference tie order is deliberately replaced by §9.5. Tier 1 has the separate attention compatibility rule in T9.
 
 ### 5.0 Mapping onto the existing seven tiers
 
-V2's four presentation tiers are a banding of the existing usefulness classes, not a replacement:
+V2's four presentation tiers are a banding of the existing usefulness classes. This mapping does **not** mean `importantFindings == Tier 1`. `importantFindings` remains the top-ranked findings selected for the legacy surface: top `MAX` by materiality score, subject to `MAX_PER_STEM` and per-kind rules for non-forced items. It is selected independently of Tier 1 membership. Tier 1 is a separate materiality/attention concept.
 
 | Existing `ImportantFindingsBuilder` class | Existing value | V2 tier |
 |---|---|---|
@@ -333,9 +360,9 @@ V2's four presentation tiers are a banding of the existing usefulness classes, n
 | `definition`, `entity` | 5 | 3 `detail` |
 | `other` | 6 | 4 `background` |
 
-Two existing behaviours are inherited verbatim:
+Two behaviours remain:
 
-- **Confidence is a tie-break inside a tier, never a tier signal** (§5.3) — this is already the implementation's stated position.
+- **Confidence is never a V2 score, tier, forced-rule or §9.5 tiebreak input.** The approved §9.5 order replaces V1 confidence/reference order on exact-score ties.
 - **A finding the document's own synthesis cited is promoted exactly one tier**, and no further. Preserved as the `cited_by_synthesis` signal, capped at one tier of movement.
 
 ### 5.1 Tiers
@@ -381,7 +408,7 @@ TierAssignment {
 
 ## 7. Tier 1 budget and forced-item rules
 
-> **Revised (clarification pass).** Two budgets already exist, both capped at 8: `TakeawayBuilder::MAX = 8` with per-origin quotas `synthesis 4 / metric 3 / trend 2 / risk 2 / obligation 1`, and `ImportantFindingsBuilder::MAX = 8` with `MAX_PER_STEM = 2`, `MAX_PER_KIND = 3`. The approved requirement is "roughly 5–10 normal items plus forced items", and **8 sits inside that range**, so the existing caps are kept as the defaults rather than replaced. What V2 adds is the **forced-item guarantee**, which neither existing mechanism has: today a fourth critical risk can be excluded by `MAX_PER_KIND = 3`.
+The V2 normal budget has target 8 and maximum 10. Forced items use a separate maximum of 8. The existing `MAX_PER_KIND = 3` cannot exclude a fourth forced critical risk.
 
 ### 7.1 Budget
 
@@ -394,6 +421,8 @@ intelligence_v2.tier1 = [
   'hard_cap'   => 18,   # absolute ceiling: max + forced_max
   'per_kind'   => 3,    # existing ImportantFindingsBuilder::MAX_PER_KIND
   'per_stem'   => 2,    # existing ImportantFindingsBuilder::MAX_PER_STEM
+  'imminent_days' => 90,
+  'recompute_after_hours' => 24,
   'origin_quotas' => ['synthesis' => 4, 'metric' => 3, 'trend' => 2, 'risk' => 2, 'obligation' => 1],
 ]
 ```
@@ -420,14 +449,20 @@ Each rule is a **deterministic predicate over one record**, identified by a stab
 
 | Priority | Rule id | Predicate |
 |---|---|---|
-| 10 | `critical_risk` | `kind = risk` **and** `severity = critical` |
+| 10 | `critical_risk` | `kind = risk` **and** `severity = critical`, except historical risks defined below |
 | 20 | `imminent_dated_obligation` | `kind ∈ {deadline, obligation}` **and** a `due_date` role with `resolution = calendar` **and** that date is within `tier1.imminent_days` (default 90) of "now" **and** the derived row's `status = open` |
 | 30 | `overdue_dated_obligation` | as above, but the date is in the past and `status = open` |
-| 40 | `penalised_obligation` | `kind = obligation` **and** a typed `extras` money or percent value whose span carries a penalty/consequence pattern |
-| 50 | `high_risk` | `kind = risk` **and** `severity = high` |
+| 40 | `penalised_obligation` | `kind = obligation` **and** a `ValueParser` money or percent value from the same cited quote as a penalty/consequence pattern |
+| 50 | `high_risk` | `kind = risk` **and** `severity = high`, except historical risks defined below |
 | 60 | `regulator_attributed` | `attribution.role ∈ {regulator, auditor}` **and** `assertion = stated` |
-| 70 | `headline_measure` | `kind = metric`, Tier ≤ 2, and the metric is the document's largest-magnitude comparable measure in its `unit_kind` + `currency` group |
-| 80 | `unresolved_material_reference` | `kind = unresolved` **and** no `resolved_evidence_id` **and** the span lies inside a Tier ≤ 2 neighbourhood |
+| 70 | `headline_measure` | `kind = metric`, Tier ≤ 2, `unit_kind = currency`, and the metric is the document's largest-magnitude comparable measure in its `unit_kind` + `currency` group. Non-currency metrics can still reach Tier 1 through ordinary scoring. |
+| 80 | `unresolved_material_reference` | `kind = unresolved` **and** no `resolved_evidence_id` **and** the span lies inside a Tier ≤ 2 neighbourhood as defined below |
+
+A historical risk has an `observed_date` resolving to a past calendar date or to an anchored period ending before `asOf`, and no other record citing the same span has a future date role or open status. Its kind and scored tier remain intact, but rules 10 and 50 do not force it. An unresolved or missing observed date does not qualify. This V1 rule cannot see a continuing consequence grounded only in a different span; it makes no semantic or cross-span inference.
+
+For rule 80, a neighbour must have a **pre-forcing scored tier** of 2 or better and share the section defined by the nearest preceding heading span. If section data is unavailable, it may instead share a page. If neither section nor page is available, rule 80 does not fire. Using pre-forcing tiers avoids circularity.
+
+The penalty/consequence patterns are case-insensitive with word boundaries: `penalty`, `penalties`, `liquidated damages`, `late fee`, `default interest`, `forfeit`, `service credit`, `termination for`.
 
 Rules 20 and 30 depend on "now", so a tier assignment has a validity window. A Tier 1 computed more than `tier1.recompute_after_hours` (default 24) ago is stale and must be recomputed on read; recomputation is deterministic and free.
 
@@ -441,7 +476,8 @@ Rules 20 and 30 depend on "now", so a tier assignment has a validity window. A T
 - **T6** Tier 1 is never padded above the number of qualifying records.
 - **T7** Tier 1 ordering is fully determined by (forced-rule priority, score, tiebreak) — no randomness, no insertion order.
 - **T8** `per_kind`, `per_stem` and `origin_quotas` never exclude a forced item.
-- **T9** For the existing test corpus, Tier 1 contains every item today's `ImportantFindingsBuilder` and `TakeawayBuilder` would surface, unless a change request records the difference. Regression, not just invariance, is what R16 asks for.
+- **T9a — importantFindings compatibility.** For the existing corpus, the V2 `importantFindings` list preserves the V1 selected set and order except at an exact-score tie group crossing a `MAX`, `MAX_PER_STEM` or per-kind selection boundary. A tie group remains tied through materiality score and all higher-priority selection semantics. Select the first N under §9.5 and require the same number from that tied group, but do not require V1 identities chosen by confidence/reference ordering. No lower-scoring record may displace a higher-scoring record. Outside this exception, selected set and order are strict. The list is top `MAX` by score, subject to `MAX_PER_STEM` and per-kind rules for non-forced items, independently of Tier 1 membership.
+- **T9b — attention compatibility.** Tier 1 contains every record V1 classifies as `critical_risk`, `high_risk` or `upcoming_obligation`. Tier 1 may be smaller than `importantFindings` and is never padded (T6). T9 places no tier-membership constraint on metrics, facts, definitions or entities. Chart candidate order remains strict. Takeaway selection is compared strictly with V1's candidate order, duplicate rule, minimum length and quotas applied to **V2-formatted candidate text** (CR-010). V1 flag-off output, including its integer-formatting defect, remains unchanged.
 
 ---
 
@@ -462,7 +498,7 @@ app/Services/Intelligence/Materiality/Signals/                  # one class per 
 config/intelligence_v2.php                                      # every weight and threshold
 ```
 
-The three existing ranking mechanisms become callers of this service, keeping their current outputs (§5.0, §7.1, T9):
+The three existing ranking mechanisms become callers of this service, subject to the CR-006 exact-score tie-order exception (§5.0, §7.1, T9):
 
 | Existing | After |
 |---|---|
@@ -483,21 +519,55 @@ The three existing ranking mechanisms become callers of this service, keeping th
 ```
 intelligence_v2.materiality = [
   'version'    => '1',
-  'weights'    => [ <signal id> => float, ... ],
+  'class_base' => ['critical_risk' => 0.94, 'high_risk' => 0.82, 'upcoming_obligation' => 0.82,
+                   'dated_obligation' => 0.64, 'undated_obligation' => 0.56, 'risk' => 0.56,
+                   'metric' => 0.36, 'fact' => 0.36, 'definition' => 0.24,
+                   'entity' => 0.24, 'other' => 0.08],
+  'weights'    => ['severity' => 0.010, 'date_proximity' => 0.010,
+                   'date_resolution' => 0.005, 'attribution_authority' => 0.005,
+                   'obligation_consequence' => 0.010, 'structural_prominence' => 0.020,
+                   'monetary_magnitude' => 0.060, 'relative_magnitude' => 0.020,
+                   'comparability' => 0.020, 'repetition_penalty' => -0.020,
+                   'boilerplate_penalty' => -0.040, 'unresolved_penalty' => -0.020,
+                   'cited_by_synthesis' => 0.000],
   'bands'      => ['tier1' => 0.72, 'tier2' => 0.45, 'tier3' => 0.18],  # score >= band
-  'signals'    => [ <signal id> => [...signal-specific parameters] ],
+  'signals'    => ['date_proximity' => ['imminent_days' => 90,
+                   'horizon_days' => 365, 'floor_value' => 0.2],
+                   'structural_prominence' => ['heading_span_types' => ['heading'],
+                                               'ordinal_first_fraction' => 0.10],
+                   'boilerplate_penalty' => ['boilerplate_span_types' => []]],
 ]
 ```
 
-Bands are score thresholds; Tier 1 membership additionally requires passing §7's budget. A record above the Tier 1 band that does not fit the budget lands in Tier 2 with `band_qualified: true` recorded, so "we had more Tier 1 candidates than the budget allows" is observable.
+Bands are score thresholds; Tier 1 membership additionally requires passing §7's budget. A record above the Tier 1 band that does not fit the budget lands in Tier 2 with `band_qualified: true` recorded, so "we had more Tier 1 candidates than the budget allows" is observable. `class_base` uses today's `ImportantFindingsBuilder::classify()` result with injectable `asOf`; unresolved and unknown classes use `other`. Compute `raw = class_base[kind_class] + Σ(weight[signal] × value[signal])`, then `score = clamp(raw, 0.0, 1.0)`. Never round stored values. A synthesis citation promotes a record exactly one tier after banding, subject to §7's budget; the zero-weight citation signal does not change the score.
 
 ### 9.3 Signals
 
-Each signal is a class implementing `contribute(IntelligenceRecord, ScoringContext): float` in `[0, 1]`, multiplied by its configured weight. The initial signal set (ids are contract; values are config):
+Each signal yields a value in `[0, 1]` before multiplication by its configured signed weight. The initial signal set (ids are contract; values are config):
 
-`kind_class`, `severity`, `date_proximity`, `date_resolution`, `monetary_magnitude`, `relative_magnitude`, `attribution_authority`, `obligation_consequence`, `structural_prominence` (heading / early-page / table-header position from the span's `type` and `ordinal`), `repetition_penalty`, `boilerplate_penalty`, `cited_by_synthesis`, `comparability` (participates in a valid comparison group), `unresolved_penalty`.
+`kind_class`, `severity`, `date_proximity`, `date_resolution`, `monetary_magnitude`, `relative_magnitude`, `attribution_authority`, `obligation_consequence`, `structural_prominence` (heading type / early document ordinal), `repetition_penalty`, `boilerplate_penalty`, `cited_by_synthesis`, `comparability` (participates in a valid comparison group), `unresolved_penalty`.
 
-`confidence` is deliberately **not** a signal (§5.3).
+The exact persisted `SourceSpanBuilder` type vocabulary is `heading`, `section`, `table_row`, `list_item`, `sentence`. Its intermediate `prose` classification becomes `sentence` before persistence; no aliases are inferred. Only `heading` is unambiguously heading-like. Materiality v1 has no explicit table-header, header, or footer type. Table-header prominence is unavailable; `boilerplate_penalty` is inactive until a later config/materiality version because the current vocabulary cannot represent header/footer semantics. Unavailable span-derived branches are skipped rather than guessed.
+
+`confidence` is deliberately **not** a signal, tier or forced-rule input (§5.3). Reasons list `kind_class` first with its base contribution, then non-zero contributing signals and skipped unavailable signals (contribution 0, `skipped: true`), then a non-zero `clamp` contribution (`score - raw`), then `tier_adjustment` (contribution 0) when applicable. Their contributions sum to the stored score within 1e-9.
+
+Signal values are deterministic:
+
+| Signal | Value rule |
+|---|---|
+| `severity` | critical 1.0; high 0.7; medium 0.35; low 0.1; otherwise 0. |
+| `date_proximity` | For a calendar date or anchored-period end while status is open (derived status `open` or absent): past and 0–90 days ahead 1.0; from 90 to 365 days ahead `1.0 - 0.8 × (days - 90) / (365 - 90)`; beyond 365 days 0.2. Otherwise 0. |
+| `date_resolution` | calendar 1.0; period 0.6; relative 0.3; unknown 0. |
+| `attribution_authority` | regulator/auditor 1.0; counterparty 0.6; quoted/third_party 0.3; otherwise 0. |
+| `obligation_consequence` | 1.0 only for an obligation whose cited quote both matches a §7.3 penalty pattern and yields a money or percent `TypedValue` via `ValueParser`; otherwise 0. |
+| `structural_prominence` | Cited span type `heading`: 1.0; ordinal within first 10% of document spans: 0.5. When both apply use the maximum, 1.0, never their sum. If no heading-like emitted type exists, skip that branch with `reason: span_type_unavailable` while keeping the ordinal rule available. No span data at all skips the entire signal. No table-header inference. |
+| `monetary_magnitude` | Currency metrics only, grouped by unit_kind + currency. Rank by canonical magnitude after scale, counting strictly smaller group members; value `rank / (group_size - 1)`, or 0.5 for a singleton. |
+| `relative_magnitude` | Numeric metrics grouped by unit_kind + currency: `abs(number) / max(abs(number))` in group; 0 if maximum is 0. |
+| `comparability` | 1.0 if the record participates in a valid group under existing `ChartCandidateBuilder` rules; otherwise 0. Eligibility and candidate construction stay unchanged. |
+| `repetition_penalty` | 1.0 for every duplicate after the first in §9.5 order, grouped by normalized kind + label + value + period; otherwise 0. |
+| `boilerplate_penalty` | Materiality v1 config has `boilerplate_span_types: []`; contribution 0.0, `skipped: true`, `reason: span_type_unavailable`. No replacement heuristic. Deferred to a later config/materiality version. |
+| `unresolved_penalty` | 1.0 for an unresolved record with no `resolved_evidence_id`; otherwise 0. |
+| `cited_by_synthesis` | 0 in score sum; one post-banding tier promotion when the document's own synthesis cites the record's `source_id`. |
 
 ### 9.4 Versioning
 
@@ -513,7 +583,7 @@ None of these is part of `pipeline_key`. **Bumping any of them must never re-ext
 
 ### 9.5 Determinism and tiebreaks
 
-Ties in score are broken by, in order: forced-rule priority (absent = 999), tier band, `kind` in the fixed order `[obligation, deadline, risk, metric, fact, definition, entity, unresolved]`, earliest `sources[0].start_offset`, then `identity` ascending. `identity` is a sha256 and total, so the order is total.
+The V2 total order is, in sequence: (1) forced-rule priority (absent = 999), (2) tier band, (3) `kind` in `[obligation, deadline, risk, metric, fact, definition, entity, unresolved]`, (4) earliest `sources[0].start_offset`, (5) earliest `sources[0].page`, null last, (6) `sources[0].end_offset`, (7) normalized label ascending using `EvidenceMerger::normalize`, (8) `identity` ascending. Identity is a sha256 and makes the order total. Unavailable offsets sort last. Confidence never participates in materiality score, tier assignment, forced rules, or this tiebreak. V1's confidence/reference order for exact-score ties is deliberately not preserved (CR-006/CR-009). Literal patterns remain config-driven.
 
 ### 9.6 Testability
 
@@ -536,8 +606,8 @@ V1 emits a nine-field coverage array plus a prose warning appended into `executi
 
 | State | Condition |
 |---|---|
-| `complete` | V1's `comprehensive` is true: `evidence_omitted`, `unresolved_references`, `failed_chunks`, `dropped_records` and `saturated_chunks` are all zero — **and** `source_text ≠ "omitted"`. |
-| `bounded` | Nothing failed, but the evidence payload was trimmed to budget or source context was reduced: `evidence_omitted > 0` or `source_text ∈ {excerpts, omitted}`, with no failures or drops. |
+| `complete` | V1's `comprehensive` is true: `evidence_omitted`, `unresolved_references`, `failed_chunks`, `dropped_records` and `saturated_chunks` are all zero — **and** `source_text ≠ "omitted"`, with every required observable stage fact known. |
+| `bounded` | Nothing failed, but evidence was trimmed, source context reduced, or a required stage fact is unobservable. Unknown required facts add stable `<fact>_unknown` reasons. |
 | `partial` | Something could not be processed: any of `failed_chunks`, `dropped_records`, `saturated_chunks`, `unresolved_references` is non-zero. |
 | `unavailable` | No usable evidence exists, or synthesis terminally failed: `ai_pipeline.synthesis ∉ {completed}` and no summary is served. |
 
@@ -554,6 +624,16 @@ CoverageState {
   warning: string | null                                                # V1 field, unchanged
   reasons: [string]        # NEW: stable reason codes, e.g. ["evidence_trimmed", "chunk_failed"]
   tier1_truncated: bool    # NEW: §7.1 forced overflow or band-qualified records excluded
+  stages: {               # NEW; review is reserved and not emitted
+    ingestion: StageCoverage,
+    extraction: StageCoverage,
+    synthesis: StageCoverage
+  }
+}
+StageCoverage {
+  status: "complete" | "bounded" | "partial" | "unavailable" | "unknown"
+  unknown_facts: [string]
+  ...stage-specific numeric diagnostics: int | null # unknown is null, never 0
 }
 ```
 
@@ -564,6 +644,9 @@ CoverageState {
 - **C3** `state ≠ complete` forbids every `assertion: absent` block (§12).
 - **C4** `state: partial` or `unavailable` must be visible on any surface that shows Tier 1, including exports.
 - **C5** A document whose route is `normal` has no chunk-level counters; its coverage is computed per §21.
+- **C6** Each stage is `partial` for any observed non-zero failure counter; otherwise `unavailable` with no usable data; otherwise `bounded` if trimmed/reduced; otherwise `unknown` for an unobservable required fact; otherwise `complete`. Only facts `CoverageStateBuilder` can currently observe may populate diagnostics. List unobservable facts; do not instrument extraction. Existing top-level V1 integer counters retain their type and semantics; unknown new-stage numeric diagnostics are `null`. A required unknown fact prevents top-level `complete`, producing `bounded` and `<fact>_unknown` in `reasons`.
+
+The current builder observes `pipeline.route`, `pipeline.synthesis`, summary availability, `tier1_truncated`, and the stored top-level coverage counters/fields shown in §10.2. It cannot observe ingestion completeness or failure counts, per-stage extraction attempt/failure counts beyond the existing aggregate chunk counters, or per-stage synthesis request/failure counts. Those stage facts stay in `unknown_facts`; missing numeric diagnostics are `null`. The existing top-level counters retain their V1 zero fallback for compatibility, but that fallback never proves an unknown stage fact was observed.
 
 ---
 
@@ -586,6 +669,8 @@ AttentionState {
 | `watch` | Tier 1 by any other rule or by score; or Tier 2 with a `due_date` role resolving to `calendar` or `period` in the future. |
 | `informational` | Everything else surfaced. |
 | `resolved` | The derived row's `status` is a terminal non-open value (`risks`: `mitigated`/`closed`; `deadlines`: `met`/`missed`), **or** an `unresolved` record acquired a `resolved_evidence_id`. |
+
+Historical risk exception: a risk with `observed_date` resolving to a past calendar date or an anchored period ending before `asOf`, and with no other same-span record carrying a future date role or open status, keeps its risk kind and scored tier but has `informational` attention with reason `historical_context`. Missing or unresolved observed dates never qualify. A continuing consequence grounded only in a different span may fail to suppress this conservative V1 exception; there is no semantic or cross-span inference.
 
 ### 11.2 Document-level
 
@@ -629,7 +714,14 @@ If any condition fails, the block is not emitted. There is no softened variant, 
 
 ### 12.3 AI prose screening
 
-Before any `origin: docintel_ai` block is accepted, it is screened for negation-of-existence patterns against a versioned pattern set (`intelligence_v2.negative_claim.patterns`). A match causes verification failure with reason `negative_claim`, which triggers the deterministic fallback (§14.4). The screen is lexical and conservative: a false positive costs one AI sentence replaced by a template; a false negative is an unfounded absence claim shipped to a user. **The screen errs toward rejection.**
+Before any `origin: docintel_ai` block is accepted, it is screened against `intelligence_v2.negative_claim.patterns`, version `1` (CR-012). Matching is English-only, case-insensitive and word-boundary based; any single match rejects the AI block with reason `negative_claim`. The version-1 groups are:
+
+- **Existence negation:** `no <noun> (was|were|has been|have been)? (identified|found|disclosed|reported|noted|recorded|provided|mentioned)`; `none (was|were|has been)? (identified|found|disclosed|reported)`; `not (identified|found|disclosed|reported|mentioned|provided|stated|addressed)`; `(does|do|did) not (disclose|identify|mention|state|contain|include|report|address)`; `without (any )?(material |significant )?(risk|issue|finding|deadline|obligation|penalty)`; `(there is|there are|there was|there were) no`; `lack(s|ed)? (of )?`; `absence of`; `nothing (material|significant|to report)`; `fails? to (disclose|identify|mention)`; `never (disclosed|mentioned|reported)`.
+- **Clean-bill phrases:** `all (obligations|risks|deadlines|items) (are|were) (met|resolved|closed|addressed)`; `no (outstanding|open|unresolved|pending|overdue)`; `fully (compliant|resolved|addressed)`; `(complete|comprehensive) coverage`.
+
+A match is a conservative trigger, never proof that an absence assertion is valid. A separately declared deterministic predicate must pass §12.1's complete-coverage, zero-match and provenance conditions before its approved absence template may be emitted. A match alone never creates a template. If the guard fails, emit no absence block. A rejected block with a separately available **non-absence** deterministic template over the same cited records follows §14.4; otherwise omit it and count `brief.ai_blocks_rejected`. Never repair by provider call. Log only block type, reason and count, without text. The five legacy summary arrays remain unchanged (§12.4). Accepted false positives include `lack of clarity`, `not addressed in this section` and `complete coverage` used for insurance; see CR-012. No negation-scope analysis is attempted.
+
+Stage A's existing `material_findings` and `trends` have no declared deterministic absence predicate, so a match on their V2 takeaway presentation is omitted before selection and counted in the additive `analysis.stats.briefAiBlocksRejected` diagnostic. `key_findings` mirrored into `summaryNotes` is one of the unchanged legacy arrays. The only Stage A named absence template is `absence.high_critical_risks`: the separately declared predicate `risk_severity_in(high,critical)` yields “No high or critical risks were identified.” only after the guard passes. No AI wording is reused.
 
 ### 12.4 Scope of the guard
 
@@ -656,8 +748,8 @@ BriefBlock {
   text: string                # the rendered sentence or phrase
   detail: string | null
 
-  origin: "document" | "docintel_deterministic" | "docintel_ai"      # §2.1
-  assertion: "stated" | "derived" | "inferred" | "absent"            # §2.2
+  origin: "document" | "unknown" | "docintel_deterministic" | "docintel_ai" # §2.1
+  assertion: "stated" | "unspecified" | "derived" | "inferred" | "absent" # §2.2
   attribution: Attribution                                           # §2.3
 
   cites: [string]             # record source_ids. MUST be non-empty except for
@@ -682,9 +774,9 @@ BriefBlock {
 |---|---|---|
 | `headline` | What this document is and what it is about. | deterministic, ai |
 | `assessment` | The overall reading. At most one per Brief. | ai (deterministic fallback) |
-| `finding` | One material thing the document states. | document, deterministic, ai |
-| `measure` | One measured value, with its period and unit. | document, deterministic |
-| `timeline` | A dated or period-bound obligation or event. | document, deterministic |
+| `finding` | One material finding. Unknown-origin wording must carry `unspecified`, never `stated`. | document, unknown, deterministic, ai |
+| `measure` | One measured value, with its period and unit. Unknown-origin records require `unspecified`. | document, unknown, deterministic |
+| `timeline` | A dated or period-bound obligation or event. Unknown-origin records require `unspecified`. | document, unknown, deterministic |
 | `tension` | Two cited records that pull against each other. | ai (deterministic fallback) |
 | `question` | Something a reader should ask. Must stay unanswered. | ai |
 | `attention` | Why an item needs attention. | deterministic |
@@ -765,6 +857,7 @@ Run in order; all are deterministic, local, and free.
 | `comparison_valid` | A comparative statement ("rose", "higher than", "down from") cites at least two records that are comparable per §1.2 V7, and the stated direction matches the arithmetic. |
 | `negative_claim` | §12.3 screen. Any match fails. |
 | `attribution_respected` | §13.4 B5. |
+| `origin_assertion_consistent` | An `unknown`-origin record cannot verify a `stated` block or support an absence claim; it retains `unspecified` assertion and unattributed attribution. |
 | `no_source_text_leak` | The block does not reproduce a span of cited evidence longer than `brief.max_quote_chars` without it being an explicit quote block. Preserves V1's "the model never supplies evidence text" posture. |
 
 ### 14.3 Outcome
@@ -973,7 +1066,7 @@ Mapping from V2 concepts onto that interface — **the left column already exist
 | `overview.summaryNotes[]` | ungrounded AI prose, `supported: false` |
 | `visualAnalysis` | §16 |
 | `analysisGroups` | Tier 2–3 records grouped by kind, with `total` for pagination |
-| `importantFindings` | Tier 1 records as `AnalysisFinding`, `citedBySynthesis` set from the summary's `source_ids` |
+| `importantFindings` | Legacy-surface top-ranked `AnalysisFinding` records selected independently of Tier 1 under T9a; `citedBySynthesis` set from the summary's `source_ids` |
 | `stats` | the nine declared counters |
 
 Two further new top-level keys:
@@ -1044,6 +1137,7 @@ Consequences:
 - **A5** The coverage `warning` keeps being appended to `executive_summary`.
 - **A6** Behaviour with the V2 flag off is byte-identical to the merged pre-V2 baseline (§20) — i.e. to `main` **with the visualization work merged**, which is the tree V2 branches from (§0a.1).
 - **A7** The `evidence` map's narrowing to referenced `source_id`s was introduced by the visualization branch, not by V2 (audit §5.3.2). V2 **inherits** it and must not narrow it further: any `source_id` that V2 newly references — from a Brief block, a tier assignment or an attention state — must be added to `DocumentAnalysisComposer::referencedSourceIds()`, or its evidence will be missing from the response while the UI tries to open it.
+- **A8** Retaining grounded period-only obligations is a deliberate correction to legacy behaviour. It applies regardless of the V2 flag, only to newly extracted incremental-route documents. Flag-off snapshots must come from post-fix code or omit period-only records. The normal route still does not retain period-only obligations. This exception is not an authorization to change any other extraction behaviour.
 
 ### 18.3 Database
 
@@ -1112,7 +1206,7 @@ Mirrors the established pattern of `document_intelligence.evidence_spans`.
 
 ### 20.2 Off (the default)
 
-- `analysis`, `coverageState` and `attentionSummary` are **absent** from the intelligence response — not `null`, absent — so a client cannot distinguish the response from today's byte-for-byte.
+- `analysis` remains present as in the pre-V2 visualization baseline. V2-only `coverageState` and `attentionSummary` are **absent** from the intelligence response — not `null`, absent — so a client cannot distinguish the response from today's byte-for-byte.
 - `/brief` and `/records` return `404` (route not registered) when `enabled` is false. A registered route returning `200 {data: null}` would itself be a shape change.
 - No tier, Brief, chart-candidate or verification row is written.
 - Nothing in the existing pipeline behaves differently. The synthesis schema and prompt are the **V1 versions**.
@@ -1153,8 +1247,9 @@ IntelligenceRecord (adapted) {
   source_id          = "entity:<id>" | "risk:<id>" | "deadline:<id>" | "kpi:<id>"
   kind               = entity | risk | deadline | metric
   quote              = context (entities) | evidence (risks, deadlines) | null (kpis)
-  provenance.origin  = "document"
-  provenance.assertion = "stated"        # except date_type = inferred → "inferred"
+  provenance.origin  = "document" only when §2.4 directness is established; else "unknown"
+  provenance.assertion = "stated" only for established document origin;
+                         otherwise "unspecified" (or "inferred" for inferred legacy rows)
   provenance.attribution = {speaker: null, role: "unattributed", reported: false}
   typed              = ValueParser over value/unit/period, where parseable
   dates              = per §4.5 from date_type + due_date + relative_text
@@ -1164,7 +1259,7 @@ IntelligenceRecord (adapted) {
 
 Rules:
 
-- **L1** Tiering runs. Signals that need data the adapter cannot supply (`structural_prominence`, `comparability` when offsets are needed) contribute **0** and are recorded as `skipped` in `reasons`. The tier is lower-fidelity, not absent.
+- **L1** Tiering runs. Signals that need span data the adapter cannot supply (`structural_prominence`, `comparability` when offsets are needed) contribute **0** and are recorded as `skipped` in `reasons`. A normal-route record has no span ordinal, so the entire structural signal is skipped; it does not acquire a guessed heading or table-header type. `boilerplate_penalty` is skipped with `span_type_unavailable` on every route in materiality v1. The tier is lower-fidelity, not absent.
 - **L2** Highlighting is `mode: page_only` when `EvidencePageLocator` yields a page, else `mode: none`. **Never** `text_match` fabricated from a quote whose offsets are unknown — a search with no anchor can match the wrong occurrence silently.
 - **L3** A Brief is deterministic-only. No synthesis re-run, no provider call. `brief.ai_blocks_available: false`.
 - **L4** `coverageState.state` is `bounded` (adapted, chunk counters unavailable) with `reasons: ["legacy_route"]`. It is **never `complete`**, so §12 forbids every absence claim on a legacy document.
@@ -1245,7 +1340,7 @@ tests/Fixtures/IntelligenceV2/
 | `16-legacy-normal-route` | §21.2: adapter, skipped signals, `page_only`/`none` highlighting, charts suppressed, `bounded` coverage, deterministic-only Brief |
 | `17-superseded-pipeline-key` | old evidence rows invisible (§21.3) |
 | `18-flag-off` | `intelligence-off.json` is byte-identical to the merged pre-V2 baseline; new keys **absent**, not null; `analysis` still present, since it predates V2 (§20.2, A6) |
-| `25-preserves-existing-ranking` | T9: for the existing `DocumentIntelligenceAnalysisTest` corpus, the unified scorer reproduces today's `importantFindings` order, `takeaways` selection and chart candidate order (R16) |
+| `25-preserves-existing-ranking` | T9a: existing-corpus `importantFindings` selected set and order stay strict outside exact-score selection-cap boundaries; at such a boundary select the same number from the tied group under §9.5, never allowing a lower score to displace a higher one (CR-009). T9b: Tier 1 includes all V1 `critical_risk`, `high_risk` and `upcoming_obligation` records. Chart candidate order stays strict. Takeaway selection strictly matches V1 selection logic applied to V2-formatted text, captured in `tests/Fixtures/intelligence-v2/expected/25-takeaways-v2.json` (CR-010). Metrics, facts, definitions and entities need not enter Tier 1 (CR-008). |
 | `26-forced-item-beats-per-kind-cap` | four critical risks: all four forced into Tier 1, `per_kind = 3` not applied to forced items (T8) — the behaviour today's `MAX_PER_KIND` does not provide |
 | `19-no-bounding-boxes` | every highlight is `offset`, `text_match`, `page_only` or `none`; no case produces a box (§15.2) |
 | `20-text-match-fallback` | offsets exist but the consumer is not `extracted_text` → `text_match` with `needle`, `occurrence`, `occurrences` |
@@ -1258,16 +1353,19 @@ tests/Fixtures/IntelligenceV2/
 
 1. Output validates against `schemas/*.schema.json`.
 2. Output equals `expected/` exactly — key order normalised, values not.
-3. Invariants V1–V7 (§1.2), T1–T9 (§7.4), B1–B6 (§13.4), C1–C5 (§10.3), P1 (§18.1), A1–A7 (§18.2), D1–D5 (§18.3), L1–L6 (§21.2), F1–F5 (§20.4) hold.
+3. Invariants V1–V7 (§1.2), T1–T9 (§7.4), B1–B6 (§13.4), C1–C6 (§10.3), P1 (§18.1), A1–A8 (§18.2), D1–D5 (§18.3), L1–L6 (§21.2), F1–F5 (§20.4) hold.
 4. Recorded provider calls equal the §19.2 inventory for that case — **zero V2-attributable calls** in every case.
 5. Every `origin: docintel_ai` block has `ai_generated: true` and a non-null `verification` (§13.6).
 6. No `assertion: absent` block exists unless `coverage.state = complete` and `absence_check` is present (§12).
+6a. An `origin: unknown` record has `assertion: unspecified`, unattributed attribution, and never backs `stated` or `absent` output.
 7. Every config value the case depends on comes from `config.json`; no literal threshold appears in the implementation (§9.1).
 8. The `intelligence-off.json` snapshot matches a snapshot taken from the V1 code path.
 
 ### 22.5 Golden-file discipline
 
 Updating an `expected/` file is a contract change and requires a change request (§22.6) naming the section changed and why. A silent golden-file update is the one failure mode a conformance suite cannot catch by itself, so it is caught in review instead.
+
+CR-010 approves the V2 takeaway golden `tests/Fixtures/intelligence-v2/expected/25-takeaways-v2.json`: the corrected formatter preserves employee counts, so Employees is selected and Portfolio exposure is not. The V1 golden and flag-off formatter remain unchanged.
 
 ### 22.6 Relationship to the change-request process
 
@@ -1292,21 +1390,35 @@ The visualization branch created exactly that namespace with 11 classes, all pro
 `CA_BACKEND/docs/` is the established home for this architecture — `docintel-date-contract.md`, `architecture/evidence-span-grounding.md`, `architecture/large-document-processing.md`, `tasks/docintel-*`. `/home/collins/boys/docs/` is empty, is not inside either git repository, and would therefore not be version-controlled at all. Keeping these files in `CA_BACKEND/docs/intelligence-v2/` is the only option that versions them.
 
 **Q8 (new) — Does V2 need a new scorer at all, given three already exist? RESOLVED: yes, but as unification.**
-`ImportantFindingsBuilder`, `TakeawayBuilder` and `ChartCandidateBuilder` each rank and cap independently via `private const`s (audit R16). None is versioned, configurable or testable as a unit, and none provides a forced-item guarantee — a fourth critical risk is excluded today by `MAX_PER_KIND = 3`. V2 unifies them at their current values (§5.0, §7.1, T9, fixture `25`) and adds the guarantee (§7.3, fixture `26`).
+`ImportantFindingsBuilder`, `TakeawayBuilder` and `ChartCandidateBuilder` each rank and cap independently via `private const`s (audit R16). None is versioned, configurable or testable as a unit, and none provides a forced-item guarantee — a fourth critical risk is excluded today by `MAX_PER_KIND = 3`. V2 unifies them under T9's calibrated membership and selection rules, with the CR-006 exact-score tie exception, and adds the guarantee (§7.3, fixture `26`).
 
 ### Still open — product decisions
 
-**Q1 — Tier 1 `imminent_days`** (§7.3 rule 20). 90 days is a placeholder. The repository does not settle it: `ImportantFindingsBuilder::classify()` only splits "on or after today" from "before today", with no horizon at all, and `docs/DEADLINE_ATTENTION.md` governs reminders rather than materiality. **Needs a product answer**, informed by how customers actually use tracked deadlines.
+**Q1 — Tier 1 `imminent_days`. RESOLVED:** The Stage A approver fixed it at 90 days in §7.1 and §7.3.
 
 **Q4 — Synthesis output pressure** (§19.4, audit §12.4). `synthesis_max_tokens` is 8192 for one call plus one bounded repair. Brief blocks would compete with `executive_summary` and `key_findings`, and the visualization branch has made `material_findings` and `trends` load-bearing for the takeaway list while they remain the first fields dropped under pressure. The options — a smaller Brief cap, a raised `synthesis_max_tokens` (cost, no new call), or splitting Brief generation out — trade cost against completeness. **Needs measurement first, then a product decision.** This is the one place V2 could degrade existing behaviour, so it should be settled before the prompt changes.
 
-**Q5 — `attribution` pattern set** (§2.3). Deterministic reporting-pattern detection will have modest recall, so most records will stay `unattributed`. Whether that is acceptable, or whether attribution should wait for a design that can do better, is a product call. A model-proposed attribution remains out of scope under §19.3.
+**Deferred — presentation-independent takeaway deduplication (CR-011).** V2 currently deduplicates rendered text, so future formatter changes may affect selection again. A later design should evaluate a canonical selection key; it is outside CR-010 and Stage A Part 2.
 
-**Q9 (new) — Scope of V2 relative to the unmerged work.** Now that the visualization branch is known to contain much of what the first draft specified, the approver should confirm which of §0a.3's seven additions are in V2's scope and which are later phases. A plausible split: typed values + date roles + materiality unification + forced items as V2; verification, Brief blocks, coverage/attention states and the negative-claim guard as V2.1. **The contract does not assume a split; it describes the whole.**
+**Resolved — negative-claim prose pattern set (CR-012).** The version-1 English patterns and match policy are in §12.3; the Stage A Part 2 screen uses them without changing legacy summary arrays.
+
+**Q5 — `attribution` pattern set. RESOLVED by CR-007:** English-only, versioned, config-driven patterns and nearest-match rules are in §2.3 and CR-007. A model-proposed attribution remains out of scope under §19.3.
+
+**Q9 — Scope of Stage A Part 2. RESOLVED:** The Stage A Part 2 instruction authorizes typed values, provenance, materiality, attention, coverage, negative-claim guard integration and explainability. Stage B is not authorized by this instruction.
 
 ---
 
 ## Change log
+
+### 2026-10-07 — Stage A Part 2 approvals
+
+CR-001 through CR-004 are approved as amended above: unknown/unspecified provenance, conservative historical-risk attention, exact scorer and role-pattern parameters, and typed-value/coverage shapes. A8 records the already-committed period-only validator exception. The Stage A Part 2 instruction is authoritative where earlier contract text differs.
+
+CR-006 approves §9.5 tie ordering over V1 confidence/reference order for exact-score ties. CR-007 approves the exact attribution pattern map and tie/default/reported rules. CR-008 clarifies that `importantFindings` is independent of Tier 1 and replaces the inconsistent old T9 membership requirement with T9a/T9b. None changes scorer weights, bands, class bases, signals, promotion, patterns, or forced rules.
+
+CR-009 extends §9.5 with page, end offset and normalized label before identity, and permits a different V1 selected identity only when an exact-score tie crosses an `importantFindings` selection cap while preserving the number selected from the tied group. The existing fixture uses placeholder positions for every evidence row and offers no independent source positions for a correction. See CR-009 for the read-only diagnostic. No scorer parameter changed.
+
+CR-010 approves V1 takeaway selection logic applied to V2-formatted text, the corresponding §22.5 golden, and leaving the flag-off formatting defect unchanged. CR-011 separately tracks a future presentation-independent deduplication design; no scorer or selection constant changes in Stage A Part 2.
 
 ### 2026-10-07 — clarification pass
 
@@ -1316,8 +1428,8 @@ Prompted by a review of the audit's branch provenance. The corrections below all
 |---|---|---|
 | 1 | **New §0a** | V2 is an extension of `App\Services\Intelligence\*`, not greenfield. Prerequisite merge, inventory of what exists, and the seven things V2 genuinely adds. |
 | 2 | §1 | `TypedValue` wraps the existing `MeasurementParser` / `Measurement` / `PeriodParser` / `ReportingPeriod` and delegates to them; existing ambiguity rejections are authoritative. |
-| 3 | **New §5.0** | V2's four tiers mapped onto the existing seven `ImportantFindingsBuilder::TIERS`. Confidence-as-tiebreak and one-tier citation promotion inherited verbatim. |
-| 4 | §7.1 | Budget reconciled with the two existing caps of 8. Added `per_kind`, `per_stem`, `origin_quotas` at current values. Added **T8** (forced items escape all caps) and **T9** (reproduce today's ranking). |
+| 3 | **New §5.0** | V2's four tiers mapped onto the existing seven `ImportantFindingsBuilder::TIERS`. One-tier citation promotion retained; CR-006 later replaced confidence-based exact-score ties with §9.5. |
+| 4 | §7.1 | Budget reconciled with the two existing caps of 8. Added `per_kind`, `per_stem`, `origin_quotas` at current values. Added **T8** (forced items escape all caps) and **T9** (strict calibration with the later CR-006 tie exception). |
 | 5 | §9.1 | Scorer sits inside the existing namespace; the three existing mechanisms become its callers at their current values. |
 | 6 | §16 | **Rewritten.** Replaced invented eligibility rules, thresholds and reason codes with `ChartCandidateBuilder`'s actual ones (2 min points not 3; 12/5 caps not 24/3; the five real rejection codes; the real `score()`). Added §16.3a for the little V2 may change. |
 | 7 | §16.5 | Caps corrected to 12 / 12 / 5 / 2. The first draft's 6 / 24 / 3 / 3 were invented and are withdrawn. |

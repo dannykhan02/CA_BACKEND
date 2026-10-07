@@ -8,6 +8,7 @@ use App\Models\DocumentEvidence;
 use App\Models\DocumentKpi;
 use App\Models\KpiDefinition;
 use App\Models\User;
+use App\Services\AnthropicClient;
 use App\Services\Intelligence\DocumentAnalysisComposer;
 use App\Services\Intelligence\ImportantFindingsBuilder;
 use App\Services\WorkspaceService;
@@ -106,6 +107,21 @@ class DocumentIntelligenceAnalysisTest extends TestCase
         $this->assertSame('USD billion', $charts[0]['unit']);
         $this->assertSame(['2022', '2023', '2024'], array_column($charts[0]['points'], 'label'));
         $this->assertSame([9.8, 10.7, 12.4], array_column($charts[0]['points'], 'value'));
+    }
+
+    public function test_v2_chart_takeaway_uses_one_formatter_and_never_reaches_a_provider_client(): void
+    {
+        config(['intelligence_v2.enabled' => true]);
+        app()->bind(AnthropicClient::class, fn () => throw new \LogicException('Stage A reached a provider client'));
+        $document = $this->intelligenceDocument();
+        $this->metricFinding($document, 'Total financing', '100', 'USD billion', '2023');
+        $this->metricFinding($document, 'Total financing', '110', 'USD billion', '2024');
+
+        $takeaways = $this->analyze($document)['overview']['takeaways'];
+        $metric = collect($takeaways)->firstWhere('origin', 'metric');
+        self::assertNotNull($metric);
+        self::assertStringContainsString('USD 100 billion', $metric['text']);
+        self::assertStringNotContainsString('USD billion USD', $metric['text']);
     }
 
     public function test_a_canonical_kpi_identity_groups_differently_worded_labels(): void
@@ -684,5 +700,42 @@ class DocumentIntelligenceAnalysisTest extends TestCase
 
         $body = $this->getJson("/api/documents/{$document->id}/intelligence")->assertOk()->getContent();
         $this->assertLessThan(262144, strlen($body), 'intelligence payload must stay well under 256KB');
+    }
+
+    /** CR-010 calibration: new case; the protected V1 assertions above remain unchanged. */
+    public function test_fixture_25_preserves_approved_v2_calibration(): void
+    {
+        app()->bind(AnthropicClient::class, fn () => throw new \LogicException('Stage A reached a provider client'));
+        $document = $this->annualReport();
+        $composer = app(DocumentAnalysisComposer::class);
+        $asOf = new \DateTimeImmutable('2026-10-07T00:00:00+00:00');
+        config(['intelligence_v2.enabled' => false]);
+        $v1 = $composer->compose($document->fresh(), $asOf);
+        config(['intelligence_v2.enabled' => true]);
+        $v2 = $composer->compose($document->fresh(), $asOf);
+        $expected = json_decode(file_get_contents(base_path('tests/Fixtures/intelligence-v2/expected/25-takeaways-v2.json')),
+            true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame($expected, array_map(fn ($item) => ['origin' => $item['origin'], 'text' => $item['text']],
+            $v2['overview']['takeaways']));
+        self::assertSame(['risk', 'metric'], array_column(array_slice($v1['importantFindings'], 0, 2), 'kind'));
+        self::assertSame(array_slice(array_column($v1['importantFindings'], 'label'), 0, 2),
+            array_slice(array_column($v2['importantFindings'], 'label'), 0, 2));
+        // CR-009: the fact/definition cap boundary falls inside an exact-score group.
+        self::assertSame(['Operating note 1', 'Operating note 10'],
+            array_slice(array_column($v2['importantFindings'], 'label'), 2, 2));
+        self::assertSame(['African Development Bank', 'Capital Markets Authority', 'Chief Financial Officer'],
+            array_slice(array_column($v2['importantFindings'], 'label'), 4));
+        $financingApproved = collect($v2['importantFindings'])->firstWhere('label', 'Total financing approved');
+        self::assertSame(3, $financingApproved['materialityTier']);
+        self::assertNull($financingApproved['forcedRule']);
+        $tier1Ids = array_column($v2['tier1'], 'sourceId');
+        self::assertNotContains($financingApproved['sourceId'], $tier1Ids);
+        foreach ($document->risks->whereIn('severity', ['critical', 'high']) as $risk) {
+            self::assertContains('risk:'.$risk->id, $tier1Ids);
+        }
+        foreach ($document->deadlines->where('due_date', '>=', $asOf->format('Y-m-d')) as $deadline) {
+            self::assertContains('deadline:'.$deadline->id, $tier1Ids);
+        }
+        self::assertSame($v1['visualAnalysis']['charts'], $v2['visualAnalysis']['charts']);
     }
 }

@@ -604,6 +604,36 @@ class IncrementalDocumentPipelineTest extends TestCase
             $merger->identity([...$record, 'label' => 'Renew insurance']));
     }
 
+    public function test_period_only_obligation_keeps_period_in_legacy_row_and_exact_date_mapping_is_unchanged(): void
+    {
+        config(['document_intelligence.evidence_spans' => false]);
+        $periodQuote = 'Payment is due in Q3 2026.';
+        $exactQuote = 'The return is due on 31 March 2025.';
+        $document = $this->document($periodQuote."\n".$exactQuote);
+        $chunk = $this->plan($document);
+        $period = $this->record(['kind' => 'obligation', 'label' => 'Payment',
+            'value' => 'Payment is due in Q3 2026', 'quote' => $periodQuote, 'period' => 'Q3 2026',
+            'date_type' => null, 'due_date' => null, 'unit' => null]);
+        $exact = $this->record(['kind' => 'obligation', 'label' => 'Return',
+            'value' => 'Return due on 31 March 2025', 'quote' => $exactQuote, 'period' => null,
+            'date_type' => 'explicit', 'due_date' => '2025-03-31', 'unit' => null]);
+        $validated = EvidenceSchema::validate(['records' => [$period, $exact]], $document->extracted_text);
+        self::assertSame(2, $validated['_validation']['records_kept']);
+        $chunk->update(['status' => 'completed', 'result' => $validated]);
+        app(EvidenceMerger::class)->merge($document);
+
+        self::assertSame(2, DocumentEvidence::count());
+        $periodRow = $document->deadlines()->where('title', 'Payment')->sole();
+        self::assertSame('relative', $periodRow->date_type);
+        self::assertNull($periodRow->due_date);
+        self::assertSame('Q3 2026', $periodRow->relative_text);
+        $exactRow = $document->deadlines()->where('title', 'Return')->sole();
+        self::assertSame('explicit', $exactRow->date_type);
+        self::assertSame('2025-03-31', $exactRow->due_date->format('Y-m-d'));
+        self::assertNull($exactRow->relative_text);
+        Http::assertNothingSent();
+    }
+
     public function test_connection_timeout_splits_input_without_identical_retries(): void
     {
         Http::fake(['*/count_tokens' => Http::response(['input_tokens' => 50]), '*/messages' => Http::failedConnection('cURL error 28: Operation timed out')]);

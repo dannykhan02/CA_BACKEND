@@ -364,8 +364,11 @@ class EvidenceMerger
             $title = mb_substr($r['label'], 0, 255);
 
             return $queue('deadline', 'document_deadlines', $title."\0".$r['quote'], ['title' => $title, 'evidence' => $r['quote']] + $common
-                + ['deadline_type' => $r['kind'], 'description' => $r['value'], 'date_type' => $r['date_type'],
-                    'due_date' => $r['due_date'], 'relative_text' => $r['due_date'] ? null : $r['value'], 'status' => 'open'], 'deadline:');
+                + ['deadline_type' => $r['kind'], 'description' => $r['value'],
+                    'date_type' => ($r['legacy_mapping']['date_type'] ?? null) === 'relative_for_period' ? 'relative' : $r['date_type'],
+                    'due_date' => $r['due_date'], 'relative_text' => $r['due_date'] ? null
+                        : (($r['legacy_mapping']['date_type'] ?? null) === 'relative_for_period' ? $r['period'] : $r['value']),
+                    'status' => 'open'], 'deadline:');
         }
         if ($r['kind'] === 'metric') {
             $number = rtrim(str_replace(',', '', $r['value']), '%');
