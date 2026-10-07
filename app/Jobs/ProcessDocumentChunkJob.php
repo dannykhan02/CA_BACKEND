@@ -15,6 +15,7 @@ use App\Services\AI\Incremental\EvidenceGrounding;
 use App\Services\AI\Incremental\EvidenceSchema;
 use App\Services\AI\Incremental\ExtractionCapacity;
 use App\Services\AI\Incremental\IncrementalPipeline;
+use App\Services\AI\Incremental\ProactiveChunkRisk;
 use App\Services\AI\ProviderGate;
 use App\Services\AnthropicClient;
 use App\Support\QueueTopology;
@@ -70,7 +71,24 @@ class ProcessDocumentChunkJob implements ShouldQueue
             }
             // The gate reserves capacity for documents that actually attempted admission.
             // A queued DB row alone may have no runnable worker (or belong to stale work).
-            app(ProviderGate::class)->hold($document->id, fn () => $this->process($client, $pipeline, $chunk, $document));
+            $admissionRequestedAt = now();
+            $leaseAcquiredAt = null;
+            try {
+                app(ProviderGate::class)->hold($document->id, function () use ($client, $pipeline, $chunk, $document, &$leaseAcquiredAt) {
+                    $leaseAcquiredAt = now();
+                    $this->process($client, $pipeline, $chunk, $document);
+                });
+            } finally {
+                if ($leaseAcquiredAt !== null) {
+                    try {
+                        DocumentAiRun::where('chunk_id', $chunk->id)->where('request_attempt', $chunk->fresh()->attempts)
+                            ->update(['admission_requested_at' => $admissionRequestedAt,
+                                'lease_acquired_at' => $leaseAcquiredAt, 'lease_released_at' => now()]);
+                    } catch (\Throwable $error) {
+                        Log::warning('Chunk attempt timing unavailable', ['chunk_id' => $chunk->id, 'error_type' => $error::class]);
+                    }
+                }
+            }
         } catch (ProviderBusyException $e) {
             $this->deferForProvider($e, ['document_id' => $document->id, 'chunk_id' => $chunk->id], function (int $delay) use ($chunk, $e) {
                 try {
@@ -136,6 +154,27 @@ class ProcessDocumentChunkJob implements ShouldQueue
                 $counted = $client->countTokens($payload);
             } catch (\Throwable) {
                 $counted = null;
+            }
+        }
+        // A counted, structurally dense root can exceed the useful output budget long
+        // before it exceeds the input context. Split it before reserving or sending an
+        // extraction request. Failed token counting leaves the existing fallback intact.
+        if ($counted !== null && $chunk->depth === 0 && $counted <= app(ExtractionCapacity::class)->maxRequestInputTokens()) {
+            $spans = $grounding->usesSpans($document) ? $grounding->chunkSpans($document, $chunk) : null;
+            $risk = app(ProactiveChunkRisk::class)->assess($text, $counted, $spans, $document->type);
+            if ($risk['split']) {
+                $children = app(ChunkPlanner::class)->splitAtBoundary($document->extracted_text, $chunk->start_offset,
+                    $chunk->end_offset, (int) config('document_intelligence.minimum_split_chars'), $spans, $chunk->start_page);
+                if (count($children) === 2) {
+                    $chunk->update(['token_count' => $counted,
+                        'cost_accounting' => [...($chunk->cost_accounting ?? []), 'planning_risk' => $risk]]);
+                    $pipeline->split($chunk, $document, proactive: true, plannedChildren: $children);
+                    if ($chunk->refresh()->status === 'split') {
+                        $pipeline->pump($document->id);
+
+                        return;
+                    }
+                }
             }
         }
         $claimed = DB::transaction(function () use ($chunk, $document, $pipeline, $counted, $grounding, $mode) {
