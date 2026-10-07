@@ -1059,7 +1059,7 @@ Mapping from V2 concepts onto that interface — **the left column already exist
 | `overview.summaryNotes[]` | ungrounded AI prose, `supported: false` |
 | `visualAnalysis` | §16 |
 | `analysisGroups` | Tier 2–3 records grouped by kind, with `total` for pagination |
-| `importantFindings` | Tier 1 records as `AnalysisFinding`, `citedBySynthesis` set from the summary's `source_ids` |
+| `importantFindings` | Legacy-surface top-ranked `AnalysisFinding` records selected independently of Tier 1 under T9a; `citedBySynthesis` set from the summary's `source_ids` |
 | `stats` | the nine declared counters |
 
 Two further new top-level keys:
