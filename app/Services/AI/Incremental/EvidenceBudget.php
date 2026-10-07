@@ -6,9 +6,18 @@ use App\Models\Document;
 use App\Models\DocumentChunk;
 use App\Models\DocumentEvidence;
 use App\Services\AI\AiModels;
+use App\Services\Intelligence\ChartCandidateBuilder;
+use App\Services\Intelligence\ImportantFindingsBuilder;
+use App\Services\Intelligence\Materiality\MaterialityReadModel;
+use App\Services\Intelligence\Materiality\MaterialityScorer;
+use App\Services\Intelligence\MetricCollector;
 
 class EvidenceBudget
 {
+    public function __construct(private MaterialityReadModel $materialityRecords,
+        private MaterialityScorer $materialityScorer, private MetricCollector $metrics,
+        private ChartCandidateBuilder $charts, private ImportantFindingsBuilder $findings) {}
+
     /** Normal documents use the same whole-record budget without checkpoints or extra calls. */
     public function trimNormal(array $data): array
     {
@@ -36,17 +45,33 @@ class EvidenceBudget
         return $data;
     }
 
-    public function forDocument(Document $document): array
+    public function forDocument(Document $document, ?\DateTimeImmutable $asOf = null): array
     {
         $records = DocumentEvidence::where('workspace_id', $document->workspace_id)->where('document_id', $document->id)
             ->where('pipeline_key', $document->ai_pipeline['key'])->orderBy('identity')->get();
         $unresolved = $records->filter(fn ($record) => $record->kind === 'unresolved' && ! isset($record->data['resolved_evidence_id']))->count();
         $records = $records->filter(fn ($record) => $record->kind !== 'unresolved' || isset($record->data['resolved_evidence_id']));
-        $records = $records->sortBy(fn ($e) => match ($e->kind) {
-            'deadline', 'obligation' => 0, 'metric' => 1,
-            'risk' => in_array($e->data['severity'], ['high', 'critical']) ? 0 : 2,
-            'definition', 'entity' => 3, default => 4,
-        })->values();
+        if (config('intelligence_v2.enabled')) {
+            $document->loadMissing(['risks', 'deadlines', 'intelligenceSummary']);
+            $cited = $this->findings->citedSourceIds($document->intelligenceSummary);
+            $chartCandidates = $this->charts->build($this->metrics->collect($document)['observations'], $cited)['candidates'];
+            $read = $this->materialityRecords->build($document, $records, $chartCandidates, $cited);
+            $assignments = $this->materialityScorer->assign($read['records'], $read['context'], $asOf ?? new \DateTimeImmutable);
+            $byId = collect($read['records'])->keyBy('identity');
+            $records = $records->sort(function ($left, $right) use ($assignments, $byId) {
+                $a = $assignments[$left->identity];
+                $b = $assignments[$right->identity];
+
+                return [$a['tier'], -$a['score']] <=> [$b['tier'], -$b['score']]
+                    ?: MaterialityScorer::compareTiebreak($byId[$left->identity], $byId[$right->identity], $a, $b);
+            })->values();
+        } else {
+            $records = $records->sortBy(fn ($e) => match ($e->kind) {
+                'deadline', 'obligation' => 0, 'metric' => 1,
+                'risk' => in_array($e->data['severity'], ['high', 'critical']) ? 0 : 2,
+                'definition', 'entity' => 3, default => 4,
+            })->values();
+        }
         $data = ['entities' => [], 'risks' => [], 'deadlines' => [], 'kpis' => [], 'facts' => []];
         // Identical at every synthesis fallback level: only source context is degraded.
         $budget = (int) config('document_intelligence.synthesis_token_budget');

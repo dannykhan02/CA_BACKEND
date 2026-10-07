@@ -4,6 +4,10 @@ namespace App\Services\Intelligence;
 
 use App\Models\Document;
 use App\Models\DocumentEvidence;
+use App\Services\Intelligence\Attention\AttentionStateBuilder;
+use App\Services\Intelligence\Attention\HistoricalRiskRule;
+use App\Services\Intelligence\Materiality\MaterialityReadModel;
+use App\Services\Intelligence\Materiality\MaterialityScorer;
 use Illuminate\Support\Collection;
 
 /**
@@ -27,11 +31,16 @@ class DocumentAnalysisComposer
         private TakeawayBuilder $takeaways,
         private AnalysisGrouper $groups,
         private ImportantFindingsBuilder $findings,
+        private MaterialityReadModel $materialityRecords,
+        private MaterialityScorer $materialityScorer,
+        private CoverageStateBuilder $coverageStates,
+        private HistoricalRiskRule $historicalRisks,
     ) {}
 
     /** @return array<string,mixed> */
-    public function compose(Document $document): array
+    public function compose(Document $document, ?\DateTimeImmutable $asOf = null): array
     {
+        $asOf ??= new \DateTimeImmutable;
         $document->loadMissing(['risks', 'deadlines', 'intelligenceSummary']);
         $summary = $document->intelligenceSummary;
         $evidence = $this->evidence($document);
@@ -40,7 +49,22 @@ class DocumentAnalysisComposer
         $collected = $this->metrics->collect($document);
         $derived = $this->charts->build($collected['observations'], $cited);
         $charts = array_slice($derived['candidates'], 0, self::MAX_CHARTS);
-        $takeaways = $this->takeaways->build($document, $summary, $charts);
+        $v2 = (bool) config('intelligence_v2.enabled');
+        $materiality = null;
+        $records = [];
+        if ($v2) {
+            $read = $this->materialityRecords->build($document, $evidence, $derived['candidates'], $cited);
+            $records = $read['records'];
+            $materiality = $this->materialityScorer->assign($records, $read['context'], $asOf);
+        }
+        $materialityBySource = null;
+        if ($v2) {
+            $materialityBySource = [];
+            foreach ($records as $record) {
+                $materialityBySource[$record['source_id']] = $materiality[$record['identity']];
+            }
+        }
+        $takeaways = $this->takeaways->build($document, $summary, $charts, $materialityBySource);
         $notes = $this->takeaways->notes($summary, $takeaways);
         $groups = $this->groups->build($evidence);
 
@@ -51,9 +75,9 @@ class DocumentAnalysisComposer
         foreach ($takeaways as $takeaway) {
             $shown = [...$shown, ...$takeaway['sourceIds']];
         }
-        $important = $this->findings->build($evidence, $summary, array_values(array_unique($shown)));
+        $important = $this->findings->build($evidence, $summary, array_values(array_unique($shown)), $materiality);
 
-        return [
+        $analysis = [
             'overview' => ['takeaways' => $takeaways, 'summaryNotes' => $notes],
             'visualAnalysis' => [
                 'charts' => $charts,
@@ -74,6 +98,45 @@ class DocumentAnalysisComposer
                 'groundedSources' => $evidence->sum(fn (DocumentEvidence $row) => count($row->sources ?? [])),
             ],
         ];
+        if ($v2) {
+            $byId = collect($records)->keyBy('identity');
+            $tier1Items = [];
+            $attentionBuilder = new AttentionStateBuilder($this->historicalRisks, config('intelligence_v2.attention'));
+            $attentionStates = [];
+            foreach ($materiality as $identity => $assignment) {
+                $record = $byId->get($identity);
+                $attention = $attentionBuilder->build($record, $assignment, $records, $asOf);
+                $attentionStates[] = $attention;
+                if ($assignment['tier'] === 1) {
+                    $tier1Items[] = ['record' => $record, 'assignment' => $assignment, 'attention' => $attention];
+                }
+            }
+            usort($tier1Items, static function ($a, $b) {
+                $forced = (int) $b['assignment']['forced'] <=> (int) $a['assignment']['forced'];
+                if ($forced !== 0) {
+                    return $forced;
+                }
+                $priority = $a['assignment']['forced_priority'] <=> $b['assignment']['forced_priority'];
+                if ($priority !== 0) {
+                    return $priority;
+                }
+
+                return $b['assignment']['score'] <=> $a['assignment']['score']
+                    ?: MaterialityScorer::compareTiebreak($a['record'], $b['record'], $a['assignment'], $b['assignment']);
+            });
+            $tier1 = array_map(static fn ($item) => [
+                'sourceId' => $item['record']['source_id'], 'kind' => $item['record']['kind'],
+                'forced' => $item['assignment']['forced'], 'forcedRule' => $item['assignment']['forced_rule'],
+                'tierReasons' => $item['assignment']['reasons'], 'attention' => $item['attention'],
+            ], $tier1Items);
+            $overflow = count(array_filter($materiality, fn ($item) => $item['overflow_from_forced']));
+            $truncated = $overflow > 0 || count(array_filter($materiality, fn ($item) => $item['band_qualified'] && $item['tier'] !== 1)) > 0;
+            $coverage = $this->coverageStates->build($document->ai_pipeline ?? [], $summary !== null, $truncated);
+            $analysis['tier1'] = $tier1;
+            $analysis['attention'] = $attentionBuilder->summary($attentionStates, $coverage, $overflow, $asOf);
+        }
+
+        return $analysis;
     }
 
     /**
@@ -103,6 +166,9 @@ class DocumentAnalysisComposer
         }
         foreach ($analysis['importantFindings'] as $finding) {
             $ids[$finding['sourceId']] = true;
+        }
+        foreach ($analysis['tier1'] ?? [] as $item) {
+            $ids[$item['sourceId']] = true;
         }
 
         return array_keys($ids);

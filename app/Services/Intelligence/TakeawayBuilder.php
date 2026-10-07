@@ -49,7 +49,8 @@ class TakeawayBuilder
      * @param  list<array<string,mixed>>  $charts
      * @return list<array<string,mixed>>
      */
-    public function build(Document $document, ?DocumentIntelligenceSummary $summary, array $charts): array
+    public function build(Document $document, ?DocumentIntelligenceSummary $summary, array $charts,
+        ?array $materialityBySource = null): array
     {
         $candidates = [
             ...$this->fromSynthesis($summary),
@@ -62,11 +63,13 @@ class TakeawayBuilder
         $taken = [];
         $used = [];
         foreach ($candidates as $candidate) {
-            if (count($taken) >= self::MAX) {
+            if (count($taken) >= ($materialityBySource === null ? self::MAX : config('intelligence_v2.tier1.target'))) {
                 break;
             }
             $origin = $candidate['origin'];
-            if (($used[$origin] ?? 0) >= self::QUOTAS[$origin]) {
+            $quota = $materialityBySource === null ? self::QUOTAS[$origin]
+                : config('intelligence_v2.tier1.origin_quotas')[$origin];
+            if (($used[$origin] ?? 0) >= $quota) {
                 continue;
             }
             // A candidate that lost its references on the way here is not a takeaway.
@@ -77,6 +80,13 @@ class TakeawayBuilder
                 continue;
             }
             $used[$origin] = ($used[$origin] ?? 0) + 1;
+            if ($materialityBySource !== null) {
+                $linked = array_values(array_filter(array_map(fn ($id) => $materialityBySource[$id] ?? null,
+                    $candidate['sourceIds'])));
+                usort($linked, fn ($a, $b) => [$a['tier'], -$a['score']] <=> [$b['tier'], -$b['score']]);
+                $candidate['materialityTier'] = $linked[0]['tier'] ?? null;
+                $candidate['tierReasons'] = $linked[0]['reasons'] ?? [];
+            }
             $taken[] = $candidate;
         }
 

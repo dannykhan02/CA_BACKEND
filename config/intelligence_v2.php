@@ -68,7 +68,7 @@ return [
         ],
         'date_role_patterns' => [
             'effective_date' => ['effective from', 'effective on', 'with effect from', 'takes effect', 'comes into force'],
-            'due_date' => ['due by', 'due on', 'due in', 'deadline', 'no later than'],
+            'due_date' => ['due by', 'due on', 'due in', 'deadline', 'no later than', 'must be ... by'],
             'expiry_date' => ['expires', 'valid until', 'terminates on'],
             'issued_date' => ['signed on', 'executed on', 'issued on'],
             'as_of_date' => ['as at', 'as of'],
