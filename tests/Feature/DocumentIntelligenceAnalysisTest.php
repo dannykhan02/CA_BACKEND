@@ -725,7 +725,11 @@ class DocumentIntelligenceAnalysisTest extends TestCase
             array_slice(array_column($v2['importantFindings'], 'label'), 2, 2));
         self::assertSame(['African Development Bank', 'Capital Markets Authority', 'Chief Financial Officer'],
             array_slice(array_column($v2['importantFindings'], 'label'), 4));
+        $financingApproved = collect($v2['importantFindings'])->firstWhere('label', 'Total financing approved');
+        self::assertSame(3, $financingApproved['materialityTier']);
+        self::assertNull($financingApproved['forcedRule']);
         $tier1Ids = array_column($v2['tier1'], 'sourceId');
+        self::assertNotContains($financingApproved['sourceId'], $tier1Ids);
         foreach ($document->risks->whereIn('severity', ['critical', 'high']) as $risk) {
             self::assertContains('risk:'.$risk->id, $tier1Ids);
         }

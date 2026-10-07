@@ -81,7 +81,7 @@ class ForcedItemRules
                 if ($record['section'] === $other['section']) {
                     return true;
                 }
-            } elseif (($record['section'] ?? null) === null && ($other['section'] ?? null) === null
+            } elseif ((($record['section'] ?? null) === null || ($other['section'] ?? null) === null)
                 && ($record['page'] ?? null) !== null && $record['page'] === ($other['page'] ?? null)) {
                 return true;
             }

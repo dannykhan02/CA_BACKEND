@@ -165,7 +165,7 @@ class ImportantFindingsBuilder
         $stems = [];
         $kinds = [];
         foreach ($candidates as $candidate) {
-            if (count($findings) >= self::MAX) {
+            if (count($findings) >= config('intelligence_v2.tier1.target')) {
                 break;
             }
             $data = $candidate['data'];

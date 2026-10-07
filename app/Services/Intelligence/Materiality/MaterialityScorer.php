@@ -91,18 +91,36 @@ class MaterialityScorer
             ?: self::compareTiebreak($byId[$a], $byId[$b], $assignments[$a], $assignments[$b]));
         $normalCount = 0;
         $total = min(count($forcedIds), $budget['forced_max']);
+        $normalKinds = [];
+        $normalStems = [];
+        $normalOrigins = [];
         foreach ($normalIds as $id) {
             $candidate = $assignments[$id];
             $qualifies = $candidate['scored_tier'] === 1
                 || ($total < $budget['min'] && $candidate['scored_tier'] === 2);
-            if ($qualifies && $normalCount < $budget['max']) {
+            $record = $byId[$id];
+            $kind = $record['kind'] === 'obligation' ? 'deadline' : $record['kind'];
+            $stem = trim((string) preg_replace('/[^\p{L}\s]+|\s+/u', ' ',
+                (string) preg_replace('/[\p{N}]+/u', '', mb_strtolower((string) ($record['data']['label'] ?? '')))));
+            $origin = match ($record['kind']) {
+                'metric' => 'metric', 'risk' => 'risk', 'obligation', 'deadline' => 'obligation', default => null,
+            };
+            $withinQuotas = ($normalKinds[$kind] ?? 0) < $budget['per_kind']
+                && ($normalStems[$stem] ?? 0) < $budget['per_stem']
+                && ($origin === null || ($normalOrigins[$origin] ?? 0) < $budget['origin_quotas'][$origin]);
+            if ($qualifies && $withinQuotas && $normalCount < $budget['max']) {
                 $assignments[$id]['tier'] = 1;
                 $normalCount++;
                 $total++;
+                $normalKinds[$kind] = ($normalKinds[$kind] ?? 0) + 1;
+                $normalStems[$stem] = ($normalStems[$stem] ?? 0) + 1;
+                if ($origin !== null) {
+                    $normalOrigins[$origin] = ($normalOrigins[$origin] ?? 0) + 1;
+                }
             } elseif ($candidate['scored_tier'] === 1) {
                 $assignments[$id]['tier'] = 2;
                 $assignments[$id]['reasons'][] = ['signal' => 'tier_adjustment', 'weight' => 0.0, 'contribution' => 0.0,
-                    'reason' => 'normal_budget', 'to_tier' => 2];
+                    'reason' => $withinQuotas ? 'normal_budget' : 'normal_quota', 'to_tier' => 2];
             }
         }
         if ($total > $budget['hard_cap']) {

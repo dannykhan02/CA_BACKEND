@@ -1,0 +1,9 @@
+{
+  "fixture_type": "SYNTHETIC ADB diagnostic; not a production-document fixture",
+  "source_line": "Total commitments reached USD 12.4 billion, compared with USD 10.1 billion in 2023.",
+  "records": [
+    {"identity": "synthetic-adb-current", "source_id": "synthetic:current", "kind": "metric", "label": "Total commitments", "value": "USD 12.4 billion", "period": null},
+    {"identity": "synthetic-adb-prior", "source_id": "synthetic:prior", "kind": "metric", "label": "Total commitments", "value": "USD 10.1 billion", "period": "2023"}
+  ],
+  "unavailable_without_a_real_fixture": ["membership counts", "ADBI publication counts", "climate-risk source records", "disaster-risk source records"]
+}
