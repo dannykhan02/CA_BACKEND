@@ -10,7 +10,7 @@ use App\Services\AI\Incremental\EvidenceSchema;
 /** Conservative provenance from accepted stored evidence, never model-reported axes. */
 class ProvenanceProjector
 {
-    public function __construct(private EvidenceMerger $merger) {}
+    public function __construct(private EvidenceMerger $merger, private AttributionMatcher $attribution) {}
 
     /** @return array<string,mixed> */
     public function project(DocumentEvidence $row): array
@@ -19,8 +19,8 @@ class ProvenanceProjector
         $origin = $this->direct($data) ? 'document' : 'unknown';
 
         return ['origin' => $origin, 'assertion' => $origin === 'document' ? 'stated' : 'unspecified',
-            'attribution' => ['speaker' => null, 'role' => 'unattributed', 'reported' => false,
-                'evidence_ref' => null]];
+            'attribution' => $origin === 'document' ? $this->attribution->match($row)
+                : ['speaker' => null, 'role' => 'unattributed', 'reported' => false, 'evidence_ref' => null]];
     }
 
     /** @param array<string,mixed> $provenance */
