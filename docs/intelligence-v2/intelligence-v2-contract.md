@@ -1393,6 +1393,8 @@ The visualization branch created exactly that namespace with 11 classes, all pro
 
 **Deferred — presentation-independent takeaway deduplication (CR-011).** V2 currently deduplicates rendered text, so future formatter changes may affect selection again. A later design should evaluate a canonical selection key; it is outside CR-010 and Stage A Part 2.
 
+**Open — negative-claim prose pattern set (CR-012).** §12.3 requires versioned lexical patterns, but none have been approved. Stage A Part 2 prose-screening integration waits for the exact pattern set and matching policy; no literals may be invented.
+
 **Q5 — `attribution` pattern set. RESOLVED by CR-007:** English-only, versioned, config-driven patterns and nearest-match rules are in §2.3 and CR-007. A model-proposed attribution remains out of scope under §19.3.
 
 **Q9 — Scope of Stage A Part 2. RESOLVED:** The Stage A Part 2 instruction authorizes typed values, provenance, materiality, attention, coverage, negative-claim guard integration and explainability. Stage B is not authorized by this instruction.
