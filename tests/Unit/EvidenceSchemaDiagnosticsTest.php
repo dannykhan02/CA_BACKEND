@@ -48,7 +48,8 @@ class EvidenceSchemaDiagnosticsTest extends TestCase
             [$this->record(['date_type' => 'explicit', 'due_date' => '2024/02/01']), 'invalid_date', 'due_date_wrong_format'],
             [$this->record(['date_type' => 'explicit', 'due_date' => '2024-02-30']), 'invalid_date', 'due_date_invalid_calendar_date'],
             [$this->record(['kind' => 'deadline', 'date_type' => 'relative', 'due_date' => '2024-02-01']), 'invalid_date', 'due_date_present_for_non_explicit_type'],
-            [$this->record(['kind' => 'deadline']), 'invalid_date', 'invalid_deadline_date_type'],
+            // A deadline with no stated period remains invalid; only grounded period-only timing is retained.
+            [$this->record(['kind' => 'deadline', 'period' => null]), 'invalid_date', 'invalid_deadline_date_type'],
         ];
         $result = EvidenceSchema::validate(['records' => [$this->record(), ...array_column($invalid, 0)]], self::SOURCE);
         $diagnostics = $result['_validation'];

@@ -130,6 +130,27 @@ class EvidenceDateContractTest extends TestCase
         self::assertStringContainsString('within 30 days after execution', $relative['value']);
     }
 
+    public function test_period_only_deadlines_and_obligations_are_retained_with_a_disclosed_legacy_mapping(): void
+    {
+        foreach (['deadline', 'obligation'] as $kind) {
+            $source = 'Payment is due in Q3 2026.';
+            $record = $this->record(['kind' => $kind, 'value' => 'Payment is due in Q3 2026',
+                'period' => 'Q3 2026']);
+            foreach ([EvidenceGrounding::SPANS, EvidenceGrounding::LEGACY] as $mode) {
+                $result = $mode === EvidenceGrounding::SPANS
+                    ? $this->validate($source, [$record])
+                    : EvidenceSchema::validate(['records' => [array_diff_key($record, ['evidence_ids' => true])
+                        + ['quote' => $source]]], $source);
+                self::assertSame(1, $result['_validation']['records_kept']);
+                self::assertSame(0, $result['_validation']['records_dropped']);
+                self::assertNull($result['records'][0]['date_type']);
+                self::assertNull($result['records'][0]['due_date']);
+                self::assertSame('Q3 2026', $result['records'][0]['period']);
+                self::assertSame(['date_type' => 'relative_for_period'], $result['records'][0]['legacy_mapping']);
+            }
+        }
+    }
+
     public function test_partial_periods_never_acquire_a_fabricated_due_date(): void
     {
         foreach (['March 2025', '2025', 'FY2025', 'Q3 2026', 'second quarter of 2025'] as $period) {
@@ -179,6 +200,9 @@ class EvidenceDateContractTest extends TestCase
         $source = 'Payment due 31 March 2025.';
         foreach ([
             [$this->record(['kind' => 'deadline', 'date_type' => 'explicit']), 'explicit_date_missing_due_date'],
+            [$this->record(['kind' => 'deadline']), 'invalid_deadline_date_type'],
+            [$this->record(['kind' => 'obligation', 'period' => 'Q3 2026']), 'invalid_deadline_date_type'],
+            [$this->record(['kind' => 'obligation', 'period' => 'March 2025', 'due_date' => '2025-03-31']), 'invalid_deadline_date_type'],
             [$this->record(['kind' => 'obligation', 'date_type' => 'calendar']), 'invalid_deadline_date_type'],
             [$this->record(['date_type' => 'calendar']), 'invalid_date_type'],
             [$this->record(['kind' => 'deadline', 'date_type' => 'explicit', 'due_date' => '2025/03/31']), 'due_date_wrong_format'],

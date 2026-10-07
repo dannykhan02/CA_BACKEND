@@ -3,6 +3,7 @@
 namespace App\Services\AI\Incremental;
 
 use App\Exceptions\AiProcessingException;
+use App\Services\Intelligence\PeriodParser;
 
 class EvidenceSchema
 {
@@ -366,7 +367,15 @@ PROMPT;
             self::reject('invalid_date', $critical ? 'invalid_deadline_date_type' : 'invalid_date_type');
         }
         if ($critical && $record['date_type'] === null) {
-            self::reject('invalid_date', 'invalid_deadline_date_type');
+            $period = is_string($record['period']) ? $record['period'] : '';
+            $parsed = $period !== '' ? (new PeriodParser)->parse($period) : null;
+            if ($record['due_date'] !== null || $parsed === null || $parsed->granularity === 'day'
+                || ! str_contains($record['quote'], $period)) {
+                self::reject('invalid_date', 'invalid_deadline_date_type');
+            }
+            // The source states a period, while the legacy deadline table only accepts
+            // explicit, relative or inferred. Keep the source period and disclose the mapping.
+            $record['legacy_mapping'] = ['date_type' => 'relative_for_period'];
         }
 
         $sanitized = [];
