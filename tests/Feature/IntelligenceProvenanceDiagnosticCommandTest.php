@@ -46,6 +46,11 @@ class IntelligenceProvenanceDiagnosticCommandTest extends TestCase
         self::assertSame(1, $report['unknown_reasons']['value_not_in_quote']);
         self::assertSame(1, $report['diagnostic_classifications']['numeric_equivalent']['count']);
         self::assertSame(0, $report['summary']['key_figure_eligible_count']);
+        self::assertSame(0, array_sum($report['extended_diagnostic']['genuinely_unsupported']['subtype_counts']));
+        self::assertSame(0, array_sum($report['extended_diagnostic']['ambiguous']['classification_counts']));
+        self::assertSame('2026-10-08', $report['extended_diagnostic']['projection']['as_of']);
+        self::assertSame(1, $report['extended_diagnostic']['projection']['conservative']['document_origin']);
+        self::assertSame(1, $report['extended_diagnostic']['projection']['conservative']['key_figure_eligible_count']);
         foreach ($statements as $sql) {
             self::assertDoesNotMatchRegularExpression('/^\s*(?:insert|update|delete|create|alter|drop|truncate|dispatch)\b/i',
                 $sql);
