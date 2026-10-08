@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Services\Intelligence\Brief\BriefVerifier;
+use App\Services\Intelligence\Brief\Templates\DeterministicTemplates;
 use Tests\TestCase;
 
 class IntelligenceBriefVerifierTest extends TestCase
@@ -11,9 +12,9 @@ class IntelligenceBriefVerifierTest extends TestCase
         string $origin = 'document', string $kind = 'metric'): array
     {
         return ['source_id' => $id, 'identity' => $id, 'kind' => $kind,
-            'data' => ['value' => '11', 'subject' => '', 'aliases' => [], 'severity' => null],
+            'data' => ['label' => 'Revenue', 'value' => '11', 'subject' => '', 'aliases' => [], 'severity' => null],
             'typed' => ['value' => ['type' => 'money', 'number' => $number, 'raw' => '11',
-                'precision' => 'exact', 'unit_kind' => 'currency', 'currency' => $currency,
+                'precision' => 'exact', 'scale' => 1e9, 'unit_kind' => 'currency', 'currency' => $currency,
                 'unit' => $currency.' billion'], 'dates' => ['period_covered' => [
                     'resolution' => 'period', 'period' => ['text' => 'FY2025']]]],
             'provenance' => ['origin' => $origin, 'assertion' => $origin === 'document' ? 'stated' : 'unspecified'],
@@ -50,7 +51,7 @@ class IntelligenceBriefVerifierTest extends TestCase
         $record = $this->record();
         $record['typed']['dates']['due_date'] = ['resolution' => 'calendar', 'date' => '2025-03-31'];
         $record['typed']['value'] = ['type' => 'percent', 'number' => 11.0, 'raw' => '11%',
-            'precision' => 'exact', 'unit_kind' => 'percent', 'currency' => null, 'unit' => '%'];
+            'precision' => 'exact', 'scale' => 1.0, 'unit_kind' => 'percent', 'currency' => null, 'unit' => '%'];
         $verifier = app(BriefVerifier::class);
         $numbers = $verifier->verify($this->block('The rate was 14%.'), ['kpi:1' => $record], ['kpi:1']);
         self::assertContains('numbers_grounded', $numbers['failed_reasons']);
@@ -102,6 +103,10 @@ class IntelligenceBriefVerifierTest extends TestCase
     {
         $a = $this->record('kpi:1', 100.0);
         $b = $this->record('kpi:2', 120.0);
+        $a['typed']['value']['raw'] = '100';
+        $b['typed']['value']['raw'] = '120';
+        $a['typed']['value']['unit'] = $b['typed']['value']['unit'] = 'USD';
+        $a['typed']['value']['scale'] = $b['typed']['value']['scale'] = 1.0;
         $block = $this->block('Revenue rose 20%.', ['kpi:1', 'kpi:2']);
         $block['derivation'] = ['operation' => 'growth_percent', 'inputs' => ['kpi:1', 'kpi:2']];
         $verifier = app(BriefVerifier::class);
@@ -146,5 +151,132 @@ class IntelligenceBriefVerifierTest extends TestCase
             ['state' => 'bounded'], [$record], $request);
         self::assertTrue($bounded['rejected']);
         self::assertNull($bounded['block']);
+    }
+
+    public function test_every_original_citation_entry_is_validated_without_dropping_duplicates(): void
+    {
+        $record = $this->record();
+        $verifier = app(BriefVerifier::class);
+        foreach ([['kpi:1'], ['kpi:1', 'kpi:1']] as $cites) {
+            self::assertSame('passed', $verifier->verify($this->block('Revenue was USD 11 billion.', $cites),
+                ['kpi:1' => $record], ['kpi:1'])['status']);
+        }
+        foreach ([['kpi:1', []], [''], [null], [123], ['kpi:1', '']] as $cites) {
+            $block = $this->block('Revenue was USD 11 billion.');
+            $block['cites'] = $cites;
+            self::assertContains('cites_available', $verifier->verify($block,
+                ['kpi:1' => $record], ['kpi:1'])['failed_reasons']);
+        }
+        $block = $this->block('Revenue was USD 11 billion.');
+        $block['cites'] = null;
+        $block['sourceIds'] = ['kpi:1'];
+        self::assertContains('cites_available', $verifier->verify($block,
+            ['kpi:1' => $record], ['kpi:1'])['failed_reasons']);
+    }
+
+    public function test_origin_assertion_pairs_follow_contract_table(): void
+    {
+        $legal = ['document' => ['stated'], 'docintel_deterministic' => ['derived', 'absent'],
+            'docintel_ai' => ['stated', 'derived', 'inferred'], 'unknown' => ['unspecified']];
+        $assertions = ['stated', 'derived', 'absent', 'inferred', 'unspecified', 'invalid'];
+        $verifier = app(BriefVerifier::class);
+        foreach (array_keys($legal) as $origin) {
+            foreach ($assertions as $assertion) {
+                $block = $this->block('A finding.');
+                $block['origin'] = $origin;
+                $block['assertion'] = $assertion;
+                $result = $verifier->verify($block, ['kpi:1' => $this->record()], ['kpi:1']);
+                self::assertSame(in_array($assertion, $legal[$origin], true) ? 'passed' : 'failed',
+                    $this->check($result, 'origin_assertion_consistent'), $origin.'/'.$assertion);
+            }
+        }
+        $unknown = $verifier->verify($this->block('A finding.'),
+            ['kpi:1' => $this->record(origin: 'unknown')], ['kpi:1']);
+        self::assertSame('failed', $this->check($unknown, 'origin_assertion_consistent'));
+    }
+
+    public function test_calendar_dates_use_shared_recognizer_and_periods_stay_separate(): void
+    {
+        $record = $this->record();
+        $record['typed']['dates']['due_date'] = ['resolution' => 'calendar', 'date' => '2025-03-31'];
+        $verifier = app(BriefVerifier::class);
+        foreach (['2025-03-31', '31/03/2025', '31 March 2025', 'March 31, 2025'] as $date) {
+            $result = $verifier->verify($this->block('Due '.$date.'.'), ['kpi:1' => $record], ['kpi:1']);
+            self::assertSame('passed', $this->check($result, 'dates_grounded'), $date);
+        }
+        $invalid = $verifier->verify($this->block('Due 31/02/2025.'), ['kpi:1' => $record], ['kpi:1']);
+        self::assertSame('failed', $this->check($invalid, 'dates_grounded'));
+        unset($record['typed']['dates']['due_date']);
+        $period = $verifier->verify($this->block('Due 31 March 2025.'), ['kpi:1' => $record], ['kpi:1']);
+        self::assertSame('failed', $this->check($period, 'dates_grounded'));
+    }
+
+    public function test_incomplete_typed_values_and_cross_record_units_cannot_ground_claims(): void
+    {
+        $verifier = app(BriefVerifier::class);
+        $record = $this->record();
+        foreach (['type', 'number', 'scale', 'unit_kind', 'currency', 'precision'] as $key) {
+            $bad = $record;
+            unset($bad['typed']['value'][$key]);
+            $result = $verifier->verify($this->block('Revenue was USD 11 billion.'),
+                ['kpi:1' => $bad], ['kpi:1']);
+            self::assertSame('failed', $this->check($result, 'numbers_grounded'), $key);
+        }
+        $other = $this->record('kpi:2', 12e9, 'USD');
+        $other['typed']['value']['raw'] = '12';
+        $other['typed']['value']['currency'] = 'EUR';
+        $other['typed']['value']['unit'] = 'EUR billion';
+        $result = $verifier->verify($this->block('Revenue was EUR 11 billion.', ['kpi:1', 'kpi:2']),
+            ['kpi:1' => $record, 'kpi:2' => $other], ['kpi:1', 'kpi:2']);
+        self::assertSame('failed', $this->check($result, 'numbers_grounded'));
+        self::assertSame('failed', $this->check($result, 'units_consistent'));
+
+        $duration = $this->record();
+        $duration['typed']['value'] = null;
+        $duration['typed']['dates']['due_date'] = ['resolution' => 'relative',
+            'duration' => ['text' => 'within 30 days', 'anchor_resolved' => false]];
+        $result = $verifier->verify($this->block('Submit within 30 days.'),
+            ['kpi:1' => $duration], ['kpi:1']);
+        self::assertSame('failed', $this->check($result, 'numbers_grounded'));
+    }
+
+    public function test_fallback_is_registered_rendered_and_verified_or_omitted(): void
+    {
+        $record = $this->record();
+        $original = $this->block('Revenue was USD 99 billion.');
+        $input = ['label' => 'Revenue', 'value' => $record['typed']['value']];
+        $candidate = ['type' => 'finding', 'origin' => 'docintel_deterministic', 'assertion' => 'derived',
+            'template_id' => 'measure.period_value', 'template_input' => $input,
+            'text' => app(DeterministicTemplates::class)->render('measure.period_value', $input),
+            'cites' => ['kpi:1']];
+        $candidate['type'] = $original['type'] = 'measure';
+        $verifier = app(BriefVerifier::class);
+        $admit = fn (array $replacement) => $verifier->admit($original, ['kpi:1' => $record], ['kpi:1'],
+            ['state' => 'complete'], [$record], null, fn () => $replacement);
+        self::assertNotNull($admit($candidate)['block']);
+        $bad = $candidate;
+        $bad['cites'] = ['kpi:1', null];
+        self::assertNull($admit($bad)['block']);
+        $bad = $candidate;
+        $bad['text'] = 'Revenue: USD 99 billion';
+        self::assertNull($admit($bad)['block']);
+        $bad = $candidate;
+        $bad['template_input']['value']['raw'] = 'USD 99 billion';
+        $bad['text'] = app(DeterministicTemplates::class)->render('measure.period_value', $bad['template_input']);
+        self::assertNull($admit($bad)['block']);
+        $bad = $candidate;
+        $bad['template_id'] = 'made.up';
+        self::assertNull($admit($bad)['block']);
+        self::assertTrue($admit($bad)['rejected']);
+
+        $timeline = $this->block('Due 31 February 2025.');
+        $timeline['type'] = 'timeline';
+        $dateInput = ['label' => 'Filing', 'date' => ['raw' => '31 March 2025']];
+        $dateCandidate = ['type' => 'timeline', 'origin' => 'docintel_deterministic',
+            'assertion' => 'derived', 'template_id' => 'timeline.calendar_due',
+            'template_input' => $dateInput, 'cites' => ['kpi:1'],
+            'text' => app(DeterministicTemplates::class)->render('timeline.calendar_due', $dateInput)];
+        self::assertNull($verifier->admit($timeline, ['kpi:1' => $record], ['kpi:1'],
+            ['state' => 'complete'], [$record], null, fn () => $dateCandidate)['block']);
     }
 }

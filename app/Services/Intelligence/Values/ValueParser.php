@@ -165,11 +165,9 @@ class ValueParser
         if ($date === false || $date->format('Y-m-d') !== $iso) {
             return null;
         }
-        preg_match_all('/(?<!\d)\d{4}[-\/.]\d{1,2}[-\/.]\d{1,2}(?!\d)|(?<!\d)\d{1,2}[\/.\-]\d{1,2}[\/.\-]\d{4}(?!\d)|(?<!\d)\d{1,2}(?:st|nd|rd|th)?[\s,.-]+[A-Za-z]{3,9}\.?(?:[\s,.-]+)\d{4}(?!\d)|(?<!\w)[A-Za-z]{3,9}\.?[\s,.-]+\d{1,2}(?:st|nd|rd|th)?[\s,.-]+\d{4}(?!\d)/iu',
-            $quote, $matches);
-        foreach ($matches[0] as $candidate) {
-            if (EvidenceDateRecognizer::statesDate($candidate, $date)) {
-                return $candidate;
+        foreach (EvidenceDateRecognizer::datesIn($quote) as $candidate) {
+            if ($candidate['date'] === $iso && EvidenceDateRecognizer::statesDate($candidate['raw'], $date)) {
+                return $candidate['raw'];
             }
         }
 
