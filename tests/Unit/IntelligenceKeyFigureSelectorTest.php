@@ -60,4 +60,18 @@ class IntelligenceKeyFigureSelectorTest extends TestCase
         self::assertCount(2, app(KeyFigureSelector::class)->select(array_slice($records, 0, 2),
             asOf: new \DateTimeImmutable('2026-10-07')));
     }
+
+    public function test_only_finite_document_origin_currency_metrics_are_eligible(): void
+    {
+        $valid = $this->metric('valid', 'Revenue', 100);
+        $withoutCurrency = $this->metric('no-currency', 'Revenue', 200);
+        $withoutCurrency['typed']['value']['currency'] = null;
+        $percent = $this->metric('percent', 'Margin', 30);
+        $percent['typed']['value']['type'] = 'percent';
+        $percent['typed']['value']['unit_kind'] = 'percent';
+        $infinite = $this->metric('infinite', 'Revenue', INF);
+        $selected = app(KeyFigureSelector::class)->select([$valid, $withoutCurrency, $percent, $infinite],
+            asOf: new \DateTimeImmutable('2026-10-07'));
+        self::assertSame(['valid'], array_column($selected, 'identity'));
+    }
 }

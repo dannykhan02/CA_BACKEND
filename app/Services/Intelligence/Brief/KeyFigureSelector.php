@@ -25,7 +25,7 @@ class KeyFigureSelector
                 && ($value['type'] ?? null) === 'money'
                 && ($value['unit_kind'] ?? null) === 'currency'
                 && is_string($value['currency'] ?? null) && $value['currency'] !== ''
-                && is_numeric($value['number'] ?? null)
+                && is_numeric($value['number'] ?? null) && is_finite((float) $value['number'])
                 && is_string($record['source_id'] ?? null);
         }));
         usort($eligible, fn ($a, $b) => MaterialityScorer::compareTiebreak($a, $b,
@@ -36,7 +36,7 @@ class KeyFigureSelector
             $value = $record['typed']['value'];
             $period = $record['typed']['dates']['period_covered']['period']['text']
                 ?? $record['data']['period'] ?? '';
-            $key = implode('|', [$value['currency'], sprintf('%.15g', (float) $value['number']),
+            $key = implode('|', [$value['currency'], sprintf('%.17g', (float) $value['number']),
                 $this->normalizer->normalize((string) $period)]);
             if (isset($seen[$key])) {
                 continue;
