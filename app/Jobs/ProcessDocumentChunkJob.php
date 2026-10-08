@@ -268,9 +268,22 @@ class ProcessDocumentChunkJob implements ShouldQueue
                 // Terminal (invalid_evidence, invalid_schema, auth, billing, ...): never split or retried.
                 $chunk->update(['status' => 'failed', 'completed_at' => now()]);
             }
-        } catch (\Throwable) {
-            $chunk->update(['status' => 'failed', 'failure_class' => 'deterministic', 'completed_at' => now()]);
-        } finally {
+        } catch (\Throwable $e) {
+            Log::error('Unexpected document intelligence chunk failure', [
+                'document_id' => $document->id,
+                'chunk_id' => $chunk->id,
+                'exception' => $e::class,
+                'message' => $e->getMessage(),
+                'file' => basename($e->getFile()),
+                'line' => $e->getLine(),
+            ]);
+
+            $chunk->update([
+                'status' => 'failed',
+                'failure_class' => 'deterministic',
+                'completed_at' => now(),
+            ]);
+        }finally {
             $pipeline->settleCost($chunk, $providerCalled);
             $this->logOutcome($chunk);
         }
