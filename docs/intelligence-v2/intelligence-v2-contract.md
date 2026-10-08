@@ -1,6 +1,6 @@
 # DocIntel Intelligence V2 — contract
 
-**Status:** Stage A implemented; CR-001 through CR-012 approved. Stage B and Stage C are deferred.
+**Status:** Stage A implemented; CR-001 through CR-013 approved. Stage B and Stage C are deferred.
 **Date:** 2026-10-07
 **Revised:** 2026-10-07 (clarification pass — see the change log at the end)
 **Basis:** [`current-architecture-audit.md`](current-architecture-audit.md) (same directory), as revised by the same pass.
@@ -455,7 +455,7 @@ Each rule is a **deterministic predicate over one record**, identified by a stab
 | 40 | `penalised_obligation` | `kind = obligation` **and** a `ValueParser` money or percent value from the same cited quote as a penalty/consequence pattern |
 | 50 | `high_risk` | `kind = risk` **and** `severity = high`, except historical risks defined below |
 | 60 | `regulator_attributed` | `attribution.role ∈ {regulator, auditor}` **and** `assertion = stated` |
-| 70 | `headline_measure` | `kind = metric`, Tier ≤ 2, `unit_kind = currency`, and the metric is the document's largest-magnitude comparable measure in its `unit_kind` + `currency` group. Non-currency metrics can still reach Tier 1 through ordinary scoring. |
+| 70 | `headline_measure` | `kind = metric`, typed `unit_kind = currency`, non-null currency and valid scale-applied canonical number; pre-forcing scored Tier ≤ 2; at least two valid metrics in the document's same `unit_kind` + `currency` group; and the largest absolute canonical magnitude in that group. Exact magnitude ties use §9.5. Chart candidacy, participation, eligibility and confidence do not enter this predicate. Non-currency metrics can still reach Tier 1 through ordinary scoring. |
 | 80 | `unresolved_material_reference` | `kind = unresolved` **and** no `resolved_evidence_id` **and** the span lies inside a Tier ≤ 2 neighbourhood as defined below |
 
 A historical risk has an `observed_date` resolving to a past calendar date or to an anchored period ending before `asOf`, and no other record citing the same span has a future date role or open status. Its kind and scored tier remain intact, but rules 10 and 50 do not force it. An unresolved or missing observed date does not qualify. This V1 rule cannot see a continuing consequence grounded only in a different span; it makes no semantic or cross-span inference.
@@ -1404,7 +1404,7 @@ The visualization branch created exactly that namespace with 11 classes, all pro
 
 **Resolved — negative-claim prose pattern set (CR-012).** The version-1 English patterns and match policy are in §12.3; the Stage A Part 2 screen uses them without changing legacy summary arrays.
 
-**Proposed — headline measure eligibility (CR-013).** The current caller also requires chart-group membership, narrower than rule 70. CR-013 proposes the contract's largest currency metric in its unit_kind + currency group with pre-forcing Tier ≤ 2; no code change is authorized until approval.
+**Approved — headline measure eligibility (CR-013).** Rule 70 uses a document-level currency group with at least two valid canonical metrics and pre-forcing Tier ≤ 2; chart-group membership is irrelevant to the forced predicate. The chart-derived `comparability` score signal remains unchanged.
 
 **Q5 — `attribution` pattern set. RESOLVED by CR-007:** English-only, versioned, config-driven patterns and nearest-match rules are in §2.3 and CR-007. A model-proposed attribution remains out of scope under §19.3.
 
