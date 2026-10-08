@@ -39,7 +39,7 @@ class BriefVerifier
         $periods = $this->periods($text);
         $add('periods_grounded', $periods === [] ? null : $this->periodsGrounded($periods, $records));
         $entities = $this->entities($text);
-        $add('entities_grounded', $entities === [] ? null : $this->entitiesGrounded($entities, $records));
+        $add('entities_grounded', $entities === [] ? null : $this->entitiesGrounded($entities, $records, $recordsBySource));
         $unitTokens = $this->unitTokens($text);
         $add('units_consistent', $unitTokens === [] ? null : $this->unitsConsistent($unitTokens, $records, $block));
         $direction = $this->comparisonDirection($text);
@@ -47,8 +47,11 @@ class BriefVerifier
         $add('negative_claim', ! $this->negativeClaims->matchesProse($text));
         $reported = (bool) ($block['attribution']['reported'] ?? false);
         $add('attribution_respected', ! $reported || $this->namesAttribution($text, $block['attribution']));
-        $originConsistent = ! in_array($block['assertion'] ?? null, ['stated', 'absent'], true)
-            || count(array_filter($records, fn ($record) => ($record['provenance']['origin'] ?? null) === 'unknown')) === 0;
+        $originConsistent = (($block['assertion'] ?? null) !== 'absent'
+                || ($block['origin'] ?? null) === 'docintel_deterministic')
+            && (! in_array($block['assertion'] ?? null, ['stated', 'absent'], true)
+                || count(array_filter($records,
+                    fn ($record) => ($record['provenance']['origin'] ?? null) === 'unknown')) === 0);
         $add('origin_assertion_consistent', $originConsistent);
         $add('no_source_text_leak', ! $this->leaksQuote($text, $records));
         $failed = array_values(array_map(fn ($check) => $check['check'],
@@ -79,8 +82,14 @@ class BriefVerifier
             $replacement = $screened['block'];
         } elseif ($fallback !== null) {
             $candidate = $fallback($block);
+            $originalCites = (array) ($block['cites'] ?? $block['sourceIds'] ?? []);
+            $candidateCites = is_array($candidate) ? (array) ($candidate['cites'] ?? $candidate['sourceIds'] ?? []) : [];
+            sort($originalCites);
+            sort($candidateCites);
             if (is_array($candidate) && ($candidate['origin'] ?? null) === 'docintel_deterministic'
-                && is_string($candidate['template_id'] ?? null)) {
+                && ($candidate['type'] ?? null) === ($block['type'] ?? null)
+                && is_string($candidate['template_id'] ?? null)
+                && $originalCites !== [] && $candidateCites === $originalCites) {
                 $replacement = $candidate;
             }
         }
@@ -262,7 +271,7 @@ class BriefVerifier
     }
 
     /** @param list<string> $entities @param list<array<string,mixed>> $records */
-    private function entitiesGrounded(array $entities, array $records): bool
+    private function entitiesGrounded(array $entities, array $records, array $recordsBySource): bool
     {
         $known = [];
         foreach ($records as $record) {
@@ -273,6 +282,12 @@ class BriefVerifier
                 $values = [...$values, ...($data['aliases'] ?? [])];
             }
             $values = [...$values, ...($record['confirmed_entity_names'] ?? [])];
+            $confirmedId = $record['typed']['value']['entity_ref']['id'] ?? null;
+            $confirmed = is_string($confirmedId) ? ($recordsBySource[$confirmedId] ?? null) : null;
+            if (($confirmed['kind'] ?? null) === 'entity') {
+                $values[] = $confirmed['data']['value'] ?? null;
+                $values = [...$values, ...($confirmed['data']['aliases'] ?? [])];
+            }
             foreach ($values as $value) {
                 if (is_string($value)) {
                     $known[] = $this->normalizer->normalize($value);

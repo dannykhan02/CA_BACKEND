@@ -77,6 +77,10 @@ class IntelligenceBriefVerifierTest extends TestCase
         $alias = $verifier->verify($this->block('African Development Bank approved the measure.', ['entity:1']),
             ['entity:1' => $entity], ['entity:1']);
         self::assertSame('passed', $this->check($alias, 'entities_grounded'));
+        $metric['typed']['value']['entity_ref'] = ['id' => 'entity:1', 'text' => 'AfDB'];
+        $confirmed = $verifier->verify($this->block('African Development Bank approved the measure.'),
+            ['kpi:1' => $metric, 'entity:1' => $entity], ['kpi:1']);
+        self::assertSame('passed', $this->check($confirmed, 'entities_grounded'));
     }
 
     public function test_comparison_needs_two_comparable_records_and_correct_direction(): void
