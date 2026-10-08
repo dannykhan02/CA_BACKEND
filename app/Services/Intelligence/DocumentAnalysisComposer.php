@@ -72,7 +72,8 @@ class DocumentAnalysisComposer
             }
         }
         $takeaways = $this->takeaways->build($document, $summary, $charts, $materialityBySource,
-            $v2 ? ['coverage' => $coverage, 'records' => $records] : null);
+            $v2 ? ['coverage' => $coverage, 'records' => $records,
+                'scope' => 'pipeline:'.($document->ai_pipeline['key'] ?? '')] : null);
         $notes = $this->takeaways->notes($summary, $takeaways);
         $negativeClaimRejections = $v2 ? $this->takeaways->negativeClaimRejections() : [];
         foreach ($negativeClaimRejections as $blockType => $count) {

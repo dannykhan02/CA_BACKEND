@@ -68,6 +68,7 @@ class TakeawayBuilder
             ...$this->fromTrends($summary),
             ...$this->fromRisks($document),
             ...$this->fromObligations($document),
+            ...($negativeClaimContext === null ? [] : $this->fromRiskAbsence($negativeClaimContext)),
         ];
 
         $taken = [];
@@ -248,6 +249,37 @@ class TakeawayBuilder
         }
 
         return $takeaways;
+    }
+
+    /** @param array<string,mixed> $context @return list<array<string,mixed>> */
+    private function fromRiskAbsence(array $context): array
+    {
+        // The declaration is owned by this deterministic caller, never by a synthesis sentence.
+        $request = ['template_id' => 'absence.high_critical_risks',
+            'predicate' => 'risk_severity_in(high,critical)', 'scope' => $context['scope'] ?? ''];
+        $block = $this->negativeClaims->deterministicAbsence($context['coverage'], $context['records'], $request);
+        if ($block === null) {
+            return [];
+        }
+        // Takeaways require citations. Cite directly grounded risk records from the scanned set;
+        // a complete zero-risk document has no such citation and emits no takeaway.
+        $cites = [];
+        foreach ($context['records'] as $record) {
+            if (($record['kind'] ?? null) === 'risk' && ($record['provenance']['origin'] ?? null) === 'document'
+                && in_array(SeverityNormalizer::normalize($record['data']['severity'] ?? null), ['low', 'medium'], true)
+                && is_string($record['source_id'] ?? null)) {
+                $cites[$record['source_id']] = true;
+            }
+        }
+        $sourceIds = array_slice(array_keys($cites), 0, config('intelligence_v2.brief_limits.max_cites_per_block'));
+        if ($sourceIds === []) {
+            return [];
+        }
+
+        return [['origin' => 'risk', 'text' => $block['text'], 'detail' => null,
+            'basis' => 'explicit', 'severity' => null, 'sourceIds' => $sourceIds, 'chartId' => null,
+            'assertion' => $block['assertion'], 'templateId' => $block['template_id'],
+            'absenceCheck' => $block['absence_check'], 'aiGenerated' => false]];
     }
 
     /**

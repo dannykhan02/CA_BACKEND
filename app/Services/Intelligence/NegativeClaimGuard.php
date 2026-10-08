@@ -56,7 +56,7 @@ class NegativeClaimGuard
     }
 
     /** @param list<array<string,mixed>> $records @param array<string,string>|null $request @return array<string,mixed>|null */
-    private function deterministicAbsence(array $coverage, array $records, ?array $request): ?array
+    public function deterministicAbsence(array $coverage, array $records, ?array $request): ?array
     {
         // The only declared Stage A template uses the contract's named example predicate. New
         // predicates need their own explicit deterministic template and a separately reviewed scan.

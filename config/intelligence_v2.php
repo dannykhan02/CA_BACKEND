@@ -4,6 +4,7 @@ return [
     'enabled' => (bool) env('DOCINTEL_INTELLIGENCE_V2', false),
     'workspaces' => [],
     'brief' => (bool) env('DOCINTEL_V2_BRIEF', true),
+    'brief_limits' => ['max_cites_per_block' => 4],
     'charts' => (bool) env('DOCINTEL_V2_CHARTS', true),
     'values' => ['parser_version' => 'values.v1'],
     'negative_claim' => [
