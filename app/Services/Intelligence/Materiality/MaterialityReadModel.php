@@ -60,7 +60,8 @@ class MaterialityReadModel
             }
             $quotes = array_values(array_filter(array_column($row->sources ?? [], 'quote'), 'is_string'));
             $records[] = [
-                'identity' => $row->identity, 'source_id' => $row->source_id ?: 'evidence:'.$row->id,
+                'identity' => $row->identity, 'record_id' => $row->id,
+                'source_id' => $row->source_id ?: 'evidence:'.$row->id,
                 'kind' => $row->kind, 'data' => $data,
                 'typed' => $this->dates->resolve($projected['typed'], $data + ['kind' => $row->kind], $quotes),
                 'provenance' => $projected['provenance'], 'sources' => $row->sources ?? [],

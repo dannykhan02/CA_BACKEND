@@ -41,6 +41,7 @@ class IntelligenceBriefAssemblerTest extends TestCase
         $metric = $this->record('metric', 'metric', 'Total financing', ['value' => [
             'type' => 'money', 'raw' => 'USD 12.4 billion', 'number' => 12.4e9,
             'unit' => 'USD billion', 'unit_kind' => 'currency', 'currency' => 'USD',
+            'scale' => 1e9, 'precision' => 'exact',
         ], 'dates' => ['period_covered' => ['resolution' => 'period',
             'period' => ['text' => 'FY2025']]]]);
         $overdue['sources'][0]['quote'] = 'Covenant review was due 30 September 2026.';

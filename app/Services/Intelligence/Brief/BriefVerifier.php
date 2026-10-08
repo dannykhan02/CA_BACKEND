@@ -3,21 +3,30 @@
 namespace App\Services\Intelligence\Brief;
 
 use App\Services\AI\Incremental\EvidenceMerger;
+use App\Services\AI\Incremental\EvidenceDateRecognizer;
 use App\Services\Intelligence\MeasurementParser;
 use App\Services\Intelligence\NegativeClaimGuard;
+use App\Services\Intelligence\Brief\Templates\DeterministicTemplates;
 
 /** Local verification of prose against the records it cites. No provider or persistence path. */
 class BriefVerifier
 {
     public function __construct(private NegativeClaimGuard $negativeClaims,
-        private MeasurementParser $measurements, private EvidenceMerger $normalizer) {}
+        private MeasurementParser $measurements, private EvidenceMerger $normalizer,
+        private DeterministicTemplates $templates) {}
 
     /** @param array<string,mixed> $block @param array<string,array<string,mixed>> $recordsBySource
      *  @param list<string> $availableSourceIds @return array<string,mixed>
      */
     public function verify(array $block, array $recordsBySource, array $availableSourceIds): array
     {
-        $cites = array_values(array_filter((array) ($block['cites'] ?? $block['sourceIds'] ?? []), 'is_string'));
+        $originalCites = array_key_exists('cites', $block) ? $block['cites'] : ($block['sourceIds'] ?? null);
+        $cites = is_array($originalCites) ? $originalCites : [];
+        $citesShapeValid = array_is_list($cites) && $cites !== [];
+        foreach ($cites as $id) {
+            $citesShapeValid = $citesShapeValid && is_string($id) && trim($id) !== '';
+        }
+        $cites = $citesShapeValid ? $cites : [];
         $records = array_values(array_filter(array_map(fn ($id) => $recordsBySource[$id] ?? null, $cites)));
         $text = trim((string) ($block['text'] ?? '').' '.(string) ($block['detail'] ?? ''));
         $checks = [];
@@ -26,7 +35,11 @@ class BriefVerifier
                 'detail' => $detail];
         };
         $available = array_fill_keys($availableSourceIds, true);
-        $citesValid = $cites !== [] && count($cites) <= config('intelligence_v2.brief_limits.max_cites_per_block');
+        $absenceTemplate = ($block['origin'] ?? null) === 'docintel_deterministic'
+            && ($block['assertion'] ?? null) === 'absent'
+            && ($block['template_id'] ?? null) === 'absence.high_critical_risks';
+        $citesValid = ($citesShapeValid || ($absenceTemplate && $originalCites === null))
+            && count($cites) <= config('intelligence_v2.brief_limits.max_cites_per_block');
         foreach ($cites as $id) {
             $citesValid = $citesValid && isset($available[$id], $recordsBySource[$id]);
         }
@@ -41,17 +54,30 @@ class BriefVerifier
         $entities = $this->entities($text);
         $add('entities_grounded', $entities === [] ? null : $this->entitiesGrounded($entities, $records, $recordsBySource));
         $unitTokens = $this->unitTokens($text);
-        $add('units_consistent', $unitTokens === [] ? null : $this->unitsConsistent($unitTokens, $records, $block));
+        $add('units_consistent', $unitTokens === [] ? null : $this->unitsConsistent($unitTokens, $numbers, $records, $block));
         $direction = $this->comparisonDirection($text);
         $add('comparison_valid', $direction === null ? null : $this->comparisonValid($direction, $records));
-        $add('negative_claim', ! $this->negativeClaims->matchesProse($text));
+        $approvedAbsence = ($block['origin'] ?? null) === 'docintel_deterministic'
+            && ($block['assertion'] ?? null) === 'absent'
+            && ($block['template_id'] ?? null) === 'absence.high_critical_risks'
+            && ($block['absence_check']['predicate'] ?? null) === 'risk_severity_in(high,critical)'
+            && ($block['absence_check']['matched'] ?? null) === 0;
+        $add('negative_claim', $approvedAbsence || ! $this->negativeClaims->matchesProse($text));
         $reported = (bool) ($block['attribution']['reported'] ?? false);
         $add('attribution_respected', ! $reported || $this->namesAttribution($text, $block['attribution']));
-        $originConsistent = (($block['assertion'] ?? null) !== 'absent'
-                || ($block['origin'] ?? null) === 'docintel_deterministic')
-            && (! in_array($block['assertion'] ?? null, ['stated', 'absent'], true)
+        $legal = ['document' => ['stated'], 'docintel_deterministic' => ['derived', 'absent'],
+            'docintel_ai' => ['stated', 'derived', 'inferred'], 'unknown' => ['unspecified']];
+        $origin = $block['origin'] ?? null;
+        $assertion = $block['assertion'] ?? null;
+        $originConsistent = is_string($origin) && in_array($assertion, $legal[$origin] ?? [], true)
+            && (! in_array($assertion, ['stated', 'absent'], true)
                 || count(array_filter($records,
                     fn ($record) => ($record['provenance']['origin'] ?? null) === 'unknown')) === 0);
+        foreach ($records as $record) {
+            $recordOrigin = $record['provenance']['origin'] ?? null;
+            $originConsistent = $originConsistent && is_string($recordOrigin)
+                && in_array($record['provenance']['assertion'] ?? null, $legal[$recordOrigin] ?? [], true);
+        }
         $add('origin_assertion_consistent', $originConsistent);
         $add('no_source_text_leak', ! $this->leaksQuote($text, $records));
         $failed = array_values(array_map(fn ($check) => $check['check'],
@@ -82,19 +108,86 @@ class BriefVerifier
             $replacement = $screened['block'];
         } elseif ($fallback !== null) {
             $candidate = $fallback($block);
-            $originalCites = (array) ($block['cites'] ?? $block['sourceIds'] ?? []);
-            $candidateCites = is_array($candidate) ? (array) ($candidate['cites'] ?? $candidate['sourceIds'] ?? []) : [];
+            $originalCites = (array) (array_key_exists('cites', $block)
+                ? $block['cites'] : ($block['sourceIds'] ?? []));
+            $candidateCites = is_array($candidate) ? (array) (array_key_exists('cites', $candidate)
+                ? $candidate['cites'] : ($candidate['sourceIds'] ?? [])) : [];
             sort($originalCites);
             sort($candidateCites);
             if (is_array($candidate) && ($candidate['origin'] ?? null) === 'docintel_deterministic'
                 && ($candidate['type'] ?? null) === ($block['type'] ?? null)
-                && is_string($candidate['template_id'] ?? null)
                 && $originalCites !== [] && $candidateCites === $originalCites) {
                 $replacement = $candidate;
             }
         }
 
-        return ['block' => $replacement, 'rejected' => true, 'verification' => $verification];
+        if (($replacement['assertion'] ?? null) === 'absent'
+            && $this->negativeClaims->deterministicAbsence($coverage, $allRecords, $absenceRequest) === null) {
+            $replacement = null;
+        }
+        if ($replacement !== null && $this->registeredFallback($replacement, $block, $recordsBySource)) {
+            $fallbackVerification = $this->verify($replacement, $recordsBySource, $availableSourceIds);
+            if ($fallbackVerification['status'] === 'passed') {
+                $replacement['verification'] = $fallbackVerification;
+                $replacement['ai_generated'] = false;
+
+                return ['block' => $replacement, 'rejected' => true, 'verification' => $verification];
+            }
+        }
+
+        return ['block' => null, 'rejected' => true, 'verification' => $verification];
+    }
+
+    private function registeredFallback(array $candidate, array $original, array $recordsBySource): bool
+    {
+        if (($candidate['origin'] ?? null) !== 'docintel_deterministic'
+            || ($candidate['type'] ?? null) !== ($original['type'] ?? null)) {
+            return false;
+        }
+        if (($candidate['template_id'] ?? null) === 'absence.high_critical_risks') {
+            return ($candidate['text'] ?? null) === 'No high or critical risks were identified.'
+                && ($candidate['assertion'] ?? null) === 'absent'
+                && ($candidate['absence_check']['predicate'] ?? null) === 'risk_severity_in(high,critical)'
+                && ($candidate['absence_check']['matched'] ?? null) === 0;
+        }
+        $registered = ['measure.period_value' => 'measure', 'timeline.calendar_due' => 'timeline',
+            'timeline.period_due' => 'timeline', 'timeline.relative_due' => 'timeline',
+            'attention.overdue' => 'attention', 'attention.imminent' => 'attention',
+            'attention.critical_risk' => 'attention'];
+        $id = $candidate['template_id'] ?? null;
+        if (! is_string($id) || ($registered[$id] ?? null) !== ($candidate['type'] ?? null)
+            || ! is_array($candidate['template_input'] ?? null)) {
+            return false;
+        }
+
+        $input = $candidate['template_input'];
+        if (array_diff(array_keys($input), ['label', 'value', 'date', 'period', 'attribution']) !== []
+            || ($id === 'measure.period_value' && ! isset($input['value']))
+            || (in_array($id, ['timeline.calendar_due', 'timeline.period_due', 'timeline.relative_due',
+                'attention.overdue', 'attention.imminent'], true) && ! isset($input['date']))) {
+            return false;
+        }
+        $groundedInput = false;
+        foreach ($candidate['cites'] ?? [] as $sourceId) {
+            if (! is_string($sourceId) || ! isset($recordsBySource[$sourceId])) {
+                continue;
+            }
+            $record = $recordsBySource[$sourceId];
+            if (($input['label'] ?? null) !== ($record['data']['label'] ?? null)
+                || (isset($input['value']) && $input['value'] !== ($record['typed']['value'] ?? null))
+                || (isset($input['date']) && ! in_array($input['date'], $record['typed']['dates'] ?? [], true))
+                || (isset($input['attribution'])
+                    && $input['attribution'] !== ($record['provenance']['attribution'] ?? null))
+                || (isset($input['period']) && ! in_array($input['period'],
+                    array_column(array_column($record['typed']['dates'] ?? [], 'period'), 'text'), true))) {
+                continue;
+            }
+            $groundedInput = true;
+            break;
+        }
+
+        return $groundedInput
+            && ($candidate['text'] ?? null) === $this->templates->render($id, $input);
     }
 
     /** @return list<array{raw:string,number:float,unit:string|null}> */
@@ -128,7 +221,7 @@ class BriefVerifier
             $matched = false;
             foreach ($records as $record) {
                 $value = $record['typed']['value'] ?? null;
-                if (! is_numeric($value['number'] ?? null)) {
+                if (! $this->validNumericValue($value)) {
                     continue;
                 }
                 if ($number['unit'] !== null && $number['unit'] !== ($value['currency'] ?? null)
@@ -150,7 +243,12 @@ class BriefVerifier
                 foreach ($records as $record) {
                     foreach ($record['typed']['dates'] ?? [] as $typedDate) {
                         $duration = $typedDate['duration']['text'] ?? null;
-                        if (is_string($duration) && preg_match('/(?<!\d)'.preg_quote($number['raw'], '/').'(?!\d)/u', $duration)) {
+                        if (($typedDate['type'] ?? null) === 'duration'
+                            && ($typedDate['resolution'] ?? null) === 'relative'
+                            && ($typedDate['duration']['anchor_resolved'] ?? null) === false
+                            && is_string($duration) && $duration !== ''
+                            && ($typedDate['raw'] ?? null) === $duration
+                            && preg_match('/(?<!\d)'.preg_quote($number['raw'], '/').'(?!\d)/u', $duration)) {
                             $matched = true;
                             break 2;
                         }
@@ -174,6 +272,45 @@ class BriefVerifier
         return 0.0;
     }
 
+    private function validNumericValue(mixed $value): bool
+    {
+        if (! is_array($value) || ! in_array($value['type'] ?? null,
+            ['number', 'money', 'percent', 'ratio', 'count'], true)
+            || ! is_numeric($value['number'] ?? null)
+            || ! in_array((float) ($value['scale'] ?? 0), [1.0, 1e3, 1e6, 1e9, 1e12], true)
+            || ! in_array($value['unit_kind'] ?? null,
+                ['currency', 'percent', 'ratio', 'count', 'other'], true)
+            || ! in_array($value['precision'] ?? null, ['exact', 'rounded', 'approximate'], true)
+            || ! is_string($value['raw'] ?? null) || $value['raw'] === '') {
+            return false;
+        }
+        if (array_key_exists('measure_status', $value)
+            && ! in_array($value['measure_status'], [null, 'actual', 'forecast', 'target'], true)) {
+            return false;
+        }
+        $expectedKinds = ['number' => 'other', 'money' => 'currency', 'percent' => 'percent',
+            'ratio' => 'ratio', 'count' => 'count'];
+        if ($value['unit_kind'] !== $expectedKinds[$value['type']]) {
+            return false;
+        }
+        if ($value['type'] === 'money') {
+            if (! is_string($value['currency'] ?? null) || ! preg_match('/^[A-Z]{3}$/D', $value['currency'])) {
+                return false;
+            }
+        } elseif (($value['currency'] ?? null) !== null) {
+            return false;
+        }
+        $parsed = $this->measurements->parse($value['raw'], $value['unit'] ?? null, null);
+
+        return $parsed !== null && (float) $parsed->magnitude === (float) $value['number']
+            && (float) $parsed->scale === (float) $value['scale']
+            && $parsed->currency === ($value['currency'] ?? null)
+            && in_array($parsed->kind, match ($value['type']) {
+                'money' => ['currency'], 'percent' => ['percent'], 'ratio' => ['ratio'],
+                'count' => ['count'], default => ['unknown', 'change'],
+            }, true);
+    }
+
     /** @param list<array<string,mixed>> $records */
     private function derivedNumberMatches(float $number, array $block, array $records): bool
     {
@@ -189,7 +326,7 @@ class BriefVerifier
         [$from, $to] = $derivation['inputs'];
         $a = $byId[$from]['typed']['value'] ?? null;
         $b = $byId[$to]['typed']['value'] ?? null;
-        if (! is_numeric($a['number'] ?? null) || ! is_numeric($b['number'] ?? null)
+        if (! $this->validNumericValue($a) || ! $this->validNumericValue($b)
             || (float) $a['number'] == 0.0 || ! $this->comparable($a, $b)) {
             return false;
         }
@@ -201,21 +338,18 @@ class BriefVerifier
     /** @return list<string> */
     private function dates(string $text): array
     {
-        preg_match_all('/\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}\s+[A-Z][a-z]+\s+\d{4}\b|\b[A-Z][a-z]+\s+\d{1,2},?\s+\d{4}\b/u',
-            $text, $matches);
-
-        return $matches[0];
+        return EvidenceDateRecognizer::candidatesIn($text);
     }
 
     /** @param list<string> $dates @param list<array<string,mixed>> $records */
     private function datesGrounded(array $dates, array $records): bool
     {
         foreach ($dates as $date) {
-            $iso = strtotime($date);
-            if ($iso === false) {
+            $recognized = EvidenceDateRecognizer::datesIn($date);
+            if ($recognized === []) {
                 return false;
             }
-            $canonical = date('Y-m-d', $iso);
+            $canonical = $recognized[0]['date'];
             $found = false;
             foreach ($records as $record) {
                 foreach ($record['typed']['dates'] ?? [] as $typed) {
@@ -312,26 +446,16 @@ class BriefVerifier
     }
 
     /** @param list<string> $tokens @param list<array<string,mixed>> $records */
-    private function unitsConsistent(array $tokens, array $records, array $block): bool
+    private function unitsConsistent(array $tokens, array $numbers, array $records, array $block): bool
     {
         foreach ($tokens as $token) {
-            $expected = preg_match('/^([A-Z]{3})\s+\d/', $token, $parts) ? $parts[1] : '%';
             $found = false;
-            foreach ($records as $record) {
-                $value = $record['typed']['value'] ?? [];
-                $found = $found || ($expected === '%' ? ($value['unit_kind'] ?? null) === 'percent'
-                    : ($value['currency'] ?? null) === $expected);
-            }
-            if (! $found && $expected === '%' && ($block['derivation']['operation'] ?? null) === 'growth_percent'
-                && count($block['derivation']['inputs'] ?? []) === 2) {
-                $byId = [];
-                foreach ($records as $record) {
-                    $byId[$record['source_id']] = $record;
+            foreach ($numbers as $number) {
+                if (str_contains($number['raw'], $token)
+                    && $this->numbersGrounded([$number], $records, $block)) {
+                    $found = true;
+                    break;
                 }
-                [$from, $to] = $block['derivation']['inputs'];
-                $a = $byId[$from]['typed']['value'] ?? null;
-                $b = $byId[$to]['typed']['value'] ?? null;
-                $found = is_array($a) && is_array($b) && $this->comparable($a, $b);
             }
             if (! $found) {
                 return false;
