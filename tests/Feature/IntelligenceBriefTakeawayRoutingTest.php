@@ -68,4 +68,18 @@ class IntelligenceBriefTakeawayRoutingTest extends TestCase
         self::assertArrayNotHasKey('verification', $synthesis);
         self::assertArrayNotHasKey('briefAiBlocksRejected', $analysis['stats']);
     }
+
+    public function test_fixture_25_counts_both_approved_synthesis_rejections(): void
+    {
+        config(['intelligence_v2.enabled' => true]);
+        app()->bind(AnthropicClient::class, fn () => throw new \LogicException('B1 reached a provider client'));
+        // Reuse the protected corpus without editing its input or its existing test.
+        $fixture = new DocumentIntelligenceAnalysisTest('test_fixture_25_preserves_approved_v2_calibration');
+        $document = (new \ReflectionMethod($fixture, 'annualReport'))->invoke($fixture);
+        $analysis = app(DocumentAnalysisComposer::class)->compose($document->fresh(),
+            new \DateTimeImmutable('2026-10-07T00:00:00+00:00'));
+        self::assertSame(2, $analysis['stats']['briefAiBlocksRejected']);
+        self::assertSame([], array_values(array_filter($analysis['overview']['takeaways'],
+            fn ($item) => in_array($item['origin'], ['synthesis', 'trend'], true))));
+    }
 }
