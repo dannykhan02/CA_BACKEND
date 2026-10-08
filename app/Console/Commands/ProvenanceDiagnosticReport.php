@@ -7,13 +7,14 @@ use App\Models\DocumentEvidence;
 use App\Models\DocumentSourceSpan;
 use App\Services\Intelligence\Materiality\MaterialityReadModel;
 use App\Services\Intelligence\ProvenanceDiagnostic;
+use App\Services\Intelligence\ProvenanceDiagnosticExtension;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
 /** Observes accepted rows only. PostgreSQL rejects writes inside the read-only transaction. */
 class ProvenanceDiagnosticReport extends Command
 {
-    protected $signature = 'docintel:provenance-diagnostic {document} {--json}';
+    protected $signature = 'docintel:provenance-diagnostic {document} {--json} {--as-of=2026-10-08}';
 
     protected $description = 'Read-only diagnosis of unknown-origin V2 metric evidence';
 
@@ -22,9 +23,16 @@ class ProvenanceDiagnosticReport extends Command
 
     private const REASONS = ['value_not_in_quote', 'period_not_in_quote', 'due_date_not_grounded', 'other'];
 
-    public function handle(MaterialityReadModel $readModel, ProvenanceDiagnostic $diagnostic): int
+    public function handle(MaterialityReadModel $readModel, ProvenanceDiagnostic $diagnostic,
+        ProvenanceDiagnosticExtension $extension): int
     {
-        $report = DB::transaction(function () use ($readModel, $diagnostic): ?array {
+        $asOf = \DateTimeImmutable::createFromFormat('!Y-m-d', (string) $this->option('as-of'));
+        if (! $asOf || $asOf->format('Y-m-d') !== $this->option('as-of')) {
+            $this->error('--as-of must be a valid YYYY-MM-DD date.');
+
+            return self::FAILURE;
+        }
+        $report = DB::transaction(function () use ($readModel, $diagnostic, $extension, $asOf): ?array {
             if (DB::getDriverName() === 'pgsql') {
                 DB::statement('SET TRANSACTION READ ONLY');
             }
@@ -50,8 +58,10 @@ class ProvenanceDiagnosticReport extends Command
             $count = count($metrics);
             $buckets = array_fill_keys(self::BUCKETS, ['count' => 0, 'samples' => []]);
             $reasons = array_fill_keys(self::REASONS, 0);
+            $diagnosed = [];
             foreach ($unknown as $record) {
                 $result = $diagnostic->classify($record, $spans, (string) $document->extracted_text);
+                $diagnosed[] = ['record' => $record, 'diagnosis' => $result];
                 $bucket = $result['diagnostic_bucket'];
                 $reason = $result['original_reason'];
                 $buckets[$bucket]['count']++;
@@ -60,6 +70,8 @@ class ProvenanceDiagnosticReport extends Command
                     $buckets[$bucket]['samples'][] = $result;
                 }
             }
+            $extended = $extension->analyze($records, $diagnosed, $spans,
+                (string) $document->extracted_text, $asOf);
 
             return [
                 'document' => ['id' => $document->id, 'name' => $document->name],
@@ -67,19 +79,11 @@ class ProvenanceDiagnosticReport extends Command
                     'document_origin_metrics' => $documentOrigin, 'unknown_origin_metrics' => count($unknown),
                     'document_origin_percentage' => $count ? round(100 * $documentOrigin / $count, 2) : 0,
                     'unknown_origin_percentage' => $count ? round(100 * count($unknown) / $count, 2) : 0,
-                    'key_figure_eligible_count' => count(array_filter($metrics, static function (array $record): bool {
-                        $value = $record['typed']['value'] ?? null;
-
-                        return ($record['provenance']['origin'] ?? null) === 'document'
-                            && ($value['type'] ?? null) === 'money'
-                            && ($value['unit_kind'] ?? null) === 'currency'
-                            && is_string($value['currency'] ?? null) && $value['currency'] !== ''
-                            && is_numeric($value['number'] ?? null) && is_finite((float) $value['number'])
-                            && is_string($record['source_id'] ?? null);
-                    })),
+                    'key_figure_eligible_count' => $extended['projection']['current']['key_figure_eligible_count'],
                 ],
                 'unknown_reasons' => $reasons,
                 'diagnostic_classifications' => $buckets,
+                'extended_diagnostic' => $extended,
             ];
         });
 
@@ -107,6 +111,19 @@ class ProvenanceDiagnosticReport extends Command
             foreach ($bucket['samples'] as $sample) {
                 $this->line('  '.json_encode($sample, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE));
             }
+        }
+        foreach (['genuinely_unsupported' => 'subtype_counts', 'ambiguous' => 'classification_counts'] as $group => $counts) {
+            $this->line($group.' detail:');
+            foreach ($report['extended_diagnostic'][$group][$counts] as $name => $count) {
+                $this->line('  '.$name.': '.$count);
+            }
+            foreach ($report['extended_diagnostic'][$group]['records'] as $row) {
+                $this->line('  '.json_encode($row, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE));
+            }
+        }
+        foreach (['structural_spans', 'candidate_rules', 'projection'] as $section) {
+            $this->line($section.': '.json_encode($report['extended_diagnostic'][$section],
+                JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE));
         }
 
         return self::SUCCESS;
