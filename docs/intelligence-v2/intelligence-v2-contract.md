@@ -762,7 +762,7 @@ BriefBlock {
   verification: Verification | null   # §14; non-null for every docintel_ai block
   absence_check: AbsenceCheck | null  # §12; non-null iff assertion = "absent"
 
-  tier: 1 | 2 | 3             # the materiality tier of the block
+  tier: 1 | 2 | 3 | 4         # the cited record's materiality tier; B1 key figures may be Tier 4
   attention: AttentionState | null
   chart_id: string | null     # links a measure block to a chart candidate (§16)
 }
