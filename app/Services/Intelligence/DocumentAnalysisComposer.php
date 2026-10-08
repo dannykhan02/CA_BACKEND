@@ -76,10 +76,15 @@ class DocumentAnalysisComposer
                 'scope' => 'pipeline:'.($document->ai_pipeline['key'] ?? '')] : null);
         $notes = $this->takeaways->notes($summary, $takeaways);
         $negativeClaimRejections = $v2 ? $this->takeaways->negativeClaimRejections() : [];
-        foreach ($negativeClaimRejections as $blockType => $count) {
-            Log::info('docintel.v2.negative_claim_rejected', [
-                'block_type' => $blockType, 'reason' => 'negative_claim', 'count' => $count,
-            ]);
+        foreach ($v2 ? $this->takeaways->rejectionReasons() : [] as $blockType => $reasons) {
+            foreach ($reasons as $reason => $count) {
+                $event = $reason === 'negative_claim'
+                    ? 'docintel.v2.negative_claim_rejected'
+                    : 'docintel.v2.brief_ai_rejected';
+                Log::info($event, [
+                    'block_type' => $blockType, 'reason' => $reason, 'count' => $count,
+                ]);
+            }
         }
         $groups = $this->groups->build($evidence);
 

@@ -1,6 +1,6 @@
 # DocIntel Intelligence V2 — contract
 
-**Status:** Stage A implemented; CR-001 through CR-013 approved. Stage B and Stage C are deferred.
+**Status:** Stage A implemented; CR-001 through CR-014 approved. Stage B1 is in progress; later Stage B and Stage C are deferred.
 **Date:** 2026-10-07
 **Revised:** 2026-10-07 (clarification pass — see the change log at the end)
 **Basis:** [`current-architecture-audit.md`](current-architecture-audit.md) (same directory), as revised by the same pass.
@@ -477,7 +477,7 @@ Rules 20 and 30 depend on "now", so a tier assignment has a validity window. A T
 - **T7** Tier 1 ordering is fully determined by (forced-rule priority, score, tiebreak) — no randomness, no insertion order.
 - **T8** `per_kind`, `per_stem` and `origin_quotas` never exclude a forced item.
 - **T9a — importantFindings compatibility.** For the existing corpus, the V2 `importantFindings` list preserves the V1 selected set and order except at an exact-score tie group crossing a `MAX`, `MAX_PER_STEM` or per-kind selection boundary. A tie group remains tied through materiality score and all higher-priority selection semantics. Select the first N under §9.5 and require the same number from that tied group, but do not require V1 identities chosen by confidence/reference ordering. No lower-scoring record may displace a higher-scoring record. Outside this exception, selected set and order are strict. The list is top `MAX` by score, subject to `MAX_PER_STEM` and per-kind rules for non-forced items, independently of Tier 1 membership.
-- **T9b — attention compatibility.** Tier 1 contains every record V1 classifies as `critical_risk`, `high_risk` or `upcoming_obligation`. Tier 1 may be smaller than `importantFindings` and is never padded (T6). T9 places no tier-membership constraint on metrics, facts, definitions or entities. Chart candidate order remains strict. Takeaway selection is compared strictly with V1's candidate order, duplicate rule, minimum length and quotas applied to **V2-formatted candidate text** (CR-010). V1 flag-off output, including its integer-formatting defect, remains unchanged.
+- **T9b — attention compatibility.** Tier 1 contains every record V1 classifies as `critical_risk`, `high_risk` or `upcoming_obligation`. Tier 1 may be smaller than `importantFindings` and is never padded (T6). T9 places no tier-membership constraint on metrics, facts, definitions or entities. Chart candidate order remains strict. V2 takeaway selection applies V1's candidate order, duplicate rule, minimum length and quotas to **V2-formatted candidate text** (CR-010), then omits synthesis-derived candidates that fail §14 verification (CR-014). V1 flag-off output, including its integer-formatting defect, remains unchanged.
 
 ---
 
@@ -753,7 +753,7 @@ BriefBlock {
   attribution: Attribution                                           # §2.3
 
   cites: [string]             # record source_ids. MUST be non-empty except for
-                              # coverage_note, which cites the coverage state instead.
+                              # coverage_note and headline.document_identity (CR-014).
   evidence: [EvidenceRef]     # §15, resolved for display
   typed: { <name>: TypedValue }   # every number or date the text states, typed and cited
 
@@ -762,7 +762,7 @@ BriefBlock {
   verification: Verification | null   # §14; non-null for every docintel_ai block
   absence_check: AbsenceCheck | null  # §12; non-null iff assertion = "absent"
 
-  tier: 1 | 2 | 3             # the materiality tier of the block
+  tier: 1 | 2 | 3 | 4         # the cited record's materiality tier; B1 key figures may be Tier 4
   attention: AttentionState | null
   chart_id: string | null     # links a measure block to a chart candidate (§16)
 }
@@ -788,7 +788,7 @@ BriefBlock {
 
 ### 13.4 Citation rules
 
-- **B1** `cites` is non-empty for every block except `coverage_note`.
+- **B1** `cites` is non-empty for every block except `coverage_note` and `headline.document_identity`, which renders only document type and name (CR-014).
 - **B2** Every `source_id` in `cites` must exist in the current `pipeline_key`'s record set and be one that was actually supplied to the generator. This is V1's `$availableSourceIds` check (`ResponseValidator.php:326-335`), retained and extended to every block.
 - **B3** Every number and every date stated in `text` or `detail` must appear in `typed` with its own citation, and must verify (§14).
 - **B4** A `tension` block cites at least two records, from at least two distinct `identity` values.
@@ -800,11 +800,14 @@ BriefBlock {
 Templates live in `app/Services/Intelligence/Brief/Templates/`, are identified by `template_id`, versioned by `brief.template_version`, and render **only** from `TypedValue`s and record fields. A template may not interpolate model-written text. Example shapes (wording is implementation detail; the contract is that they exist and are pure):
 
 - `measure.period_value` — "<label>: <raw> <unit> (<period.text>)"
+- `headline.document_identity` — document type and name only; it may have empty `cites` (CR-014).
 - `timeline.calendar_due` — "<label> — due <date>"
 - `timeline.period_due` — "<label> — due in <period.text>"
 - `timeline.relative_due` — "<label> — due <duration.text>"
 - `attention.overdue` — "<label> was due <date> and is still open."
 - `coverage_note.partial` — renders from `CoverageState.reasons`, never from prose.
+
+**Stage B1 key figures (CR-014).** Select independently of materiality tier, without promotion or score changes. Eligible records are document-origin currency metrics with a valid canonical numeric `TypedValue` and non-null currency. Deduplicate exact equivalents by currency, canonical number and normalized period, keeping the first under §9.5. Order total/headline labels first using case-insensitive English word boundaries and `brief.key_figures.total_label_patterns = ["total", "overall", "aggregate", "net", "gross"]`; then by the existing `monetary_magnitude` signal value descending within the unit-kind/currency group; then by §9.5. `brief.key_figures.max = 6`; emit every eligible record when fewer than six, without padding. Do not compare raw magnitudes across currencies. Omit comparisons unless a deterministic comparable prior-period record exists under V7.
 
 ### 13.6 AI identifiability
 
@@ -824,6 +827,8 @@ A surface that shows an AI block without a label is a contract violation, and §
 4. Request AI blocks (`assessment`, `tension`, `question`, and `finding` where a deterministic template cannot express the record) **within the existing synthesis call** (§19.2).
 5. Verify every AI block (§14). Replace failures with deterministic fallbacks.
 6. Order: `headline`, `assessment`, `attention` blocks, `timeline`, `measure`, `finding`, `tension`, `question`, `coverage_note`. Within a type, by tier then by §9.5 tiebreak.
+
+**Stage B1 boundary (CR-014).** The read-only Brief contains only deterministic `headline`, `attention`, `timeline`, `measure` and `coverage_note` blocks and reports `ai_blocks_available: false`. No AI Brief block is generated or inserted. Existing synthesis takeaways are a separate surface; their V2 candidates pass §14 verification and may retain `ai_generated: true` when accepted. B1 creates no absence Brief block. Timeline includes open or unknown-status non-historical records with a typed due-date role, including Tier 2 watch items; attention blocks come from Tier 1 needs-attention/watch items.
 
 ---
 
@@ -859,6 +864,8 @@ Run in order; all are deterministic, local, and free.
 | `attribution_respected` | §13.4 B5. |
 | `origin_assertion_consistent` | An `unknown`-origin record cannot verify a `stated` block or support an absence claim; it retains `unspecified` assertion and unattributed attribution. |
 | `no_source_text_leak` | The block does not reproduce a span of cited evidence longer than `brief.max_quote_chars` without it being an explicit quote block. Preserves V1's "the model never supplies evidence text" posture. |
+
+For Stage B1, `brief.max_quote_chars = 160` (CR-014). All eleven checks above, including `origin_assertion_consistent`, are required.
 
 ### 14.3 Outcome
 
@@ -1198,7 +1205,11 @@ The following are **explicitly out of scope** for V2 and each requires a separat
 config/intelligence_v2.php
   'enabled'        => (bool) env('DOCINTEL_INTELLIGENCE_V2', false),   # default OFF
   'workspaces'     => [],    # optional allow-list of workspace ids; empty = honour 'enabled'
-  'brief'          => (bool) env('DOCINTEL_V2_BRIEF', true),           # within V2
+  'brief'          => ['enabled' => (bool) env('DOCINTEL_V2_BRIEF', true),
+                       'template_version' => '1', 'verifier_version' => '1',
+                       'max_quote_chars' => 160,
+                       'key_figures' => ['max' => 6,
+                         'total_label_patterns' => ['total','overall','aggregate','net','gross']]],
   'charts'         => (bool) env('DOCINTEL_V2_CHARTS', true),          # within V2
 ```
 
@@ -1342,7 +1353,7 @@ tests/Fixtures/IntelligenceV2/
 | `16-legacy-normal-route` | §21.2: adapter, skipped signals, `page_only`/`none` highlighting, charts suppressed, `bounded` coverage, deterministic-only Brief |
 | `17-superseded-pipeline-key` | old evidence rows invisible (§21.3) |
 | `18-flag-off` | `intelligence-off.json` is byte-identical to the merged pre-V2 baseline; new keys **absent**, not null; `analysis` still present, since it predates V2 (§20.2, A6) |
-| `25-preserves-existing-ranking` | T9a: existing-corpus `importantFindings` selected set and order stay strict outside exact-score selection-cap boundaries; at such a boundary select the same number from the tied group under §9.5, never allowing a lower score to displace a higher one (CR-009). T9b: Tier 1 includes all V1 `critical_risk`, `high_risk` and `upcoming_obligation` records. Chart candidate order stays strict. Takeaway selection strictly matches V1 selection logic applied to V2-formatted text, captured in `tests/Fixtures/intelligence-v2/expected/25-takeaways-v2.json` (CR-010). Metrics, facts, definitions and entities need not enter Tier 1 (CR-008). |
+| `25-preserves-existing-ranking` | T9a: existing-corpus `importantFindings` selected set and order stay strict outside exact-score selection-cap boundaries; at such a boundary select the same number from the tied group under §9.5, never allowing a lower score to displace a higher one (CR-009). T9b: Tier 1 includes all V1 `critical_risk`, `high_risk` and `upcoming_obligation` records. Chart candidate order stays strict. Takeaway selection is V1 logic on V2-formatted text minus synthesis-derived candidates rejected by BriefVerifier, captured in `tests/Fixtures/intelligence-v2/expected/25-takeaways-v2.json` (CR-010, CR-014). Metrics, facts, definitions and entities need not enter Tier 1 (CR-008). |
 | `26-forced-item-beats-per-kind-cap` | four critical risks: all four forced into Tier 1, `per_kind = 3` not applied to forced items (T8) — the behaviour today's `MAX_PER_KIND` does not provide |
 | `19-no-bounding-boxes` | every highlight is `offset`, `text_match`, `page_only` or `none`; no case produces a box (§15.2) |
 | `20-text-match-fallback` | offsets exist but the consumer is not `extracted_text` → `text_match` with `needle`, `occurrence`, `occurrences` |
@@ -1367,7 +1378,7 @@ tests/Fixtures/IntelligenceV2/
 
 Updating an `expected/` file is a contract change and requires a change request (§22.6) naming the section changed and why. A silent golden-file update is the one failure mode a conformance suite cannot catch by itself, so it is caught in review instead.
 
-CR-010 approves the V2 takeaway golden `tests/Fixtures/intelligence-v2/expected/25-takeaways-v2.json`: the corrected formatter preserves employee counts, so Employees is selected and Portfolio exposure is not. The V1 golden and flag-off formatter remain unchanged.
+CR-010 approves the V2 takeaway formatter: Employees is selected and Portfolio exposure is not. CR-014 updates the V2 takeaway golden `tests/Fixtures/intelligence-v2/expected/25-takeaways-v2.json` by omitting the synthesis finding “Financing growth is concentrated in infrastructure.” (`origin_assertion_consistent`) and the trend “Approvals have risen in each of the last three reporting years.” (`comparison_valid`, `origin_assertion_consistent`). Both cite one unknown-origin `kpi` record in fixture 25; the V1 golden and flag-off formatter remain unchanged.
 
 ### 22.6 Relationship to the change-request process
 
@@ -1413,6 +1424,10 @@ The visualization branch created exactly that namespace with 11 classes, all pro
 ---
 
 ## Change log
+
+### 2026-10-08 — Stage B1 approval (CR-014)
+
+The Brief is deterministic-only in B1; headline metadata may have empty cites, quote limit is 160 characters, and key figures use the approved currency selector. The existing synthesis/takeaway surface is verified separately. Fixture 25's two unsupported synthesis candidates are omitted and counted, with its V2 takeaway golden updated under §22.5. The Brief flag is an array with `enabled`, retaining the same environment variable and default. All eleven §14.2 checks remain required.
 
 ### 2026-10-07 — Stage A Part 2 approvals
 

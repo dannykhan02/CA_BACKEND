@@ -3,8 +3,18 @@
 return [
     'enabled' => (bool) env('DOCINTEL_INTELLIGENCE_V2', false),
     'workspaces' => [],
-    'brief' => (bool) env('DOCINTEL_V2_BRIEF', true),
     'brief_limits' => ['max_cites_per_block' => 4],
+    'brief' => [
+        'enabled' => (bool) env('DOCINTEL_V2_BRIEF', true),
+        'template_version' => '1',
+        'verifier_version' => '1',
+        'max_quote_chars' => 160,
+        'numeric_tolerance' => ['exact_for' => ['integer', 'currency'], 'rounded' => 'half_last_digit'],
+        'key_figures' => [
+            'max' => 6,
+            'total_label_patterns' => ['total', 'overall', 'aggregate', 'net', 'gross'],
+        ],
+    ],
     'charts' => (bool) env('DOCINTEL_V2_CHARTS', true),
     'values' => ['parser_version' => 'values.v1'],
     'negative_claim' => [

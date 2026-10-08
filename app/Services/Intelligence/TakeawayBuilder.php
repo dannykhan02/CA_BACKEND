@@ -5,6 +5,7 @@ namespace App\Services\Intelligence;
 use App\Models\Document;
 use App\Models\DocumentIntelligenceSummary;
 use App\Services\Intelligence\Values\ValueFormatter;
+use App\Services\Intelligence\Brief\BriefVerifier;
 
 /**
  * Builds the document's key takeaways without a provider call.
@@ -29,15 +30,25 @@ use App\Services\Intelligence\Values\ValueFormatter;
  */
 class TakeawayBuilder
 {
-    public function __construct(private ValueFormatter $valueFormatter, private NegativeClaimGuard $negativeClaims) {}
+    public function __construct(private ValueFormatter $valueFormatter, private NegativeClaimGuard $negativeClaims,
+        private BriefVerifier $briefVerifier) {}
 
     /** @var array<string,int> */
     private array $negativeClaimRejections = [];
+
+    /** @var array<string,array<string,int>> */
+    private array $rejectionReasons = [];
 
     /** @return array<string,int> */
     public function negativeClaimRejections(): array
     {
         return $this->negativeClaimRejections;
+    }
+
+    /** @return array<string,array<string,int>> */
+    public function rejectionReasons(): array
+    {
+        return $this->rejectionReasons;
     }
 
     private const MAX = 8;
@@ -62,6 +73,7 @@ class TakeawayBuilder
         ?array $materialityBySource = null, ?array $negativeClaimContext = null): array
     {
         $this->negativeClaimRejections = [];
+        $this->rejectionReasons = [];
         $candidates = [
             ...$this->fromSynthesis($summary),
             ...$this->fromCharts($charts),
@@ -75,18 +87,28 @@ class TakeawayBuilder
         $used = [];
         foreach ($candidates as $candidate) {
             if ($negativeClaimContext !== null && in_array($candidate['origin'], ['synthesis', 'trend'], true)) {
-                $screened = $this->negativeClaims->screenAiBlock([
+                $bySource = [];
+                foreach ($negativeClaimContext['records'] as $record) {
+                    $bySource[$record['source_id']] = $record;
+                }
+                $checked = $this->briefVerifier->admit([
                     'type' => 'takeaway', 'origin' => 'docintel_ai',
+                    'assertion' => ($candidate['basis'] ?? null) === 'explicit' ? 'stated' : 'inferred',
+                    'attribution' => ['speaker' => null, 'role' => 'unattributed', 'reported' => false],
                     'text' => $candidate['text'], 'detail' => $candidate['detail'],
-                ], $negativeClaimContext['coverage'], $negativeClaimContext['records']);
-                if ($screened['rejected']) {
+                    'cites' => $candidate['sourceIds'],
+                ], $bySource, array_keys($bySource), $negativeClaimContext['coverage'],
+                    $negativeClaimContext['records']);
+                if ($checked['rejected']) {
                     $this->negativeClaimRejections[$candidate['origin']] =
                         ($this->negativeClaimRejections[$candidate['origin']] ?? 0) + 1;
-
-                    // These legacy synthesis rows declare no deterministic absence predicate or
-                    // non-absence template. A lexical match cannot create either one.
+                    $reason = implode(',', $checked['verification']['failed_reasons']);
+                    $this->rejectionReasons[$candidate['origin']][$reason] =
+                        ($this->rejectionReasons[$candidate['origin']][$reason] ?? 0) + 1;
                     continue;
                 }
+                $candidate['ai_generated'] = true;
+                $candidate['verification'] = $checked['verification'];
             }
             if (count($taken) >= ($materialityBySource === null ? self::MAX : config('intelligence_v2.tier1.target'))) {
                 break;
