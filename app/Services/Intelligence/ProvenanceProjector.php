@@ -12,14 +12,14 @@ class ProvenanceProjector
 {
     public function __construct(private EvidenceMerger $merger, private AttributionMatcher $attribution) {}
 
-    /** @return array<string,mixed> */
-    public function project(DocumentEvidence $row): array
+    /** @param array<string,string>|null $entityIds @return array<string,mixed> */
+    public function project(DocumentEvidence $row, ?array $entityIds = null): array
     {
         $data = is_array($row->data) ? $row->data : [];
         $origin = $this->direct($data) ? 'document' : 'unknown';
 
         return ['origin' => $origin, 'assertion' => $origin === 'document' ? 'stated' : 'unspecified',
-            'attribution' => $origin === 'document' ? $this->attribution->match($row)
+            'attribution' => $origin === 'document' ? $this->attribution->match($row, $entityIds)
                 : ['speaker' => null, 'role' => 'unattributed', 'reported' => false, 'evidence_ref' => null]];
     }
 

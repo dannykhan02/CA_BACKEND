@@ -13,8 +13,8 @@ class TypedEvidenceProjector
     public function __construct(private ValueParser $parser, private ProvenanceProjector $provenance,
         private EvidenceMerger $normalizer) {}
 
-    /** @return array<string,mixed> */
-    public function project(DocumentEvidence $row): array
+    /** @param array<string,string>|null $entityIds @return array<string,mixed> */
+    public function project(DocumentEvidence $row, ?array $entityIds = null): array
     {
         $data = is_array($row->data) ? $row->data : [];
         $quotes = [];
@@ -29,15 +29,20 @@ class TypedEvidenceProjector
         $confirmedEntityId = null;
         $subject = is_string($data['subject'] ?? null) ? trim($data['subject']) : '';
         if ($subject !== '' && $row->document_id !== null && $row->workspace_id !== null) {
-            $entityId = DocumentEntity::where('workspace_id', $row->workspace_id)
-                ->where('document_id', $row->document_id)
-                ->where('normalized_value', $this->normalizer->normalize($subject))->value('id');
-            if ($entityId !== null) {
-                $confirmedEntityId = 'entity:'.$entityId;
+            $normalized = $this->normalizer->normalize($subject);
+            if ($entityIds !== null) {
+                $confirmedEntityId = $entityIds[$normalized] ?? null;
+            } else {
+                $entityId = DocumentEntity::where('workspace_id', $row->workspace_id)
+                    ->where('document_id', $row->document_id)
+                    ->where('normalized_value', $normalized)->value('id');
+                if ($entityId !== null) {
+                    $confirmedEntityId = 'entity:'.$entityId;
+                }
             }
         }
         $data['typed'] = $this->parser->parse($data, $quotes, $confirmedEntityId);
-        $data['provenance'] = $this->provenance->project($row);
+        $data['provenance'] = $this->provenance->project($row, $entityIds);
 
         return $data;
     }
