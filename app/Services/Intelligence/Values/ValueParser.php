@@ -2,6 +2,7 @@
 
 namespace App\Services\Intelligence\Values;
 
+use App\Services\AI\Incremental\EvidenceDateRecognizer;
 use App\Services\Intelligence\MeasurementParser;
 use App\Services\Intelligence\PeriodParser;
 use App\Services\Intelligence\ReportingPeriod;
@@ -160,10 +161,14 @@ class ValueParser
             (int) substr($iso, 8, 2), (int) substr($iso, 0, 4))) {
             return null;
         }
-        preg_match_all('/\b\d{4}-\d{1,2}-\d{1,2}\b|\b\d{1,2}\s+[A-Za-z]{3,9}\s+\d{4}\b|\b[A-Za-z]{3,9}\s+\d{1,2},?\s+\d{4}\b/iu',
+        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $iso);
+        if ($date === false || $date->format('Y-m-d') !== $iso) {
+            return null;
+        }
+        preg_match_all('/(?<!\d)\d{4}[-\/.]\d{1,2}[-\/.]\d{1,2}(?!\d)|(?<!\d)\d{1,2}[\/.\-]\d{1,2}[\/.\-]\d{4}(?!\d)|(?<!\d)\d{1,2}(?:st|nd|rd|th)?[\s,.-]+[A-Za-z]{3,9}\.?(?:[\s,.-]+)\d{4}(?!\d)|(?<!\w)[A-Za-z]{3,9}\.?[\s,.-]+\d{1,2}(?:st|nd|rd|th)?[\s,.-]+\d{4}(?!\d)/iu',
             $quote, $matches);
         foreach ($matches[0] as $candidate) {
-            if ($this->periods->parse($candidate)?->label === $iso) {
+            if (EvidenceDateRecognizer::statesDate($candidate, $date)) {
                 return $candidate;
             }
         }

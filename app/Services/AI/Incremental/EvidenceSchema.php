@@ -400,7 +400,7 @@ PROMPT;
                         ? 'due_date_invalid_calendar_date' : 'due_date_wrong_format';
                     self::reject('invalid_date', $reason);
                 }
-                if (! self::evidenceStatesDate($record['quote'], $date)) {
+                if (! EvidenceDateRecognizer::statesDate($record['quote'], $date)) {
                     if ($critical) {
                         self::reject('invalid_date', 'explicit_date_not_in_evidence');
                     }
@@ -415,37 +415,6 @@ PROMPT;
         }
 
         return $sanitized;
-    }
-
-    /** Match a whole, unambiguous calendar date in the already-grounded evidence. */
-    private static function evidenceStatesDate(string $quote, \DateTimeImmutable $date): bool
-    {
-        $year = $date->format('Y');
-        $month = $date->format('m');
-        $day = $date->format('d');
-        $numeric = '/(?<!\d)'.preg_quote($year, '/').'[-\/.]'.preg_quote($month, '/').'[-\/.]'.preg_quote($day, '/').'(?!\d)/u';
-        if (preg_match($numeric, $quote)) {
-            return true;
-        }
-
-        $monthName = '(?:'.preg_quote($date->format('F'), '/').'|'.preg_quote($date->format('M'), '/').'\.?)';
-        $dayNumber = '0?'.(int) $day.'(?:st|nd|rd|th)?';
-        $separator = '[\s,.-]+';
-        foreach ([
-            '/(?<!\d)'.$dayNumber.$separator.$monthName.$separator.$year.'(?!\d)/iu',
-            '/(?<!\w)'.$monthName.$separator.$dayNumber.$separator.$year.'(?!\d)/iu',
-        ] as $pattern) {
-            if (preg_match($pattern, $quote)) {
-                return true;
-            }
-        }
-
-        // Day/month/year is unambiguous only when the day is greater than twelve.
-        if ((int) $day > 12 && preg_match('/(?<!\d)'.(int) $day.'[\/.-]0?'.(int) $month.'[\/.-]'.$year.'(?!\d)/u', $quote)) {
-            return true;
-        }
-
-        return false;
     }
 
     private static function diagnostics(int $returned, int $kept, array $classes, array $reasons, string $mode = EvidenceGrounding::LEGACY,
