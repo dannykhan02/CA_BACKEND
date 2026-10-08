@@ -10,7 +10,8 @@ use App\Services\AI\Incremental\EvidenceSchema;
 /** Conservative provenance from accepted stored evidence, never model-reported axes. */
 class ProvenanceProjector
 {
-    public function __construct(private EvidenceMerger $merger, private AttributionMatcher $attribution) {}
+    public function __construct(private EvidenceMerger $merger, private AttributionMatcher $attribution,
+        private NumericEquivalentGrounding $numericEquivalence) {}
 
     /** @param array<string,string>|null $entityIds @return array<string,mixed> */
     public function project(DocumentEvidence $row, ?array $entityIds = null): array
@@ -39,7 +40,14 @@ class ProvenanceProjector
         $quote = is_string($data['quote'] ?? null) ? $data['quote'] : '';
         $value = $this->merger->normalize((string) ($data['value'] ?? ''));
         $normalQuote = $this->merger->normalize($quote);
-        if ($value === '' || $normalQuote === '' || ! str_contains($normalQuote, $value)) {
+        if ($value === '' || $normalQuote === '') {
+            return false;
+        }
+        $verbatim = str_contains($normalQuote, $value);
+        if ($verbatim && $this->numericEquivalence->contradictsSubstring($data, $quote)) {
+            return false;
+        }
+        if (! $verbatim && ! $this->numericEquivalence->equivalent($data, $quote)) {
             return false;
         }
         if ($data['period'] ?? null) {

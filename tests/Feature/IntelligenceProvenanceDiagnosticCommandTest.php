@@ -42,15 +42,17 @@ class IntelligenceProvenanceDiagnosticCommandTest extends TestCase
         $report = json_decode(Artisan::output(), true, 512, JSON_THROW_ON_ERROR);
         self::assertSame($document->id, $report['document']['id']);
         self::assertSame(1, $report['summary']['total_evidence']);
-        self::assertSame(1, $report['summary']['unknown_origin_metrics']);
-        self::assertSame(1, $report['unknown_reasons']['value_not_in_quote']);
-        self::assertSame(1, $report['diagnostic_classifications']['numeric_equivalent']['count']);
+        // Narrow numeric equivalence now grounds this stored quote, so the diagnostic has no unknown metric to classify.
+        self::assertSame(1, $report['summary']['document_origin_metrics']);
+        self::assertSame(0, $report['summary']['unknown_origin_metrics']);
+        self::assertSame(0, $report['unknown_reasons']['value_not_in_quote']);
+        self::assertSame(0, $report['diagnostic_classifications']['numeric_equivalent']['count']);
         self::assertSame(0, $report['summary']['key_figure_eligible_count']);
         self::assertSame(0, array_sum($report['extended_diagnostic']['genuinely_unsupported']['subtype_counts']));
         self::assertSame(0, array_sum($report['extended_diagnostic']['ambiguous']['classification_counts']));
         self::assertSame('2026-10-08', $report['extended_diagnostic']['projection']['as_of']);
         self::assertSame(1, $report['extended_diagnostic']['projection']['conservative']['document_origin']);
-        self::assertSame(1, $report['extended_diagnostic']['projection']['conservative']['key_figure_eligible_count']);
+        self::assertSame(0, $report['extended_diagnostic']['projection']['conservative']['key_figure_eligible_count']);
         foreach ($statements as $sql) {
             self::assertDoesNotMatchRegularExpression('/^\s*(?:insert|update|delete|create|alter|drop|truncate|dispatch)\b/i',
                 $sql);
