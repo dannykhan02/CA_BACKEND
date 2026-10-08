@@ -78,7 +78,10 @@ class DocumentAnalysisComposer
         $negativeClaimRejections = $v2 ? $this->takeaways->negativeClaimRejections() : [];
         foreach ($v2 ? $this->takeaways->rejectionReasons() : [] as $blockType => $reasons) {
             foreach ($reasons as $reason => $count) {
-                Log::info('docintel.v2.brief_ai_rejected', [
+                $event = $reason === 'negative_claim'
+                    ? 'docintel.v2.negative_claim_rejected'
+                    : 'docintel.v2.brief_ai_rejected';
+                Log::info($event, [
                     'block_type' => $blockType, 'reason' => $reason, 'count' => $count,
                 ]);
             }
