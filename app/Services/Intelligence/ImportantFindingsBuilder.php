@@ -230,9 +230,7 @@ class ImportantFindingsBuilder
     /** @param array<string,mixed> $data */
     private function severity(array $data): ?string
     {
-        $severity = is_string($data['severity'] ?? null) ? strtolower(trim($data['severity'])) : null;
-
-        return in_array($severity, ['low', 'medium', 'high', 'critical'], true) ? $severity : null;
+        return SeverityNormalizer::normalize($data['severity'] ?? null);
     }
 
     /** An explicit calendar date only, exactly as the extraction schema guarantees it. */

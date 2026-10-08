@@ -54,7 +54,7 @@ return [
         'reported_roles' => ['counterparty', 'quoted', 'third_party'],
     ],
     'attention' => [
-        'needs_attention_forced_rules' => ['critical_risk', 'overdue_dated_obligation',
+        'needs_attention_forced_rules' => ['critical_risk', 'high_risk', 'overdue_dated_obligation',
             'imminent_dated_obligation', 'penalised_obligation'],
         'terminal_statuses' => ['mitigated', 'closed', 'met', 'missed'],
     ],

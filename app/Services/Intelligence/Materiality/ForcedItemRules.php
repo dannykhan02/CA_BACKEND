@@ -3,6 +3,7 @@
 namespace App\Services\Intelligence\Materiality;
 
 use App\Services\Intelligence\Attention\HistoricalRiskRule;
+use App\Services\Intelligence\SeverityNormalizer;
 
 /** Approved forced predicates over the full document read model. */
 class ForcedItemRules
@@ -13,7 +14,7 @@ class ForcedItemRules
     public function first(array $record, array $records, array $assignments, array $context, \DateTimeImmutable $asOf): ?string
     {
         $kind = $record['kind'] ?? null;
-        $severity = $record['data']['severity'] ?? null;
+        $severity = SeverityNormalizer::normalize($record['data']['severity'] ?? null);
         $historical = $this->historical->applies($record, $records, $asOf);
         $date = $record['typed']['dates']['due_date'] ?? null;
         $due = ($date['resolution'] ?? null) === 'calendar' ? ($date['date'] ?? null) : null;

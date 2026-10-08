@@ -3,6 +3,7 @@
 namespace App\Services\Intelligence\Materiality;
 
 use App\Services\AI\Incremental\EvidenceMerger;
+use App\Services\Intelligence\SeverityNormalizer;
 
 /** One deterministic ranking and Tier 1 budget for all V2 callers. */
 class MaterialityScorer
@@ -136,7 +137,7 @@ class MaterialityScorer
         $kind = $record['kind'] ?? null;
         $data = $record['data'] ?? [];
         if ($kind === 'risk') {
-            return match (strtolower(trim((string) ($data['severity'] ?? '')))) {
+            return match (SeverityNormalizer::normalize($data['severity'] ?? null)) {
                 'critical' => 'critical_risk', 'high' => 'high_risk', default => 'risk',
             };
         }
