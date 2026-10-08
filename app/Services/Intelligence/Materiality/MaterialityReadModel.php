@@ -3,6 +3,7 @@
 namespace App\Services\Intelligence\Materiality;
 
 use App\Models\Document;
+use App\Models\DocumentEntity;
 use App\Models\DocumentEvidence;
 use App\Models\DocumentSourceSpan;
 use App\Services\Intelligence\Values\TypedEvidenceProjector;
@@ -37,10 +38,15 @@ class MaterialityReadModel
         }
         $risks = $document->risks->keyBy('id');
         $deadlines = $document->deadlines->keyBy('id');
+        $entityIds = [];
+        foreach (DocumentEntity::where('workspace_id', $document->workspace_id)
+            ->where('document_id', $document->id)->orderBy('id')->get(['id', 'normalized_value']) as $entity) {
+            $entityIds[$entity->normalized_value] ??= 'entity:'.$entity->id;
+        }
         $records = [];
         foreach ($evidence as $row) {
             $data = is_array($row->data) ? $row->data : [];
-            $projected = $this->projector->project($row);
+            $projected = $this->projector->project($row, $entityIds);
             $source = $row->sources[0] ?? [];
             $span = $spans->get($source['span_id'] ?? null);
             $status = null;

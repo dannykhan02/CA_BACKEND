@@ -1,6 +1,6 @@
 # DocIntel Intelligence V2 — contract
 
-**Status:** DRAFT, awaiting approval. Nothing here is implemented.
+**Status:** Stage A implemented; CR-001 through CR-013 approved. Stage B and Stage C are deferred.
 **Date:** 2026-10-07
 **Revised:** 2026-10-07 (clarification pass — see the change log at the end)
 **Basis:** [`current-architecture-audit.md`](current-architecture-audit.md) (same directory), as revised by the same pass.
@@ -362,7 +362,7 @@ V2's four presentation tiers are a banding of the existing usefulness classes. T
 
 Two behaviours remain:
 
-- **Confidence is never a V2 score, tier, forced-rule or §9.5 tiebreak input.** The approved §9.5 order replaces V1 confidence/reference order on exact-score ties.
+- **Confidence is not a direct V2 score, tier, forced-rule or §9.5 tiebreak input.** It can affect tiering indirectly: existing chart-group resolution uses confidence, and the approved `comparability` signal uses membership in a valid chart group. The approved §9.5 order replaces V1 confidence/reference order on exact-score ties.
 - **A finding the document's own synthesis cited is promoted exactly one tier**, and no further. Preserved as the `cited_by_synthesis` signal, capped at one tier of movement.
 
 ### 5.1 Tiers
@@ -396,7 +396,7 @@ TierAssignment {
 
 ### 5.3 Tier is not confidence
 
-`confidence` is a model-supplied number the extraction prompt itself disclaims ("Confidence is not evidence"). It is **not** a scorer signal. It remains on the derived rows and remains the sort order of the three existing paginated endpoints, unchanged (§18.3).
+`confidence` is a model-supplied number the extraction prompt itself disclaims ("Confidence is not evidence"). It is **not** a scorer signal. Existing chart-group resolution can nevertheless use it to choose a representative observation; membership then feeds `comparability` (§9.3), so an indirect tier effect is possible. It remains on derived rows and remains the sort order of the three existing paginated endpoints, unchanged (§18.3).
 
 ---
 
@@ -455,7 +455,7 @@ Each rule is a **deterministic predicate over one record**, identified by a stab
 | 40 | `penalised_obligation` | `kind = obligation` **and** a `ValueParser` money or percent value from the same cited quote as a penalty/consequence pattern |
 | 50 | `high_risk` | `kind = risk` **and** `severity = high`, except historical risks defined below |
 | 60 | `regulator_attributed` | `attribution.role ∈ {regulator, auditor}` **and** `assertion = stated` |
-| 70 | `headline_measure` | `kind = metric`, Tier ≤ 2, `unit_kind = currency`, and the metric is the document's largest-magnitude comparable measure in its `unit_kind` + `currency` group. Non-currency metrics can still reach Tier 1 through ordinary scoring. |
+| 70 | `headline_measure` | `kind = metric`, typed `unit_kind = currency`, non-null currency and valid scale-applied canonical number; pre-forcing scored Tier ≤ 2; at least two valid metrics in the document's same `unit_kind` + `currency` group; and the largest absolute canonical magnitude in that group. Exact magnitude ties use §9.5. Chart candidacy, participation, eligibility and confidence do not enter this predicate. Non-currency metrics can still reach Tier 1 through ordinary scoring. |
 | 80 | `unresolved_material_reference` | `kind = unresolved` **and** no `resolved_evidence_id` **and** the span lies inside a Tier ≤ 2 neighbourhood as defined below |
 
 A historical risk has an `observed_date` resolving to a past calendar date or to an anchored period ending before `asOf`, and no other record citing the same span has a future date role or open status. Its kind and scored tier remain intact, but rules 10 and 50 do not force it. An unresolved or missing observed date does not qualify. This V1 rule cannot see a continuing consequence grounded only in a different span; it makes no semantic or cross-span inference.
@@ -549,7 +549,7 @@ Each signal yields a value in `[0, 1]` before multiplication by its configured s
 
 The exact persisted `SourceSpanBuilder` type vocabulary is `heading`, `section`, `table_row`, `list_item`, `sentence`. Its intermediate `prose` classification becomes `sentence` before persistence; no aliases are inferred. Only `heading` is unambiguously heading-like. Materiality v1 has no explicit table-header, header, or footer type. Table-header prominence is unavailable; `boilerplate_penalty` is inactive until a later config/materiality version because the current vocabulary cannot represent header/footer semantics. Unavailable span-derived branches are skipped rather than guessed.
 
-`confidence` is deliberately **not** a signal, tier or forced-rule input (§5.3). Reasons list `kind_class` first with its base contribution, then non-zero contributing signals and skipped unavailable signals (contribution 0, `skipped: true`), then a non-zero `clamp` contribution (`score - raw`), then `tier_adjustment` (contribution 0) when applicable. Their contributions sum to the stored score within 1e-9.
+`confidence` is deliberately **not** a direct signal, tier or forced-rule input (§5.3). `ChartCandidateBuilder` uses confidence when resolving competing observations; this can change valid chart-group membership and therefore the approved `comparability` signal, indirectly affecting V2 score and tier. Reasons list `kind_class` first with its base contribution, then non-zero contributing signals and skipped unavailable signals (contribution 0, `skipped: true`), then a non-zero `clamp` contribution (`score - raw`), then `tier_adjustment` (contribution 0) when applicable. Their contributions sum to the stored score within 1e-9.
 
 Signal values are deterministic:
 
@@ -583,7 +583,7 @@ None of these is part of `pipeline_key`. **Bumping any of them must never re-ext
 
 ### 9.5 Determinism and tiebreaks
 
-The V2 total order is, in sequence: (1) forced-rule priority (absent = 999), (2) tier band, (3) `kind` in `[obligation, deadline, risk, metric, fact, definition, entity, unresolved]`, (4) earliest `sources[0].start_offset`, (5) earliest `sources[0].page`, null last, (6) `sources[0].end_offset`, (7) normalized label ascending using `EvidenceMerger::normalize`, (8) `identity` ascending. Identity is a sha256 and makes the order total. Unavailable offsets sort last. Confidence never participates in materiality score, tier assignment, forced rules, or this tiebreak. V1's confidence/reference order for exact-score ties is deliberately not preserved (CR-006/CR-009). Literal patterns remain config-driven.
+The V2 total order is, in sequence: (1) forced-rule priority (absent = 999), (2) tier band, (3) `kind` in `[obligation, deadline, risk, metric, fact, definition, entity, unresolved]`, (4) earliest `sources[0].start_offset`, (5) earliest `sources[0].page`, null last, (6) `sources[0].end_offset`, (7) normalized label ascending using `EvidenceMerger::normalize`, (8) `identity` ascending. Identity is a sha256 and makes the order total. Unavailable offsets sort last. Confidence is not a direct score, tier, forced-rule or tiebreak input; §9.3 describes the indirect comparability path. V1's confidence/reference order for exact-score ties is deliberately not preserved (CR-006/CR-009). Literal patterns remain config-driven.
 
 ### 9.6 Testability
 
@@ -606,7 +606,7 @@ V1 emits a nine-field coverage array plus a prose warning appended into `executi
 
 | State | Condition |
 |---|---|
-| `complete` | V1's `comprehensive` is true: `evidence_omitted`, `unresolved_references`, `failed_chunks`, `dropped_records` and `saturated_chunks` are all zero — **and** `source_text ≠ "omitted"`, with every required observable stage fact known. |
+| `complete` | V1's `comprehensive` is true: `evidence_omitted`, `unresolved_references`, `failed_chunks`, `dropped_records` and `saturated_chunks` are all zero — **and** `source_text = "full"`, with every required observable stage fact known. `"excerpts"` is bounded. |
 | `bounded` | Nothing failed, but evidence was trimmed, source context reduced, or a required stage fact is unobservable. Unknown required facts add stable `<fact>_unknown` reasons. |
 | `partial` | Something could not be processed: any of `failed_chunks`, `dropped_records`, `saturated_chunks`, `unresolved_references` is non-zero. |
 | `unavailable` | No usable evidence exists, or synthesis terminally failed: `ai_pipeline.synthesis ∉ {completed}` and no summary is served. |
@@ -665,7 +665,7 @@ AttentionState {
 
 | State | Condition |
 |---|---|
-| `needs_attention` | Tier 1 **and** forced by `critical_risk`, `overdue_dated_obligation`, `imminent_dated_obligation` or `penalised_obligation`. |
+| `needs_attention` | Tier 1 **and** forced by `critical_risk`, `high_risk`, `overdue_dated_obligation`, `imminent_dated_obligation` or `penalised_obligation`. |
 | `watch` | Tier 1 by any other rule or by score; or Tier 2 with a `due_date` role resolving to `calendar` or `period` in the future. |
 | `informational` | Everything else surfaced. |
 | `resolved` | The derived row's `status` is a terminal non-open value (`risks`: `mitigated`/`closed`; `deadlines`: `met`/`missed`), **or** an `unresolved` record acquired a `resolved_evidence_id`. |
@@ -721,7 +721,7 @@ Before any `origin: docintel_ai` block is accepted, it is screened against `inte
 
 A match is a conservative trigger, never proof that an absence assertion is valid. A separately declared deterministic predicate must pass §12.1's complete-coverage, zero-match and provenance conditions before its approved absence template may be emitted. A match alone never creates a template. If the guard fails, emit no absence block. A rejected block with a separately available **non-absence** deterministic template over the same cited records follows §14.4; otherwise omit it and count `brief.ai_blocks_rejected`. Never repair by provider call. Log only block type, reason and count, without text. The five legacy summary arrays remain unchanged (§12.4). Accepted false positives include `lack of clarity`, `not addressed in this section` and `complete coverage` used for insurance; see CR-012. No negation-scope analysis is attempted.
 
-Stage A's existing `material_findings` and `trends` have no declared deterministic absence predicate, so a match on their V2 takeaway presentation is omitted before selection and counted in the additive `analysis.stats.briefAiBlocksRejected` diagnostic. `key_findings` mirrored into `summaryNotes` is one of the unchanged legacy arrays. The only Stage A named absence template is `absence.high_critical_risks`: the separately declared predicate `risk_severity_in(high,critical)` yields “No high or critical risks were identified.” only after the guard passes. No AI wording is reused.
+Stage A's existing `material_findings` and `trends` have no declared deterministic absence predicate, so a match on their V2 takeaway presentation is omitted before selection and counted in the additive `analysis.stats.briefAiBlocksRejected` diagnostic. `key_findings` mirrored into `summaryNotes` is one of the unchanged legacy arrays. The only Stage A named absence template is `absence.high_critical_risks`: the separately declared predicate `risk_severity_in(high,critical)` yields “No high or critical risks were identified.” only after the guard passes. The V2 takeaway caller can emit that deterministic template when complete coverage, a zero-match scan, known provenance and directly grounded low/medium risk citations are available. No AI wording is reused; without cited risk evidence no absence takeaway is emitted.
 
 ### 12.4 Scope of the guard
 
@@ -793,7 +793,7 @@ BriefBlock {
 - **B3** Every number and every date stated in `text` or `detail` must appear in `typed` with its own citation, and must verify (§14).
 - **B4** A `tension` block cites at least two records, from at least two distinct `identity` values.
 - **B5** A block whose `attribution.reported` is true must name the speaker or role in `text`. It may not present the claim as the document's own.
-- **B6** Cite count per block is bounded: `intelligence_v2.brief.max_cites_per_block` (default 4), matching V1's existing 1–4 `source_ids` rule.
+- **B6** Cite count per block is bounded: `intelligence_v2.brief_limits.max_cites_per_block` (default 4), matching V1's existing 1–4 `source_ids` rule.
 
 ### 13.5 Deterministic templates
 
@@ -1055,6 +1055,8 @@ Existing behaviour V2 inherits and must preserve:
 - `DocumentAnalysis` is **exactly** the interface at `CA/src/types.ts:267` — `overview {takeaways, summaryNotes}`, `visualAnalysis {charts, omitted, rejected}`, `analysisGroups`, `importantFindings`, `stats`. Both sides already agree on it, with 38 backend tests and two frontend test files.
 - `DocumentAnalysisComposer::referencedSourceIds()` drives which evidence rows the response carries (see §18.2 on the narrowing this introduced).
 
+Stage A currently adds `analysis.tier1` (source ID, kind, forced status/rule, machine-readable tier reasons and per-item attention) and `analysis.attention` (document attention state, counts, next due date, nested coverage and forced overflow). It also adds `analysis.stats.briefAiBlocksRejected` for V2 prose-screen diagnostics. These are the implemented keys. Top-level `coverageState` and `attentionSummary` remain deferred to Stage C and are not emitted by Stage A.
+
 Mapping from V2 concepts onto that interface — **the left column already exists and is already populated as described; V2 only changes how the values are computed**:
 
 | Frontend field | V2 source |
@@ -1069,14 +1071,14 @@ Mapping from V2 concepts onto that interface — **the left column already exist
 | `importantFindings` | Legacy-surface top-ranked `AnalysisFinding` records selected independently of Tier 1 under T9a; `citedBySynthesis` set from the summary's `source_ids` |
 | `stats` | the nine declared counters |
 
-Two further new top-level keys:
+Stage C proposes two further top-level keys:
 
 ```
 coverageState: CoverageState | null        # §10.2 — the structured form of existing data
 attentionSummary: AttentionSummary | null  # §11.2
 ```
 
-`processingDetails.coverage` and `processingDetails.synthesisCoverageWarning` remain exactly as they are; `coverageState` is a structured sibling, not a replacement.
+`processingDetails.coverage` and `processingDetails.synthesisCoverageWarning` remain exactly as they are; when Stage C is implemented, `coverageState` is a structured sibling, not a replacement.
 
 ### 17.2 New endpoints
 
@@ -1213,7 +1215,7 @@ Mirrors the established pattern of `document_intelligence.evidence_spans`.
 
 ### 20.3 On
 
-- The additive keys and endpoints appear.
+- Stage A emits its additive `analysis.tier1` and `analysis.attention` keys. The later Stage B/C keys and endpoints appear only when those stages are implemented.
 - The synthesis schema and prompt gain the Brief block fields.
 - Tiers, typed values, date roles and chart candidates are computed.
 - Legacy fields and legacy behaviour are unchanged (§18.2).
@@ -1401,6 +1403,8 @@ The visualization branch created exactly that namespace with 11 classes, all pro
 **Deferred — presentation-independent takeaway deduplication (CR-011).** V2 currently deduplicates rendered text, so future formatter changes may affect selection again. A later design should evaluate a canonical selection key; it is outside CR-010 and Stage A Part 2.
 
 **Resolved — negative-claim prose pattern set (CR-012).** The version-1 English patterns and match policy are in §12.3; the Stage A Part 2 screen uses them without changing legacy summary arrays.
+
+**Approved — headline measure eligibility (CR-013).** Rule 70 uses a document-level currency group with at least two valid canonical metrics and pre-forcing Tier ≤ 2; chart-group membership is irrelevant to the forced predicate. The chart-derived `comparability` score signal remains unchanged.
 
 **Q5 — `attribution` pattern set. RESOLVED by CR-007:** English-only, versioned, config-driven patterns and nearest-match rules are in §2.3 and CR-007. A model-proposed attribution remains out of scope under §19.3.
 

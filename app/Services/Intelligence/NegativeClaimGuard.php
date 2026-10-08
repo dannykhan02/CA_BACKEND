@@ -56,7 +56,7 @@ class NegativeClaimGuard
     }
 
     /** @param list<array<string,mixed>> $records @param array<string,string>|null $request @return array<string,mixed>|null */
-    private function deterministicAbsence(array $coverage, array $records, ?array $request): ?array
+    public function deterministicAbsence(array $coverage, array $records, ?array $request): ?array
     {
         // The only declared Stage A template uses the contract's named example predicate. New
         // predicates need their own explicit deterministic template and a separately reviewed scan.
@@ -66,7 +66,8 @@ class NegativeClaimGuard
         }
         $check = $this->absenceCheck($coverage, $request['predicate'], (string) ($request['scope'] ?? ''),
             $records, static fn (array $record) => ($record['kind'] ?? null) === 'risk'
-                && in_array($record['data']['severity'] ?? $record['severity'] ?? null, ['high', 'critical'], true));
+                && in_array(SeverityNormalizer::normalize($record['data']['severity'] ?? $record['severity'] ?? null),
+                    ['high', 'critical'], true));
         if ($check === null) {
             return null;
         }

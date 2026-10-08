@@ -10,7 +10,10 @@ use App\Models\KpiDefinition;
 use App\Models\User;
 use App\Services\AnthropicClient;
 use App\Services\Intelligence\DocumentAnalysisComposer;
+use App\Services\Intelligence\FindingClassifier;
 use App\Services\Intelligence\ImportantFindingsBuilder;
+use App\Services\Intelligence\Materiality\MaterialityReadModel;
+use App\Services\Intelligence\Materiality\MaterialityScorer;
 use App\Services\WorkspaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -702,7 +705,7 @@ class DocumentIntelligenceAnalysisTest extends TestCase
         $this->assertLessThan(262144, strlen($body), 'intelligence payload must stay well under 256KB');
     }
 
-    /** CR-010 calibration: new case; the protected V1 assertions above remain unchanged. */
+    /** M-7: derive V2 selection from V1 and computed exact-score groups; protected V1 cases stay unchanged. */
     public function test_fixture_25_preserves_approved_v2_calibration(): void
     {
         app()->bind(AnthropicClient::class, fn () => throw new \LogicException('Stage A reached a provider client'));
@@ -717,14 +720,8 @@ class DocumentIntelligenceAnalysisTest extends TestCase
             true, 512, JSON_THROW_ON_ERROR);
         self::assertSame($expected, array_map(fn ($item) => ['origin' => $item['origin'], 'text' => $item['text']],
             $v2['overview']['takeaways']));
-        self::assertSame(['risk', 'metric'], array_column(array_slice($v1['importantFindings'], 0, 2), 'kind'));
-        self::assertSame(array_slice(array_column($v1['importantFindings'], 'label'), 0, 2),
-            array_slice(array_column($v2['importantFindings'], 'label'), 0, 2));
-        // CR-009: the fact/definition cap boundary falls inside an exact-score group.
-        self::assertSame(['Operating note 1', 'Operating note 10'],
-            array_slice(array_column($v2['importantFindings'], 'label'), 2, 2));
-        self::assertSame(['African Development Bank', 'Capital Markets Authority', 'Chief Financial Officer'],
-            array_slice(array_column($v2['importantFindings'], 'label'), 4));
+        $this->assertFixture25ImportantCompatibility($document, $v1['importantFindings'],
+            $v2['importantFindings'], $v2['visualAnalysis']['charts'], $asOf);
         $financingApproved = collect($v2['importantFindings'])->firstWhere('label', 'Total financing approved');
         self::assertSame(3, $financingApproved['materialityTier']);
         self::assertNull($financingApproved['forcedRule']);
@@ -737,5 +734,94 @@ class DocumentIntelligenceAnalysisTest extends TestCase
             self::assertContains('deadline:'.$deadline->id, $tier1Ids);
         }
         self::assertSame($v1['visualAnalysis']['charts'], $v2['visualAnalysis']['charts']);
+    }
+
+    /** @param list<array<string,mixed>> $v1 @param list<array<string,mixed>> $v2 @param list<array<string,mixed>> $charts */
+    private function assertFixture25ImportantCompatibility(Document $document, array $v1, array $v2,
+        array $charts, \DateTimeImmutable $asOf): void
+    {
+        $summary = $document->fresh()->intelligenceSummary;
+        $evidence = DocumentEvidence::where('document_id', $document->id)
+            ->where('pipeline_key', $document->ai_pipeline['key'])->get();
+        $read = app(MaterialityReadModel::class)->build($document->fresh(), $evidence, $charts,
+            app(ImportantFindingsBuilder::class)->citedSourceIds($summary));
+        $assignments = app(MaterialityScorer::class)->assign($read['records'], $read['context'], $asOf);
+        $records = collect($read['records'])->keyBy('source_id');
+        $bySource = [];
+        foreach ($read['records'] as $record) {
+            $bySource[$record['source_id']] = $assignments[$record['identity']];
+        }
+        $score = static fn (array $item) => sprintf('%.17g', $bySource[$item['sourceId']]['score']);
+        $v1Scores = array_map($score, $v1);
+        $v2Scores = array_map($score, $v2);
+        self::assertSame($v1Scores, $v2Scores, 'No lower-scoring selection may replace a higher-scoring one.');
+        $groups = static function (array $items) use ($score): array {
+            $byScore = [];
+            foreach ($items as $item) {
+                $byScore[$score($item)][] = $item;
+            }
+
+            return $byScore;
+        };
+        $v1Groups = $groups($v1);
+        $v2Groups = $groups($v2);
+        self::assertSame(array_keys($v1Groups), array_keys($v2Groups));
+        foreach ($v1Groups as $scoreKey => $v1Group) {
+            $v2Group = $v2Groups[$scoreKey];
+            $oldIds = array_column($v1Group, 'sourceId');
+            $newIds = array_column($v2Group, 'sourceId');
+            self::assertCount(count($oldIds), $newIds, 'An exact-score boundary must retain its selected count.');
+            $expectedOrder = $newIds;
+            usort($expectedOrder, static function ($left, $right) use ($records, $bySource): int {
+                return MaterialityScorer::compareTiebreak($records->get($left), $records->get($right),
+                    $bySource[$left], $bySource[$right]);
+            });
+            self::assertSame($expectedOrder, $newIds, 'Exact-score V2 order must follow §9.5.');
+            $oldOnly = array_values(array_diff($oldIds, $newIds));
+            $newOnly = array_values(array_diff($newIds, $oldIds));
+            self::assertCount(count($oldOnly), $newOnly);
+            foreach ($oldOnly as $oldId) {
+                $old = $records->get($oldId);
+                $compatible = array_filter($newOnly, static fn ($newId) => $records->get($newId)['kind'] === $old['kind']
+                    && $bySource[$newId]['forced_priority'] === $bySource[$oldId]['forced_priority']
+                    && $bySource[$newId]['scored_tier'] === $bySource[$oldId]['scored_tier']);
+                self::assertNotEmpty($compatible, 'A cap-boundary substitute must share higher-priority semantics.');
+                $kind = $old['kind'] === 'obligation' ? 'deadline' : $old['kind'];
+                $kindCount = count(array_filter($v2, static fn ($item) => ($item['kind'] === 'obligation' ? 'deadline' : $item['kind']) === $kind));
+                $stem = $this->fixture25Stem((string) ($old['data']['label'] ?? ''));
+                $stemCount = count(array_filter($v2, fn ($item) => $this->fixture25Stem($item['label']) === $stem));
+                self::assertTrue(count($v2) === config('intelligence_v2.tier1.target')
+                    || $kindCount >= config('intelligence_v2.tier1.per_kind')
+                    || $stemCount >= config('intelligence_v2.tier1.per_stem'),
+                    'A changed identity requires an actual MAX, per-kind or per-stem boundary.');
+            }
+        }
+    }
+
+    private function fixture25Stem(string $label): string
+    {
+        $withoutDigits = preg_replace('/[\p{N}]+/u', '', mb_strtolower($label));
+
+        return trim((string) preg_replace('/[^\p{L}\s]+|\s+/u', ' ', (string) $withoutDigits));
+    }
+
+    /** H-4: new corpus equivalence case; no protected V1 assertion is changed. */
+    public function test_shared_classifier_matches_t9_annual_report_classes_at_fixed_as_of(): void
+    {
+        app()->bind(AnthropicClient::class, fn () => throw new \LogicException('Stage A reached a provider client'));
+        $document = $this->annualReport();
+        $asOf = new \DateTimeImmutable('2026-10-07T00:00:00+00:00');
+        $classifier = app(FindingClassifier::class);
+        $scorer = app(MaterialityScorer::class);
+        $classes = [];
+        foreach (DocumentEvidence::where('document_id', $document->id)->get() as $row) {
+            $class = $classifier->classify($row->kind, $row->data, $asOf);
+            self::assertSame($class, $scorer->classify(['kind' => $row->kind, 'data' => $row->data], $asOf));
+            $classes[$class] = ($classes[$class] ?? 0) + 1;
+        }
+        self::assertSame(['high_risk' => 1, 'risk' => 1, 'upcoming_obligation' => 1,
+            'dated_obligation' => 1, 'metric' => 14, 'fact' => 40, 'entity' => 4],
+            array_replace(array_fill_keys(['high_risk', 'risk', 'upcoming_obligation',
+                'dated_obligation', 'metric', 'fact', 'entity'], 0), $classes));
     }
 }

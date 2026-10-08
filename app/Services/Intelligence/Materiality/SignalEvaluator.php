@@ -3,6 +3,7 @@
 namespace App\Services\Intelligence\Materiality;
 
 use App\Services\AI\Incremental\EvidenceMerger;
+use App\Services\Intelligence\SeverityNormalizer;
 use App\Services\Intelligence\Values\ValueParser;
 
 /** Pure, bounded signal values over accepted read-model records. */
@@ -18,7 +19,7 @@ class SignalEvaluator
         $date = $this->date($record);
         $resolution = $date['resolution'] ?? 'unknown';
         $signal = [];
-        $signal['severity'] = ['value' => $settings['severity'][$record['data']['severity'] ?? ''] ?? 0.0];
+        $signal['severity'] = ['value' => $settings['severity'][SeverityNormalizer::normalize($record['data']['severity'] ?? null) ?? ''] ?? 0.0];
         $signal['date_proximity'] = ['value' => $this->proximity($date, $record, $asOf, $settings['date_proximity'])];
         $signal['date_resolution'] = ['value' => $settings['date_resolution'][$resolution] ?? $settings['date_resolution']['unknown']];
         $signal['attribution_authority'] = ['value' => $settings['attribution_authority'][$record['provenance']['attribution']['role'] ?? ''] ?? 0.0];

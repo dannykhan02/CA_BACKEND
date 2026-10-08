@@ -4,6 +4,7 @@ return [
     'enabled' => (bool) env('DOCINTEL_INTELLIGENCE_V2', false),
     'workspaces' => [],
     'brief' => (bool) env('DOCINTEL_V2_BRIEF', true),
+    'brief_limits' => ['max_cites_per_block' => 4],
     'charts' => (bool) env('DOCINTEL_V2_CHARTS', true),
     'values' => ['parser_version' => 'values.v1'],
     'negative_claim' => [
@@ -54,7 +55,7 @@ return [
         'reported_roles' => ['counterparty', 'quoted', 'third_party'],
     ],
     'attention' => [
-        'needs_attention_forced_rules' => ['critical_risk', 'overdue_dated_obligation',
+        'needs_attention_forced_rules' => ['critical_risk', 'high_risk', 'overdue_dated_obligation',
             'imminent_dated_obligation', 'penalised_obligation'],
         'terminal_statuses' => ['mitigated', 'closed', 'met', 'missed'],
     ],

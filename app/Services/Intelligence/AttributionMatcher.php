@@ -11,8 +11,8 @@ class AttributionMatcher
 {
     public function __construct(private EvidenceMerger $normalizer) {}
 
-    /** @return array{speaker:?string,role:string,reported:bool,evidence_ref:?array} */
-    public function match(DocumentEvidence $row): array
+    /** @param array<string,string>|null $entityIds @return array{speaker:?string,role:string,reported:bool,evidence_ref:?array} */
+    public function match(DocumentEvidence $row, ?array $entityIds = null): array
     {
         $default = ['speaker' => null, 'role' => 'unattributed', 'reported' => false, 'evidence_ref' => null];
         $data = is_array($row->data) ? $row->data : [];
@@ -55,11 +55,15 @@ class AttributionMatcher
         $winner = $matches[0];
         $speaker = null;
         if (is_string($winner['speaker_text']) && $row->workspace_id && $row->document_id) {
-            $entityId = DocumentEntity::where('workspace_id', $row->workspace_id)
-                ->where('document_id', $row->document_id)
-                ->where('normalized_value', $this->normalizer->normalize($winner['speaker_text']))
-                ->value('id');
-            $speaker = $entityId === null ? null : 'entity:'.$entityId;
+            $normalized = $this->normalizer->normalize($winner['speaker_text']);
+            if ($entityIds !== null) {
+                $speaker = $entityIds[$normalized] ?? null;
+            } else {
+                $entityId = DocumentEntity::where('workspace_id', $row->workspace_id)
+                    ->where('document_id', $row->document_id)
+                    ->where('normalized_value', $normalized)->value('id');
+                $speaker = $entityId === null ? null : 'entity:'.$entityId;
+            }
         }
         $source = ($row->sources ?? [])[0] ?? null;
         $reference = is_array($source) && $row->exists ? [

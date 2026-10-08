@@ -3,12 +3,13 @@
 namespace App\Services\Intelligence\Materiality;
 
 use App\Services\AI\Incremental\EvidenceMerger;
+use App\Services\Intelligence\FindingClassifier;
 
 /** One deterministic ranking and Tier 1 budget for all V2 callers. */
 class MaterialityScorer
 {
     public function __construct(private SignalEvaluator $signals, private ForcedItemRules $forced,
-        private EvidenceMerger $normalizer) {}
+        private EvidenceMerger $normalizer, private FindingClassifier $classifier) {}
 
     /**
      * @param  list<array<string,mixed>>  $records
@@ -133,23 +134,7 @@ class MaterialityScorer
     /** @param array<string,mixed> $record */
     public function classify(array $record, \DateTimeImmutable $asOf): string
     {
-        $kind = $record['kind'] ?? null;
-        $data = $record['data'] ?? [];
-        if ($kind === 'risk') {
-            return match (strtolower(trim((string) ($data['severity'] ?? '')))) {
-                'critical' => 'critical_risk', 'high' => 'high_risk', default => 'risk',
-            };
-        }
-        if (in_array($kind, ['deadline', 'obligation'], true)) {
-            $due = ($data['date_type'] ?? null) === 'explicit' ? ($data['due_date'] ?? null) : null;
-            if (! is_string($due) || ! preg_match('/^\d{4}-\d{2}-\d{2}$/D', $due)) {
-                return 'undated_obligation';
-            }
-
-            return $due >= $asOf->format('Y-m-d') ? 'upcoming_obligation' : 'dated_obligation';
-        }
-
-        return in_array($kind, ['metric', 'fact', 'definition', 'entity'], true) ? $kind : 'other';
+        return $this->classifier->classify((string) ($record['kind'] ?? ''), $record['data'] ?? [], $asOf);
     }
 
     /** §9.5, with missing positions last. @param array<string,mixed> $left @param array<string,mixed> $right @param array<string,mixed> $leftAssignment @param array<string,mixed> $rightAssignment */

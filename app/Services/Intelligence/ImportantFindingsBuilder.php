@@ -28,6 +28,8 @@ use Illuminate\Support\Collection;
  */
 class ImportantFindingsBuilder
 {
+    public function __construct(private FindingClassifier $classifier) {}
+
     private const MAX = 8;
 
     /** A rich report ends in long runs of near-identical table rows; two of any one is plenty. */
@@ -83,7 +85,7 @@ class ImportantFindingsBuilder
             }
             $isCited = isset($cited[$reference]);
             $candidates[] = [
-                'tier' => max(0, self::TIERS[$this->classify($row->kind, $data, $today)] - ($isCited ? 1 : 0)),
+                'tier' => max(0, self::TIERS[$this->classifier->classify($row->kind, $data, $today)] - ($isCited ? 1 : 0)),
                 'confidence' => round((float) ($data['confidence'] ?? 0), 2),
                 'row' => $row,
                 'data' => $data,
@@ -199,48 +201,16 @@ class ImportantFindingsBuilder
         return $findings;
     }
 
-    /**
-     * Which usefulness tier this finding falls in. Only facts the finding states: nothing is
-     * guessed from wording, and an obligation without a real date is never treated as dated.
-     *
-     * @param  array<string,mixed>  $data
-     */
-    private function classify(string $kind, array $data, \DateTimeInterface $today): string
-    {
-        if ($kind === 'risk') {
-            return match ($this->severity($data)) {
-                'critical' => 'critical_risk',
-                'high' => 'high_risk',
-                default => 'risk',
-            };
-        }
-        if ($kind === 'deadline' || $kind === 'obligation') {
-            $due = $this->dueDate($data);
-            if ($due === null) {
-                // Relative or inferred timing is still an obligation; it just has no calendar date.
-                return 'undated_obligation';
-            }
-
-            return $due >= $today->format('Y-m-d') ? 'upcoming_obligation' : 'dated_obligation';
-        }
-
-        return array_key_exists($kind, self::TIERS) ? $kind : 'other';
-    }
-
     /** @param array<string,mixed> $data */
     private function severity(array $data): ?string
     {
-        $severity = is_string($data['severity'] ?? null) ? strtolower(trim($data['severity'])) : null;
-
-        return in_array($severity, ['low', 'medium', 'high', 'critical'], true) ? $severity : null;
+        return SeverityNormalizer::normalize($data['severity'] ?? null);
     }
 
     /** An explicit calendar date only, exactly as the extraction schema guarantees it. */
     private function dueDate(array $data): ?string
     {
-        $due = is_string($data['due_date'] ?? null) ? trim($data['due_date']) : '';
-
-        return ($data['date_type'] ?? null) === 'explicit' && preg_match('/^\d{4}-\d{2}-\d{2}$/D', $due) ? $due : null;
+        return $this->classifier->explicitDueDate($data);
     }
 
     /** Obligations and deadlines are one kind for the diversity cap: they read the same. */
