@@ -137,6 +137,17 @@ class BriefVerifier
                     break;
                 }
             }
+            if (! $matched) {
+                foreach ($records as $record) {
+                    foreach ($record['typed']['dates'] ?? [] as $typedDate) {
+                        $duration = $typedDate['duration']['text'] ?? null;
+                        if (is_string($duration) && preg_match('/(?<!\d)'.preg_quote($number['raw'], '/').'(?!\d)/u', $duration)) {
+                            $matched = true;
+                            break 2;
+                        }
+                    }
+                }
+            }
             if (! $matched && ! $this->derivedNumberMatches($number['number'], $block, $records)) {
                 return false;
             }
