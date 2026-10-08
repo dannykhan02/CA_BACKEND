@@ -9,6 +9,7 @@ return [
         'template_version' => '1',
         'verifier_version' => '1',
         'max_quote_chars' => 160,
+        'numeric_tolerance' => ['exact_for' => ['integer', 'currency'], 'rounded' => 'half_last_digit'],
         'key_figures' => [
             'max' => 6,
             'total_label_patterns' => ['total', 'overall', 'aggregate', 'net', 'gross'],
