@@ -91,6 +91,9 @@ class BriefVerifier
     /** @return list<array{raw:string,number:float,unit:string|null}> */
     private function numbers(string $text): array
     {
+        foreach ([...$this->dates($text), ...$this->periods($text)] as $temporal) {
+            $text = str_replace($temporal, ' ', $text);
+        }
         preg_match_all('/(?<![\p{L}\d])(?:[A-Z]{3}\s+)?[+-]?\d[\d,]*(?:\.\d+)?(?:\s*(?:trillion|billion|million|thousand|%|percent))?/iu',
             $text, $matches);
         $out = [];
@@ -211,6 +214,9 @@ class BriefVerifier
     /** @return list<string> */
     private function periods(string $text): array
     {
+        foreach ($this->dates($text) as $date) {
+            $text = str_replace($date, ' ', $text);
+        }
         preg_match_all('/\bFY\s*\d{4}\b|\bQ[1-4]\s+\d{4}\b|\bH[12]\s+\d{4}\b|(?<![-\d])\b(?:19|20)\d{2}\b(?!-\d)/iu', $text, $matches);
 
         return $matches[0];
