@@ -14,9 +14,8 @@ class KeyFigureSelector
     /** @param list<array<string,mixed>> $records @param array<string,array<string,mixed>> $assignments
      *  @return list<array<string,mixed>>
      */
-    public function select(array $records, array $assignments = [], ?\DateTimeImmutable $asOf = null): array
+    public function select(array $records, \DateTimeImmutable $asOf, array $assignments = []): array
     {
-        $asOf ??= new \DateTimeImmutable;
         $eligible = array_values(array_filter($records, static function (array $record): bool {
             $value = $record['typed']['value'] ?? null;
 

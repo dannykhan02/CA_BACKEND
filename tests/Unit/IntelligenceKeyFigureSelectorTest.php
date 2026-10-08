@@ -27,7 +27,7 @@ class IntelligenceKeyFigureSelectorTest extends TestCase
             $this->metric('total', 'Total revenue', 100, offset: 20),
             $this->metric('small', 'Revenue', 50),
         ];
-        $selected = app(KeyFigureSelector::class)->select($records, asOf: new \DateTimeImmutable('2026-10-07'));
+        $selected = app(KeyFigureSelector::class)->select($records, new \DateTimeImmutable('2026-10-07'));
         self::assertSame(['total', 'large', 'small'], array_column($selected, 'identity'));
     }
 
@@ -41,24 +41,24 @@ class IntelligenceKeyFigureSelectorTest extends TestCase
             $this->metric('unknown', 'Total revenue', 2000, origin: 'unknown'),
         ];
         $selector = app(KeyFigureSelector::class);
-        $first = $selector->select($records, asOf: new \DateTimeImmutable('2026-10-07'));
+        $first = $selector->select($records, new \DateTimeImmutable('2026-10-07'));
         self::assertSame(['eur-high', 'usd-high', 'eur-low', 'usd-low'], array_column($first, 'identity'));
         foreach ($records as &$record) {
             $record['data']['confidence'] = 1 - $record['data']['confidence'];
         }
         unset($record);
         self::assertSame(array_column($first, 'identity'), array_column($selector->select($records,
-            asOf: new \DateTimeImmutable('2026-10-07')), 'identity'));
+            new \DateTimeImmutable('2026-10-07')), 'identity'));
     }
 
     public function test_six_cap_and_no_padding(): void
     {
         $records = array_map(fn ($id) => $this->metric((string) $id, 'Measure '.$id, (float) $id), range(1, 8));
-        $selected = app(KeyFigureSelector::class)->select($records, asOf: new \DateTimeImmutable('2026-10-07'));
+        $selected = app(KeyFigureSelector::class)->select($records, new \DateTimeImmutable('2026-10-07'));
         self::assertCount(6, $selected);
         self::assertSame(['8', '7', '6', '5', '4', '3'], array_column($selected, 'identity'));
         self::assertCount(2, app(KeyFigureSelector::class)->select(array_slice($records, 0, 2),
-            asOf: new \DateTimeImmutable('2026-10-07')));
+            new \DateTimeImmutable('2026-10-07')));
     }
 
     public function test_only_finite_document_origin_currency_metrics_are_eligible(): void
@@ -71,7 +71,7 @@ class IntelligenceKeyFigureSelectorTest extends TestCase
         $percent['typed']['value']['unit_kind'] = 'percent';
         $infinite = $this->metric('infinite', 'Revenue', INF);
         $selected = app(KeyFigureSelector::class)->select([$valid, $withoutCurrency, $percent, $infinite],
-            asOf: new \DateTimeImmutable('2026-10-07'));
+            new \DateTimeImmutable('2026-10-07'));
         self::assertSame(['valid'], array_column($selected, 'identity'));
     }
 }
