@@ -10,7 +10,9 @@ use App\Models\KpiDefinition;
 use App\Models\User;
 use App\Services\AnthropicClient;
 use App\Services\Intelligence\DocumentAnalysisComposer;
+use App\Services\Intelligence\FindingClassifier;
 use App\Services\Intelligence\ImportantFindingsBuilder;
+use App\Services\Intelligence\Materiality\MaterialityScorer;
 use App\Services\WorkspaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -737,5 +739,25 @@ class DocumentIntelligenceAnalysisTest extends TestCase
             self::assertContains('deadline:'.$deadline->id, $tier1Ids);
         }
         self::assertSame($v1['visualAnalysis']['charts'], $v2['visualAnalysis']['charts']);
+    }
+
+    /** H-4: new corpus equivalence case; no protected V1 assertion is changed. */
+    public function test_shared_classifier_matches_t9_annual_report_classes_at_fixed_as_of(): void
+    {
+        app()->bind(AnthropicClient::class, fn () => throw new \LogicException('Stage A reached a provider client'));
+        $document = $this->annualReport();
+        $asOf = new \DateTimeImmutable('2026-10-07T00:00:00+00:00');
+        $classifier = app(FindingClassifier::class);
+        $scorer = app(MaterialityScorer::class);
+        $classes = [];
+        foreach (DocumentEvidence::where('document_id', $document->id)->get() as $row) {
+            $class = $classifier->classify($row->kind, $row->data, $asOf);
+            self::assertSame($class, $scorer->classify(['kind' => $row->kind, 'data' => $row->data], $asOf));
+            $classes[$class] = ($classes[$class] ?? 0) + 1;
+        }
+        self::assertSame(['high_risk' => 1, 'risk' => 1, 'upcoming_obligation' => 1,
+            'dated_obligation' => 1, 'metric' => 14, 'fact' => 40, 'entity' => 4],
+            array_replace(array_fill_keys(['high_risk', 'risk', 'upcoming_obligation',
+                'dated_obligation', 'metric', 'fact', 'entity'], 0), $classes));
     }
 }
