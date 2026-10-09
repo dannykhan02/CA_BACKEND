@@ -1,0 +1,693 @@
+{
+  "detector_version": "candidate-inventory-v1.0.0",
+  "reviewer": "AI coding agent",
+  "gold": [
+    {
+      "chunk": "unicef_reduced",
+      "claim": "Guatemala social protection investment was USD 1 billion",
+      "candidate_ids": [
+        "c0a3e60ee4e13f9c98cf"
+      ],
+      "detected": true
+    },
+    {
+      "chunk": "unicef_reduced",
+      "claim": "Mental health integration reached more than 8.8 million people",
+      "candidate_ids": [
+        "c52e44980755d415f861"
+      ],
+      "detected": true
+    },
+    {
+      "chunk": "unicef_reduced",
+      "claim": "Yemen under-five mortality dropped 23 percent over the last decade of conflict",
+      "candidate_ids": [
+        "94a59249bd14c1a60fb4"
+      ],
+      "detected": true
+    },
+    {
+      "chunk": "unicef_reduced",
+      "claim": "Rwanda Marburg outbreak fatality rate was 22.7 percent",
+      "candidate_ids": [
+        "d1e8d4bd918c18b06a2c"
+      ],
+      "detected": true
+    },
+    {
+      "chunk": "unicef_reduced",
+      "claim": "India safely managed water supplies reached 59.3 million people in 2024",
+      "candidate_ids": [
+        "6972c47208f182c53ffe"
+      ],
+      "detected": true
+    },
+    {
+      "chunk": "unicef_reduced",
+      "claim": "India sanitation services reached 17.9 million people in 2024",
+      "candidate_ids": [
+        "8dd74f5f8c5e7e495f5d"
+      ],
+      "detected": true
+    },
+    {
+      "chunk": "unicef_reduced",
+      "claim": "Moldova RESTART investment was USD 68 million",
+      "candidate_ids": [
+        "33f23fbe5edbdc221c14"
+      ],
+      "detected": true
+    },
+    {
+      "chunk": "unicef_reduced",
+      "claim": "Bangladesh under-five stunting reduced 40 percent over a decade",
+      "candidate_ids": [
+        "3aba1db2ab339d7622e1"
+      ],
+      "detected": true
+    },
+    {
+      "chunk": "unicef_reduced",
+      "claim": "Development Effectiveness expenditure was USD 174 million",
+      "candidate_ids": [
+        "ab6694be000ca39cf989"
+      ],
+      "detected": true
+    },
+    {
+      "chunk": "india_wash",
+      "claim": "India child mortality fell 37 percent between 2014 and 2022",
+      "candidate_ids": [
+        "7ca6da7d98b0a4f55476"
+      ],
+      "detected": true
+    },
+    {
+      "chunk": "india_wash",
+      "claim": "Swachh Bharat targeted over 110 million toilets",
+      "candidate_ids": [
+        "f5c37b26593437829bfb"
+      ],
+      "detected": true
+    },
+    {
+      "chunk": "india_wash",
+      "claim": "Swachh Bharat targeted sanitation for 550 million people",
+      "candidate_ids": [
+        "54c37631c378b6e229e5"
+      ],
+      "detected": true
+    },
+    {
+      "chunk": "india_wash",
+      "claim": "550 million people reached with at least basic sanitation in the last 10 years",
+      "candidate_ids": [
+        "1d4a20a03547cd982d04"
+      ],
+      "detected": true
+    },
+    {
+      "chunk": "india_wash",
+      "claim": "580 million people reached with improved household drinking water in the last 10 years",
+      "candidate_ids": [
+        "6c44aea9d1dd3e971973"
+      ],
+      "detected": true
+    },
+    {
+      "chunk": "india_wash",
+      "claim": "More than 115 million rural households gained piped water in the last five years",
+      "candidate_ids": [
+        "4bcef52aca725bba6a20"
+      ],
+      "detected": true
+    },
+    {
+      "chunk": "india_wash",
+      "claim": "India invested over USD 120 billion in water and sanitation over the past 10 years",
+      "candidate_ids": [
+        "2fbef7e0303a604ce86b"
+      ],
+      "detected": true
+    }
+  ],
+  "sample": [
+    {
+      "candidate_id": "7ca6da7d98b0a4f55476",
+      "chunk": "india_wash",
+      "class": "percentage",
+      "span_id": "E201",
+      "raw": "37 per cent",
+      "source_context": "en 2014 and 2022, India saw a 37 per cent reduction in child mortality.",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "94a59249bd14c1a60fb4",
+      "chunk": "unicef_reduced",
+      "class": "percentage",
+      "span_id": "E110",
+      "raw": "23 per cent",
+      "source_context": "h services, contributing to a 23 per cent drop in under-five \nmortality",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "d1e8d4bd918c18b06a2c",
+      "chunk": "unicef_reduced",
+      "class": "percentage",
+      "span_id": "E113",
+      "raw": "22.7 per cent",
+      "source_context": "d and a low fatality \nrate of 22.7 per cent.\n",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "2d6efcf0bb264cf1bc2c",
+      "chunk": "unicef_reduced",
+      "class": "percentage",
+      "span_id": "E121",
+      "raw": "3.4 per cent",
+      "source_context": "otection reform, mitigating a 3.4 per cent rise in \nchild poverty and in",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "790d2baf0795736e184a",
+      "chunk": "unicef_reduced",
+      "class": "percentage",
+      "span_id": "E121",
+      "raw": "42 per cent",
+      "source_context": "uding \nUkrainian refugees, by 42 per cent.\n",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "3aba1db2ab339d7622e1",
+      "chunk": "unicef_reduced",
+      "class": "percentage",
+      "span_id": "E122",
+      "raw": "40 per cent",
+      "source_context": "n outcomes, contributing to a 40 per cent reduction in stunting \namong ",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "19346275946898e1c738",
+      "chunk": "unicef_quantitative",
+      "class": "percentage",
+      "span_id": "E097",
+      "raw": "3 per cent",
+      "source_context": "y \ncontributions decreased by 3 per cent or $34 million. \n$26 million ",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "b3cd9097334507dd3002",
+      "chunk": "unicef_quantitative",
+      "class": "percentage",
+      "span_id": "E098",
+      "raw": "20 per cent",
+      "source_context": " of Core Resources \nwas below 20 per cent – indicating a persistent tre",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "94a59249bd14c1a60fb4",
+      "chunk": "unicef_quantitative",
+      "class": "percentage",
+      "span_id": "E110",
+      "raw": "23 per cent",
+      "source_context": "h services, contributing to a 23 per cent drop in under-five \nmortality",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "d1e8d4bd918c18b06a2c",
+      "chunk": "unicef_quantitative",
+      "class": "percentage",
+      "span_id": "E113",
+      "raw": "22.7 per cent",
+      "source_context": "d and a low fatality \nrate of 22.7 per cent.\n",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "718eb9b97cdf66e61373",
+      "chunk": "india_wash",
+      "class": "currency",
+      "span_id": "E228",
+      "raw": "$650",
+      "source_context": "ving at least 50,000 rupees \n($650).\n",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "2fbef7e0303a604ce86b",
+      "chunk": "india_wash",
+      "class": "currency",
+      "span_id": "E232",
+      "raw": "$120 billion",
+      "source_context": "-changing \ninvestment of over $120 billion in water and \nsanitation over",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "c0a3e60ee4e13f9c98cf",
+      "chunk": "unicef_reduced",
+      "class": "currency",
+      "span_id": "E108",
+      "raw": "$1 billion",
+      "source_context": "nerships, which resulted in a $1 billion investment in social protecti",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "33f23fbe5edbdc221c14",
+      "chunk": "unicef_reduced",
+      "class": "currency",
+      "span_id": "E121",
+      "raw": "$68 million",
+      "source_context": "e Resources paved the way for $68 million of government and \nother inve",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "2732c2e926f043bd12e3",
+      "chunk": "unicef_reduced",
+      "class": "currency",
+      "span_id": "E133",
+      "raw": "$952 million",
+      "source_context": " in sudden-onset emergencies \n$952 million\nExpense*\n",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "ab6694be000ca39cf989",
+      "chunk": "unicef_reduced",
+      "class": "currency",
+      "span_id": "E137",
+      "raw": "$174 million",
+      "source_context": "velopment \nEffectiveness \nwas $174 million)\n$227 million\nExpenditure**\n",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "4881ec605df91321b09c",
+      "chunk": "unicef_reduced",
+      "class": "currency",
+      "span_id": "E137",
+      "raw": "$227 million",
+      "source_context": "ectiveness \nwas $174 million)\n$227 million\nExpenditure**\n",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "bc5967caf8d7761a1857",
+      "chunk": "unicef_quantitative",
+      "class": "currency",
+      "span_id": "E066",
+      "raw": "$230.0 million",
+      "source_context": "Sweden $230.0 million\nNetherlands $124.4 million\nSw",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "62bb2a570605775d8429",
+      "chunk": "unicef_quantitative",
+      "class": "currency",
+      "span_id": "E066",
+      "raw": "$124.4 million",
+      "source_context": "en $230.0 million\nNetherlands $124.4 million\nSwitzerland $90.8 million\nAus",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "2b4c43106a0cb39ad5a4",
+      "chunk": "unicef_quantitative",
+      "class": "currency",
+      "span_id": "E066",
+      "raw": "$90.8 million",
+      "source_context": "ds $124.4 million\nSwitzerland $90.8 million\nAustralia $80.0 million\nBelgu",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "f5c37b26593437829bfb",
+      "chunk": "india_wash",
+      "class": "scaled_quantity",
+      "span_id": "E206",
+      "raw": "110 million",
+      "source_context": "ecation by constructing over \n110 million toilets for 550 million peopl",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "54c37631c378b6e229e5",
+      "chunk": "india_wash",
+      "class": "scaled_quantity",
+      "span_id": "E206",
+      "raw": "550 million",
+      "source_context": "over \n110 million toilets for 550 million people across the country.\n",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "1d4a20a03547cd982d04",
+      "chunk": "india_wash",
+      "class": "scaled_quantity",
+      "span_id": "E209",
+      "raw": "550 million",
+      "source_context": "g lives\nIn the last 10 years, 550 million people  \nhave been reached wi",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "6c44aea9d1dd3e971973",
+      "chunk": "india_wash",
+      "class": "scaled_quantity",
+      "span_id": "E209",
+      "raw": "580 million",
+      "source_context": " least basic \nsanitation, and 580 million people with \nimproved drinkin",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "4bcef52aca725bba6a20",
+      "chunk": "india_wash",
+      "class": "scaled_quantity",
+      "span_id": "E218",
+      "raw": "115 million",
+      "source_context": "e last five years, \nmore than 115 million rural households have gained ",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "59470f5d819e3fe2efbf",
+      "chunk": "india_wash",
+      "class": "scaled_quantity",
+      "span_id": "E233",
+      "raw": "110 million",
+      "source_context": "110 million toilets constructed, more\n",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "5a5e12e1c7902fe241b5",
+      "chunk": "india_wash",
+      "class": "scaled_quantity",
+      "span_id": "E234",
+      "raw": "550 million",
+      "source_context": "than 550 million people using \nimproved sanita",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "6da0b72134a66478a73c",
+      "chunk": "india_wash",
+      "class": "scaled_quantity",
+      "span_id": "E235",
+      "raw": "580 million",
+      "source_context": "580 million rural people using\n",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "32d03e7ac766272b4b14",
+      "chunk": "india_wash",
+      "class": "scaled_quantity",
+      "span_id": "E237",
+      "raw": "17.9 million",
+      "source_context": " child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely mana",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    },
+    {
+      "candidate_id": "18beb215840ee823f810",
+      "chunk": "india_wash",
+      "class": "scaled_quantity",
+      "span_id": "E237",
+      "raw": "59.3 million",
+      "source_context": "fely managed \nsanitation, and 59.3 million people \naccessed safely manag",
+      "correct": true,
+      "review_note": "explicit quantity in saved source; chart exclusions applied"
+    }
+  ],
+  "sample_precision_is_rough_n_about_30": true,
+  "excluded_chart_examples": [
+    {
+      "chunk": "unicef_reduced",
+      "span_id": "E101",
+      "raw": "$512.6 million"
+    },
+    {
+      "chunk": "unicef_reduced",
+      "span_id": "E101",
+      "raw": "32%"
+    },
+    {
+      "chunk": "unicef_reduced",
+      "span_id": "E101",
+      "raw": "$724.9 million"
+    },
+    {
+      "chunk": "unicef_reduced",
+      "span_id": "E101",
+      "raw": "46%"
+    },
+    {
+      "chunk": "unicef_reduced",
+      "span_id": "E101",
+      "raw": "$346.1 million"
+    },
+    {
+      "chunk": "unicef_reduced",
+      "span_id": "E101",
+      "raw": "22%"
+    },
+    {
+      "chunk": "unicef_reduced",
+      "span_id": "E101",
+      "raw": "$1.584\nbillion"
+    },
+    {
+      "chunk": "unicef_reduced",
+      "span_id": "E103",
+      "raw": "0%"
+    },
+    {
+      "chunk": "unicef_reduced",
+      "span_id": "E103",
+      "raw": "10%"
+    },
+    {
+      "chunk": "unicef_reduced",
+      "span_id": "E103",
+      "raw": "20%"
+    },
+    {
+      "chunk": "unicef_reduced",
+      "span_id": "E103",
+      "raw": "30%"
+    },
+    {
+      "chunk": "unicef_reduced",
+      "span_id": "E103",
+      "raw": "40%"
+    }
+  ],
+  "gold_quantity_recall": 1.0,
+  "headline_sample_precision": 1.0,
+  "thresholds_pass": true,
+  "gold_false_negatives": [],
+  "false_positives": [],
+  "detector_exclusions": {
+    "unicef_reduced": {
+      "diagnostic_year": 6,
+      "currency": 9,
+      "percentage": 29,
+      "diagnostic_bare_number": 29
+    },
+    "india_wash": {
+      "diagnostic_year": 2,
+      "diagnostic_bare_number": 16
+    },
+    "unicef_quantitative": {
+      "diagnostic_bare_number": 88,
+      "diagnostic_year": 19,
+      "currency": 9,
+      "percentage": 29
+    }
+  },
+  "contract": {
+    "contract_id": "intelligence-v2-pre-b2-extraction-v1",
+    "model_id": "claude-haiku-4-5-20251001",
+    "wire_format_version": "canonical-json-span-v1",
+    "candidate_inventory_detector_version": "candidate-inventory-v1.0.0",
+    "candidate_representation_matcher_version": "candidate-representation-v1.0.0",
+    "planner_config_version": "pre-b2-saved-request-planner-v1",
+    "planner_config_sha256": "e55066f545a0b42a4570f0d48dfe447a6a56984602f69b63a65d53708c3051d2",
+    "chunk_contracts": {
+      "unicef_reduced": {
+        "source_sha256": "103987d34dc9a0a55d6d6924273b19177e60f53f6db67ff7a5924b00c4b7d46a",
+        "span_set_sha256": "9ab4454b1d8c6cd5ae98ff2dffca178cf0b23692607748ac89b1d1e9ecc0b1d9",
+        "schema_version": "evidence-schema-span-v1-snapshot",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "variants": {
+          "CONTROL": {
+            "extraction_prompt_version": "pre-b2-control-v1",
+            "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+            "request_body_sha256": "d28a6421e873e965413815c779461264f841c1ec0ab5fc543be47bf61db5d700"
+          },
+          "CONTROL_MINUS_MATERIALITY": {
+            "extraction_prompt_version": "pre-b2-control-minus-materiality-v1",
+            "system_prompt_sha256": "e502eb39ccfabe2401451c72cb79c904d3c94fb609807a0ae8b739f7269e142f",
+            "request_body_sha256": "5c8b718fb2cf3e33e879bb7ced97a50cf3adc65162258f23270946dbe1dbd345"
+          }
+        }
+      },
+      "india_wash": {
+        "source_sha256": "0709f82d8ff76517e2617ca88e17a1e21a4bbefbcd60a2c18c678ee50b23171f",
+        "span_set_sha256": "8a4539f31dfd0ccfdba2d844ab9285034c0c7c50ad0d92189470f7ee7aa58df7",
+        "schema_version": "evidence-schema-span-v1-snapshot",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "variants": {
+          "CONTROL": {
+            "extraction_prompt_version": "pre-b2-control-v1",
+            "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+            "request_body_sha256": "716df69a1607827b5994b68e1cadd5b61433c950397a69995cc31e3a2ac6e42e"
+          },
+          "CONTROL_MINUS_MATERIALITY": {
+            "extraction_prompt_version": "pre-b2-control-minus-materiality-v1",
+            "system_prompt_sha256": "e502eb39ccfabe2401451c72cb79c904d3c94fb609807a0ae8b739f7269e142f",
+            "request_body_sha256": "6580b94f3b9aceecb61a358c2e35854d0a3410c992e054b0e9259d9c2ee5e469"
+          }
+        }
+      }
+    },
+    "historical_chunks": {
+      "unicef_quantitative": {
+        "source_sha256": "08f304548a0e4198528ddea6e694f008400b12fdbda61f058e3bb55c4a1b5dd3",
+        "span_set_sha256": "f6646f6fed362519343b2ca5895353585659b40ba8748d1b7324653010bdb6ab",
+        "schema_version": "evidence-schema-span-v1-snapshot",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      }
+    },
+    "saved_call_contracts": {
+      "four_call_C1": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "143b3385379edaa0955625350eb69da3a59814ad23dffb0676bbf073ccfccd91",
+        "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "four_call_C2": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "143b3385379edaa0955625350eb69da3a59814ad23dffb0676bbf073ccfccd91",
+        "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "four_call_T1": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "d375b31fea55001b7f864ff257d1395a3f82b1489fe220605ece14711cd0099f",
+        "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "four_call_T2": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "d375b31fea55001b7f864ff257d1395a3f82b1489fe220605ece14711cd0099f",
+        "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "india_wash-C1": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "f3f0f6f7313153c1e8693d2fe5ad3470d46425ec43af8c0277512af40bcc7669",
+        "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "india_wash-C2": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "f3f0f6f7313153c1e8693d2fe5ad3470d46425ec43af8c0277512af40bcc7669",
+        "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "india_wash-C3": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "f3f0f6f7313153c1e8693d2fe5ad3470d46425ec43af8c0277512af40bcc7669",
+        "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "india_wash-K1": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "12d55bc7b35a631fef9305eb20a46a07e3b9075675e9131dd44edc9860a4feeb",
+        "system_prompt_sha256": "86ebfadccbe2af3077c88378b0000d790f7610ae5f92a0aed03c7ac8b8974594",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "india_wash-K2": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "12d55bc7b35a631fef9305eb20a46a07e3b9075675e9131dd44edc9860a4feeb",
+        "system_prompt_sha256": "86ebfadccbe2af3077c88378b0000d790f7610ae5f92a0aed03c7ac8b8974594",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "india_wash-K3": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "12d55bc7b35a631fef9305eb20a46a07e3b9075675e9131dd44edc9860a4feeb",
+        "system_prompt_sha256": "86ebfadccbe2af3077c88378b0000d790f7610ae5f92a0aed03c7ac8b8974594",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "unicef_reduced-C1": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "d304bc2997f958dc6784390c62266758571ad87fcca391a1fc9c68fbc4d296fe",
+        "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "unicef_reduced-C2": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "d304bc2997f958dc6784390c62266758571ad87fcca391a1fc9c68fbc4d296fe",
+        "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "unicef_reduced-C3": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "d304bc2997f958dc6784390c62266758571ad87fcca391a1fc9c68fbc4d296fe",
+        "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "unicef_reduced-K1": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "e7e913c49784741f3a966ce6eea45cdbc18d29655f5b38941e015ee747990ae3",
+        "system_prompt_sha256": "86ebfadccbe2af3077c88378b0000d790f7610ae5f92a0aed03c7ac8b8974594",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "unicef_reduced-K2": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "e7e913c49784741f3a966ce6eea45cdbc18d29655f5b38941e015ee747990ae3",
+        "system_prompt_sha256": "86ebfadccbe2af3077c88378b0000d790f7610ae5f92a0aed03c7ac8b8974594",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "unicef_reduced-K3": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "e7e913c49784741f3a966ce6eea45cdbc18d29655f5b38941e015ee747990ae3",
+        "system_prompt_sha256": "86ebfadccbe2af3077c88378b0000d790f7610ae5f92a0aed03c7ac8b8974594",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      }
+    },
+    "request_body_hash_serialization": "UTF-8 JSON, ensure_ascii=false, comma/colon separators, no added whitespace"
+  }
+}
