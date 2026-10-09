@@ -1,0 +1,1530 @@
+{
+  "title": "SOURCE-SIDE OBSERVABLE REFERENCE",
+  "gold_standard": false,
+  "materiality_rule": "Heuristic only: currency >= $100m equivalent, percent >=20, short time bounds, scaled operational >=1m, or obligation words.",
+  "source_sha256": "803c45e8e6a1e38952f213d70b95aa9ab62aa02dc7bbf206df156d6d59cf18fc",
+  "count": 152,
+  "material_proxy_count": 76,
+  "candidates": [
+    {
+      "span": "E061",
+      "page": 3,
+      "type": "sentence",
+      "category": "date_time",
+      "expression": "2024",
+      "number": "2024",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E064",
+      "page": 3,
+      "type": "sentence",
+      "category": "date_time",
+      "expression": "2020",
+      "number": "2.02E+3",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E064",
+      "page": 3,
+      "type": "sentence",
+      "category": "date_time",
+      "expression": "2024",
+      "number": "2024",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E065",
+      "page": 3,
+      "type": "heading",
+      "category": "date_time",
+      "expression": "2020",
+      "number": "2.02E+3",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E065",
+      "page": 3,
+      "type": "heading",
+      "category": "date_time",
+      "expression": "2021",
+      "number": "2021",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E065",
+      "page": 3,
+      "type": "heading",
+      "category": "date_time",
+      "expression": "2022",
+      "number": "2022",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E065",
+      "page": 3,
+      "type": "heading",
+      "category": "date_time",
+      "expression": "2023",
+      "number": "2023",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E065",
+      "page": 3,
+      "type": "heading",
+      "category": "date_time",
+      "expression": "2024",
+      "number": "2024",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E066",
+      "page": 3,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$230.0 million",
+      "number": "2.3E+2",
+      "scale": "million",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E066",
+      "page": 3,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$124.4 million",
+      "number": "124.4",
+      "scale": "million",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E066",
+      "page": 3,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$90.8 million",
+      "number": "90.8",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E066",
+      "page": 3,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$80.0 million",
+      "number": "8E+1",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E066",
+      "page": 3,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$66.6 million",
+      "number": "66.6",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E066",
+      "page": 3,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$38.5 million",
+      "number": "38.5",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E066",
+      "page": 3,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$14.3 million",
+      "number": "14.3",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E066",
+      "page": 3,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$11.4 million",
+      "number": "11.4",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E066",
+      "page": 3,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$8.0 million",
+      "number": "8",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E066",
+      "page": 3,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$5.0 million",
+      "number": "5",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E066",
+      "page": 3,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$23.5 million",
+      "number": "23.5",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E066",
+      "page": 3,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$33.5 million",
+      "number": "33.5",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E073",
+      "page": 4,
+      "type": "sentence",
+      "category": "obligation_language",
+      "expression": "must",
+      "number": null,
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E075",
+      "page": 4,
+      "type": "sentence",
+      "category": "date_time",
+      "expression": "2000",
+      "number": "2E+3",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E075",
+      "page": 4,
+      "type": "sentence",
+      "category": "scaled_operational",
+      "expression": "7.9 million",
+      "number": "7.9",
+      "scale": "million",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E076",
+      "page": 4,
+      "type": "sentence",
+      "category": "scaled_operational",
+      "expression": "154 million",
+      "number": "154",
+      "scale": "million",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E077",
+      "page": 4,
+      "type": "sentence",
+      "category": "scaled_operational",
+      "expression": "56 million",
+      "number": "56",
+      "scale": "million",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E077",
+      "page": 4,
+      "type": "sentence",
+      "category": "scaled_operational",
+      "expression": "2 billion",
+      "number": "2",
+      "scale": "billion",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E081",
+      "page": 4,
+      "type": "sentence",
+      "category": "numeric_operational",
+      "expression": "190 countries",
+      "number": "1.9E+2",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E095",
+      "page": 5,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$1.584 billion",
+      "number": "1.584",
+      "scale": "billion",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E096",
+      "page": 5,
+      "type": "heading",
+      "category": "date_time",
+      "expression": "2024",
+      "number": "2024",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E097",
+      "page": 5,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$34 million",
+      "number": "34",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E097",
+      "page": 5,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$26 million",
+      "number": "26",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E097",
+      "page": 5,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$8 million",
+      "number": "8",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E097",
+      "page": 5,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$47 million",
+      "number": "47",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E097",
+      "page": 5,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "3 per cent",
+      "number": "3",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E097",
+      "page": 5,
+      "type": "sentence",
+      "category": "date_time",
+      "expression": "2024",
+      "number": "2024",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E098",
+      "page": 5,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "20 per cent",
+      "number": "2E+1",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E101",
+      "page": 5,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$512.6 million",
+      "number": "512.6",
+      "scale": "million",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E101",
+      "page": 5,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$724.9 million",
+      "number": "724.9",
+      "scale": "million",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E101",
+      "page": 5,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$346.1 million",
+      "number": "346.1",
+      "scale": "million",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E101",
+      "page": 5,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$1.584\nbillion",
+      "number": "1.584",
+      "scale": "billion",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E101",
+      "page": 5,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "32%",
+      "number": "32",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E101",
+      "page": 5,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "46%",
+      "number": "46",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E101",
+      "page": 5,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "22%",
+      "number": "22",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E101",
+      "page": 5,
+      "type": "sentence",
+      "category": "date_time",
+      "expression": "2024",
+      "number": "2024",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$7.219 \nbillion",
+      "number": "7.219",
+      "scale": "billion",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$8.122 \nbillion",
+      "number": "8.122",
+      "scale": "billion",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$9.326 \nbillion",
+      "number": "9.326",
+      "scale": "billion",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$8.920 \nbillion",
+      "number": "8.92",
+      "scale": "billion",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$8.263 \nbillion",
+      "number": "8.263",
+      "scale": "billion",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "0%",
+      "number": "0",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "10%",
+      "number": "1E+1",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "20%",
+      "number": "2E+1",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "30%",
+      "number": "3E+1",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "40%",
+      "number": "4E+1",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "50%",
+      "number": "5E+1",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "60%",
+      "number": "6E+1",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "70%",
+      "number": "7E+1",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "80%",
+      "number": "8E+1",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "90%",
+      "number": "9E+1",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "100%",
+      "number": "1E+2",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "37%",
+      "number": "37",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "41%",
+      "number": "41",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "49%",
+      "number": "49",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "46%",
+      "number": "46",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "45%",
+      "number": "45",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "17%",
+      "number": "17",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "14%",
+      "number": "14",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "33%",
+      "number": "33",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "18%",
+      "number": "18",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "31%",
+      "number": "31",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "19%",
+      "number": "19",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "date_time",
+      "expression": "2020",
+      "number": "2.02E+3",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E103",
+      "page": 5,
+      "type": "sentence",
+      "category": "date_time",
+      "expression": "2024",
+      "number": "2024",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E107",
+      "page": 6,
+      "type": "sentence",
+      "category": "scaled_operational",
+      "expression": "10 million",
+      "number": "1E+1",
+      "scale": "million",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E108",
+      "page": 6,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$1 billion",
+      "number": "1",
+      "scale": "billion",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E109",
+      "page": 6,
+      "type": "sentence",
+      "category": "scaled_operational",
+      "expression": "8.8 million",
+      "number": "8.8",
+      "scale": "million",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E109",
+      "page": 6,
+      "type": "sentence",
+      "category": "numeric_operational",
+      "expression": "13 countries",
+      "number": "13",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E110",
+      "page": 6,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "23 per cent",
+      "number": "23",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E111",
+      "page": 6,
+      "type": "sentence",
+      "category": "numeric_operational",
+      "expression": "129,000 children",
+      "number": "1.29E+5",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E112",
+      "page": 6,
+      "type": "sentence",
+      "category": "numeric_operational",
+      "expression": "120,000 people",
+      "number": "1.2E+5",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E113",
+      "page": 6,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "22.7 per cent",
+      "number": "22.7",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E118",
+      "page": 7,
+      "type": "sentence",
+      "category": "numeric_operational",
+      "expression": "10 children",
+      "number": "1E+1",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E120",
+      "page": 7,
+      "type": "sentence",
+      "category": "date_time",
+      "expression": "2024",
+      "number": "2024",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E120",
+      "page": 7,
+      "type": "sentence",
+      "category": "scaled_operational",
+      "expression": "59.3 million",
+      "number": "59.3",
+      "scale": "million",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E120",
+      "page": 7,
+      "type": "sentence",
+      "category": "scaled_operational",
+      "expression": "17.9 million",
+      "number": "17.9",
+      "scale": "million",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E121",
+      "page": 7,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$68 million",
+      "number": "68",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E121",
+      "page": 7,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "3.4 per cent",
+      "number": "3.4",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E121",
+      "page": 7,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "42 per cent",
+      "number": "42",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E122",
+      "page": 7,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "40 per cent",
+      "number": "4E+1",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E123",
+      "page": 7,
+      "type": "sentence",
+      "category": "numeric_operational",
+      "expression": "500 children",
+      "number": "5E+2",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E124",
+      "page": 7,
+      "type": "sentence",
+      "category": "numeric_operational",
+      "expression": "675,000 children",
+      "number": "6.75E+5",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E133",
+      "page": 8,
+      "type": "list_item",
+      "category": "currency",
+      "expression": "$952 million",
+      "number": "952",
+      "scale": "million",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E137",
+      "page": 8,
+      "type": "list_item",
+      "category": "currency",
+      "expression": "$174 million",
+      "number": "174",
+      "scale": "million",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E137",
+      "page": 8,
+      "type": "list_item",
+      "category": "currency",
+      "expression": "$227 million",
+      "number": "227",
+      "scale": "million",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E140",
+      "page": 8,
+      "type": "list_item",
+      "category": "currency",
+      "expression": "$162 million",
+      "number": "162",
+      "scale": "million",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E144",
+      "page": 9,
+      "type": "sentence",
+      "category": "date_time",
+      "expression": "2022",
+      "number": "2022",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E144",
+      "page": 9,
+      "type": "sentence",
+      "category": "date_time",
+      "expression": "2025",
+      "number": "2025",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E144",
+      "page": 9,
+      "type": "sentence",
+      "category": "numeric_operational",
+      "expression": "149  \ncountries",
+      "number": "149",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E145",
+      "page": 9,
+      "type": "sentence",
+      "category": "scaled_operational",
+      "expression": "2.1 billion",
+      "number": "2.1",
+      "scale": "billion",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E146",
+      "page": 9,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$817.2 million",
+      "number": "817.2",
+      "scale": "million",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E146",
+      "page": 9,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$42.9 million",
+      "number": "42.9",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E146",
+      "page": 9,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$53.9 million",
+      "number": "53.9",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E146",
+      "page": 9,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$6.4 million",
+      "number": "6.4",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E146",
+      "page": 9,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$31.6 million",
+      "number": "31.6",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E146",
+      "page": 9,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "86%",
+      "number": "86",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E146",
+      "page": 9,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "5%",
+      "number": "5",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E146",
+      "page": 9,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "6%",
+      "number": "6",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E146",
+      "page": 9,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "1%",
+      "number": "1",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E146",
+      "page": 9,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "3%",
+      "number": "3",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E147",
+      "page": 9,
+      "type": "list_item",
+      "category": "currency",
+      "expression": "$850,000",
+      "number": "8.5E+5",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E150",
+      "page": 10,
+      "type": "heading",
+      "category": "percent",
+      "expression": "6 %",
+      "number": "6",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E151",
+      "page": 10,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$53.9 million",
+      "number": "53.9",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E154",
+      "page": 10,
+      "type": "sentence",
+      "category": "scaled_operational",
+      "expression": "6 million",
+      "number": "6",
+      "scale": "million",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E167",
+      "page": 11,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$42.9 million",
+      "number": "42.9",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E167",
+      "page": 11,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "5%",
+      "number": "5",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E169",
+      "page": 11,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$42.9\nmillion",
+      "number": "42.9",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E169",
+      "page": 11,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$25.2 million",
+      "number": "25.2",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E169",
+      "page": 11,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$5.3 million",
+      "number": "5.3",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E169",
+      "page": 11,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$4.0 million",
+      "number": "4",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E169",
+      "page": 11,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$3.1 million",
+      "number": "3.1",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E169",
+      "page": 11,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$1.9 million",
+      "number": "1.9",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E169",
+      "page": 11,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$1.4 million",
+      "number": "1.4",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E169",
+      "page": 11,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$0.3 million",
+      "number": "0.3",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E169",
+      "page": 11,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$1.8 million",
+      "number": "1.8",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E169",
+      "page": 11,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$5.8 million",
+      "number": "5.8",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E170",
+      "page": 11,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$10 million",
+      "number": "1E+1",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E170",
+      "page": 11,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$5.0 million",
+      "number": "5",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E170",
+      "page": 11,
+      "type": "sentence",
+      "category": "numeric_operational",
+      "expression": "10 countries",
+      "number": "1E+1",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E171",
+      "page": 11,
+      "type": "list_item",
+      "category": "currency",
+      "expression": "$10 million",
+      "number": "1E+1",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E171",
+      "page": 11,
+      "type": "list_item",
+      "category": "numeric_operational",
+      "expression": "4 countries",
+      "number": "4",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E171",
+      "page": 11,
+      "type": "list_item",
+      "category": "numeric_operational",
+      "expression": "20 countries",
+      "number": "2E+1",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E171",
+      "page": 11,
+      "type": "list_item",
+      "category": "numeric_operational",
+      "expression": "12 countries",
+      "number": "12",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E171",
+      "page": 11,
+      "type": "list_item",
+      "category": "numeric_operational",
+      "expression": "14 countries",
+      "number": "14",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E173",
+      "page": 12,
+      "type": "sentence",
+      "category": "currency",
+      "expression": "$6.4 million",
+      "number": "6.4",
+      "scale": "million",
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E173",
+      "page": 12,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "1%",
+      "number": "1",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E173",
+      "page": 12,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "41%",
+      "number": "41",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E173",
+      "page": 12,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "21%",
+      "number": "21",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E173",
+      "page": 12,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "15%",
+      "number": "15",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E173",
+      "page": 12,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "11%",
+      "number": "11",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E173",
+      "page": 12,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "8%",
+      "number": "8",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E173",
+      "page": 12,
+      "type": "sentence",
+      "category": "percent",
+      "expression": "4%",
+      "number": "4",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E173",
+      "page": 12,
+      "type": "sentence",
+      "category": "date_time",
+      "expression": "30 years",
+      "number": "3E+1",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E176",
+      "page": 12,
+      "type": "sentence",
+      "category": "scaled_operational",
+      "expression": "14.9 million",
+      "number": "14.9",
+      "scale": "million",
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E179",
+      "page": 12,
+      "type": "sentence",
+      "category": "date_time",
+      "expression": "2025",
+      "number": "2025",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E180",
+      "page": 12,
+      "type": "sentence",
+      "category": "date_time",
+      "expression": "2024",
+      "number": "2024",
+      "scale": null,
+      "potentially_material_proxy": false
+    },
+    {
+      "span": "E181",
+      "page": 12,
+      "type": "list_item",
+      "category": "numeric_operational",
+      "expression": "1,770,000 people",
+      "number": "1.77E+6",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E182",
+      "page": 12,
+      "type": "list_item",
+      "category": "numeric_operational",
+      "expression": "1,700 health facilities",
+      "number": "1.7E+3",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E182",
+      "page": 12,
+      "type": "list_item",
+      "category": "numeric_operational",
+      "expression": "129,000 children",
+      "number": "1.29E+5",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E183",
+      "page": 12,
+      "type": "list_item",
+      "category": "percent",
+      "expression": "20 per cent",
+      "number": "2E+1",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E183",
+      "page": 12,
+      "type": "list_item",
+      "category": "numeric_operational",
+      "expression": "500 children",
+      "number": "5E+2",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E183",
+      "page": 12,
+      "type": "list_item",
+      "category": "numeric_operational",
+      "expression": "1,900 children",
+      "number": "1.9E+3",
+      "scale": null,
+      "potentially_material_proxy": true
+    },
+    {
+      "span": "E185",
+      "page": 12,
+      "type": "sentence",
+      "category": "date_time",
+      "expression": "48 hours",
+      "number": "48",
+      "scale": null,
+      "potentially_material_proxy": true
+    }
+  ]
+}

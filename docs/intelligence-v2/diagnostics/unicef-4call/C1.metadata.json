@@ -1,0 +1,18 @@
+{
+    "label": "C1",
+    "request_sha256": "143b3385379edaa0955625350eb69da3a59814ad23dffb0676bbf073ccfccd91",
+    "request_bytes": 34178,
+    "response_sha256": "45df5212f914ec5e06fab7f2221c5c1e3a96689e250a8b42f86409eb3f5cd12a",
+    "http_status": 200,
+    "model": "claude-haiku-4-5-20251001",
+    "stop_reason": "end_turn",
+    "stop_classification": "NORMAL_COMPLETION",
+    "input_tokens": 9815,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "output_tokens": 10058,
+    "latency_ms": 84003,
+    "provider_request_id": "req_011CfrSaWD4SbtaSeZqHoBPj",
+    "returned_records": 80,
+    "error": null
+}

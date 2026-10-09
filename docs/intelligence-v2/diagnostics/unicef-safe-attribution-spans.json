@@ -1,0 +1,1234 @@
+[
+    {
+        "ordinal": 33,
+        "key": "E033",
+        "page": 3,
+        "start_offset": 4218,
+        "end_offset": 4250,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 34,
+        "key": "E034",
+        "page": 3,
+        "start_offset": 4251,
+        "end_offset": 4284,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 35,
+        "key": "E035",
+        "page": 3,
+        "start_offset": 4285,
+        "end_offset": 4297,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 36,
+        "key": "E036",
+        "page": 3,
+        "start_offset": 4298,
+        "end_offset": 4330,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 37,
+        "key": "E037",
+        "page": 3,
+        "start_offset": 4331,
+        "end_offset": 4342,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 38,
+        "key": "E038",
+        "page": 3,
+        "start_offset": 4343,
+        "end_offset": 4374,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 39,
+        "key": "E039",
+        "page": 3,
+        "start_offset": 4375,
+        "end_offset": 4408,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 40,
+        "key": "E040",
+        "page": 3,
+        "start_offset": 4409,
+        "end_offset": 4420,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 41,
+        "key": "E041",
+        "page": 3,
+        "start_offset": 4421,
+        "end_offset": 4474,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 42,
+        "key": "E042",
+        "page": 3,
+        "start_offset": 4475,
+        "end_offset": 4508,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 43,
+        "key": "E043",
+        "page": 3,
+        "start_offset": 4509,
+        "end_offset": 4549,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 44,
+        "key": "E044",
+        "page": 3,
+        "start_offset": 4550,
+        "end_offset": 4566,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 45,
+        "key": "E045",
+        "page": 3,
+        "start_offset": 4567,
+        "end_offset": 4589,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 46,
+        "key": "E046",
+        "page": 3,
+        "start_offset": 4590,
+        "end_offset": 4609,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 47,
+        "key": "E047",
+        "page": 3,
+        "start_offset": 4610,
+        "end_offset": 4643,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 48,
+        "key": "E048",
+        "page": 3,
+        "start_offset": 4644,
+        "end_offset": 4656,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 49,
+        "key": "E049",
+        "page": 3,
+        "start_offset": 4657,
+        "end_offset": 4669,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 50,
+        "key": "E050",
+        "page": 3,
+        "start_offset": 4670,
+        "end_offset": 4711,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 51,
+        "key": "E051",
+        "page": 3,
+        "start_offset": 4712,
+        "end_offset": 4746,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 52,
+        "key": "E052",
+        "page": 3,
+        "start_offset": 4747,
+        "end_offset": 4775,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 53,
+        "key": "E053",
+        "page": 3,
+        "start_offset": 4776,
+        "end_offset": 4806,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 54,
+        "key": "E054",
+        "page": 3,
+        "start_offset": 4807,
+        "end_offset": 4821,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 55,
+        "key": "E055",
+        "page": 3,
+        "start_offset": 4822,
+        "end_offset": 4855,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 56,
+        "key": "E056",
+        "page": 3,
+        "start_offset": 4856,
+        "end_offset": 4892,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 57,
+        "key": "E057",
+        "page": 3,
+        "start_offset": 4893,
+        "end_offset": 4904,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 58,
+        "key": "E058",
+        "page": 3,
+        "start_offset": 4905,
+        "end_offset": 4962,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 59,
+        "key": "E059",
+        "page": 3,
+        "start_offset": 4963,
+        "end_offset": 4973,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 60,
+        "key": "E060",
+        "page": 3,
+        "start_offset": 4974,
+        "end_offset": 5009,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 61,
+        "key": "E061",
+        "page": 3,
+        "start_offset": 5010,
+        "end_offset": 5273,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 62,
+        "key": "E062",
+        "page": 3,
+        "start_offset": 5274,
+        "end_offset": 5409,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 63,
+        "key": "E063",
+        "page": 3,
+        "start_offset": 5410,
+        "end_offset": 5585,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 64,
+        "key": "E064",
+        "page": 3,
+        "start_offset": 5586,
+        "end_offset": 5883,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 65,
+        "key": "E065",
+        "page": 3,
+        "start_offset": 5890,
+        "end_offset": 5914,
+        "type": "heading"
+    },
+    {
+        "ordinal": 66,
+        "key": "E066",
+        "page": 3,
+        "start_offset": 5915,
+        "end_offset": 6198,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 67,
+        "key": "E067",
+        "page": 4,
+        "start_offset": 6200,
+        "end_offset": 6261,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 68,
+        "key": "E068",
+        "page": 4,
+        "start_offset": 6262,
+        "end_offset": 6370,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 69,
+        "key": "E069",
+        "page": 4,
+        "start_offset": 6372,
+        "end_offset": 6430,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 70,
+        "key": "E070",
+        "page": 4,
+        "start_offset": 6431,
+        "end_offset": 6532,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 71,
+        "key": "E071",
+        "page": 4,
+        "start_offset": 6533,
+        "end_offset": 6654,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 72,
+        "key": "E072",
+        "page": 4,
+        "start_offset": 6655,
+        "end_offset": 6758,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 73,
+        "key": "E073",
+        "page": 4,
+        "start_offset": 6759,
+        "end_offset": 6959,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 74,
+        "key": "E074",
+        "page": 4,
+        "start_offset": 6960,
+        "end_offset": 7186,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 75,
+        "key": "E075",
+        "page": 4,
+        "start_offset": 7188,
+        "end_offset": 7303,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 76,
+        "key": "E076",
+        "page": 4,
+        "start_offset": 7304,
+        "end_offset": 7367,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 77,
+        "key": "E077",
+        "page": 4,
+        "start_offset": 7368,
+        "end_offset": 7477,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 78,
+        "key": "E078",
+        "page": 4,
+        "start_offset": 7478,
+        "end_offset": 7628,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 79,
+        "key": "E079",
+        "page": 4,
+        "start_offset": 7630,
+        "end_offset": 7706,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 80,
+        "key": "E080",
+        "page": 4,
+        "start_offset": 7708,
+        "end_offset": 7808,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 81,
+        "key": "E081",
+        "page": 4,
+        "start_offset": 7810,
+        "end_offset": 8037,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 82,
+        "key": "E082",
+        "page": 4,
+        "start_offset": 8038,
+        "end_offset": 8099,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 83,
+        "key": "E083",
+        "page": 4,
+        "start_offset": 8101,
+        "end_offset": 8299,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 84,
+        "key": "E084",
+        "page": 4,
+        "start_offset": 8302,
+        "end_offset": 8462,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 85,
+        "key": "E085",
+        "page": 4,
+        "start_offset": 8463,
+        "end_offset": 8636,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 86,
+        "key": "E086",
+        "page": 4,
+        "start_offset": 8637,
+        "end_offset": 8783,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 87,
+        "key": "E087",
+        "page": 4,
+        "start_offset": 8785,
+        "end_offset": 8895,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 88,
+        "key": "E088",
+        "page": 4,
+        "start_offset": 8897,
+        "end_offset": 8966,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 89,
+        "key": "E089",
+        "page": 4,
+        "start_offset": 8967,
+        "end_offset": 9113,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 90,
+        "key": "E090",
+        "page": 4,
+        "start_offset": 9114,
+        "end_offset": 9178,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 91,
+        "key": "E091",
+        "page": 4,
+        "start_offset": 9179,
+        "end_offset": 9340,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 92,
+        "key": "E092",
+        "page": 4,
+        "start_offset": 9342,
+        "end_offset": 9449,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 93,
+        "key": "E093",
+        "page": 4,
+        "start_offset": 9451,
+        "end_offset": 9979,
+        "type": "list_item"
+    },
+    {
+        "ordinal": 94,
+        "key": "E094",
+        "page": 5,
+        "start_offset": 9981,
+        "end_offset": 10042,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 95,
+        "key": "E095",
+        "page": 5,
+        "start_offset": 10043,
+        "end_offset": 10173,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 96,
+        "key": "E096",
+        "page": 5,
+        "start_offset": 10175,
+        "end_offset": 10229,
+        "type": "heading"
+    },
+    {
+        "ordinal": 97,
+        "key": "E097",
+        "page": 5,
+        "start_offset": 10231,
+        "end_offset": 10534,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 98,
+        "key": "E098",
+        "page": 5,
+        "start_offset": 10535,
+        "end_offset": 10856,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 99,
+        "key": "E099",
+        "page": 5,
+        "start_offset": 10858,
+        "end_offset": 11113,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 100,
+        "key": "E100",
+        "page": 5,
+        "start_offset": 11115,
+        "end_offset": 11225,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 101,
+        "key": "E101",
+        "page": 5,
+        "start_offset": 11226,
+        "end_offset": 11447,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 102,
+        "key": "E102",
+        "page": 5,
+        "start_offset": 11448,
+        "end_offset": 11460,
+        "type": "section"
+    },
+    {
+        "ordinal": 103,
+        "key": "E103",
+        "page": 5,
+        "start_offset": 11461,
+        "end_offset": 11906,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 104,
+        "key": "E104",
+        "page": 6,
+        "start_offset": 11909,
+        "end_offset": 11970,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 105,
+        "key": "E105",
+        "page": 6,
+        "start_offset": 11971,
+        "end_offset": 12106,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 106,
+        "key": "E106",
+        "page": 6,
+        "start_offset": 12107,
+        "end_offset": 12255,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 107,
+        "key": "E107",
+        "page": 6,
+        "start_offset": 12256,
+        "end_offset": 12540,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 108,
+        "key": "E108",
+        "page": 6,
+        "start_offset": 12542,
+        "end_offset": 12890,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 109,
+        "key": "E109",
+        "page": 6,
+        "start_offset": 12892,
+        "end_offset": 13152,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 110,
+        "key": "E110",
+        "page": 6,
+        "start_offset": 13153,
+        "end_offset": 13394,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 111,
+        "key": "E111",
+        "page": 6,
+        "start_offset": 13395,
+        "end_offset": 13612,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 112,
+        "key": "E112",
+        "page": 6,
+        "start_offset": 13613,
+        "end_offset": 13913,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 113,
+        "key": "E113",
+        "page": 6,
+        "start_offset": 13914,
+        "end_offset": 14089,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 114,
+        "key": "E114",
+        "page": 6,
+        "start_offset": 14090,
+        "end_offset": 14250,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 115,
+        "key": "E115",
+        "page": 7,
+        "start_offset": 14253,
+        "end_offset": 14314,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 116,
+        "key": "E116",
+        "page": 7,
+        "start_offset": 14315,
+        "end_offset": 14509,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 117,
+        "key": "E117",
+        "page": 7,
+        "start_offset": 14510,
+        "end_offset": 14582,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 118,
+        "key": "E118",
+        "page": 7,
+        "start_offset": 14583,
+        "end_offset": 14860,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 119,
+        "key": "E119",
+        "page": 7,
+        "start_offset": 14861,
+        "end_offset": 15208,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 120,
+        "key": "E120",
+        "page": 7,
+        "start_offset": 15209,
+        "end_offset": 15502,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 121,
+        "key": "E121",
+        "page": 7,
+        "start_offset": 15504,
+        "end_offset": 15814,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 122,
+        "key": "E122",
+        "page": 7,
+        "start_offset": 15816,
+        "end_offset": 16111,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 123,
+        "key": "E123",
+        "page": 7,
+        "start_offset": 16112,
+        "end_offset": 16425,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 124,
+        "key": "E124",
+        "page": 7,
+        "start_offset": 16426,
+        "end_offset": 16724,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 125,
+        "key": "E125",
+        "page": 8,
+        "start_offset": 16727,
+        "end_offset": 16789,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 126,
+        "key": "E126",
+        "page": 8,
+        "start_offset": 16790,
+        "end_offset": 16819,
+        "type": "section"
+    },
+    {
+        "ordinal": 127,
+        "key": "E127",
+        "page": 8,
+        "start_offset": 16820,
+        "end_offset": 17046,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 128,
+        "key": "E128",
+        "page": 8,
+        "start_offset": 17048,
+        "end_offset": 17090,
+        "type": "heading"
+    },
+    {
+        "ordinal": 129,
+        "key": "E129",
+        "page": 8,
+        "start_offset": 17092,
+        "end_offset": 17405,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 130,
+        "key": "E130",
+        "page": 8,
+        "start_offset": 17406,
+        "end_offset": 17505,
+        "type": "list_item"
+    },
+    {
+        "ordinal": 131,
+        "key": "E131",
+        "page": 8,
+        "start_offset": 17506,
+        "end_offset": 17601,
+        "type": "list_item"
+    },
+    {
+        "ordinal": 132,
+        "key": "E132",
+        "page": 8,
+        "start_offset": 17603,
+        "end_offset": 17689,
+        "type": "list_item"
+    },
+    {
+        "ordinal": 133,
+        "key": "E133",
+        "page": 8,
+        "start_offset": 17691,
+        "end_offset": 17812,
+        "type": "list_item"
+    },
+    {
+        "ordinal": 134,
+        "key": "E134",
+        "page": 8,
+        "start_offset": 17813,
+        "end_offset": 17927,
+        "type": "list_item"
+    },
+    {
+        "ordinal": 135,
+        "key": "E135",
+        "page": 8,
+        "start_offset": 17928,
+        "end_offset": 18024,
+        "type": "list_item"
+    },
+    {
+        "ordinal": 136,
+        "key": "E136",
+        "page": 8,
+        "start_offset": 18025,
+        "end_offset": 18098,
+        "type": "list_item"
+    },
+    {
+        "ordinal": 137,
+        "key": "E137",
+        "page": 8,
+        "start_offset": 18099,
+        "end_offset": 18242,
+        "type": "list_item"
+    },
+    {
+        "ordinal": 138,
+        "key": "E138",
+        "page": 8,
+        "start_offset": 18243,
+        "end_offset": 18310,
+        "type": "list_item"
+    },
+    {
+        "ordinal": 139,
+        "key": "E139",
+        "page": 8,
+        "start_offset": 18311,
+        "end_offset": 18403,
+        "type": "list_item"
+    },
+    {
+        "ordinal": 140,
+        "key": "E140",
+        "page": 8,
+        "start_offset": 18404,
+        "end_offset": 18587,
+        "type": "list_item"
+    },
+    {
+        "ordinal": 141,
+        "key": "E141",
+        "page": 9,
+        "start_offset": 18590,
+        "end_offset": 18651,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 142,
+        "key": "E142",
+        "page": 9,
+        "start_offset": 18653,
+        "end_offset": 18708,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 143,
+        "key": "E143",
+        "page": 9,
+        "start_offset": 18710,
+        "end_offset": 19151,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 144,
+        "key": "E144",
+        "page": 9,
+        "start_offset": 19152,
+        "end_offset": 19422,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 145,
+        "key": "E145",
+        "page": 9,
+        "start_offset": 19426,
+        "end_offset": 19490,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 146,
+        "key": "E146",
+        "page": 9,
+        "start_offset": 19491,
+        "end_offset": 19740,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 147,
+        "key": "E147",
+        "page": 9,
+        "start_offset": 19741,
+        "end_offset": 20725,
+        "type": "list_item"
+    },
+    {
+        "ordinal": 148,
+        "key": "E148",
+        "page": 10,
+        "start_offset": 20728,
+        "end_offset": 20789,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 149,
+        "key": "E149",
+        "page": 10,
+        "start_offset": 20790,
+        "end_offset": 20820,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 150,
+        "key": "E150",
+        "page": 10,
+        "start_offset": 20821,
+        "end_offset": 20824,
+        "type": "heading"
+    },
+    {
+        "ordinal": 151,
+        "key": "E151",
+        "page": 10,
+        "start_offset": 20827,
+        "end_offset": 21310,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 152,
+        "key": "E152",
+        "page": 10,
+        "start_offset": 21311,
+        "end_offset": 21365,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 153,
+        "key": "E153",
+        "page": 10,
+        "start_offset": 21366,
+        "end_offset": 21418,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 154,
+        "key": "E154",
+        "page": 10,
+        "start_offset": 21420,
+        "end_offset": 21594,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 155,
+        "key": "E155",
+        "page": 10,
+        "start_offset": 21597,
+        "end_offset": 21693,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 156,
+        "key": "E156",
+        "page": 10,
+        "start_offset": 21694,
+        "end_offset": 21769,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 157,
+        "key": "E157",
+        "page": 10,
+        "start_offset": 21773,
+        "end_offset": 22286,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 158,
+        "key": "E158",
+        "page": 10,
+        "start_offset": 22289,
+        "end_offset": 22349,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 159,
+        "key": "E159",
+        "page": 10,
+        "start_offset": 22350,
+        "end_offset": 22569,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 160,
+        "key": "E160",
+        "page": 10,
+        "start_offset": 22572,
+        "end_offset": 22832,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 161,
+        "key": "E161",
+        "page": 10,
+        "start_offset": 22833,
+        "end_offset": 23058,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 162,
+        "key": "E162",
+        "page": 10,
+        "start_offset": 23059,
+        "end_offset": 23230,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 163,
+        "key": "E163",
+        "page": 10,
+        "start_offset": 23231,
+        "end_offset": 23381,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 164,
+        "key": "E164",
+        "page": 10,
+        "start_offset": 23383,
+        "end_offset": 23440,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 165,
+        "key": "E165",
+        "page": 10,
+        "start_offset": 23441,
+        "end_offset": 23611,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 166,
+        "key": "E166",
+        "page": 11,
+        "start_offset": 23615,
+        "end_offset": 23676,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 167,
+        "key": "E167",
+        "page": 11,
+        "start_offset": 23677,
+        "end_offset": 24122,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 168,
+        "key": "E168",
+        "page": 11,
+        "start_offset": 24124,
+        "end_offset": 24268,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 169,
+        "key": "E169",
+        "page": 11,
+        "start_offset": 24269,
+        "end_offset": 25244,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 170,
+        "key": "E170",
+        "page": 11,
+        "start_offset": 25245,
+        "end_offset": 25631,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 171,
+        "key": "E171",
+        "page": 11,
+        "start_offset": 25633,
+        "end_offset": 26277,
+        "type": "list_item"
+    },
+    {
+        "ordinal": 172,
+        "key": "E172",
+        "page": 12,
+        "start_offset": 26279,
+        "end_offset": 26386,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 173,
+        "key": "E173",
+        "page": 12,
+        "start_offset": 26388,
+        "end_offset": 26864,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 174,
+        "key": "E174",
+        "page": 12,
+        "start_offset": 26865,
+        "end_offset": 26942,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 175,
+        "key": "E175",
+        "page": 12,
+        "start_offset": 26943,
+        "end_offset": 27120,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 176,
+        "key": "E176",
+        "page": 12,
+        "start_offset": 27122,
+        "end_offset": 27215,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 177,
+        "key": "E177",
+        "page": 12,
+        "start_offset": 27216,
+        "end_offset": 27340,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 178,
+        "key": "E178",
+        "page": 12,
+        "start_offset": 27342,
+        "end_offset": 27470,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 179,
+        "key": "E179",
+        "page": 12,
+        "start_offset": 27471,
+        "end_offset": 27700,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 180,
+        "key": "E180",
+        "page": 12,
+        "start_offset": 27701,
+        "end_offset": 28034,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 181,
+        "key": "E181",
+        "page": 12,
+        "start_offset": 28035,
+        "end_offset": 28354,
+        "type": "list_item"
+    },
+    {
+        "ordinal": 182,
+        "key": "E182",
+        "page": 12,
+        "start_offset": 28355,
+        "end_offset": 28596,
+        "type": "list_item"
+    },
+    {
+        "ordinal": 183,
+        "key": "E183",
+        "page": 12,
+        "start_offset": 28597,
+        "end_offset": 29102,
+        "type": "list_item"
+    },
+    {
+        "ordinal": 184,
+        "key": "E184",
+        "page": 12,
+        "start_offset": 29104,
+        "end_offset": 29220,
+        "type": "table_row"
+    },
+    {
+        "ordinal": 185,
+        "key": "E185",
+        "page": 12,
+        "start_offset": 29223,
+        "end_offset": 29368,
+        "type": "sentence"
+    },
+    {
+        "ordinal": 186,
+        "key": "E186",
+        "page": 12,
+        "start_offset": 29369,
+        "end_offset": 29519,
+        "type": "sentence"
+    }
+]
