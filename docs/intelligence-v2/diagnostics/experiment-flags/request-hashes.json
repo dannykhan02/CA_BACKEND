@@ -1,0 +1,26 @@
+{
+    "CONTROL": {
+        "prompt_version": "2",
+        "sha256": "143b3385379edaa0955625350eb69da3a59814ad23dffb0676bbf073ccfccd91",
+        "bytes": 34178,
+        "isolation": "system text only"
+    },
+    "COLLECTOR_ONLY": {
+        "prompt_version": "diagnostic-collector-v1",
+        "sha256": "ed3a27dce2ee70cfe14f9c6aa9a969c5cbcd0db013ad5e4a8ac309750049663c",
+        "bytes": 34034,
+        "isolation": "system text only"
+    },
+    "METADATA_ONLY": {
+        "prompt_version": "diagnostic-metadata-v1",
+        "sha256": "2c42488418ce6a8e0f87021b157cb6e7752b81956e3813276eb62eb01c3be31f",
+        "bytes": 34332,
+        "isolation": "system text only"
+    },
+    "COLLECTOR_PLUS_METADATA": {
+        "prompt_version": "diagnostic-collector-metadata-v1",
+        "sha256": "5e5602f7c68bb19eb44f868ff945f0c70860ea042ef5e3e0ed62ff3d6fbf8fe4",
+        "bytes": 34436,
+        "isolation": "system text only"
+    }
+}

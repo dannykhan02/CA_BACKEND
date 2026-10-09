@@ -1,0 +1,958 @@
+[
+  {
+    "sample_id": "S0001",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0002",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0003",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0004",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0005",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0006",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0007",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0008",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0009",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0010",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0011",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0012",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0013",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0014",
+    "judgment": "UNSUPPORTED"
+  },
+  {
+    "sample_id": "S0015",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0016",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0017",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0018",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0019",
+    "judgment": "UNSUPPORTED"
+  },
+  {
+    "sample_id": "S0020",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0021",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0022",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0023",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0024",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0025",
+    "judgment": "UNSUPPORTED"
+  },
+  {
+    "sample_id": "S0026",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0027",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0028",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0029",
+    "judgment": "UNSUPPORTED"
+  },
+  {
+    "sample_id": "S0030",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0031",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0032",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0033",
+    "judgment": "UNSUPPORTED"
+  },
+  {
+    "sample_id": "S0034",
+    "judgment": "UNSUPPORTED"
+  },
+  {
+    "sample_id": "S0035",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0036",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0037",
+    "judgment": "UNSUPPORTED"
+  },
+  {
+    "sample_id": "S0038",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0039",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0040",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0041",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0042",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0043",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0044",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0045",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0046",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0047",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0048",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0049",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0050",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0051",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0052",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0053",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0054",
+    "judgment": "UNSUPPORTED"
+  },
+  {
+    "sample_id": "S0055",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0056",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0057",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0058",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0059",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0060",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0061",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0062",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0063",
+    "judgment": "UNSUPPORTED"
+  },
+  {
+    "sample_id": "S0064",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0065",
+    "judgment": "UNSUPPORTED"
+  },
+  {
+    "sample_id": "S0066",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0067",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0068",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0069",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0070",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0071",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0072",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0073",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0074",
+    "judgment": "UNSUPPORTED"
+  },
+  {
+    "sample_id": "S0075",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0076",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0077",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0078",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0079",
+    "judgment": "UNSUPPORTED"
+  },
+  {
+    "sample_id": "S0080",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0081",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0082",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0083",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0084",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0085",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0086",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0087",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0088",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0089",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0090",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0091",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0092",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0093",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0094",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0095",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0096",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0097",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0098",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0099",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0100",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0101",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0102",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0103",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0104",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0105",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0106",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0107",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0108",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0109",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0110",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0111",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0112",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0113",
+    "judgment": "UNSUPPORTED"
+  },
+  {
+    "sample_id": "S0114",
+    "judgment": "UNSUPPORTED"
+  },
+  {
+    "sample_id": "S0115",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0116",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0117",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0118",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0119",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0120",
+    "judgment": "UNSUPPORTED"
+  },
+  {
+    "sample_id": "S0121",
+    "judgment": "UNSUPPORTED"
+  },
+  {
+    "sample_id": "S0122",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0123",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0124",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0125",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0126",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0127",
+    "judgment": "UNSUPPORTED"
+  },
+  {
+    "sample_id": "S0128",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0129",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0130",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0131",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0132",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0133",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0134",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0135",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0136",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0137",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0138",
+    "judgment": "UNSUPPORTED"
+  },
+  {
+    "sample_id": "S0139",
+    "judgment": "NOISE"
+  },
+  {
+    "sample_id": "S0140",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0141",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0142",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0143",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0144",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0145",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0146",
+    "judgment": "UNSUPPORTED"
+  },
+  {
+    "sample_id": "S0147",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0148",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0149",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0150",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0151",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0152",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0153",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0154",
+    "judgment": "UNSUPPORTED"
+  },
+  {
+    "sample_id": "S0155",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0156",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0157",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0158",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0159",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0160",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0161",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0162",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0163",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0164",
+    "judgment": "UNSUPPORTED"
+  },
+  {
+    "sample_id": "S0165",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0166",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0167",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0168",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0169",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0170",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0171",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0172",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0173",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0174",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0175",
+    "judgment": "UNSUPPORTED"
+  },
+  {
+    "sample_id": "S0176",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0177",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0178",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0179",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0180",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0181",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0182",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0183",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0184",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0185",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0186",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0187",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0188",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0189",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0190",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0191",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0192",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0193",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0194",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0195",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0196",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0197",
+    "judgment": "UNSUPPORTED"
+  },
+  {
+    "sample_id": "S0198",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0199",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0200",
+    "judgment": "UNSUPPORTED"
+  },
+  {
+    "sample_id": "S0201",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0202",
+    "judgment": "UNSUPPORTED"
+  },
+  {
+    "sample_id": "S0203",
+    "judgment": "UNSUPPORTED"
+  },
+  {
+    "sample_id": "S0204",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0205",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0206",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0207",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0208",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0209",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0210",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0211",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0212",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0213",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0214",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0215",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0216",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0217",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0218",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0219",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0220",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0221",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0222",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0223",
+    "judgment": "NOISE"
+  },
+  {
+    "sample_id": "S0224",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0225",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0226",
+    "judgment": "NOISE"
+  },
+  {
+    "sample_id": "S0227",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0228",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0229",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0230",
+    "judgment": "PARTIALLY_SUPPORTED"
+  },
+  {
+    "sample_id": "S0231",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0232",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0233",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0234",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0235",
+    "judgment": "UNSUPPORTED"
+  },
+  {
+    "sample_id": "S0236",
+    "judgment": "UNSUPPORTED"
+  },
+  {
+    "sample_id": "S0237",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0238",
+    "judgment": "SUPPORTED"
+  },
+  {
+    "sample_id": "S0239",
+    "judgment": "PARTIALLY_SUPPORTED"
+  }
+]

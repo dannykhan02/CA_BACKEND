@@ -1,0 +1,1527 @@
+[
+    {
+        "label": "Child mortality reduction in India",
+        "value": "37 per cent reduction between 2014 and 2022",
+        "subject": "India",
+        "reference": "child mortality",
+        "evidence_ids": [
+            "E201"
+        ],
+        "entity_type": null,
+        "unit": "percent",
+        "period": "2014-2022",
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": "change",
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "metric",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E201",
+                "page": 14,
+                "start_offset": 32459,
+                "end_offset": 32535,
+                "type": "sentence",
+                "text": "Between 2014 and 2022, India saw a 37 per cent reduction in child mortality."
+            }
+        ],
+        "quote": "Between 2014 and 2022, India saw a 37 per cent reduction in child mortality."
+    },
+    {
+        "label": "Swachh Bharat Mission launch",
+        "value": "2014",
+        "subject": "Government of India",
+        "reference": "Swachh Bharat (Clean India) Mission launch",
+        "evidence_ids": [
+            "E205"
+        ],
+        "entity_type": null,
+        "unit": null,
+        "period": "2014",
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "fact",
+        "confidence": 0.95,
+        "aliases": [
+            "Clean India Mission"
+        ],
+        "evidence": [
+            {
+                "span_id": "E205",
+                "page": 14,
+                "start_offset": 33114,
+                "end_offset": 33253,
+                "type": "sentence",
+                "text": "In 2014, the Government of India launched the Swachh Bharat \n(Clean India) Mission, one of the largest sanitation programmes \nin the world."
+            }
+        ],
+        "quote": "In 2014, the Government of India launched the Swachh Bharat \n(Clean India) Mission, one of the largest sanitation programmes \nin the world."
+    },
+    {
+        "label": "Swachh Bharat Mission target for toilet construction",
+        "value": "over 110 million toilets for 550 million people",
+        "subject": "Government of India",
+        "reference": "Swachh Bharat sanitation programme goal",
+        "evidence_ids": [
+            "E206"
+        ],
+        "entity_type": null,
+        "unit": "toilets and people",
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": "target",
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "metric",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E206",
+                "page": 14,
+                "start_offset": 33254,
+                "end_offset": 33427,
+                "type": "sentence",
+                "text": "Its goal was bold: provide universal access to \nsanitation and eliminate open defecation by constructing over \n110 million toilets for 550 million people across the country."
+            }
+        ],
+        "quote": "Its goal was bold: provide universal access to \nsanitation and eliminate open defecation by constructing over \n110 million toilets for 550 million people across the country."
+    },
+    {
+        "label": "People reached with basic sanitation in past 10 years",
+        "value": "550 million people",
+        "subject": "India",
+        "reference": "WASH services",
+        "evidence_ids": [
+            "E209"
+        ],
+        "entity_type": null,
+        "unit": "people",
+        "period": "last 10 years",
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": "actual",
+        "value_basis": "total",
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "metric",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E209",
+                "page": 14,
+                "start_offset": 33638,
+                "end_offset": 33886,
+                "type": "sentence",
+                "text": "A Decade of Progress: How \nIndia’s WASH transformation \nis saving lives\nIn the last 10 years, 550 million people  \nhave been reached with at least basic \nsanitation, and 580 million people with \nimproved drinking water in their homes. \nSDG target 6"
+            }
+        ],
+        "quote": "A Decade of Progress: How \nIndia’s WASH transformation \nis saving lives\nIn the last 10 years, 550 million people  \nhave been reached with at least basic \nsanitation, and 580 million people with \nimproved drinking water in their homes. \nSDG target 6"
+    },
+    {
+        "label": "People reached with improved drinking water in past 10 years",
+        "value": "580 million people",
+        "subject": "India",
+        "reference": "WASH services in homes",
+        "evidence_ids": [
+            "E209"
+        ],
+        "entity_type": null,
+        "unit": "people",
+        "period": "last 10 years",
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": "actual",
+        "value_basis": "total",
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "metric",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E209",
+                "page": 14,
+                "start_offset": 33638,
+                "end_offset": 33886,
+                "type": "sentence",
+                "text": "A Decade of Progress: How \nIndia’s WASH transformation \nis saving lives\nIn the last 10 years, 550 million people  \nhave been reached with at least basic \nsanitation, and 580 million people with \nimproved drinking water in their homes. \nSDG target 6"
+            }
+        ],
+        "quote": "A Decade of Progress: How \nIndia’s WASH transformation \nis saving lives\nIn the last 10 years, 550 million people  \nhave been reached with at least basic \nsanitation, and 580 million people with \nimproved drinking water in their homes. \nSDG target 6"
+    },
+    {
+        "label": "Rural households gaining piped water connections in past five years",
+        "value": "more than 115 million",
+        "subject": "India",
+        "reference": "Jal Jeevan Mission rural piped water",
+        "evidence_ids": [
+            "E218"
+        ],
+        "entity_type": null,
+        "unit": "households",
+        "period": "last five years",
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": "actual",
+        "value_basis": "total",
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "metric",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E218",
+                "page": 15,
+                "start_offset": 35365,
+                "end_offset": 35502,
+                "type": "sentence",
+                "text": "Over the last five years, \nmore than 115 million rural households have gained piped water \nconnections in their homes for the first time."
+            }
+        ],
+        "quote": "Over the last five years, \nmore than 115 million rural households have gained piped water \nconnections in their homes for the first time."
+    },
+    {
+        "label": "Government of India investment in water and sanitation",
+        "value": "over $120 billion",
+        "subject": "Government of India",
+        "reference": "water and sanitation investment over past 10 years",
+        "evidence_ids": [
+            "E232"
+        ],
+        "entity_type": null,
+        "unit": "USD",
+        "period": "past 10 years",
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": "actual",
+        "value_basis": "total",
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "metric",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E232",
+                "page": 16,
+                "start_offset": 37734,
+                "end_offset": 37932,
+                "type": "sentence",
+                "text": "The Government of India has backed its \ncommitment with a game-changing \ninvestment of over $120 billion in water and \nsanitation over the past 10 years. The \nresults speak for themselves: achieving"
+            }
+        ],
+        "quote": "The Government of India has backed its \ncommitment with a game-changing \ninvestment of over $120 billion in water and \nsanitation over the past 10 years. The \nresults speak for themselves: achieving"
+    },
+    {
+        "label": "Toilets constructed through Swachh Bharat Mission",
+        "value": "110 million",
+        "subject": "Government of India",
+        "reference": "Swachh Bharat sanitation infrastructure",
+        "evidence_ids": [
+            "E233"
+        ],
+        "entity_type": null,
+        "unit": "toilets",
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": "actual",
+        "value_basis": "total",
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "metric",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E233",
+                "page": 16,
+                "start_offset": 37934,
+                "end_offset": 37971,
+                "type": "heading",
+                "text": "110 million toilets constructed, more"
+            }
+        ],
+        "quote": "110 million toilets constructed, more"
+    },
+    {
+        "label": "People using improved sanitation",
+        "value": "more than 550 million",
+        "subject": "India",
+        "reference": "Swachh Bharat results",
+        "evidence_ids": [
+            "E234"
+        ],
+        "entity_type": null,
+        "unit": "people",
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": "actual",
+        "value_basis": "total",
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "metric",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E234",
+                "page": 16,
+                "start_offset": 37973,
+                "end_offset": 38034,
+                "type": "sentence",
+                "text": "than 550 million people using \nimproved sanitation, more than"
+            }
+        ],
+        "quote": "than 550 million people using \nimproved sanitation, more than"
+    },
+    {
+        "label": "Rural people using improved drinking water",
+        "value": "more than 580 million",
+        "subject": "India",
+        "reference": "Swachh Bharat and Jal Jeevan results",
+        "evidence_ids": [
+            "E235"
+        ],
+        "entity_type": null,
+        "unit": "people",
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": "actual",
+        "value_basis": "total",
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "metric",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E235",
+                "page": 16,
+                "start_offset": 38036,
+                "end_offset": 38066,
+                "type": "heading",
+                "text": "580 million rural people using"
+            }
+        ],
+        "quote": "580 million rural people using"
+    },
+    {
+        "label": "People accessing safely managed sanitation in 2024",
+        "value": "17.9 million",
+        "subject": "India",
+        "reference": "SDG target 6 achievement",
+        "evidence_ids": [
+            "E237"
+        ],
+        "entity_type": null,
+        "unit": "people",
+        "period": "2024",
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": "actual",
+        "value_basis": "total",
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "metric",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E237",
+                "page": 16,
+                "start_offset": 38141,
+                "end_offset": 40163,
+                "type": "list_item",
+                "text": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+            }
+        ],
+        "quote": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+    },
+    {
+        "label": "People accessing safely managed water in 2024",
+        "value": "59.3 million",
+        "subject": "India",
+        "reference": "SDG target 6 achievement in homes",
+        "evidence_ids": [
+            "E237"
+        ],
+        "entity_type": null,
+        "unit": "people",
+        "period": "2024",
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": "actual",
+        "value_basis": "total",
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "metric",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E237",
+                "page": 16,
+                "start_offset": 38141,
+                "end_offset": 40163,
+                "type": "list_item",
+                "text": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+            }
+        ],
+        "quote": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+    },
+    {
+        "label": "Estimated savings per family constructing toilets",
+        "value": "at least 50,000 rupees ($650)",
+        "subject": "India village families",
+        "reference": "economic benefit of toilet construction",
+        "evidence_ids": [
+            "E228"
+        ],
+        "entity_type": null,
+        "unit": "rupees and USD",
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": "actual",
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "metric",
+        "confidence": 0.85,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E228",
+                "page": 15,
+                "start_offset": 36944,
+                "end_offset": 37094,
+                "type": "sentence",
+                "text": "\"UNICEF has estimated that every \nfamily living in the village who are \nconstructing toilets in their homes \nis saving at least 50,000 rupees \n($650)."
+            }
+        ],
+        "quote": "\"UNICEF has estimated that every \nfamily living in the village who are \nconstructing toilets in their homes \nis saving at least 50,000 rupees \n($650)."
+    },
+    {
+        "label": "UNICEF role in Swachh Bharat Mission",
+        "value": "trusted partner in mission's design, delivery and scaling up",
+        "subject": "UNICEF",
+        "reference": "partnership with Government of India",
+        "evidence_ids": [
+            "E213"
+        ],
+        "entity_type": "organization",
+        "unit": null,
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "fact",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E213",
+                "page": 15,
+                "start_offset": 34255,
+                "end_offset": 34476,
+                "type": "sentence",
+                "text": "From the start, UNICEF has been a \ntrusted partner in the mission’s design, delivery \nand scaling up, helping ensure that infrastructure \nwas matched with systems-strengthening, community \nengagement and behaviour change."
+            }
+        ],
+        "quote": "From the start, UNICEF has been a \ntrusted partner in the mission’s design, delivery \nand scaling up, helping ensure that infrastructure \nwas matched with systems-strengthening, community \nengagement and behaviour change."
+    },
+    {
+        "label": "UNICEF technical support in Swachh Bharat",
+        "value": "embedded technical advisors in every state and built capacity of local governments",
+        "subject": "UNICEF",
+        "reference": "systems-strengthening and service monitoring",
+        "evidence_ids": [
+            "E214"
+        ],
+        "entity_type": "organization",
+        "unit": null,
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "fact",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E214",
+                "page": 15,
+                "start_offset": 34477,
+                "end_offset": 34645,
+                "type": "sentence",
+                "text": "UNICEF supported \nthis shift by embedding technical advisors in every state, \nand building the capacity of local governments to improve and \nmonitor services over time."
+            }
+        ],
+        "quote": "UNICEF supported \nthis shift by embedding technical advisors in every state, \nand building the capacity of local governments to improve and \nmonitor services over time."
+    },
+    {
+        "label": "Jal Jeevan Mission launch",
+        "value": "launched to achieve universal access to safe and adequate drinking water",
+        "subject": "Government of India",
+        "reference": "natural next step after sanitation movement",
+        "evidence_ids": [
+            "E216"
+        ],
+        "entity_type": null,
+        "unit": null,
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "fact",
+        "confidence": 0.95,
+        "aliases": [
+            "Water is Life Mission"
+        ],
+        "evidence": [
+            {
+                "span_id": "E216",
+                "page": 15,
+                "start_offset": 34770,
+                "end_offset": 35133,
+                "type": "sentence",
+                "text": "I have personally seen how  \nmuch engagement has been shown by your team in water  \nand sanitation.” \nBuilding on the gains of the sanitation movement, India launched \nthe Jal Jeevan (Water is Life) Mission to achieve universal access \nto safe and adequate drinking water – a natural and essential \nnext step in improving child health, development and protection."
+            }
+        ],
+        "quote": "I have personally seen how  \nmuch engagement has been shown by your team in water  \nand sanitation.” \nBuilding on the gains of the sanitation movement, India launched \nthe Jal Jeevan (Water is Life) Mission to achieve universal access \nto safe and adequate drinking water – a natural and essential \nnext step in improving child health, development and protection."
+    },
+    {
+        "label": "UNICEF support to Jal Jeevan Mission",
+        "value": "providing technical expertise, developing equity-focused tools, improving service delivery",
+        "subject": "UNICEF",
+        "reference": "support for marginalized children and communities",
+        "evidence_ids": [
+            "E217"
+        ],
+        "entity_type": "organization",
+        "unit": null,
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "fact",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E217",
+                "page": 15,
+                "start_offset": 35135,
+                "end_offset": 35364,
+                "type": "sentence",
+                "text": "UNICEF’s support expanded accordingly, providing technical \nexpertise, developing equity-focused tools for state and district \ngovernments, and helping improve service delivery for the most \nmarginalized children and communities."
+            }
+        ],
+        "quote": "UNICEF’s support expanded accordingly, providing technical \nexpertise, developing equity-focused tools for state and district \ngovernments, and helping improve service delivery for the most \nmarginalized children and communities."
+    },
+    {
+        "label": "Unrestricted Core Resources importance",
+        "value": "critical to UNICEF success in India WASH programmes",
+        "subject": "UNICEF",
+        "reference": "consistency and strategic partnership",
+        "evidence_ids": [
+            "E220",
+            "E221"
+        ],
+        "entity_type": "organization",
+        "unit": null,
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "fact",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E220",
+                "page": 15,
+                "start_offset": 35657,
+                "end_offset": 35721,
+                "type": "sentence",
+                "text": "Unrestricted Core Resources \nhave been critical to this success."
+            },
+            {
+                "span_id": "E221",
+                "page": 15,
+                "start_offset": 35722,
+                "end_offset": 35944,
+                "type": "sentence",
+                "text": "While other resources can be \nfragmented or time-bound, Core Resources allowed UNICEF \nto be a consistent, strategic partner, year after year – playing \na central role in planning, monitoring and scaling up the \nprogramme."
+            }
+        ],
+        "quote": "Unrestricted Core Resources \nhave been critical to this success.\n\nWhile other resources can be \nfragmented or time-bound, Core Resources allowed UNICEF \nto be a consistent, strategic partner, year after year – playing \na central role in planning, monitoring and scaling up the \nprogramme."
+    },
+    {
+        "label": "UNICEF contribution to WASH data management",
+        "value": "improved collection, management and use of WASH data for India",
+        "subject": "UNICEF",
+        "reference": "transformative contribution to data systems",
+        "evidence_ids": [
+            "E223"
+        ],
+        "entity_type": "organization",
+        "unit": null,
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "fact",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E223",
+                "page": 15,
+                "start_offset": 36134,
+                "end_offset": 36255,
+                "type": "sentence",
+                "text": "One of UNICEF’s most transformative contributions has been \nimproving the way India collects, manages and uses WASH data."
+            }
+        ],
+        "quote": "One of UNICEF’s most transformative contributions has been \nimproving the way India collects, manages and uses WASH data."
+    },
+    {
+        "label": "Impact of improved access to clean water and sanitation",
+        "value": "dramatically reduced incidence of diarrhoeal disease, malnutrition and infection",
+        "subject": "India",
+        "reference": "leading causes of death in young children",
+        "evidence_ids": [
+            "E202"
+        ],
+        "entity_type": null,
+        "unit": null,
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "fact",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E202",
+                "page": 14,
+                "start_offset": 32536,
+                "end_offset": 32825,
+                "type": "sentence",
+                "text": "While progress on child health is \nnever the result of a single intervention, improved access to clean water and sanitation played a pivotal role by \ndramatically reducing incidence of diarrhoeal disease, malnutrition and infection – some of the leading causes \nof death in young children."
+            }
+        ],
+        "quote": "While progress on child health is \nnever the result of a single intervention, improved access to clean water and sanitation played a pivotal role by \ndramatically reducing incidence of diarrhoeal disease, malnutrition and infection – some of the leading causes \nof death in young children."
+    },
+    {
+        "label": "Government of India representative statement on UNICEF partnership",
+        "value": "Vini Mahajan, Secretary of Ministry of Water Resources affirmed valuable partnership",
+        "subject": "UNICEF",
+        "reference": "engagement in water and sanitation",
+        "evidence_ids": [
+            "E215",
+            "E216"
+        ],
+        "entity_type": "person",
+        "unit": null,
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "fact",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E215",
+                "page": 15,
+                "start_offset": 34646,
+                "end_offset": 34769,
+                "type": "sentence",
+                "text": "As Ms Vini Mahajan, Secretary  \nof the Ministry of Water Resources, said: “UNICEF has been  \na very valuable partner to us."
+            },
+            {
+                "span_id": "E216",
+                "page": 15,
+                "start_offset": 34770,
+                "end_offset": 35133,
+                "type": "sentence",
+                "text": "I have personally seen how  \nmuch engagement has been shown by your team in water  \nand sanitation.” \nBuilding on the gains of the sanitation movement, India launched \nthe Jal Jeevan (Water is Life) Mission to achieve universal access \nto safe and adequate drinking water – a natural and essential \nnext step in improving child health, development and protection."
+            }
+        ],
+        "quote": "As Ms Vini Mahajan, Secretary  \nof the Ministry of Water Resources, said: “UNICEF has been  \na very valuable partner to us.\n\nI have personally seen how  \nmuch engagement has been shown by your team in water  \nand sanitation.” \nBuilding on the gains of the sanitation movement, India launched \nthe Jal Jeevan (Water is Life) Mission to achieve universal access \nto safe and adequate drinking water – a natural and essential \nnext step in improving child health, development and protection."
+    },
+    {
+        "label": "Swachh Bharat Mission status by 2024",
+        "value": "reached nearly every corner of the country and catalysed shift in mindset",
+        "subject": "Government of India",
+        "reference": "evolution from toilet construction to systems strengthening",
+        "evidence_ids": [
+            "E211",
+            "E212"
+        ],
+        "entity_type": null,
+        "unit": null,
+        "period": "2024",
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "fact",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E211",
+                "page": 15,
+                "start_offset": 33951,
+                "end_offset": 34023,
+                "type": "sentence",
+                "text": "By 2024, Swachh Bharat had reached  \nnearly every corner of the country."
+            },
+            {
+                "span_id": "E212",
+                "page": 15,
+                "start_offset": 34026,
+                "end_offset": 34254,
+                "type": "sentence",
+                "text": "But more importantly, it had catalysed \na shift in mindset – from building toilets \nto strengthening systems for sustainable \nsanitation services, including solid and liquid \nwaste management and climate-responsive \ninitiatives."
+            }
+        ],
+        "quote": "By 2024, Swachh Bharat had reached  \nnearly every corner of the country.\n\nBut more importantly, it had catalysed \na shift in mindset – from building toilets \nto strengthening systems for sustainable \nsanitation services, including solid and liquid \nwaste management and climate-responsive \ninitiatives."
+    },
+    {
+        "label": "Systemic impact of WASH initiatives in India",
+        "value": "far-reaching systemic impact across water, sanitation and hygiene programmes",
+        "subject": "India",
+        "reference": "WASH revolution",
+        "evidence_ids": [
+            "E203"
+        ],
+        "entity_type": null,
+        "unit": null,
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "fact",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E203",
+                "page": 14,
+                "start_offset": 32826,
+                "end_offset": 32950,
+                "type": "sentence",
+                "text": "Few programmes have had such a far-reaching and systemic impact as India’s \nwater, sanitation and hygiene (WASH) revolution."
+            }
+        ],
+        "quote": "Few programmes have had such a far-reaching and systemic impact as India’s \nwater, sanitation and hygiene (WASH) revolution."
+    },
+    {
+        "label": "Safe sanitation and hygiene programme duration in India",
+        "value": "decade-long effort",
+        "subject": "India",
+        "reference": "bringing safe sanitation and hygiene to every home",
+        "evidence_ids": [
+            "E200"
+        ],
+        "entity_type": null,
+        "unit": "years",
+        "period": "decade",
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "fact",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E200",
+                "page": 14,
+                "start_offset": 32299,
+                "end_offset": 32458,
+                "type": "sentence",
+                "text": "In India, a decade-long effort to bring safe sanitation and hygiene to every home has done more than improve \ntoilets – it has helped to save children’s lives."
+            }
+        ],
+        "quote": "In India, a decade-long effort to bring safe sanitation and hygiene to every home has done more than improve \ntoilets – it has helped to save children’s lives."
+    },
+    {
+        "label": "Backing of Swachh Bharat Mission",
+        "value": "ambitious government-led movement backed by UNICEF and enabled by sustained investments of unrestricted funding",
+        "subject": "Government of India",
+        "reference": "institutional support for sanitation programme",
+        "evidence_ids": [
+            "E204"
+        ],
+        "entity_type": null,
+        "unit": null,
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "fact",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E204",
+                "page": 14,
+                "start_offset": 32951,
+                "end_offset": 33113,
+                "type": "sentence",
+                "text": "At the heart of that transformation has been an ambitious \ngovernment-led movement, backed by UNICEF and enabled by sustained investments of unrestricted funding."
+            }
+        ],
+        "quote": "At the heart of that transformation has been an ambitious \ngovernment-led movement, backed by UNICEF and enabled by sustained investments of unrestricted funding."
+    },
+    {
+        "label": "Data fragmentation challenge in WASH progress measurement",
+        "value": "fragmented definitions, reporting formats and data systems made it difficult to measure progress and spotlight inequalities",
+        "subject": "India",
+        "reference": "pre-UNICEF data system challenges",
+        "evidence_ids": [
+            "E224"
+        ],
+        "entity_type": null,
+        "unit": null,
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": "high",
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "risk",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E224",
+                "page": 15,
+                "start_offset": 36257,
+                "end_offset": 36435,
+                "type": "sentence",
+                "text": "Despite massive public investment, fragmented definitions, \nreporting formats and data systems had made it difficult to \nmeasure progress consistently and spotlight inequalities."
+            }
+        ],
+        "quote": "Despite massive public investment, fragmented definitions, \nreporting formats and data systems had made it difficult to \nmeasure progress consistently and spotlight inequalities."
+    },
+    {
+        "label": "UNICEF data systems strengthening",
+        "value": "worked with government to strengthen systems for more accurate, timely and actionable data",
+        "subject": "UNICEF",
+        "reference": "enabling data-guided decisions at every level",
+        "evidence_ids": [
+            "E225"
+        ],
+        "entity_type": "organization",
+        "unit": null,
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "fact",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E225",
+                "page": 15,
+                "start_offset": 36437,
+                "end_offset": 36610,
+                "type": "sentence",
+                "text": "UNICEF worked closely with government to strengthen these \nsystems, enabling more accurate, timely and actionable data to \nguide decisions and track progress at every level."
+            }
+        ],
+        "quote": "UNICEF worked closely with government to strengthen these \nsystems, enabling more accurate, timely and actionable data to \nguide decisions and track progress at every level."
+    },
+    {
+        "label": "Behavioural change from UNICEF WASH programmes",
+        "value": "sparked lasting behavioural change particularly in schools with children empowered to carry healthy habits to families",
+        "subject": "India",
+        "reference": "Swachh Bharat knowledge and dialogue creation",
+        "evidence_ids": [
+            "E237"
+        ],
+        "entity_type": null,
+        "unit": null,
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "fact",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E237",
+                "page": 16,
+                "start_offset": 38141,
+                "end_offset": 40163,
+                "type": "list_item",
+                "text": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+            }
+        ],
+        "quote": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+    },
+    {
+        "label": "Climate-smart and sustainable solutions foundation",
+        "value": "programme has laid foundation for climate-smart, sustainable solutions",
+        "subject": "India",
+        "reference": "UNICEF water and sanitation programmes adding climate change and environmental sustainability",
+        "evidence_ids": [
+            "E237"
+        ],
+        "entity_type": null,
+        "unit": null,
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "fact",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E237",
+                "page": 16,
+                "start_offset": 38141,
+                "end_offset": 40163,
+                "type": "list_item",
+                "text": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+            }
+        ],
+        "quote": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+    },
+    {
+        "label": "Youth role in climate and environmental sustainability",
+        "value": "youth becomes very important helping to live sustainably",
+        "subject": "India",
+        "reference": "climate change and environmental sustainability initiatives",
+        "evidence_ids": [
+            "E237"
+        ],
+        "entity_type": null,
+        "unit": null,
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "fact",
+        "confidence": 0.85,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E237",
+                "page": 16,
+                "start_offset": 38141,
+                "end_offset": 40163,
+                "type": "list_item",
+                "text": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+            }
+        ],
+        "quote": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+    },
+    {
+        "label": "Global significance of India WASH progress",
+        "value": "more than national success story; global milestone shifting global dial on water and sanitation",
+        "subject": "India",
+        "reference": "progress at scale with sustained government, partner and donor support",
+        "evidence_ids": [
+            "E237"
+        ],
+        "entity_type": null,
+        "unit": null,
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "fact",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E237",
+                "page": 16,
+                "start_offset": 38141,
+                "end_offset": 40163,
+                "type": "list_item",
+                "text": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+            }
+        ],
+        "quote": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+    },
+    {
+        "label": "Sustainable Development Goal 6 alignment",
+        "value": "results are measurable, replicable and within reach for every child, everywhere",
+        "subject": "India",
+        "reference": "Core Resources contribution to SDG 6",
+        "evidence_ids": [
+            "E237"
+        ],
+        "entity_type": null,
+        "unit": null,
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "fact",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E237",
+                "page": 16,
+                "start_offset": 38141,
+                "end_offset": 40163,
+                "type": "list_item",
+                "text": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+            }
+        ],
+        "quote": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+    },
+    {
+        "label": "Ground water quality improvement",
+        "value": "quality of ground water has improved in the last five years with Swachh Bharat Mission as major contributor",
+        "subject": "India",
+        "reference": "water quality benefit",
+        "evidence_ids": [
+            "E229"
+        ],
+        "entity_type": null,
+        "unit": null,
+        "period": "last five years",
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": "actual",
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "metric",
+        "confidence": 0.85,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E229",
+                "page": 15,
+                "start_offset": 37095,
+                "end_offset": 37625,
+                "type": "sentence",
+                "text": "Another UNICEF study has \nrevealed that the quality of ground \nwater has improved in the last five \nyears, and I believe that Swachh \nBharat Mission is also a major \ncontributor to the same.\"\n“When a developing country is \nable to successfully implement \nthe world's biggest sanitation \ncampaign... all its achievements \nand outcomes are an inspirational \nmessage for the entire world.”\n\"Swachh Bharat mission is this \ncentury’s biggest and most successful \npeople’s movement with people’s \nparticipation and people’s leadership.\""
+            }
+        ],
+        "quote": "Another UNICEF study has \nrevealed that the quality of ground \nwater has improved in the last five \nyears, and I believe that Swachh \nBharat Mission is also a major \ncontributor to the same.\"\n“When a developing country is \nable to successfully implement \nthe world's biggest sanitation \ncampaign... all its achievements \nand outcomes are an inspirational \nmessage for the entire world.”\n\"Swachh Bharat mission is this \ncentury’s biggest and most successful \npeople’s movement with people’s \nparticipation and people’s leadership.\""
+    },
+    {
+        "label": "Water-borne diseases reduction",
+        "value": "lasting reductions in waterborne diseases as major contributor to reducing child mortality and morbidity",
+        "subject": "India",
+        "reference": "health outcomes from improved sanitation and water access",
+        "evidence_ids": [
+            "E236",
+            "E237"
+        ],
+        "entity_type": null,
+        "unit": null,
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": "actual",
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "metric",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E236",
+                "page": 16,
+                "start_offset": 38068,
+                "end_offset": 38139,
+                "type": "sentence",
+                "text": "improved drinking water, and lasting \nreductions in waterborne diseases"
+            },
+            {
+                "span_id": "E237",
+                "page": 16,
+                "start_offset": 38141,
+                "end_offset": 40163,
+                "type": "list_item",
+                "text": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+            }
+        ],
+        "quote": "improved drinking water, and lasting \nreductions in waterborne diseases\n\n– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+    },
+    {
+        "label": "Flexibility benefit of unrestricted funding",
+        "value": "allowed UNICEF to work flexibly across sectors, test and adapt approaches in real time, and remain engaged for long haul",
+        "subject": "UNICEF",
+        "reference": "unrestricted funding enabling programme evolution",
+        "evidence_ids": [
+            "E237"
+        ],
+        "entity_type": "organization",
+        "unit": null,
+        "period": "10 years",
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "fact",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E237",
+                "page": 16,
+                "start_offset": 38141,
+                "end_offset": 40163,
+                "type": "list_item",
+                "text": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+            }
+        ],
+        "quote": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+    },
+    {
+        "label": "UNICEF programme evolution achievement",
+        "value": "helped take programme from proof of concept to national scale and from infrastructure rollout to systems transformation",
+        "subject": "UNICEF",
+        "reference": "10-year enabling role in Swachh Bharat",
+        "evidence_ids": [
+            "E237"
+        ],
+        "entity_type": "organization",
+        "unit": null,
+        "period": "10 years",
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "fact",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E237",
+                "page": 16,
+                "start_offset": 38141,
+                "end_offset": 40163,
+                "type": "list_item",
+                "text": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+            }
+        ],
+        "quote": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+    },
+    {
+        "label": "UNICEF India representative statement on children knowledge",
+        "value": "Cynthia McCaffrey noted children now have knowledge, talk about it and grow with it through Swachh Bharat",
+        "subject": "UNICEF",
+        "reference": "behavioural change and knowledge dialogue",
+        "evidence_ids": [
+            "E237"
+        ],
+        "entity_type": "person",
+        "unit": null,
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "fact",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E237",
+                "page": 16,
+                "start_offset": 38141,
+                "end_offset": 40163,
+                "type": "list_item",
+                "text": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+            }
+        ],
+        "quote": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+    },
+    {
+        "label": "UNICEF India Representative",
+        "value": "Cynthia McCaffrey",
+        "subject": "UNICEF",
+        "reference": "India country representation",
+        "evidence_ids": [
+            "E237"
+        ],
+        "entity_type": "person",
+        "unit": null,
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "entity",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E237",
+                "page": 16,
+                "start_offset": 38141,
+                "end_offset": 40163,
+                "type": "list_item",
+                "text": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+            }
+        ],
+        "quote": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+    },
+    {
+        "label": "Prime Minister of India",
+        "value": "Narendra Modi",
+        "subject": "Government of India",
+        "reference": "leadership",
+        "evidence_ids": [
+            "E230"
+        ],
+        "entity_type": "person",
+        "unit": null,
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "entity",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E230",
+                "page": 15,
+                "start_offset": 37627,
+                "end_offset": 37669,
+                "type": "list_item",
+                "text": "— Narendra Modi,  \nPrime Minister of India"
+            }
+        ],
+        "quote": "— Narendra Modi,  \nPrime Minister of India"
+    },
+    {
+        "label": "Ministry of Water Resources Secretary",
+        "value": "Vini Mahajan",
+        "subject": "Government of India",
+        "reference": "Ministry of Water Resources",
+        "evidence_ids": [
+            "E215"
+        ],
+        "entity_type": "person",
+        "unit": null,
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "entity",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E215",
+                "page": 15,
+                "start_offset": 34646,
+                "end_offset": 34769,
+                "type": "sentence",
+                "text": "As Ms Vini Mahajan, Secretary  \nof the Ministry of Water Resources, said: “UNICEF has been  \na very valuable partner to us."
+            }
+        ],
+        "quote": "As Ms Vini Mahajan, Secretary  \nof the Ministry of Water Resources, said: “UNICEF has been  \na very valuable partner to us."
+    },
+    {
+        "label": "Swachh Bharat Mission characterization",
+        "value": "century's biggest and most successful people's movement with people's participation and people's leadership",
+        "subject": "Government of India",
+        "reference": "Swachh Bharat programme",
+        "evidence_ids": [
+            "E230"
+        ],
+        "entity_type": null,
+        "unit": null,
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "fact",
+        "confidence": 0.9,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E230",
+                "page": 15,
+                "start_offset": 37627,
+                "end_offset": 37669,
+                "type": "list_item",
+                "text": "— Narendra Modi,  \nPrime Minister of India"
+            }
+        ],
+        "quote": "— Narendra Modi,  \nPrime Minister of India"
+    },
+    {
+        "label": "Sanitation campaign global inspirational value",
+        "value": "developing country successfully implementing world's biggest sanitation campaign provides inspirational message for entire world",
+        "subject": "India",
+        "reference": "Swachh Bharat Mission outcomes",
+        "evidence_ids": [
+            "E230"
+        ],
+        "entity_type": null,
+        "unit": null,
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "fact",
+        "confidence": 0.9,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E230",
+                "page": 15,
+                "start_offset": 37627,
+                "end_offset": 37669,
+                "type": "list_item",
+                "text": "— Narendra Modi,  \nPrime Minister of India"
+            }
+        ],
+        "quote": "— Narendra Modi,  \nPrime Minister of India"
+    },
+    {
+        "label": "Swachh Bharat Mission UN objectives alignment",
+        "value": "not only made lives of tens of millions of people better and protected their dignity but played important role achieving UN goals",
+        "subject": "Government of India",
+        "reference": "alignment with United Nations objectives",
+        "evidence_ids": [
+            "E227"
+        ],
+        "entity_type": null,
+        "unit": null,
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "fact",
+        "confidence": 0.95,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E227",
+                "page": 15,
+                "start_offset": 36712,
+                "end_offset": 36943,
+                "type": "sentence",
+                "text": "The \nSwachh Bharat Mission has not \nonly made the lives of crores [tens \nof millions] of people better, but  \nhas also protected their dignity  \nand has also played an important \nrole in achieving the goals of the \nUnited Nations.\""
+            }
+        ],
+        "quote": "The \nSwachh Bharat Mission has not \nonly made the lives of crores [tens \nof millions] of people better, but  \nhas also protected their dignity  \nand has also played an important \nrole in achieving the goals of the \nUnited Nations.\""
+    },
+    {
+        "label": "UNICEF study on economic savings",
+        "value": "UNICEF estimated every family constructing toilets saving at least 50,000 rupees ($650)",
+        "subject": "India",
+        "reference": "toilet construction economic benefit",
+        "evidence_ids": [
+            "E228"
+        ],
+        "entity_type": "organization",
+        "unit": null,
+        "period": null,
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": null,
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "fact",
+        "confidence": 0.85,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E228",
+                "page": 15,
+                "start_offset": 36944,
+                "end_offset": 37094,
+                "type": "sentence",
+                "text": "\"UNICEF has estimated that every \nfamily living in the village who are \nconstructing toilets in their homes \nis saving at least 50,000 rupees \n($650)."
+            }
+        ],
+        "quote": "\"UNICEF has estimated that every \nfamily living in the village who are \nconstructing toilets in their homes \nis saving at least 50,000 rupees \n($650)."
+    },
+    {
+        "label": "UNICEF groundwater study",
+        "value": "UNICEF study revealed ground water quality improved in last five years",
+        "subject": "UNICEF",
+        "reference": "water quality improvement research",
+        "evidence_ids": [
+            "E229"
+        ],
+        "entity_type": "organization",
+        "unit": null,
+        "period": "last five years",
+        "date_type": null,
+        "due_date": null,
+        "severity": null,
+        "metric_type": "actual",
+        "value_basis": null,
+        "aggregation": null,
+        "quantity_kind": null,
+        "kind": "fact",
+        "confidence": 0.85,
+        "aliases": [],
+        "evidence": [
+            {
+                "span_id": "E229",
+                "page": 15,
+                "start_offset": 37095,
+                "end_offset": 37625,
+                "type": "sentence",
+                "text": "Another UNICEF study has \nrevealed that the quality of ground \nwater has improved in the last five \nyears, and I believe that Swachh \nBharat Mission is also a major \ncontributor to the same.\"\n“When a developing country is \nable to successfully implement \nthe world's biggest sanitation \ncampaign... all its achievements \nand outcomes are an inspirational \nmessage for the entire world.”\n\"Swachh Bharat mission is this \ncentury’s biggest and most successful \npeople’s movement with people’s \nparticipation and people’s leadership.\""
+            }
+        ],
+        "quote": "Another UNICEF study has \nrevealed that the quality of ground \nwater has improved in the last five \nyears, and I believe that Swachh \nBharat Mission is also a major \ncontributor to the same.\"\n“When a developing country is \nable to successfully implement \nthe world's biggest sanitation \ncampaign... all its achievements \nand outcomes are an inspirational \nmessage for the entire world.”\n\"Swachh Bharat mission is this \ncentury’s biggest and most successful \npeople’s movement with people’s \nparticipation and people’s leadership.\""
+    }
+]

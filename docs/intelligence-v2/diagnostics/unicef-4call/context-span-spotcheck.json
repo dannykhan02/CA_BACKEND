@@ -1,0 +1,217 @@
+{
+  "reviewer": "Codex AI source-text spot check, not independent human review",
+  "reviewed": 11,
+  "current_rule_disagreements": 1,
+  "disagreement_handling": "C2 index 102 remains OUTSIDE_LOCALITY in the frozen automated output. Manual inspection finds AMBIGUOUS_CONTEXT because E143 says yearly allocations while E144 describes possible additional allocations; no label or aggregate count was silently changed.",
+  "cases": [
+    {
+      "call": "C1",
+      "raw_index": 0,
+      "rule_context_class": "OUTSIDE_LOCALITY",
+      "manual_context_class": "OUTSIDE_LOCALITY",
+      "period_accuracy": "CORRECT_BUT_UNSUPPORTED_BY_CITATION",
+      "cited_value_spans": [
+        {
+          "span_id": "E033",
+          "page": 3,
+          "type": "table_row",
+          "text": "German Committee for UNICEF\t69.4"
+        }
+      ],
+      "selected_candidate_id": "E061",
+      "candidate_excerpt": "Top 30 Core Resources partners by contributions received, 2024\nUNICEF thanks each of our donors and partners – governments, corporations, foundations, philanthropists, and \nmillions of individuals around the world – for ",
+      "reason": "E033 row has 69.4 and no year. E061 titles the 2024 Top 30 table on the same page but 28 spans away; E032 is absent.",
+      "disagreement": false
+    },
+    {
+      "call": "C2",
+      "raw_index": 0,
+      "rule_context_class": "OUTSIDE_LOCALITY",
+      "manual_context_class": "OUTSIDE_LOCALITY",
+      "period_accuracy": null,
+      "cited_value_spans": [
+        {
+          "span_id": "E033",
+          "page": 3,
+          "type": "table_row",
+          "text": "German Committee for UNICEF\t69.4"
+        }
+      ],
+      "selected_candidate_id": "E061",
+      "candidate_excerpt": "Top 30 Core Resources partners by contributions received, 2024\nUNICEF thanks each of our donors and partners – governments, corporations, foundations, philanthropists, and \nmillions of individuals around the world – for ",
+      "reason": "The same E033 value is period-null. E061 is present but fails the configured 12-span limit.",
+      "disagreement": false
+    },
+    {
+      "call": "T1",
+      "raw_index": 0,
+      "rule_context_class": "OUTSIDE_LOCALITY",
+      "manual_context_class": "OUTSIDE_LOCALITY",
+      "period_accuracy": null,
+      "cited_value_spans": [
+        {
+          "span_id": "E033",
+          "page": 3,
+          "type": "table_row",
+          "text": "German Committee for UNICEF\t69.4"
+        }
+      ],
+      "selected_candidate_id": "E061",
+      "candidate_excerpt": "Top 30 Core Resources partners by contributions received, 2024\nUNICEF thanks each of our donors and partners – governments, corporations, foundations, philanthropists, and \nmillions of individuals around the world – for ",
+      "reason": "Temperature-zero response still cites E033 alone; E061 remains 28 spans away.",
+      "disagreement": false
+    },
+    {
+      "call": "T2",
+      "raw_index": 0,
+      "rule_context_class": "OUTSIDE_LOCALITY",
+      "manual_context_class": "OUTSIDE_LOCALITY",
+      "period_accuracy": null,
+      "cited_value_spans": [
+        {
+          "span_id": "E033",
+          "page": 3,
+          "type": "table_row",
+          "text": "German Committee for UNICEF\t69.4"
+        }
+      ],
+      "selected_candidate_id": "E061",
+      "candidate_excerpt": "Top 30 Core Resources partners by contributions received, 2024\nUNICEF thanks each of our donors and partners – governments, corporations, foundations, philanthropists, and \nmillions of individuals around the world – for ",
+      "reason": "Repeated temperature-zero response has the same period-null E033 grounding.",
+      "disagreement": false
+    },
+    {
+      "call": "C1",
+      "raw_index": 27,
+      "rule_context_class": "AMBIGUOUS_CONTEXT",
+      "manual_context_class": "AMBIGUOUS_CONTEXT",
+      "period_accuracy": "AMBIGUOUS",
+      "cited_value_spans": [
+        {
+          "span_id": "E066",
+          "page": 3,
+          "type": "sentence",
+          "text": "Sweden $230.0 million\nNetherlands $124.4 million\nSwitzerland $90.8 million\nAustralia $80.0 million\nBelguim $66.6 million\nDenmark $38.5 million\nUnited Kingdom $14.3 million\nNew Zealand $11.4 million\nQatar $8.0 million\nIceland $5.0 million\nLuxembourg $23.5 million\nCanada $33.5 million"
+        }
+      ],
+      "selected_candidate_id": "E065",
+      "candidate_excerpt": "2020 2021 2022 2023 2024",
+      "reason": "E066 gives amounts, while E064/E065 give a 2020–2024 range and five columns without value-column ownership in the saved text.",
+      "disagreement": false
+    },
+    {
+      "call": "C1",
+      "raw_index": 47,
+      "rule_context_class": "ALREADY_SUPPORTED",
+      "manual_context_class": "ALREADY_SUPPORTED",
+      "period_accuracy": "CORRECT_AND_SUPPORTED",
+      "cited_value_spans": [
+        {
+          "span_id": "E075",
+          "page": 4,
+          "type": "sentence",
+          "text": "This support is changing lives. Since 2000, 7.9 million \nmore children have survived to see their fifth \nbirthdays."
+        }
+      ],
+      "selected_candidate_id": null,
+      "candidate_excerpt": null,
+      "reason": "E075 itself says Since 2000 for the 7.9 million child-survival observation.",
+      "disagreement": false
+    },
+    {
+      "call": "C2",
+      "raw_index": 102,
+      "rule_context_class": "OUTSIDE_LOCALITY",
+      "manual_context_class": "AMBIGUOUS_CONTEXT",
+      "period_accuracy": "AMBIGUOUS",
+      "cited_value_spans": [
+        {
+          "span_id": "E144",
+          "page": 9,
+          "type": "sentence",
+          "text": "Offices may also receive additional allocations for critical and unfunded priorities of the Strategic Plan \n2022‒2025, with a particular focus on: adolescent girls, community health and nutrition, education, or climate action.\n149  \ncountries and territories\n7  \nregions"
+        }
+      ],
+      "selected_candidate_id": "E124",
+      "candidate_excerpt": "Sierra Leone: Core Resources strengthened the child protection and case \nmanagement system, accrediting social workers for the first time  \nand facilitating protection services for more than 675,000 children in \nfive yea",
+      "reason": "E144 mentions Strategic Plan 2022–2025, but yearly allocations are in E143 and applicability to E144 additional allocations is unclear.",
+      "disagreement": true
+    },
+    {
+      "call": "T1",
+      "raw_index": 103,
+      "rule_context_class": "STRUCTURALLY_UNSAFE",
+      "manual_context_class": "STRUCTURALLY_UNSAFE",
+      "period_accuracy": "AMBIGUOUS",
+      "cited_value_spans": [
+        {
+          "span_id": "E108",
+          "page": 6,
+          "type": "sentence",
+          "text": "Guatemala: Core Resources positioned UNICEF as a key partner in the transformation \nof the social protection system, offering the government strategic policy advice and \npartnerships, which resulted in a $1 billion investment in social protection \nprogrammes and mitigation of a three-to-four-fold increase in poverty during \nthe COVID-19 pandemic."
+        }
+      ],
+      "selected_candidate_id": "E110",
+      "candidate_excerpt": "Before, during and after an emergency\nYemen: Core Resources safeguarded continued access and expansion of \nessential health services, contributing to a 23 per cent drop in under-five \nmortality over the course of the las",
+      "reason": "E108 has COVID timing for mitigation; whether it dates the investment is ambiguous. Nearby country rows cannot supply 2024.",
+      "disagreement": false
+    },
+    {
+      "call": "C1",
+      "raw_index": 77,
+      "rule_context_class": "OUTSIDE_LOCALITY",
+      "manual_context_class": "OUTSIDE_LOCALITY",
+      "period_accuracy": "NO_EXPLICIT_PERIOD_CONTEXT",
+      "cited_value_spans": [
+        {
+          "span_id": "E137",
+          "page": 8,
+          "type": "list_item",
+          "text": "• Capital costs aligned with programme goals and strategies\n(of which \nDevelopment \nEffectiveness \nwas $174 million)\n$227 million\nExpenditure**"
+        }
+      ],
+      "selected_candidate_id": "E144",
+      "candidate_excerpt": "Offices may also receive additional allocations for critical and unfunded priorities of the Strategic Plan \n2022‒2025, with a particular focus on: adolescent girls, community health and nutrition, education, or climate a",
+      "reason": "E137 gives $227 million and $174 million, with no claim-owned 2024 period in that span.",
+      "disagreement": false
+    },
+    {
+      "call": "C2",
+      "raw_index": 77,
+      "rule_context_class": "OUTSIDE_LOCALITY",
+      "manual_context_class": "OUTSIDE_LOCALITY",
+      "period_accuracy": null,
+      "cited_value_spans": [
+        {
+          "span_id": "E169",
+          "page": 11,
+          "type": "sentence",
+          "text": "Total\n$42.9\nmillion\n$25.2 million\nSystems strengthening to \nleave no one behind\n$5.3 million\nCommunity engagement, \nsocial and behaviour change\n$4.0 million\nOperational support to \nprogramme delivery\n$3.1 million\nData, research, evaluation, \nand knowledge management\n$1.9 million\nAdvocacy and communications\n$1.4 million\nInnovation\n$1.4 million\nPartnerships and engagement: \npublic and private\n$0.3 million\nDigital transformation\n$0.3 million\nRisk-informed humanitarian and \ndevelopment nexus programming\n$1.8 million funds implementation of the Joint UNICEF and the Africa Centre \nfor Disease Control Action Plan, supporting stronger primary health-care \nsystems and public health emergency preparedness and response in Africa.\n$5.8 million funds the prevention of HIV among adolescent girls and young \nwomen in 11 African countries: South Africa, Uganda, the United Republic of \nTanzania, Zambia, Namibia, Lesotho, Eswatini, Zimbabwe, the Democratic Republic \nof the Congo,"
+        }
+      ],
+      "selected_candidate_id": "E179",
+      "candidate_excerpt": "As James Elder, UNICEF spokesperson, said after visiting the Democratic Republic of the Congo in \nApril 2025: 7he cRVt RI iQactiRQ iVQt aEVtUact ,tV PeaVXUeG iQ SUeYeQtaEOe VX`eUiQJ aQG ORVt IXtXUeV\nUNICEF exists for eve",
+      "reason": "E169 allocation figures have no explicit 2024 period; nearby period phrases concern other blocks.",
+      "disagreement": false
+    },
+    {
+      "call": "T2",
+      "raw_index": 34,
+      "rule_context_class": "AMBIGUOUS_CONTEXT",
+      "manual_context_class": "AMBIGUOUS_CONTEXT",
+      "period_accuracy": "AMBIGUOUS",
+      "cited_value_spans": [
+        {
+          "span_id": "E076",
+          "page": 4,
+          "type": "sentence",
+          "text": "Vaccination efforts have saved an \nestimated 154 million lives."
+        }
+      ],
+      "selected_candidate_id": "E075",
+      "candidate_excerpt": "This support is changing lives. Since 2000, 7.9 million \nmore children have survived to see their fifth \nbirthdays.",
+      "reason": "Since 2000 is in E075; E076 vaccination lives saved is a separate following sentence with uncertain temporal scope.",
+      "disagreement": false
+    }
+  ]
+}

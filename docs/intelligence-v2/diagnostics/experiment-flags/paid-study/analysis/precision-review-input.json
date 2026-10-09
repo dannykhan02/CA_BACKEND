@@ -1,0 +1,86 @@
+[
+  {
+    "cell": "unicef_reduced-C1",
+    "chunk": "unicef_reduced",
+    "variant": "CONTROL",
+    "run": 1,
+    "accepted_file": "/home/collins/boys/CA_BACKEND/docs/intelligence-v2/diagnostics/experiment-flags/paid-study/analysis/unicef_reduced-C1.accepted.json"
+  },
+  {
+    "cell": "unicef_reduced-K1",
+    "chunk": "unicef_reduced",
+    "variant": "COLLECTOR_ONLY",
+    "run": 1,
+    "accepted_file": "/home/collins/boys/CA_BACKEND/docs/intelligence-v2/diagnostics/experiment-flags/paid-study/analysis/unicef_reduced-K1.accepted.json"
+  },
+  {
+    "cell": "india_wash-C1",
+    "chunk": "india_wash",
+    "variant": "CONTROL",
+    "run": 1,
+    "accepted_file": "/home/collins/boys/CA_BACKEND/docs/intelligence-v2/diagnostics/experiment-flags/paid-study/analysis/india_wash-C1.accepted.json"
+  },
+  {
+    "cell": "india_wash-K1",
+    "chunk": "india_wash",
+    "variant": "COLLECTOR_ONLY",
+    "run": 1,
+    "accepted_file": "/home/collins/boys/CA_BACKEND/docs/intelligence-v2/diagnostics/experiment-flags/paid-study/analysis/india_wash-K1.accepted.json"
+  },
+  {
+    "cell": "unicef_reduced-C2",
+    "chunk": "unicef_reduced",
+    "variant": "CONTROL",
+    "run": 2,
+    "accepted_file": "/home/collins/boys/CA_BACKEND/docs/intelligence-v2/diagnostics/experiment-flags/paid-study/analysis/unicef_reduced-C2.accepted.json"
+  },
+  {
+    "cell": "unicef_reduced-K2",
+    "chunk": "unicef_reduced",
+    "variant": "COLLECTOR_ONLY",
+    "run": 2,
+    "accepted_file": "/home/collins/boys/CA_BACKEND/docs/intelligence-v2/diagnostics/experiment-flags/paid-study/analysis/unicef_reduced-K2.accepted.json"
+  },
+  {
+    "cell": "india_wash-C2",
+    "chunk": "india_wash",
+    "variant": "CONTROL",
+    "run": 2,
+    "accepted_file": "/home/collins/boys/CA_BACKEND/docs/intelligence-v2/diagnostics/experiment-flags/paid-study/analysis/india_wash-C2.accepted.json"
+  },
+  {
+    "cell": "india_wash-K2",
+    "chunk": "india_wash",
+    "variant": "COLLECTOR_ONLY",
+    "run": 2,
+    "accepted_file": "/home/collins/boys/CA_BACKEND/docs/intelligence-v2/diagnostics/experiment-flags/paid-study/analysis/india_wash-K2.accepted.json"
+  },
+  {
+    "cell": "unicef_reduced-C3",
+    "chunk": "unicef_reduced",
+    "variant": "CONTROL",
+    "run": 3,
+    "accepted_file": "/home/collins/boys/CA_BACKEND/docs/intelligence-v2/diagnostics/experiment-flags/paid-study/analysis/unicef_reduced-C3.accepted.json"
+  },
+  {
+    "cell": "unicef_reduced-K3",
+    "chunk": "unicef_reduced",
+    "variant": "COLLECTOR_ONLY",
+    "run": 3,
+    "accepted_file": "/home/collins/boys/CA_BACKEND/docs/intelligence-v2/diagnostics/experiment-flags/paid-study/analysis/unicef_reduced-K3.accepted.json"
+  },
+  {
+    "cell": "india_wash-C3",
+    "chunk": "india_wash",
+    "variant": "CONTROL",
+    "run": 3,
+    "accepted_file": "/home/collins/boys/CA_BACKEND/docs/intelligence-v2/diagnostics/experiment-flags/paid-study/analysis/india_wash-C3.accepted.json"
+  },
+  {
+    "cell": "india_wash-K3",
+    "chunk": "india_wash",
+    "variant": "COLLECTOR_ONLY",
+    "run": 3,
+    "accepted_file": "/home/collins/boys/CA_BACKEND/docs/intelligence-v2/diagnostics/experiment-flags/paid-study/analysis/india_wash-K3.accepted.json"
+  }
+]

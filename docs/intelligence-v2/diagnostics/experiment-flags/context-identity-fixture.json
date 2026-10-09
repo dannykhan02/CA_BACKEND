@@ -1,0 +1,22 @@
+{
+  "A": {
+    "evidence_ids": [
+      "E033"
+    ],
+    "base_identity": "[\"Q\",[\"E033\"],[\"69400000\"],\"million\",\"USD\",false]",
+    "experiment_primary_identity": "[\"Q\",[\"E033\"],[\"69400000\"],\"million\",\"USD\",false]",
+    "strict_identity": "[[\"Q\",[\"E033\"],[\"69400000\"],\"million\",\"USD\",false],[\"german committee for unicef core resources contribution 2024\",\"2024\",\"usd millions\"]]"
+  },
+  "B": {
+    "evidence_ids": [
+      "E032",
+      "E033"
+    ],
+    "base_identity": "[\"Q\",[\"E032\",\"E033\"],[\"69400000\"],\"million\",\"USD\",false]",
+    "experiment_primary_identity": "[\"Q\",[\"E032\",\"E033\"],[\"69400000\"],\"million\",\"USD\",false]",
+    "strict_identity": "[[\"Q\",[\"E032\",\"E033\"],[\"69400000\"],\"million\",\"USD\",false],[\"german committee for unicef core resources contribution 2024\",\"2024\",\"usd millions\"]]"
+  },
+  "primary_equal": false,
+  "strict_equal": false,
+  "note": "B uses E032 only as a counterfactual identity fixture; E032 is absent from all four exact saved requests and would be rejected by span validation."
+}

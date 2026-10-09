@@ -1,0 +1,174 @@
+{
+  "source_sha256": "0709f82d8ff76517e2617ca88e17a1e21a4bbefbcd60a2c18c678ee50b23171f",
+  "gold": [
+    {
+      "evidence_ids": [
+        "E201"
+      ],
+      "normalized_claim": "India child mortality fell 37 percent between 2014 and 2022",
+      "canonical_value": 37,
+      "canonical_unit": "percent",
+      "why_qualifies": "independently supported source observation",
+      "priority_material": true,
+      "optional_period_explicitly_supported": true
+    },
+    {
+      "evidence_ids": [
+        "E205"
+      ],
+      "normalized_claim": "India launched Swachh Bharat Mission in 2014",
+      "canonical_value": 2014,
+      "canonical_unit": "year",
+      "why_qualifies": "independently supported source observation",
+      "priority_material": true,
+      "optional_period_explicitly_supported": true
+    },
+    {
+      "evidence_ids": [
+        "E206"
+      ],
+      "normalized_claim": "Swachh Bharat targeted over 110 million toilets",
+      "canonical_value": 110000000,
+      "canonical_unit": "toilets",
+      "why_qualifies": "independently supported source observation",
+      "priority_material": true,
+      "optional_period_explicitly_supported": false
+    },
+    {
+      "evidence_ids": [
+        "E206"
+      ],
+      "normalized_claim": "Swachh Bharat targeted sanitation for 550 million people",
+      "canonical_value": 550000000,
+      "canonical_unit": "people",
+      "why_qualifies": "independently supported source observation",
+      "priority_material": true,
+      "optional_period_explicitly_supported": false
+    },
+    {
+      "evidence_ids": [
+        "E207"
+      ],
+      "normalized_claim": "The sanitation target was achieved by 2019",
+      "canonical_value": 2019,
+      "canonical_unit": "year",
+      "why_qualifies": "independently supported source observation",
+      "priority_material": true,
+      "optional_period_explicitly_supported": true
+    },
+    {
+      "evidence_ids": [
+        "E209"
+      ],
+      "normalized_claim": "550 million people reached with at least basic sanitation in the last 10 years",
+      "canonical_value": 550000000,
+      "canonical_unit": "people",
+      "why_qualifies": "independently supported source observation",
+      "priority_material": true,
+      "optional_period_explicitly_supported": true
+    },
+    {
+      "evidence_ids": [
+        "E209"
+      ],
+      "normalized_claim": "580 million people reached with improved household drinking water in the last 10 years",
+      "canonical_value": 580000000,
+      "canonical_unit": "people",
+      "why_qualifies": "independently supported source observation",
+      "priority_material": true,
+      "optional_period_explicitly_supported": true
+    },
+    {
+      "evidence_ids": [
+        "E218"
+      ],
+      "normalized_claim": "More than 115 million rural households gained piped water in the last five years",
+      "canonical_value": 115000000,
+      "canonical_unit": "households",
+      "why_qualifies": "independently supported source observation",
+      "priority_material": true,
+      "optional_period_explicitly_supported": true
+    },
+    {
+      "evidence_ids": [
+        "E228"
+      ],
+      "normalized_claim": "UNICEF estimated village families constructing toilets saved at least 50,000 rupees",
+      "canonical_value": 50000,
+      "canonical_unit": "INR",
+      "why_qualifies": "independently supported source observation",
+      "priority_material": true,
+      "optional_period_explicitly_supported": false
+    },
+    {
+      "evidence_ids": [
+        "E232"
+      ],
+      "normalized_claim": "India invested over USD 120 billion in water and sanitation over the past 10 years",
+      "canonical_value": 120,
+      "canonical_unit": "USD billion",
+      "why_qualifies": "independently supported source observation",
+      "priority_material": true,
+      "optional_period_explicitly_supported": true
+    },
+    {
+      "evidence_ids": [
+        "E214"
+      ],
+      "normalized_claim": "UNICEF embedded technical advisors in every Indian state",
+      "canonical_value": null,
+      "canonical_unit": null,
+      "why_qualifies": "independently supported source observation",
+      "priority_material": false,
+      "optional_period_explicitly_supported": false
+    },
+    {
+      "evidence_ids": [
+        "E223"
+      ],
+      "normalized_claim": "UNICEF improved India WASH data collection and management",
+      "canonical_value": null,
+      "canonical_unit": null,
+      "why_qualifies": "independently supported source observation",
+      "priority_material": false,
+      "optional_period_explicitly_supported": false
+    }
+  ],
+  "negative": [
+    {
+      "evidence_ids": [
+        "E209"
+      ],
+      "excluded_claim": "SDG target 6 is an achieved business metric",
+      "reason": "context label"
+    },
+    {
+      "evidence_ids": [
+        "E206"
+      ],
+      "excluded_claim": "110 million toilets were completed in 2014",
+      "reason": "target confused with actual and year"
+    },
+    {
+      "evidence_ids": [
+        "E207"
+      ],
+      "excluded_claim": "Vani has a 2019 deadline to practise handwashing",
+      "reason": "caption and date conflated"
+    },
+    {
+      "evidence_ids": [
+        "E218"
+      ],
+      "excluded_claim": "115 million households were reached in 2024",
+      "reason": "unsupported calendar period"
+    },
+    {
+      "evidence_ids": [
+        "E231"
+      ],
+      "excluded_claim": "Annual report 14 is an operational quantity",
+      "reason": "page footer"
+    }
+  ]
+}

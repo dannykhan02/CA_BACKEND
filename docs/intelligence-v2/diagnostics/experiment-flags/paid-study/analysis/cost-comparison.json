@@ -1,0 +1,36 @@
+{
+  "unicef_reduced": {
+    "control_mean_cost": 0.03026066666666667,
+    "collector_mean_cost": 0.046137,
+    "extra_cost": 0.01587633333333333,
+    "extra_cost_percent": 52.46524641448744,
+    "mean_returned_delta": 23.66666666666667,
+    "mean_accepted_delta": 23.66666666666667,
+    "mean_rejected_delta": 0,
+    "mean_output_token_delta": 3174.666666666667,
+    "mean_input_token_delta": 3,
+    "output_count_effect_tokens": 3297.6253687315643,
+    "output_length_effect_tokens": -122.95870206489607,
+    "mean_gold_delta": 0.6666666666666679,
+    "extra_cost_per_net_gold": 0.02381449999999995,
+    "extra_accepted_per_net_gold": 35.49999999999994,
+    "extra_output_tokens_per_net_gold": 4761.999999999992
+  },
+  "india_wash": {
+    "control_mean_cost": 0.022729666666666665,
+    "collector_mean_cost": 0.032926000000000004,
+    "extra_cost": 0.010196333333333338,
+    "extra_cost_percent": 44.85914150376163,
+    "mean_returned_delta": 11.666666666666668,
+    "mean_accepted_delta": 12.666666666666664,
+    "mean_rejected_delta": -0.9999999999999996,
+    "mean_output_token_delta": 2038.6666666666665,
+    "mean_input_token_delta": 3,
+    "output_count_effect_tokens": 1479.6780303030307,
+    "output_length_effect_tokens": 558.988636363636,
+    "mean_gold_delta": 1.3333333333333321,
+    "extra_cost_per_net_gold": 0.007647250000000011,
+    "extra_accepted_per_net_gold": 9.500000000000007,
+    "extra_output_tokens_per_net_gold": 1529.0000000000011
+  }
+}

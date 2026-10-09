@@ -1,0 +1,263 @@
+{
+  "reviewer": "Codex AI agent, source-text spot check; not independent human review",
+  "selected_count": 12,
+  "current_rule_disagreements": 0,
+  "no_context_found_examples": "None available: the rule engine found a nearby explicit period expression for every unresolved case, although most were unsafe, ambiguous or outside locality.",
+  "initial_rule_implementation_corrections": [
+    {
+      "issue": "The first regex missed decade-long in E200 and Over 10 years in E237.",
+      "initial_effect": "Three E200 records were misclassified NO_EXPLICIT_PERIOD_CONTEXT; five E237 records were AMBIGUOUS.",
+      "resolution": "Added the literal temporal patterns and reran all cases; these eight are now CORRECT_AND_SUPPORTED."
+    },
+    {
+      "issue": "First pass treated E108 investment 2024 as definitely WRONG.",
+      "initial_effect": "One false certainty: pandemic timing can attach to mitigation only.",
+      "resolution": "Changed that record to AMBIGUOUS; E122 remains the one clear WRONG case."
+    },
+    {
+      "issue": "First pass treated E112 and E124 model 2024 as ambiguous because their spans mention other temporal phrases.",
+      "initial_effect": "Two unsupported years were hidden in AMBIGUOUS.",
+      "resolution": "Changed both to NO_EXPLICIT_PERIOD_CONTEXT for the specific recorded claims."
+    },
+    {
+      "issue": "First pass treated the E103 aggregate 2020-2024 series like a single-year chart point.",
+      "initial_effect": "One caption-range period was marked AMBIGUOUS with the unowned chart points.",
+      "resolution": "Marked only the aggregate period range CORRECT_AND_SUPPORTED; individual value-year pairings remain unverified."
+    }
+  ],
+  "cases": [
+    {
+      "cell": "india_wash-C1",
+      "raw_index": 22,
+      "rule_context_class": "SAFE_CONTEXT_CANDIDATE",
+      "manual_context_class": "SAFE_CONTEXT_CANDIDATE",
+      "rule_period_accuracy": null,
+      "model_period": null,
+      "cited_value_spans": [
+        {
+          "span_id": "E212",
+          "page": 15,
+          "text": "But more importantly, it had catalysed \na shift in mindset – from building toilets \nto strengthening systems for sustainable \nsanitation services, including solid and liquid \nwaste management and climate-responsive \ninitiatives."
+        }
+      ],
+      "selected_candidate_id": "E211",
+      "candidate_source_excerpt": "By 2024, Swachh Bharat had reached  \nnearly every corner of the country.",
+      "rationale": "E212 continues E211 with the same Swachh Bharat subject and the pronoun it; By 2024 can qualify the described state.",
+      "disagreement": false
+    },
+    {
+      "cell": "india_wash-K3",
+      "raw_index": 23,
+      "rule_context_class": "SAFE_CONTEXT_CANDIDATE",
+      "manual_context_class": "SAFE_CONTEXT_CANDIDATE",
+      "rule_period_accuracy": null,
+      "model_period": null,
+      "cited_value_spans": [
+        {
+          "span_id": "E212",
+          "page": 15,
+          "text": "But more importantly, it had catalysed \na shift in mindset – from building toilets \nto strengthening systems for sustainable \nsanitation services, including solid and liquid \nwaste management and climate-responsive \ninitiatives."
+        }
+      ],
+      "selected_candidate_id": "E211",
+      "candidate_source_excerpt": "By 2024, Swachh Bharat had reached  \nnearly every corner of the country.",
+      "rationale": "The same E211/E212 paragraph continuation is in the frozen India request; a second citation would use 2 of 3 IDs.",
+      "disagreement": false
+    },
+    {
+      "cell": "unicef_reduced-C1",
+      "raw_index": 5,
+      "rule_context_class": "AMBIGUOUS_CONTEXT",
+      "manual_context_class": "AMBIGUOUS_CONTEXT",
+      "rule_period_accuracy": "AMBIGUOUS",
+      "model_period": "2024",
+      "cited_value_spans": [
+        {
+          "span_id": "E103",
+          "page": 5,
+          "text": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)"
+        }
+      ],
+      "selected_candidate_id": "E103",
+      "candidate_source_excerpt": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n2024202320222021202",
+      "rationale": "E103 has five years and several value arrays flattened from charts; no reliable value-to-year column ownership remains.",
+      "disagreement": false
+    },
+    {
+      "cell": "india_wash-C1",
+      "raw_index": 9,
+      "rule_context_class": "AMBIGUOUS_CONTEXT",
+      "manual_context_class": "AMBIGUOUS_CONTEXT",
+      "rule_period_accuracy": null,
+      "model_period": null,
+      "cited_value_spans": [
+        {
+          "span_id": "E233",
+          "page": 16,
+          "text": "110 million toilets constructed, more"
+        }
+      ],
+      "selected_candidate_id": "E232",
+      "candidate_source_excerpt": "The Government of India has backed its \ncommitment with a game-changing \ninvestment of over $120 billion in water and \nsanitation over the past 10 years. The \nresults speak for themselves: achieving",
+      "rationale": "E232 says investment over ten years, then a results list continues into E233; the ten-year phrase may modify investment only.",
+      "disagreement": false
+    },
+    {
+      "cell": "unicef_reduced-C1",
+      "raw_index": 15,
+      "rule_context_class": "STRUCTURALLY_UNSAFE",
+      "manual_context_class": "STRUCTURALLY_UNSAFE",
+      "rule_period_accuracy": "AMBIGUOUS",
+      "model_period": "2024",
+      "cited_value_spans": [
+        {
+          "span_id": "E108",
+          "page": 6,
+          "text": "Guatemala: Core Resources positioned UNICEF as a key partner in the transformation \nof the social protection system, offering the government strategic policy advice and \npartnerships, which resulted in a $1 billion investment in social protection \nprogrammes and mitigation of a three-to-four-fold increase in poverty during \nthe COVID-19 pandemic."
+        }
+      ],
+      "selected_candidate_id": "E110",
+      "candidate_source_excerpt": "Before, during and after an emergency\nYemen: Core Resources safeguarded continued access and expansion of \nessential health services, contributing to a 23 per cent drop in under-five \nmortality over the course of the las",
+      "rationale": "E108 describes the investment and pandemic mitigation in one sentence, but COVID timing may attach only to mitigation. Other nearby periods belong to other country rows.",
+      "disagreement": false
+    },
+    {
+      "cell": "india_wash-C1",
+      "raw_index": 6,
+      "rule_context_class": "STRUCTURALLY_UNSAFE",
+      "manual_context_class": "STRUCTURALLY_UNSAFE",
+      "rule_period_accuracy": null,
+      "model_period": null,
+      "cited_value_spans": [
+        {
+          "span_id": "E216",
+          "page": 15,
+          "text": "I have personally seen how  \nmuch engagement has been shown by your team in water  \nand sanitation.” \nBuilding on the gains of the sanitation movement, India launched \nthe Jal Jeevan (Water is Life) Mission to achieve universal access \nto safe and adequate drinking water – a natural and essential \nnext step in improving child health, development and protection."
+        }
+      ],
+      "selected_candidate_id": "E218",
+      "candidate_source_excerpt": "Over the last five years, \nmore than 115 million rural households have gained piped water \nconnections in their homes for the first time.",
+      "rationale": "E216 describes a Jal Jeevan launch; E218 five years modifies household connections, not the launch.",
+      "disagreement": false
+    },
+    {
+      "cell": "unicef_reduced-C1",
+      "raw_index": 13,
+      "rule_context_class": "STRUCTURALLY_UNSAFE",
+      "manual_context_class": "STRUCTURALLY_UNSAFE",
+      "rule_period_accuracy": "NO_EXPLICIT_PERIOD_CONTEXT",
+      "model_period": "2024",
+      "cited_value_spans": [
+        {
+          "span_id": "E107",
+          "page": 6,
+          "text": "Leading, convening and pioneering\nHorn of Africa: Core Resources scaled up an innovative solution using satellite data \nto detect groundwater, mapping nearly a million square kilometres of territory in \ndrought-prone countries, with the potential to benefit 10 million people in need."
+        }
+      ],
+      "selected_candidate_id": "E108",
+      "candidate_source_excerpt": "Guatemala: Core Resources positioned UNICEF as a key partner in the transformation \nof the social protection system, offering the government strategic policy advice and \npartnerships, which resulted in a $1 billion inves",
+      "rationale": "E107 groundwater mapping gives no year; E108 pandemic timing belongs to Guatemala, not Horn of Africa.",
+      "disagreement": false
+    },
+    {
+      "cell": "india_wash-C3",
+      "raw_index": 3,
+      "rule_context_class": "OUTSIDE_LOCALITY",
+      "manual_context_class": "OUTSIDE_LOCALITY",
+      "rule_period_accuracy": null,
+      "model_period": null,
+      "cited_value_spans": [
+        {
+          "span_id": "E206",
+          "page": 14,
+          "text": "Its goal was bold: provide universal access to \nsanitation and eliminate open defecation by constructing over \n110 million toilets for 550 million people across the country."
+        },
+        {
+          "span_id": "E233",
+          "page": 16,
+          "text": "110 million toilets constructed, more"
+        }
+      ],
+      "selected_candidate_id": "E205",
+      "candidate_source_excerpt": "In 2014, the Government of India launched the Swachh Bharat \n(Clean India) Mission, one of the largest sanitation programmes \nin the world.",
+      "rationale": "E206 and E233 already span pages 14 and 16; E205 launch year cannot safely date the constructed-toilets outcome.",
+      "disagreement": false
+    },
+    {
+      "cell": "unicef_reduced-C1",
+      "raw_index": 36,
+      "rule_context_class": "OUTSIDE_LOCALITY",
+      "manual_context_class": "OUTSIDE_LOCALITY",
+      "rule_period_accuracy": "NO_EXPLICIT_PERIOD_CONTEXT",
+      "model_period": "2024",
+      "cited_value_spans": [
+        {
+          "span_id": "E128",
+          "page": 8,
+          "text": "12 of the 17 Sustainable Development Goals"
+        }
+      ],
+      "selected_candidate_id": "E124",
+      "candidate_source_excerpt": "Sierra Leone: Core Resources strengthened the child protection and case \nmanagement system, accrediting social workers for the first time  \nand facilitating protection services for more than 675,000 children in \nfive yea",
+      "rationale": "E128 SDG count is page 8; E124 five years is Sierra Leone on page 7 and cannot date it.",
+      "disagreement": false
+    },
+    {
+      "cell": "india_wash-C1",
+      "raw_index": 0,
+      "rule_context_class": "ALREADY_SUPPORTED",
+      "manual_context_class": "ALREADY_SUPPORTED",
+      "rule_period_accuracy": "CORRECT_AND_SUPPORTED",
+      "model_period": "2014-2022",
+      "cited_value_spans": [
+        {
+          "span_id": "E201",
+          "page": 14,
+          "text": "Between 2014 and 2022, India saw a 37 per cent reduction in child mortality."
+        }
+      ],
+      "selected_candidate_id": null,
+      "candidate_source_excerpt": null,
+      "rationale": "E201 explicitly states 2014 to 2022 and the 37 percent child-mortality claim in one span.",
+      "disagreement": false
+    },
+    {
+      "cell": "unicef_reduced-C1",
+      "raw_index": 31,
+      "rule_context_class": "ALREADY_CITED_CONFLICT",
+      "manual_context_class": "ALREADY_CITED_CONFLICT",
+      "rule_period_accuracy": "WRONG",
+      "model_period": "2024",
+      "cited_value_spans": [
+        {
+          "span_id": "E122",
+          "page": 7,
+          "text": "Bangladesh: Core Resources helped UNICEF mobilize and sustain government action to \ntransform children’s nutrition outcomes, contributing to a 40 per cent reduction in stunting \namong children under five and a nearly tenfold increase in domestic investments in \nnutrition services over a decade."
+        }
+      ],
+      "selected_candidate_id": null,
+      "candidate_source_excerpt": null,
+      "rationale": "E122 explicitly says the stunting reduction was over a decade. The model supplied 2024; E120 nearby has 2024 for an India water row.",
+      "disagreement": false
+    },
+    {
+      "cell": "india_wash-C1",
+      "raw_index": 19,
+      "rule_context_class": "ALREADY_SUPPORTED",
+      "manual_context_class": "ALREADY_SUPPORTED",
+      "rule_period_accuracy": "CORRECT_AND_SUPPORTED",
+      "model_period": "5 years",
+      "cited_value_spans": [
+        {
+          "span_id": "E229",
+          "page": 15,
+          "text": "Another UNICEF study has \nrevealed that the quality of ground \nwater has improved in the last five \nyears, and I believe that Swachh \nBharat Mission is also a major \ncontributor to the same.\"\n“When a developing country is \nable to successfully implement \nthe world's biggest sanitation \ncampaign... all its achievements \nand outcomes are an inspirational \nmessage for the entire world.”\n\"Swachh Bharat mission is this \ncentury’s biggest and most successful \npeople’s movement with people’s \nparticipation and people’s leadership.\""
+        }
+      ],
+      "selected_candidate_id": null,
+      "candidate_source_excerpt": null,
+      "rationale": "E229 explicitly gives groundwater quality improvement in the last five years.",
+      "disagreement": false
+    }
+  ]
+}

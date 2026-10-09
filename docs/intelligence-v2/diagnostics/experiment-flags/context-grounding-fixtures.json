@@ -1,0 +1,582 @@
+{
+    "header_number_30": {
+        "fixture": "header_number_30",
+        "accepted": true,
+        "evidence_ids": [
+            "E001",
+            "E002"
+        ],
+        "value": "30",
+        "period": "2024",
+        "unit": null,
+        "origin": "document",
+        "typed_value": {
+            "type": "number",
+            "raw": "30",
+            "verbatim": true,
+            "number": 30,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": null,
+            "unit_kind": "other",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+                "id": null,
+                "text": "German Committee for UNICEF"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+        },
+        "typed_period": "2024",
+        "merger_identity": "b5ef2d5d6156b15bdd3b24cf89d66a605663dc04afc2529af6da658f1503c588",
+        "resolved_quote": "Top 30 Core Resources partners, 2024\n\nGerman Committee for UNICEF 69.4"
+    },
+    "two_year_header_2023": {
+        "fixture": "two_year_header_2023",
+        "accepted": true,
+        "evidence_ids": [
+            "E001",
+            "E002"
+        ],
+        "value": "69.4",
+        "period": "2023",
+        "unit": null,
+        "origin": "document",
+        "typed_value": {
+            "type": "number",
+            "raw": "69.4",
+            "verbatim": true,
+            "number": 69.4,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": null,
+            "unit_kind": "other",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+                "id": null,
+                "text": "German Committee for UNICEF"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+        },
+        "typed_period": "2023",
+        "merger_identity": "200489653c3d8589a8a1d4a729eed183daa2d2951c1a7ed071f92ac90658402f",
+        "resolved_quote": "Top 30 Core Resources partners, 2023 and 2024\n\nGerman Committee for UNICEF 69.4"
+    },
+    "two_year_header_2024": {
+        "fixture": "two_year_header_2024",
+        "accepted": true,
+        "evidence_ids": [
+            "E001",
+            "E002"
+        ],
+        "value": "69.4",
+        "period": "2024",
+        "unit": null,
+        "origin": "document",
+        "typed_value": {
+            "type": "number",
+            "raw": "69.4",
+            "verbatim": true,
+            "number": 69.4,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": null,
+            "unit_kind": "other",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+                "id": null,
+                "text": "German Committee for UNICEF"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+        },
+        "typed_period": "2024",
+        "merger_identity": "081bb90fe6e5023c1d38625db001684305833b3d235725ccc717fad8d85457ae",
+        "resolved_quote": "Top 30 Core Resources partners, 2023 and 2024\n\nGerman Committee for UNICEF 69.4"
+    },
+    "usd_millions_header": {
+        "fixture": "usd_millions_header",
+        "accepted": true,
+        "evidence_ids": [
+            "E001",
+            "E002"
+        ],
+        "value": "69.4",
+        "period": null,
+        "unit": "USD millions",
+        "origin": "document",
+        "typed_value": {
+            "type": "money",
+            "raw": "69.4",
+            "verbatim": true,
+            "number": 69400000,
+            "scale": 1000000,
+            "scale_source": "unit",
+            "currency": "USD",
+            "unit": "USD millions",
+            "unit_kind": "currency",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+                "id": null,
+                "text": "German Committee for UNICEF"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+        },
+        "typed_period": null,
+        "merger_identity": "5e4a164d46de30ee52cfbbb1f73a45e116d85c8bf78c8543c2bedfdf9cf8250f",
+        "resolved_quote": "PARTNER USD (MILLIONS)\n\nGerman Committee for UNICEF 69.4"
+    },
+    "usd_millions_row_only": {
+        "fixture": "usd_millions_row_only",
+        "accepted": true,
+        "evidence_ids": [
+            "E002"
+        ],
+        "value": "69.4",
+        "period": null,
+        "unit": "USD millions",
+        "origin": "document",
+        "typed_value": {
+            "type": "money",
+            "raw": "69.4",
+            "verbatim": true,
+            "number": 69400000,
+            "scale": 1000000,
+            "scale_source": "unit",
+            "currency": "USD",
+            "unit": "USD millions",
+            "unit_kind": "currency",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+                "id": null,
+                "text": "German Committee for UNICEF"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+        },
+        "typed_period": null,
+        "merger_identity": "5e4a164d46de30ee52cfbbb1f73a45e116d85c8bf78c8543c2bedfdf9cf8250f",
+        "resolved_quote": "German Committee for UNICEF 69.4"
+    },
+    "wrong_currency_with_header": {
+        "fixture": "wrong_currency_with_header",
+        "accepted": true,
+        "evidence_ids": [
+            "E001",
+            "E002"
+        ],
+        "value": "69.4",
+        "period": null,
+        "unit": "EUR millions",
+        "origin": "document",
+        "typed_value": {
+            "type": "money",
+            "raw": "69.4",
+            "verbatim": true,
+            "number": 69400000,
+            "scale": 1000000,
+            "scale_source": "unit",
+            "currency": "EUR",
+            "unit": "EUR millions",
+            "unit_kind": "currency",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+                "id": null,
+                "text": "German Committee for UNICEF"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+        },
+        "typed_period": null,
+        "merger_identity": "1c729b10e06abcef7f08a639d93737f6c07635a033a32320fcee012bbbb72345",
+        "resolved_quote": "PARTNER USD (MILLIONS)\n\nGerman Committee for UNICEF 69.4"
+    },
+    "unrelated_header_number": {
+        "fixture": "unrelated_header_number",
+        "accepted": true,
+        "evidence_ids": [
+            "E001",
+            "E002"
+        ],
+        "value": "42",
+        "period": "2024",
+        "unit": null,
+        "origin": "document",
+        "typed_value": {
+            "type": "number",
+            "raw": "42",
+            "verbatim": true,
+            "number": 42,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": null,
+            "unit_kind": "other",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+                "id": null,
+                "text": "German Committee for UNICEF"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+        },
+        "typed_period": "2024",
+        "merger_identity": "5d0db3ec2024f51853b5993b41e35ac3737e89ba2c8bf0680290eeba64098e8d",
+        "resolved_quote": "Top 42 partners, 2024\n\nGerman Committee for UNICEF 69.4"
+    },
+    "same_value_2023": {
+        "fixture": "same_value_2023",
+        "accepted": true,
+        "evidence_ids": [
+            "E001",
+            "E002"
+        ],
+        "value": "50",
+        "period": "2023",
+        "unit": null,
+        "origin": "document",
+        "typed_value": {
+            "type": "number",
+            "raw": "50",
+            "verbatim": true,
+            "number": 50,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": null,
+            "unit_kind": "other",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+                "id": null,
+                "text": "German Committee for UNICEF"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+        },
+        "typed_period": "2023",
+        "merger_identity": "19969d645eb3d9634a6abec785d5f201830b06c3f390386e2b12f6d5c7e5ff1b",
+        "resolved_quote": "2023 revenue 50; 2024 revenue 50\n\nRevenue 50"
+    },
+    "same_value_2024": {
+        "fixture": "same_value_2024",
+        "accepted": true,
+        "evidence_ids": [
+            "E001",
+            "E002"
+        ],
+        "value": "50",
+        "period": "2024",
+        "unit": null,
+        "origin": "document",
+        "typed_value": {
+            "type": "number",
+            "raw": "50",
+            "verbatim": true,
+            "number": 50,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": null,
+            "unit_kind": "other",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+                "id": null,
+                "text": "German Committee for UNICEF"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+        },
+        "typed_period": "2024",
+        "merger_identity": "d0361b9a71e2da59461f2903d2cfb8d0d57669a714e76e306ae28dc3cf2e817b",
+        "resolved_quote": "2023 revenue 50; 2024 revenue 50\n\nRevenue 50"
+    },
+    "identity_metric_A": {
+        "fixture": "identity_metric_A",
+        "accepted": true,
+        "evidence_ids": [
+            "E002"
+        ],
+        "value": "69.4",
+        "period": null,
+        "unit": null,
+        "origin": "document",
+        "typed_value": {
+            "type": "number",
+            "raw": "69.4",
+            "verbatim": true,
+            "number": 69.4,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": null,
+            "unit_kind": "other",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+                "id": null,
+                "text": "German Committee for UNICEF"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+        },
+        "typed_period": null,
+        "merger_identity": "6cf2cf31dd6a9fc5cfc9f47c81f6174b0251fea6643e9853ecc5c2526cd67587",
+        "resolved_quote": "German Committee for UNICEF 69.4"
+    },
+    "identity_metric_B": {
+        "fixture": "identity_metric_B",
+        "accepted": true,
+        "evidence_ids": [
+            "E001",
+            "E002"
+        ],
+        "value": "69.4",
+        "period": null,
+        "unit": null,
+        "origin": "document",
+        "typed_value": {
+            "type": "number",
+            "raw": "69.4",
+            "verbatim": true,
+            "number": 69.4,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": null,
+            "unit_kind": "other",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+                "id": null,
+                "text": "German Committee for UNICEF"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+        },
+        "typed_period": null,
+        "merger_identity": "6cf2cf31dd6a9fc5cfc9f47c81f6174b0251fea6643e9853ecc5c2526cd67587",
+        "resolved_quote": "Top 30 Core Resources partners, 2024\n\nGerman Committee for UNICEF 69.4"
+    },
+    "identity_metric_period_A": {
+        "fixture": "identity_metric_period_A",
+        "accepted": true,
+        "evidence_ids": [
+            "E002"
+        ],
+        "value": "69.4",
+        "period": "2024",
+        "unit": null,
+        "origin": "unknown",
+        "typed_value": {
+            "type": "number",
+            "raw": "69.4",
+            "verbatim": true,
+            "number": 69.4,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": null,
+            "unit_kind": "other",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+                "id": null,
+                "text": "German Committee for UNICEF"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+        },
+        "typed_period": null,
+        "merger_identity": "081bb90fe6e5023c1d38625db001684305833b3d235725ccc717fad8d85457ae",
+        "resolved_quote": "German Committee for UNICEF 69.4"
+    },
+    "identity_metric_period_B": {
+        "fixture": "identity_metric_period_B",
+        "accepted": true,
+        "evidence_ids": [
+            "E001",
+            "E002"
+        ],
+        "value": "69.4",
+        "period": "2024",
+        "unit": null,
+        "origin": "document",
+        "typed_value": {
+            "type": "number",
+            "raw": "69.4",
+            "verbatim": true,
+            "number": 69.4,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": null,
+            "unit_kind": "other",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+                "id": null,
+                "text": "German Committee for UNICEF"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+        },
+        "typed_period": "2024",
+        "merger_identity": "081bb90fe6e5023c1d38625db001684305833b3d235725ccc717fad8d85457ae",
+        "resolved_quote": "Top 30 Core Resources partners, 2024\n\nGerman Committee for UNICEF 69.4"
+    },
+    "identity_fact_A": {
+        "fixture": "identity_fact_A",
+        "accepted": true,
+        "evidence_ids": [
+            "E002"
+        ],
+        "value": "69.4",
+        "period": null,
+        "unit": null,
+        "origin": "document",
+        "typed_value": {
+            "type": "number",
+            "raw": "69.4",
+            "verbatim": true,
+            "number": 69.4,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": null,
+            "unit_kind": "other",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": null,
+            "entity_ref": {
+                "id": null,
+                "text": "German Committee for UNICEF"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+        },
+        "typed_period": null,
+        "merger_identity": "8c7559277e3e3a9d044f5c224677d69213069d018e7c09f1419ede32643a8467",
+        "resolved_quote": "German Committee for UNICEF 69.4"
+    },
+    "identity_fact_B": {
+        "fixture": "identity_fact_B",
+        "accepted": true,
+        "evidence_ids": [
+            "E001",
+            "E002"
+        ],
+        "value": "69.4",
+        "period": null,
+        "unit": null,
+        "origin": "document",
+        "typed_value": {
+            "type": "number",
+            "raw": "69.4",
+            "verbatim": true,
+            "number": 69.4,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": null,
+            "unit_kind": "other",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": null,
+            "entity_ref": {
+                "id": null,
+                "text": "German Committee for UNICEF"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+        },
+        "typed_period": null,
+        "merger_identity": "6830d6119a5a1c0662da64a58777189243b4f70a5f15e6379d88231ff2a29af1",
+        "resolved_quote": "Top 30 Core Resources partners, 2024\n\nGerman Committee for UNICEF 69.4"
+    },
+    "comparisons": {
+        "metric_same_period_merger_identity_equal": true,
+        "metric_explicit_period_merger_identity_equal": true,
+        "fact_merger_identity_equal": false,
+        "different_period_same_value_merger_identity_equal": false
+    },
+    "exact_counterfactual_identity": {
+        "metric_E033_identity": "f0727f9d5c7559f015b831a291ed3e623e6b8249ab2eb1ef917a315dbc32a6e4",
+        "metric_E032_E033_identity": "f0727f9d5c7559f015b831a291ed3e623e6b8249ab2eb1ef917a315dbc32a6e4",
+        "metric_equal": true,
+        "B_valid_in_earlier_request": false,
+        "fact_equal": false
+    },
+    "exact_saved_request_validation": {
+        "E032_E033": {
+            "classification": "invalid_evidence",
+            "rejection_reasons": {
+                "evidence_id_outside_chunk": 1
+            },
+            "reason": null
+        },
+        "E033_E061": {
+            "classification": "invalid_evidence",
+            "rejection_reasons": {
+                "invalid_evidence_span_combination": 1
+            },
+            "reason": null
+        }
+    }
+}

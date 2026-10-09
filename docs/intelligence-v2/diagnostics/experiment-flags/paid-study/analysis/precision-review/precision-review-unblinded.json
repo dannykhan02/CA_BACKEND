@@ -1,0 +1,170 @@
+{
+  "judgments_sha256": "440db4fb196a9538729c5bdb591443dd45d1bde944cada55f239474ffa8c6b4e",
+  "reviewer_disclosure": "The precision reviewer was an AI agent using mechanical blinding. The agent conducting the wider experiment had access to study context, so this is not equivalent to an independent human-blinded review.",
+  "by_chunk_variant": {
+    "india_wash:COLLECTOR_ONLY": {
+      "sampled": 60,
+      "judgments": {
+        "PARTIALLY_SUPPORTED": 6,
+        "SUPPORTED": 50,
+        "UNSUPPORTED": 4
+      },
+      "supported_precision": 0.8333333333333334,
+      "supported_plus_partial": 0.9333333333333333
+    },
+    "india_wash:CONTROL": {
+      "sampled": 59,
+      "judgments": {
+        "SUPPORTED": 52,
+        "PARTIALLY_SUPPORTED": 3,
+        "UNSUPPORTED": 2,
+        "NOISE": 2
+      },
+      "supported_precision": 0.8813559322033898,
+      "supported_plus_partial": 0.9322033898305084
+    },
+    "unicef_reduced:COLLECTOR_ONLY": {
+      "sampled": 60,
+      "judgments": {
+        "SUPPORTED": 40,
+        "UNSUPPORTED": 14,
+        "PARTIALLY_SUPPORTED": 6
+      },
+      "supported_precision": 0.6666666666666666,
+      "supported_plus_partial": 0.7666666666666667
+    },
+    "unicef_reduced:CONTROL": {
+      "sampled": 60,
+      "judgments": {
+        "SUPPORTED": 28,
+        "PARTIALLY_SUPPORTED": 23,
+        "UNSUPPORTED": 8,
+        "NOISE": 1
+      },
+      "supported_precision": 0.4666666666666667,
+      "supported_plus_partial": 0.85
+    }
+  },
+  "by_cell": {
+    "india_wash-C1": {
+      "sampled": 20,
+      "judgments": {
+        "SUPPORTED": 18,
+        "PARTIALLY_SUPPORTED": 1,
+        "NOISE": 1
+      },
+      "supported_precision": 0.9,
+      "supported_plus_partial": 0.95
+    },
+    "india_wash-C2": {
+      "sampled": 20,
+      "judgments": {
+        "SUPPORTED": 17,
+        "PARTIALLY_SUPPORTED": 2,
+        "UNSUPPORTED": 1
+      },
+      "supported_precision": 0.85,
+      "supported_plus_partial": 0.95
+    },
+    "india_wash-C3": {
+      "sampled": 19,
+      "judgments": {
+        "SUPPORTED": 17,
+        "NOISE": 1,
+        "UNSUPPORTED": 1
+      },
+      "supported_precision": 0.8947368421052632,
+      "supported_plus_partial": 0.8947368421052632
+    },
+    "india_wash-K1": {
+      "sampled": 20,
+      "judgments": {
+        "PARTIALLY_SUPPORTED": 3,
+        "SUPPORTED": 16,
+        "UNSUPPORTED": 1
+      },
+      "supported_precision": 0.8,
+      "supported_plus_partial": 0.95
+    },
+    "india_wash-K2": {
+      "sampled": 20,
+      "judgments": {
+        "SUPPORTED": 17,
+        "UNSUPPORTED": 2,
+        "PARTIALLY_SUPPORTED": 1
+      },
+      "supported_precision": 0.85,
+      "supported_plus_partial": 0.9
+    },
+    "india_wash-K3": {
+      "sampled": 20,
+      "judgments": {
+        "UNSUPPORTED": 1,
+        "SUPPORTED": 17,
+        "PARTIALLY_SUPPORTED": 2
+      },
+      "supported_precision": 0.85,
+      "supported_plus_partial": 0.95
+    },
+    "unicef_reduced-C1": {
+      "sampled": 20,
+      "judgments": {
+        "SUPPORTED": 3,
+        "UNSUPPORTED": 4,
+        "PARTIALLY_SUPPORTED": 13
+      },
+      "supported_precision": 0.15,
+      "supported_plus_partial": 0.8
+    },
+    "unicef_reduced-C2": {
+      "sampled": 20,
+      "judgments": {
+        "PARTIALLY_SUPPORTED": 5,
+        "UNSUPPORTED": 2,
+        "SUPPORTED": 12,
+        "NOISE": 1
+      },
+      "supported_precision": 0.6,
+      "supported_plus_partial": 0.85
+    },
+    "unicef_reduced-C3": {
+      "sampled": 20,
+      "judgments": {
+        "SUPPORTED": 13,
+        "UNSUPPORTED": 2,
+        "PARTIALLY_SUPPORTED": 5
+      },
+      "supported_precision": 0.65,
+      "supported_plus_partial": 0.9
+    },
+    "unicef_reduced-K1": {
+      "sampled": 20,
+      "judgments": {
+        "SUPPORTED": 12,
+        "UNSUPPORTED": 4,
+        "PARTIALLY_SUPPORTED": 4
+      },
+      "supported_precision": 0.6,
+      "supported_plus_partial": 0.8
+    },
+    "unicef_reduced-K2": {
+      "sampled": 20,
+      "judgments": {
+        "SUPPORTED": 13,
+        "PARTIALLY_SUPPORTED": 2,
+        "UNSUPPORTED": 5
+      },
+      "supported_precision": 0.65,
+      "supported_plus_partial": 0.75
+    },
+    "unicef_reduced-K3": {
+      "sampled": 20,
+      "judgments": {
+        "SUPPORTED": 15,
+        "UNSUPPORTED": 5
+      },
+      "supported_precision": 0.75,
+      "supported_plus_partial": 0.75
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "outcome": "REJECT COLLECTOR",
+  "summary": "REJECT COLLECTOR. The pre-registered cost hard gate failed on both chunks: Collector mean call cost rose 52.47% on UNICEF and 44.86% on India, above the 25% maximum. All 12 calls completed with no truncation and total actual spend USD 0.396160. Mean gold recall improved, but these results cannot override a hard safety gate.",
+  "rationale": "The pre-registered rule requires rejection if Collector mean cost per successful call exceeds Control by more than 25% on either chunk. It exceeded that limit on both. UNICEF mean gold recall was 13.67/17 Control versus 14.33/17 Collector; India was 8.33/12 versus 9.67/12. India sampled SUPPORTED precision fell 4.80 points, within but close to the 5-point limit. India document-origin share fell 13.33 points, exceeding the 10-point descriptive safety-concern trigger. No Collector-only truncation occurred. The recall gain was not consistent across every paired run, and UNICEF gold provenance is nonblind. Do not recommend productization from this study.",
+  "primary_rejection_reasons": [
+    "UNICEF mean cost increase 52.47% > 25%",
+    "India mean cost increase 44.86% > 25%"
+  ],
+  "secondary_safety_concerns": [
+    "India origin=document share deterioration 13.33 percentage points",
+    "India sampled SUPPORTED precision deterioration 4.80 points, near 5-point gate"
+  ],
+  "judgments_sha256": "440db4fb196a9538729c5bdb591443dd45d1bde944cada55f239474ffa8c6b4e",
+  "provider_calls": 12,
+  "failed_calls": 0,
+  "truncated_calls": 0,
+  "all_hard_gates_pass": false
+}

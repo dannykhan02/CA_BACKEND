@@ -1,0 +1,20 @@
+{
+  "source_sha256": "803c45e8e6a1e38952f213d70b95aa9ab62aa02dc7bbf206df156d6d59cf18fc",
+  "currency_raw": 58,
+  "currency_distinct_notation": 47,
+  "percent_raw": 53,
+  "percent_distinct_notation": 41,
+  "date_time_raw": 24,
+  "date_time_distinct_notation": 9,
+  "other_numeric_raw": 97,
+  "other_numeric_distinct_notation": 74,
+  "all_numeric_tokens": 229,
+  "span_types": {
+    "table_row": 34,
+    "sentence": 97,
+    "heading": 4,
+    "list_item": 17,
+    "section": 2
+  },
+  "heading_section_span_ratio": 0.039
+}

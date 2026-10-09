@@ -1,0 +1,29 @@
+{
+  "cell": "unicef_reduced-C2",
+  "chunk": "unicef_reduced",
+  "variant": "CONTROL",
+  "run": 2,
+  "status": "success",
+  "http_status": 200,
+  "error": null,
+  "request_sha256": "d304bc2997f958dc6784390c62266758571ad87fcca391a1fc9c68fbc4d296fe",
+  "response_sha256": "8bdd77598e9eaa6a3822cae9771055658a561a98235c3e6f6d618180888102e3",
+  "provider_request_id": "req_011CfrXa4TLxJ8gow6FTYKwE",
+  "started_at_utc": "2026-10-09T10:45:24.896914+00:00",
+  "latency_ms": 50878,
+  "stop_reason": "end_turn",
+  "usage": {
+    "input_tokens": 4019,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 5974,
+    "service_tier": "standard",
+    "inference_geo": "not_available"
+  },
+  "actual_cost_usd": "0.033889",
+  "unknown_cost_reserve_usd": null
+}

@@ -1,0 +1,470 @@
+{
+  "unicef_reduced-C1": {
+    "matched": 1,
+    "total": 6,
+    "items": [
+      {
+        "negative_ordinal": 1,
+        "excluded_claim": "The Guatemala investment occurred in 2024",
+        "matched": true,
+        "accepted_index": 15
+      },
+      {
+        "negative_ordinal": 2,
+        "excluded_claim": "Stylized map disclaimer is a risk finding",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 3,
+        "excluded_claim": "Annual report page 5 is a programme result",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 4,
+        "excluded_claim": "Scan the QR code by a deadline",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 5,
+        "excluded_claim": "The Yemen mortality reduction occurred in calendar year 2024",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 6,
+        "excluded_claim": "USD 952 million is an EPF loan due immediately",
+        "matched": false,
+        "accepted_index": null
+      }
+    ]
+  },
+  "unicef_reduced-C2": {
+    "matched": 0,
+    "total": 6,
+    "items": [
+      {
+        "negative_ordinal": 1,
+        "excluded_claim": "The Guatemala investment occurred in 2024",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 2,
+        "excluded_claim": "Stylized map disclaimer is a risk finding",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 3,
+        "excluded_claim": "Annual report page 5 is a programme result",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 4,
+        "excluded_claim": "Scan the QR code by a deadline",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 5,
+        "excluded_claim": "The Yemen mortality reduction occurred in calendar year 2024",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 6,
+        "excluded_claim": "USD 952 million is an EPF loan due immediately",
+        "matched": false,
+        "accepted_index": null
+      }
+    ]
+  },
+  "unicef_reduced-C3": {
+    "matched": 0,
+    "total": 6,
+    "items": [
+      {
+        "negative_ordinal": 1,
+        "excluded_claim": "The Guatemala investment occurred in 2024",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 2,
+        "excluded_claim": "Stylized map disclaimer is a risk finding",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 3,
+        "excluded_claim": "Annual report page 5 is a programme result",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 4,
+        "excluded_claim": "Scan the QR code by a deadline",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 5,
+        "excluded_claim": "The Yemen mortality reduction occurred in calendar year 2024",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 6,
+        "excluded_claim": "USD 952 million is an EPF loan due immediately",
+        "matched": false,
+        "accepted_index": null
+      }
+    ]
+  },
+  "unicef_reduced-K1": {
+    "matched": 0,
+    "total": 6,
+    "items": [
+      {
+        "negative_ordinal": 1,
+        "excluded_claim": "The Guatemala investment occurred in 2024",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 2,
+        "excluded_claim": "Stylized map disclaimer is a risk finding",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 3,
+        "excluded_claim": "Annual report page 5 is a programme result",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 4,
+        "excluded_claim": "Scan the QR code by a deadline",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 5,
+        "excluded_claim": "The Yemen mortality reduction occurred in calendar year 2024",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 6,
+        "excluded_claim": "USD 952 million is an EPF loan due immediately",
+        "matched": false,
+        "accepted_index": null
+      }
+    ]
+  },
+  "unicef_reduced-K2": {
+    "matched": 0,
+    "total": 6,
+    "items": [
+      {
+        "negative_ordinal": 1,
+        "excluded_claim": "The Guatemala investment occurred in 2024",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 2,
+        "excluded_claim": "Stylized map disclaimer is a risk finding",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 3,
+        "excluded_claim": "Annual report page 5 is a programme result",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 4,
+        "excluded_claim": "Scan the QR code by a deadline",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 5,
+        "excluded_claim": "The Yemen mortality reduction occurred in calendar year 2024",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 6,
+        "excluded_claim": "USD 952 million is an EPF loan due immediately",
+        "matched": false,
+        "accepted_index": null
+      }
+    ]
+  },
+  "unicef_reduced-K3": {
+    "matched": 0,
+    "total": 6,
+    "items": [
+      {
+        "negative_ordinal": 1,
+        "excluded_claim": "The Guatemala investment occurred in 2024",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 2,
+        "excluded_claim": "Stylized map disclaimer is a risk finding",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 3,
+        "excluded_claim": "Annual report page 5 is a programme result",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 4,
+        "excluded_claim": "Scan the QR code by a deadline",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 5,
+        "excluded_claim": "The Yemen mortality reduction occurred in calendar year 2024",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 6,
+        "excluded_claim": "USD 952 million is an EPF loan due immediately",
+        "matched": false,
+        "accepted_index": null
+      }
+    ]
+  },
+  "india_wash-C1": {
+    "matched": 0,
+    "total": 5,
+    "items": [
+      {
+        "negative_ordinal": 1,
+        "excluded_claim": "SDG target 6 is an achieved business metric",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 2,
+        "excluded_claim": "110 million toilets were completed in 2014",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 3,
+        "excluded_claim": "Vani has a 2019 deadline to practise handwashing",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 4,
+        "excluded_claim": "115 million households were reached in 2024",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 5,
+        "excluded_claim": "Annual report 14 is an operational quantity",
+        "matched": false,
+        "accepted_index": null
+      }
+    ]
+  },
+  "india_wash-C2": {
+    "matched": 0,
+    "total": 5,
+    "items": [
+      {
+        "negative_ordinal": 1,
+        "excluded_claim": "SDG target 6 is an achieved business metric",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 2,
+        "excluded_claim": "110 million toilets were completed in 2014",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 3,
+        "excluded_claim": "Vani has a 2019 deadline to practise handwashing",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 4,
+        "excluded_claim": "115 million households were reached in 2024",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 5,
+        "excluded_claim": "Annual report 14 is an operational quantity",
+        "matched": false,
+        "accepted_index": null
+      }
+    ]
+  },
+  "india_wash-C3": {
+    "matched": 0,
+    "total": 5,
+    "items": [
+      {
+        "negative_ordinal": 1,
+        "excluded_claim": "SDG target 6 is an achieved business metric",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 2,
+        "excluded_claim": "110 million toilets were completed in 2014",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 3,
+        "excluded_claim": "Vani has a 2019 deadline to practise handwashing",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 4,
+        "excluded_claim": "115 million households were reached in 2024",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 5,
+        "excluded_claim": "Annual report 14 is an operational quantity",
+        "matched": false,
+        "accepted_index": null
+      }
+    ]
+  },
+  "india_wash-K1": {
+    "matched": 0,
+    "total": 5,
+    "items": [
+      {
+        "negative_ordinal": 1,
+        "excluded_claim": "SDG target 6 is an achieved business metric",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 2,
+        "excluded_claim": "110 million toilets were completed in 2014",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 3,
+        "excluded_claim": "Vani has a 2019 deadline to practise handwashing",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 4,
+        "excluded_claim": "115 million households were reached in 2024",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 5,
+        "excluded_claim": "Annual report 14 is an operational quantity",
+        "matched": false,
+        "accepted_index": null
+      }
+    ]
+  },
+  "india_wash-K2": {
+    "matched": 0,
+    "total": 5,
+    "items": [
+      {
+        "negative_ordinal": 1,
+        "excluded_claim": "SDG target 6 is an achieved business metric",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 2,
+        "excluded_claim": "110 million toilets were completed in 2014",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 3,
+        "excluded_claim": "Vani has a 2019 deadline to practise handwashing",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 4,
+        "excluded_claim": "115 million households were reached in 2024",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 5,
+        "excluded_claim": "Annual report 14 is an operational quantity",
+        "matched": false,
+        "accepted_index": null
+      }
+    ]
+  },
+  "india_wash-K3": {
+    "matched": 0,
+    "total": 5,
+    "items": [
+      {
+        "negative_ordinal": 1,
+        "excluded_claim": "SDG target 6 is an achieved business metric",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 2,
+        "excluded_claim": "110 million toilets were completed in 2014",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 3,
+        "excluded_claim": "Vani has a 2019 deadline to practise handwashing",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 4,
+        "excluded_claim": "115 million households were reached in 2024",
+        "matched": false,
+        "accepted_index": null
+      },
+      {
+        "negative_ordinal": 5,
+        "excluded_claim": "Annual report 14 is an operational quantity",
+        "matched": false,
+        "accepted_index": null
+      }
+    ]
+  }
+}

@@ -1,0 +1,1842 @@
+{
+  "gold": {
+    "unicef_reduced": {
+      "gold_items": {
+        "1": "Guatemala social protection investment was USD 1 billion",
+        "2": "Mental health integration reached more than 8.8 million people",
+        "3": "Yemen under-five mortality dropped 23 percent over the last decade of conflict",
+        "4": "Core Resources supported more than 1,700 DRC health-care facilities",
+        "5": "Rwanda Marburg outbreak fatality rate was 22.7 percent",
+        "6": "India safely managed water supplies reached 59.3 million people in 2024",
+        "7": "India sanitation services reached 17.9 million people in 2024",
+        "8": "Moldova RESTART investment was USD 68 million",
+        "9": "Bangladesh under-five stunting reduced 40 percent over a decade",
+        "10": "Satellite data was used to detect groundwater in the Horn of Africa",
+        "11": "Core Resources supported mental health service integration into national systems",
+        "12": "Jordan Core Resources funded a One Stop Centre",
+        "13": "More than 9 in 10 children were registered before their first birthdays in Côte d’Ivoire and Cabo Verde",
+        "14": "Sierra Leone facilitated protection services for more than 675,000 children in five years",
+        "15": "Development Effectiveness expenditure was USD 174 million",
+        "16": "Core Resources support progress across 12 of the 17 Sustainable Development Goals",
+        "17": "UNICEF country programmes advance children’s rights and SDGs"
+      },
+      "by_run": {
+        "1": {
+          "both": [
+            1,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            13,
+            14,
+            15
+          ],
+          "control_only": [],
+          "collector_only": [
+            2
+          ],
+          "missed_both": [
+            12,
+            16,
+            17
+          ]
+        },
+        "2": {
+          "both": [
+            1,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            13,
+            14,
+            15
+          ],
+          "control_only": [
+            2
+          ],
+          "collector_only": [
+            17
+          ],
+          "missed_both": [
+            12,
+            16
+          ]
+        },
+        "3": {
+          "both": [
+            1,
+            3,
+            4,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            13,
+            14,
+            15,
+            17
+          ],
+          "control_only": [
+            12
+          ],
+          "collector_only": [
+            2,
+            5
+          ],
+          "missed_both": [
+            16
+          ]
+        }
+      },
+      "union_across_runs": {
+        "both": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          13,
+          14,
+          15,
+          17
+        ],
+        "control_only": [
+          12
+        ],
+        "collector_only": [],
+        "missed_both": [
+          16
+        ]
+      }
+    },
+    "india_wash": {
+      "gold_items": {
+        "1": "India child mortality fell 37 percent between 2014 and 2022",
+        "2": "India launched Swachh Bharat Mission in 2014",
+        "3": "Swachh Bharat targeted over 110 million toilets",
+        "4": "Swachh Bharat targeted sanitation for 550 million people",
+        "5": "The sanitation target was achieved by 2019",
+        "6": "550 million people reached with at least basic sanitation in the last 10 years",
+        "7": "580 million people reached with improved household drinking water in the last 10 years",
+        "8": "More than 115 million rural households gained piped water in the last five years",
+        "9": "UNICEF estimated village families constructing toilets saved at least 50,000 rupees",
+        "10": "India invested over USD 120 billion in water and sanitation over the past 10 years",
+        "11": "UNICEF embedded technical advisors in every Indian state",
+        "12": "UNICEF improved India WASH data collection and management"
+      },
+      "by_run": {
+        "1": {
+          "both": [
+            1,
+            2,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "control_only": [],
+          "collector_only": [
+            3,
+            4,
+            11,
+            12
+          ],
+          "missed_both": [
+            5
+          ]
+        },
+        "2": {
+          "both": [
+            1,
+            2,
+            4,
+            6,
+            7,
+            9,
+            10,
+            11,
+            12
+          ],
+          "control_only": [
+            3
+          ],
+          "collector_only": [],
+          "missed_both": [
+            5,
+            8
+          ]
+        },
+        "3": {
+          "both": [
+            1,
+            6,
+            8,
+            9,
+            10,
+            11
+          ],
+          "control_only": [
+            2,
+            12
+          ],
+          "collector_only": [
+            3,
+            4,
+            7
+          ],
+          "missed_both": [
+            5
+          ]
+        }
+      },
+      "union_across_runs": {
+        "both": [
+          1,
+          2,
+          3,
+          4,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12
+        ],
+        "control_only": [],
+        "collector_only": [],
+        "missed_both": [
+          5
+        ]
+      }
+    }
+  },
+  "collector_record_classification": {
+    "unicef_reduced-K1": {
+      "counts": {
+        "ACCEPTED_NON_GOLD_UNADJUDICATED": 16,
+        "VALID_NON_GOLD_EVIDENCE": 7,
+        "NOISE_OR_UNSUPPORTED": 4,
+        "GOLD_SHARED": 12,
+        "GOLD_RECOVERY": 1
+      },
+      "records": [
+        {
+          "raw_index": 0,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 1,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 2,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 3,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 4,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 5,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 6,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 7,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 8,
+          "classification": "NOISE_OR_UNSUPPORTED",
+          "accepted": true
+        },
+        {
+          "raw_index": 9,
+          "classification": "NOISE_OR_UNSUPPORTED",
+          "accepted": true
+        },
+        {
+          "raw_index": 10,
+          "classification": "NOISE_OR_UNSUPPORTED",
+          "accepted": true
+        },
+        {
+          "raw_index": 11,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 12,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 13,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 14,
+          "classification": "GOLD_RECOVERY",
+          "accepted": true
+        },
+        {
+          "raw_index": 15,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 16,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 17,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 18,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 19,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 20,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 21,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 22,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 23,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 24,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 25,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 26,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 27,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 28,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 29,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 30,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 31,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 32,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 33,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 34,
+          "classification": "NOISE_OR_UNSUPPORTED",
+          "accepted": true
+        },
+        {
+          "raw_index": 35,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 36,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 37,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 38,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 39,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        }
+      ]
+    },
+    "unicef_reduced-K2": {
+      "counts": {
+        "ACCEPTED_NON_GOLD_UNADJUDICATED": 38,
+        "VALID_NON_GOLD_EVIDENCE": 9,
+        "GOLD_SHARED": 13,
+        "NOISE_OR_UNSUPPORTED": 5,
+        "GOLD_RECOVERY": 1
+      },
+      "records": [
+        {
+          "raw_index": 0,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 1,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 2,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 3,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 4,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 5,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 6,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 7,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 8,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 9,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 10,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 11,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 12,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 13,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 14,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 15,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 16,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 17,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 18,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 19,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 20,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 21,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 22,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 23,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 24,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 25,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 26,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 27,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 28,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 29,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 30,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 31,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 32,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 33,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 34,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 35,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 36,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 37,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 38,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 39,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 40,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 41,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 42,
+          "classification": "NOISE_OR_UNSUPPORTED",
+          "accepted": true
+        },
+        {
+          "raw_index": 43,
+          "classification": "NOISE_OR_UNSUPPORTED",
+          "accepted": true
+        },
+        {
+          "raw_index": 44,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 45,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 46,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 47,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 48,
+          "classification": "NOISE_OR_UNSUPPORTED",
+          "accepted": true
+        },
+        {
+          "raw_index": 49,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 50,
+          "classification": "NOISE_OR_UNSUPPORTED",
+          "accepted": true
+        },
+        {
+          "raw_index": 51,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 52,
+          "classification": "NOISE_OR_UNSUPPORTED",
+          "accepted": true
+        },
+        {
+          "raw_index": 53,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 54,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 55,
+          "classification": "GOLD_RECOVERY",
+          "accepted": true
+        },
+        {
+          "raw_index": 56,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 57,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 58,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 59,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 60,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 61,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 62,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 63,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 64,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 65,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        }
+      ]
+    },
+    "unicef_reduced-K3": {
+      "counts": {
+        "ACCEPTED_NON_GOLD_UNADJUDICATED": 46,
+        "NOISE_OR_UNSUPPORTED": 5,
+        "GOLD_SHARED": 13,
+        "GOLD_RECOVERY": 2,
+        "VALID_NON_GOLD_EVIDENCE": 12
+      },
+      "records": [
+        {
+          "raw_index": 0,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 1,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 2,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 3,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 4,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 5,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 6,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 7,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 8,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 9,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 10,
+          "classification": "NOISE_OR_UNSUPPORTED",
+          "accepted": true
+        },
+        {
+          "raw_index": 11,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 12,
+          "classification": "NOISE_OR_UNSUPPORTED",
+          "accepted": true
+        },
+        {
+          "raw_index": 13,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 14,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 15,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 16,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 17,
+          "classification": "NOISE_OR_UNSUPPORTED",
+          "accepted": true
+        },
+        {
+          "raw_index": 18,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 19,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 20,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 21,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 22,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 23,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 24,
+          "classification": "NOISE_OR_UNSUPPORTED",
+          "accepted": true
+        },
+        {
+          "raw_index": 25,
+          "classification": "NOISE_OR_UNSUPPORTED",
+          "accepted": true
+        },
+        {
+          "raw_index": 26,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 27,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 28,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 29,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 30,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 31,
+          "classification": "GOLD_RECOVERY",
+          "accepted": true
+        },
+        {
+          "raw_index": 32,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 33,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 34,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 35,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 36,
+          "classification": "GOLD_RECOVERY",
+          "accepted": true
+        },
+        {
+          "raw_index": 37,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 38,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 39,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 40,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 41,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 42,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 43,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 44,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 45,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 46,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 47,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 48,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 49,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 50,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 51,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 52,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 53,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 54,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 55,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 56,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 57,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 58,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 59,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 60,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 61,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 62,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 63,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 64,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 65,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 66,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 67,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 68,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 69,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 70,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 71,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 72,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 73,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 74,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 75,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 76,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 77,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        }
+      ]
+    },
+    "india_wash-K1": {
+      "counts": {
+        "GOLD_SHARED": 7,
+        "GOLD_RECOVERY": 3,
+        "REJECTED": 1,
+        "ACCEPTED_NON_GOLD_UNADJUDICATED": 21,
+        "NOISE_OR_UNSUPPORTED": 1,
+        "VALID_NON_GOLD_EVIDENCE": 12,
+        "MECHANICAL_DUPLICATE": 1
+      },
+      "records": [
+        {
+          "raw_index": 0,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 1,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 2,
+          "classification": "GOLD_RECOVERY",
+          "accepted": true
+        },
+        {
+          "raw_index": 3,
+          "classification": "REJECTED",
+          "accepted": false
+        },
+        {
+          "raw_index": 4,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 5,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 6,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 7,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 8,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 9,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 10,
+          "classification": "NOISE_OR_UNSUPPORTED",
+          "accepted": true
+        },
+        {
+          "raw_index": 11,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 12,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 13,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 14,
+          "classification": "MECHANICAL_DUPLICATE",
+          "accepted": true
+        },
+        {
+          "raw_index": 15,
+          "classification": "GOLD_RECOVERY",
+          "accepted": true
+        },
+        {
+          "raw_index": 16,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 17,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 18,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 19,
+          "classification": "GOLD_RECOVERY",
+          "accepted": true
+        },
+        {
+          "raw_index": 20,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 21,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 22,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 23,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 24,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 25,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 26,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 27,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 28,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 29,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 30,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 31,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 32,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 33,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 34,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 35,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 36,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 37,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 38,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 39,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 40,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 41,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 42,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 43,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 44,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 45,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        }
+      ]
+    },
+    "india_wash-K2": {
+      "counts": {
+        "GOLD_SHARED": 9,
+        "REJECTED": 2,
+        "ACCEPTED_NON_GOLD_UNADJUDICATED": 15,
+        "VALID_NON_GOLD_EVIDENCE": 13,
+        "NOISE_OR_UNSUPPORTED": 2
+      },
+      "records": [
+        {
+          "raw_index": 0,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 1,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 2,
+          "classification": "REJECTED",
+          "accepted": false
+        },
+        {
+          "raw_index": 3,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 4,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 5,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 6,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 7,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 8,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 9,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 10,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 11,
+          "classification": "NOISE_OR_UNSUPPORTED",
+          "accepted": true
+        },
+        {
+          "raw_index": 12,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 13,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 14,
+          "classification": "REJECTED",
+          "accepted": false
+        },
+        {
+          "raw_index": 15,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 16,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 17,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 18,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 19,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 20,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 21,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 22,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 23,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 24,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 25,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 26,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 27,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 28,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 29,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 30,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 31,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 32,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 33,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 34,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 35,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 36,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 37,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 38,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 39,
+          "classification": "NOISE_OR_UNSUPPORTED",
+          "accepted": true
+        },
+        {
+          "raw_index": 40,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        }
+      ]
+    },
+    "india_wash-K3": {
+      "counts": {
+        "GOLD_SHARED": 6,
+        "REJECTED": 7,
+        "GOLD_RECOVERY": 2,
+        "ACCEPTED_NON_GOLD_UNADJUDICATED": 7,
+        "NOISE_OR_UNSUPPORTED": 1,
+        "VALID_NON_GOLD_EVIDENCE": 13
+      },
+      "records": [
+        {
+          "raw_index": 0,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 1,
+          "classification": "REJECTED",
+          "accepted": false
+        },
+        {
+          "raw_index": 2,
+          "classification": "GOLD_RECOVERY",
+          "accepted": true
+        },
+        {
+          "raw_index": 3,
+          "classification": "REJECTED",
+          "accepted": false
+        },
+        {
+          "raw_index": 4,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 5,
+          "classification": "GOLD_RECOVERY",
+          "accepted": true
+        },
+        {
+          "raw_index": 6,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 7,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 8,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 9,
+          "classification": "NOISE_OR_UNSUPPORTED",
+          "accepted": true
+        },
+        {
+          "raw_index": 10,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 11,
+          "classification": "REJECTED",
+          "accepted": false
+        },
+        {
+          "raw_index": 12,
+          "classification": "REJECTED",
+          "accepted": false
+        },
+        {
+          "raw_index": 13,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 14,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 15,
+          "classification": "REJECTED",
+          "accepted": false
+        },
+        {
+          "raw_index": 16,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 17,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 18,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 19,
+          "classification": "GOLD_SHARED",
+          "accepted": true
+        },
+        {
+          "raw_index": 20,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 21,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 22,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 23,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 24,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 25,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 26,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 27,
+          "classification": "REJECTED",
+          "accepted": false
+        },
+        {
+          "raw_index": 28,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        },
+        {
+          "raw_index": 29,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 30,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 31,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 32,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 33,
+          "classification": "VALID_NON_GOLD_EVIDENCE",
+          "accepted": true
+        },
+        {
+          "raw_index": 34,
+          "classification": "REJECTED",
+          "accepted": false
+        },
+        {
+          "raw_index": 35,
+          "classification": "ACCEPTED_NON_GOLD_UNADJUDICATED",
+          "accepted": true
+        }
+      ]
+    }
+  },
+  "classification_note": "VALID_NON_GOLD and NOISE_OR_UNSUPPORTED use existing sampled precision judgments only; partial support and unsampled records remain unadjudicated. Exact structured duplicates only."
+}

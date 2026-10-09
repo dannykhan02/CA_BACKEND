@@ -1,0 +1,113 @@
+{
+  "caveat": "COMPACT_COLLECTOR is untested; costs/recall proxy saved COLLECTOR_ONLY. SPLIT_FIRST has no observed cost or recall.",
+  "candidates": {
+    "all_standard": {
+      "routes": {
+        "unicef_reduced": "STANDARD",
+        "india_wash": "STANDARD"
+      },
+      "estimated_two_chunk_one_run_cost_usd": 0.052990333333333334,
+      "estimated_sum_of_chunk_gold_recall": 22.0,
+      "observed_by_chunk": {
+        "unicef_reduced": {
+          "control_mean_gold": 13.666666666666666,
+          "collector_mean_gold": 14.333333333333334
+        },
+        "india_wash": {
+          "control_mean_gold": 8.333333333333334,
+          "collector_mean_gold": 9.666666666666666
+        }
+      }
+    },
+    "all_collector_reference": {
+      "routes": {
+        "unicef_reduced": "COMPACT_COLLECTOR",
+        "india_wash": "COMPACT_COLLECTOR"
+      },
+      "estimated_two_chunk_one_run_cost_usd": 0.079063,
+      "estimated_sum_of_chunk_gold_recall": 24.0,
+      "observed_by_chunk": {
+        "unicef_reduced": {
+          "control_mean_gold": 13.666666666666666,
+          "collector_mean_gold": 14.333333333333334
+        },
+        "india_wash": {
+          "control_mean_gold": 8.333333333333334,
+          "collector_mean_gold": 9.666666666666666
+        }
+      }
+    },
+    "chunk_pressure_ge_10": {
+      "routes": {
+        "unicef_reduced": "STANDARD",
+        "india_wash": "COMPACT_COLLECTOR"
+      },
+      "estimated_two_chunk_one_run_cost_usd": 0.06318666666666667,
+      "estimated_sum_of_chunk_gold_recall": 23.333333333333332,
+      "observed_by_chunk": {
+        "unicef_reduced": {
+          "control_mean_gold": 13.666666666666666,
+          "collector_mean_gold": 14.333333333333334
+        },
+        "india_wash": {
+          "control_mean_gold": 8.333333333333334,
+          "collector_mean_gold": 9.666666666666666
+        }
+      }
+    },
+    "chunk_pressure_ge_10_or_numeric_ge_80": {
+      "routes": {
+        "unicef_reduced": "COMPACT_COLLECTOR",
+        "india_wash": "COMPACT_COLLECTOR"
+      },
+      "estimated_two_chunk_one_run_cost_usd": 0.079063,
+      "estimated_sum_of_chunk_gold_recall": 24.0,
+      "observed_by_chunk": {
+        "unicef_reduced": {
+          "control_mean_gold": 13.666666666666666,
+          "collector_mean_gold": 14.333333333333334
+        },
+        "india_wash": {
+          "control_mean_gold": 8.333333333333334,
+          "collector_mean_gold": 9.666666666666666
+        }
+      }
+    },
+    "document_relative_numeric": {
+      "routes": {
+        "unicef_reduced": "COMPACT_COLLECTOR",
+        "india_wash": "STANDARD"
+      },
+      "estimated_two_chunk_one_run_cost_usd": 0.06886666666666666,
+      "estimated_sum_of_chunk_gold_recall": 22.666666666666668,
+      "observed_by_chunk": {
+        "unicef_reduced": {
+          "control_mean_gold": 13.666666666666666,
+          "collector_mean_gold": 14.333333333333334
+        },
+        "india_wash": {
+          "control_mean_gold": 8.333333333333334,
+          "collector_mean_gold": 9.666666666666666
+        }
+      }
+    },
+    "split_first_pressure_ge_20": {
+      "routes": {
+        "unicef_reduced": "STANDARD",
+        "india_wash": "COMPACT_COLLECTOR"
+      },
+      "estimated_two_chunk_one_run_cost_usd": 0.06318666666666667,
+      "estimated_sum_of_chunk_gold_recall": 23.333333333333332,
+      "observed_by_chunk": {
+        "unicef_reduced": {
+          "control_mean_gold": 13.666666666666666,
+          "collector_mean_gold": 14.333333333333334
+        },
+        "india_wash": {
+          "control_mean_gold": 8.333333333333334,
+          "collector_mean_gold": 9.666666666666666
+        }
+      }
+    }
+  }
+}
