@@ -1,0 +1,104 @@
+{
+  "type": "object",
+  "properties": {
+    "m": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "l": {
+            "type": "string"
+          },
+          "v": {
+            "type": "string"
+          },
+          "s": {
+            "type": "string"
+          },
+          "r": {
+            "type": "string"
+          },
+          "e": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          },
+          "et": {
+            "type": "string"
+          },
+          "u": {
+            "type": "string"
+          },
+          "p": {
+            "type": "string"
+          },
+          "dt": {
+            "type": "string",
+            "enum": [
+              "explicit",
+              "relative",
+              "inferred"
+            ]
+          },
+          "dd": {
+            "type": "string"
+          },
+          "sv": {
+            "type": "string"
+          },
+          "mt": {
+            "type": "string"
+          },
+          "vb": {
+            "type": "string"
+          },
+          "ag": {
+            "type": "string"
+          },
+          "qk": {
+            "type": "string"
+          },
+          "k": {
+            "type": "string",
+            "enum": [
+              "entity",
+              "metric",
+              "deadline",
+              "obligation",
+              "risk",
+              "fact",
+              "definition",
+              "unresolved"
+            ]
+          },
+          "cf": {
+            "type": "number"
+          },
+          "a": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "l",
+          "v",
+          "s",
+          "r",
+          "e",
+          "k",
+          "cf",
+          "a"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "m"
+  ],
+  "additionalProperties": false
+}

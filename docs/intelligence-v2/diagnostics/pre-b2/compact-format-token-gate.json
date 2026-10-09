@@ -1,0 +1,323 @@
+{
+  "pre_registered_gate": 0.25,
+  "model": "claude-haiku-4-5-20251001",
+  "population_records": 912,
+  "population_cells": 16,
+  "status": "MEASURED",
+  "compact_codec_worth_implementing": true,
+  "variants": {
+    "current": {
+      "chunks": [
+        {
+          "chunk": "unicef_quantitative",
+          "record_count": 404,
+          "chars": 191412,
+          "utf8_bytes": 191478,
+          "tokens": 49355
+        },
+        {
+          "chunk": "india_wash",
+          "record_count": 211,
+          "chars": 108729,
+          "utf8_bytes": 108777,
+          "tokens": 28425
+        },
+        {
+          "chunk": "unicef_reduced",
+          "record_count": 297,
+          "chars": 162231,
+          "utf8_bytes": 162361,
+          "tokens": 40998
+        }
+      ],
+      "tokens": 118778,
+      "chars": 462372,
+      "utf8_bytes": 462616,
+      "tokens_per_record": 130.2390350877193,
+      "savings_vs_current": 0.0
+    },
+    "readable": {
+      "chunks": [
+        {
+          "chunk": "unicef_quantitative",
+          "record_count": 404,
+          "chars": 151170,
+          "utf8_bytes": 151236,
+          "tokens": 37135
+        },
+        {
+          "chunk": "india_wash",
+          "record_count": 211,
+          "chars": 79007,
+          "utf8_bytes": 79055,
+          "tokens": 19320
+        },
+        {
+          "chunk": "unicef_reduced",
+          "record_count": 297,
+          "chars": 135641,
+          "utf8_bytes": 135771,
+          "tokens": 33005
+        }
+      ],
+      "tokens": 89460,
+      "chars": 365818,
+      "utf8_bytes": 366062,
+      "tokens_per_record": 98.09210526315789,
+      "savings_vs_current": 0.24683022108471264
+    },
+    "short": {
+      "chunks": [
+        {
+          "chunk": "unicef_quantitative",
+          "record_count": 404,
+          "chars": 118391,
+          "utf8_bytes": 118457,
+          "tokens": 34472
+        },
+        {
+          "chunk": "india_wash",
+          "record_count": 211,
+          "chars": 65624,
+          "utf8_bytes": 65672,
+          "tokens": 18480
+        },
+        {
+          "chunk": "unicef_reduced",
+          "record_count": 297,
+          "chars": 109983,
+          "utf8_bytes": 110113,
+          "tokens": 30791
+        }
+      ],
+      "tokens": 83743,
+      "chars": 293998,
+      "utf8_bytes": 294242,
+      "tokens_per_record": 91.8234649122807,
+      "savings_vs_current": 0.29496203000555654
+    }
+  },
+  "token_count_requests": 31,
+  "best_savings": 0.29496203000555654,
+  "field_breakdown": {
+    "canonical_reserialized_tokens": 118690,
+    "reference_value_tokens_estimate": 17149,
+    "reference_share_of_reserialized_current": 0.14448563484708063,
+    "schema_scaffolding_tokens_estimate": 72169,
+    "schema_scaffolding_share_estimate": 0.6080461706967731,
+    "omitted_null_savings_tokens": 29318,
+    "shorter_key_savings_tokens": 5717,
+    "field_family_token_contribution_estimate": {
+      "value": 6431,
+      "reference": 17149,
+      "identity": 14660,
+      "metadata": 8281
+    },
+    "by_evidence_kind": {
+      "deadline": {
+        "records": 5,
+        "tokens": 611
+      },
+      "definition": {
+        "records": 18,
+        "tokens": 2411
+      },
+      "entity": {
+        "records": 12,
+        "tokens": 1356
+      },
+      "fact": {
+        "records": 235,
+        "tokens": 31663
+      },
+      "metric": {
+        "records": 621,
+        "tokens": 79754
+      },
+      "obligation": {
+        "records": 14,
+        "tokens": 1981
+      },
+      "risk": {
+        "records": 6,
+        "tokens": 809
+      },
+      "unresolved": {
+        "records": 1,
+        "tokens": 140
+      }
+    },
+    "method_note": "Token subtraction after blanking values is an estimate; tokenizer boundaries make shares non-additive. Skeleton counts punctuation, keys, and empty-value markers."
+  },
+  "contract": {
+    "contract_id": "intelligence-v2-pre-b2-extraction-v1",
+    "model_id": "claude-haiku-4-5-20251001",
+    "wire_format_version": "canonical-json-span-v1",
+    "candidate_inventory_detector_version": "candidate-inventory-v1.0.0",
+    "candidate_representation_matcher_version": "candidate-representation-v1.0.0",
+    "planner_config_version": "pre-b2-saved-request-planner-v1",
+    "planner_config_sha256": "e55066f545a0b42a4570f0d48dfe447a6a56984602f69b63a65d53708c3051d2",
+    "chunk_contracts": {
+      "unicef_reduced": {
+        "source_sha256": "103987d34dc9a0a55d6d6924273b19177e60f53f6db67ff7a5924b00c4b7d46a",
+        "span_set_sha256": "9ab4454b1d8c6cd5ae98ff2dffca178cf0b23692607748ac89b1d1e9ecc0b1d9",
+        "schema_version": "evidence-schema-span-v1-snapshot",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "variants": {
+          "CONTROL": {
+            "extraction_prompt_version": "pre-b2-control-v1",
+            "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+            "request_body_sha256": "d28a6421e873e965413815c779461264f841c1ec0ab5fc543be47bf61db5d700"
+          },
+          "CONTROL_MINUS_MATERIALITY": {
+            "extraction_prompt_version": "pre-b2-control-minus-materiality-v1",
+            "system_prompt_sha256": "e502eb39ccfabe2401451c72cb79c904d3c94fb609807a0ae8b739f7269e142f",
+            "request_body_sha256": "5c8b718fb2cf3e33e879bb7ced97a50cf3adc65162258f23270946dbe1dbd345"
+          }
+        }
+      },
+      "india_wash": {
+        "source_sha256": "0709f82d8ff76517e2617ca88e17a1e21a4bbefbcd60a2c18c678ee50b23171f",
+        "span_set_sha256": "8a4539f31dfd0ccfdba2d844ab9285034c0c7c50ad0d92189470f7ee7aa58df7",
+        "schema_version": "evidence-schema-span-v1-snapshot",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "variants": {
+          "CONTROL": {
+            "extraction_prompt_version": "pre-b2-control-v1",
+            "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+            "request_body_sha256": "716df69a1607827b5994b68e1cadd5b61433c950397a69995cc31e3a2ac6e42e"
+          },
+          "CONTROL_MINUS_MATERIALITY": {
+            "extraction_prompt_version": "pre-b2-control-minus-materiality-v1",
+            "system_prompt_sha256": "e502eb39ccfabe2401451c72cb79c904d3c94fb609807a0ae8b739f7269e142f",
+            "request_body_sha256": "6580b94f3b9aceecb61a358c2e35854d0a3410c992e054b0e9259d9c2ee5e469"
+          }
+        }
+      }
+    },
+    "historical_chunks": {
+      "unicef_quantitative": {
+        "source_sha256": "08f304548a0e4198528ddea6e694f008400b12fdbda61f058e3bb55c4a1b5dd3",
+        "span_set_sha256": "f6646f6fed362519343b2ca5895353585659b40ba8748d1b7324653010bdb6ab",
+        "schema_version": "evidence-schema-span-v1-snapshot",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      }
+    },
+    "saved_call_contracts": {
+      "four_call_C1": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "143b3385379edaa0955625350eb69da3a59814ad23dffb0676bbf073ccfccd91",
+        "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "four_call_C2": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "143b3385379edaa0955625350eb69da3a59814ad23dffb0676bbf073ccfccd91",
+        "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "four_call_T1": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "d375b31fea55001b7f864ff257d1395a3f82b1489fe220605ece14711cd0099f",
+        "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "four_call_T2": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "d375b31fea55001b7f864ff257d1395a3f82b1489fe220605ece14711cd0099f",
+        "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "india_wash-C1": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "f3f0f6f7313153c1e8693d2fe5ad3470d46425ec43af8c0277512af40bcc7669",
+        "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "india_wash-C2": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "f3f0f6f7313153c1e8693d2fe5ad3470d46425ec43af8c0277512af40bcc7669",
+        "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "india_wash-C3": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "f3f0f6f7313153c1e8693d2fe5ad3470d46425ec43af8c0277512af40bcc7669",
+        "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "india_wash-K1": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "12d55bc7b35a631fef9305eb20a46a07e3b9075675e9131dd44edc9860a4feeb",
+        "system_prompt_sha256": "86ebfadccbe2af3077c88378b0000d790f7610ae5f92a0aed03c7ac8b8974594",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "india_wash-K2": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "12d55bc7b35a631fef9305eb20a46a07e3b9075675e9131dd44edc9860a4feeb",
+        "system_prompt_sha256": "86ebfadccbe2af3077c88378b0000d790f7610ae5f92a0aed03c7ac8b8974594",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "india_wash-K3": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "12d55bc7b35a631fef9305eb20a46a07e3b9075675e9131dd44edc9860a4feeb",
+        "system_prompt_sha256": "86ebfadccbe2af3077c88378b0000d790f7610ae5f92a0aed03c7ac8b8974594",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "unicef_reduced-C1": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "d304bc2997f958dc6784390c62266758571ad87fcca391a1fc9c68fbc4d296fe",
+        "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "unicef_reduced-C2": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "d304bc2997f958dc6784390c62266758571ad87fcca391a1fc9c68fbc4d296fe",
+        "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "unicef_reduced-C3": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "d304bc2997f958dc6784390c62266758571ad87fcca391a1fc9c68fbc4d296fe",
+        "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "unicef_reduced-K1": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "e7e913c49784741f3a966ce6eea45cdbc18d29655f5b38941e015ee747990ae3",
+        "system_prompt_sha256": "86ebfadccbe2af3077c88378b0000d790f7610ae5f92a0aed03c7ac8b8974594",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "unicef_reduced-K2": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "e7e913c49784741f3a966ce6eea45cdbc18d29655f5b38941e015ee747990ae3",
+        "system_prompt_sha256": "86ebfadccbe2af3077c88378b0000d790f7610ae5f92a0aed03c7ac8b8974594",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      },
+      "unicef_reduced-K3": {
+        "model_id": "claude-haiku-4-5-20251001",
+        "request_body_sha256": "e7e913c49784741f3a966ce6eea45cdbc18d29655f5b38941e015ee747990ae3",
+        "system_prompt_sha256": "86ebfadccbe2af3077c88378b0000d790f7610ae5f92a0aed03c7ac8b8974594",
+        "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+        "wire_format_version": "canonical-json-span-v1"
+      }
+    },
+    "request_body_hash_serialization": "UTF-8 JSON, ensure_ascii=false, comma/colon separators, no added whitespace"
+  }
+}

@@ -9,8 +9,9 @@ $metaFile = $paid.'/'.$cell.'.metadata.json'; $rawFile = $paid.'/'.$cell.'.respo
 if (! is_file($metaFile) || ! is_file($rawFile)) { fwrite(STDERR, "Missing successful call artifacts\n"); exit(3); }
 $meta = json_decode(file_get_contents($metaFile), true, 512, JSON_THROW_ON_ERROR);
 if (($meta['status'] ?? null) !== 'success') { fwrite(STDERR, "Cell is not successful\n"); exit(3); }
-$raw = file_get_contents($rawFile);
-if (hash('sha256', $raw) !== $meta['response_sha256']) { fwrite(STDERR, "Response hash changed\n"); exit(3); }
+$overrideFile = $argv[2] ?? null; // Offline compact-expansion equivalence probe only.
+$raw = file_get_contents($overrideFile ?? $rawFile);
+if ($overrideFile === null && hash('sha256', $raw) !== $meta['response_sha256']) { fwrite(STDERR, "Response hash changed\n"); exit(3); }
 $study = str_starts_with($cell, 'india_') ? 'india_wash' : 'unicef_reduced';
 $manifest = json_decode(file_get_contents($base.'/study-chunks.json'), true, 512, JSON_THROW_ON_ERROR)[$study];
 $source = file_get_contents($root.'/unicef-full-extracted.txt');
@@ -72,6 +73,10 @@ $out = ['cell'=>$cell, 'response_sha256'=>hash('sha256',$raw),
     'rejected_count'=>count($decoded['records'])-count($accepted),
     'validation'=>$all['_validation'], 'origin'=>$origin, 'key_figure_eligible_count'=>$eligible,
     'premerge_identity_count'=>count($identities), 'trace'=>$trace];
+if ($overrideFile !== null) {
+    echo json_encode(['replay'=>$out, 'accepted'=>$accepted], JSON_THROW_ON_ERROR)."\n";
+    exit(0);
+}
 $dir = $paid.'/analysis'; if (! is_dir($dir)) mkdir($dir, 0770, true);
 file_put_contents($dir.'/'.$cell.'.accepted.json', json_encode($accepted, JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR)."\n", LOCK_EX);
 file_put_contents($dir.'/'.$cell.'.replay.json', json_encode($out, JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR)."\n", LOCK_EX);
