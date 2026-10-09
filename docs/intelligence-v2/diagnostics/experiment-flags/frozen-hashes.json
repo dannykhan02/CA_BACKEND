@@ -1,0 +1,42 @@
+{
+  "unicef_reduced": {
+    "source": {
+      "file": "unicef_reduced.source.txt",
+      "sha256": "103987d34dc9a0a55d6d6924273b19177e60f53f6db67ff7a5924b00c4b7d46a",
+      "bytes": 7602,
+      "count": 40
+    },
+    "gold": {
+      "file": "unicef_reduced.gold-items.json",
+      "sha256": "2f3ff579f519ebf7fd42fd9a1d3fbc2b1482a61d4cc0cbfabc8d96356342b0f0",
+      "bytes": 6064,
+      "count": 17
+    },
+    "negative": {
+      "file": "unicef_reduced.negative-items.json",
+      "sha256": "d7ae58df69ae7e3ba33530b021d8fc856513d077ed2d6effa6faf57041de479a",
+      "bytes": 992,
+      "count": 6
+    }
+  },
+  "india_wash": {
+    "source": {
+      "file": "india_wash.source.txt",
+      "sha256": "0709f82d8ff76517e2617ca88e17a1e21a4bbefbcd60a2c18c678ee50b23171f",
+      "bytes": 8253,
+      "count": 39
+    },
+    "gold": {
+      "file": "india_wash.gold-items.json",
+      "sha256": "69b89cfd09c2807834f7e914d92fb3181b57794c343cc7ae8893602b4fa1b0ad",
+      "bytes": 4243,
+      "count": 12
+    },
+    "negative": {
+      "file": "india_wash.negative-items.json",
+      "sha256": "fcf8a0655919ec96f0f1737c136bbce99ae816911329790818ead06a51dc7147",
+      "bytes": 805,
+      "count": 5
+    }
+  }
+}

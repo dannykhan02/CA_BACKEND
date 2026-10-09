@@ -1,0 +1,1521 @@
+{
+    "cell": "unicef_reduced-C2",
+    "response_sha256": "8bdd77598e9eaa6a3822cae9771055658a561a98235c3e6f6d618180888102e3",
+    "returned_count": 42,
+    "accepted_count": 42,
+    "rejected_count": 0,
+    "validation": {
+        "records_returned": 42,
+        "records_kept": 42,
+        "records_dropped": 0,
+        "rejections": [],
+        "rejection_reasons": [],
+        "evidence_grounding_mode": "span_reference",
+        "records_date_metadata_sanitized": 14,
+        "date_metadata_sanitized": {
+            "unsupported_explicit_date_removed": 14,
+            "partial_period_preserved": 14
+        },
+        "date_rejection_reasons_by_kind": [],
+        "date_metadata_sanitized_by_kind": {
+            "unsupported_explicit_date_removed": {
+                "metric": 14
+            },
+            "partial_period_preserved": {
+                "metric": 14
+            }
+        }
+    },
+    "origin": {
+        "document": 38,
+        "unknown": 4
+    },
+    "key_figure_eligible_count": 7,
+    "premerge_identity_count": 42,
+    "trace": [
+        {
+            "raw_index": 0,
+            "accepted": true,
+            "identity": "06fea299eff6da34e8a8bcaf95bde71d318d53598b984b188b2655b5293b9104",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": true,
+            "typed": {
+                "value": {
+                    "type": "money",
+                    "raw": "$512.6 million",
+                    "verbatim": true,
+                    "number": 512600000,
+                    "scale": 1000000,
+                    "scale_source": "stated",
+                    "currency": "$",
+                    "unit": "USD",
+                    "unit_kind": "currency",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "UNICEF"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": {
+                    "period_covered": {
+                        "type": "period",
+                        "raw": "2024",
+                        "verbatim": true,
+                        "number": null,
+                        "scale": null,
+                        "scale_source": null,
+                        "currency": null,
+                        "unit": null,
+                        "unit_kind": "other",
+                        "sign": null,
+                        "precision": "exact",
+                        "measure_status": "actual",
+                        "entity_ref": {
+                            "id": null,
+                            "text": "UNICEF"
+                        },
+                        "date": null,
+                        "period": {
+                            "text": "2024",
+                            "grain": "year",
+                            "start": "2024-01-01",
+                            "end": "2024-12-31",
+                            "anchored": true,
+                            "fiscal_year_basis": null
+                        },
+                        "duration": null,
+                        "parser_version": "values.v1",
+                        "resolution": "period"
+                    }
+                },
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 1,
+            "accepted": true,
+            "identity": "d00bb1d923b373d5bf06f21b66d2b6027b807e19b3104017c0db9d42a7076650",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": true,
+            "typed": {
+                "value": {
+                    "type": "money",
+                    "raw": "$724.9 million",
+                    "verbatim": true,
+                    "number": 724900000,
+                    "scale": 1000000,
+                    "scale_source": "stated",
+                    "currency": "$",
+                    "unit": "USD",
+                    "unit_kind": "currency",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "UNICEF"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": {
+                    "period_covered": {
+                        "type": "period",
+                        "raw": "2024",
+                        "verbatim": true,
+                        "number": null,
+                        "scale": null,
+                        "scale_source": null,
+                        "currency": null,
+                        "unit": null,
+                        "unit_kind": "other",
+                        "sign": null,
+                        "precision": "exact",
+                        "measure_status": "actual",
+                        "entity_ref": {
+                            "id": null,
+                            "text": "UNICEF"
+                        },
+                        "date": null,
+                        "period": {
+                            "text": "2024",
+                            "grain": "year",
+                            "start": "2024-01-01",
+                            "end": "2024-12-31",
+                            "anchored": true,
+                            "fiscal_year_basis": null
+                        },
+                        "duration": null,
+                        "parser_version": "values.v1",
+                        "resolution": "period"
+                    }
+                },
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 2,
+            "accepted": true,
+            "identity": "9db932716c02bd3c774bb4a7dbe57fc01f9f3f3cf54549fa7a1f563520f0ce88",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": true,
+            "typed": {
+                "value": {
+                    "type": "money",
+                    "raw": "$346.1 million",
+                    "verbatim": true,
+                    "number": 346100000,
+                    "scale": 1000000,
+                    "scale_source": "stated",
+                    "currency": "$",
+                    "unit": "USD",
+                    "unit_kind": "currency",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "UNICEF"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": {
+                    "period_covered": {
+                        "type": "period",
+                        "raw": "2024",
+                        "verbatim": true,
+                        "number": null,
+                        "scale": null,
+                        "scale_source": null,
+                        "currency": null,
+                        "unit": null,
+                        "unit_kind": "other",
+                        "sign": null,
+                        "precision": "exact",
+                        "measure_status": "actual",
+                        "entity_ref": {
+                            "id": null,
+                            "text": "UNICEF"
+                        },
+                        "date": null,
+                        "period": {
+                            "text": "2024",
+                            "grain": "year",
+                            "start": "2024-01-01",
+                            "end": "2024-12-31",
+                            "anchored": true,
+                            "fiscal_year_basis": null
+                        },
+                        "duration": null,
+                        "parser_version": "values.v1",
+                        "resolution": "period"
+                    }
+                },
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 3,
+            "accepted": true,
+            "identity": "67d7a25b20e95d5bf5c6309c35b0b01afdd34e79d17430c466d4c388e21c78f2",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": {
+                    "period_covered": {
+                        "type": "period",
+                        "raw": "2024",
+                        "verbatim": true,
+                        "number": null,
+                        "scale": null,
+                        "scale_source": null,
+                        "currency": null,
+                        "unit": null,
+                        "unit_kind": "other",
+                        "sign": null,
+                        "precision": "exact",
+                        "measure_status": "actual",
+                        "entity_ref": {
+                            "id": null,
+                            "text": "UNICEF"
+                        },
+                        "date": null,
+                        "period": {
+                            "text": "2024",
+                            "grain": "year",
+                            "start": "2024-01-01",
+                            "end": "2024-12-31",
+                            "anchored": true,
+                            "fiscal_year_basis": null
+                        },
+                        "duration": null,
+                        "parser_version": "values.v1",
+                        "resolution": "period"
+                    }
+                },
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 4,
+            "accepted": true,
+            "identity": "4195a46d355d9fd26b5d305dfe4248a17cabdd5694a351f239c61292caf207b4",
+            "premerge_collision": false,
+            "origin": "unknown",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "percent",
+                    "raw": "37%",
+                    "verbatim": true,
+                    "number": 37,
+                    "scale": 1,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": "percent",
+                    "unit_kind": "percent",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "UNICEF"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": {
+                    "period_covered": {
+                        "type": "period",
+                        "raw": "2024",
+                        "verbatim": true,
+                        "number": null,
+                        "scale": null,
+                        "scale_source": null,
+                        "currency": null,
+                        "unit": null,
+                        "unit_kind": "other",
+                        "sign": null,
+                        "precision": "exact",
+                        "measure_status": "actual",
+                        "entity_ref": {
+                            "id": null,
+                            "text": "UNICEF"
+                        },
+                        "date": null,
+                        "period": {
+                            "text": "2024",
+                            "grain": "year",
+                            "start": "2024-01-01",
+                            "end": "2024-12-31",
+                            "anchored": true,
+                            "fiscal_year_basis": null
+                        },
+                        "duration": null,
+                        "parser_version": "values.v1",
+                        "resolution": "period"
+                    }
+                },
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 5,
+            "accepted": true,
+            "identity": "a1432b6f8ead981aa8ab2c21cc35ee94487ee1d8401f63302876c267f98163ea",
+            "premerge_collision": false,
+            "origin": "unknown",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "percent",
+                    "raw": "45%",
+                    "verbatim": true,
+                    "number": 45,
+                    "scale": 1,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": "percent",
+                    "unit_kind": "percent",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "UNICEF"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": {
+                    "period_covered": {
+                        "type": "period",
+                        "raw": "2024",
+                        "verbatim": true,
+                        "number": null,
+                        "scale": null,
+                        "scale_source": null,
+                        "currency": null,
+                        "unit": null,
+                        "unit_kind": "other",
+                        "sign": null,
+                        "precision": "exact",
+                        "measure_status": "actual",
+                        "entity_ref": {
+                            "id": null,
+                            "text": "UNICEF"
+                        },
+                        "date": null,
+                        "period": {
+                            "text": "2024",
+                            "grain": "year",
+                            "start": "2024-01-01",
+                            "end": "2024-12-31",
+                            "anchored": true,
+                            "fiscal_year_basis": null
+                        },
+                        "duration": null,
+                        "parser_version": "values.v1",
+                        "resolution": "period"
+                    }
+                },
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 6,
+            "accepted": true,
+            "identity": "76b8c5ee8c4769b1bafa25970fcd7f8275e636bd4d72ea3964daa42c3c0039d1",
+            "premerge_collision": false,
+            "origin": "unknown",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "percent",
+                    "raw": "18%",
+                    "verbatim": true,
+                    "number": 18,
+                    "scale": 1,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": "percent",
+                    "unit_kind": "percent",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "UNICEF"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": {
+                    "period_covered": {
+                        "type": "period",
+                        "raw": "2024",
+                        "verbatim": true,
+                        "number": null,
+                        "scale": null,
+                        "scale_source": null,
+                        "currency": null,
+                        "unit": null,
+                        "unit_kind": "other",
+                        "sign": null,
+                        "precision": "exact",
+                        "measure_status": "actual",
+                        "entity_ref": {
+                            "id": null,
+                            "text": "UNICEF"
+                        },
+                        "date": null,
+                        "period": {
+                            "text": "2024",
+                            "grain": "year",
+                            "start": "2024-01-01",
+                            "end": "2024-12-31",
+                            "anchored": true,
+                            "fiscal_year_basis": null
+                        },
+                        "duration": null,
+                        "parser_version": "values.v1",
+                        "resolution": "period"
+                    }
+                },
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 7,
+            "accepted": true,
+            "identity": "7d8beb2dc38047d9d07fabebdf970d5d4a5caed710a09518d36e5c0c78c64e1c",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": {
+                    "period_covered": {
+                        "type": "period",
+                        "raw": "2024",
+                        "verbatim": true,
+                        "number": null,
+                        "scale": null,
+                        "scale_source": null,
+                        "currency": null,
+                        "unit": null,
+                        "unit_kind": "other",
+                        "sign": null,
+                        "precision": "exact",
+                        "measure_status": "actual",
+                        "entity_ref": {
+                            "id": null,
+                            "text": "UNICEF"
+                        },
+                        "date": null,
+                        "period": {
+                            "text": "2024",
+                            "grain": "year",
+                            "start": "2024-01-01",
+                            "end": "2024-12-31",
+                            "anchored": true,
+                            "fiscal_year_basis": null
+                        },
+                        "duration": null,
+                        "parser_version": "values.v1",
+                        "resolution": "period"
+                    }
+                },
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 8,
+            "accepted": true,
+            "identity": "744bc0eb1bd02bba54d9b97d40f4bdb2c82ff0db29e342975c8bb5eb1cb13161",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": {
+                    "period_covered": {
+                        "type": "period",
+                        "raw": "2023",
+                        "verbatim": true,
+                        "number": null,
+                        "scale": null,
+                        "scale_source": null,
+                        "currency": null,
+                        "unit": null,
+                        "unit_kind": "other",
+                        "sign": null,
+                        "precision": "exact",
+                        "measure_status": "actual",
+                        "entity_ref": {
+                            "id": null,
+                            "text": "UNICEF"
+                        },
+                        "date": null,
+                        "period": {
+                            "text": "2023",
+                            "grain": "year",
+                            "start": "2023-01-01",
+                            "end": "2023-12-31",
+                            "anchored": true,
+                            "fiscal_year_basis": null
+                        },
+                        "duration": null,
+                        "parser_version": "values.v1",
+                        "resolution": "period"
+                    }
+                },
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 9,
+            "accepted": true,
+            "identity": "cc37783dcd6b64434eea7e97c9d30d52b1e465f3688c56bcf4fbbbf3bddf97f2",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": {
+                    "period_covered": {
+                        "type": "period",
+                        "raw": "2022",
+                        "verbatim": true,
+                        "number": null,
+                        "scale": null,
+                        "scale_source": null,
+                        "currency": null,
+                        "unit": null,
+                        "unit_kind": "other",
+                        "sign": null,
+                        "precision": "exact",
+                        "measure_status": "actual",
+                        "entity_ref": {
+                            "id": null,
+                            "text": "UNICEF"
+                        },
+                        "date": null,
+                        "period": {
+                            "text": "2022",
+                            "grain": "year",
+                            "start": "2022-01-01",
+                            "end": "2022-12-31",
+                            "anchored": true,
+                            "fiscal_year_basis": null
+                        },
+                        "duration": null,
+                        "parser_version": "values.v1",
+                        "resolution": "period"
+                    }
+                },
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 10,
+            "accepted": true,
+            "identity": "c02b0d749846585eecc80da924733d9ecf407d1e61042b862ab88e1ba2b8f226",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": {
+                    "period_covered": {
+                        "type": "period",
+                        "raw": "2021",
+                        "verbatim": true,
+                        "number": null,
+                        "scale": null,
+                        "scale_source": null,
+                        "currency": null,
+                        "unit": null,
+                        "unit_kind": "other",
+                        "sign": null,
+                        "precision": "exact",
+                        "measure_status": "actual",
+                        "entity_ref": {
+                            "id": null,
+                            "text": "UNICEF"
+                        },
+                        "date": null,
+                        "period": {
+                            "text": "2021",
+                            "grain": "year",
+                            "start": "2021-01-01",
+                            "end": "2021-12-31",
+                            "anchored": true,
+                            "fiscal_year_basis": null
+                        },
+                        "duration": null,
+                        "parser_version": "values.v1",
+                        "resolution": "period"
+                    }
+                },
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 11,
+            "accepted": true,
+            "identity": "2c3b386c142bb4868f658045f254d181106f25772c991b49cf974785d4cee0a3",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": {
+                    "period_covered": {
+                        "type": "period",
+                        "raw": "2020",
+                        "verbatim": true,
+                        "number": null,
+                        "scale": null,
+                        "scale_source": null,
+                        "currency": null,
+                        "unit": null,
+                        "unit_kind": "other",
+                        "sign": null,
+                        "precision": "exact",
+                        "measure_status": "actual",
+                        "entity_ref": {
+                            "id": null,
+                            "text": "UNICEF"
+                        },
+                        "date": null,
+                        "period": {
+                            "text": "2020",
+                            "grain": "year",
+                            "start": "2020-01-01",
+                            "end": "2020-12-31",
+                            "anchored": true,
+                            "fiscal_year_basis": null
+                        },
+                        "duration": null,
+                        "parser_version": "values.v1",
+                        "resolution": "period"
+                    }
+                },
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 12,
+            "accepted": true,
+            "identity": "be5c80958ef28c6ea3fbc49c5d35fdc74fce425705752573803dbb78ab57aab0",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 13,
+            "accepted": true,
+            "identity": "c6a500e6ecfbafaa0150da941cce6e8d37d0f14e5bf6bc76424b9b1856c20e20",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "count",
+                    "raw": "10 million people",
+                    "verbatim": true,
+                    "number": 10000000,
+                    "scale": 1000000,
+                    "scale_source": "stated",
+                    "currency": null,
+                    "unit": "people",
+                    "unit_kind": "count",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Horn of Africa drought-prone countries"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 14,
+            "accepted": true,
+            "identity": "230c7d24e90b60d06b94b22d4eaf1ffeca557b16d1b53640707745e207c51504",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 15,
+            "accepted": true,
+            "identity": "2a544ee405433b75937da56ee241d15f0f66d2314865c724949c2d8528919a69",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "number",
+                    "raw": "13 countries",
+                    "verbatim": true,
+                    "number": 13,
+                    "scale": 1,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": null,
+                    "unit_kind": "other",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Global"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 16,
+            "accepted": true,
+            "identity": "6ec224af26225debac32900b90873b73a0717ac29359b039065cc3b200365fc2",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 17,
+            "accepted": true,
+            "identity": "3113c9c17218b6bd3aa50c968b23556c2e091e9bfaaa5f655a55e5cd445d30d8",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "percent",
+                    "raw": "23 per cent drop",
+                    "verbatim": true,
+                    "number": 23,
+                    "scale": 1,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": "percent",
+                    "unit_kind": "percent",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": null,
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Yemen"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 18,
+            "accepted": true,
+            "identity": "403a3a928f5fc67ef4b85fdd7fc9ded5d68340da691013efb7e66a402598023e",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 19,
+            "accepted": true,
+            "identity": "b1e206907cb279608331944c1616d1137ed5a8a42842290e9d6b1f9582d708c1",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "count",
+                    "raw": "more than 129,000 children",
+                    "verbatim": true,
+                    "number": 129000,
+                    "scale": 1,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": "people",
+                    "unit_kind": "count",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Democratic Republic of the Congo"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 20,
+            "accepted": true,
+            "identity": "720565a65bd804e92f8167f881931f0be495ed7551b9c6d4dc305bb0d5e2f9e9",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "count",
+                    "raw": "more than 120,000 people",
+                    "verbatim": true,
+                    "number": 120000,
+                    "scale": 1,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": "people",
+                    "unit_kind": "count",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Madagascar and Mozambique"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 21,
+            "accepted": true,
+            "identity": "bd8d01a1d0d33037b403bc0d97f4e30ffb4630319ea7acf0d708fe4240b0ad26",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "percent",
+                    "raw": "22.7 per cent",
+                    "verbatim": true,
+                    "number": 22.7,
+                    "scale": 1,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": "percent",
+                    "unit_kind": "percent",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Rwanda"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 22,
+            "accepted": true,
+            "identity": "f42e67380e15b47fbeae21f6ef133b8acd89a191742b0bf0c541d2078a6b3516",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 23,
+            "accepted": true,
+            "identity": "36786813b07f9acff9f455e299424cc7538ed82fefe0e0c69ca044f406afe065",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "number",
+                    "raw": "14 provinces",
+                    "verbatim": true,
+                    "number": 14,
+                    "scale": 1,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": null,
+                    "unit_kind": "other",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Viet Nam"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 24,
+            "accepted": true,
+            "identity": "b0832557dcbc6ac0246400cea762f09226768cc8b0ed873495264d7b1bb251a5",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "count",
+                    "raw": "59.3 million people",
+                    "verbatim": true,
+                    "number": 59300000,
+                    "scale": 1000000,
+                    "scale_source": "stated",
+                    "currency": null,
+                    "unit": "people",
+                    "unit_kind": "count",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "India"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": {
+                    "period_covered": {
+                        "type": "period",
+                        "raw": "2024",
+                        "verbatim": true,
+                        "number": null,
+                        "scale": null,
+                        "scale_source": null,
+                        "currency": null,
+                        "unit": null,
+                        "unit_kind": "other",
+                        "sign": null,
+                        "precision": "exact",
+                        "measure_status": "actual",
+                        "entity_ref": {
+                            "id": null,
+                            "text": "India"
+                        },
+                        "date": null,
+                        "period": {
+                            "text": "2024",
+                            "grain": "year",
+                            "start": "2024-01-01",
+                            "end": "2024-12-31",
+                            "anchored": true,
+                            "fiscal_year_basis": null
+                        },
+                        "duration": null,
+                        "parser_version": "values.v1",
+                        "resolution": "period"
+                    }
+                },
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 25,
+            "accepted": true,
+            "identity": "08fb9bb7e8618a5ab0cf9920c9c82944f2d9847174d865f3bb7298870b55e85b",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "count",
+                    "raw": "17.9 million people",
+                    "verbatim": true,
+                    "number": 17900000,
+                    "scale": 1000000,
+                    "scale_source": "stated",
+                    "currency": null,
+                    "unit": "people",
+                    "unit_kind": "count",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "India"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": {
+                    "period_covered": {
+                        "type": "period",
+                        "raw": "2024",
+                        "verbatim": true,
+                        "number": null,
+                        "scale": null,
+                        "scale_source": null,
+                        "currency": null,
+                        "unit": null,
+                        "unit_kind": "other",
+                        "sign": null,
+                        "precision": "exact",
+                        "measure_status": "actual",
+                        "entity_ref": {
+                            "id": null,
+                            "text": "India"
+                        },
+                        "date": null,
+                        "period": {
+                            "text": "2024",
+                            "grain": "year",
+                            "start": "2024-01-01",
+                            "end": "2024-12-31",
+                            "anchored": true,
+                            "fiscal_year_basis": null
+                        },
+                        "duration": null,
+                        "parser_version": "values.v1",
+                        "resolution": "period"
+                    }
+                },
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 26,
+            "accepted": true,
+            "identity": "4a415e199542c98b1213828cd34e15f6ab44e3e2f296b1af659e1744cbd39ace",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": true,
+            "typed": {
+                "value": {
+                    "type": "money",
+                    "raw": "$68 million",
+                    "verbatim": true,
+                    "number": 68000000,
+                    "scale": 1000000,
+                    "scale_source": "stated",
+                    "currency": "$",
+                    "unit": "USD",
+                    "unit_kind": "currency",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Republic of Moldova"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 27,
+            "accepted": true,
+            "identity": "f790fbc8226146cf3e66fbf0194c30cdeb9f6fb16932fc7e40802356a6384be9",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "percent",
+                    "raw": "3.4 per cent rise",
+                    "verbatim": true,
+                    "number": 3.4,
+                    "scale": 1,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": "percent",
+                    "unit_kind": "percent",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Republic of Moldova"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 28,
+            "accepted": true,
+            "identity": "12ca63af0534be53381028dc2d7f87974a3231fef160ca91951ec82881987723",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "percent",
+                    "raw": "42 per cent",
+                    "verbatim": true,
+                    "number": 42,
+                    "scale": 1,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": "percent",
+                    "unit_kind": "percent",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": null,
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Republic of Moldova families with children including Ukrainian refugees"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 29,
+            "accepted": true,
+            "identity": "37ec59c1e3d01a957f8761f9f382923288d01c12f6c6ae7d7f5e6162394e9d29",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "percent",
+                    "raw": "40 per cent reduction",
+                    "verbatim": true,
+                    "number": 40,
+                    "scale": 1,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": "percent",
+                    "unit_kind": "percent",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": null,
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Bangladesh children under five"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 30,
+            "accepted": true,
+            "identity": "a4de9653b2ca662f758ec55379108ae1dffa29666572211eb6fccf54bac86dd6",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 31,
+            "accepted": true,
+            "identity": "968a33718eadad7973cce4d8cadf54ca7209fec860902f84ed95b19f4236d870",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 32,
+            "accepted": true,
+            "identity": "49c4cda422f8c16ada26c090fd1101949ae8d33fc86583597ef61414b19e6cd9",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "count",
+                    "raw": "more than 675,000 children",
+                    "verbatim": true,
+                    "number": 675000,
+                    "scale": 1,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": "people",
+                    "unit_kind": "count",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Sierra Leone"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 33,
+            "accepted": true,
+            "identity": "53647fe26cc9017072fb74a289f0ad5ff3faed682e3bfd91b4e6cd56c4fb7a39",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 34,
+            "accepted": true,
+            "identity": "0b0fd134b633e70f258654ce8392a23fb426b084d7ea428ed7678dc8ea4ebaf8",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "number",
+                    "raw": "19 child indicators",
+                    "verbatim": true,
+                    "number": 19,
+                    "scale": 1,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": null,
+                    "unit_kind": "other",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "UNICEF"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 35,
+            "accepted": true,
+            "identity": "df8b1290d26373c357b533c7f55596f0d57ae2425cba322fce8c0886581e4beb",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": true,
+            "typed": {
+                "value": {
+                    "type": "money",
+                    "raw": "$174 million",
+                    "verbatim": true,
+                    "number": 174000000,
+                    "scale": 1000000,
+                    "scale_source": "stated",
+                    "currency": "$",
+                    "unit": "USD",
+                    "unit_kind": "currency",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "UNICEF Development Effectiveness"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 36,
+            "accepted": true,
+            "identity": "40460d7cf0d50d2147a9b9b5244a1140295c8a9ea5aec488461be85905940adf",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": true,
+            "typed": {
+                "value": {
+                    "type": "money",
+                    "raw": "$952 million",
+                    "verbatim": true,
+                    "number": 952000000,
+                    "scale": 1000000,
+                    "scale_source": "stated",
+                    "currency": "$",
+                    "unit": "USD",
+                    "unit_kind": "currency",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "UNICEF country programmes"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 37,
+            "accepted": true,
+            "identity": "10b8aab226a2fa8fa3aed62fffa1099be2e508544470793f0afeb4bbea449ff7",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": true,
+            "typed": {
+                "value": {
+                    "type": "money",
+                    "raw": "$227 million",
+                    "verbatim": true,
+                    "number": 227000000,
+                    "scale": 1000000,
+                    "scale_source": "stated",
+                    "currency": "$",
+                    "unit": "USD",
+                    "unit_kind": "currency",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "UNICEF development effectiveness"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 38,
+            "accepted": true,
+            "identity": "0b445e2369e7625f4c4c2fe00ed7c604f31db309c436581cbf9efdd050098645",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 39,
+            "accepted": true,
+            "identity": "63301a0dacc21e8e265dca32e6c331fad44910a79c06200a270955b284271dd7",
+            "premerge_collision": false,
+            "origin": "unknown",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 40,
+            "accepted": true,
+            "identity": "d6ef44c1124b5bb5c10147f840d4e8947be46317671d104a39872622ca942a0e",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 41,
+            "accepted": true,
+            "identity": "5939cfe11cf2c9b209a7fff04f956e4a8862235ac6d8910c8575881dadb9c9f0",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        }
+    ]
+}

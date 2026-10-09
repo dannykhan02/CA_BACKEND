@@ -1,0 +1,62 @@
+{
+  "unicef_reduced": {
+    "CONTROL": {
+      "request_sha256": "d304bc2997f958dc6784390c62266758571ad87fcca391a1fc9c68fbc4d296fe",
+      "request_bytes": 13676,
+      "prompt_version": "2",
+      "max_tokens": 16000,
+      "max_records": 79,
+      "source_sha256": "f0ad279601b11e3e8f34cd8cfe0b69fef35899698b62fb6ae8790136cc4b583d",
+      "span_map_sha256": "41b64b039f47fbf54e0f4340b2dcf195f4aaa1384d1071379373d6a3f6b709c2",
+      "fake_http_requests_per_process": 1,
+      "anthropic_network_calls": 0,
+      "row_counts_identical": true,
+      "queue_dispatches": 0,
+      "billing_events": 0
+    },
+    "COLLECTOR_ONLY": {
+      "request_sha256": "e7e913c49784741f3a966ce6eea45cdbc18d29655f5b38941e015ee747990ae3",
+      "request_bytes": 13780,
+      "prompt_version": "diagnostic-collector-v1",
+      "max_tokens": 16000,
+      "max_records": 79,
+      "source_sha256": "f0ad279601b11e3e8f34cd8cfe0b69fef35899698b62fb6ae8790136cc4b583d",
+      "span_map_sha256": "41b64b039f47fbf54e0f4340b2dcf195f4aaa1384d1071379373d6a3f6b709c2",
+      "fake_http_requests_per_process": 1,
+      "anthropic_network_calls": 0,
+      "row_counts_identical": true,
+      "queue_dispatches": 0,
+      "billing_events": 0
+    }
+  },
+  "india_wash": {
+    "CONTROL": {
+      "request_sha256": "f3f0f6f7313153c1e8693d2fe5ad3470d46425ec43af8c0277512af40bcc7669",
+      "request_bytes": 14360,
+      "prompt_version": "2",
+      "max_tokens": 16000,
+      "max_records": 79,
+      "source_sha256": "72d2315e9afbabeb6a368f956729c442ab8410d7d236e17c5273dee258707494",
+      "span_map_sha256": "f3a6bbfc65ff8e1a778fbe25f7836d407291c3d7afede5822aa5c003da983d1b",
+      "fake_http_requests_per_process": 1,
+      "anthropic_network_calls": 0,
+      "row_counts_identical": true,
+      "queue_dispatches": 0,
+      "billing_events": 0
+    },
+    "COLLECTOR_ONLY": {
+      "request_sha256": "12d55bc7b35a631fef9305eb20a46a07e3b9075675e9131dd44edc9860a4feeb",
+      "request_bytes": 14464,
+      "prompt_version": "diagnostic-collector-v1",
+      "max_tokens": 16000,
+      "max_records": 79,
+      "source_sha256": "72d2315e9afbabeb6a368f956729c442ab8410d7d236e17c5273dee258707494",
+      "span_map_sha256": "f3a6bbfc65ff8e1a778fbe25f7836d407291c3d7afede5822aa5c003da983d1b",
+      "fake_http_requests_per_process": 1,
+      "anthropic_network_calls": 0,
+      "row_counts_identical": true,
+      "queue_dispatches": 0,
+      "billing_events": 0
+    }
+  }
+}

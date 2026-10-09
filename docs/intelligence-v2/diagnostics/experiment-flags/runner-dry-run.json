@@ -1,0 +1,154 @@
+{
+  "status": "PASS",
+  "network_calls": 0,
+  "headers_match_anthropic_client": true,
+  "beta_headers_required": false,
+  "api_key_values_persisted": false,
+  "conservative_total_usd": "1.22381250",
+  "cells": [
+    {
+      "cell": "unicef_reduced-C1",
+      "request_sha256": "d304bc2997f958dc6784390c62266758571ad87fcca391a1fc9c68fbc4d296fe",
+      "request_bytes": 13676,
+      "headers": {
+        "x-api-key": "[REDACTED]",
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json"
+      },
+      "method": "POST",
+      "network_calls": 0
+    },
+    {
+      "cell": "unicef_reduced-K1",
+      "request_sha256": "e7e913c49784741f3a966ce6eea45cdbc18d29655f5b38941e015ee747990ae3",
+      "request_bytes": 13780,
+      "headers": {
+        "x-api-key": "[REDACTED]",
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json"
+      },
+      "method": "POST",
+      "network_calls": 0
+    },
+    {
+      "cell": "india_wash-C1",
+      "request_sha256": "f3f0f6f7313153c1e8693d2fe5ad3470d46425ec43af8c0277512af40bcc7669",
+      "request_bytes": 14360,
+      "headers": {
+        "x-api-key": "[REDACTED]",
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json"
+      },
+      "method": "POST",
+      "network_calls": 0
+    },
+    {
+      "cell": "india_wash-K1",
+      "request_sha256": "12d55bc7b35a631fef9305eb20a46a07e3b9075675e9131dd44edc9860a4feeb",
+      "request_bytes": 14464,
+      "headers": {
+        "x-api-key": "[REDACTED]",
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json"
+      },
+      "method": "POST",
+      "network_calls": 0
+    },
+    {
+      "cell": "unicef_reduced-C2",
+      "request_sha256": "d304bc2997f958dc6784390c62266758571ad87fcca391a1fc9c68fbc4d296fe",
+      "request_bytes": 13676,
+      "headers": {
+        "x-api-key": "[REDACTED]",
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json"
+      },
+      "method": "POST",
+      "network_calls": 0
+    },
+    {
+      "cell": "unicef_reduced-K2",
+      "request_sha256": "e7e913c49784741f3a966ce6eea45cdbc18d29655f5b38941e015ee747990ae3",
+      "request_bytes": 13780,
+      "headers": {
+        "x-api-key": "[REDACTED]",
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json"
+      },
+      "method": "POST",
+      "network_calls": 0
+    },
+    {
+      "cell": "india_wash-C2",
+      "request_sha256": "f3f0f6f7313153c1e8693d2fe5ad3470d46425ec43af8c0277512af40bcc7669",
+      "request_bytes": 14360,
+      "headers": {
+        "x-api-key": "[REDACTED]",
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json"
+      },
+      "method": "POST",
+      "network_calls": 0
+    },
+    {
+      "cell": "india_wash-K2",
+      "request_sha256": "12d55bc7b35a631fef9305eb20a46a07e3b9075675e9131dd44edc9860a4feeb",
+      "request_bytes": 14464,
+      "headers": {
+        "x-api-key": "[REDACTED]",
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json"
+      },
+      "method": "POST",
+      "network_calls": 0
+    },
+    {
+      "cell": "unicef_reduced-C3",
+      "request_sha256": "d304bc2997f958dc6784390c62266758571ad87fcca391a1fc9c68fbc4d296fe",
+      "request_bytes": 13676,
+      "headers": {
+        "x-api-key": "[REDACTED]",
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json"
+      },
+      "method": "POST",
+      "network_calls": 0
+    },
+    {
+      "cell": "unicef_reduced-K3",
+      "request_sha256": "e7e913c49784741f3a966ce6eea45cdbc18d29655f5b38941e015ee747990ae3",
+      "request_bytes": 13780,
+      "headers": {
+        "x-api-key": "[REDACTED]",
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json"
+      },
+      "method": "POST",
+      "network_calls": 0
+    },
+    {
+      "cell": "india_wash-C3",
+      "request_sha256": "f3f0f6f7313153c1e8693d2fe5ad3470d46425ec43af8c0277512af40bcc7669",
+      "request_bytes": 14360,
+      "headers": {
+        "x-api-key": "[REDACTED]",
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json"
+      },
+      "method": "POST",
+      "network_calls": 0
+    },
+    {
+      "cell": "india_wash-K3",
+      "request_sha256": "12d55bc7b35a631fef9305eb20a46a07e3b9075675e9131dd44edc9860a4feeb",
+      "request_bytes": 14464,
+      "headers": {
+        "x-api-key": "[REDACTED]",
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json"
+      },
+      "method": "POST",
+      "network_calls": 0
+    }
+  ]
+}

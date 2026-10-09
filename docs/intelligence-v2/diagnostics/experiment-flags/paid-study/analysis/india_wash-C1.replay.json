@@ -1,0 +1,781 @@
+{
+    "cell": "india_wash-C1",
+    "response_sha256": "de8c947ce7dae036e1af344bbbff8bb3fe3ceeb795b8285619a0673d3e2c80cc",
+    "returned_count": 36,
+    "accepted_count": 30,
+    "rejected_count": 6,
+    "validation": {
+        "records_returned": 36,
+        "records_kept": 30,
+        "records_dropped": 6,
+        "rejections": {
+            "invalid_date": 6
+        },
+        "rejection_reasons": {
+            "invalid_deadline_date_type": 5,
+            "explicit_date_not_in_evidence": 1
+        },
+        "evidence_grounding_mode": "span_reference",
+        "records_date_metadata_sanitized": 4,
+        "date_metadata_sanitized": {
+            "unsupported_explicit_date_removed": 4,
+            "partial_period_preserved": 4
+        },
+        "date_rejection_reasons_by_kind": {
+            "invalid_deadline_date_type": {
+                "obligation": 5
+            },
+            "explicit_date_not_in_evidence": {
+                "deadline": 1
+            }
+        },
+        "date_metadata_sanitized_by_kind": {
+            "unsupported_explicit_date_removed": {
+                "fact": 1,
+                "metric": 3
+            },
+            "partial_period_preserved": {
+                "fact": 1,
+                "metric": 3
+            }
+        }
+    },
+    "origin": {
+        "document": 15,
+        "unknown": 15
+    },
+    "key_figure_eligible_count": 1,
+    "premerge_identity_count": 30,
+    "trace": [
+        {
+            "raw_index": 0,
+            "accepted": true,
+            "identity": "50c8eab89adcc6888b92914d7a7ecbac31967e18b5c5d6317de27be17862defd",
+            "premerge_collision": false,
+            "origin": "unknown",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "percent",
+                    "raw": "37 per cent reduction",
+                    "verbatim": true,
+                    "number": 37,
+                    "scale": 1,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": "percent",
+                    "unit_kind": "percent",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": null,
+                    "entity_ref": {
+                        "id": null,
+                        "text": "India"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 1,
+            "accepted": true,
+            "identity": "aba1469e7db7a626af6fc196a19f06fe4623ab971ca9a112fc02eddfbad7658b",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": {
+                    "period_covered": {
+                        "type": "period",
+                        "raw": "2014",
+                        "verbatim": true,
+                        "number": null,
+                        "scale": null,
+                        "scale_source": null,
+                        "currency": null,
+                        "unit": null,
+                        "unit_kind": "other",
+                        "sign": null,
+                        "precision": "exact",
+                        "measure_status": null,
+                        "entity_ref": {
+                            "id": null,
+                            "text": "Government of India"
+                        },
+                        "date": null,
+                        "period": {
+                            "text": "2014",
+                            "grain": "year",
+                            "start": "2014-01-01",
+                            "end": "2014-12-31",
+                            "anchored": true,
+                            "fiscal_year_basis": null
+                        },
+                        "duration": null,
+                        "parser_version": "values.v1",
+                        "resolution": "period"
+                    }
+                },
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 2,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "invalid_deadline_date_type": 1
+            }
+        },
+        {
+            "raw_index": 3,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "explicit_date_not_in_evidence": 1
+            }
+        },
+        {
+            "raw_index": 4,
+            "accepted": true,
+            "identity": "08ebff8789b1c58392b2bc0de35471cdbfdfeb23e22f716721ec811180450c8b",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "count",
+                    "raw": "550 million",
+                    "verbatim": true,
+                    "number": 550000000,
+                    "scale": 1000000,
+                    "scale_source": "stated",
+                    "currency": null,
+                    "unit": "people",
+                    "unit_kind": "count",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "India"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 5,
+            "accepted": true,
+            "identity": "d362d1db2aee74917d864c290bec7d3e19304260eb6c4c9f9faf80e0012f0d89",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "count",
+                    "raw": "580 million",
+                    "verbatim": true,
+                    "number": 580000000,
+                    "scale": 1000000,
+                    "scale_source": "stated",
+                    "currency": null,
+                    "unit": "people",
+                    "unit_kind": "count",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "India"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 6,
+            "accepted": true,
+            "identity": "06c609c4d4defd79a3fb0bae45443080d07ad6a643be089ef63a17fd4ef06df2",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 7,
+            "accepted": true,
+            "identity": "6e879bbe52a6e67e9402c8136c6b90f4581a001bfa3e7a5a9a420a0f78b3366c",
+            "premerge_collision": false,
+            "origin": "unknown",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "count",
+                    "raw": "more than 115 million",
+                    "verbatim": true,
+                    "number": 115000000,
+                    "scale": 1000000,
+                    "scale_source": "stated",
+                    "currency": null,
+                    "unit": "households",
+                    "unit_kind": "count",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "India"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 8,
+            "accepted": true,
+            "identity": "d61d68093a877bd39f7d02c1c67c2c48e39adc9272c770f7ef59d01a93fecba7",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": true,
+            "typed": {
+                "value": {
+                    "type": "money",
+                    "raw": "over $120 billion",
+                    "verbatim": true,
+                    "number": 120000000000,
+                    "scale": 1000000000,
+                    "scale_source": "stated",
+                    "currency": "$",
+                    "unit": "USD",
+                    "unit_kind": "currency",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Government of India"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 9,
+            "accepted": true,
+            "identity": "9b262d22fcf2af0c03e3f1725a3c6c6e8d6975904d4ad9ed6f98a46bd977cbfa",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "count",
+                    "raw": "110 million",
+                    "verbatim": true,
+                    "number": 110000000,
+                    "scale": 1000000,
+                    "scale_source": "stated",
+                    "currency": null,
+                    "unit": "toilets",
+                    "unit_kind": "count",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Government of India"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 10,
+            "accepted": true,
+            "identity": "81b99380dcaa3f9b6967fd1195cf3a3371c91337685f3bbd23253e3525cb322f",
+            "premerge_collision": false,
+            "origin": "unknown",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 11,
+            "accepted": true,
+            "identity": "ca5dda6613ae713e4b718926a661fbc7a82ec932299c6d630e2a994c59df49c9",
+            "premerge_collision": false,
+            "origin": "unknown",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 12,
+            "accepted": true,
+            "identity": "06044679c85e59c4753bede76bf305cf99297588e6b7b2527ff219d20cfb35eb",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "count",
+                    "raw": "17.9 million",
+                    "verbatim": true,
+                    "number": 17900000,
+                    "scale": 1000000,
+                    "scale_source": "stated",
+                    "currency": null,
+                    "unit": "people",
+                    "unit_kind": "count",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "India"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": {
+                    "period_covered": {
+                        "type": "period",
+                        "raw": "2024",
+                        "verbatim": true,
+                        "number": null,
+                        "scale": null,
+                        "scale_source": null,
+                        "currency": null,
+                        "unit": null,
+                        "unit_kind": "other",
+                        "sign": null,
+                        "precision": "exact",
+                        "measure_status": "actual",
+                        "entity_ref": {
+                            "id": null,
+                            "text": "India"
+                        },
+                        "date": null,
+                        "period": {
+                            "text": "2024",
+                            "grain": "year",
+                            "start": "2024-01-01",
+                            "end": "2024-12-31",
+                            "anchored": true,
+                            "fiscal_year_basis": null
+                        },
+                        "duration": null,
+                        "parser_version": "values.v1",
+                        "resolution": "period"
+                    }
+                },
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 13,
+            "accepted": true,
+            "identity": "bfc9307cfaf2302dc85a58209c63823cf2bd2378e2d29f7a905c0a0d0770a1d1",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "count",
+                    "raw": "59.3 million",
+                    "verbatim": true,
+                    "number": 59300000,
+                    "scale": 1000000,
+                    "scale_source": "stated",
+                    "currency": null,
+                    "unit": "people",
+                    "unit_kind": "count",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "India"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": {
+                    "period_covered": {
+                        "type": "period",
+                        "raw": "2024",
+                        "verbatim": true,
+                        "number": null,
+                        "scale": null,
+                        "scale_source": null,
+                        "currency": null,
+                        "unit": null,
+                        "unit_kind": "other",
+                        "sign": null,
+                        "precision": "exact",
+                        "measure_status": "actual",
+                        "entity_ref": {
+                            "id": null,
+                            "text": "India"
+                        },
+                        "date": null,
+                        "period": {
+                            "text": "2024",
+                            "grain": "year",
+                            "start": "2024-01-01",
+                            "end": "2024-12-31",
+                            "anchored": true,
+                            "fiscal_year_basis": null
+                        },
+                        "duration": null,
+                        "parser_version": "values.v1",
+                        "resolution": "period"
+                    }
+                },
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 14,
+            "accepted": true,
+            "identity": "9dc570f9cf758d165a2ffbd22c13255b057aba4ac731719d8224e2acdbe0fc6b",
+            "premerge_collision": false,
+            "origin": "unknown",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 15,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "invalid_deadline_date_type": 1
+            }
+        },
+        {
+            "raw_index": 16,
+            "accepted": true,
+            "identity": "4a06438f8099c8e388cb1c3d9e50673cbc7ab370e06e0cd0b63525fd3f47356f",
+            "premerge_collision": false,
+            "origin": "unknown",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 17,
+            "accepted": true,
+            "identity": "021a6d4f1c531e5955d10e4d471271428afc5e30f3dd7374e93c1670330d850b",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 18,
+            "accepted": true,
+            "identity": "cf1fb23d7145af8da3809a61701af796f831b5ea2149daad0791435d8adf7090",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 19,
+            "accepted": true,
+            "identity": "37d68ed53d29724c642efcff7bbfdfcb6188b8c11bff4b007f2c3c2802dec32a",
+            "premerge_collision": false,
+            "origin": "unknown",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 20,
+            "accepted": true,
+            "identity": "e9754a8d0c45ed3766b108cea1a71164d0fbcdffae18ac170841bba9361b2f8b",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 21,
+            "accepted": true,
+            "identity": "4f60edd2d2f74b601a935762a2768541e3ea1f3ba4407c4c2badfe556f7e3d32",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": {
+                    "period_covered": {
+                        "type": "period",
+                        "raw": "2024",
+                        "verbatim": true,
+                        "number": null,
+                        "scale": null,
+                        "scale_source": null,
+                        "currency": null,
+                        "unit": null,
+                        "unit_kind": "other",
+                        "sign": null,
+                        "precision": "exact",
+                        "measure_status": null,
+                        "entity_ref": {
+                            "id": null,
+                            "text": "Swachh Bharat Mission"
+                        },
+                        "date": null,
+                        "period": {
+                            "text": "2024",
+                            "grain": "year",
+                            "start": "2024-01-01",
+                            "end": "2024-12-31",
+                            "anchored": true,
+                            "fiscal_year_basis": null
+                        },
+                        "duration": null,
+                        "parser_version": "values.v1",
+                        "resolution": "period"
+                    }
+                },
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 22,
+            "accepted": true,
+            "identity": "e491568d72e484aca5a773b0c1dc97c8bf28e1e22a5b1b56abc3ed4af2332f9c",
+            "premerge_collision": false,
+            "origin": "unknown",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 23,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "invalid_deadline_date_type": 1
+            }
+        },
+        {
+            "raw_index": 24,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "invalid_deadline_date_type": 1
+            }
+        },
+        {
+            "raw_index": 25,
+            "accepted": true,
+            "identity": "2b5cd839f77314a0515f6bd185a7026db6cc63818e7e245725064bc6c581377d",
+            "premerge_collision": false,
+            "origin": "unknown",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 26,
+            "accepted": true,
+            "identity": "89cfeafb09f68d5e1de5442887d6576e350250104d816b5d54b36798e13c14e9",
+            "premerge_collision": false,
+            "origin": "unknown",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 27,
+            "accepted": true,
+            "identity": "a8b10e045253e1e56cf906ca74bf40578029b2499fc8339a8532798096af0f7c",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 28,
+            "accepted": true,
+            "identity": "6fad9bd5a3c7c6da446a62e39775f9b49a83b5bf4f1265ead109b65ec111e20f",
+            "premerge_collision": false,
+            "origin": "unknown",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 29,
+            "accepted": true,
+            "identity": "e73b0aa6650e796f6503afc927e819e1d6ce0881049fb11c557a5d367bacc298",
+            "premerge_collision": false,
+            "origin": "unknown",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 30,
+            "accepted": true,
+            "identity": "883b53c150e85ed6456ac5515c6154ee869d1c081bf91c60a295d40f9caa20f7",
+            "premerge_collision": false,
+            "origin": "unknown",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 31,
+            "accepted": true,
+            "identity": "92ef0922b4e4ce4d50d410f4ec1255e89d773154f43d59859730bcd884aca753",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 32,
+            "accepted": true,
+            "identity": "746491abe9fa8ea3569252747686f045b659250a30f3613063351055466b11b0",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 33,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "invalid_deadline_date_type": 1
+            }
+        },
+        {
+            "raw_index": 34,
+            "accepted": true,
+            "identity": "41c962f7c878d42b1f49e5d541d6267026a4240c071b70a1f671d0ea155ed024",
+            "premerge_collision": false,
+            "origin": "unknown",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 35,
+            "accepted": true,
+            "identity": "b6f23253904ca5391c48d36fd01e7d67f850b523524d1637484979b28417701c",
+            "premerge_collision": false,
+            "origin": "unknown",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        }
+    ]
+}

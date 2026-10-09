@@ -1,0 +1,9 @@
+{
+  "files_scanned": 76,
+  "secret_values_found_and_redacted": 0,
+  "redaction_occurred": false,
+  "affected_artifacts": [],
+  "remaining_secret_value_matches": 0,
+  "passed": true,
+  "actual_key_available_for_exact_scan": true
+}

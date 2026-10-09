@@ -40,7 +40,7 @@ class AnthropicClient
 
     private const MAX_REQUESTS_PER_MINUTE = 40;
 
-    private ?int $lastResolvedPromptVersion = null;
+    private int|string|null $lastResolvedPromptVersion = null;
 
     // Tracks which capability (insights/ocr/document_qa/etc.) is currently
     // in flight, set at the top of each public method below, so the three
@@ -132,13 +132,13 @@ class AnthropicClient
     }
 
     /** One billable attempt. Queue orchestration owns retries and input splitting. */
-    public function extractChunk(Document $document, DocumentChunk $chunk, string $text): array
+    public function extractChunk(Document $document, DocumentChunk $chunk, string $text, ?\App\Services\AI\Incremental\ExtractionExperiment $experiment = null): array
     {
         $this->currentOperation = 'entities';
         $this->activeDocument = $document; // Existing durable AI-purpose vocabulary.
         $this->currentDocumentId = $document->id;
         $this->currentChunkId = $chunk->id;
-        $this->lastResolvedPromptVersion = (int) $chunk->prompt_version;
+        $this->lastResolvedPromptVersion = $experiment?->promptVersion((string) $chunk->prompt_version) ?? (int) $chunk->prompt_version;
         $response = [];
         $this->transportFailureRecorded = false;
         $start = hrtime(true);
@@ -168,7 +168,8 @@ class AnthropicClient
                     'model' => $model, 'max_attempts' => 1, 'timeout' => (int) config('document_intelligence.extraction_timeout_seconds'), 'connect_timeout' => 10,
                     'max_tokens' => app(ExtractionCapacity::class)->outputTokens(),
                     'intelligence_document' => $document, 'typed_errors' => true,
-                    'system' => [['type' => 'text', 'text' => EvidenceSchema::instructions($grounding->mode($document)),
+                    'system' => [['type' => 'text', 'text' => $experiment?->instructions(EvidenceSchema::instructions($grounding->mode($document)))
+                        ?? EvidenceSchema::instructions($grounding->mode($document)),
                         'cache_control' => ['type' => 'ephemeral']]],
                     'output_config' => ['format' => ['type' => 'json_schema', 'schema' => $schema]],
                 ]);

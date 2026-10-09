@@ -1,0 +1,197 @@
+{
+  "source_sha256": "08f304548a0e4198528ddea6e694f008400b12fdbda61f058e3bb55c4a1b5dd3",
+  "gold": [
+    {
+      "evidence_ids": [
+        "E033",
+        "E045"
+      ],
+      "normalized_claim": "German Committee for UNICEF contributed USD 69.4 million",
+      "canonical_value": 69.4,
+      "canonical_unit": "USD millions",
+      "why_qualifies": "independently supported source observation",
+      "priority_material": true,
+      "optional_period_explicitly_supported": false
+    },
+    {
+      "evidence_ids": [
+        "E108"
+      ],
+      "normalized_claim": "Guatemala social protection investment was USD 1 billion",
+      "canonical_value": 1,
+      "canonical_unit": "USD billion",
+      "why_qualifies": "independently supported source observation",
+      "priority_material": true,
+      "optional_period_explicitly_supported": false
+    },
+    {
+      "evidence_ids": [
+        "E109"
+      ],
+      "normalized_claim": "Mental health integration reached more than 8.8 million people",
+      "canonical_value": 8.8,
+      "canonical_unit": "million people",
+      "why_qualifies": "independently supported source observation",
+      "priority_material": true,
+      "optional_period_explicitly_supported": false
+    },
+    {
+      "evidence_ids": [
+        "E110"
+      ],
+      "normalized_claim": "Yemen under-five mortality dropped 23 percent over the last decade of conflict",
+      "canonical_value": 23,
+      "canonical_unit": "percent",
+      "why_qualifies": "independently supported source observation",
+      "priority_material": true,
+      "optional_period_explicitly_supported": true
+    },
+    {
+      "evidence_ids": [
+        "E111"
+      ],
+      "normalized_claim": "Core Resources supported more than 1,700 DRC health-care facilities",
+      "canonical_value": 1700,
+      "canonical_unit": "facilities",
+      "why_qualifies": "independently supported source observation",
+      "priority_material": true,
+      "optional_period_explicitly_supported": false
+    },
+    {
+      "evidence_ids": [
+        "E113"
+      ],
+      "normalized_claim": "Rwanda Marburg outbreak fatality rate was 22.7 percent",
+      "canonical_value": 22.7,
+      "canonical_unit": "percent",
+      "why_qualifies": "independently supported source observation",
+      "priority_material": true,
+      "optional_period_explicitly_supported": false
+    },
+    {
+      "evidence_ids": [
+        "E120"
+      ],
+      "normalized_claim": "India safely managed water supplies reached 59.3 million people in 2024",
+      "canonical_value": 59.3,
+      "canonical_unit": "million people",
+      "why_qualifies": "independently supported source observation",
+      "priority_material": true,
+      "optional_period_explicitly_supported": true
+    },
+    {
+      "evidence_ids": [
+        "E120"
+      ],
+      "normalized_claim": "India sanitation services reached 17.9 million people in 2024",
+      "canonical_value": 17.9,
+      "canonical_unit": "million people",
+      "why_qualifies": "independently supported source observation",
+      "priority_material": true,
+      "optional_period_explicitly_supported": true
+    },
+    {
+      "evidence_ids": [
+        "E121"
+      ],
+      "normalized_claim": "Moldova RESTART investment was USD 68 million",
+      "canonical_value": 68,
+      "canonical_unit": "USD millions",
+      "why_qualifies": "independently supported source observation",
+      "priority_material": true,
+      "optional_period_explicitly_supported": false
+    },
+    {
+      "evidence_ids": [
+        "E122"
+      ],
+      "normalized_claim": "Bangladesh under-five stunting reduced 40 percent over a decade",
+      "canonical_value": 40,
+      "canonical_unit": "percent",
+      "why_qualifies": "independently supported source observation",
+      "priority_material": true,
+      "optional_period_explicitly_supported": true
+    },
+    {
+      "evidence_ids": [
+        "E181"
+      ],
+      "normalized_claim": "Safe drinking water and supplies reached nearly 1,770,000 people",
+      "canonical_value": 1770000,
+      "canonical_unit": "people",
+      "why_qualifies": "independently supported source observation",
+      "priority_material": true,
+      "optional_period_explicitly_supported": false
+    },
+    {
+      "evidence_ids": [
+        "E107"
+      ],
+      "normalized_claim": "Satellite data was used to detect groundwater in the Horn of Africa",
+      "canonical_value": null,
+      "canonical_unit": null,
+      "why_qualifies": "independently supported source observation",
+      "priority_material": false,
+      "optional_period_explicitly_supported": false
+    },
+    {
+      "evidence_ids": [
+        "E109"
+      ],
+      "normalized_claim": "Core Resources supported mental health service integration into national systems",
+      "canonical_value": null,
+      "canonical_unit": null,
+      "why_qualifies": "independently supported source observation",
+      "priority_material": false,
+      "optional_period_explicitly_supported": false
+    },
+    {
+      "evidence_ids": [
+        "E123"
+      ],
+      "normalized_claim": "Jordan Core Resources funded a One Stop Centre",
+      "canonical_value": null,
+      "canonical_unit": null,
+      "why_qualifies": "independently supported source observation",
+      "priority_material": false,
+      "optional_period_explicitly_supported": false
+    }
+  ],
+  "negative": [
+    {
+      "evidence_ids": [
+        "E045"
+      ],
+      "excluded_claim": "USD (MILLIONS) is itself a monetary contribution",
+      "reason": "axis/header only"
+    },
+    {
+      "evidence_ids": [
+        "E065"
+      ],
+      "excluded_claim": "2020 to 2024 heading is a measured business result",
+      "reason": "chart heading without claim"
+    },
+    {
+      "evidence_ids": [
+        "E108"
+      ],
+      "excluded_claim": "The Guatemala investment occurred in 2024",
+      "reason": "unsupported period"
+    },
+    {
+      "evidence_ids": [
+        "E181"
+      ],
+      "excluded_claim": "UNICEF must provide supplies by a fixed deadline",
+      "reason": "bullet reports action, not deadline"
+    },
+    {
+      "evidence_ids": [
+        "E114"
+      ],
+      "excluded_claim": "Stylized map disclaimer is a risk finding",
+      "reason": "boilerplate"
+    }
+  ]
+}

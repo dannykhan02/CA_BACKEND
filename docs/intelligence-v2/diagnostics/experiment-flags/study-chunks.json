@@ -1,0 +1,32 @@
+{
+  "unicef_quantitative": {
+    "document": "UNICEF Core Resources Annual Report 2024",
+    "first_span": "E033",
+    "last_span": "E186",
+    "start_offset": 4218,
+    "end_offset": 29519,
+    "span_count": 154,
+    "source_sha256": "08f304548a0e4198528ddea6e694f008400b12fdbda61f058e3bb55c4a1b5dd3",
+    "source_file": "unicef_quantitative.source.txt"
+  },
+  "india_wash": {
+    "document": "UNICEF Core Resources Annual Report 2024",
+    "first_span": "E200",
+    "last_span": "E238",
+    "start_offset": 32299,
+    "end_offset": 40228,
+    "span_count": 39,
+    "source_sha256": "0709f82d8ff76517e2617ca88e17a1e21a4bbefbcd60a2c18c678ee50b23171f",
+    "source_file": "india_wash.source.txt"
+  },
+  "unicef_reduced": {
+    "document": "UNICEF Core Resources Annual Report 2024",
+    "first_span": "E100",
+    "last_span": "E139",
+    "start_offset": 11115,
+    "end_offset": 18403,
+    "span_count": 40,
+    "source_sha256": "103987d34dc9a0a55d6d6924273b19177e60f53f6db67ff7a5924b00c4b7d46a",
+    "source_file": "unicef_reduced.source.txt"
+  }
+}

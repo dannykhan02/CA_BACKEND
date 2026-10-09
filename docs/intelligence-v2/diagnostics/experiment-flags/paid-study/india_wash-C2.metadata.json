@@ -1,0 +1,29 @@
+{
+  "cell": "india_wash-C2",
+  "chunk": "india_wash",
+  "variant": "CONTROL",
+  "run": 2,
+  "status": "success",
+  "http_status": 200,
+  "error": null,
+  "request_sha256": "f3f0f6f7313153c1e8693d2fe5ad3470d46425ec43af8c0277512af40bcc7669",
+  "response_sha256": "de52287580c1f3c09a787d6a268db5b544d5e9b4709f19d81db8bfb5f0e4bbef",
+  "provider_request_id": "req_011CfrXhf5PZZcmXn93yUnCW",
+  "started_at_utc": "2026-10-09T10:47:07.866577+00:00",
+  "latency_ms": 31058,
+  "stop_reason": "end_turn",
+  "usage": {
+    "input_tokens": 4128,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 3650,
+    "service_tier": "standard",
+    "inference_geo": "not_available"
+  },
+  "actual_cost_usd": "0.022378",
+  "unknown_cost_reserve_usd": null
+}

@@ -1,0 +1,44 @@
+[
+  {
+    "evidence_ids": [
+      "E108"
+    ],
+    "excluded_claim": "The Guatemala investment occurred in 2024",
+    "reason": "unsupported period"
+  },
+  {
+    "evidence_ids": [
+      "E114"
+    ],
+    "excluded_claim": "Stylized map disclaimer is a risk finding",
+    "reason": "boilerplate"
+  },
+  {
+    "evidence_ids": [
+      "E115"
+    ],
+    "excluded_claim": "Annual report page 5 is a programme result",
+    "reason": "page footer"
+  },
+  {
+    "evidence_ids": [
+      "E116"
+    ],
+    "excluded_claim": "Scan the QR code by a deadline",
+    "reason": "navigation instruction, not a contractual deadline"
+  },
+  {
+    "evidence_ids": [
+      "E110"
+    ],
+    "excluded_claim": "The Yemen mortality reduction occurred in calendar year 2024",
+    "reason": "unsupported inferred period"
+  },
+  {
+    "evidence_ids": [
+      "E133"
+    ],
+    "excluded_claim": "USD 952 million is an EPF loan due immediately",
+    "reason": "budget category is not an obligation or deadline"
+  }
+]

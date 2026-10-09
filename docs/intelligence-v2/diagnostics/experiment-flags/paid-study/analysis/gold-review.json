@@ -1,0 +1,1664 @@
+{
+  "unicef_reduced-C1": {
+    "matched": 13,
+    "total": 17,
+    "priority_matched": 11,
+    "priority_total": 12,
+    "items": [
+      {
+        "gold_ordinal": 1,
+        "normalized_claim": "Guatemala social protection investment was USD 1 billion",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 15,
+        "accepted_label": "Government investment in social protection programmes",
+        "accepted_value": "$1 billion"
+      },
+      {
+        "gold_ordinal": 2,
+        "normalized_claim": "Mental health integration reached more than 8.8 million people",
+        "priority_material": true,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 3,
+        "normalized_claim": "Yemen under-five mortality dropped 23 percent over the last decade of conflict",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 19,
+        "accepted_label": "Under-five mortality reduction",
+        "accepted_value": "23 per cent drop"
+      },
+      {
+        "gold_ordinal": 4,
+        "normalized_claim": "Core Resources supported more than 1,700 DRC health-care facilities",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 20,
+        "accepted_label": "Health-care facilities kept operational",
+        "accepted_value": "more than 1,700 health-care facilities"
+      },
+      {
+        "gold_ordinal": 5,
+        "normalized_claim": "Rwanda Marburg outbreak fatality rate was 22.7 percent",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 23,
+        "accepted_label": "Marburg disease outbreak fatality rate",
+        "accepted_value": "22.7 per cent"
+      },
+      {
+        "gold_ordinal": 6,
+        "normalized_claim": "India safely managed water supplies reached 59.3 million people in 2024",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 26,
+        "accepted_label": "Safely managed water supplies provided",
+        "accepted_value": "59.3 million people"
+      },
+      {
+        "gold_ordinal": 7,
+        "normalized_claim": "India sanitation services reached 17.9 million people in 2024",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 27,
+        "accepted_label": "Sanitation services provided",
+        "accepted_value": "17.9 million people"
+      },
+      {
+        "gold_ordinal": 8,
+        "normalized_claim": "Moldova RESTART investment was USD 68 million",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 28,
+        "accepted_label": "Government and other investment in social protection reform",
+        "accepted_value": "$68 million"
+      },
+      {
+        "gold_ordinal": 9,
+        "normalized_claim": "Bangladesh under-five stunting reduced 40 percent over a decade",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 31,
+        "accepted_label": "Stunting reduction among children under five",
+        "accepted_value": "40 per cent reduction"
+      },
+      {
+        "gold_ordinal": 10,
+        "normalized_claim": "Satellite data was used to detect groundwater in the Horn of Africa",
+        "priority_material": false,
+        "matched": true,
+        "accepted_index": 13,
+        "accepted_label": "Satellite-based groundwater detection coverage",
+        "accepted_value": "nearly a million square kilometres"
+      },
+      {
+        "gold_ordinal": 11,
+        "normalized_claim": "Core Resources supported mental health service integration into national systems",
+        "priority_material": false,
+        "matched": true,
+        "accepted_index": 17,
+        "accepted_label": "Countries with integrated mental health services",
+        "accepted_value": "13 countries"
+      },
+      {
+        "gold_ordinal": 12,
+        "normalized_claim": "Jordan Core Resources funded a One Stop Centre",
+        "priority_material": false,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 13,
+        "normalized_claim": "More than 9 in 10 children were registered before their first birthdays in Côte d’Ivoire and Cabo Verde",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 24,
+        "accepted_label": "Child registration rate at first birthday",
+        "accepted_value": "more than 9 in 10 children"
+      },
+      {
+        "gold_ordinal": 14,
+        "normalized_claim": "Sierra Leone facilitated protection services for more than 675,000 children in five years",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 34,
+        "accepted_label": "Children receiving protection services",
+        "accepted_value": "more than 675,000 children"
+      },
+      {
+        "gold_ordinal": 15,
+        "normalized_claim": "Development Effectiveness expenditure was USD 174 million",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 40,
+        "accepted_label": "Development effectiveness capital costs portion",
+        "accepted_value": "$174 million"
+      },
+      {
+        "gold_ordinal": 16,
+        "normalized_claim": "Core Resources support progress across 12 of the 17 Sustainable Development Goals",
+        "priority_material": false,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 17,
+        "normalized_claim": "UNICEF country programmes advance children’s rights and SDGs",
+        "priority_material": false,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      }
+    ]
+  },
+  "unicef_reduced-C2": {
+    "matched": 14,
+    "total": 17,
+    "priority_matched": 12,
+    "priority_total": 12,
+    "items": [
+      {
+        "gold_ordinal": 1,
+        "normalized_claim": "Guatemala social protection investment was USD 1 billion",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 14,
+        "accepted_label": "Guatemala social protection investment generated",
+        "accepted_value": "$1 billion investment in social protection programmes"
+      },
+      {
+        "gold_ordinal": 2,
+        "normalized_claim": "Mental health integration reached more than 8.8 million people",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 16,
+        "accepted_label": "Global mental health services reach",
+        "accepted_value": "more than 8.8 million children, adolescents, caregivers and service providers"
+      },
+      {
+        "gold_ordinal": 3,
+        "normalized_claim": "Yemen under-five mortality dropped 23 percent over the last decade of conflict",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 17,
+        "accepted_label": "Yemen under-five mortality reduction over decade",
+        "accepted_value": "23 per cent drop"
+      },
+      {
+        "gold_ordinal": 4,
+        "normalized_claim": "Core Resources supported more than 1,700 DRC health-care facilities",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 18,
+        "accepted_label": "Democratic Republic of the Congo operational health facilities",
+        "accepted_value": "more than 1,700 health-care facilities"
+      },
+      {
+        "gold_ordinal": 5,
+        "normalized_claim": "Rwanda Marburg outbreak fatality rate was 22.7 percent",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 21,
+        "accepted_label": "Rwanda Marburg disease outbreak fatality rate",
+        "accepted_value": "22.7 per cent"
+      },
+      {
+        "gold_ordinal": 6,
+        "normalized_claim": "India safely managed water supplies reached 59.3 million people in 2024",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 24,
+        "accepted_label": "India water supply coverage",
+        "accepted_value": "59.3 million people"
+      },
+      {
+        "gold_ordinal": 7,
+        "normalized_claim": "India sanitation services reached 17.9 million people in 2024",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 25,
+        "accepted_label": "India sanitation services coverage",
+        "accepted_value": "17.9 million people"
+      },
+      {
+        "gold_ordinal": 8,
+        "normalized_claim": "Moldova RESTART investment was USD 68 million",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 26,
+        "accepted_label": "Republic of Moldova government and other investment in social protection",
+        "accepted_value": "$68 million"
+      },
+      {
+        "gold_ordinal": 9,
+        "normalized_claim": "Bangladesh under-five stunting reduced 40 percent over a decade",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 29,
+        "accepted_label": "Bangladesh stunting reduction among children under five",
+        "accepted_value": "40 per cent reduction"
+      },
+      {
+        "gold_ordinal": 10,
+        "normalized_claim": "Satellite data was used to detect groundwater in the Horn of Africa",
+        "priority_material": false,
+        "matched": true,
+        "accepted_index": 12,
+        "accepted_label": "Horn of Africa groundwater detection territory mapped",
+        "accepted_value": "nearly a million square kilometres"
+      },
+      {
+        "gold_ordinal": 11,
+        "normalized_claim": "Core Resources supported mental health service integration into national systems",
+        "priority_material": false,
+        "matched": true,
+        "accepted_index": 15,
+        "accepted_label": "Global mental health services integration in countries",
+        "accepted_value": "13 countries"
+      },
+      {
+        "gold_ordinal": 12,
+        "normalized_claim": "Jordan Core Resources funded a One Stop Centre",
+        "priority_material": false,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 13,
+        "normalized_claim": "More than 9 in 10 children were registered before their first birthdays in Côte d’Ivoire and Cabo Verde",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 22,
+        "accepted_label": "Côte d'Ivoire and Cabo Verde child registration rate before first birthday",
+        "accepted_value": "more than 9 in 10 children"
+      },
+      {
+        "gold_ordinal": 14,
+        "normalized_claim": "Sierra Leone facilitated protection services for more than 675,000 children in five years",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 32,
+        "accepted_label": "Sierra Leone child protection services beneficiaries",
+        "accepted_value": "more than 675,000 children"
+      },
+      {
+        "gold_ordinal": 15,
+        "normalized_claim": "Development Effectiveness expenditure was USD 174 million",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 35,
+        "accepted_label": "Development Effectiveness expense from Core Resources",
+        "accepted_value": "$174 million"
+      },
+      {
+        "gold_ordinal": 16,
+        "normalized_claim": "Core Resources support progress across 12 of the 17 Sustainable Development Goals",
+        "priority_material": false,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 17,
+        "normalized_claim": "UNICEF country programmes advance children’s rights and SDGs",
+        "priority_material": false,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      }
+    ]
+  },
+  "unicef_reduced-C3": {
+    "matched": 14,
+    "total": 17,
+    "priority_matched": 10,
+    "priority_total": 12,
+    "items": [
+      {
+        "gold_ordinal": 1,
+        "normalized_claim": "Guatemala social protection investment was USD 1 billion",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 4,
+        "accepted_label": "Guatemala social protection system investment",
+        "accepted_value": "$1 billion investment in social protection programmes resulting from UNICEF strategic policy advice and partnerships, mitigating three-to-four-fold increase in poverty during COVID-19 pandemic"
+      },
+      {
+        "gold_ordinal": 2,
+        "normalized_claim": "Mental health integration reached more than 8.8 million people",
+        "priority_material": true,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 3,
+        "normalized_claim": "Yemen under-five mortality dropped 23 percent over the last decade of conflict",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 6,
+        "accepted_label": "Yemen under-five mortality reduction",
+        "accepted_value": "23 per cent drop in under-five mortality over the last decade of conflict"
+      },
+      {
+        "gold_ordinal": 4,
+        "normalized_claim": "Core Resources supported more than 1,700 DRC health-care facilities",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 7,
+        "accepted_label": "Democratic Republic of the Congo health-care facilities and severe wasting treatment",
+        "accepted_value": "Supported more than 1,700 health-care facilities to stay operational, securing lifesaving supplies and treatment for more than 129,000 children facing severe wasting"
+      },
+      {
+        "gold_ordinal": 5,
+        "normalized_claim": "Rwanda Marburg outbreak fatality rate was 22.7 percent",
+        "priority_material": true,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 6,
+        "normalized_claim": "India safely managed water supplies reached 59.3 million people in 2024",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 12,
+        "accepted_label": "India water and sanitation programmes 2024",
+        "accepted_value": "Provided safely managed water supplies for 59.3 million people and sanitation services for 17.9 million people"
+      },
+      {
+        "gold_ordinal": 7,
+        "normalized_claim": "India sanitation services reached 17.9 million people in 2024",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 12,
+        "accepted_label": "India water and sanitation programmes 2024",
+        "accepted_value": "Provided safely managed water supplies for 59.3 million people and sanitation services for 17.9 million people"
+      },
+      {
+        "gold_ordinal": 8,
+        "normalized_claim": "Moldova RESTART investment was USD 68 million",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 13,
+        "accepted_label": "Republic of Moldova RESTART social protection reform investment",
+        "accepted_value": "$68 million of government and other investment in RESTART social protection reform, mitigating 3.4 per cent rise in child poverty and increasing value of social benefits by 42 per cent for families with children including Ukrainian refugees"
+      },
+      {
+        "gold_ordinal": 9,
+        "normalized_claim": "Bangladesh under-five stunting reduced 40 percent over a decade",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 14,
+        "accepted_label": "Bangladesh nutrition outcomes transformation stunting reduction",
+        "accepted_value": "40 per cent reduction in stunting among children under five and nearly tenfold increase in domestic investments in nutrition services over a decade"
+      },
+      {
+        "gold_ordinal": 10,
+        "normalized_claim": "Satellite data was used to detect groundwater in the Horn of Africa",
+        "priority_material": false,
+        "matched": true,
+        "accepted_index": 3,
+        "accepted_label": "Horn of Africa groundwater satellite data detection",
+        "accepted_value": "Mapped nearly one million square kilometres of territory in drought-prone countries with potential to benefit 10 million people in need"
+      },
+      {
+        "gold_ordinal": 11,
+        "normalized_claim": "Core Resources supported mental health service integration into national systems",
+        "priority_material": false,
+        "matched": true,
+        "accepted_index": 5,
+        "accepted_label": "Global mental health services integration",
+        "accepted_value": "Fast tracked integration of cross-sectoral mental health services into national systems in 13 countries, reaching more than 8.8 million children, adolescents, caregivers and service providers"
+      },
+      {
+        "gold_ordinal": 12,
+        "normalized_claim": "Jordan Core Resources funded a One Stop Centre",
+        "priority_material": false,
+        "matched": true,
+        "accepted_index": 15,
+        "accepted_label": "Jordan One Stop Centre violence survivors support",
+        "accepted_value": "Funded first-ever One Stop Centre offering proven model for replication across Jordan including Syrian refugee camps, successfully supporting initial 500 children and women survivors and witnesses of violence, abuse or exploitation with multi-sectoral services"
+      },
+      {
+        "gold_ordinal": 13,
+        "normalized_claim": "More than 9 in 10 children were registered before their first birthdays in Côte d’Ivoire and Cabo Verde",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 10,
+        "accepted_label": "Côte d'Ivoire and Cabo Verde child registration",
+        "accepted_value": "More than 9 in 10 children registered before their first birthdays"
+      },
+      {
+        "gold_ordinal": 14,
+        "normalized_claim": "Sierra Leone facilitated protection services for more than 675,000 children in five years",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 16,
+        "accepted_label": "Sierra Leone child protection system accreditation and case management",
+        "accepted_value": "Strengthened child protection and case management system, accrediting social workers for first time and facilitating protection services for more than 675,000 children in five years, including those who faced violence, exploitation, abuse or neglect"
+      },
+      {
+        "gold_ordinal": 15,
+        "normalized_claim": "Development Effectiveness expenditure was USD 174 million",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 23,
+        "accepted_label": "UNICEF development effectiveness expenditure",
+        "accepted_value": "$227 million including $174 million for development effectiveness and capital costs aligned with programme goals and strategies"
+      },
+      {
+        "gold_ordinal": 16,
+        "normalized_claim": "Core Resources support progress across 12 of the 17 Sustainable Development Goals",
+        "priority_material": false,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 17,
+        "normalized_claim": "UNICEF country programmes advance children’s rights and SDGs",
+        "priority_material": false,
+        "matched": true,
+        "accepted_index": 19,
+        "accepted_label": "UNICEF country programmes",
+        "accepted_value": "UNICEF country programmes advancing children's rights and the SDGs for children around the world"
+      }
+    ]
+  },
+  "unicef_reduced-K1": {
+    "matched": 14,
+    "total": 17,
+    "priority_matched": 12,
+    "priority_total": 12,
+    "items": [
+      {
+        "gold_ordinal": 1,
+        "normalized_claim": "Guatemala social protection investment was USD 1 billion",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 13,
+        "accepted_label": "Guatemala social protection government investment",
+        "accepted_value": "$1 billion"
+      },
+      {
+        "gold_ordinal": 2,
+        "normalized_claim": "Mental health integration reached more than 8.8 million people",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 14,
+        "accepted_label": "Global mental health services integration reach",
+        "accepted_value": "more than 8.8 million children, adolescents, caregivers and service providers"
+      },
+      {
+        "gold_ordinal": 3,
+        "normalized_claim": "Yemen under-five mortality dropped 23 percent over the last decade of conflict",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 16,
+        "accepted_label": "Yemen under-five mortality reduction",
+        "accepted_value": "23 per cent drop"
+      },
+      {
+        "gold_ordinal": 4,
+        "normalized_claim": "Core Resources supported more than 1,700 DRC health-care facilities",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 17,
+        "accepted_label": "Democratic Republic of the Congo operational health-care facilities",
+        "accepted_value": "more than 1,700 health-care facilities"
+      },
+      {
+        "gold_ordinal": 5,
+        "normalized_claim": "Rwanda Marburg outbreak fatality rate was 22.7 percent",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 20,
+        "accepted_label": "Rwanda Marburg disease outbreak fatality rate",
+        "accepted_value": "22.7 per cent"
+      },
+      {
+        "gold_ordinal": 6,
+        "normalized_claim": "India safely managed water supplies reached 59.3 million people in 2024",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 23,
+        "accepted_label": "India safely managed water supplies",
+        "accepted_value": "59.3 million people"
+      },
+      {
+        "gold_ordinal": 7,
+        "normalized_claim": "India sanitation services reached 17.9 million people in 2024",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 24,
+        "accepted_label": "India sanitation services",
+        "accepted_value": "17.9 million people"
+      },
+      {
+        "gold_ordinal": 8,
+        "normalized_claim": "Moldova RESTART investment was USD 68 million",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 25,
+        "accepted_label": "Republic of Moldova government and other investment in RESTART social protection reform",
+        "accepted_value": "$68 million"
+      },
+      {
+        "gold_ordinal": 9,
+        "normalized_claim": "Bangladesh under-five stunting reduced 40 percent over a decade",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 28,
+        "accepted_label": "Bangladesh stunting reduction among children under five",
+        "accepted_value": "40 per cent reduction"
+      },
+      {
+        "gold_ordinal": 10,
+        "normalized_claim": "Satellite data was used to detect groundwater in the Horn of Africa",
+        "priority_material": false,
+        "matched": true,
+        "accepted_index": 11,
+        "accepted_label": "Horn of Africa groundwater satellite mapping territory",
+        "accepted_value": "nearly a million square kilometres"
+      },
+      {
+        "gold_ordinal": 11,
+        "normalized_claim": "Core Resources supported mental health service integration into national systems",
+        "priority_material": false,
+        "matched": true,
+        "accepted_index": 14,
+        "accepted_label": "Global mental health services integration reach",
+        "accepted_value": "more than 8.8 million children, adolescents, caregivers and service providers"
+      },
+      {
+        "gold_ordinal": 12,
+        "normalized_claim": "Jordan Core Resources funded a One Stop Centre",
+        "priority_material": false,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 13,
+        "normalized_claim": "More than 9 in 10 children were registered before their first birthdays in Côte d’Ivoire and Cabo Verde",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 21,
+        "accepted_label": "Côte d'Ivoire and Cabo Verde child registration rate before first birthday",
+        "accepted_value": "more than 9 in 10 children"
+      },
+      {
+        "gold_ordinal": 14,
+        "normalized_claim": "Sierra Leone facilitated protection services for more than 675,000 children in five years",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 31,
+        "accepted_label": "Sierra Leone children receiving protection services",
+        "accepted_value": "more than 675,000 children"
+      },
+      {
+        "gold_ordinal": 15,
+        "normalized_claim": "Development Effectiveness expenditure was USD 174 million",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 36,
+        "accepted_label": "Development effectiveness capital costs component",
+        "accepted_value": "$174 million"
+      },
+      {
+        "gold_ordinal": 16,
+        "normalized_claim": "Core Resources support progress across 12 of the 17 Sustainable Development Goals",
+        "priority_material": false,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 17,
+        "normalized_claim": "UNICEF country programmes advance children’s rights and SDGs",
+        "priority_material": false,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      }
+    ]
+  },
+  "unicef_reduced-K2": {
+    "matched": 14,
+    "total": 17,
+    "priority_matched": 11,
+    "priority_total": 12,
+    "items": [
+      {
+        "gold_ordinal": 1,
+        "normalized_claim": "Guatemala social protection investment was USD 1 billion",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 13,
+        "accepted_label": "Government investment in social protection programmes",
+        "accepted_value": "$1 billion"
+      },
+      {
+        "gold_ordinal": 2,
+        "normalized_claim": "Mental health integration reached more than 8.8 million people",
+        "priority_material": true,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 3,
+        "normalized_claim": "Yemen under-five mortality dropped 23 percent over the last decade of conflict",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 17,
+        "accepted_label": "Under-five mortality reduction",
+        "accepted_value": "23 per cent"
+      },
+      {
+        "gold_ordinal": 4,
+        "normalized_claim": "Core Resources supported more than 1,700 DRC health-care facilities",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 18,
+        "accepted_label": "Health-care facilities supported to stay operational",
+        "accepted_value": "more than 1,700"
+      },
+      {
+        "gold_ordinal": 5,
+        "normalized_claim": "Rwanda Marburg outbreak fatality rate was 22.7 percent",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 21,
+        "accepted_label": "Marburg disease outbreak fatality rate",
+        "accepted_value": "22.7 per cent"
+      },
+      {
+        "gold_ordinal": 6,
+        "normalized_claim": "India safely managed water supplies reached 59.3 million people in 2024",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 24,
+        "accepted_label": "People provided safely managed water supplies",
+        "accepted_value": "59.3 million"
+      },
+      {
+        "gold_ordinal": 7,
+        "normalized_claim": "India sanitation services reached 17.9 million people in 2024",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 25,
+        "accepted_label": "People provided sanitation services",
+        "accepted_value": "17.9 million"
+      },
+      {
+        "gold_ordinal": 8,
+        "normalized_claim": "Moldova RESTART investment was USD 68 million",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 26,
+        "accepted_label": "Government and other investment in RESTART social protection reform",
+        "accepted_value": "$68 million"
+      },
+      {
+        "gold_ordinal": 9,
+        "normalized_claim": "Bangladesh under-five stunting reduced 40 percent over a decade",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 29,
+        "accepted_label": "Stunting reduction among children under five",
+        "accepted_value": "40 per cent"
+      },
+      {
+        "gold_ordinal": 10,
+        "normalized_claim": "Satellite data was used to detect groundwater in the Horn of Africa",
+        "priority_material": false,
+        "matched": true,
+        "accepted_index": 11,
+        "accepted_label": "Satellite data groundwater detection coverage",
+        "accepted_value": "nearly a million square kilometres"
+      },
+      {
+        "gold_ordinal": 11,
+        "normalized_claim": "Core Resources supported mental health service integration into national systems",
+        "priority_material": false,
+        "matched": true,
+        "accepted_index": 15,
+        "accepted_label": "Countries with integrated cross-sectoral mental health services",
+        "accepted_value": "13 countries"
+      },
+      {
+        "gold_ordinal": 12,
+        "normalized_claim": "Jordan Core Resources funded a One Stop Centre",
+        "priority_material": false,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 13,
+        "normalized_claim": "More than 9 in 10 children were registered before their first birthdays in Côte d’Ivoire and Cabo Verde",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 22,
+        "accepted_label": "Children registered before first birthday",
+        "accepted_value": "more than 9 in 10"
+      },
+      {
+        "gold_ordinal": 14,
+        "normalized_claim": "Sierra Leone facilitated protection services for more than 675,000 children in five years",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 32,
+        "accepted_label": "Children receiving protection services through strengthened system",
+        "accepted_value": "more than 675,000"
+      },
+      {
+        "gold_ordinal": 15,
+        "normalized_claim": "Development Effectiveness expenditure was USD 174 million",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 37,
+        "accepted_label": "Development effectiveness specific allocation",
+        "accepted_value": "$174 million"
+      },
+      {
+        "gold_ordinal": 16,
+        "normalized_claim": "Core Resources support progress across 12 of the 17 Sustainable Development Goals",
+        "priority_material": false,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 17,
+        "normalized_claim": "UNICEF country programmes advance children’s rights and SDGs",
+        "priority_material": false,
+        "matched": true,
+        "accepted_index": 55,
+        "accepted_label": "UNICEF country programmes pillar",
+        "accepted_value": "UNICEF country programmes advancing children's rights and the SDGs for children around the world"
+      }
+    ]
+  },
+  "unicef_reduced-K3": {
+    "matched": 15,
+    "total": 17,
+    "priority_matched": 12,
+    "priority_total": 12,
+    "items": [
+      {
+        "gold_ordinal": 1,
+        "normalized_claim": "Guatemala social protection investment was USD 1 billion",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 29,
+        "accepted_label": "Government investment in social protection programmes",
+        "accepted_value": "$1 billion"
+      },
+      {
+        "gold_ordinal": 2,
+        "normalized_claim": "Mental health integration reached more than 8.8 million people",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 31,
+        "accepted_label": "Beneficiaries of cross-sectoral mental health services integration",
+        "accepted_value": "more than 8.8 million"
+      },
+      {
+        "gold_ordinal": 3,
+        "normalized_claim": "Yemen under-five mortality dropped 23 percent over the last decade of conflict",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 32,
+        "accepted_label": "Reduction in under-five mortality over last decade of conflict",
+        "accepted_value": "23 per cent drop"
+      },
+      {
+        "gold_ordinal": 4,
+        "normalized_claim": "Core Resources supported more than 1,700 DRC health-care facilities",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 33,
+        "accepted_label": "Health-care facilities supported to stay operational",
+        "accepted_value": "more than 1,700"
+      },
+      {
+        "gold_ordinal": 5,
+        "normalized_claim": "Rwanda Marburg outbreak fatality rate was 22.7 percent",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 36,
+        "accepted_label": "Marburg disease outbreak fatality rate",
+        "accepted_value": "22.7 per cent"
+      },
+      {
+        "gold_ordinal": 6,
+        "normalized_claim": "India safely managed water supplies reached 59.3 million people in 2024",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 39,
+        "accepted_label": "Population provided safely managed water supplies",
+        "accepted_value": "59.3 million people"
+      },
+      {
+        "gold_ordinal": 7,
+        "normalized_claim": "India sanitation services reached 17.9 million people in 2024",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 40,
+        "accepted_label": "Population provided sanitation services",
+        "accepted_value": "17.9 million people"
+      },
+      {
+        "gold_ordinal": 8,
+        "normalized_claim": "Moldova RESTART investment was USD 68 million",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 41,
+        "accepted_label": "Government and other investment in RESTART social protection reform",
+        "accepted_value": "$68 million"
+      },
+      {
+        "gold_ordinal": 9,
+        "normalized_claim": "Bangladesh under-five stunting reduced 40 percent over a decade",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 44,
+        "accepted_label": "Reduction in stunting among children under five",
+        "accepted_value": "40 per cent reduction"
+      },
+      {
+        "gold_ordinal": 10,
+        "normalized_claim": "Satellite data was used to detect groundwater in the Horn of Africa",
+        "priority_material": false,
+        "matched": true,
+        "accepted_index": 27,
+        "accepted_label": "Territory mapped for groundwater detection using satellite data",
+        "accepted_value": "nearly a million square kilometres"
+      },
+      {
+        "gold_ordinal": 11,
+        "normalized_claim": "Core Resources supported mental health service integration into national systems",
+        "priority_material": false,
+        "matched": true,
+        "accepted_index": 30,
+        "accepted_label": "Countries with integrated cross-sectoral mental health services",
+        "accepted_value": "13 countries"
+      },
+      {
+        "gold_ordinal": 12,
+        "normalized_claim": "Jordan Core Resources funded a One Stop Centre",
+        "priority_material": false,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 13,
+        "normalized_claim": "More than 9 in 10 children were registered before their first birthdays in Côte d’Ivoire and Cabo Verde",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 37,
+        "accepted_label": "Children registered before their first birthday",
+        "accepted_value": "more than 9 in 10"
+      },
+      {
+        "gold_ordinal": 14,
+        "normalized_claim": "Sierra Leone facilitated protection services for more than 675,000 children in five years",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 47,
+        "accepted_label": "Child protection services beneficiaries over five years",
+        "accepted_value": "more than 675,000 children"
+      },
+      {
+        "gold_ordinal": 15,
+        "normalized_claim": "Development Effectiveness expenditure was USD 174 million",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 51,
+        "accepted_label": "Development Effectiveness expenditure",
+        "accepted_value": "$174 million"
+      },
+      {
+        "gold_ordinal": 16,
+        "normalized_claim": "Core Resources support progress across 12 of the 17 Sustainable Development Goals",
+        "priority_material": false,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 17,
+        "normalized_claim": "UNICEF country programmes advance children’s rights and SDGs",
+        "priority_material": false,
+        "matched": true,
+        "accepted_index": 55,
+        "accepted_label": "UNICEF country programmes",
+        "accepted_value": "Advancing children's rights and the SDGs for children around the world"
+      }
+    ]
+  },
+  "india_wash-C1": {
+    "matched": 7,
+    "total": 12,
+    "priority_matched": 7,
+    "priority_total": 10,
+    "items": [
+      {
+        "gold_ordinal": 1,
+        "normalized_claim": "India child mortality fell 37 percent between 2014 and 2022",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 0,
+        "accepted_label": "Child mortality reduction in India",
+        "accepted_value": "37 per cent reduction"
+      },
+      {
+        "gold_ordinal": 2,
+        "normalized_claim": "India launched Swachh Bharat Mission in 2014",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 1,
+        "accepted_label": "Swachh Bharat Mission launch",
+        "accepted_value": "Government of India launched the Swachh Bharat (Clean India) Mission"
+      },
+      {
+        "gold_ordinal": 3,
+        "normalized_claim": "Swachh Bharat targeted over 110 million toilets",
+        "priority_material": true,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 4,
+        "normalized_claim": "Swachh Bharat targeted sanitation for 550 million people",
+        "priority_material": true,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 5,
+        "normalized_claim": "The sanitation target was achieved by 2019",
+        "priority_material": true,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 6,
+        "normalized_claim": "550 million people reached with at least basic sanitation in the last 10 years",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 2,
+        "accepted_label": "People reached with basic sanitation in last 10 years",
+        "accepted_value": "550 million"
+      },
+      {
+        "gold_ordinal": 7,
+        "normalized_claim": "580 million people reached with improved household drinking water in the last 10 years",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 3,
+        "accepted_label": "People reached with improved drinking water in last 10 years",
+        "accepted_value": "580 million"
+      },
+      {
+        "gold_ordinal": 8,
+        "normalized_claim": "More than 115 million rural households gained piped water in the last five years",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 5,
+        "accepted_label": "Rural households with piped water connections over last five years",
+        "accepted_value": "more than 115 million"
+      },
+      {
+        "gold_ordinal": 9,
+        "normalized_claim": "UNICEF estimated village families constructing toilets saved at least 50,000 rupees",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 15,
+        "accepted_label": "Economic savings per family from toilet construction",
+        "accepted_value": "at least 50,000 rupees ($650)"
+      },
+      {
+        "gold_ordinal": 10,
+        "normalized_claim": "India invested over USD 120 billion in water and sanitation over the past 10 years",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 6,
+        "accepted_label": "Government of India investment in water and sanitation",
+        "accepted_value": "over $120 billion"
+      },
+      {
+        "gold_ordinal": 11,
+        "normalized_claim": "UNICEF embedded technical advisors in every Indian state",
+        "priority_material": false,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 12,
+        "normalized_claim": "UNICEF improved India WASH data collection and management",
+        "priority_material": false,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      }
+    ]
+  },
+  "india_wash-C2": {
+    "matched": 10,
+    "total": 12,
+    "priority_matched": 8,
+    "priority_total": 10,
+    "items": [
+      {
+        "gold_ordinal": 1,
+        "normalized_claim": "India child mortality fell 37 percent between 2014 and 2022",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 0,
+        "accepted_label": "Child mortality reduction in India",
+        "accepted_value": "37 per cent reduction between 2014 and 2022"
+      },
+      {
+        "gold_ordinal": 2,
+        "normalized_claim": "India launched Swachh Bharat Mission in 2014",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 1,
+        "accepted_label": "Swachh Bharat Mission launch",
+        "accepted_value": "2014"
+      },
+      {
+        "gold_ordinal": 3,
+        "normalized_claim": "Swachh Bharat targeted over 110 million toilets",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 2,
+        "accepted_label": "Swachh Bharat Mission sanitation target",
+        "accepted_value": "110 million toilets for 550 million people"
+      },
+      {
+        "gold_ordinal": 4,
+        "normalized_claim": "Swachh Bharat targeted sanitation for 550 million people",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 2,
+        "accepted_label": "Swachh Bharat Mission sanitation target",
+        "accepted_value": "110 million toilets for 550 million people"
+      },
+      {
+        "gold_ordinal": 5,
+        "normalized_claim": "The sanitation target was achieved by 2019",
+        "priority_material": true,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 6,
+        "normalized_claim": "550 million people reached with at least basic sanitation in the last 10 years",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 3,
+        "accepted_label": "People reached with basic sanitation over 10 years",
+        "accepted_value": "550 million people"
+      },
+      {
+        "gold_ordinal": 7,
+        "normalized_claim": "580 million people reached with improved household drinking water in the last 10 years",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 4,
+        "accepted_label": "People reached with improved drinking water over 10 years",
+        "accepted_value": "580 million people"
+      },
+      {
+        "gold_ordinal": 8,
+        "normalized_claim": "More than 115 million rural households gained piped water in the last five years",
+        "priority_material": true,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 9,
+        "normalized_claim": "UNICEF estimated village families constructing toilets saved at least 50,000 rupees",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 15,
+        "accepted_label": "Estimated household savings from toilet construction",
+        "accepted_value": "at least 50,000 rupees ($650) per family"
+      },
+      {
+        "gold_ordinal": 10,
+        "normalized_claim": "India invested over USD 120 billion in water and sanitation over the past 10 years",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 6,
+        "accepted_label": "Government of India investment in water and sanitation over 10 years",
+        "accepted_value": "over $120 billion"
+      },
+      {
+        "gold_ordinal": 11,
+        "normalized_claim": "UNICEF embedded technical advisors in every Indian state",
+        "priority_material": false,
+        "matched": true,
+        "accepted_index": 14,
+        "accepted_label": "UNICEF embedding technical advisors",
+        "accepted_value": "Every state"
+      },
+      {
+        "gold_ordinal": 12,
+        "normalized_claim": "UNICEF improved India WASH data collection and management",
+        "priority_material": false,
+        "matched": true,
+        "accepted_index": 22,
+        "accepted_label": "WASH data systems strengthening by UNICEF",
+        "accepted_value": "Improved collection, management and use of WASH data"
+      }
+    ]
+  },
+  "india_wash-C3": {
+    "matched": 8,
+    "total": 12,
+    "priority_matched": 6,
+    "priority_total": 10,
+    "items": [
+      {
+        "gold_ordinal": 1,
+        "normalized_claim": "India child mortality fell 37 percent between 2014 and 2022",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 0,
+        "accepted_label": "Child mortality reduction in India",
+        "accepted_value": "37 per cent reduction"
+      },
+      {
+        "gold_ordinal": 2,
+        "normalized_claim": "India launched Swachh Bharat Mission in 2014",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 1,
+        "accepted_label": "Swachh Bharat Mission launch",
+        "accepted_value": "2014"
+      },
+      {
+        "gold_ordinal": 3,
+        "normalized_claim": "Swachh Bharat targeted over 110 million toilets",
+        "priority_material": true,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 4,
+        "normalized_claim": "Swachh Bharat targeted sanitation for 550 million people",
+        "priority_material": true,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 5,
+        "normalized_claim": "The sanitation target was achieved by 2019",
+        "priority_material": true,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 6,
+        "normalized_claim": "550 million people reached with at least basic sanitation in the last 10 years",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 2,
+        "accepted_label": "People provided universal access to sanitation",
+        "accepted_value": "550 million"
+      },
+      {
+        "gold_ordinal": 7,
+        "normalized_claim": "580 million people reached with improved household drinking water in the last 10 years",
+        "priority_material": true,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 8,
+        "normalized_claim": "More than 115 million rural households gained piped water in the last five years",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 4,
+        "accepted_label": "Rural households with piped water connections",
+        "accepted_value": "more than 115 million"
+      },
+      {
+        "gold_ordinal": 9,
+        "normalized_claim": "UNICEF estimated village families constructing toilets saved at least 50,000 rupees",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 7,
+        "accepted_label": "Savings per family constructing toilets",
+        "accepted_value": "at least 50,000 rupees ($650)"
+      },
+      {
+        "gold_ordinal": 10,
+        "normalized_claim": "India invested over USD 120 billion in water and sanitation over the past 10 years",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 3,
+        "accepted_label": "Government of India investment in water and sanitation",
+        "accepted_value": "over $120 billion"
+      },
+      {
+        "gold_ordinal": 11,
+        "normalized_claim": "UNICEF embedded technical advisors in every Indian state",
+        "priority_material": false,
+        "matched": true,
+        "accepted_index": 14,
+        "accepted_label": "UNICEF support model",
+        "accepted_value": "embedded technical advisors in every state and capacity building for local governments"
+      },
+      {
+        "gold_ordinal": 12,
+        "normalized_claim": "UNICEF improved India WASH data collection and management",
+        "priority_material": false,
+        "matched": true,
+        "accepted_index": 15,
+        "accepted_label": "UNICEF contribution to WASH data management",
+        "accepted_value": "improved way India collects, manages and uses WASH data"
+      }
+    ]
+  },
+  "india_wash-K1": {
+    "matched": 11,
+    "total": 12,
+    "priority_matched": 9,
+    "priority_total": 10,
+    "items": [
+      {
+        "gold_ordinal": 1,
+        "normalized_claim": "India child mortality fell 37 percent between 2014 and 2022",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 0,
+        "accepted_label": "Child mortality reduction in India",
+        "accepted_value": "37 per cent reduction between 2014 and 2022"
+      },
+      {
+        "gold_ordinal": 2,
+        "normalized_claim": "India launched Swachh Bharat Mission in 2014",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 1,
+        "accepted_label": "Swachh Bharat Mission launch",
+        "accepted_value": "2014"
+      },
+      {
+        "gold_ordinal": 3,
+        "normalized_claim": "Swachh Bharat targeted over 110 million toilets",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 2,
+        "accepted_label": "Swachh Bharat Mission target for toilet construction",
+        "accepted_value": "over 110 million toilets for 550 million people"
+      },
+      {
+        "gold_ordinal": 4,
+        "normalized_claim": "Swachh Bharat targeted sanitation for 550 million people",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 2,
+        "accepted_label": "Swachh Bharat Mission target for toilet construction",
+        "accepted_value": "over 110 million toilets for 550 million people"
+      },
+      {
+        "gold_ordinal": 5,
+        "normalized_claim": "The sanitation target was achieved by 2019",
+        "priority_material": true,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 6,
+        "normalized_claim": "550 million people reached with at least basic sanitation in the last 10 years",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 3,
+        "accepted_label": "People reached with basic sanitation in past 10 years",
+        "accepted_value": "550 million people"
+      },
+      {
+        "gold_ordinal": 7,
+        "normalized_claim": "580 million people reached with improved household drinking water in the last 10 years",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 4,
+        "accepted_label": "People reached with improved drinking water in past 10 years",
+        "accepted_value": "580 million people"
+      },
+      {
+        "gold_ordinal": 8,
+        "normalized_claim": "More than 115 million rural households gained piped water in the last five years",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 5,
+        "accepted_label": "Rural households gaining piped water connections in past five years",
+        "accepted_value": "more than 115 million"
+      },
+      {
+        "gold_ordinal": 9,
+        "normalized_claim": "UNICEF estimated village families constructing toilets saved at least 50,000 rupees",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 12,
+        "accepted_label": "Estimated savings per family constructing toilets",
+        "accepted_value": "at least 50,000 rupees ($650)"
+      },
+      {
+        "gold_ordinal": 10,
+        "normalized_claim": "India invested over USD 120 billion in water and sanitation over the past 10 years",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 6,
+        "accepted_label": "Government of India investment in water and sanitation",
+        "accepted_value": "over $120 billion"
+      },
+      {
+        "gold_ordinal": 11,
+        "normalized_claim": "UNICEF embedded technical advisors in every Indian state",
+        "priority_material": false,
+        "matched": true,
+        "accepted_index": 14,
+        "accepted_label": "UNICEF technical support in Swachh Bharat",
+        "accepted_value": "embedded technical advisors in every state and built capacity of local governments"
+      },
+      {
+        "gold_ordinal": 12,
+        "normalized_claim": "UNICEF improved India WASH data collection and management",
+        "priority_material": false,
+        "matched": true,
+        "accepted_index": 18,
+        "accepted_label": "UNICEF contribution to WASH data management",
+        "accepted_value": "improved collection, management and use of WASH data for India"
+      }
+    ]
+  },
+  "india_wash-K2": {
+    "matched": 9,
+    "total": 12,
+    "priority_matched": 7,
+    "priority_total": 10,
+    "items": [
+      {
+        "gold_ordinal": 1,
+        "normalized_claim": "India child mortality fell 37 percent between 2014 and 2022",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 0,
+        "accepted_label": "Child mortality reduction in India (2014-2022)",
+        "accepted_value": "37 per cent reduction"
+      },
+      {
+        "gold_ordinal": 2,
+        "normalized_claim": "India launched Swachh Bharat Mission in 2014",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 1,
+        "accepted_label": "Swachh Bharat Mission launch",
+        "accepted_value": "2014"
+      },
+      {
+        "gold_ordinal": 3,
+        "normalized_claim": "Swachh Bharat targeted over 110 million toilets",
+        "priority_material": true,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 4,
+        "normalized_claim": "Swachh Bharat targeted sanitation for 550 million people",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 3,
+        "accepted_label": "Population targeted for sanitation under Swachh Bharat Mission",
+        "accepted_value": "550 million"
+      },
+      {
+        "gold_ordinal": 5,
+        "normalized_claim": "The sanitation target was achieved by 2019",
+        "priority_material": true,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 6,
+        "normalized_claim": "550 million people reached with at least basic sanitation in the last 10 years",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 4,
+        "accepted_label": "People reached with basic sanitation in last 10 years",
+        "accepted_value": "550 million"
+      },
+      {
+        "gold_ordinal": 7,
+        "normalized_claim": "580 million people reached with improved household drinking water in the last 10 years",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 5,
+        "accepted_label": "People reached with improved drinking water in last 10 years",
+        "accepted_value": "580 million"
+      },
+      {
+        "gold_ordinal": 8,
+        "normalized_claim": "More than 115 million rural households gained piped water in the last five years",
+        "priority_material": true,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 9,
+        "normalized_claim": "UNICEF estimated village families constructing toilets saved at least 50,000 rupees",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 22,
+        "accepted_label": "Family savings from toilet construction",
+        "accepted_value": "At least 50,000 rupees ($650) per family"
+      },
+      {
+        "gold_ordinal": 10,
+        "normalized_claim": "India invested over USD 120 billion in water and sanitation over the past 10 years",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 7,
+        "accepted_label": "Government of India investment in water and sanitation",
+        "accepted_value": "over $120 billion"
+      },
+      {
+        "gold_ordinal": 11,
+        "normalized_claim": "UNICEF embedded technical advisors in every Indian state",
+        "priority_material": false,
+        "matched": true,
+        "accepted_index": 29,
+        "accepted_label": "UNICEF technical support deployment",
+        "accepted_value": "Embedded technical advisors in every state"
+      },
+      {
+        "gold_ordinal": 12,
+        "normalized_claim": "UNICEF improved India WASH data collection and management",
+        "priority_material": false,
+        "matched": true,
+        "accepted_index": 17,
+        "accepted_label": "UNICEF data systems improvement contribution",
+        "accepted_value": "Improved the way India collects, manages and uses WASH data"
+      }
+    ]
+  },
+  "india_wash-K3": {
+    "matched": 9,
+    "total": 12,
+    "priority_matched": 8,
+    "priority_total": 10,
+    "items": [
+      {
+        "gold_ordinal": 1,
+        "normalized_claim": "India child mortality fell 37 percent between 2014 and 2022",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 0,
+        "accepted_label": "Child mortality reduction in India",
+        "accepted_value": "37 per cent reduction"
+      },
+      {
+        "gold_ordinal": 2,
+        "normalized_claim": "India launched Swachh Bharat Mission in 2014",
+        "priority_material": true,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 3,
+        "normalized_claim": "Swachh Bharat targeted over 110 million toilets",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 1,
+        "accepted_label": "Swachh Bharat Mission toilet construction target",
+        "accepted_value": "over 110 million toilets for 550 million people"
+      },
+      {
+        "gold_ordinal": 4,
+        "normalized_claim": "Swachh Bharat targeted sanitation for 550 million people",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 1,
+        "accepted_label": "Swachh Bharat Mission toilet construction target",
+        "accepted_value": "over 110 million toilets for 550 million people"
+      },
+      {
+        "gold_ordinal": 5,
+        "normalized_claim": "The sanitation target was achieved by 2019",
+        "priority_material": true,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      },
+      {
+        "gold_ordinal": 6,
+        "normalized_claim": "550 million people reached with at least basic sanitation in the last 10 years",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 2,
+        "accepted_label": "People reached with basic sanitation in India last 10 years",
+        "accepted_value": "550 million people"
+      },
+      {
+        "gold_ordinal": 7,
+        "normalized_claim": "580 million people reached with improved household drinking water in the last 10 years",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 3,
+        "accepted_label": "People reached with improved drinking water in India last 10 years",
+        "accepted_value": "580 million people"
+      },
+      {
+        "gold_ordinal": 8,
+        "normalized_claim": "More than 115 million rural households gained piped water in the last five years",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 8,
+        "accepted_label": "Rural households with piped water connections in last 5 years",
+        "accepted_value": "more than 115 million rural households"
+      },
+      {
+        "gold_ordinal": 9,
+        "normalized_claim": "UNICEF estimated village families constructing toilets saved at least 50,000 rupees",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 9,
+        "accepted_label": "Estimated household savings from toilet construction",
+        "accepted_value": "at least 50,000 rupees ($650) per family"
+      },
+      {
+        "gold_ordinal": 10,
+        "normalized_claim": "India invested over USD 120 billion in water and sanitation over the past 10 years",
+        "priority_material": true,
+        "matched": true,
+        "accepted_index": 4,
+        "accepted_label": "Government of India investment in water and sanitation past 10 years",
+        "accepted_value": "over $120 billion"
+      },
+      {
+        "gold_ordinal": 11,
+        "normalized_claim": "UNICEF embedded technical advisors in every Indian state",
+        "priority_material": false,
+        "matched": true,
+        "accepted_index": 14,
+        "accepted_label": "WASH systems strengthening through UNICEF technical advisors",
+        "accepted_value": "embedding technical advisors in every state"
+      },
+      {
+        "gold_ordinal": 12,
+        "normalized_claim": "UNICEF improved India WASH data collection and management",
+        "priority_material": false,
+        "matched": false,
+        "accepted_index": null,
+        "accepted_label": null,
+        "accepted_value": null
+      }
+    ]
+  }
+}

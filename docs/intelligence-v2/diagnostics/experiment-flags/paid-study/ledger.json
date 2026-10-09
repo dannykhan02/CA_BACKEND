@@ -1,0 +1,20 @@
+{
+  "actual_cost_usd": "0.396160",
+  "unknown_cost_reserve_usd": "0",
+  "completed_cells": [
+    "unicef_reduced-C1",
+    "unicef_reduced-K1",
+    "india_wash-C1",
+    "india_wash-K1",
+    "unicef_reduced-C2",
+    "unicef_reduced-K2",
+    "india_wash-C2",
+    "india_wash-K2",
+    "unicef_reduced-C3",
+    "unicef_reduced-K3",
+    "india_wash-C3",
+    "india_wash-K3"
+  ],
+  "failed_cells": 0,
+  "limit_usd": "1.50"
+}

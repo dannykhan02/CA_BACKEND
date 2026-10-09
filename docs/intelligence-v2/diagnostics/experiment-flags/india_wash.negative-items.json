@@ -1,0 +1,37 @@
+[
+  {
+    "evidence_ids": [
+      "E209"
+    ],
+    "excluded_claim": "SDG target 6 is an achieved business metric",
+    "reason": "context label"
+  },
+  {
+    "evidence_ids": [
+      "E206"
+    ],
+    "excluded_claim": "110 million toilets were completed in 2014",
+    "reason": "target confused with actual and year"
+  },
+  {
+    "evidence_ids": [
+      "E207"
+    ],
+    "excluded_claim": "Vani has a 2019 deadline to practise handwashing",
+    "reason": "caption and date conflated"
+  },
+  {
+    "evidence_ids": [
+      "E218"
+    ],
+    "excluded_claim": "115 million households were reached in 2024",
+    "reason": "unsupported calendar period"
+  },
+  {
+    "evidence_ids": [
+      "E231"
+    ],
+    "excluded_claim": "Annual report 14 is an operational quantity",
+    "reason": "page footer"
+  }
+]
