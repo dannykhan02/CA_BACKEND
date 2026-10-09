@@ -1,0 +1,352 @@
+{
+  "unicef_reduced-C1": {
+    "chunk": "unicef_reduced",
+    "variant": "CONTROL",
+    "run": 1,
+    "input_tokens": 4019,
+    "output_tokens": 4811,
+    "cost_usd": 0.028074,
+    "returned": 41,
+    "accepted": 41,
+    "rejected": 0,
+    "output_tokens_per_returned": 117.34,
+    "output_tokens_per_accepted": 117.34,
+    "response_record_bytes": 18500,
+    "record_bytes_per_returned": 451.22,
+    "origin": {
+      "document": 18,
+      "unknown": 23
+    },
+    "typed_value_counts": {
+      "none": 18,
+      "money": 8,
+      "percent": 6,
+      "count": 9
+    },
+    "key_figure_eligible": 3,
+    "premerge_identity_count": 41,
+    "premerge_collisions": 0,
+    "gold_recalled": 13
+  },
+  "unicef_reduced-C2": {
+    "chunk": "unicef_reduced",
+    "variant": "CONTROL",
+    "run": 2,
+    "input_tokens": 4019,
+    "output_tokens": 5974,
+    "cost_usd": 0.033889,
+    "returned": 42,
+    "accepted": 42,
+    "rejected": 0,
+    "output_tokens_per_returned": 142.24,
+    "output_tokens_per_accepted": 142.24,
+    "response_record_bytes": 23941,
+    "record_bytes_per_returned": 570.02,
+    "origin": {
+      "document": 38,
+      "unknown": 4
+    },
+    "typed_value_counts": {
+      "money": 7,
+      "none": 18,
+      "percent": 8,
+      "count": 6,
+      "number": 3
+    },
+    "key_figure_eligible": 7,
+    "premerge_identity_count": 42,
+    "premerge_collisions": 0,
+    "gold_recalled": 14
+  },
+  "unicef_reduced-C3": {
+    "chunk": "unicef_reduced",
+    "variant": "CONTROL",
+    "run": 3,
+    "input_tokens": 4019,
+    "output_tokens": 4960,
+    "cost_usd": 0.028819,
+    "returned": 30,
+    "accepted": 30,
+    "rejected": 0,
+    "output_tokens_per_returned": 165.33,
+    "output_tokens_per_accepted": 165.33,
+    "response_record_bytes": 20604,
+    "record_bytes_per_returned": 686.8,
+    "origin": {
+      "document": 10,
+      "unknown": 20
+    },
+    "typed_value_counts": {
+      "none": 29,
+      "money": 1
+    },
+    "key_figure_eligible": 0,
+    "premerge_identity_count": 30,
+    "premerge_collisions": 0,
+    "gold_recalled": 14
+  },
+  "unicef_reduced-K1": {
+    "chunk": "unicef_reduced",
+    "variant": "COLLECTOR_ONLY",
+    "run": 1,
+    "input_tokens": 4022,
+    "output_tokens": 5837,
+    "cost_usd": 0.033207,
+    "returned": 40,
+    "accepted": 40,
+    "rejected": 0,
+    "output_tokens_per_returned": 145.93,
+    "output_tokens_per_accepted": 145.93,
+    "response_record_bytes": 23422,
+    "record_bytes_per_returned": 585.55,
+    "origin": {
+      "document": 36,
+      "unknown": 4
+    },
+    "typed_value_counts": {
+      "money": 8,
+      "none": 14,
+      "percent": 10,
+      "count": 8
+    },
+    "key_figure_eligible": 3,
+    "premerge_identity_count": 40,
+    "premerge_collisions": 0,
+    "gold_recalled": 14
+  },
+  "unicef_reduced-K2": {
+    "chunk": "unicef_reduced",
+    "variant": "COLLECTOR_ONLY",
+    "run": 2,
+    "input_tokens": 4022,
+    "output_tokens": 8543,
+    "cost_usd": 0.046737,
+    "returned": 66,
+    "accepted": 66,
+    "rejected": 0,
+    "output_tokens_per_returned": 129.44,
+    "output_tokens_per_accepted": 129.44,
+    "response_record_bytes": 32899,
+    "record_bytes_per_returned": 498.47,
+    "origin": {
+      "document": 65,
+      "unknown": 1
+    },
+    "typed_value_counts": {
+      "money": 8,
+      "none": 24,
+      "percent": 23,
+      "count": 8,
+      "number": 3
+    },
+    "key_figure_eligible": 6,
+    "premerge_identity_count": 66,
+    "premerge_collisions": 0,
+    "gold_recalled": 14
+  },
+  "unicef_reduced-K3": {
+    "chunk": "unicef_reduced",
+    "variant": "COLLECTOR_ONLY",
+    "run": 3,
+    "input_tokens": 4022,
+    "output_tokens": 10889,
+    "cost_usd": 0.058467,
+    "returned": 78,
+    "accepted": 78,
+    "rejected": 0,
+    "output_tokens_per_returned": 139.6,
+    "output_tokens_per_accepted": 139.6,
+    "response_record_bytes": 42565,
+    "record_bytes_per_returned": 545.71,
+    "origin": {
+      "document": 44,
+      "unknown": 34
+    },
+    "typed_value_counts": {
+      "money": 8,
+      "none": 38,
+      "percent": 22,
+      "count": 7,
+      "number": 3
+    },
+    "key_figure_eligible": 5,
+    "premerge_identity_count": 78,
+    "premerge_collisions": 0,
+    "gold_recalled": 15
+  },
+  "india_wash-C1": {
+    "chunk": "india_wash",
+    "variant": "CONTROL",
+    "run": 1,
+    "input_tokens": 4128,
+    "output_tokens": 4642,
+    "cost_usd": 0.027338,
+    "returned": 36,
+    "accepted": 30,
+    "rejected": 6,
+    "output_tokens_per_returned": 128.94,
+    "output_tokens_per_accepted": 154.73,
+    "response_record_bytes": 17574,
+    "record_bytes_per_returned": 488.17,
+    "origin": {
+      "document": 15,
+      "unknown": 15
+    },
+    "typed_value_counts": {
+      "percent": 1,
+      "none": 22,
+      "count": 6,
+      "money": 1
+    },
+    "key_figure_eligible": 1,
+    "premerge_identity_count": 30,
+    "premerge_collisions": 0,
+    "gold_recalled": 7
+  },
+  "india_wash-C2": {
+    "chunk": "india_wash",
+    "variant": "CONTROL",
+    "run": 2,
+    "input_tokens": 4128,
+    "output_tokens": 3650,
+    "cost_usd": 0.022378,
+    "returned": 28,
+    "accepted": 26,
+    "rejected": 2,
+    "output_tokens_per_returned": 130.36,
+    "output_tokens_per_accepted": 140.38,
+    "response_record_bytes": 13466,
+    "record_bytes_per_returned": 480.93,
+    "origin": {
+      "document": 16,
+      "unknown": 10
+    },
+    "typed_value_counts": {
+      "none": 18,
+      "period": 1,
+      "number": 6,
+      "money": 1
+    },
+    "key_figure_eligible": 1,
+    "premerge_identity_count": 26,
+    "premerge_collisions": 0,
+    "gold_recalled": 10
+  },
+  "india_wash-C3": {
+    "chunk": "india_wash",
+    "variant": "CONTROL",
+    "run": 3,
+    "input_tokens": 4128,
+    "output_tokens": 2869,
+    "cost_usd": 0.018473,
+    "returned": 24,
+    "accepted": 19,
+    "rejected": 5,
+    "output_tokens_per_returned": 119.54,
+    "output_tokens_per_accepted": 151.0,
+    "response_record_bytes": 10349,
+    "record_bytes_per_returned": 431.21,
+    "origin": {
+      "document": 11,
+      "unknown": 8
+    },
+    "typed_value_counts": {
+      "percent": 1,
+      "period": 1,
+      "count": 4,
+      "money": 1,
+      "none": 12
+    },
+    "key_figure_eligible": 1,
+    "premerge_identity_count": 19,
+    "premerge_collisions": 0,
+    "gold_recalled": 8
+  },
+  "india_wash-K1": {
+    "chunk": "india_wash",
+    "variant": "COLLECTOR_ONLY",
+    "run": 1,
+    "input_tokens": 4131,
+    "output_tokens": 5602,
+    "cost_usd": 0.032141,
+    "returned": 46,
+    "accepted": 45,
+    "rejected": 1,
+    "output_tokens_per_returned": 121.78,
+    "output_tokens_per_accepted": 124.49,
+    "response_record_bytes": 21031,
+    "record_bytes_per_returned": 457.2,
+    "origin": {
+      "document": 15,
+      "unknown": 30
+    },
+    "typed_value_counts": {
+      "none": 37,
+      "period": 1,
+      "count": 6,
+      "money": 1
+    },
+    "key_figure_eligible": 1,
+    "premerge_identity_count": 45,
+    "premerge_collisions": 0,
+    "gold_recalled": 11
+  },
+  "india_wash-K2": {
+    "chunk": "india_wash",
+    "variant": "COLLECTOR_ONLY",
+    "run": 2,
+    "input_tokens": 4131,
+    "output_tokens": 6223,
+    "cost_usd": 0.035246,
+    "returned": 41,
+    "accepted": 39,
+    "rejected": 2,
+    "output_tokens_per_returned": 151.78,
+    "output_tokens_per_accepted": 159.56,
+    "response_record_bytes": 24503,
+    "record_bytes_per_returned": 597.63,
+    "origin": {
+      "document": 20,
+      "unknown": 19
+    },
+    "typed_value_counts": {
+      "percent": 1,
+      "period": 1,
+      "count": 10,
+      "money": 1,
+      "none": 26
+    },
+    "key_figure_eligible": 1,
+    "premerge_identity_count": 39,
+    "premerge_collisions": 0,
+    "gold_recalled": 9
+  },
+  "india_wash-K3": {
+    "chunk": "india_wash",
+    "variant": "COLLECTOR_ONLY",
+    "run": 3,
+    "input_tokens": 4131,
+    "output_tokens": 5452,
+    "cost_usd": 0.031391,
+    "returned": 36,
+    "accepted": 29,
+    "rejected": 7,
+    "output_tokens_per_returned": 151.44,
+    "output_tokens_per_accepted": 188.0,
+    "response_record_bytes": 21544,
+    "record_bytes_per_returned": 598.44,
+    "origin": {
+      "document": 13,
+      "unknown": 16
+    },
+    "typed_value_counts": {
+      "count": 5,
+      "none": 23,
+      "money": 1
+    },
+    "key_figure_eligible": 1,
+    "premerge_identity_count": 29,
+    "premerge_collisions": 0,
+    "gold_recalled": 9
+  }
+}

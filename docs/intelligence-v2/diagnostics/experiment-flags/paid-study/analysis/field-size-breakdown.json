@@ -1,0 +1,703 @@
+{
+  "method": "compact UTF-8 JSON value bytes; token proxy = bytes/4, not provider tokenizer; excludes field names and JSON punctuation",
+  "fields": {
+    "CONTROL": {
+      "label": {
+        "bytes": 9397,
+        "populated": 201,
+        "mean_bytes_per_record": 46.75,
+        "token_proxy_total": 2349.2,
+        "token_proxy_per_record": 11.7
+      },
+      "value": {
+        "bytes": 11242,
+        "populated": 201,
+        "mean_bytes_per_record": 55.93,
+        "token_proxy_total": 2810.5,
+        "token_proxy_per_record": 14.0
+      },
+      "subject": {
+        "bytes": 2981,
+        "populated": 201,
+        "mean_bytes_per_record": 14.83,
+        "token_proxy_total": 745.2,
+        "token_proxy_per_record": 3.7
+      },
+      "reference": {
+        "bytes": 19835,
+        "populated": 201,
+        "mean_bytes_per_record": 98.68,
+        "token_proxy_total": 4958.8,
+        "token_proxy_per_record": 24.7
+      },
+      "evidence_ids": {
+        "bytes": 1671,
+        "populated": 201,
+        "mean_bytes_per_record": 8.31,
+        "token_proxy_total": 417.8,
+        "token_proxy_per_record": 2.1
+      },
+      "entity_type": {
+        "bytes": 1314,
+        "populated": 77,
+        "mean_bytes_per_record": 6.54,
+        "token_proxy_total": 328.5,
+        "token_proxy_per_record": 1.6
+      },
+      "unit": {
+        "bytes": 1266,
+        "populated": 105,
+        "mean_bytes_per_record": 6.3,
+        "token_proxy_total": 316.5,
+        "token_proxy_per_record": 1.6
+      },
+      "period": {
+        "bytes": 1136,
+        "populated": 99,
+        "mean_bytes_per_record": 5.65,
+        "token_proxy_total": 284.0,
+        "token_proxy_per_record": 1.4
+      },
+      "date_type": {
+        "bytes": 1050,
+        "populated": 41,
+        "mean_bytes_per_record": 5.22,
+        "token_proxy_total": 262.5,
+        "token_proxy_per_record": 1.3
+      },
+      "due_date": {
+        "bytes": 1132,
+        "populated": 41,
+        "mean_bytes_per_record": 5.63,
+        "token_proxy_total": 283.0,
+        "token_proxy_per_record": 1.4
+      },
+      "severity": {
+        "bytes": 816,
+        "populated": 3,
+        "mean_bytes_per_record": 4.06,
+        "token_proxy_total": 204.0,
+        "token_proxy_per_record": 1.0
+      },
+      "metric_type": {
+        "bytes": 1308,
+        "populated": 126,
+        "mean_bytes_per_record": 6.51,
+        "token_proxy_total": 327.0,
+        "token_proxy_per_record": 1.6
+      },
+      "value_basis": {
+        "bytes": 1176,
+        "populated": 127,
+        "mean_bytes_per_record": 5.85,
+        "token_proxy_total": 294.0,
+        "token_proxy_per_record": 1.5
+      },
+      "aggregation": {
+        "bytes": 804,
+        "populated": 0,
+        "mean_bytes_per_record": 4.0,
+        "token_proxy_total": 201.0,
+        "token_proxy_per_record": 1.0
+      },
+      "quantity_kind": {
+        "bytes": 1369,
+        "populated": 98,
+        "mean_bytes_per_record": 6.81,
+        "token_proxy_total": 342.2,
+        "token_proxy_per_record": 1.7
+      },
+      "kind": {
+        "bytes": 1524,
+        "populated": 201,
+        "mean_bytes_per_record": 7.58,
+        "token_proxy_total": 381.0,
+        "token_proxy_per_record": 1.9
+      },
+      "confidence": {
+        "bytes": 762,
+        "populated": 201,
+        "mean_bytes_per_record": 3.79,
+        "token_proxy_total": 190.5,
+        "token_proxy_per_record": 0.9
+      },
+      "aliases": {
+        "bytes": 627,
+        "populated": 16,
+        "mean_bytes_per_record": 3.12,
+        "token_proxy_total": 156.8,
+        "token_proxy_per_record": 0.8
+      }
+    },
+    "COLLECTOR_ONLY": {
+      "label": {
+        "bytes": 13934,
+        "populated": 307,
+        "mean_bytes_per_record": 45.39,
+        "token_proxy_total": 3483.5,
+        "token_proxy_per_record": 11.3
+      },
+      "value": {
+        "bytes": 12979,
+        "populated": 307,
+        "mean_bytes_per_record": 42.28,
+        "token_proxy_total": 3244.8,
+        "token_proxy_per_record": 10.6
+      },
+      "subject": {
+        "bytes": 3920,
+        "populated": 307,
+        "mean_bytes_per_record": 12.77,
+        "token_proxy_total": 980.0,
+        "token_proxy_per_record": 3.2
+      },
+      "reference": {
+        "bytes": 41295,
+        "populated": 307,
+        "mean_bytes_per_record": 134.51,
+        "token_proxy_total": 10323.8,
+        "token_proxy_per_record": 33.6
+      },
+      "evidence_ids": {
+        "bytes": 2540,
+        "populated": 307,
+        "mean_bytes_per_record": 8.27,
+        "token_proxy_total": 635.0,
+        "token_proxy_per_record": 2.1
+      },
+      "entity_type": {
+        "bytes": 1854,
+        "populated": 101,
+        "mean_bytes_per_record": 6.04,
+        "token_proxy_total": 463.5,
+        "token_proxy_per_record": 1.5
+      },
+      "unit": {
+        "bytes": 2284,
+        "populated": 171,
+        "mean_bytes_per_record": 7.44,
+        "token_proxy_total": 571.0,
+        "token_proxy_per_record": 1.9
+      },
+      "period": {
+        "bytes": 1760,
+        "populated": 124,
+        "mean_bytes_per_record": 5.73,
+        "token_proxy_total": 440.0,
+        "token_proxy_per_record": 1.4
+      },
+      "date_type": {
+        "bytes": 1744,
+        "populated": 86,
+        "mean_bytes_per_record": 5.68,
+        "token_proxy_total": 436.0,
+        "token_proxy_per_record": 1.4
+      },
+      "due_date": {
+        "bytes": 1886,
+        "populated": 86,
+        "mean_bytes_per_record": 6.14,
+        "token_proxy_total": 471.5,
+        "token_proxy_per_record": 1.5
+      },
+      "severity": {
+        "bytes": 1238,
+        "populated": 3,
+        "mean_bytes_per_record": 4.03,
+        "token_proxy_total": 309.5,
+        "token_proxy_per_record": 1.0
+      },
+      "metric_type": {
+        "bytes": 1944,
+        "populated": 179,
+        "mean_bytes_per_record": 6.33,
+        "token_proxy_total": 486.0,
+        "token_proxy_per_record": 1.6
+      },
+      "value_basis": {
+        "bytes": 1708,
+        "populated": 179,
+        "mean_bytes_per_record": 5.56,
+        "token_proxy_total": 427.0,
+        "token_proxy_per_record": 1.4
+      },
+      "aggregation": {
+        "bytes": 1228,
+        "populated": 0,
+        "mean_bytes_per_record": 4.0,
+        "token_proxy_total": 307.0,
+        "token_proxy_per_record": 1.0
+      },
+      "quantity_kind": {
+        "bytes": 2574,
+        "populated": 160,
+        "mean_bytes_per_record": 8.38,
+        "token_proxy_total": 643.5,
+        "token_proxy_per_record": 2.1
+      },
+      "kind": {
+        "bytes": 2300,
+        "populated": 307,
+        "mean_bytes_per_record": 7.49,
+        "token_proxy_total": 575.0,
+        "token_proxy_per_record": 1.9
+      },
+      "confidence": {
+        "bytes": 1067,
+        "populated": 307,
+        "mean_bytes_per_record": 3.48,
+        "token_proxy_total": 266.8,
+        "token_proxy_per_record": 0.9
+      },
+      "aliases": {
+        "bytes": 941,
+        "populated": 32,
+        "mean_bytes_per_record": 3.07,
+        "token_proxy_total": 235.2,
+        "token_proxy_per_record": 0.8
+      }
+    }
+  },
+  "by_chunk_variant": {
+    "unicef_reduced:CONTROL": {
+      "label": {
+        "bytes": 5470,
+        "populated": 113,
+        "mean_bytes_per_record": 48.41,
+        "token_proxy_total": 1367.5
+      },
+      "value": {
+        "bytes": 6169,
+        "populated": 113,
+        "mean_bytes_per_record": 54.59,
+        "token_proxy_total": 1542.2
+      },
+      "subject": {
+        "bytes": 1672,
+        "populated": 113,
+        "mean_bytes_per_record": 14.8,
+        "token_proxy_total": 418.0
+      },
+      "reference": {
+        "bytes": 14970,
+        "populated": 113,
+        "mean_bytes_per_record": 132.48,
+        "token_proxy_total": 3742.5
+      },
+      "evidence_ids": {
+        "bytes": 904,
+        "populated": 113,
+        "mean_bytes_per_record": 8.0,
+        "token_proxy_total": 226.0
+      },
+      "entity_type": {
+        "bytes": 758,
+        "populated": 51,
+        "mean_bytes_per_record": 6.71,
+        "token_proxy_total": 189.5
+      },
+      "unit": {
+        "bytes": 806,
+        "populated": 82,
+        "mean_bytes_per_record": 7.13,
+        "token_proxy_total": 201.5
+      },
+      "period": {
+        "bytes": 641,
+        "populated": 66,
+        "mean_bytes_per_record": 5.67,
+        "token_proxy_total": 160.2
+      },
+      "date_type": {
+        "bytes": 644,
+        "populated": 32,
+        "mean_bytes_per_record": 5.7,
+        "token_proxy_total": 161.0
+      },
+      "due_date": {
+        "bytes": 708,
+        "populated": 32,
+        "mean_bytes_per_record": 6.27,
+        "token_proxy_total": 177.0
+      },
+      "severity": {
+        "bytes": 452,
+        "populated": 0,
+        "mean_bytes_per_record": 4.0,
+        "token_proxy_total": 113.0
+      },
+      "metric_type": {
+        "bytes": 824,
+        "populated": 93,
+        "mean_bytes_per_record": 7.29,
+        "token_proxy_total": 206.0
+      },
+      "value_basis": {
+        "bytes": 713,
+        "populated": 94,
+        "mean_bytes_per_record": 6.31,
+        "token_proxy_total": 178.2
+      },
+      "aggregation": {
+        "bytes": 452,
+        "populated": 0,
+        "mean_bytes_per_record": 4.0,
+        "token_proxy_total": 113.0
+      },
+      "quantity_kind": {
+        "bytes": 946,
+        "populated": 88,
+        "mean_bytes_per_record": 8.37,
+        "token_proxy_total": 236.5
+      },
+      "kind": {
+        "bytes": 866,
+        "populated": 113,
+        "mean_bytes_per_record": 7.66,
+        "token_proxy_total": 216.5
+      },
+      "confidence": {
+        "bytes": 430,
+        "populated": 113,
+        "mean_bytes_per_record": 3.81,
+        "token_proxy_total": 107.5
+      },
+      "aliases": {
+        "bytes": 308,
+        "populated": 8,
+        "mean_bytes_per_record": 2.73,
+        "token_proxy_total": 77.0
+      }
+    },
+    "unicef_reduced:COLLECTOR_ONLY": {
+      "label": {
+        "bytes": 8322,
+        "populated": 184,
+        "mean_bytes_per_record": 45.23,
+        "token_proxy_total": 2080.5
+      },
+      "value": {
+        "bytes": 5279,
+        "populated": 184,
+        "mean_bytes_per_record": 28.69,
+        "token_proxy_total": 1319.8
+      },
+      "subject": {
+        "bytes": 2068,
+        "populated": 184,
+        "mean_bytes_per_record": 11.24,
+        "token_proxy_total": 517.0
+      },
+      "reference": {
+        "bytes": 26176,
+        "populated": 184,
+        "mean_bytes_per_record": 142.26,
+        "token_proxy_total": 6544.0
+      },
+      "evidence_ids": {
+        "bytes": 1507,
+        "populated": 184,
+        "mean_bytes_per_record": 8.19,
+        "token_proxy_total": 376.8
+      },
+      "entity_type": {
+        "bytes": 1198,
+        "populated": 77,
+        "mean_bytes_per_record": 6.51,
+        "token_proxy_total": 299.5
+      },
+      "unit": {
+        "bytes": 1451,
+        "populated": 132,
+        "mean_bytes_per_record": 7.89,
+        "token_proxy_total": 362.8
+      },
+      "period": {
+        "bytes": 1034,
+        "populated": 88,
+        "mean_bytes_per_record": 5.62,
+        "token_proxy_total": 258.5
+      },
+      "date_type": {
+        "bytes": 1168,
+        "populated": 72,
+        "mean_bytes_per_record": 6.35,
+        "token_proxy_total": 292.0
+      },
+      "due_date": {
+        "bytes": 1312,
+        "populated": 72,
+        "mean_bytes_per_record": 7.13,
+        "token_proxy_total": 328.0
+      },
+      "severity": {
+        "bytes": 736,
+        "populated": 0,
+        "mean_bytes_per_record": 4.0,
+        "token_proxy_total": 184.0
+      },
+      "metric_type": {
+        "bytes": 1316,
+        "populated": 145,
+        "mean_bytes_per_record": 7.15,
+        "token_proxy_total": 329.0
+      },
+      "value_basis": {
+        "bytes": 1112,
+        "populated": 145,
+        "mean_bytes_per_record": 6.04,
+        "token_proxy_total": 278.0
+      },
+      "aggregation": {
+        "bytes": 736,
+        "populated": 0,
+        "mean_bytes_per_record": 4.0,
+        "token_proxy_total": 184.0
+      },
+      "quantity_kind": {
+        "bytes": 1702,
+        "populated": 145,
+        "mean_bytes_per_record": 9.25,
+        "token_proxy_total": 425.5
+      },
+      "kind": {
+        "bytes": 1416,
+        "populated": 184,
+        "mean_bytes_per_record": 7.7,
+        "token_proxy_total": 354.0
+      },
+      "confidence": {
+        "bytes": 616,
+        "populated": 184,
+        "mean_bytes_per_record": 3.35,
+        "token_proxy_total": 154.0
+      },
+      "aliases": {
+        "bytes": 521,
+        "populated": 24,
+        "mean_bytes_per_record": 2.83,
+        "token_proxy_total": 130.2
+      }
+    },
+    "india_wash:CONTROL": {
+      "label": {
+        "bytes": 3927,
+        "populated": 88,
+        "mean_bytes_per_record": 44.62,
+        "token_proxy_total": 981.8
+      },
+      "value": {
+        "bytes": 5073,
+        "populated": 88,
+        "mean_bytes_per_record": 57.65,
+        "token_proxy_total": 1268.2
+      },
+      "subject": {
+        "bytes": 1309,
+        "populated": 88,
+        "mean_bytes_per_record": 14.88,
+        "token_proxy_total": 327.2
+      },
+      "reference": {
+        "bytes": 4865,
+        "populated": 88,
+        "mean_bytes_per_record": 55.28,
+        "token_proxy_total": 1216.2
+      },
+      "evidence_ids": {
+        "bytes": 767,
+        "populated": 88,
+        "mean_bytes_per_record": 8.72,
+        "token_proxy_total": 191.8
+      },
+      "entity_type": {
+        "bytes": 556,
+        "populated": 26,
+        "mean_bytes_per_record": 6.32,
+        "token_proxy_total": 139.0
+      },
+      "unit": {
+        "bytes": 460,
+        "populated": 23,
+        "mean_bytes_per_record": 5.23,
+        "token_proxy_total": 115.0
+      },
+      "period": {
+        "bytes": 495,
+        "populated": 33,
+        "mean_bytes_per_record": 5.62,
+        "token_proxy_total": 123.8
+      },
+      "date_type": {
+        "bytes": 406,
+        "populated": 9,
+        "mean_bytes_per_record": 4.61,
+        "token_proxy_total": 101.5
+      },
+      "due_date": {
+        "bytes": 424,
+        "populated": 9,
+        "mean_bytes_per_record": 4.82,
+        "token_proxy_total": 106.0
+      },
+      "severity": {
+        "bytes": 364,
+        "populated": 3,
+        "mean_bytes_per_record": 4.14,
+        "token_proxy_total": 91.0
+      },
+      "metric_type": {
+        "bytes": 484,
+        "populated": 33,
+        "mean_bytes_per_record": 5.5,
+        "token_proxy_total": 121.0
+      },
+      "value_basis": {
+        "bytes": 463,
+        "populated": 33,
+        "mean_bytes_per_record": 5.26,
+        "token_proxy_total": 115.8
+      },
+      "aggregation": {
+        "bytes": 352,
+        "populated": 0,
+        "mean_bytes_per_record": 4.0,
+        "token_proxy_total": 88.0
+      },
+      "quantity_kind": {
+        "bytes": 423,
+        "populated": 10,
+        "mean_bytes_per_record": 4.81,
+        "token_proxy_total": 105.8
+      },
+      "kind": {
+        "bytes": 658,
+        "populated": 88,
+        "mean_bytes_per_record": 7.48,
+        "token_proxy_total": 164.5
+      },
+      "confidence": {
+        "bytes": 332,
+        "populated": 88,
+        "mean_bytes_per_record": 3.77,
+        "token_proxy_total": 83.0
+      },
+      "aliases": {
+        "bytes": 319,
+        "populated": 8,
+        "mean_bytes_per_record": 3.62,
+        "token_proxy_total": 79.8
+      }
+    },
+    "india_wash:COLLECTOR_ONLY": {
+      "label": {
+        "bytes": 5612,
+        "populated": 123,
+        "mean_bytes_per_record": 45.63,
+        "token_proxy_total": 1403.0
+      },
+      "value": {
+        "bytes": 7700,
+        "populated": 123,
+        "mean_bytes_per_record": 62.6,
+        "token_proxy_total": 1925.0
+      },
+      "subject": {
+        "bytes": 1852,
+        "populated": 123,
+        "mean_bytes_per_record": 15.06,
+        "token_proxy_total": 463.0
+      },
+      "reference": {
+        "bytes": 15119,
+        "populated": 123,
+        "mean_bytes_per_record": 122.92,
+        "token_proxy_total": 3779.8
+      },
+      "evidence_ids": {
+        "bytes": 1033,
+        "populated": 123,
+        "mean_bytes_per_record": 8.4,
+        "token_proxy_total": 258.2
+      },
+      "entity_type": {
+        "bytes": 656,
+        "populated": 24,
+        "mean_bytes_per_record": 5.33,
+        "token_proxy_total": 164.0
+      },
+      "unit": {
+        "bytes": 833,
+        "populated": 39,
+        "mean_bytes_per_record": 6.77,
+        "token_proxy_total": 208.2
+      },
+      "period": {
+        "bytes": 726,
+        "populated": 36,
+        "mean_bytes_per_record": 5.9,
+        "token_proxy_total": 181.5
+      },
+      "date_type": {
+        "bytes": 576,
+        "populated": 14,
+        "mean_bytes_per_record": 4.68,
+        "token_proxy_total": 144.0
+      },
+      "due_date": {
+        "bytes": 574,
+        "populated": 14,
+        "mean_bytes_per_record": 4.67,
+        "token_proxy_total": 143.5
+      },
+      "severity": {
+        "bytes": 502,
+        "populated": 3,
+        "mean_bytes_per_record": 4.08,
+        "token_proxy_total": 125.5
+      },
+      "metric_type": {
+        "bytes": 628,
+        "populated": 34,
+        "mean_bytes_per_record": 5.11,
+        "token_proxy_total": 157.0
+      },
+      "value_basis": {
+        "bytes": 596,
+        "populated": 34,
+        "mean_bytes_per_record": 4.85,
+        "token_proxy_total": 149.0
+      },
+      "aggregation": {
+        "bytes": 492,
+        "populated": 0,
+        "mean_bytes_per_record": 4.0,
+        "token_proxy_total": 123.0
+      },
+      "quantity_kind": {
+        "bytes": 872,
+        "populated": 15,
+        "mean_bytes_per_record": 7.09,
+        "token_proxy_total": 218.0
+      },
+      "kind": {
+        "bytes": 884,
+        "populated": 123,
+        "mean_bytes_per_record": 7.19,
+        "token_proxy_total": 221.0
+      },
+      "confidence": {
+        "bytes": 451,
+        "populated": 123,
+        "mean_bytes_per_record": 3.67,
+        "token_proxy_total": 112.8
+      },
+      "aliases": {
+        "bytes": 420,
+        "populated": 8,
+        "mean_bytes_per_record": 3.41,
+        "token_proxy_total": 105.0
+      }
+    }
+  }
+}
