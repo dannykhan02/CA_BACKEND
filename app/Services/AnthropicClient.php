@@ -1134,6 +1134,51 @@ PROMPT;
         ];
     }
 
+    /**
+     * One B2 brief-narrative attempt over an already-bounded Stage A context.
+     *
+     * Deliberately a single response with no repair and no retry: a truncated or malformed
+     * narrative is not salvaged, because half a narrative is indistinguishable from a confident
+     * one. The caller degrades to the deterministic Brief instead. Retries are the queue's.
+     *
+     * @param  array<string,mixed>  $context  App\Services\Intelligence\B2\NarrativeContextBuilder output
+     * @return array{decoded:array<string,mixed>,response_hash:string}
+     */
+    public function synthesizeBriefNarrative(Document $document, array $context, string $model): array
+    {
+        $settings = config('intelligence_v2.b2');
+        $this->currentOperation = 'brief_synthesis';
+        $this->activeDocument = $document;
+        $this->requestModel = $model;
+        $this->lastResolvedPromptVersion = null;
+        if (! in_array($model, config('document_intelligence.structured_models'), true)) {
+            throw new AiProcessingException('unsupported_structured_model');
+        }
+        $options = [
+            'model' => $model,
+            'max_attempts' => 1,
+            'single_response' => true,
+            'typed_errors' => true,
+            'timeout' => (int) $settings['timeout_seconds'],
+            'connect_timeout' => (int) $settings['connect_timeout_seconds'],
+            'max_tokens' => (int) $settings['max_output_tokens'],
+            'system' => [['type' => 'text', 'text' => \App\Services\Intelligence\B2\NarrativePrompt::system(),
+                'cache_control' => ['type' => 'ephemeral']]],
+            'output_config' => ['format' => ['type' => 'json_schema',
+                'schema' => \App\Services\Intelligence\B2\NarrativeSchema::schema()]],
+        ];
+        if (in_array($model, config('document_intelligence.effort_models'), true)) {
+            $options['output_config']['effort'] = config('services.anthropic.synthesis_effort');
+        }
+
+        return $this->structuredCall(json_encode($context, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+            $document, 'brief_synthesis', function (array $response): array {
+                return ['decoded' => $this->decodeJsonContent($response),
+                    // Lineage only: the narrative itself is stored verified, so the raw envelope is not.
+                    'response_hash' => hash('sha256', $this->responseText($response))];
+            }, $options);
+    }
+
     /** Repair works from validated evidence only; source text is synthesis-only context. */
     private function withoutSourceContext(string $json): string
     {

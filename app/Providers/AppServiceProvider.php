@@ -8,6 +8,7 @@ use App\Observers\DocumentObserver;
 use App\Observers\WorkspaceObserver;
 use App\Services\AI\Incremental\EvidenceGrounding;
 use App\Services\AI\ProviderGate;
+use App\Services\Intelligence\B2\StageASnapshot;
 use App\Services\Ocr\OcrEngineResolver;
 use App\Support\QueueTopology;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -30,6 +31,8 @@ class AppServiceProvider extends ServiceProvider
         // One span set per process: a document's evidence spans are segmented once per
         // extraction version and reused by every chunk, validation and merge in the same worker.
         $this->app->singleton(EvidenceGrounding::class);
+        // Memoizes one Stage A projection per document per request/job; see the class docblock.
+        $this->app->scoped(StageASnapshot::class);
 
         // OCR provider list is config-driven (config/ocr.php) — adding
         // a provider means adding one line there, not touching this

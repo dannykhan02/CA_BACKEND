@@ -84,10 +84,13 @@ class ModelRoutingGuardTest extends TestCase
             self::assertContains($model, [self::FAST, self::SMART], "Purpose {$purpose} resolves to {$model}.");
         }
         // Synthesis-class work is SMART; everything else, including per-chunk extraction, is FAST.
-        foreach (['document_summary', 'summary_repair', 'document_comparison', 'document_qa'] as $purpose) {
+        // brief_synthesis (B2) writes narrative over already-validated evidence, so it is
+        // synthesis-class and resolves to SMART like the Stage A summary it sits on top of.
+        $smart = ['document_summary', 'summary_repair', 'document_comparison', 'document_qa', 'brief_synthesis'];
+        foreach ($smart as $purpose) {
             self::assertSame(self::SMART, $resolved[$purpose] ?? app(AiModels::class)->forTask($purpose), $purpose);
         }
-        foreach (array_diff($purposes, ['document_summary', 'summary_repair', 'document_comparison', 'document_qa']) as $purpose) {
+        foreach (array_diff($purposes, $smart) as $purpose) {
             self::assertSame(self::FAST, $resolved[$purpose], $purpose);
         }
     }

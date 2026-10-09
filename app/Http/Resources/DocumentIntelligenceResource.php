@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use App\Models\DocumentEvidence;
 use App\Services\DocumentIntelligenceService;
 use App\Services\Documents\EvidencePageLocator;
+use App\Services\Intelligence\B2\BriefReadService;
 use App\Services\Intelligence\DocumentAnalysisComposer;
 use App\Services\Intelligence\ImportantFindingsBuilder;
 use Illuminate\Http\Request;
@@ -50,7 +51,13 @@ class DocumentIntelligenceResource extends JsonResource
         $analysis = in_array($this->status, ['Ready', 'Needs Review'], true)
             ? $composer->compose($this->resource)
             : null;
+        $brief = $analysis === null ? null : app(BriefReadService::class)->forDocument($this->resource);
         $referenced = array_fill_keys($analysis === null ? [] : $composer->referencedSourceIds($analysis), true);
+        foreach ($brief['blocks'] ?? [] as $block) {
+            foreach ($block['cites'] as $cited) {
+                $referenced[$cited] = true;
+            }
+        }
         foreach (app(ImportantFindingsBuilder::class)->citedSourceIds($this->resource->intelligenceSummary) as $cited) {
             $referenced[$cited] = true;
         }
@@ -107,6 +114,10 @@ class DocumentIntelligenceResource extends JsonResource
                     : null
             ),
             'analysis' => $analysis,
+            // B2 off (the default) omits the key entirely, so the response is byte-for-byte what
+            // it was before. On, it carries B1's deterministic blocks plus the verified narrative
+            // when one exists for exactly this evidence set.
+            ...($brief === null ? [] : ['brief' => $brief]),
             'evidence' => (object) $evidence,
             'processingDetails' => $service->processingDetails($this->resource),
             'processing' => $service->getProcessingStatus($this->resource),
