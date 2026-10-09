@@ -1,0 +1,94 @@
+{
+  "status": "PREPARED_NOT_AUTHORIZED",
+  "max_calls": 12,
+  "max_total_cost_usd": 0.6,
+  "model": "claude-haiku-4-5-20251001",
+  "prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+  "compact_schema_sha256": "1bc072a68427391d49cccc99dbdec1f7214558db1f92fe0215159a7c248404f1",
+  "steps": [
+    {
+      "name": "unicef_reduced-A1",
+      "chunk": "unicef_reduced",
+      "arm": "A",
+      "wire_format": "canonical-json-span-v1",
+      "request_sha256": "d28a6421e873e965413815c779461264f841c1ec0ab5fc543be47bf61db5d700"
+    },
+    {
+      "name": "unicef_reduced-B1",
+      "chunk": "unicef_reduced",
+      "arm": "B",
+      "wire_format": "compact-json-v1",
+      "request_sha256": "b9483433139abc66acfd44285a5c1586c1271a77839284c0efc57c2ad3713c26"
+    },
+    {
+      "name": "india_wash-A1",
+      "chunk": "india_wash",
+      "arm": "A",
+      "wire_format": "canonical-json-span-v1",
+      "request_sha256": "716df69a1607827b5994b68e1cadd5b61433c950397a69995cc31e3a2ac6e42e"
+    },
+    {
+      "name": "india_wash-B1",
+      "chunk": "india_wash",
+      "arm": "B",
+      "wire_format": "compact-json-v1",
+      "request_sha256": "74af6d1fa2ae9416edc54036f7a13de5745d06c2e1fc243c382cdf794d8931d6"
+    },
+    {
+      "name": "unicef_reduced-A2",
+      "chunk": "unicef_reduced",
+      "arm": "A",
+      "wire_format": "canonical-json-span-v1",
+      "request_sha256": "d28a6421e873e965413815c779461264f841c1ec0ab5fc543be47bf61db5d700"
+    },
+    {
+      "name": "unicef_reduced-B2",
+      "chunk": "unicef_reduced",
+      "arm": "B",
+      "wire_format": "compact-json-v1",
+      "request_sha256": "b9483433139abc66acfd44285a5c1586c1271a77839284c0efc57c2ad3713c26"
+    },
+    {
+      "name": "india_wash-A2",
+      "chunk": "india_wash",
+      "arm": "A",
+      "wire_format": "canonical-json-span-v1",
+      "request_sha256": "716df69a1607827b5994b68e1cadd5b61433c950397a69995cc31e3a2ac6e42e"
+    },
+    {
+      "name": "india_wash-B2",
+      "chunk": "india_wash",
+      "arm": "B",
+      "wire_format": "compact-json-v1",
+      "request_sha256": "74af6d1fa2ae9416edc54036f7a13de5745d06c2e1fc243c382cdf794d8931d6"
+    },
+    {
+      "name": "unicef_reduced-A3",
+      "chunk": "unicef_reduced",
+      "arm": "A",
+      "wire_format": "canonical-json-span-v1",
+      "request_sha256": "d28a6421e873e965413815c779461264f841c1ec0ab5fc543be47bf61db5d700"
+    },
+    {
+      "name": "unicef_reduced-B3",
+      "chunk": "unicef_reduced",
+      "arm": "B",
+      "wire_format": "compact-json-v1",
+      "request_sha256": "b9483433139abc66acfd44285a5c1586c1271a77839284c0efc57c2ad3713c26"
+    },
+    {
+      "name": "india_wash-A3",
+      "chunk": "india_wash",
+      "arm": "A",
+      "wire_format": "canonical-json-span-v1",
+      "request_sha256": "716df69a1607827b5994b68e1cadd5b61433c950397a69995cc31e3a2ac6e42e"
+    },
+    {
+      "name": "india_wash-B3",
+      "chunk": "india_wash",
+      "arm": "B",
+      "wire_format": "compact-json-v1",
+      "request_sha256": "74af6d1fa2ae9416edc54036f7a13de5745d06c2e1fc243c382cdf794d8931d6"
+    }
+  ]
+}

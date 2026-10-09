@@ -1,0 +1,2503 @@
+{
+  "unicef_reduced-A1": [
+    {
+      "ordinal": 1,
+      "frozen_item": {
+        "evidence_ids": [
+          "E108"
+        ],
+        "excluded_claim": "The Guatemala investment occurred in 2024",
+        "reason": "unsupported period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 15,
+          "label": "Government investment in social protection programmes",
+          "value": "$1 billion",
+          "kind": "metric",
+          "period": null,
+          "evidence_ids": [
+            "E108"
+          ]
+        },
+        {
+          "accepted_index": 16,
+          "label": "Poverty increase mitigation factor",
+          "value": "three-to-four-fold increase in poverty",
+          "kind": "fact",
+          "period": "COVID-19 pandemic",
+          "evidence_ids": [
+            "E108"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 2,
+      "frozen_item": {
+        "evidence_ids": [
+          "E114"
+        ],
+        "excluded_claim": "Stylized map disclaimer is a risk finding",
+        "reason": "boilerplate"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 3,
+      "frozen_item": {
+        "evidence_ids": [
+          "E115"
+        ],
+        "excluded_claim": "Annual report page 5 is a programme result",
+        "reason": "page footer"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 4,
+      "frozen_item": {
+        "evidence_ids": [
+          "E116"
+        ],
+        "excluded_claim": "Scan the QR code by a deadline",
+        "reason": "navigation instruction, not a contractual deadline"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 5,
+      "frozen_item": {
+        "evidence_ids": [
+          "E110"
+        ],
+        "excluded_claim": "The Yemen mortality reduction occurred in calendar year 2024",
+        "reason": "unsupported inferred period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 19,
+          "label": "Under-five mortality drop",
+          "value": "23%",
+          "kind": "metric",
+          "period": "last decade of conflict",
+          "evidence_ids": [
+            "E110"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 6,
+      "frozen_item": {
+        "evidence_ids": [
+          "E133"
+        ],
+        "excluded_claim": "USD 952 million is an EPF loan due immediately",
+        "reason": "budget category is not an obligation or deadline"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 10,
+          "label": "Core Resources expense",
+          "value": "$952 million",
+          "kind": "metric",
+          "period": "2024",
+          "evidence_ids": [
+            "E133"
+          ]
+        },
+        {
+          "accepted_index": 41,
+          "label": "Emergency Programme Fund purpose",
+          "value": "protecting children and saving lives in sudden-onset emergencies",
+          "kind": "definition",
+          "period": null,
+          "evidence_ids": [
+            "E133"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    }
+  ],
+  "unicef_reduced-B1": [
+    {
+      "ordinal": 1,
+      "frozen_item": {
+        "evidence_ids": [
+          "E108"
+        ],
+        "excluded_claim": "The Guatemala investment occurred in 2024",
+        "reason": "unsupported period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 17,
+          "label": "Guatemala social protection investment",
+          "value": "$1 billion",
+          "kind": "metric",
+          "period": null,
+          "evidence_ids": [
+            "E108"
+          ]
+        },
+        {
+          "accepted_index": 44,
+          "label": "Guatemala social protection partnership outcome",
+          "value": "UNICEF positioned as key partner in transformation of social protection system",
+          "kind": "fact",
+          "period": "COVID-19 pandemic",
+          "evidence_ids": [
+            "E108"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 2,
+      "frozen_item": {
+        "evidence_ids": [
+          "E114"
+        ],
+        "excluded_claim": "Stylized map disclaimer is a risk finding",
+        "reason": "boilerplate"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 3,
+      "frozen_item": {
+        "evidence_ids": [
+          "E115"
+        ],
+        "excluded_claim": "Annual report page 5 is a programme result",
+        "reason": "page footer"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 4,
+      "frozen_item": {
+        "evidence_ids": [
+          "E116"
+        ],
+        "excluded_claim": "Scan the QR code by a deadline",
+        "reason": "navigation instruction, not a contractual deadline"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 5,
+      "frozen_item": {
+        "evidence_ids": [
+          "E110"
+        ],
+        "excluded_claim": "The Yemen mortality reduction occurred in calendar year 2024",
+        "reason": "unsupported inferred period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 20,
+          "label": "Yemen under-five mortality reduction",
+          "value": "23 per cent drop",
+          "kind": "metric",
+          "period": "last decade of conflict",
+          "evidence_ids": [
+            "E110"
+          ]
+        },
+        {
+          "accepted_index": 46,
+          "label": "Yemen emergency health service resilience",
+          "value": "safeguarded continued access and expansion of essential health services",
+          "kind": "fact",
+          "period": "decade of conflict",
+          "evidence_ids": [
+            "E110"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 6,
+      "frozen_item": {
+        "evidence_ids": [
+          "E133"
+        ],
+        "excluded_claim": "USD 952 million is an EPF loan due immediately",
+        "reason": "budget category is not an obligation or deadline"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 38,
+          "label": "UNICEF country programmes expense 2024",
+          "value": "$952 million",
+          "kind": "metric",
+          "period": "2024",
+          "evidence_ids": [
+            "E130",
+            "E133"
+          ]
+        },
+        {
+          "accepted_index": 60,
+          "label": "Emergency Programme Fund definition",
+          "value": "protecting children and saving lives in sudden-onset emergencies",
+          "kind": "definition",
+          "period": null,
+          "evidence_ids": [
+            "E133"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    }
+  ],
+  "india_wash-A1": [
+    {
+      "ordinal": 1,
+      "frozen_item": {
+        "evidence_ids": [
+          "E209"
+        ],
+        "excluded_claim": "SDG target 6 is an achieved business metric",
+        "reason": "context label"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 3,
+          "label": "People reached with basic sanitation over 10 years",
+          "value": "550 million people",
+          "kind": "metric",
+          "period": "10 years",
+          "evidence_ids": [
+            "E209"
+          ]
+        },
+        {
+          "accepted_index": 4,
+          "label": "People reached with improved drinking water over 10 years",
+          "value": "580 million people",
+          "kind": "metric",
+          "period": "10 years",
+          "evidence_ids": [
+            "E209"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 2,
+      "frozen_item": {
+        "evidence_ids": [
+          "E206"
+        ],
+        "excluded_claim": "110 million toilets were completed in 2014",
+        "reason": "target confused with actual and year"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 3,
+      "frozen_item": {
+        "evidence_ids": [
+          "E207"
+        ],
+        "excluded_claim": "Vani has a 2019 deadline to practise handwashing",
+        "reason": "caption and date conflated"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 2,
+          "label": "Swachh Bharat Mission target achievement",
+          "value": "ambitious target was achieved",
+          "kind": "fact",
+          "period": null,
+          "evidence_ids": [
+            "E207"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 4,
+      "frozen_item": {
+        "evidence_ids": [
+          "E218"
+        ],
+        "excluded_claim": "115 million households were reached in 2024",
+        "reason": "unsupported calendar period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 6,
+          "label": "Rural households with piped water connections",
+          "value": "more than 115 million rural households",
+          "kind": "metric",
+          "period": "5 years",
+          "evidence_ids": [
+            "E218"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 5,
+      "frozen_item": {
+        "evidence_ids": [
+          "E231"
+        ],
+        "excluded_claim": "Annual report 14 is an operational quantity",
+        "reason": "page footer"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    }
+  ],
+  "india_wash-B1": [
+    {
+      "ordinal": 1,
+      "frozen_item": {
+        "evidence_ids": [
+          "E209"
+        ],
+        "excluded_claim": "SDG target 6 is an achieved business metric",
+        "reason": "context label"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 3,
+          "label": "People reached with basic sanitation in 10 years",
+          "value": "550 million people",
+          "kind": "metric",
+          "period": "last 10 years",
+          "evidence_ids": [
+            "E209"
+          ]
+        },
+        {
+          "accepted_index": 4,
+          "label": "People reached with improved drinking water in 10 years",
+          "value": "580 million people",
+          "kind": "metric",
+          "period": "last 10 years",
+          "evidence_ids": [
+            "E209"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 2,
+      "frozen_item": {
+        "evidence_ids": [
+          "E206"
+        ],
+        "excluded_claim": "110 million toilets were completed in 2014",
+        "reason": "target confused with actual and year"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 3,
+      "frozen_item": {
+        "evidence_ids": [
+          "E207"
+        ],
+        "excluded_claim": "Vani has a 2019 deadline to practise handwashing",
+        "reason": "caption and date conflated"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 2,
+          "label": "Swachh Bharat Mission target achievement",
+          "value": "ambitious target was achieved by 2019",
+          "kind": "fact",
+          "period": null,
+          "evidence_ids": [
+            "E207"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 4,
+      "frozen_item": {
+        "evidence_ids": [
+          "E218"
+        ],
+        "excluded_claim": "115 million households were reached in 2024",
+        "reason": "unsupported calendar period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 5,
+          "label": "Rural households gained piped water connections",
+          "value": "more than 115 million rural households",
+          "kind": "metric",
+          "period": "last five years",
+          "evidence_ids": [
+            "E218"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 5,
+      "frozen_item": {
+        "evidence_ids": [
+          "E231"
+        ],
+        "excluded_claim": "Annual report 14 is an operational quantity",
+        "reason": "page footer"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    }
+  ],
+  "unicef_reduced-A2": [
+    {
+      "ordinal": 1,
+      "frozen_item": {
+        "evidence_ids": [
+          "E108"
+        ],
+        "excluded_claim": "The Guatemala investment occurred in 2024",
+        "reason": "unsupported period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 13,
+          "label": "Government social protection investment leveraged",
+          "value": "$1 billion",
+          "kind": "fact",
+          "period": null,
+          "evidence_ids": [
+            "E108"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 2,
+      "frozen_item": {
+        "evidence_ids": [
+          "E114"
+        ],
+        "excluded_claim": "Stylized map disclaimer is a risk finding",
+        "reason": "boilerplate"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 3,
+      "frozen_item": {
+        "evidence_ids": [
+          "E115"
+        ],
+        "excluded_claim": "Annual report page 5 is a programme result",
+        "reason": "page footer"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 4,
+      "frozen_item": {
+        "evidence_ids": [
+          "E116"
+        ],
+        "excluded_claim": "Scan the QR code by a deadline",
+        "reason": "navigation instruction, not a contractual deadline"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 5,
+      "frozen_item": {
+        "evidence_ids": [
+          "E110"
+        ],
+        "excluded_claim": "The Yemen mortality reduction occurred in calendar year 2024",
+        "reason": "unsupported inferred period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 16,
+          "label": "Under-five mortality drop over conflict decade",
+          "value": "23 per cent",
+          "kind": "metric",
+          "period": "last decade",
+          "evidence_ids": [
+            "E110"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 6,
+      "frozen_item": {
+        "evidence_ids": [
+          "E133"
+        ],
+        "excluded_claim": "USD 952 million is an EPF loan due immediately",
+        "reason": "budget category is not an obligation or deadline"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 34,
+          "label": "Country programmes expense 2024",
+          "value": "$952 million",
+          "kind": "metric",
+          "period": "2024",
+          "evidence_ids": [
+            "E130",
+            "E133"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    }
+  ],
+  "unicef_reduced-B2": [
+    {
+      "ordinal": 1,
+      "frozen_item": {
+        "evidence_ids": [
+          "E108"
+        ],
+        "excluded_claim": "The Guatemala investment occurred in 2024",
+        "reason": "unsupported period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 33,
+          "label": "Government investment in social protection programmes",
+          "value": "$1 billion",
+          "kind": "metric",
+          "period": null,
+          "evidence_ids": [
+            "E108"
+          ]
+        },
+        {
+          "accepted_index": 34,
+          "label": "Poverty increase mitigation ratio",
+          "value": "three-to-four-fold",
+          "kind": "metric",
+          "period": "COVID-19 pandemic",
+          "evidence_ids": [
+            "E108"
+          ]
+        },
+        {
+          "accepted_index": 68,
+          "label": "Guatemala UNICEF role positioning",
+          "value": "key partner in the transformation of the social protection system",
+          "kind": "fact",
+          "period": null,
+          "evidence_ids": [
+            "E108"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 2,
+      "frozen_item": {
+        "evidence_ids": [
+          "E114"
+        ],
+        "excluded_claim": "Stylized map disclaimer is a risk finding",
+        "reason": "boilerplate"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 3,
+      "frozen_item": {
+        "evidence_ids": [
+          "E115"
+        ],
+        "excluded_claim": "Annual report page 5 is a programme result",
+        "reason": "page footer"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 4,
+      "frozen_item": {
+        "evidence_ids": [
+          "E116"
+        ],
+        "excluded_claim": "Scan the QR code by a deadline",
+        "reason": "navigation instruction, not a contractual deadline"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 5,
+      "frozen_item": {
+        "evidence_ids": [
+          "E110"
+        ],
+        "excluded_claim": "The Yemen mortality reduction occurred in calendar year 2024",
+        "reason": "unsupported inferred period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 37,
+          "label": "Reduction in under-five mortality",
+          "value": "23 per cent drop",
+          "kind": "metric",
+          "period": "last decade",
+          "evidence_ids": [
+            "E110"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 6,
+      "frozen_item": {
+        "evidence_ids": [
+          "E133"
+        ],
+        "excluded_claim": "USD 952 million is an EPF loan due immediately",
+        "reason": "budget category is not an obligation or deadline"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 55,
+          "label": "Country programmes expense from Core Resources",
+          "value": "$952 million",
+          "kind": "metric",
+          "period": "2024",
+          "evidence_ids": [
+            "E133"
+          ]
+        },
+        {
+          "accepted_index": 62,
+          "label": "Emergency Programme Fund purpose",
+          "value": "protecting children and saving lives in sudden-onset emergencies",
+          "kind": "fact",
+          "period": null,
+          "evidence_ids": [
+            "E133"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    }
+  ],
+  "india_wash-A2": [
+    {
+      "ordinal": 1,
+      "frozen_item": {
+        "evidence_ids": [
+          "E209"
+        ],
+        "excluded_claim": "SDG target 6 is an achieved business metric",
+        "reason": "context label"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 2,
+          "label": "People reached with basic sanitation in last 10 years",
+          "value": "550 million people",
+          "kind": "metric",
+          "period": "10 years",
+          "evidence_ids": [
+            "E209"
+          ]
+        },
+        {
+          "accepted_index": 3,
+          "label": "People reached with improved drinking water in last 10 years",
+          "value": "580 million people",
+          "kind": "metric",
+          "period": "10 years",
+          "evidence_ids": [
+            "E209"
+          ]
+        },
+        {
+          "accepted_index": 18,
+          "label": "SDG target 6 progress",
+          "value": "progress toward SDG target 6 on water and sanitation",
+          "kind": "fact",
+          "period": null,
+          "evidence_ids": [
+            "E209"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 2,
+      "frozen_item": {
+        "evidence_ids": [
+          "E206"
+        ],
+        "excluded_claim": "110 million toilets were completed in 2014",
+        "reason": "target confused with actual and year"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 3,
+      "frozen_item": {
+        "evidence_ids": [
+          "E207"
+        ],
+        "excluded_claim": "Vani has a 2019 deadline to practise handwashing",
+        "reason": "caption and date conflated"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 4,
+      "frozen_item": {
+        "evidence_ids": [
+          "E218"
+        ],
+        "excluded_claim": "115 million households were reached in 2024",
+        "reason": "unsupported calendar period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 4,
+          "label": "Rural households with piped water connections in last 5 years",
+          "value": "more than 115 million",
+          "kind": "metric",
+          "period": "5 years",
+          "evidence_ids": [
+            "E218"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 5,
+      "frozen_item": {
+        "evidence_ids": [
+          "E231"
+        ],
+        "excluded_claim": "Annual report 14 is an operational quantity",
+        "reason": "page footer"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    }
+  ],
+  "india_wash-B2": [
+    {
+      "ordinal": 1,
+      "frozen_item": {
+        "evidence_ids": [
+          "E209"
+        ],
+        "excluded_claim": "SDG target 6 is an achieved business metric",
+        "reason": "context label"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 3,
+          "label": "People reached with basic sanitation in last 10 years",
+          "value": "550 million people",
+          "kind": "metric",
+          "period": "10 years",
+          "evidence_ids": [
+            "E209"
+          ]
+        },
+        {
+          "accepted_index": 4,
+          "label": "People reached with improved drinking water in last 10 years",
+          "value": "580 million people",
+          "kind": "metric",
+          "period": "10 years",
+          "evidence_ids": [
+            "E209"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 2,
+      "frozen_item": {
+        "evidence_ids": [
+          "E206"
+        ],
+        "excluded_claim": "110 million toilets were completed in 2014",
+        "reason": "target confused with actual and year"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 3,
+      "frozen_item": {
+        "evidence_ids": [
+          "E207"
+        ],
+        "excluded_claim": "Vani has a 2019 deadline to practise handwashing",
+        "reason": "caption and date conflated"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 2,
+          "label": "Swachh Bharat Mission target achievement",
+          "value": "achieved by 2019",
+          "kind": "fact",
+          "period": "2019",
+          "evidence_ids": [
+            "E207"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 4,
+      "frozen_item": {
+        "evidence_ids": [
+          "E218"
+        ],
+        "excluded_claim": "115 million households were reached in 2024",
+        "reason": "unsupported calendar period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 6,
+          "label": "Rural households with piped water connections in last 5 years",
+          "value": "more than 115 million rural households",
+          "kind": "metric",
+          "period": "last five years",
+          "evidence_ids": [
+            "E218"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 5,
+      "frozen_item": {
+        "evidence_ids": [
+          "E231"
+        ],
+        "excluded_claim": "Annual report 14 is an operational quantity",
+        "reason": "page footer"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    }
+  ],
+  "unicef_reduced-A3": [
+    {
+      "ordinal": 1,
+      "frozen_item": {
+        "evidence_ids": [
+          "E108"
+        ],
+        "excluded_claim": "The Guatemala investment occurred in 2024",
+        "reason": "unsupported period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 10,
+          "label": "Guatemala social protection government investment resulting from UNICEF policy advice",
+          "value": "$1 billion",
+          "kind": "metric",
+          "period": null,
+          "evidence_ids": [
+            "E108"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 2,
+      "frozen_item": {
+        "evidence_ids": [
+          "E114"
+        ],
+        "excluded_claim": "Stylized map disclaimer is a risk finding",
+        "reason": "boilerplate"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 3,
+      "frozen_item": {
+        "evidence_ids": [
+          "E115"
+        ],
+        "excluded_claim": "Annual report page 5 is a programme result",
+        "reason": "page footer"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 4,
+      "frozen_item": {
+        "evidence_ids": [
+          "E116"
+        ],
+        "excluded_claim": "Scan the QR code by a deadline",
+        "reason": "navigation instruction, not a contractual deadline"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 5,
+      "frozen_item": {
+        "evidence_ids": [
+          "E110"
+        ],
+        "excluded_claim": "The Yemen mortality reduction occurred in calendar year 2024",
+        "reason": "unsupported inferred period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 13,
+          "label": "Yemen under-five mortality reduction over conflict decade",
+          "value": "23 per cent drop",
+          "kind": "metric",
+          "period": "last decade",
+          "evidence_ids": [
+            "E110"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 6,
+      "frozen_item": {
+        "evidence_ids": [
+          "E133"
+        ],
+        "excluded_claim": "USD 952 million is an EPF loan due immediately",
+        "reason": "budget category is not an obligation or deadline"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 32,
+          "label": "Core Resources country programmes expense",
+          "value": "$952 million",
+          "kind": "metric",
+          "period": "2024",
+          "evidence_ids": [
+            "E133"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    }
+  ],
+  "unicef_reduced-B3": [
+    {
+      "ordinal": 1,
+      "frozen_item": {
+        "evidence_ids": [
+          "E108"
+        ],
+        "excluded_claim": "The Guatemala investment occurred in 2024",
+        "reason": "unsupported period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 29,
+          "label": "Government social protection investment resulting from UNICEF partnership",
+          "value": "$1 billion",
+          "kind": "fact",
+          "period": null,
+          "evidence_ids": [
+            "E108"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 2,
+      "frozen_item": {
+        "evidence_ids": [
+          "E114"
+        ],
+        "excluded_claim": "Stylized map disclaimer is a risk finding",
+        "reason": "boilerplate"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 3,
+      "frozen_item": {
+        "evidence_ids": [
+          "E115"
+        ],
+        "excluded_claim": "Annual report page 5 is a programme result",
+        "reason": "page footer"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 4,
+      "frozen_item": {
+        "evidence_ids": [
+          "E116"
+        ],
+        "excluded_claim": "Scan the QR code by a deadline",
+        "reason": "navigation instruction, not a contractual deadline"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 5,
+      "frozen_item": {
+        "evidence_ids": [
+          "E110"
+        ],
+        "excluded_claim": "The Yemen mortality reduction occurred in calendar year 2024",
+        "reason": "unsupported inferred period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 32,
+          "label": "Under-five mortality reduction in Yemen",
+          "value": "23 per cent drop",
+          "kind": "metric",
+          "period": "last decade of conflict",
+          "evidence_ids": [
+            "E110"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 6,
+      "frozen_item": {
+        "evidence_ids": [
+          "E133"
+        ],
+        "excluded_claim": "USD 952 million is an EPF loan due immediately",
+        "reason": "budget category is not an obligation or deadline"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 55,
+          "label": "Emergency Programme Fund",
+          "value": "$952 million",
+          "kind": "metric",
+          "period": null,
+          "evidence_ids": [
+            "E133"
+          ]
+        },
+        {
+          "accepted_index": 58,
+          "label": "Programme expense from Core Resources",
+          "value": "$952 million",
+          "kind": "metric",
+          "period": "2024",
+          "evidence_ids": [
+            "E133"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    }
+  ],
+  "india_wash-A3": [
+    {
+      "ordinal": 1,
+      "frozen_item": {
+        "evidence_ids": [
+          "E209"
+        ],
+        "excluded_claim": "SDG target 6 is an achieved business metric",
+        "reason": "context label"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 3,
+          "label": "People reached with basic sanitation in past 10 years",
+          "value": "550 million people",
+          "kind": "metric",
+          "period": "10 years",
+          "evidence_ids": [
+            "E209"
+          ]
+        },
+        {
+          "accepted_index": 4,
+          "label": "People reached with improved drinking water in past 10 years",
+          "value": "580 million people",
+          "kind": "metric",
+          "period": "10 years",
+          "evidence_ids": [
+            "E209"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 2,
+      "frozen_item": {
+        "evidence_ids": [
+          "E206"
+        ],
+        "excluded_claim": "110 million toilets were completed in 2014",
+        "reason": "target confused with actual and year"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 3,
+      "frozen_item": {
+        "evidence_ids": [
+          "E207"
+        ],
+        "excluded_claim": "Vani has a 2019 deadline to practise handwashing",
+        "reason": "caption and date conflated"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 2,
+          "label": "Swachh Bharat Mission target achievement",
+          "value": "Achieved by 2019",
+          "kind": "fact",
+          "period": "2019",
+          "evidence_ids": [
+            "E207"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 4,
+      "frozen_item": {
+        "evidence_ids": [
+          "E218"
+        ],
+        "excluded_claim": "115 million households were reached in 2024",
+        "reason": "unsupported calendar period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 7,
+          "label": "Rural households with piped water connections in past five years",
+          "value": "More than 115 million rural households",
+          "kind": "metric",
+          "period": "5 years",
+          "evidence_ids": [
+            "E218"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 5,
+      "frozen_item": {
+        "evidence_ids": [
+          "E231"
+        ],
+        "excluded_claim": "Annual report 14 is an operational quantity",
+        "reason": "page footer"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    }
+  ],
+  "india_wash-B3": [
+    {
+      "ordinal": 1,
+      "frozen_item": {
+        "evidence_ids": [
+          "E209"
+        ],
+        "excluded_claim": "SDG target 6 is an achieved business metric",
+        "reason": "context label"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 3,
+          "label": "People reached with basic sanitation in last 10 years",
+          "value": "550 million people",
+          "kind": "metric",
+          "period": "last 10 years",
+          "evidence_ids": [
+            "E209"
+          ]
+        },
+        {
+          "accepted_index": 4,
+          "label": "People reached with improved drinking water in last 10 years",
+          "value": "580 million people",
+          "kind": "metric",
+          "period": "last 10 years",
+          "evidence_ids": [
+            "E209"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 2,
+      "frozen_item": {
+        "evidence_ids": [
+          "E206"
+        ],
+        "excluded_claim": "110 million toilets were completed in 2014",
+        "reason": "target confused with actual and year"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 2,
+          "label": "Swachh Bharat Mission toilet construction target",
+          "value": "over 110 million toilets for 550 million people",
+          "kind": "metric",
+          "period": null,
+          "evidence_ids": [
+            "E206"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 3,
+      "frozen_item": {
+        "evidence_ids": [
+          "E207"
+        ],
+        "excluded_claim": "Vani has a 2019 deadline to practise handwashing",
+        "reason": "caption and date conflated"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 4,
+      "frozen_item": {
+        "evidence_ids": [
+          "E218"
+        ],
+        "excluded_claim": "115 million households were reached in 2024",
+        "reason": "unsupported calendar period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 5,
+          "label": "Rural households with piped water connections in last five years",
+          "value": "more than 115 million rural households",
+          "kind": "metric",
+          "period": "last five years",
+          "evidence_ids": [
+            "E218"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 5,
+      "frozen_item": {
+        "evidence_ids": [
+          "E231"
+        ],
+        "excluded_claim": "Annual report 14 is an operational quantity",
+        "reason": "page footer"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    }
+  ],
+  "unicef_reduced-A4": [
+    {
+      "ordinal": 1,
+      "frozen_item": {
+        "evidence_ids": [
+          "E108"
+        ],
+        "excluded_claim": "The Guatemala investment occurred in 2024",
+        "reason": "unsupported period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 11,
+          "label": "Guatemala social protection system transformation investment",
+          "value": "$1 billion",
+          "kind": "metric",
+          "period": null,
+          "evidence_ids": [
+            "E108"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 2,
+      "frozen_item": {
+        "evidence_ids": [
+          "E114"
+        ],
+        "excluded_claim": "Stylized map disclaimer is a risk finding",
+        "reason": "boilerplate"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 3,
+      "frozen_item": {
+        "evidence_ids": [
+          "E115"
+        ],
+        "excluded_claim": "Annual report page 5 is a programme result",
+        "reason": "page footer"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 4,
+      "frozen_item": {
+        "evidence_ids": [
+          "E116"
+        ],
+        "excluded_claim": "Scan the QR code by a deadline",
+        "reason": "navigation instruction, not a contractual deadline"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 5,
+      "frozen_item": {
+        "evidence_ids": [
+          "E110"
+        ],
+        "excluded_claim": "The Yemen mortality reduction occurred in calendar year 2024",
+        "reason": "unsupported inferred period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 14,
+          "label": "Yemen under-five mortality reduction",
+          "value": "23 per cent drop over the last decade",
+          "kind": "metric",
+          "period": "last decade",
+          "evidence_ids": [
+            "E110"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 6,
+      "frozen_item": {
+        "evidence_ids": [
+          "E133"
+        ],
+        "excluded_claim": "USD 952 million is an EPF loan due immediately",
+        "reason": "budget category is not an obligation or deadline"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 32,
+          "label": "UNICEF country programmes expense",
+          "value": "$952 million",
+          "kind": "metric",
+          "period": "2024",
+          "evidence_ids": [
+            "E133"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    }
+  ],
+  "unicef_reduced-B4": [
+    {
+      "ordinal": 1,
+      "frozen_item": {
+        "evidence_ids": [
+          "E108"
+        ],
+        "excluded_claim": "The Guatemala investment occurred in 2024",
+        "reason": "unsupported period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 14,
+          "label": "Social protection investment generated in Guatemala",
+          "value": "$1 billion",
+          "kind": "metric",
+          "period": null,
+          "evidence_ids": [
+            "E108"
+          ]
+        },
+        {
+          "accepted_index": 15,
+          "label": "Poverty increase mitigated in Guatemala",
+          "value": "three-to-four-fold increase",
+          "kind": "fact",
+          "period": "COVID-19 pandemic",
+          "evidence_ids": [
+            "E108"
+          ]
+        },
+        {
+          "accepted_index": 41,
+          "label": "Guatemala location",
+          "value": "Guatemala",
+          "kind": "entity",
+          "period": null,
+          "evidence_ids": [
+            "E108"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 2,
+      "frozen_item": {
+        "evidence_ids": [
+          "E114"
+        ],
+        "excluded_claim": "Stylized map disclaimer is a risk finding",
+        "reason": "boilerplate"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 3,
+      "frozen_item": {
+        "evidence_ids": [
+          "E115"
+        ],
+        "excluded_claim": "Annual report page 5 is a programme result",
+        "reason": "page footer"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 4,
+      "frozen_item": {
+        "evidence_ids": [
+          "E116"
+        ],
+        "excluded_claim": "Scan the QR code by a deadline",
+        "reason": "navigation instruction, not a contractual deadline"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 5,
+      "frozen_item": {
+        "evidence_ids": [
+          "E110"
+        ],
+        "excluded_claim": "The Yemen mortality reduction occurred in calendar year 2024",
+        "reason": "unsupported inferred period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 18,
+          "label": "Drop in under-five mortality in Yemen",
+          "value": "23 per cent",
+          "kind": "metric",
+          "period": "last decade of conflict",
+          "evidence_ids": [
+            "E110"
+          ]
+        },
+        {
+          "accepted_index": 43,
+          "label": "Yemen location",
+          "value": "Yemen",
+          "kind": "entity",
+          "period": null,
+          "evidence_ids": [
+            "E110"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 6,
+      "frozen_item": {
+        "evidence_ids": [
+          "E133"
+        ],
+        "excluded_claim": "USD 952 million is an EPF loan due immediately",
+        "reason": "budget category is not an obligation or deadline"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 36,
+          "label": "Core Resources Programme Expense for UNICEF country programmes and Emergency Programme Fund",
+          "value": "$952 million",
+          "kind": "metric",
+          "period": "2024",
+          "evidence_ids": [
+            "E133"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    }
+  ],
+  "india_wash-A4": [
+    {
+      "ordinal": 1,
+      "frozen_item": {
+        "evidence_ids": [
+          "E209"
+        ],
+        "excluded_claim": "SDG target 6 is an achieved business metric",
+        "reason": "context label"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 1,
+          "label": "People reached with basic sanitation in last 10 years",
+          "value": "550 million people",
+          "kind": "metric",
+          "period": "last 10 years",
+          "evidence_ids": [
+            "E209"
+          ]
+        },
+        {
+          "accepted_index": 2,
+          "label": "People reached with improved drinking water in last 10 years",
+          "value": "580 million people",
+          "kind": "metric",
+          "period": "last 10 years",
+          "evidence_ids": [
+            "E209"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 2,
+      "frozen_item": {
+        "evidence_ids": [
+          "E206"
+        ],
+        "excluded_claim": "110 million toilets were completed in 2014",
+        "reason": "target confused with actual and year"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 3,
+      "frozen_item": {
+        "evidence_ids": [
+          "E207"
+        ],
+        "excluded_claim": "Vani has a 2019 deadline to practise handwashing",
+        "reason": "caption and date conflated"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 4,
+      "frozen_item": {
+        "evidence_ids": [
+          "E218"
+        ],
+        "excluded_claim": "115 million households were reached in 2024",
+        "reason": "unsupported calendar period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 4,
+          "label": "Rural households with piped water connections in last 5 years",
+          "value": "More than 115 million rural households",
+          "kind": "metric",
+          "period": "last 5 years",
+          "evidence_ids": [
+            "E218"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 5,
+      "frozen_item": {
+        "evidence_ids": [
+          "E231"
+        ],
+        "excluded_claim": "Annual report 14 is an operational quantity",
+        "reason": "page footer"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    }
+  ],
+  "india_wash-B4": [
+    {
+      "ordinal": 1,
+      "frozen_item": {
+        "evidence_ids": [
+          "E209"
+        ],
+        "excluded_claim": "SDG target 6 is an achieved business metric",
+        "reason": "context label"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 4,
+          "label": "People reached with basic sanitation over 10 years",
+          "value": "550 million people",
+          "kind": "metric",
+          "period": "10 years",
+          "evidence_ids": [
+            "E209"
+          ]
+        },
+        {
+          "accepted_index": 5,
+          "label": "People reached with improved drinking water over 10 years",
+          "value": "580 million people",
+          "kind": "metric",
+          "period": "10 years",
+          "evidence_ids": [
+            "E209"
+          ]
+        },
+        {
+          "accepted_index": 38,
+          "label": "Sustainable Development Goal 6 progress",
+          "value": "shifted the global dial on water and sanitation",
+          "kind": "fact",
+          "period": null,
+          "evidence_ids": [
+            "E209"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 2,
+      "frozen_item": {
+        "evidence_ids": [
+          "E206"
+        ],
+        "excluded_claim": "110 million toilets were completed in 2014",
+        "reason": "target confused with actual and year"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 2,
+          "label": "Swachh Bharat Mission target - toilets",
+          "value": "over 110 million toilets",
+          "kind": "metric",
+          "period": null,
+          "evidence_ids": [
+            "E206"
+          ]
+        },
+        {
+          "accepted_index": 3,
+          "label": "Swachh Bharat Mission target - population",
+          "value": "550 million people",
+          "kind": "metric",
+          "period": null,
+          "evidence_ids": [
+            "E206"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 3,
+      "frozen_item": {
+        "evidence_ids": [
+          "E207"
+        ],
+        "excluded_claim": "Vani has a 2019 deadline to practise handwashing",
+        "reason": "caption and date conflated"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 4,
+      "frozen_item": {
+        "evidence_ids": [
+          "E218"
+        ],
+        "excluded_claim": "115 million households were reached in 2024",
+        "reason": "unsupported calendar period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 7,
+          "label": "Rural households with piped water connections",
+          "value": "more than 115 million rural households",
+          "kind": "metric",
+          "period": "5 years",
+          "evidence_ids": [
+            "E218"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 5,
+      "frozen_item": {
+        "evidence_ids": [
+          "E231"
+        ],
+        "excluded_claim": "Annual report 14 is an operational quantity",
+        "reason": "page footer"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    }
+  ],
+  "unicef_reduced-A5": [
+    {
+      "ordinal": 1,
+      "frozen_item": {
+        "evidence_ids": [
+          "E108"
+        ],
+        "excluded_claim": "The Guatemala investment occurred in 2024",
+        "reason": "unsupported period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 29,
+          "label": "Guatemala social protection investment",
+          "value": "$1 billion",
+          "kind": "metric",
+          "period": null,
+          "evidence_ids": [
+            "E108"
+          ]
+        },
+        {
+          "accepted_index": 30,
+          "label": "Guatemala poverty increase mitigation",
+          "value": "three-to-four-fold",
+          "kind": "fact",
+          "period": "COVID-19 pandemic",
+          "evidence_ids": [
+            "E108"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 2,
+      "frozen_item": {
+        "evidence_ids": [
+          "E114"
+        ],
+        "excluded_claim": "Stylized map disclaimer is a risk finding",
+        "reason": "boilerplate"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 3,
+      "frozen_item": {
+        "evidence_ids": [
+          "E115"
+        ],
+        "excluded_claim": "Annual report page 5 is a programme result",
+        "reason": "page footer"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 4,
+      "frozen_item": {
+        "evidence_ids": [
+          "E116"
+        ],
+        "excluded_claim": "Scan the QR code by a deadline",
+        "reason": "navigation instruction, not a contractual deadline"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 5,
+      "frozen_item": {
+        "evidence_ids": [
+          "E110"
+        ],
+        "excluded_claim": "The Yemen mortality reduction occurred in calendar year 2024",
+        "reason": "unsupported inferred period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 33,
+          "label": "Yemen under-five mortality reduction",
+          "value": "23 per cent drop",
+          "kind": "metric",
+          "period": "over the course of the last decade of conflict",
+          "evidence_ids": [
+            "E110"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 6,
+      "frozen_item": {
+        "evidence_ids": [
+          "E133"
+        ],
+        "excluded_claim": "USD 952 million is an EPF loan due immediately",
+        "reason": "budget category is not an obligation or deadline"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 52,
+          "label": "Country programmes expense",
+          "value": "$952 million",
+          "kind": "metric",
+          "period": "2024",
+          "evidence_ids": [
+            "E130",
+            "E133"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    }
+  ],
+  "unicef_reduced-B5": [
+    {
+      "ordinal": 1,
+      "frozen_item": {
+        "evidence_ids": [
+          "E108"
+        ],
+        "excluded_claim": "The Guatemala investment occurred in 2024",
+        "reason": "unsupported period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 2,
+          "label": "Guatemala social protection investment by government",
+          "value": "$1 billion",
+          "kind": "metric",
+          "period": null,
+          "evidence_ids": [
+            "E108"
+          ]
+        },
+        {
+          "accepted_index": 27,
+          "label": "Guatemala location",
+          "value": "Guatemala",
+          "kind": "entity",
+          "period": null,
+          "evidence_ids": [
+            "E108"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 2,
+      "frozen_item": {
+        "evidence_ids": [
+          "E114"
+        ],
+        "excluded_claim": "Stylized map disclaimer is a risk finding",
+        "reason": "boilerplate"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 3,
+      "frozen_item": {
+        "evidence_ids": [
+          "E115"
+        ],
+        "excluded_claim": "Annual report page 5 is a programme result",
+        "reason": "page footer"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 4,
+      "frozen_item": {
+        "evidence_ids": [
+          "E116"
+        ],
+        "excluded_claim": "Scan the QR code by a deadline",
+        "reason": "navigation instruction, not a contractual deadline"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 5,
+      "frozen_item": {
+        "evidence_ids": [
+          "E110"
+        ],
+        "excluded_claim": "The Yemen mortality reduction occurred in calendar year 2024",
+        "reason": "unsupported inferred period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 5,
+          "label": "Yemen under-five mortality reduction",
+          "value": "23 per cent drop",
+          "kind": "metric",
+          "period": "last decade",
+          "evidence_ids": [
+            "E110"
+          ]
+        },
+        {
+          "accepted_index": 29,
+          "label": "Yemen location",
+          "value": "Yemen",
+          "kind": "entity",
+          "period": null,
+          "evidence_ids": [
+            "E110"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 6,
+      "frozen_item": {
+        "evidence_ids": [
+          "E133"
+        ],
+        "excluded_claim": "USD 952 million is an EPF loan due immediately",
+        "reason": "budget category is not an obligation or deadline"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 21,
+          "label": "UNICEF country programmes expense",
+          "value": "$952 million",
+          "kind": "metric",
+          "period": "2024",
+          "evidence_ids": [
+            "E133"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    }
+  ],
+  "india_wash-A5": [
+    {
+      "ordinal": 1,
+      "frozen_item": {
+        "evidence_ids": [
+          "E209"
+        ],
+        "excluded_claim": "SDG target 6 is an achieved business metric",
+        "reason": "context label"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 3,
+          "label": "People reached with basic sanitation over 10 years",
+          "value": "550 million people",
+          "kind": "metric",
+          "period": "10 years",
+          "evidence_ids": [
+            "E209"
+          ]
+        },
+        {
+          "accepted_index": 4,
+          "label": "People reached with improved drinking water over 10 years",
+          "value": "580 million people",
+          "kind": "metric",
+          "period": "10 years",
+          "evidence_ids": [
+            "E209"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 2,
+      "frozen_item": {
+        "evidence_ids": [
+          "E206"
+        ],
+        "excluded_claim": "110 million toilets were completed in 2014",
+        "reason": "target confused with actual and year"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 3,
+      "frozen_item": {
+        "evidence_ids": [
+          "E207"
+        ],
+        "excluded_claim": "Vani has a 2019 deadline to practise handwashing",
+        "reason": "caption and date conflated"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 2,
+          "label": "Swachh Bharat Mission target achievement",
+          "value": "achieved by 2019",
+          "kind": "fact",
+          "period": null,
+          "evidence_ids": [
+            "E207"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 4,
+      "frozen_item": {
+        "evidence_ids": [
+          "E218"
+        ],
+        "excluded_claim": "115 million households were reached in 2024",
+        "reason": "unsupported calendar period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 6,
+          "label": "Rural households with piped water connections in past five years",
+          "value": "more than 115 million rural households",
+          "kind": "metric",
+          "period": "5 years",
+          "evidence_ids": [
+            "E218"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 5,
+      "frozen_item": {
+        "evidence_ids": [
+          "E231"
+        ],
+        "excluded_claim": "Annual report 14 is an operational quantity",
+        "reason": "page footer"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    }
+  ],
+  "india_wash-B5": [
+    {
+      "ordinal": 1,
+      "frozen_item": {
+        "evidence_ids": [
+          "E209"
+        ],
+        "excluded_claim": "SDG target 6 is an achieved business metric",
+        "reason": "context label"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 3,
+          "label": "People reached with basic sanitation in last 10 years",
+          "value": "550 million people",
+          "kind": "metric",
+          "period": "10 years",
+          "evidence_ids": [
+            "E209"
+          ]
+        },
+        {
+          "accepted_index": 4,
+          "label": "People reached with improved drinking water in homes in last 10 years",
+          "value": "580 million people",
+          "kind": "metric",
+          "period": "10 years",
+          "evidence_ids": [
+            "E209"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 2,
+      "frozen_item": {
+        "evidence_ids": [
+          "E206"
+        ],
+        "excluded_claim": "110 million toilets were completed in 2014",
+        "reason": "target confused with actual and year"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 3,
+      "frozen_item": {
+        "evidence_ids": [
+          "E207"
+        ],
+        "excluded_claim": "Vani has a 2019 deadline to practise handwashing",
+        "reason": "caption and date conflated"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 2,
+          "label": "Swachh Bharat Mission target achievement",
+          "value": "2019",
+          "kind": "fact",
+          "period": null,
+          "evidence_ids": [
+            "E207"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 4,
+      "frozen_item": {
+        "evidence_ids": [
+          "E218"
+        ],
+        "excluded_claim": "115 million households were reached in 2024",
+        "reason": "unsupported calendar period"
+      },
+      "cited_accepted": [
+        {
+          "accepted_index": 6,
+          "label": "Rural households with piped water connections in last five years",
+          "value": "more than 115 million rural households",
+          "kind": "metric",
+          "period": "5 years",
+          "evidence_ids": [
+            "E218"
+          ]
+        }
+      ],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    },
+    {
+      "ordinal": 5,
+      "frozen_item": {
+        "evidence_ids": [
+          "E231"
+        ],
+        "excluded_claim": "Annual report 14 is an operational quantity",
+        "reason": "page footer"
+      },
+      "cited_accepted": [],
+      "matched": null,
+      "accepted_indices": [],
+      "review_note": null
+    }
+  ]
+}

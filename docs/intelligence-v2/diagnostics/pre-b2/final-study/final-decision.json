@@ -1,0 +1,77 @@
+{
+  "status": "COMPLETE",
+  "interpretation": "DIRECTIONAL",
+  "decision": "KEEP CONTROL",
+  "reason": "The preregistered useful-effect criterion and paired-run majority condition failed; UNICEF precision and rejection-rate safety gates also failed.",
+  "calls_completed": 20,
+  "calls_failed": 0,
+  "overall_headline_representation_delta_pp": 3.131868131868132,
+  "overall_mean_additional_gold_items_per_chunk_call": 0.5999999999999996,
+  "minimum_useful_effect_met": false,
+  "effects_by_chunk": {
+    "unicef_reduced": {
+      "headline_representation_delta_pp": -1.4285714285714235,
+      "mean_additional_gold_items": 0.0,
+      "positive_representation_pairs": 1,
+      "positive_gold_pairs": 1,
+      "paired_runs": 5,
+      "majority_for_either_primary": false
+    },
+    "india_wash": {
+      "headline_representation_delta_pp": 7.692307692307699,
+      "mean_additional_gold_items": 1.1999999999999993,
+      "positive_representation_pairs": 2,
+      "positive_gold_pairs": 3,
+      "paired_runs": 5,
+      "majority_for_either_primary": true
+    }
+  },
+  "safety_pass": false,
+  "safety_by_chunk": {
+    "unicef_reduced": {
+      "precision_deterioration_pp": 8.000000000000007,
+      "precision_gate_failed": true,
+      "negative_false_positive_deterioration_pp": 0.0,
+      "negative_false_positive_gate_failed": false,
+      "rejection_rate_deterioration_pp": 8.46752154719361,
+      "rejection_rate_gate_failed": true,
+      "grounding_failure_deterioration_pp": 0.0,
+      "grounding_failure_gate_failed": false,
+      "variant_b_truncations": 0,
+      "variant_b_parser_failures": 0,
+      "variant_b_structured_output_failures": 0
+    },
+    "india_wash": {
+      "precision_deterioration_pp": -1.0204081632652962,
+      "precision_gate_failed": false,
+      "negative_false_positive_deterioration_pp": 0.0,
+      "negative_false_positive_gate_failed": false,
+      "rejection_rate_deterioration_pp": -4.674248839413209,
+      "rejection_rate_gate_failed": false,
+      "grounding_failure_deterioration_pp": -0.5555555555555555,
+      "grounding_failure_gate_failed": false,
+      "variant_b_truncations": 0,
+      "variant_b_parser_failures": 0,
+      "variant_b_structured_output_failures": 0
+    }
+  },
+  "absolute_cost_gates_pass": true,
+  "cost": {
+    "actual_total_study_cost_usd": "0.630805",
+    "max_chunk_pair_cost_usd": "0.090504",
+    "variant_b_incremental_cost_usd": "0.078725",
+    "variant_b_relative_cost_increase": 0.28519417475728154,
+    "net_additional_represented_candidate_instances": 4,
+    "net_additional_gold_item_instances": 6,
+    "cost_per_net_additional_represented_candidate_usd": "0.01968125",
+    "cost_per_net_additional_gold_item_usd": "0.01312083333333333333333333333",
+    "approved_limits_usd": {
+      "MAX_TOTAL_STUDY_COST_USD": 1.5,
+      "MAX_COST_PER_DOCUMENT_CHUNK_PAIR_USD": 0.15,
+      "MAX_COST_PER_ADDITIONAL_REPRESENTED_CANDIDATE_USD": 0.1,
+      "MAX_COST_PER_ADDITIONAL_GOLD_ITEM_USD": 0.15,
+      "basis": "12 saved paid calls cost $0.018473–$0.058467 each; 20 planned calls, conservative per-pair and total ceilings. Product value thresholds require founder approval."
+    }
+  },
+  "blinded_review_note": "Frozen blind packet of 396 sampled accepted records, adjudicated by an AI coding agent; not an independent human review."
+}

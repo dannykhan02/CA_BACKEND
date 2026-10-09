@@ -1,0 +1,232 @@
+{
+  "judgments_sha256": "f50be77a8feba83e70bbf83a057d5072bab27fa11ec545c8e392c15e85477628",
+  "reviewer_disclosure": "The precision reviewer was an AI agent using mechanical blinding. The agent conducting the wider experiment had access to study context, so this is not equivalent to an independent human-blinded review.",
+  "by_chunk_variant": {
+    "india_wash:CONTROL": {
+      "sampled": 98,
+      "judgments": {
+        "SUPPORTED": 93,
+        "PARTIALLY_SUPPORTED": 5
+      },
+      "supported_precision": 0.9489795918367347,
+      "supported_plus_partial": 1.0
+    },
+    "india_wash:CONTROL_MINUS_MATERIALITY": {
+      "sampled": 98,
+      "judgments": {
+        "SUPPORTED": 94,
+        "PARTIALLY_SUPPORTED": 3,
+        "UNSUPPORTED": 1
+      },
+      "supported_precision": 0.9591836734693877,
+      "supported_plus_partial": 0.9897959183673469
+    },
+    "unicef_reduced:CONTROL": {
+      "sampled": 100,
+      "judgments": {
+        "SUPPORTED": 68,
+        "UNSUPPORTED": 18,
+        "PARTIALLY_SUPPORTED": 14
+      },
+      "supported_precision": 0.68,
+      "supported_plus_partial": 0.82
+    },
+    "unicef_reduced:CONTROL_MINUS_MATERIALITY": {
+      "sampled": 100,
+      "judgments": {
+        "SUPPORTED": 60,
+        "UNSUPPORTED": 17,
+        "PARTIALLY_SUPPORTED": 23
+      },
+      "supported_precision": 0.6,
+      "supported_plus_partial": 0.83
+    }
+  },
+  "by_cell": {
+    "india_wash-A1": {
+      "sampled": 20,
+      "judgments": {
+        "SUPPORTED": 20
+      },
+      "supported_precision": 1.0,
+      "supported_plus_partial": 1.0
+    },
+    "india_wash-A2": {
+      "sampled": 19,
+      "judgments": {
+        "SUPPORTED": 17,
+        "PARTIALLY_SUPPORTED": 2
+      },
+      "supported_precision": 0.8947368421052632,
+      "supported_plus_partial": 1.0
+    },
+    "india_wash-A3": {
+      "sampled": 20,
+      "judgments": {
+        "SUPPORTED": 19,
+        "PARTIALLY_SUPPORTED": 1
+      },
+      "supported_precision": 0.95,
+      "supported_plus_partial": 1.0
+    },
+    "india_wash-A4": {
+      "sampled": 19,
+      "judgments": {
+        "SUPPORTED": 17,
+        "PARTIALLY_SUPPORTED": 2
+      },
+      "supported_precision": 0.8947368421052632,
+      "supported_plus_partial": 1.0
+    },
+    "india_wash-A5": {
+      "sampled": 20,
+      "judgments": {
+        "SUPPORTED": 20
+      },
+      "supported_precision": 1.0,
+      "supported_plus_partial": 1.0
+    },
+    "india_wash-B1": {
+      "sampled": 20,
+      "judgments": {
+        "SUPPORTED": 20
+      },
+      "supported_precision": 1.0,
+      "supported_plus_partial": 1.0
+    },
+    "india_wash-B2": {
+      "sampled": 18,
+      "judgments": {
+        "SUPPORTED": 17,
+        "PARTIALLY_SUPPORTED": 1
+      },
+      "supported_precision": 0.9444444444444444,
+      "supported_plus_partial": 1.0
+    },
+    "india_wash-B3": {
+      "sampled": 20,
+      "judgments": {
+        "SUPPORTED": 19,
+        "PARTIALLY_SUPPORTED": 1
+      },
+      "supported_precision": 0.95,
+      "supported_plus_partial": 1.0
+    },
+    "india_wash-B4": {
+      "sampled": 20,
+      "judgments": {
+        "SUPPORTED": 19,
+        "UNSUPPORTED": 1
+      },
+      "supported_precision": 0.95,
+      "supported_plus_partial": 0.95
+    },
+    "india_wash-B5": {
+      "sampled": 20,
+      "judgments": {
+        "SUPPORTED": 19,
+        "PARTIALLY_SUPPORTED": 1
+      },
+      "supported_precision": 0.95,
+      "supported_plus_partial": 1.0
+    },
+    "unicef_reduced-A1": {
+      "sampled": 20,
+      "judgments": {
+        "PARTIALLY_SUPPORTED": 3,
+        "SUPPORTED": 16,
+        "UNSUPPORTED": 1
+      },
+      "supported_precision": 0.8,
+      "supported_plus_partial": 0.95
+    },
+    "unicef_reduced-A2": {
+      "sampled": 20,
+      "judgments": {
+        "SUPPORTED": 14,
+        "UNSUPPORTED": 4,
+        "PARTIALLY_SUPPORTED": 2
+      },
+      "supported_precision": 0.7,
+      "supported_plus_partial": 0.8
+    },
+    "unicef_reduced-A3": {
+      "sampled": 20,
+      "judgments": {
+        "SUPPORTED": 16,
+        "PARTIALLY_SUPPORTED": 2,
+        "UNSUPPORTED": 2
+      },
+      "supported_precision": 0.8,
+      "supported_plus_partial": 0.9
+    },
+    "unicef_reduced-A4": {
+      "sampled": 20,
+      "judgments": {
+        "SUPPORTED": 14,
+        "PARTIALLY_SUPPORTED": 3,
+        "UNSUPPORTED": 3
+      },
+      "supported_precision": 0.7,
+      "supported_plus_partial": 0.85
+    },
+    "unicef_reduced-A5": {
+      "sampled": 20,
+      "judgments": {
+        "UNSUPPORTED": 8,
+        "SUPPORTED": 8,
+        "PARTIALLY_SUPPORTED": 4
+      },
+      "supported_precision": 0.4,
+      "supported_plus_partial": 0.6
+    },
+    "unicef_reduced-B1": {
+      "sampled": 20,
+      "judgments": {
+        "PARTIALLY_SUPPORTED": 10,
+        "SUPPORTED": 10
+      },
+      "supported_precision": 0.5,
+      "supported_plus_partial": 1.0
+    },
+    "unicef_reduced-B2": {
+      "sampled": 20,
+      "judgments": {
+        "SUPPORTED": 10,
+        "PARTIALLY_SUPPORTED": 2,
+        "UNSUPPORTED": 8
+      },
+      "supported_precision": 0.5,
+      "supported_plus_partial": 0.6
+    },
+    "unicef_reduced-B3": {
+      "sampled": 20,
+      "judgments": {
+        "PARTIALLY_SUPPORTED": 2,
+        "SUPPORTED": 13,
+        "UNSUPPORTED": 5
+      },
+      "supported_precision": 0.65,
+      "supported_plus_partial": 0.75
+    },
+    "unicef_reduced-B4": {
+      "sampled": 20,
+      "judgments": {
+        "UNSUPPORTED": 2,
+        "SUPPORTED": 9,
+        "PARTIALLY_SUPPORTED": 9
+      },
+      "supported_precision": 0.45,
+      "supported_plus_partial": 0.9
+    },
+    "unicef_reduced-B5": {
+      "sampled": 20,
+      "judgments": {
+        "UNSUPPORTED": 2,
+        "SUPPORTED": 18
+      },
+      "supported_precision": 0.9,
+      "supported_plus_partial": 0.9
+    }
+  }
+}

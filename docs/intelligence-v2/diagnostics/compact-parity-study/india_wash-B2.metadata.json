@@ -1,0 +1,37 @@
+{
+  "cell": "india_wash-B2",
+  "chunk": "india_wash",
+  "arm": "B",
+  "wire_format": "compact-json-v1",
+  "http_status": 200,
+  "provider_request_id": "req_011CfsJu8ma3m5iWhSE1qot8",
+  "started_at_utc": "2026-10-09T20:39:50.638698+00:00",
+  "latency_ms": 22423,
+  "transport_error": null,
+  "failure_class": null,
+  "stop_reason": "end_turn",
+  "response_model": "claude-haiku-4-5-20251001",
+  "request_sha256": "74af6d1fa2ae9416edc54036f7a13de5745d06c2e1fc243c382cdf794d8931d6",
+  "response_sha256": "fe459caca933f42dff46fd9fd41afaabe2913e143a423b243f22efa1e689fc5a",
+  "expanded_sha256": "5d2e148250c7f62016ff650d76e784e36ac326d0172948fca9e1fa2bc6de61c6",
+  "usage": {
+    "input_tokens": 4494,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 1912,
+    "service_tier": "standard",
+    "inference_geo": "not_available"
+  },
+  "cost_usd": "0.014054",
+  "returned_records": 27,
+  "budget_before_send": {
+    "actual_spend_usd": "0.175653",
+    "next_worst_case_usd": "0.105471875",
+    "remaining_usd": "0.424347",
+    "ceiling_usd": "0.60"
+  }
+}

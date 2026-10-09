@@ -1,0 +1,1886 @@
+{
+  "cells": {
+    "unicef_reduced-A1": {
+      "chunk": "unicef_reduced",
+      "arm": "A",
+      "run": 1,
+      "gold_recalled": 16,
+      "gold_total": 17,
+      "negative_matches": 0,
+      "negative_total": 6,
+      "negative_false_positive_rate": 0.0,
+      "sampled_supported_precision": 0.8,
+      "precision_sample_n": 20,
+      "returned": 47,
+      "accepted": 47,
+      "rejected": 0,
+      "rejection_rate": 0.0,
+      "rejection_reasons": {},
+      "grounding_failures": 0,
+      "grounding_failure_rate": 0.0,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "truncated": false,
+      "provider_failure": false,
+      "returned_over_max_records": 0.5949367088607594,
+      "output_over_max_tokens": 0.3988125,
+      "input_tokens": 4019,
+      "output_tokens": 6381,
+      "actual_cost_usd": "0.035924",
+      "provenance_distribution": {
+        "document": 39,
+        "unknown": 8
+      },
+      "typed_evidence_counts": {
+        "money": 8,
+        "percent": 1,
+        "count": 12
+      },
+      "key_figure_eligible_count": 5,
+      "representation_by_class": {
+        "percentage": {
+          "represented": 5,
+          "denominator": 5,
+          "statuses": {
+            "REPRESENTED": 5,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "currency": {
+          "represented": 5,
+          "denominator": 5,
+          "statuses": {
+            "REPRESENTED": 5,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "scaled_quantity": {
+          "represented": 4,
+          "denominator": 4,
+          "statuses": {
+            "REPRESENTED": 4,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        }
+      },
+      "headline_represented": 14,
+      "headline_denominator": 14,
+      "headline_rate": 1.0
+    },
+    "unicef_reduced-B1": {
+      "chunk": "unicef_reduced",
+      "arm": "B",
+      "run": 1,
+      "gold_recalled": 16,
+      "gold_total": 17,
+      "negative_matches": 0,
+      "negative_total": 6,
+      "negative_false_positive_rate": 0.0,
+      "sampled_supported_precision": 0.5,
+      "precision_sample_n": 20,
+      "returned": 67,
+      "accepted": 66,
+      "rejected": 1,
+      "rejection_rate": 0.014925373134328358,
+      "rejection_reasons": {
+        "invalid_deadline_date_type": 1
+      },
+      "grounding_failures": 0,
+      "grounding_failure_rate": 0.0,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "truncated": false,
+      "provider_failure": false,
+      "returned_over_max_records": 0.8481012658227848,
+      "output_over_max_tokens": 0.6155625,
+      "input_tokens": 3960,
+      "output_tokens": 9849,
+      "actual_cost_usd": "0.053205",
+      "provenance_distribution": {
+        "document": 36,
+        "unknown": 30
+      },
+      "typed_evidence_counts": {
+        "money": 8,
+        "percent": 9,
+        "number": 10
+      },
+      "key_figure_eligible_count": 5,
+      "representation_by_class": {
+        "percentage": {
+          "represented": 5,
+          "denominator": 5,
+          "statuses": {
+            "REPRESENTED": 5,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "currency": {
+          "represented": 5,
+          "denominator": 5,
+          "statuses": {
+            "REPRESENTED": 5,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "scaled_quantity": {
+          "represented": 4,
+          "denominator": 4,
+          "statuses": {
+            "REPRESENTED": 4,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        }
+      },
+      "headline_represented": 14,
+      "headline_denominator": 14,
+      "headline_rate": 1.0
+    },
+    "india_wash-A1": {
+      "chunk": "india_wash",
+      "arm": "A",
+      "run": 1,
+      "gold_recalled": 9,
+      "gold_total": 12,
+      "negative_matches": 0,
+      "negative_total": 5,
+      "negative_false_positive_rate": 0.0,
+      "sampled_supported_precision": 1.0,
+      "precision_sample_n": 20,
+      "returned": 36,
+      "accepted": 34,
+      "rejected": 2,
+      "rejection_rate": 0.05555555555555555,
+      "rejection_reasons": {
+        "invalid_deadline_date_type": 1,
+        "too_many_evidence_ids": 1
+      },
+      "grounding_failures": 1,
+      "grounding_failure_rate": 0.027777777777777776,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "truncated": false,
+      "provider_failure": false,
+      "returned_over_max_records": 0.45569620253164556,
+      "output_over_max_tokens": 0.287,
+      "input_tokens": 4128,
+      "output_tokens": 4592,
+      "actual_cost_usd": "0.027088",
+      "provenance_distribution": {
+        "document": 24,
+        "unknown": 10
+      },
+      "typed_evidence_counts": {
+        "percent": 1,
+        "count": 6,
+        "money": 1
+      },
+      "key_figure_eligible_count": 1,
+      "representation_by_class": {
+        "percentage": {
+          "represented": 1,
+          "denominator": 1,
+          "statuses": {
+            "REPRESENTED": 1,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "currency": {
+          "represented": 2,
+          "denominator": 2,
+          "statuses": {
+            "REPRESENTED": 2,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "scaled_quantity": {
+          "represented": 8,
+          "denominator": 10,
+          "statuses": {
+            "REPRESENTED": 8,
+            "UNREPRESENTED": 2,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 0.8
+        }
+      },
+      "headline_represented": 11,
+      "headline_denominator": 13,
+      "headline_rate": 0.8461538461538461
+    },
+    "india_wash-B1": {
+      "chunk": "india_wash",
+      "arm": "B",
+      "run": 1,
+      "gold_recalled": 9,
+      "gold_total": 12,
+      "negative_matches": 0,
+      "negative_total": 5,
+      "negative_false_positive_rate": 0.0,
+      "sampled_supported_precision": 1.0,
+      "precision_sample_n": 20,
+      "returned": 41,
+      "accepted": 39,
+      "rejected": 2,
+      "rejection_rate": 0.04878048780487805,
+      "rejection_reasons": {
+        "invalid_deadline_date_type": 2
+      },
+      "grounding_failures": 0,
+      "grounding_failure_rate": 0.0,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "truncated": false,
+      "provider_failure": false,
+      "returned_over_max_records": 0.5189873417721519,
+      "output_over_max_tokens": 0.3156875,
+      "input_tokens": 4069,
+      "output_tokens": 5051,
+      "actual_cost_usd": "0.029324",
+      "provenance_distribution": {
+        "document": 17,
+        "unknown": 22
+      },
+      "typed_evidence_counts": {
+        "count": 6,
+        "money": 1
+      },
+      "key_figure_eligible_count": 1,
+      "representation_by_class": {
+        "percentage": {
+          "represented": 1,
+          "denominator": 1,
+          "statuses": {
+            "REPRESENTED": 1,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "currency": {
+          "represented": 1,
+          "denominator": 2,
+          "statuses": {
+            "REPRESENTED": 1,
+            "UNREPRESENTED": 1,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 0.5
+        },
+        "scaled_quantity": {
+          "represented": 8,
+          "denominator": 10,
+          "statuses": {
+            "REPRESENTED": 8,
+            "UNREPRESENTED": 2,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 0.8
+        }
+      },
+      "headline_represented": 10,
+      "headline_denominator": 13,
+      "headline_rate": 0.7692307692307693
+    },
+    "unicef_reduced-A2": {
+      "chunk": "unicef_reduced",
+      "arm": "A",
+      "run": 2,
+      "gold_recalled": 14,
+      "gold_total": 17,
+      "negative_matches": 0,
+      "negative_total": 6,
+      "negative_false_positive_rate": 0.0,
+      "sampled_supported_precision": 0.7,
+      "precision_sample_n": 20,
+      "returned": 36,
+      "accepted": 36,
+      "rejected": 0,
+      "rejection_rate": 0.0,
+      "rejection_reasons": {},
+      "grounding_failures": 0,
+      "grounding_failure_rate": 0.0,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "truncated": false,
+      "provider_failure": false,
+      "returned_over_max_records": 0.45569620253164556,
+      "output_over_max_tokens": 0.359,
+      "input_tokens": 4019,
+      "output_tokens": 5744,
+      "actual_cost_usd": "0.032739",
+      "provenance_distribution": {
+        "document": 34,
+        "unknown": 2
+      },
+      "typed_evidence_counts": {
+        "money": 7,
+        "percent": 6,
+        "count": 6,
+        "number": 8
+      },
+      "key_figure_eligible_count": 4,
+      "representation_by_class": {
+        "percentage": {
+          "represented": 5,
+          "denominator": 5,
+          "statuses": {
+            "REPRESENTED": 5,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "currency": {
+          "represented": 3,
+          "denominator": 5,
+          "statuses": {
+            "REPRESENTED": 3,
+            "UNREPRESENTED": 1,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 1
+          },
+          "rate": 0.6
+        },
+        "scaled_quantity": {
+          "represented": 3,
+          "denominator": 4,
+          "statuses": {
+            "REPRESENTED": 3,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 1
+          },
+          "rate": 0.75
+        }
+      },
+      "headline_represented": 11,
+      "headline_denominator": 14,
+      "headline_rate": 0.7857142857142857
+    },
+    "unicef_reduced-B2": {
+      "chunk": "unicef_reduced",
+      "arm": "B",
+      "run": 2,
+      "gold_recalled": 14,
+      "gold_total": 17,
+      "negative_matches": 0,
+      "negative_total": 6,
+      "negative_false_positive_rate": 0.0,
+      "sampled_supported_precision": 0.5,
+      "precision_sample_n": 20,
+      "returned": 71,
+      "accepted": 71,
+      "rejected": 0,
+      "rejection_rate": 0.0,
+      "rejection_reasons": {},
+      "grounding_failures": 0,
+      "grounding_failure_rate": 0.0,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "truncated": false,
+      "provider_failure": false,
+      "returned_over_max_records": 0.8987341772151899,
+      "output_over_max_tokens": 0.582625,
+      "input_tokens": 3960,
+      "output_tokens": 9322,
+      "actual_cost_usd": "0.05057",
+      "provenance_distribution": {
+        "document": 63,
+        "unknown": 8
+      },
+      "typed_evidence_counts": {
+        "money": 8,
+        "percent": 20,
+        "number": 8
+      },
+      "key_figure_eligible_count": 5,
+      "representation_by_class": {
+        "percentage": {
+          "represented": 5,
+          "denominator": 5,
+          "statuses": {
+            "REPRESENTED": 5,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "currency": {
+          "represented": 5,
+          "denominator": 5,
+          "statuses": {
+            "REPRESENTED": 5,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "scaled_quantity": {
+          "represented": 4,
+          "denominator": 4,
+          "statuses": {
+            "REPRESENTED": 4,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        }
+      },
+      "headline_represented": 14,
+      "headline_denominator": 14,
+      "headline_rate": 1.0
+    },
+    "india_wash-A2": {
+      "chunk": "india_wash",
+      "arm": "A",
+      "run": 2,
+      "gold_recalled": 7,
+      "gold_total": 12,
+      "negative_matches": 0,
+      "negative_total": 5,
+      "negative_false_positive_rate": 0.0,
+      "sampled_supported_precision": 0.8947368421052632,
+      "precision_sample_n": 19,
+      "returned": 22,
+      "accepted": 19,
+      "rejected": 3,
+      "rejection_rate": 0.13636363636363635,
+      "rejection_reasons": {
+        "invalid_deadline_date_type": 2,
+        "explicit_date_not_in_evidence": 1
+      },
+      "grounding_failures": 0,
+      "grounding_failure_rate": 0.0,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "truncated": false,
+      "provider_failure": false,
+      "returned_over_max_records": 0.27848101265822783,
+      "output_over_max_tokens": 0.179625,
+      "input_tokens": 4128,
+      "output_tokens": 2874,
+      "actual_cost_usd": "0.018498",
+      "provenance_distribution": {
+        "document": 12,
+        "unknown": 7
+      },
+      "typed_evidence_counts": {
+        "percent": 1,
+        "period": 1,
+        "count": 6,
+        "money": 1
+      },
+      "key_figure_eligible_count": 1,
+      "representation_by_class": {
+        "percentage": {
+          "represented": 1,
+          "denominator": 1,
+          "statuses": {
+            "REPRESENTED": 1,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "currency": {
+          "represented": 2,
+          "denominator": 2,
+          "statuses": {
+            "REPRESENTED": 2,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "scaled_quantity": {
+          "represented": 8,
+          "denominator": 10,
+          "statuses": {
+            "REPRESENTED": 8,
+            "UNREPRESENTED": 2,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 0.8
+        }
+      },
+      "headline_represented": 11,
+      "headline_denominator": 13,
+      "headline_rate": 0.8461538461538461
+    },
+    "india_wash-B2": {
+      "chunk": "india_wash",
+      "arm": "B",
+      "run": 2,
+      "gold_recalled": 8,
+      "gold_total": 12,
+      "negative_matches": 0,
+      "negative_total": 5,
+      "negative_false_positive_rate": 0.0,
+      "sampled_supported_precision": 0.9444444444444444,
+      "precision_sample_n": 18,
+      "returned": 21,
+      "accepted": 18,
+      "rejected": 3,
+      "rejection_rate": 0.14285714285714285,
+      "rejection_reasons": {
+        "invalid_deadline_date_type": 3
+      },
+      "grounding_failures": 0,
+      "grounding_failure_rate": 0.0,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "truncated": false,
+      "provider_failure": false,
+      "returned_over_max_records": 0.26582278481012656,
+      "output_over_max_tokens": 0.2063125,
+      "input_tokens": 4069,
+      "output_tokens": 3301,
+      "actual_cost_usd": "0.020574",
+      "provenance_distribution": {
+        "document": 12,
+        "unknown": 6
+      },
+      "typed_evidence_counts": {
+        "percent": 1,
+        "count": 6,
+        "money": 1
+      },
+      "key_figure_eligible_count": 1,
+      "representation_by_class": {
+        "percentage": {
+          "represented": 1,
+          "denominator": 1,
+          "statuses": {
+            "REPRESENTED": 1,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "currency": {
+          "represented": 2,
+          "denominator": 2,
+          "statuses": {
+            "REPRESENTED": 2,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "scaled_quantity": {
+          "represented": 8,
+          "denominator": 10,
+          "statuses": {
+            "REPRESENTED": 8,
+            "UNREPRESENTED": 2,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 0.8
+        }
+      },
+      "headline_represented": 11,
+      "headline_denominator": 13,
+      "headline_rate": 0.8461538461538461
+    },
+    "unicef_reduced-A3": {
+      "chunk": "unicef_reduced",
+      "arm": "A",
+      "run": 3,
+      "gold_recalled": 15,
+      "gold_total": 17,
+      "negative_matches": 0,
+      "negative_total": 6,
+      "negative_false_positive_rate": 0.0,
+      "sampled_supported_precision": 0.8,
+      "precision_sample_n": 20,
+      "returned": 37,
+      "accepted": 37,
+      "rejected": 0,
+      "rejection_rate": 0.0,
+      "rejection_reasons": {},
+      "grounding_failures": 0,
+      "grounding_failure_rate": 0.0,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "truncated": false,
+      "provider_failure": false,
+      "returned_over_max_records": 0.46835443037974683,
+      "output_over_max_tokens": 0.2904375,
+      "input_tokens": 4019,
+      "output_tokens": 4647,
+      "actual_cost_usd": "0.027254",
+      "provenance_distribution": {
+        "document": 31,
+        "unknown": 6
+      },
+      "typed_evidence_counts": {
+        "money": 8,
+        "percent": 8,
+        "count": 8,
+        "number": 3
+      },
+      "key_figure_eligible_count": 5,
+      "representation_by_class": {
+        "percentage": {
+          "represented": 5,
+          "denominator": 5,
+          "statuses": {
+            "REPRESENTED": 5,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "currency": {
+          "represented": 5,
+          "denominator": 5,
+          "statuses": {
+            "REPRESENTED": 5,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "scaled_quantity": {
+          "represented": 4,
+          "denominator": 4,
+          "statuses": {
+            "REPRESENTED": 4,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        }
+      },
+      "headline_represented": 14,
+      "headline_denominator": 14,
+      "headline_rate": 1.0
+    },
+    "unicef_reduced-B3": {
+      "chunk": "unicef_reduced",
+      "arm": "B",
+      "run": 3,
+      "gold_recalled": 16,
+      "gold_total": 17,
+      "negative_matches": 0,
+      "negative_total": 6,
+      "negative_false_positive_rate": 0.0,
+      "sampled_supported_precision": 0.65,
+      "precision_sample_n": 20,
+      "returned": 59,
+      "accepted": 59,
+      "rejected": 0,
+      "rejection_rate": 0.0,
+      "rejection_reasons": {},
+      "grounding_failures": 0,
+      "grounding_failure_rate": 0.0,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "truncated": false,
+      "provider_failure": false,
+      "returned_over_max_records": 0.7468354430379747,
+      "output_over_max_tokens": 0.4955,
+      "input_tokens": 3960,
+      "output_tokens": 7928,
+      "actual_cost_usd": "0.0436",
+      "provenance_distribution": {
+        "document": 55,
+        "unknown": 4
+      },
+      "typed_evidence_counts": {
+        "money": 9,
+        "percent": 21,
+        "number": 10
+      },
+      "key_figure_eligible_count": 6,
+      "representation_by_class": {
+        "percentage": {
+          "represented": 5,
+          "denominator": 5,
+          "statuses": {
+            "REPRESENTED": 5,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "currency": {
+          "represented": 3,
+          "denominator": 5,
+          "statuses": {
+            "REPRESENTED": 3,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 2
+          },
+          "rate": 0.6
+        },
+        "scaled_quantity": {
+          "represented": 3,
+          "denominator": 4,
+          "statuses": {
+            "REPRESENTED": 3,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 1
+          },
+          "rate": 0.75
+        }
+      },
+      "headline_represented": 11,
+      "headline_denominator": 14,
+      "headline_rate": 0.7857142857142857
+    },
+    "india_wash-A3": {
+      "chunk": "india_wash",
+      "arm": "A",
+      "run": 3,
+      "gold_recalled": 9,
+      "gold_total": 12,
+      "negative_matches": 0,
+      "negative_total": 5,
+      "negative_false_positive_rate": 0.0,
+      "sampled_supported_precision": 0.95,
+      "precision_sample_n": 20,
+      "returned": 23,
+      "accepted": 21,
+      "rejected": 2,
+      "rejection_rate": 0.08695652173913043,
+      "rejection_reasons": {
+        "invalid_deadline_date_type": 2
+      },
+      "grounding_failures": 0,
+      "grounding_failure_rate": 0.0,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "truncated": false,
+      "provider_failure": false,
+      "returned_over_max_records": 0.2911392405063291,
+      "output_over_max_tokens": 0.1756875,
+      "input_tokens": 4128,
+      "output_tokens": 2811,
+      "actual_cost_usd": "0.018183",
+      "provenance_distribution": {
+        "document": 10,
+        "unknown": 11
+      },
+      "typed_evidence_counts": {
+        "percent": 1,
+        "count": 5
+      },
+      "key_figure_eligible_count": 0,
+      "representation_by_class": {
+        "percentage": {
+          "represented": 1,
+          "denominator": 1,
+          "statuses": {
+            "REPRESENTED": 1,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "currency": {
+          "represented": 2,
+          "denominator": 2,
+          "statuses": {
+            "REPRESENTED": 2,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "scaled_quantity": {
+          "represented": 8,
+          "denominator": 10,
+          "statuses": {
+            "REPRESENTED": 8,
+            "UNREPRESENTED": 2,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 0.8
+        }
+      },
+      "headline_represented": 11,
+      "headline_denominator": 13,
+      "headline_rate": 0.8461538461538461
+    },
+    "india_wash-B3": {
+      "chunk": "india_wash",
+      "arm": "B",
+      "run": 3,
+      "gold_recalled": 10,
+      "gold_total": 12,
+      "negative_matches": 0,
+      "negative_total": 5,
+      "negative_false_positive_rate": 0.0,
+      "sampled_supported_precision": 0.95,
+      "precision_sample_n": 20,
+      "returned": 24,
+      "accepted": 22,
+      "rejected": 2,
+      "rejection_rate": 0.08333333333333333,
+      "rejection_reasons": {
+        "invalid_deadline_date_type": 2
+      },
+      "grounding_failures": 0,
+      "grounding_failure_rate": 0.0,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "truncated": false,
+      "provider_failure": false,
+      "returned_over_max_records": 0.3037974683544304,
+      "output_over_max_tokens": 0.1765,
+      "input_tokens": 4069,
+      "output_tokens": 2824,
+      "actual_cost_usd": "0.018189",
+      "provenance_distribution": {
+        "document": 15,
+        "unknown": 7
+      },
+      "typed_evidence_counts": {
+        "period": 1,
+        "count": 6,
+        "money": 1
+      },
+      "key_figure_eligible_count": 1,
+      "representation_by_class": {
+        "percentage": {
+          "represented": 1,
+          "denominator": 1,
+          "statuses": {
+            "REPRESENTED": 1,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "currency": {
+          "represented": 2,
+          "denominator": 2,
+          "statuses": {
+            "REPRESENTED": 2,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "scaled_quantity": {
+          "represented": 10,
+          "denominator": 10,
+          "statuses": {
+            "REPRESENTED": 10,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        }
+      },
+      "headline_represented": 13,
+      "headline_denominator": 13,
+      "headline_rate": 1.0
+    },
+    "unicef_reduced-A4": {
+      "chunk": "unicef_reduced",
+      "arm": "A",
+      "run": 4,
+      "gold_recalled": 15,
+      "gold_total": 17,
+      "negative_matches": 0,
+      "negative_total": 6,
+      "negative_false_positive_rate": 0.0,
+      "sampled_supported_precision": 0.7,
+      "precision_sample_n": 20,
+      "returned": 37,
+      "accepted": 37,
+      "rejected": 0,
+      "rejection_rate": 0.0,
+      "rejection_reasons": {},
+      "grounding_failures": 0,
+      "grounding_failure_rate": 0.0,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "truncated": false,
+      "provider_failure": false,
+      "returned_over_max_records": 0.46835443037974683,
+      "output_over_max_tokens": 0.33325,
+      "input_tokens": 4019,
+      "output_tokens": 5332,
+      "actual_cost_usd": "0.030679",
+      "provenance_distribution": {
+        "document": 30,
+        "unknown": 7
+      },
+      "typed_evidence_counts": {
+        "money": 8,
+        "percent": 7,
+        "count": 7,
+        "number": 2
+      },
+      "key_figure_eligible_count": 5,
+      "representation_by_class": {
+        "percentage": {
+          "represented": 5,
+          "denominator": 5,
+          "statuses": {
+            "REPRESENTED": 5,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "currency": {
+          "represented": 5,
+          "denominator": 5,
+          "statuses": {
+            "REPRESENTED": 5,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "scaled_quantity": {
+          "represented": 4,
+          "denominator": 4,
+          "statuses": {
+            "REPRESENTED": 4,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        }
+      },
+      "headline_represented": 14,
+      "headline_denominator": 14,
+      "headline_rate": 1.0
+    },
+    "unicef_reduced-B4": {
+      "chunk": "unicef_reduced",
+      "arm": "B",
+      "run": 4,
+      "gold_recalled": 15,
+      "gold_total": 17,
+      "negative_matches": 0,
+      "negative_total": 6,
+      "negative_false_positive_rate": 0.0,
+      "sampled_supported_precision": 0.45,
+      "precision_sample_n": 20,
+      "returned": 58,
+      "accepted": 58,
+      "rejected": 0,
+      "rejection_rate": 0.0,
+      "rejection_reasons": {},
+      "grounding_failures": 0,
+      "grounding_failure_rate": 0.0,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "truncated": false,
+      "provider_failure": false,
+      "returned_over_max_records": 0.7341772151898734,
+      "output_over_max_tokens": 0.4870625,
+      "input_tokens": 3960,
+      "output_tokens": 7793,
+      "actual_cost_usd": "0.042925",
+      "provenance_distribution": {
+        "document": 31,
+        "unknown": 27
+      },
+      "typed_evidence_counts": {
+        "money": 8,
+        "percent": 7,
+        "count": 10
+      },
+      "key_figure_eligible_count": 4,
+      "representation_by_class": {
+        "percentage": {
+          "represented": 5,
+          "denominator": 5,
+          "statuses": {
+            "REPRESENTED": 5,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "currency": {
+          "represented": 5,
+          "denominator": 5,
+          "statuses": {
+            "REPRESENTED": 5,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "scaled_quantity": {
+          "represented": 4,
+          "denominator": 4,
+          "statuses": {
+            "REPRESENTED": 4,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        }
+      },
+      "headline_represented": 14,
+      "headline_denominator": 14,
+      "headline_rate": 1.0
+    },
+    "india_wash-A4": {
+      "chunk": "india_wash",
+      "arm": "A",
+      "run": 4,
+      "gold_recalled": 7,
+      "gold_total": 12,
+      "negative_matches": 0,
+      "negative_total": 5,
+      "negative_false_positive_rate": 0.0,
+      "sampled_supported_precision": 0.8947368421052632,
+      "precision_sample_n": 19,
+      "returned": 26,
+      "accepted": 19,
+      "rejected": 7,
+      "rejection_rate": 0.2692307692307692,
+      "rejection_reasons": {
+        "due_date_wrong_format": 5,
+        "invalid_deadline_date_type": 2
+      },
+      "grounding_failures": 0,
+      "grounding_failure_rate": 0.0,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "truncated": false,
+      "provider_failure": false,
+      "returned_over_max_records": 0.3291139240506329,
+      "output_over_max_tokens": 0.197375,
+      "input_tokens": 4128,
+      "output_tokens": 3158,
+      "actual_cost_usd": "0.019918",
+      "provenance_distribution": {
+        "document": 8,
+        "unknown": 11
+      },
+      "typed_evidence_counts": {
+        "count": 4
+      },
+      "key_figure_eligible_count": 0,
+      "representation_by_class": {
+        "percentage": {
+          "represented": 1,
+          "denominator": 1,
+          "statuses": {
+            "REPRESENTED": 1,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "currency": {
+          "represented": 2,
+          "denominator": 2,
+          "statuses": {
+            "REPRESENTED": 2,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "scaled_quantity": {
+          "represented": 6,
+          "denominator": 10,
+          "statuses": {
+            "REPRESENTED": 6,
+            "UNREPRESENTED": 4,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 0.6
+        }
+      },
+      "headline_represented": 9,
+      "headline_denominator": 13,
+      "headline_rate": 0.6923076923076923
+    },
+    "india_wash-B4": {
+      "chunk": "india_wash",
+      "arm": "B",
+      "run": 4,
+      "gold_recalled": 11,
+      "gold_total": 12,
+      "negative_matches": 0,
+      "negative_total": 5,
+      "negative_false_positive_rate": 0.0,
+      "sampled_supported_precision": 0.95,
+      "precision_sample_n": 20,
+      "returned": 40,
+      "accepted": 39,
+      "rejected": 1,
+      "rejection_rate": 0.025,
+      "rejection_reasons": {
+        "explicit_date_not_in_evidence": 1
+      },
+      "grounding_failures": 0,
+      "grounding_failure_rate": 0.0,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "truncated": false,
+      "provider_failure": false,
+      "returned_over_max_records": 0.5063291139240507,
+      "output_over_max_tokens": 0.299875,
+      "input_tokens": 4069,
+      "output_tokens": 4798,
+      "actual_cost_usd": "0.028059",
+      "provenance_distribution": {
+        "document": 16,
+        "unknown": 23
+      },
+      "typed_evidence_counts": {
+        "percent": 1,
+        "period": 1,
+        "count": 7,
+        "money": 1
+      },
+      "key_figure_eligible_count": 1,
+      "representation_by_class": {
+        "percentage": {
+          "represented": 1,
+          "denominator": 1,
+          "statuses": {
+            "REPRESENTED": 1,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "currency": {
+          "represented": 2,
+          "denominator": 2,
+          "statuses": {
+            "REPRESENTED": 2,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "scaled_quantity": {
+          "represented": 10,
+          "denominator": 10,
+          "statuses": {
+            "REPRESENTED": 10,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        }
+      },
+      "headline_represented": 13,
+      "headline_denominator": 13,
+      "headline_rate": 1.0
+    },
+    "unicef_reduced-A5": {
+      "chunk": "unicef_reduced",
+      "arm": "A",
+      "run": 5,
+      "gold_recalled": 14,
+      "gold_total": 17,
+      "negative_matches": 0,
+      "negative_total": 6,
+      "negative_false_positive_rate": 0.0,
+      "sampled_supported_precision": 0.4,
+      "precision_sample_n": 20,
+      "returned": 58,
+      "accepted": 58,
+      "rejected": 0,
+      "rejection_rate": 0.0,
+      "rejection_reasons": {},
+      "grounding_failures": 0,
+      "grounding_failure_rate": 0.0,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "truncated": false,
+      "provider_failure": false,
+      "returned_over_max_records": 0.7341772151898734,
+      "output_over_max_tokens": 0.47275,
+      "input_tokens": 4019,
+      "output_tokens": 7564,
+      "actual_cost_usd": "0.041839",
+      "provenance_distribution": {
+        "document": 26,
+        "unknown": 32
+      },
+      "typed_evidence_counts": {
+        "money": 8,
+        "percent": 20,
+        "count": 10
+      },
+      "key_figure_eligible_count": 5,
+      "representation_by_class": {
+        "percentage": {
+          "represented": 4,
+          "denominator": 5,
+          "statuses": {
+            "REPRESENTED": 4,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 1
+          },
+          "rate": 0.8
+        },
+        "currency": {
+          "represented": 5,
+          "denominator": 5,
+          "statuses": {
+            "REPRESENTED": 5,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "scaled_quantity": {
+          "represented": 4,
+          "denominator": 4,
+          "statuses": {
+            "REPRESENTED": 4,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        }
+      },
+      "headline_represented": 13,
+      "headline_denominator": 14,
+      "headline_rate": 0.9285714285714286
+    },
+    "unicef_reduced-B5": {
+      "chunk": "unicef_reduced",
+      "arm": "B",
+      "run": 5,
+      "gold_recalled": 13,
+      "gold_total": 17,
+      "negative_matches": 0,
+      "negative_total": 6,
+      "negative_false_positive_rate": 0.0,
+      "sampled_supported_precision": 0.9,
+      "precision_sample_n": 20,
+      "returned": 71,
+      "accepted": 42,
+      "rejected": 29,
+      "rejection_rate": 0.4084507042253521,
+      "rejection_reasons": {
+        "due_date_wrong_format": 29
+      },
+      "grounding_failures": 0,
+      "grounding_failure_rate": 0.0,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "truncated": false,
+      "provider_failure": false,
+      "returned_over_max_records": 0.8987341772151899,
+      "output_over_max_tokens": 0.5588125,
+      "input_tokens": 3960,
+      "output_tokens": 8941,
+      "actual_cost_usd": "0.048665",
+      "provenance_distribution": {
+        "document": 38,
+        "unknown": 4
+      },
+      "typed_evidence_counts": {
+        "count": 8,
+        "money": 5,
+        "percent": 5
+      },
+      "key_figure_eligible_count": 2,
+      "representation_by_class": {
+        "percentage": {
+          "represented": 5,
+          "denominator": 5,
+          "statuses": {
+            "REPRESENTED": 5,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "currency": {
+          "represented": 5,
+          "denominator": 5,
+          "statuses": {
+            "REPRESENTED": 5,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "scaled_quantity": {
+          "represented": 2,
+          "denominator": 4,
+          "statuses": {
+            "REPRESENTED": 2,
+            "UNREPRESENTED": 2,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 0.5
+        }
+      },
+      "headline_represented": 12,
+      "headline_denominator": 14,
+      "headline_rate": 0.8571428571428571
+    },
+    "india_wash-A5": {
+      "chunk": "india_wash",
+      "arm": "A",
+      "run": 5,
+      "gold_recalled": 10,
+      "gold_total": 12,
+      "negative_matches": 0,
+      "negative_total": 5,
+      "negative_false_positive_rate": 0.0,
+      "sampled_supported_precision": 1.0,
+      "precision_sample_n": 20,
+      "returned": 32,
+      "accepted": 30,
+      "rejected": 2,
+      "rejection_rate": 0.0625,
+      "rejection_reasons": {
+        "invalid_deadline_date_type": 2
+      },
+      "grounding_failures": 0,
+      "grounding_failure_rate": 0.0,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "truncated": false,
+      "provider_failure": false,
+      "returned_over_max_records": 0.4050632911392405,
+      "output_over_max_tokens": 0.247375,
+      "input_tokens": 4128,
+      "output_tokens": 3958,
+      "actual_cost_usd": "0.023918",
+      "provenance_distribution": {
+        "document": 21,
+        "unknown": 9
+      },
+      "typed_evidence_counts": {
+        "number": 1,
+        "count": 6,
+        "money": 1
+      },
+      "key_figure_eligible_count": 1,
+      "representation_by_class": {
+        "percentage": {
+          "represented": 1,
+          "denominator": 1,
+          "statuses": {
+            "REPRESENTED": 1,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "currency": {
+          "represented": 2,
+          "denominator": 2,
+          "statuses": {
+            "REPRESENTED": 2,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "scaled_quantity": {
+          "represented": 8,
+          "denominator": 10,
+          "statuses": {
+            "REPRESENTED": 8,
+            "UNREPRESENTED": 2,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 0.8
+        }
+      },
+      "headline_represented": 11,
+      "headline_denominator": 13,
+      "headline_rate": 0.8461538461538461
+    },
+    "india_wash-B5": {
+      "chunk": "india_wash",
+      "arm": "B",
+      "run": 5,
+      "gold_recalled": 10,
+      "gold_total": 12,
+      "negative_matches": 0,
+      "negative_total": 5,
+      "negative_false_positive_rate": 0.0,
+      "sampled_supported_precision": 0.95,
+      "precision_sample_n": 20,
+      "returned": 26,
+      "accepted": 24,
+      "rejected": 2,
+      "rejection_rate": 0.07692307692307693,
+      "rejection_reasons": {
+        "invalid_deadline_date_type": 2
+      },
+      "grounding_failures": 0,
+      "grounding_failure_rate": 0.0,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "truncated": false,
+      "provider_failure": false,
+      "returned_over_max_records": 0.3291139240506329,
+      "output_over_max_tokens": 0.1948125,
+      "input_tokens": 4069,
+      "output_tokens": 3117,
+      "actual_cost_usd": "0.019654",
+      "provenance_distribution": {
+        "document": 16,
+        "unknown": 8
+      },
+      "typed_evidence_counts": {
+        "period": 2,
+        "count": 6,
+        "money": 1
+      },
+      "key_figure_eligible_count": 1,
+      "representation_by_class": {
+        "percentage": {
+          "represented": 1,
+          "denominator": 1,
+          "statuses": {
+            "REPRESENTED": 1,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "currency": {
+          "represented": 2,
+          "denominator": 2,
+          "statuses": {
+            "REPRESENTED": 2,
+            "UNREPRESENTED": 0,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 1.0
+        },
+        "scaled_quantity": {
+          "represented": 8,
+          "denominator": 10,
+          "statuses": {
+            "REPRESENTED": 8,
+            "UNREPRESENTED": 2,
+            "INDETERMINATE": 0,
+            "MENTIONED_IN_TEXT_ONLY": 0
+          },
+          "rate": 0.8
+        }
+      },
+      "headline_represented": 11,
+      "headline_denominator": 13,
+      "headline_rate": 0.8461538461538461
+    }
+  },
+  "groups": {
+    "unicef_reduced": {
+      "A": {
+        "mean_headline_representation": 0.9428571428571428,
+        "represented_sum": 66,
+        "headline_denominator_sum": 70,
+        "mean_gold_recalled": 14.8,
+        "mean_gold_recall_rate": 0.8705882352941177,
+        "supported_precision": 0.68,
+        "precision_sample_n": 100,
+        "mean_negative_false_positive_rate": 0.0,
+        "mean_rejection_rate": 0.0,
+        "pooled_rejection_rate": 0.0,
+        "mean_grounding_failure_rate": 0.0,
+        "mean_returned": 43,
+        "mean_accepted": 43,
+        "mean_input_tokens": 4019,
+        "mean_output_tokens": 5933.6,
+        "mean_cost_usd": "0.033687",
+        "total_cost_usd": "0.168435",
+        "provenance_document": 160,
+        "provenance_unknown": 55,
+        "typed_evidence_counts": {
+          "money": 39,
+          "percent": 42,
+          "count": 43,
+          "number": 13
+        },
+        "key_figure_eligible_count": 24,
+        "truncated_calls": 0,
+        "parser_failures": 0,
+        "structured_output_failures": 0
+      },
+      "B": {
+        "mean_headline_representation": 0.9285714285714286,
+        "represented_sum": 65,
+        "headline_denominator_sum": 70,
+        "mean_gold_recalled": 14.8,
+        "mean_gold_recall_rate": 0.8705882352941177,
+        "supported_precision": 0.6,
+        "precision_sample_n": 100,
+        "mean_negative_false_positive_rate": 0.0,
+        "mean_rejection_rate": 0.0846752154719361,
+        "pooled_rejection_rate": 0.09202453987730061,
+        "mean_grounding_failure_rate": 0.0,
+        "mean_returned": 65.2,
+        "mean_accepted": 59.2,
+        "mean_input_tokens": 3960,
+        "mean_output_tokens": 8766.6,
+        "mean_cost_usd": "0.047793",
+        "total_cost_usd": "0.238965",
+        "provenance_document": 223,
+        "provenance_unknown": 73,
+        "typed_evidence_counts": {
+          "money": 38,
+          "percent": 62,
+          "number": 28,
+          "count": 18
+        },
+        "key_figure_eligible_count": 22,
+        "truncated_calls": 0,
+        "parser_failures": 0,
+        "structured_output_failures": 0
+      }
+    },
+    "india_wash": {
+      "A": {
+        "mean_headline_representation": 0.8153846153846154,
+        "represented_sum": 53,
+        "headline_denominator_sum": 65,
+        "mean_gold_recalled": 8.4,
+        "mean_gold_recall_rate": 0.7000000000000001,
+        "supported_precision": 0.9489795918367347,
+        "precision_sample_n": 98,
+        "mean_negative_false_positive_rate": 0.0,
+        "mean_rejection_rate": 0.12212129657781831,
+        "pooled_rejection_rate": 0.11510791366906475,
+        "mean_grounding_failure_rate": 0.005555555555555555,
+        "mean_returned": 27.8,
+        "mean_accepted": 24.6,
+        "mean_input_tokens": 4128,
+        "mean_output_tokens": 3478.6,
+        "mean_cost_usd": "0.021521",
+        "total_cost_usd": "0.107605",
+        "provenance_document": 75,
+        "provenance_unknown": 48,
+        "typed_evidence_counts": {
+          "percent": 3,
+          "count": 27,
+          "money": 3,
+          "period": 1,
+          "number": 1
+        },
+        "key_figure_eligible_count": 3,
+        "truncated_calls": 0,
+        "parser_failures": 0,
+        "structured_output_failures": 0
+      },
+      "B": {
+        "mean_headline_representation": 0.8923076923076924,
+        "represented_sum": 58,
+        "headline_denominator_sum": 65,
+        "mean_gold_recalled": 9.6,
+        "mean_gold_recall_rate": 0.8,
+        "supported_precision": 0.9591836734693877,
+        "precision_sample_n": 98,
+        "mean_negative_false_positive_rate": 0.0,
+        "mean_rejection_rate": 0.07537880818368622,
+        "pooled_rejection_rate": 0.06578947368421052,
+        "mean_grounding_failure_rate": 0.0,
+        "mean_returned": 30.4,
+        "mean_accepted": 28.4,
+        "mean_input_tokens": 4069,
+        "mean_output_tokens": 3818.2,
+        "mean_cost_usd": "0.023160",
+        "total_cost_usd": "0.115800",
+        "provenance_document": 76,
+        "provenance_unknown": 66,
+        "typed_evidence_counts": {
+          "count": 31,
+          "money": 5,
+          "percent": 2,
+          "period": 4
+        },
+        "key_figure_eligible_count": 5,
+        "truncated_calls": 0,
+        "parser_failures": 0,
+        "structured_output_failures": 0
+      }
+    }
+  },
+  "variants": {
+    "A": {
+      "balanced_mean_headline_representation": 0.8791208791208791,
+      "pooled_headline_represented": 119,
+      "pooled_headline_denominator": 135,
+      "mean_gold_recalled_per_chunk_call": 11.6,
+      "total_gold_item_instances_recalled": 116,
+      "total_cost_usd": "0.276040",
+      "mean_returned": 35.4,
+      "mean_accepted": 33.8,
+      "mean_output_tokens": 4706.1,
+      "mean_input_tokens": 4073.5,
+      "pooled_rejection_rate": 0.04519774011299435,
+      "supported_precision_pooled": 0.8131313131313131,
+      "by_class": {
+        "percentage": {
+          "represented": 29,
+          "denominator": 30
+        },
+        "currency": {
+          "represented": 33,
+          "denominator": 35
+        },
+        "scaled_quantity": {
+          "represented": 57,
+          "denominator": 70
+        }
+      }
+    },
+    "B": {
+      "balanced_mean_headline_representation": 0.9104395604395604,
+      "pooled_headline_represented": 123,
+      "pooled_headline_denominator": 135,
+      "mean_gold_recalled_per_chunk_call": 12.2,
+      "total_gold_item_instances_recalled": 122,
+      "total_cost_usd": "0.354765",
+      "mean_returned": 47.8,
+      "mean_accepted": 43.8,
+      "mean_output_tokens": 6292.4,
+      "mean_input_tokens": 4014.5,
+      "pooled_rejection_rate": 0.08368200836820083,
+      "supported_precision_pooled": 0.7777777777777778,
+      "by_class": {
+        "percentage": {
+          "represented": 30,
+          "denominator": 30
+        },
+        "currency": {
+          "represented": 32,
+          "denominator": 35
+        },
+        "scaled_quantity": {
+          "represented": 61,
+          "denominator": 70
+        }
+      }
+    }
+  },
+  "paired": {
+    "unicef_reduced": [
+      {
+        "run": 1,
+        "representation_delta_pp": 0.0,
+        "gold_delta_items": 0,
+        "returned_delta": 20,
+        "accepted_delta": 19,
+        "output_token_delta": 3468,
+        "cost_delta_usd": "0.017281",
+        "cost_pair_usd": "0.089129",
+        "representation_insensitive_candidate_jaccard": 1.0,
+        "merger_identity_jaccard": 0.0
+      },
+      {
+        "run": 2,
+        "representation_delta_pp": 21.42857142857143,
+        "gold_delta_items": 0,
+        "returned_delta": 35,
+        "accepted_delta": 35,
+        "output_token_delta": 3578,
+        "cost_delta_usd": "0.017831",
+        "cost_pair_usd": "0.083309",
+        "representation_insensitive_candidate_jaccard": 0.7857142857142857,
+        "merger_identity_jaccard": 0.0
+      },
+      {
+        "run": 3,
+        "representation_delta_pp": -21.42857142857143,
+        "gold_delta_items": 1,
+        "returned_delta": 22,
+        "accepted_delta": 22,
+        "output_token_delta": 3281,
+        "cost_delta_usd": "0.016346",
+        "cost_pair_usd": "0.070854",
+        "representation_insensitive_candidate_jaccard": 0.7857142857142857,
+        "merger_identity_jaccard": 0.0
+      },
+      {
+        "run": 4,
+        "representation_delta_pp": 0.0,
+        "gold_delta_items": 0,
+        "returned_delta": 21,
+        "accepted_delta": 21,
+        "output_token_delta": 2461,
+        "cost_delta_usd": "0.012246",
+        "cost_pair_usd": "0.073604",
+        "representation_insensitive_candidate_jaccard": 1.0,
+        "merger_identity_jaccard": 0.0
+      },
+      {
+        "run": 5,
+        "representation_delta_pp": -7.142857142857151,
+        "gold_delta_items": -1,
+        "returned_delta": 13,
+        "accepted_delta": -16,
+        "output_token_delta": 1377,
+        "cost_delta_usd": "0.006826",
+        "cost_pair_usd": "0.090504",
+        "representation_insensitive_candidate_jaccard": 0.7857142857142857,
+        "merger_identity_jaccard": 0.0
+      }
+    ],
+    "india_wash": [
+      {
+        "run": 1,
+        "representation_delta_pp": -7.692307692307687,
+        "gold_delta_items": 0,
+        "returned_delta": 5,
+        "accepted_delta": 5,
+        "output_token_delta": 459,
+        "cost_delta_usd": "0.002236",
+        "cost_pair_usd": "0.056412",
+        "representation_insensitive_candidate_jaccard": 0.9090909090909091,
+        "merger_identity_jaccard": 0.028169014084507043
+      },
+      {
+        "run": 2,
+        "representation_delta_pp": 0.0,
+        "gold_delta_items": 1,
+        "returned_delta": -1,
+        "accepted_delta": -1,
+        "output_token_delta": 427,
+        "cost_delta_usd": "0.002076",
+        "cost_pair_usd": "0.039072",
+        "representation_insensitive_candidate_jaccard": 1.0,
+        "merger_identity_jaccard": 0.08823529411764706
+      },
+      {
+        "run": 3,
+        "representation_delta_pp": 15.384615384615385,
+        "gold_delta_items": 1,
+        "returned_delta": 1,
+        "accepted_delta": 1,
+        "output_token_delta": 13,
+        "cost_delta_usd": "0.000006",
+        "cost_pair_usd": "0.036372",
+        "representation_insensitive_candidate_jaccard": 0.8461538461538461,
+        "merger_identity_jaccard": 0.10256410256410256
+      },
+      {
+        "run": 4,
+        "representation_delta_pp": 30.76923076923077,
+        "gold_delta_items": 4,
+        "returned_delta": 14,
+        "accepted_delta": 20,
+        "output_token_delta": 1640,
+        "cost_delta_usd": "0.008141",
+        "cost_pair_usd": "0.047977",
+        "representation_insensitive_candidate_jaccard": 0.6923076923076923,
+        "merger_identity_jaccard": 0.03571428571428571
+      },
+      {
+        "run": 5,
+        "representation_delta_pp": 0.0,
+        "gold_delta_items": 0,
+        "returned_delta": -6,
+        "accepted_delta": -6,
+        "output_token_delta": -841,
+        "cost_delta_usd": "-0.004264",
+        "cost_pair_usd": "0.043572",
+        "representation_insensitive_candidate_jaccard": 1.0,
+        "merger_identity_jaccard": 0.10204081632653061
+      }
+    ]
+  },
+  "cost": {
+    "actual_total_study_cost_usd": "0.630805",
+    "max_chunk_pair_cost_usd": "0.090504",
+    "variant_b_incremental_cost_usd": "0.078725",
+    "variant_b_relative_cost_increase": 0.28519417475728154,
+    "net_additional_represented_candidate_instances": 4,
+    "net_additional_gold_item_instances": 6,
+    "cost_per_net_additional_represented_candidate_usd": "0.01968125",
+    "cost_per_net_additional_gold_item_usd": "0.01312083333333333333333333333",
+    "approved_limits_usd": {
+      "MAX_TOTAL_STUDY_COST_USD": 1.5,
+      "MAX_COST_PER_DOCUMENT_CHUNK_PAIR_USD": 0.15,
+      "MAX_COST_PER_ADDITIONAL_REPRESENTED_CANDIDATE_USD": 0.1,
+      "MAX_COST_PER_ADDITIONAL_GOLD_ITEM_USD": 0.15,
+      "basis": "12 saved paid calls cost $0.018473–$0.058467 each; 20 planned calls, conservative per-pair and total ceilings. Product value thresholds require founder approval."
+    }
+  },
+  "precision_judgments_sha256": "f50be77a8feba83e70bbf83a057d5072bab27fa11ec545c8e392c15e85477628",
+  "interpretation": "DIRECTIONAL: two chunks from one source document"
+}

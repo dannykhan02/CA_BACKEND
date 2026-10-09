@@ -1,0 +1,8 @@
+{
+  "packet_sha256": "4f7725d3a6188b6dfae14bcc3f93b5db8633df6a73eb4669271512d3b39b5f43",
+  "judgment_sha256": "8963639954155455ad8a21546babaa920e44d038180f04e8ff54989390367cc8",
+  "judgment_count": 240,
+  "reviewer_identity_type": "independent blinded semantic precision reviewer (Codex AI coding agent)",
+  "mapping_applied": false,
+  "reviewer_disclosure": "AI agent review; no independent human reviewer was available. Reviewer was instructed to read only the blinded packet and reported no mapping access."
+}

@@ -1,0 +1,40 @@
+{
+  "actual_spent_usd": "0.630805",
+  "unknown_reserved_usd": "0",
+  "calls_completed": 20,
+  "calls_failed": 0,
+  "pair_spent_usd": {
+    "unicef_reduced:1": "0.089129",
+    "india_wash:1": "0.056412",
+    "unicef_reduced:2": "0.083309",
+    "india_wash:2": "0.039072",
+    "unicef_reduced:3": "0.070854",
+    "india_wash:3": "0.036372",
+    "unicef_reduced:4": "0.073604",
+    "india_wash:4": "0.047977",
+    "unicef_reduced:5": "0.090504",
+    "india_wash:5": "0.043572"
+  },
+  "completed_cells": [
+    "unicef_reduced-A1",
+    "unicef_reduced-B1",
+    "india_wash-A1",
+    "india_wash-B1",
+    "unicef_reduced-A2",
+    "unicef_reduced-B2",
+    "india_wash-A2",
+    "india_wash-B2",
+    "unicef_reduced-A3",
+    "unicef_reduced-B3",
+    "india_wash-A3",
+    "india_wash-B3",
+    "unicef_reduced-A4",
+    "unicef_reduced-B4",
+    "india_wash-A4",
+    "india_wash-B4",
+    "unicef_reduced-A5",
+    "unicef_reduced-B5",
+    "india_wash-A5",
+    "india_wash-B5"
+  ]
+}

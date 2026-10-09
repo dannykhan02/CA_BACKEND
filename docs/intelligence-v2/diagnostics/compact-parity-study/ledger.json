@@ -1,0 +1,19 @@
+{
+  "actual_spend_usd": "0.289903",
+  "completed_cells": [
+    "unicef_reduced-A1",
+    "unicef_reduced-B1",
+    "india_wash-A1",
+    "india_wash-B1",
+    "unicef_reduced-A2",
+    "unicef_reduced-B2",
+    "india_wash-A2",
+    "india_wash-B2",
+    "unicef_reduced-A3",
+    "unicef_reduced-B3",
+    "india_wash-A3",
+    "india_wash-B3"
+  ],
+  "calls_completed": 12,
+  "calls_failed": 0
+}

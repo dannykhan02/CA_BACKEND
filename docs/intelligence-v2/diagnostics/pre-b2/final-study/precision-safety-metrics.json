@@ -1,0 +1,301 @@
+{
+  "precision_judgments_sha256": "f50be77a8feba83e70bbf83a057d5072bab27fa11ec545c8e392c15e85477628",
+  "cells": {
+    "unicef_reduced-A1": {
+      "sampled_supported_precision": 0.8,
+      "precision_sample_n": 20,
+      "negative_false_positive_rate": 0.0,
+      "rejection_rate": 0.0,
+      "rejection_reasons": {},
+      "grounding_failure_rate": 0.0,
+      "truncated": false,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "provider_failure": false
+    },
+    "unicef_reduced-B1": {
+      "sampled_supported_precision": 0.5,
+      "precision_sample_n": 20,
+      "negative_false_positive_rate": 0.0,
+      "rejection_rate": 0.014925373134328358,
+      "rejection_reasons": {
+        "invalid_deadline_date_type": 1
+      },
+      "grounding_failure_rate": 0.0,
+      "truncated": false,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "provider_failure": false
+    },
+    "india_wash-A1": {
+      "sampled_supported_precision": 1.0,
+      "precision_sample_n": 20,
+      "negative_false_positive_rate": 0.0,
+      "rejection_rate": 0.05555555555555555,
+      "rejection_reasons": {
+        "invalid_deadline_date_type": 1,
+        "too_many_evidence_ids": 1
+      },
+      "grounding_failure_rate": 0.027777777777777776,
+      "truncated": false,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "provider_failure": false
+    },
+    "india_wash-B1": {
+      "sampled_supported_precision": 1.0,
+      "precision_sample_n": 20,
+      "negative_false_positive_rate": 0.0,
+      "rejection_rate": 0.04878048780487805,
+      "rejection_reasons": {
+        "invalid_deadline_date_type": 2
+      },
+      "grounding_failure_rate": 0.0,
+      "truncated": false,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "provider_failure": false
+    },
+    "unicef_reduced-A2": {
+      "sampled_supported_precision": 0.7,
+      "precision_sample_n": 20,
+      "negative_false_positive_rate": 0.0,
+      "rejection_rate": 0.0,
+      "rejection_reasons": {},
+      "grounding_failure_rate": 0.0,
+      "truncated": false,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "provider_failure": false
+    },
+    "unicef_reduced-B2": {
+      "sampled_supported_precision": 0.5,
+      "precision_sample_n": 20,
+      "negative_false_positive_rate": 0.0,
+      "rejection_rate": 0.0,
+      "rejection_reasons": {},
+      "grounding_failure_rate": 0.0,
+      "truncated": false,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "provider_failure": false
+    },
+    "india_wash-A2": {
+      "sampled_supported_precision": 0.8947368421052632,
+      "precision_sample_n": 19,
+      "negative_false_positive_rate": 0.0,
+      "rejection_rate": 0.13636363636363635,
+      "rejection_reasons": {
+        "invalid_deadline_date_type": 2,
+        "explicit_date_not_in_evidence": 1
+      },
+      "grounding_failure_rate": 0.0,
+      "truncated": false,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "provider_failure": false
+    },
+    "india_wash-B2": {
+      "sampled_supported_precision": 0.9444444444444444,
+      "precision_sample_n": 18,
+      "negative_false_positive_rate": 0.0,
+      "rejection_rate": 0.14285714285714285,
+      "rejection_reasons": {
+        "invalid_deadline_date_type": 3
+      },
+      "grounding_failure_rate": 0.0,
+      "truncated": false,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "provider_failure": false
+    },
+    "unicef_reduced-A3": {
+      "sampled_supported_precision": 0.8,
+      "precision_sample_n": 20,
+      "negative_false_positive_rate": 0.0,
+      "rejection_rate": 0.0,
+      "rejection_reasons": {},
+      "grounding_failure_rate": 0.0,
+      "truncated": false,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "provider_failure": false
+    },
+    "unicef_reduced-B3": {
+      "sampled_supported_precision": 0.65,
+      "precision_sample_n": 20,
+      "negative_false_positive_rate": 0.0,
+      "rejection_rate": 0.0,
+      "rejection_reasons": {},
+      "grounding_failure_rate": 0.0,
+      "truncated": false,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "provider_failure": false
+    },
+    "india_wash-A3": {
+      "sampled_supported_precision": 0.95,
+      "precision_sample_n": 20,
+      "negative_false_positive_rate": 0.0,
+      "rejection_rate": 0.08695652173913043,
+      "rejection_reasons": {
+        "invalid_deadline_date_type": 2
+      },
+      "grounding_failure_rate": 0.0,
+      "truncated": false,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "provider_failure": false
+    },
+    "india_wash-B3": {
+      "sampled_supported_precision": 0.95,
+      "precision_sample_n": 20,
+      "negative_false_positive_rate": 0.0,
+      "rejection_rate": 0.08333333333333333,
+      "rejection_reasons": {
+        "invalid_deadline_date_type": 2
+      },
+      "grounding_failure_rate": 0.0,
+      "truncated": false,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "provider_failure": false
+    },
+    "unicef_reduced-A4": {
+      "sampled_supported_precision": 0.7,
+      "precision_sample_n": 20,
+      "negative_false_positive_rate": 0.0,
+      "rejection_rate": 0.0,
+      "rejection_reasons": {},
+      "grounding_failure_rate": 0.0,
+      "truncated": false,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "provider_failure": false
+    },
+    "unicef_reduced-B4": {
+      "sampled_supported_precision": 0.45,
+      "precision_sample_n": 20,
+      "negative_false_positive_rate": 0.0,
+      "rejection_rate": 0.0,
+      "rejection_reasons": {},
+      "grounding_failure_rate": 0.0,
+      "truncated": false,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "provider_failure": false
+    },
+    "india_wash-A4": {
+      "sampled_supported_precision": 0.8947368421052632,
+      "precision_sample_n": 19,
+      "negative_false_positive_rate": 0.0,
+      "rejection_rate": 0.2692307692307692,
+      "rejection_reasons": {
+        "due_date_wrong_format": 5,
+        "invalid_deadline_date_type": 2
+      },
+      "grounding_failure_rate": 0.0,
+      "truncated": false,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "provider_failure": false
+    },
+    "india_wash-B4": {
+      "sampled_supported_precision": 0.95,
+      "precision_sample_n": 20,
+      "negative_false_positive_rate": 0.0,
+      "rejection_rate": 0.025,
+      "rejection_reasons": {
+        "explicit_date_not_in_evidence": 1
+      },
+      "grounding_failure_rate": 0.0,
+      "truncated": false,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "provider_failure": false
+    },
+    "unicef_reduced-A5": {
+      "sampled_supported_precision": 0.4,
+      "precision_sample_n": 20,
+      "negative_false_positive_rate": 0.0,
+      "rejection_rate": 0.0,
+      "rejection_reasons": {},
+      "grounding_failure_rate": 0.0,
+      "truncated": false,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "provider_failure": false
+    },
+    "unicef_reduced-B5": {
+      "sampled_supported_precision": 0.9,
+      "precision_sample_n": 20,
+      "negative_false_positive_rate": 0.0,
+      "rejection_rate": 0.4084507042253521,
+      "rejection_reasons": {
+        "due_date_wrong_format": 29
+      },
+      "grounding_failure_rate": 0.0,
+      "truncated": false,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "provider_failure": false
+    },
+    "india_wash-A5": {
+      "sampled_supported_precision": 1.0,
+      "precision_sample_n": 20,
+      "negative_false_positive_rate": 0.0,
+      "rejection_rate": 0.0625,
+      "rejection_reasons": {
+        "invalid_deadline_date_type": 2
+      },
+      "grounding_failure_rate": 0.0,
+      "truncated": false,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "provider_failure": false
+    },
+    "india_wash-B5": {
+      "sampled_supported_precision": 0.95,
+      "precision_sample_n": 20,
+      "negative_false_positive_rate": 0.0,
+      "rejection_rate": 0.07692307692307693,
+      "rejection_reasons": {
+        "invalid_deadline_date_type": 2
+      },
+      "grounding_failure_rate": 0.0,
+      "truncated": false,
+      "parser_failure": false,
+      "structured_output_failure": false,
+      "provider_failure": false
+    }
+  },
+  "gates": {
+    "unicef_reduced": {
+      "precision_deterioration_pp": 8.000000000000007,
+      "precision_gate_failed": true,
+      "negative_false_positive_deterioration_pp": 0.0,
+      "negative_false_positive_gate_failed": false,
+      "rejection_rate_deterioration_pp": 8.46752154719361,
+      "rejection_rate_gate_failed": true,
+      "grounding_failure_deterioration_pp": 0.0,
+      "grounding_failure_gate_failed": false,
+      "variant_b_truncations": 0,
+      "variant_b_parser_failures": 0,
+      "variant_b_structured_output_failures": 0
+    },
+    "india_wash": {
+      "precision_deterioration_pp": -1.0204081632652962,
+      "precision_gate_failed": false,
+      "negative_false_positive_deterioration_pp": 0.0,
+      "negative_false_positive_gate_failed": false,
+      "rejection_rate_deterioration_pp": -4.674248839413209,
+      "rejection_rate_gate_failed": false,
+      "grounding_failure_deterioration_pp": -0.5555555555555555,
+      "grounding_failure_gate_failed": false,
+      "variant_b_truncations": 0,
+      "variant_b_parser_failures": 0,
+      "variant_b_structured_output_failures": 0
+    }
+  },
+  "reviewer": "AI coding agent using mechanically blinded frozen packet"
+}

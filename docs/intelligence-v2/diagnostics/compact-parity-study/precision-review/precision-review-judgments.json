@@ -1,0 +1,1202 @@
+[
+  {
+    "sample_id": "S0001",
+    "judgment": "UNSUPPORTED",
+    "review_note": "The source makes $174 million the development-effectiveness component within a $227 million capital-cost expenditure; the record reverses that relationship."
+  },
+  {
+    "sample_id": "S0002",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0003",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0004",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The 14-province scale-up is stated, but the cited passage does not establish a 2024 period."
+  },
+  {
+    "sample_id": "S0005",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The amount occurs among annual totals, but flattened chart text makes its precise year and total-series attribution uncertain."
+  },
+  {
+    "sample_id": "S0006",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0007",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0008",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0009",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The mitigation of a 3.4 percent child-poverty rise is stated, but the target metric metadata is inconsistent with a reported outcome."
+  },
+  {
+    "sample_id": "S0010",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0011",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0012",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The amount occurs among annual totals, but flattened chart text makes its precise year and total-series attribution uncertain."
+  },
+  {
+    "sample_id": "S0013",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0014",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0015",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0016",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0017",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0018",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0019",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0020",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The core figure appears in the source, but the record adds 2024 without that period in the cited span."
+  },
+  {
+    "sample_id": "S0021",
+    "judgment": "UNSUPPORTED",
+    "review_note": "The cited span is only a report header and does not state the record claim."
+  },
+  {
+    "sample_id": "S0022",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0023",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0024",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0025",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0026",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0027",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0028",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The clipped source supports 550 million people using improved sanitation, but omits the leading words needed to establish more than and gives limited geographic attribution."
+  },
+  {
+    "sample_id": "S0029",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The core figure appears in the source, but the record adds 2024 without that period in the cited span."
+  },
+  {
+    "sample_id": "S0030",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0031",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The clipped source supports 550 million people using improved sanitation, but omits the leading words needed to establish more than and gives limited geographic attribution."
+  },
+  {
+    "sample_id": "S0032",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0033",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0034",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0035",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The clipped source supports 550 million people using improved sanitation, but omits the leading words needed to establish more than and gives limited geographic attribution."
+  },
+  {
+    "sample_id": "S0036",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0037",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The clipped source supports 580 million rural people using something, but does not include the drinking-water object or the more-than qualifier."
+  },
+  {
+    "sample_id": "S0038",
+    "judgment": "UNSUPPORTED",
+    "review_note": "The flattened chart shows funding-resource categories, not a private-sector series; the proposed category-to-percentage mapping is unsupported."
+  },
+  {
+    "sample_id": "S0039",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The percentage appears in a flattened chart, but its exact year and resource-category role cannot be established from the cited text alone."
+  },
+  {
+    "sample_id": "S0040",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0041",
+    "judgment": "UNSUPPORTED",
+    "review_note": "The $26.509 billion figure does not occur in the cited source chart."
+  },
+  {
+    "sample_id": "S0042",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0043",
+    "judgment": "UNSUPPORTED",
+    "review_note": "The cited list gives $227 million for capital-cost expenditure and $174 million for its development-effectiveness component; the record assigns $227 million to development effectiveness."
+  },
+  {
+    "sample_id": "S0044",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The percentage appears in a flattened chart, but its exact year and resource-category role cannot be established from the cited text alone."
+  },
+  {
+    "sample_id": "S0045",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The amount occurs among annual totals, but flattened chart text makes its precise year and total-series attribution uncertain."
+  },
+  {
+    "sample_id": "S0046",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The core figure appears in the source, but the record adds 2024 without that period in the cited span."
+  },
+  {
+    "sample_id": "S0047",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0048",
+    "judgment": "UNSUPPORTED",
+    "review_note": "The flattened chart shows funding-resource categories, not a private-sector series; the proposed category-to-percentage mapping is unsupported."
+  },
+  {
+    "sample_id": "S0049",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0050",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The nearly tenfold investment rise is stated; the unit times is reasonable, but value_basis rate is imprecise for a multiplicative change."
+  },
+  {
+    "sample_id": "S0051",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The percentage appears in a flattened chart, but its exact year and resource-category role cannot be established from the cited text alone."
+  },
+  {
+    "sample_id": "S0052",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The clipped source mentions 580 million rural people, but does not establish improved drinking water, more than, or attribution to Swachh Bharat."
+  },
+  {
+    "sample_id": "S0053",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0054",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0055",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0056",
+    "judgment": "UNSUPPORTED",
+    "review_note": "The cited billion-dollar figures appear as annual totals; the record assigns one to a specific resource category without source support."
+  },
+  {
+    "sample_id": "S0057",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0058",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The quote supports the positive assessment, but it is Ms Vini Mahajan speaking rather than an institutional Government of India evaluation."
+  },
+  {
+    "sample_id": "S0059",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0060",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0061",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0062",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0063",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The core figure appears in the source, but the record adds 2024 without that period in the cited span."
+  },
+  {
+    "sample_id": "S0064",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The clipped source states 110 million toilets constructed, but does not itself identify the programme, country, or government attribution."
+  },
+  {
+    "sample_id": "S0065",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0066",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0067",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The poverty-increase mitigation is stated for the COVID-19 pandemic; the 2024 period is absent and conflicts with that scope."
+  },
+  {
+    "sample_id": "S0068",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0069",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0070",
+    "judgment": "UNSUPPORTED",
+    "review_note": "The cited billion-dollar figures appear as annual totals; the record assigns one to a specific resource category without source support."
+  },
+  {
+    "sample_id": "S0071",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0072",
+    "judgment": "UNSUPPORTED",
+    "review_note": "The cited billion-dollar figures appear as annual totals; the record assigns one to a specific resource category without source support."
+  },
+  {
+    "sample_id": "S0073",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0074",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The $174 million development-effectiveness component is stated, but the capital-cost row context is needed to interpret expenditure precisely."
+  },
+  {
+    "sample_id": "S0075",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0076",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0077",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0078",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0079",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0080",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0081",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0082",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0083",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "Per-family savings are stated as a UNICEF estimate, but the record presents them as an actual average without the estimate qualification."
+  },
+  {
+    "sample_id": "S0084",
+    "judgment": "UNSUPPORTED",
+    "review_note": "The cited span is only a report header and does not state the record claim."
+  },
+  {
+    "sample_id": "S0085",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0086",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0087",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0088",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The 19-indicator role is stated, but the antecedent of they is missing, so the Core Resources attribution is uncertain."
+  },
+  {
+    "sample_id": "S0089",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0090",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0091",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0092",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0093",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The clipped source supports 550 million people using improved sanitation, but omits the leading words needed to establish more than and gives limited geographic attribution."
+  },
+  {
+    "sample_id": "S0094",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The near-national reach is stated, but it is a qualitative fact represented as a metric."
+  },
+  {
+    "sample_id": "S0095",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0096",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0097",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0098",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The clipped source states 110 million toilets constructed, but does not itself identify the programme, country, or government attribution."
+  },
+  {
+    "sample_id": "S0099",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The 37 percent reduction and dates are stated, but value_basis total misclassifies a percentage change."
+  },
+  {
+    "sample_id": "S0100",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0101",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0102",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0103",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0104",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0105",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The systems shift is described, but 2024 is absent from the cited span."
+  },
+  {
+    "sample_id": "S0106",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0107",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The percentage appears in a flattened chart, but its exact year and resource-category role cannot be established from the cited text alone."
+  },
+  {
+    "sample_id": "S0108",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The percentage appears in a flattened chart, but its exact year and resource-category role cannot be established from the cited text alone."
+  },
+  {
+    "sample_id": "S0109",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0110",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0111",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0112",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The percentage appears in a flattened chart, but its exact year and resource-category role cannot be established from the cited text alone."
+  },
+  {
+    "sample_id": "S0113",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0114",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0115",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The source says more than 1,700 facilities; the record stores exactly 1,700 and adds an unsupported 2024 period."
+  },
+  {
+    "sample_id": "S0116",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0117",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The core figure appears in the source, but the record adds 2024 without that period in the cited span."
+  },
+  {
+    "sample_id": "S0118",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0119",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0120",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0121",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0122",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The groundwater-quality improvement and five-year period are stated, but India is only inferable from context in this quote."
+  },
+  {
+    "sample_id": "S0123",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0124",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The core figure appears in the source, but the record adds 2024 without that period in the cited span."
+  },
+  {
+    "sample_id": "S0125",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0126",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0127",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0128",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0129",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0130",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0131",
+    "judgment": "UNSUPPORTED",
+    "review_note": "The cited fragment states only 12 of 17 Sustainable Development Goals and does not attribute acceleration to Core Resources or establish a 2024 period."
+  },
+  {
+    "sample_id": "S0132",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0133",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0134",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The amount occurs among annual totals, but flattened chart text makes its precise year and total-series attribution uncertain."
+  },
+  {
+    "sample_id": "S0135",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0136",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0137",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0138",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The core figure appears in the source, but the record adds 2024 without that period in the cited span."
+  },
+  {
+    "sample_id": "S0139",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0140",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0141",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The systems shift is stated, but the cited sentence uses it and does not directly attribute the action to the Government of India."
+  },
+  {
+    "sample_id": "S0142",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0143",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0144",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0145",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0146",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The clipped source supports 550 million people using improved sanitation, but omits the leading words needed to establish more than and gives limited geographic attribution."
+  },
+  {
+    "sample_id": "S0147",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0148",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The amount occurs among annual totals, but flattened chart text makes its precise year and total-series attribution uncertain."
+  },
+  {
+    "sample_id": "S0149",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0150",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0151",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0152",
+    "judgment": "UNSUPPORTED",
+    "review_note": "The $952 million expense is attached to the Emergency Programme Fund; the cited text does not give it as a combined expense for the named programme categories."
+  },
+  {
+    "sample_id": "S0153",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0154",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0155",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0156",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The source reports a nearly tenfold increase in domestic investment, but does not explicitly assign all investment to the Government of Bangladesh."
+  },
+  {
+    "sample_id": "S0157",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0158",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The 37 percent reduction and dates are stated, but value_basis total misclassifies a percentage change."
+  },
+  {
+    "sample_id": "S0159",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0160",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0161",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The clipped source states 110 million toilets constructed, but does not itself identify the programme, country, or government attribution."
+  },
+  {
+    "sample_id": "S0162",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0163",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0164",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0165",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0166",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0167",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0168",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0169",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0170",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0171",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The two private-sector activities are stated within an integrated-budget discussion, but the cited span does not identify them specifically as pillar 3."
+  },
+  {
+    "sample_id": "S0172",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0173",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0174",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0175",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0176",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0177",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0178",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The clipped text states lasting reductions in waterborne diseases, but omits the claimed child-mortality and morbidity context."
+  },
+  {
+    "sample_id": "S0179",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0180",
+    "judgment": "UNSUPPORTED",
+    "review_note": "The cited annual-total chart does not support the stated value-year pairing; the totals appear in a different annual sequence."
+  },
+  {
+    "sample_id": "S0181",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The clipped source supports 580 million rural people using something, but does not include the drinking-water object or the more-than qualifier."
+  },
+  {
+    "sample_id": "S0182",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0183",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The clipped source states 110 million toilets constructed, but does not itself identify the programme, country, or government attribution."
+  },
+  {
+    "sample_id": "S0184",
+    "judgment": "UNSUPPORTED",
+    "review_note": "The cited list gives $227 million for capital-cost expenditure and $174 million for its development-effectiveness component; the record assigns $227 million to development effectiveness."
+  },
+  {
+    "sample_id": "S0185",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0186",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The clipped source supports 580 million rural people using something, but does not include the drinking-water object or the more-than qualifier."
+  },
+  {
+    "sample_id": "S0187",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The percentage appears in a flattened chart, but its exact year and resource-category role cannot be established from the cited text alone."
+  },
+  {
+    "sample_id": "S0188",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0189",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0190",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0191",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The clipped text supports lasting waterborne-disease reductions, but does not establish the ten-year period."
+  },
+  {
+    "sample_id": "S0192",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0193",
+    "judgment": "UNSUPPORTED",
+    "review_note": "The cited annual-total chart does not support the stated value-year pairing; the totals appear in a different annual sequence."
+  },
+  {
+    "sample_id": "S0194",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The WASH health effect is described, but the cited span does not establish the 2014–2022 period or directly attribute that specific mortality reduction to WASH."
+  },
+  {
+    "sample_id": "S0195",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0196",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The listed diseases are supported, but the passage presents them as examples of leading causes rather than a formal definition."
+  },
+  {
+    "sample_id": "S0197",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0198",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0199",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0200",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0201",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The percentage appears in a flattened chart, but its exact year and resource-category role cannot be established from the cited text alone."
+  },
+  {
+    "sample_id": "S0202",
+    "judgment": "UNSUPPORTED",
+    "review_note": "The cited billion-dollar figures appear as annual totals; the record assigns one to a specific resource category without source support."
+  },
+  {
+    "sample_id": "S0203",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0204",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0205",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The clipped source states 110 million toilets constructed, but does not itself identify the programme, country, or government attribution."
+  },
+  {
+    "sample_id": "S0206",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0207",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The percentage appears in a flattened chart, but its exact year and resource-category role cannot be established from the cited text alone."
+  },
+  {
+    "sample_id": "S0208",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0209",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0210",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0211",
+    "judgment": "UNSUPPORTED",
+    "review_note": "The cited billion-dollar figures appear as annual totals; the record assigns one to a specific resource category without source support."
+  },
+  {
+    "sample_id": "S0212",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The percentage appears in a flattened chart, but its exact year and resource-category role cannot be established from the cited text alone."
+  },
+  {
+    "sample_id": "S0213",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0214",
+    "judgment": "UNSUPPORTED",
+    "review_note": "The source says a 3.4 percent rise in child poverty was mitigated; the record labels it as a child-poverty rise and adds an unsupported year."
+  },
+  {
+    "sample_id": "S0215",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0216",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0217",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0218",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0219",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0220",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The core figure appears in the source, but the record adds 2024 without that period in the cited span."
+  },
+  {
+    "sample_id": "S0221",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0222",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0223",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The percentage appears in a flattened chart, but its exact year and resource-category role cannot be established from the cited text alone."
+  },
+  {
+    "sample_id": "S0224",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0225",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0226",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The percentage appears in a flattened chart, but its exact year and resource-category role cannot be established from the cited text alone."
+  },
+  {
+    "sample_id": "S0227",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0228",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0229",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0230",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0231",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0232",
+    "judgment": "UNSUPPORTED",
+    "review_note": "The cited span identifies Narendra Modi but does not include the claimed statement."
+  },
+  {
+    "sample_id": "S0233",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The source says an ambitious target was achieved by 2019, but the clipped span does not identify which target."
+  },
+  {
+    "sample_id": "S0234",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0235",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The percentage appears in a flattened chart, but its exact year and resource-category role cannot be established from the cited text alone."
+  },
+  {
+    "sample_id": "S0236",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0237",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The percentage appears in a flattened chart, but its exact year and resource-category role cannot be established from the cited text alone."
+  },
+  {
+    "sample_id": "S0238",
+    "judgment": "UNSUPPORTED",
+    "review_note": "The flattened chart shows funding-resource categories, not a private-sector series; the proposed category-to-percentage mapping is unsupported."
+  },
+  {
+    "sample_id": "S0239",
+    "judgment": "SUPPORTED",
+    "review_note": "The cited source directly supports the record’s claim and material attribution."
+  },
+  {
+    "sample_id": "S0240",
+    "judgment": "PARTIALLY_SUPPORTED",
+    "review_note": "The clipped source supports 580 million rural people using something, but does not include the drinking-water object or the more-than qualifier."
+  }
+]

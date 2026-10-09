@@ -1,0 +1,126 @@
+{
+  "unicef_reduced": [
+    {
+      "run": 1,
+      "representation_delta_pp": 0.0,
+      "gold_delta_items": 0,
+      "returned_delta": 20,
+      "accepted_delta": 19,
+      "output_token_delta": 3468,
+      "cost_delta_usd": "0.017281",
+      "cost_pair_usd": "0.089129",
+      "representation_insensitive_candidate_jaccard": 1.0,
+      "merger_identity_jaccard": 0.0
+    },
+    {
+      "run": 2,
+      "representation_delta_pp": 21.42857142857143,
+      "gold_delta_items": 0,
+      "returned_delta": 35,
+      "accepted_delta": 35,
+      "output_token_delta": 3578,
+      "cost_delta_usd": "0.017831",
+      "cost_pair_usd": "0.083309",
+      "representation_insensitive_candidate_jaccard": 0.7857142857142857,
+      "merger_identity_jaccard": 0.0
+    },
+    {
+      "run": 3,
+      "representation_delta_pp": -21.42857142857143,
+      "gold_delta_items": 1,
+      "returned_delta": 22,
+      "accepted_delta": 22,
+      "output_token_delta": 3281,
+      "cost_delta_usd": "0.016346",
+      "cost_pair_usd": "0.070854",
+      "representation_insensitive_candidate_jaccard": 0.7857142857142857,
+      "merger_identity_jaccard": 0.0
+    },
+    {
+      "run": 4,
+      "representation_delta_pp": 0.0,
+      "gold_delta_items": 0,
+      "returned_delta": 21,
+      "accepted_delta": 21,
+      "output_token_delta": 2461,
+      "cost_delta_usd": "0.012246",
+      "cost_pair_usd": "0.073604",
+      "representation_insensitive_candidate_jaccard": 1.0,
+      "merger_identity_jaccard": 0.0
+    },
+    {
+      "run": 5,
+      "representation_delta_pp": -7.142857142857151,
+      "gold_delta_items": -1,
+      "returned_delta": 13,
+      "accepted_delta": -16,
+      "output_token_delta": 1377,
+      "cost_delta_usd": "0.006826",
+      "cost_pair_usd": "0.090504",
+      "representation_insensitive_candidate_jaccard": 0.7857142857142857,
+      "merger_identity_jaccard": 0.0
+    }
+  ],
+  "india_wash": [
+    {
+      "run": 1,
+      "representation_delta_pp": -7.692307692307687,
+      "gold_delta_items": 0,
+      "returned_delta": 5,
+      "accepted_delta": 5,
+      "output_token_delta": 459,
+      "cost_delta_usd": "0.002236",
+      "cost_pair_usd": "0.056412",
+      "representation_insensitive_candidate_jaccard": 0.9090909090909091,
+      "merger_identity_jaccard": 0.028169014084507043
+    },
+    {
+      "run": 2,
+      "representation_delta_pp": 0.0,
+      "gold_delta_items": 1,
+      "returned_delta": -1,
+      "accepted_delta": -1,
+      "output_token_delta": 427,
+      "cost_delta_usd": "0.002076",
+      "cost_pair_usd": "0.039072",
+      "representation_insensitive_candidate_jaccard": 1.0,
+      "merger_identity_jaccard": 0.08823529411764706
+    },
+    {
+      "run": 3,
+      "representation_delta_pp": 15.384615384615385,
+      "gold_delta_items": 1,
+      "returned_delta": 1,
+      "accepted_delta": 1,
+      "output_token_delta": 13,
+      "cost_delta_usd": "0.000006",
+      "cost_pair_usd": "0.036372",
+      "representation_insensitive_candidate_jaccard": 0.8461538461538461,
+      "merger_identity_jaccard": 0.10256410256410256
+    },
+    {
+      "run": 4,
+      "representation_delta_pp": 30.76923076923077,
+      "gold_delta_items": 4,
+      "returned_delta": 14,
+      "accepted_delta": 20,
+      "output_token_delta": 1640,
+      "cost_delta_usd": "0.008141",
+      "cost_pair_usd": "0.047977",
+      "representation_insensitive_candidate_jaccard": 0.6923076923076923,
+      "merger_identity_jaccard": 0.03571428571428571
+    },
+    {
+      "run": 5,
+      "representation_delta_pp": 0.0,
+      "gold_delta_items": 0,
+      "returned_delta": -6,
+      "accepted_delta": -6,
+      "output_token_delta": -841,
+      "cost_delta_usd": "-0.004264",
+      "cost_pair_usd": "0.043572",
+      "representation_insensitive_candidate_jaccard": 1.0,
+      "merger_identity_jaccard": 0.10204081632653061
+    }
+  ]
+}

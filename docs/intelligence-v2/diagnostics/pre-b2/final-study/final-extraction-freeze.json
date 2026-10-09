@@ -1,0 +1,76 @@
+{
+  "status": "FROZEN_FOR_B2",
+  "decision": "KEEP CONTROL",
+  "interpretation": "DIRECTIONAL",
+  "contract_id": "intelligence-v2-pre-b2-extraction-v1",
+  "chosen_prompt_version": "pre-b2-control-v1",
+  "model_id": "claude-haiku-4-5-20251001",
+  "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+  "schema_version": "evidence-schema-span-v1-snapshot",
+  "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+  "canonical_wire_format_version": "canonical-json-span-v1",
+  "candidate_inventory_detector_version": "candidate-inventory-v1.0.0",
+  "candidate_representation_matcher_version": "candidate-representation-v1.0.0",
+  "planner_config_version": "pre-b2-saved-request-planner-v1",
+  "planner_config_sha256": "e55066f545a0b42a4570f0d48dfe447a6a56984602f69b63a65d53708c3051d2",
+  "control_request_contracts": {
+    "unicef_reduced": {
+      "model_id": "claude-haiku-4-5-20251001",
+      "prompt_version": "pre-b2-control-v1",
+      "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+      "schema_version": "evidence-schema-span-v1-snapshot",
+      "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+      "wire_format_version": "canonical-json-span-v1",
+      "source_sha256": "103987d34dc9a0a55d6d6924273b19177e60f53f6db67ff7a5924b00c4b7d46a",
+      "span_set_sha256": "9ab4454b1d8c6cd5ae98ff2dffca178cf0b23692607748ac89b1d1e9ecc0b1d9",
+      "planner_config_sha256": "e55066f545a0b42a4570f0d48dfe447a6a56984602f69b63a65d53708c3051d2",
+      "detector_version": "candidate-inventory-v1.0.0",
+      "matcher_version": "candidate-representation-v1.0.0",
+      "request_body_sha256": "d28a6421e873e965413815c779461264f841c1ec0ab5fc543be47bf61db5d700"
+    },
+    "india_wash": {
+      "model_id": "claude-haiku-4-5-20251001",
+      "prompt_version": "pre-b2-control-v1",
+      "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+      "schema_version": "evidence-schema-span-v1-snapshot",
+      "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+      "wire_format_version": "canonical-json-span-v1",
+      "source_sha256": "0709f82d8ff76517e2617ca88e17a1e21a4bbefbcd60a2c18c678ee50b23171f",
+      "span_set_sha256": "8a4539f31dfd0ccfdba2d844ab9285034c0c7c50ad0d92189470f7ee7aa58df7",
+      "planner_config_sha256": "e55066f545a0b42a4570f0d48dfe447a6a56984602f69b63a65d53708c3051d2",
+      "detector_version": "candidate-inventory-v1.0.0",
+      "matcher_version": "candidate-representation-v1.0.0",
+      "request_body_sha256": "716df69a1607827b5994b68e1cadd5b61433c950397a69995cc31e3a2ac6e42e"
+    }
+  },
+  "all_study_request_hashes": {
+    "unicef_reduced:CONTROL": "d28a6421e873e965413815c779461264f841c1ec0ab5fc543be47bf61db5d700",
+    "unicef_reduced:CONTROL_MINUS_MATERIALITY": "5c8b718fb2cf3e33e879bb7ced97a50cf3adc65162258f23270946dbe1dbd345",
+    "india_wash:CONTROL": "716df69a1607827b5994b68e1cadd5b61433c950397a69995cc31e3a2ac6e42e",
+    "india_wash:CONTROL_MINUS_MATERIALITY": "6580b94f3b9aceecb61a358c2e35854d0a3410c992e054b0e9259d9c2ee5e469"
+  },
+  "request_hash_manifest": "request-hash-manifest.json",
+  "study_result": "No preregistered meaningful improvement; UNICEF precision and rejection safety gates failed.",
+  "study_cost_usd": "0.630805",
+  "generation_calls": 20,
+  "production_prompt_changed": false,
+  "production_extraction_behavior_changed": false,
+  "compact_json": {
+    "COMPACT_CODEC_WORTH_IMPLEMENTING": true,
+    "offline_estimated_savings_percent_approximately": 29.5,
+    "production_activation": "DEFERRED"
+  },
+  "known_deferred_issues": [
+    "adaptive routing",
+    "AI document classifier",
+    "field-role provenance",
+    "context citation",
+    "structure-aware segmentation",
+    "residual gap-fill",
+    "prompt caching",
+    "batch API",
+    "semantic deduplication",
+    "null-period identity",
+    "Compact JSON production activation"
+  ]
+}

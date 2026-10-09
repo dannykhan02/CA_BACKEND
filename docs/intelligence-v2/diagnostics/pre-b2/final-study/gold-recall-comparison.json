@@ -1,0 +1,152 @@
+{
+  "cells": {
+    "unicef_reduced-A1": {
+      "gold_recalled": 16,
+      "gold_total": 17
+    },
+    "unicef_reduced-B1": {
+      "gold_recalled": 16,
+      "gold_total": 17
+    },
+    "india_wash-A1": {
+      "gold_recalled": 9,
+      "gold_total": 12
+    },
+    "india_wash-B1": {
+      "gold_recalled": 9,
+      "gold_total": 12
+    },
+    "unicef_reduced-A2": {
+      "gold_recalled": 14,
+      "gold_total": 17
+    },
+    "unicef_reduced-B2": {
+      "gold_recalled": 14,
+      "gold_total": 17
+    },
+    "india_wash-A2": {
+      "gold_recalled": 7,
+      "gold_total": 12
+    },
+    "india_wash-B2": {
+      "gold_recalled": 8,
+      "gold_total": 12
+    },
+    "unicef_reduced-A3": {
+      "gold_recalled": 15,
+      "gold_total": 17
+    },
+    "unicef_reduced-B3": {
+      "gold_recalled": 16,
+      "gold_total": 17
+    },
+    "india_wash-A3": {
+      "gold_recalled": 9,
+      "gold_total": 12
+    },
+    "india_wash-B3": {
+      "gold_recalled": 10,
+      "gold_total": 12
+    },
+    "unicef_reduced-A4": {
+      "gold_recalled": 15,
+      "gold_total": 17
+    },
+    "unicef_reduced-B4": {
+      "gold_recalled": 15,
+      "gold_total": 17
+    },
+    "india_wash-A4": {
+      "gold_recalled": 7,
+      "gold_total": 12
+    },
+    "india_wash-B4": {
+      "gold_recalled": 11,
+      "gold_total": 12
+    },
+    "unicef_reduced-A5": {
+      "gold_recalled": 14,
+      "gold_total": 17
+    },
+    "unicef_reduced-B5": {
+      "gold_recalled": 13,
+      "gold_total": 17
+    },
+    "india_wash-A5": {
+      "gold_recalled": 10,
+      "gold_total": 12
+    },
+    "india_wash-B5": {
+      "gold_recalled": 10,
+      "gold_total": 12
+    }
+  },
+  "groups": {
+    "unicef_reduced": {
+      "A": {
+        "mean_gold_recalled": 14.8,
+        "mean_gold_recall_rate": 0.8705882352941177
+      },
+      "B": {
+        "mean_gold_recalled": 14.8,
+        "mean_gold_recall_rate": 0.8705882352941177
+      }
+    },
+    "india_wash": {
+      "A": {
+        "mean_gold_recalled": 8.4,
+        "mean_gold_recall_rate": 0.7000000000000001
+      },
+      "B": {
+        "mean_gold_recalled": 9.6,
+        "mean_gold_recall_rate": 0.8
+      }
+    }
+  },
+  "paired": {
+    "unicef_reduced": [
+      {
+        "run": 1,
+        "gold_delta_items": 0
+      },
+      {
+        "run": 2,
+        "gold_delta_items": 0
+      },
+      {
+        "run": 3,
+        "gold_delta_items": 1
+      },
+      {
+        "run": 4,
+        "gold_delta_items": 0
+      },
+      {
+        "run": 5,
+        "gold_delta_items": -1
+      }
+    ],
+    "india_wash": [
+      {
+        "run": 1,
+        "gold_delta_items": 0
+      },
+      {
+        "run": 2,
+        "gold_delta_items": 1
+      },
+      {
+        "run": 3,
+        "gold_delta_items": 1
+      },
+      {
+        "run": 4,
+        "gold_delta_items": 4
+      },
+      {
+        "run": 5,
+        "gold_delta_items": 0
+      }
+    ]
+  }
+}

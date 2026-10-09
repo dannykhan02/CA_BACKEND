@@ -1,0 +1,80 @@
+[
+  {
+    "ordinal": 1,
+    "matched": true,
+    "accepted_indices": [
+      0
+    ]
+  },
+  {
+    "ordinal": 2,
+    "matched": true,
+    "accepted_indices": [
+      1
+    ]
+  },
+  {
+    "ordinal": 3,
+    "matched": false,
+    "accepted_indices": []
+  },
+  {
+    "ordinal": 4,
+    "matched": false,
+    "accepted_indices": []
+  },
+  {
+    "ordinal": 5,
+    "matched": true,
+    "accepted_indices": [
+      2
+    ]
+  },
+  {
+    "ordinal": 6,
+    "matched": true,
+    "accepted_indices": [
+      3
+    ]
+  },
+  {
+    "ordinal": 7,
+    "matched": true,
+    "accepted_indices": [
+      4
+    ]
+  },
+  {
+    "ordinal": 8,
+    "matched": true,
+    "accepted_indices": [
+      6
+    ]
+  },
+  {
+    "ordinal": 9,
+    "matched": true,
+    "accepted_indices": [
+      7
+    ]
+  },
+  {
+    "ordinal": 10,
+    "matched": true,
+    "accepted_indices": [
+      8
+    ]
+  },
+  {
+    "ordinal": 11,
+    "matched": false,
+    "accepted_indices": []
+  },
+  {
+    "ordinal": 12,
+    "matched": true,
+    "accepted_indices": [
+      15
+    ]
+  }
+]

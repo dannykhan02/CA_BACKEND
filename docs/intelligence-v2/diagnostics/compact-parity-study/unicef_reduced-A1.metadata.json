@@ -1,0 +1,37 @@
+{
+  "cell": "unicef_reduced-A1",
+  "chunk": "unicef_reduced",
+  "arm": "A",
+  "wire_format": "canonical-json-span-v1",
+  "http_status": 200,
+  "provider_request_id": "req_011CfsJXande8SD4LbqYekb3",
+  "started_at_utc": "2026-10-09T20:34:58.262710+00:00",
+  "latency_ms": 47455,
+  "transport_error": null,
+  "failure_class": null,
+  "stop_reason": "end_turn",
+  "response_model": "claude-haiku-4-5-20251001",
+  "request_sha256": "d28a6421e873e965413815c779461264f841c1ec0ab5fc543be47bf61db5d700",
+  "response_sha256": "831926c5c90e1920f57dd10d2c9ead774f74a5331777ffde77afedc054a55dac",
+  "expanded_sha256": "c96a321362d9a94aecbd50572b6ba74d4b9a75f137624f23845b0c71c1f5596e",
+  "usage": {
+    "input_tokens": 4019,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 5605,
+    "service_tier": "standard",
+    "inference_geo": "not_available"
+  },
+  "cost_usd": "0.032044",
+  "returned_records": 42,
+  "budget_before_send": {
+    "actual_spend_usd": "0",
+    "next_worst_case_usd": "0.1012296875",
+    "remaining_usd": "0.60",
+    "ceiling_usd": "0.60"
+  }
+}

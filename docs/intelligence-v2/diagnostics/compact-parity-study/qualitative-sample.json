@@ -1,0 +1,892 @@
+[
+  {
+    "cell": "unicef_reduced-B2",
+    "raw_index": 17,
+    "raw_compact": {
+      "l": "Children facing severe wasting treated",
+      "v": "more than 129,000",
+      "s": "Democratic Republic of the Congo",
+      "r": "[E111]",
+      "e": [
+        "E111"
+      ],
+      "k": "metric",
+      "cf": 0.95,
+      "a": []
+    },
+    "expanded_canonical": {
+      "label": "Children facing severe wasting treated",
+      "value": "more than 129,000",
+      "subject": "Democratic Republic of the Congo",
+      "reference": "[E111]",
+      "evidence_ids": [
+        "E111"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": []
+    },
+    "source": [
+      {
+        "evidence_id": "E111",
+        "text": "Democratic Republic of the Congo: Core Resources supported more than \n1,700 health-care facilities to stay operational, securing lifesaving supplies \nand treatment for more than 129,000 children facing severe wasting."
+      }
+    ]
+  },
+  {
+    "cell": "unicef_reduced-B3",
+    "raw_index": 27,
+    "raw_compact": {
+      "l": "Marburg disease outbreak fatality rate",
+      "v": "22.7 per cent",
+      "s": "Rwanda",
+      "r": "Rwanda: Core Resources reinforced the government's response to the Marburg disease outbreak, contributing to more lives being saved and a low fatality rate of 22.7 per cent.",
+      "e": [
+        "E113"
+      ],
+      "k": "metric",
+      "cf": 1.0,
+      "a": []
+    },
+    "expanded_canonical": {
+      "label": "Marburg disease outbreak fatality rate",
+      "value": "22.7 per cent",
+      "subject": "Rwanda",
+      "reference": "Rwanda: Core Resources reinforced the government's response to the Marburg disease outbreak, contributing to more lives being saved and a low fatality rate of 22.7 per cent.",
+      "evidence_ids": [
+        "E113"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": []
+    },
+    "source": [
+      {
+        "evidence_id": "E113",
+        "text": "Rwanda: Core Resources reinforced the government’s response to the Marburg \ndisease outbreak, contributing to more lives being saved and a low fatality \nrate of 22.7 per cent."
+      }
+    ]
+  },
+  {
+    "cell": "unicef_reduced-B2",
+    "raw_index": 1,
+    "raw_compact": {
+      "l": "Core resources income from private sector",
+      "v": "$724.9 million",
+      "s": "UNICEF",
+      "r": "[E101]",
+      "e": [
+        "E101"
+      ],
+      "k": "metric",
+      "cf": 0.95,
+      "a": [
+        "46%"
+      ]
+    },
+    "expanded_canonical": {
+      "label": "Core resources income from private sector",
+      "value": "$724.9 million",
+      "subject": "UNICEF",
+      "reference": "[E101]",
+      "evidence_ids": [
+        "E101"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": [
+        "46%"
+      ]
+    },
+    "source": [
+      {
+        "evidence_id": "E101",
+        "text": "Core resources income by type of partner,\n2024\n$512.6 million\nPublic sector, 32%\n$724.9 million\nPrivate sector, 46%\n$346.1 million\nOther, 22%\nTotal\n$1.584\nbillion\nPrivate sector Public sector Tot al\n0\n200\n400\n600\n800\n1000"
+      }
+    ]
+  },
+  {
+    "cell": "unicef_reduced-B2",
+    "raw_index": 51,
+    "raw_compact": {
+      "l": "Other Resources Regular income from 2021",
+      "v": "20%",
+      "s": "UNICEF",
+      "r": "[E103]",
+      "e": [
+        "E103"
+      ],
+      "k": "metric",
+      "cf": 0.95,
+      "a": []
+    },
+    "expanded_canonical": {
+      "label": "Other Resources Regular income from 2021",
+      "value": "20%",
+      "subject": "UNICEF",
+      "reference": "[E103]",
+      "evidence_ids": [
+        "E103"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": []
+    },
+    "source": [
+      {
+        "evidence_id": "E103",
+        "text": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)"
+      }
+    ]
+  },
+  {
+    "cell": "unicef_reduced-B1",
+    "raw_index": 21,
+    "raw_compact": {
+      "l": "Sanitation services delivery in India",
+      "v": "17.9 million people provided with sanitation services in 2024",
+      "s": "Population in India",
+      "r": "India: Core Resources continued to play a vital role in the delivery and scaling up of the government's flagship water and sanitation programmes, providing safely managed water supplies for 59.3 million people and sanitation services for 17.9 million people in 2024",
+      "e": [
+        "E120"
+      ],
+      "k": "metric",
+      "cf": 0.98,
+      "a": []
+    },
+    "expanded_canonical": {
+      "label": "Sanitation services delivery in India",
+      "value": "17.9 million people provided with sanitation services in 2024",
+      "subject": "Population in India",
+      "reference": "India: Core Resources continued to play a vital role in the delivery and scaling up of the government's flagship water and sanitation programmes, providing safely managed water supplies for 59.3 million people and sanitation services for 17.9 million people in 2024",
+      "evidence_ids": [
+        "E120"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.98,
+      "aliases": []
+    },
+    "source": [
+      {
+        "evidence_id": "E120",
+        "text": "Taking the work to scale\nIndia: Core Resources continued to play a vital role in the delivery and scaling up of the \ngovernment’s flagship water and sanitation programmes, providing safely managed water \nsupplies for 59.3 million people and sanitation services for 17.9 million people in 2024."
+      }
+    ]
+  },
+  {
+    "cell": "unicef_reduced-B2",
+    "raw_index": 15,
+    "raw_compact": {
+      "l": "Period of under-five mortality reduction",
+      "v": "last decade",
+      "s": "Yemen",
+      "r": "[E110]",
+      "e": [
+        "E110"
+      ],
+      "k": "fact",
+      "cf": 0.95,
+      "a": []
+    },
+    "expanded_canonical": {
+      "label": "Period of under-five mortality reduction",
+      "value": "last decade",
+      "subject": "Yemen",
+      "reference": "[E110]",
+      "evidence_ids": [
+        "E110"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.95,
+      "aliases": []
+    },
+    "source": [
+      {
+        "evidence_id": "E110",
+        "text": "Before, during and after an emergency\nYemen: Core Resources safeguarded continued access and expansion of \nessential health services, contributing to a 23 per cent drop in under-five \nmortality over the course of the last decade of conflict."
+      }
+    ]
+  },
+  {
+    "cell": "unicef_reduced-B2",
+    "raw_index": 25,
+    "raw_compact": {
+      "l": "Government and other investment leveraged for social protection reform",
+      "v": "$68 million",
+      "s": "Republic of Moldova",
+      "r": "[E121]",
+      "e": [
+        "E121"
+      ],
+      "k": "metric",
+      "cf": 0.95,
+      "a": []
+    },
+    "expanded_canonical": {
+      "label": "Government and other investment leveraged for social protection reform",
+      "value": "$68 million",
+      "subject": "Republic of Moldova",
+      "reference": "[E121]",
+      "evidence_ids": [
+        "E121"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": []
+    },
+    "source": [
+      {
+        "evidence_id": "E121",
+        "text": "Republic of Moldova: Core Resources paved the way for $68 million of government and \nother investment in the RESTART social protection reform, mitigating a 3.4 per cent rise in \nchild poverty and increasing the value of social benefits for families with children, including \nUkrainian refugees, by 42 per cent."
+      }
+    ]
+  },
+  {
+    "cell": "unicef_reduced-B1",
+    "raw_index": 24,
+    "raw_compact": {
+      "l": "Social benefits increase for families with children in Moldova",
+      "v": "Value of social benefits for families with children, including Ukrainian refugees, increased by 42 per cent",
+      "s": "Families with children in Republic of Moldova",
+      "r": "Republic of Moldova: Core Resources paved the way for $68 million of government and other investment in the RESTART social protection reform, mitigating a 3.4 per cent rise in child poverty and increasing the value of social benefits for families with children, including Ukrainian refugees, by 42 per cent",
+      "e": [
+        "E121"
+      ],
+      "k": "metric",
+      "cf": 0.95,
+      "a": []
+    },
+    "expanded_canonical": {
+      "label": "Social benefits increase for families with children in Moldova",
+      "value": "Value of social benefits for families with children, including Ukrainian refugees, increased by 42 per cent",
+      "subject": "Families with children in Republic of Moldova",
+      "reference": "Republic of Moldova: Core Resources paved the way for $68 million of government and other investment in the RESTART social protection reform, mitigating a 3.4 per cent rise in child poverty and increasing the value of social benefits for families with children, including Ukrainian refugees, by 42 per cent",
+      "evidence_ids": [
+        "E121"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": []
+    },
+    "source": [
+      {
+        "evidence_id": "E121",
+        "text": "Republic of Moldova: Core Resources paved the way for $68 million of government and \nother investment in the RESTART social protection reform, mitigating a 3.4 per cent rise in \nchild poverty and increasing the value of social benefits for families with children, including \nUkrainian refugees, by 42 per cent."
+      }
+    ]
+  },
+  {
+    "cell": "unicef_reduced-B2",
+    "raw_index": 32,
+    "raw_compact": {
+      "l": "Children protected through case management system",
+      "v": "more than 675,000",
+      "s": "Sierra Leone",
+      "r": "[E124]",
+      "e": [
+        "E124"
+      ],
+      "k": "metric",
+      "cf": 0.95,
+      "a": []
+    },
+    "expanded_canonical": {
+      "label": "Children protected through case management system",
+      "value": "more than 675,000",
+      "subject": "Sierra Leone",
+      "reference": "[E124]",
+      "evidence_ids": [
+        "E124"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": []
+    },
+    "source": [
+      {
+        "evidence_id": "E124",
+        "text": "Sierra Leone: Core Resources strengthened the child protection and case \nmanagement system, accrediting social workers for the first time  \nand facilitating protection services for more than 675,000 children in \nfive years, including those who have faced violence, exploitation,  \nabuse or neglect."
+      }
+    ]
+  },
+  {
+    "cell": "unicef_reduced-B2",
+    "raw_index": 53,
+    "raw_compact": {
+      "l": "Core Resources income from 2020",
+      "v": "46%",
+      "s": "UNICEF",
+      "r": "[E103]",
+      "e": [
+        "E103"
+      ],
+      "k": "metric",
+      "cf": 0.95,
+      "a": []
+    },
+    "expanded_canonical": {
+      "label": "Core Resources income from 2020",
+      "value": "46%",
+      "subject": "UNICEF",
+      "reference": "[E103]",
+      "evidence_ids": [
+        "E103"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": []
+    },
+    "source": [
+      {
+        "evidence_id": "E103",
+        "text": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)"
+      }
+    ]
+  },
+  {
+    "cell": "india_wash-B2",
+    "raw_index": 11,
+    "raw_compact": {
+      "l": "UNICEF technical support delivery",
+      "v": "UNICEF supported this shift by embedding technical advisors in every state, and building the capacity of local governments to improve and monitor services over time",
+      "s": "UNICEF",
+      "r": "E214",
+      "e": [
+        "E214"
+      ],
+      "k": "fact",
+      "cf": 0.85,
+      "a": []
+    },
+    "expanded_canonical": {
+      "label": "UNICEF technical support delivery",
+      "value": "UNICEF supported this shift by embedding technical advisors in every state, and building the capacity of local governments to improve and monitor services over time",
+      "subject": "UNICEF",
+      "reference": "E214",
+      "evidence_ids": [
+        "E214"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.85,
+      "aliases": []
+    },
+    "source": [
+      {
+        "evidence_id": "E214",
+        "text": "UNICEF supported \nthis shift by embedding technical advisors in every state, \nand building the capacity of local governments to improve and \nmonitor services over time."
+      }
+    ]
+  },
+  {
+    "cell": "india_wash-B3",
+    "raw_index": 16,
+    "raw_compact": {
+      "l": "UNICEF technical support in WASH mission",
+      "v": "UNICEF supported by embedding technical advisors in every state, and building the capacity of local governments to improve and monitor services over time",
+      "s": "UNICEF",
+      "r": "Swachh Bharat Mission support",
+      "e": [
+        "E214"
+      ],
+      "k": "fact",
+      "cf": 0.93,
+      "a": []
+    },
+    "expanded_canonical": {
+      "label": "UNICEF technical support in WASH mission",
+      "value": "UNICEF supported by embedding technical advisors in every state, and building the capacity of local governments to improve and monitor services over time",
+      "subject": "UNICEF",
+      "reference": "Swachh Bharat Mission support",
+      "evidence_ids": [
+        "E214"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.93,
+      "aliases": []
+    },
+    "source": [
+      {
+        "evidence_id": "E214",
+        "text": "UNICEF supported \nthis shift by embedding technical advisors in every state, \nand building the capacity of local governments to improve and \nmonitor services over time."
+      }
+    ]
+  },
+  {
+    "cell": "india_wash-B2",
+    "raw_index": 23,
+    "raw_compact": {
+      "l": "Impact on waterborne diseases",
+      "v": "Lasting reductions in waterborne diseases – a major contributor to child mortality and morbidity",
+      "s": "India",
+      "r": "E236",
+      "e": [
+        "E236"
+      ],
+      "k": "metric",
+      "cf": 0.85,
+      "a": []
+    },
+    "expanded_canonical": {
+      "label": "Impact on waterborne diseases",
+      "value": "Lasting reductions in waterborne diseases – a major contributor to child mortality and morbidity",
+      "subject": "India",
+      "reference": "E236",
+      "evidence_ids": [
+        "E236"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.85,
+      "aliases": []
+    },
+    "source": [
+      {
+        "evidence_id": "E236",
+        "text": "improved drinking water, and lasting \nreductions in waterborne diseases"
+      }
+    ]
+  },
+  {
+    "cell": "india_wash-B3",
+    "raw_index": 24,
+    "raw_compact": {
+      "l": "Swachh Bharat Mission systemic impact",
+      "v": "Few programmes have had such a far-reaching and systemic impact as India's water, sanitation and hygiene (WASH) revolution",
+      "s": "India",
+      "r": "WASH transformation assessment",
+      "e": [
+        "E203"
+      ],
+      "k": "fact",
+      "cf": 0.87,
+      "a": []
+    },
+    "expanded_canonical": {
+      "label": "Swachh Bharat Mission systemic impact",
+      "value": "Few programmes have had such a far-reaching and systemic impact as India's water, sanitation and hygiene (WASH) revolution",
+      "subject": "India",
+      "reference": "WASH transformation assessment",
+      "evidence_ids": [
+        "E203"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.87,
+      "aliases": []
+    },
+    "source": [
+      {
+        "evidence_id": "E203",
+        "text": "Few programmes have had such a far-reaching and systemic impact as India’s \nwater, sanitation and hygiene (WASH) revolution."
+      }
+    ]
+  },
+  {
+    "cell": "india_wash-B3",
+    "raw_index": 8,
+    "raw_compact": {
+      "l": "Cost savings per family from toilet construction",
+      "v": "Every family living in the village who are constructing toilets in their homes is saving at least 50,000 rupees ($650)",
+      "s": "Families in villages",
+      "r": "UNICEF estimate",
+      "e": [
+        "E228"
+      ],
+      "k": "fact",
+      "cf": 0.85,
+      "a": []
+    },
+    "expanded_canonical": {
+      "label": "Cost savings per family from toilet construction",
+      "value": "Every family living in the village who are constructing toilets in their homes is saving at least 50,000 rupees ($650)",
+      "subject": "Families in villages",
+      "reference": "UNICEF estimate",
+      "evidence_ids": [
+        "E228"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.85,
+      "aliases": []
+    },
+    "source": [
+      {
+        "evidence_id": "E228",
+        "text": "\"UNICEF has estimated that every \nfamily living in the village who are \nconstructing toilets in their homes \nis saving at least 50,000 rupees \n($650)."
+      }
+    ]
+  },
+  {
+    "cell": "india_wash-B1",
+    "raw_index": 6,
+    "raw_compact": {
+      "l": "Jal Jeevan Mission launch",
+      "v": "India launched the Jal Jeevan (Water is Life) Mission to achieve universal access to safe and adequate drinking water",
+      "s": "Government of India",
+      "r": "[E216]",
+      "e": [
+        "E216"
+      ],
+      "k": "fact",
+      "cf": 0.95,
+      "a": [
+        "Jal Jeevan Mission",
+        "Water is Life Mission"
+      ]
+    },
+    "expanded_canonical": {
+      "label": "Jal Jeevan Mission launch",
+      "value": "India launched the Jal Jeevan (Water is Life) Mission to achieve universal access to safe and adequate drinking water",
+      "subject": "Government of India",
+      "reference": "[E216]",
+      "evidence_ids": [
+        "E216"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.95,
+      "aliases": [
+        "Jal Jeevan Mission",
+        "Water is Life Mission"
+      ]
+    },
+    "source": [
+      {
+        "evidence_id": "E216",
+        "text": "I have personally seen how  \nmuch engagement has been shown by your team in water  \nand sanitation.” \nBuilding on the gains of the sanitation movement, India launched \nthe Jal Jeevan (Water is Life) Mission to achieve universal access \nto safe and adequate drinking water – a natural and essential \nnext step in improving child health, development and protection."
+      }
+    ]
+  },
+  {
+    "cell": "india_wash-B3",
+    "raw_index": 15,
+    "raw_compact": {
+      "l": "UNICEF role in Swachh Bharat Mission",
+      "v": "UNICEF has been a trusted partner in the mission's design, delivery and scaling up, helping ensure that infrastructure was matched with systems-strengthening, community engagement and behaviour change",
+      "s": "UNICEF",
+      "r": "From the start",
+      "e": [
+        "E213"
+      ],
+      "k": "fact",
+      "cf": 0.93,
+      "a": []
+    },
+    "expanded_canonical": {
+      "label": "UNICEF role in Swachh Bharat Mission",
+      "value": "UNICEF has been a trusted partner in the mission's design, delivery and scaling up, helping ensure that infrastructure was matched with systems-strengthening, community engagement and behaviour change",
+      "subject": "UNICEF",
+      "reference": "From the start",
+      "evidence_ids": [
+        "E213"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.93,
+      "aliases": []
+    },
+    "source": [
+      {
+        "evidence_id": "E213",
+        "text": "From the start, UNICEF has been a \ntrusted partner in the mission’s design, delivery \nand scaling up, helping ensure that infrastructure \nwas matched with systems-strengthening, community \nengagement and behaviour change."
+      }
+    ]
+  },
+  {
+    "cell": "india_wash-B3",
+    "raw_index": 7,
+    "raw_compact": {
+      "l": "Rural households with piped water connections over five years",
+      "v": "More than 115 million rural households have gained piped water connections in their homes for the first time",
+      "s": "India",
+      "r": "Over the last five years",
+      "e": [
+        "E218"
+      ],
+      "k": "metric",
+      "cf": 0.92,
+      "a": []
+    },
+    "expanded_canonical": {
+      "label": "Rural households with piped water connections over five years",
+      "value": "More than 115 million rural households have gained piped water connections in their homes for the first time",
+      "subject": "India",
+      "reference": "Over the last five years",
+      "evidence_ids": [
+        "E218"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.92,
+      "aliases": []
+    },
+    "source": [
+      {
+        "evidence_id": "E218",
+        "text": "Over the last five years, \nmore than 115 million rural households have gained piped water \nconnections in their homes for the first time."
+      }
+    ]
+  },
+  {
+    "cell": "india_wash-B2",
+    "raw_index": 25,
+    "raw_compact": {
+      "l": "Safely managed sanitation access in 2024",
+      "v": "17.9 million people accessed safely managed sanitation in their homes in 2024",
+      "s": "India",
+      "r": "E237",
+      "e": [
+        "E237"
+      ],
+      "k": "metric",
+      "cf": 0.9,
+      "a": []
+    },
+    "expanded_canonical": {
+      "label": "Safely managed sanitation access in 2024",
+      "value": "17.9 million people accessed safely managed sanitation in their homes in 2024",
+      "subject": "India",
+      "reference": "E237",
+      "evidence_ids": [
+        "E237"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.9,
+      "aliases": []
+    },
+    "source": [
+      {
+        "evidence_id": "E237",
+        "text": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+      }
+    ]
+  },
+  {
+    "cell": "india_wash-B1",
+    "raw_index": 28,
+    "raw_compact": {
+      "l": "entity_type:person",
+      "v": "Cynthia McCaffrey",
+      "s": "UNICEF India Representative",
+      "r": "[E237]",
+      "e": [
+        "E237"
+      ],
+      "k": "entity",
+      "cf": 0.95,
+      "a": []
+    },
+    "expanded_canonical": {
+      "label": "entity_type:person",
+      "value": "Cynthia McCaffrey",
+      "subject": "UNICEF India Representative",
+      "reference": "[E237]",
+      "evidence_ids": [
+        "E237"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "entity",
+      "confidence": 0.95,
+      "aliases": []
+    },
+    "source": [
+      {
+        "evidence_id": "E237",
+        "text": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+      }
+    ]
+  }
+]

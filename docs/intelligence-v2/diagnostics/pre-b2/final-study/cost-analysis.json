@@ -1,0 +1,17 @@
+{
+  "actual_total_study_cost_usd": "0.630805",
+  "max_chunk_pair_cost_usd": "0.090504",
+  "variant_b_incremental_cost_usd": "0.078725",
+  "variant_b_relative_cost_increase": 0.28519417475728154,
+  "net_additional_represented_candidate_instances": 4,
+  "net_additional_gold_item_instances": 6,
+  "cost_per_net_additional_represented_candidate_usd": "0.01968125",
+  "cost_per_net_additional_gold_item_usd": "0.01312083333333333333333333333",
+  "approved_limits_usd": {
+    "MAX_TOTAL_STUDY_COST_USD": 1.5,
+    "MAX_COST_PER_DOCUMENT_CHUNK_PAIR_USD": 0.15,
+    "MAX_COST_PER_ADDITIONAL_REPRESENTED_CANDIDATE_USD": 0.1,
+    "MAX_COST_PER_ADDITIONAL_GOLD_ITEM_USD": 0.15,
+    "basis": "12 saved paid calls cost $0.018473–$0.058467 each; 20 planned calls, conservative per-pair and total ceilings. Product value thresholds require founder approval."
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "contract_id": "intelligence-v2-pre-b2-extraction-v1",
+  "order": [
+    "unicef_reduced-A1",
+    "unicef_reduced-B1",
+    "india_wash-A1",
+    "india_wash-B1",
+    "unicef_reduced-A2",
+    "unicef_reduced-B2",
+    "india_wash-A2",
+    "india_wash-B2",
+    "unicef_reduced-A3",
+    "unicef_reduced-B3",
+    "india_wash-A3",
+    "india_wash-B3",
+    "unicef_reduced-A4",
+    "unicef_reduced-B4",
+    "india_wash-A4",
+    "india_wash-B4",
+    "unicef_reduced-A5",
+    "unicef_reduced-B5",
+    "india_wash-A5",
+    "india_wash-B5"
+  ],
+  "calls": {
+    "unicef_reduced:CONTROL": {
+      "model_id": "claude-haiku-4-5-20251001",
+      "prompt_version": "pre-b2-control-v1",
+      "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+      "schema_version": "evidence-schema-span-v1-snapshot",
+      "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+      "wire_format_version": "canonical-json-span-v1",
+      "source_sha256": "103987d34dc9a0a55d6d6924273b19177e60f53f6db67ff7a5924b00c4b7d46a",
+      "span_set_sha256": "9ab4454b1d8c6cd5ae98ff2dffca178cf0b23692607748ac89b1d1e9ecc0b1d9",
+      "planner_config_sha256": "e55066f545a0b42a4570f0d48dfe447a6a56984602f69b63a65d53708c3051d2",
+      "detector_version": "candidate-inventory-v1.0.0",
+      "matcher_version": "candidate-representation-v1.0.0",
+      "request_body_sha256": "d28a6421e873e965413815c779461264f841c1ec0ab5fc543be47bf61db5d700"
+    },
+    "unicef_reduced:CONTROL_MINUS_MATERIALITY": {
+      "model_id": "claude-haiku-4-5-20251001",
+      "prompt_version": "pre-b2-control-minus-materiality-v1",
+      "system_prompt_sha256": "e502eb39ccfabe2401451c72cb79c904d3c94fb609807a0ae8b739f7269e142f",
+      "schema_version": "evidence-schema-span-v1-snapshot",
+      "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+      "wire_format_version": "canonical-json-span-v1",
+      "source_sha256": "103987d34dc9a0a55d6d6924273b19177e60f53f6db67ff7a5924b00c4b7d46a",
+      "span_set_sha256": "9ab4454b1d8c6cd5ae98ff2dffca178cf0b23692607748ac89b1d1e9ecc0b1d9",
+      "planner_config_sha256": "e55066f545a0b42a4570f0d48dfe447a6a56984602f69b63a65d53708c3051d2",
+      "detector_version": "candidate-inventory-v1.0.0",
+      "matcher_version": "candidate-representation-v1.0.0",
+      "request_body_sha256": "5c8b718fb2cf3e33e879bb7ced97a50cf3adc65162258f23270946dbe1dbd345"
+    },
+    "india_wash:CONTROL": {
+      "model_id": "claude-haiku-4-5-20251001",
+      "prompt_version": "pre-b2-control-v1",
+      "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+      "schema_version": "evidence-schema-span-v1-snapshot",
+      "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+      "wire_format_version": "canonical-json-span-v1",
+      "source_sha256": "0709f82d8ff76517e2617ca88e17a1e21a4bbefbcd60a2c18c678ee50b23171f",
+      "span_set_sha256": "8a4539f31dfd0ccfdba2d844ab9285034c0c7c50ad0d92189470f7ee7aa58df7",
+      "planner_config_sha256": "e55066f545a0b42a4570f0d48dfe447a6a56984602f69b63a65d53708c3051d2",
+      "detector_version": "candidate-inventory-v1.0.0",
+      "matcher_version": "candidate-representation-v1.0.0",
+      "request_body_sha256": "716df69a1607827b5994b68e1cadd5b61433c950397a69995cc31e3a2ac6e42e"
+    },
+    "india_wash:CONTROL_MINUS_MATERIALITY": {
+      "model_id": "claude-haiku-4-5-20251001",
+      "prompt_version": "pre-b2-control-minus-materiality-v1",
+      "system_prompt_sha256": "e502eb39ccfabe2401451c72cb79c904d3c94fb609807a0ae8b739f7269e142f",
+      "schema_version": "evidence-schema-span-v1-snapshot",
+      "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+      "wire_format_version": "canonical-json-span-v1",
+      "source_sha256": "0709f82d8ff76517e2617ca88e17a1e21a4bbefbcd60a2c18c678ee50b23171f",
+      "span_set_sha256": "8a4539f31dfd0ccfdba2d844ab9285034c0c7c50ad0d92189470f7ee7aa58df7",
+      "planner_config_sha256": "e55066f545a0b42a4570f0d48dfe447a6a56984602f69b63a65d53708c3051d2",
+      "detector_version": "candidate-inventory-v1.0.0",
+      "matcher_version": "candidate-representation-v1.0.0",
+      "request_body_sha256": "6580b94f3b9aceecb61a358c2e35854d0a3410c992e054b0e9259d9c2ee5e469"
+    }
+  },
+  "initial_repo_head": "618e713b68852f62ad45b29318a5f947f4cc6cfe",
+  "pricing_source": "https://platform.claude.com/docs/en/models/haiku-4-5/overview",
+  "approved_limits_usd": {
+    "total": "1.50",
+    "per_chunk_pair": "0.15"
+  }
+}

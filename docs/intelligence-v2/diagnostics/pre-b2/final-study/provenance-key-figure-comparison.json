@@ -1,0 +1,296 @@
+{
+  "cells": {
+    "unicef_reduced-A1": {
+      "provenance_distribution": {
+        "document": 39,
+        "unknown": 8
+      },
+      "typed_evidence_counts": {
+        "money": 8,
+        "percent": 1,
+        "count": 12
+      },
+      "key_figure_eligible_count": 5
+    },
+    "unicef_reduced-B1": {
+      "provenance_distribution": {
+        "document": 36,
+        "unknown": 30
+      },
+      "typed_evidence_counts": {
+        "money": 8,
+        "percent": 9,
+        "number": 10
+      },
+      "key_figure_eligible_count": 5
+    },
+    "india_wash-A1": {
+      "provenance_distribution": {
+        "document": 24,
+        "unknown": 10
+      },
+      "typed_evidence_counts": {
+        "percent": 1,
+        "count": 6,
+        "money": 1
+      },
+      "key_figure_eligible_count": 1
+    },
+    "india_wash-B1": {
+      "provenance_distribution": {
+        "document": 17,
+        "unknown": 22
+      },
+      "typed_evidence_counts": {
+        "count": 6,
+        "money": 1
+      },
+      "key_figure_eligible_count": 1
+    },
+    "unicef_reduced-A2": {
+      "provenance_distribution": {
+        "document": 34,
+        "unknown": 2
+      },
+      "typed_evidence_counts": {
+        "money": 7,
+        "percent": 6,
+        "count": 6,
+        "number": 8
+      },
+      "key_figure_eligible_count": 4
+    },
+    "unicef_reduced-B2": {
+      "provenance_distribution": {
+        "document": 63,
+        "unknown": 8
+      },
+      "typed_evidence_counts": {
+        "money": 8,
+        "percent": 20,
+        "number": 8
+      },
+      "key_figure_eligible_count": 5
+    },
+    "india_wash-A2": {
+      "provenance_distribution": {
+        "document": 12,
+        "unknown": 7
+      },
+      "typed_evidence_counts": {
+        "percent": 1,
+        "period": 1,
+        "count": 6,
+        "money": 1
+      },
+      "key_figure_eligible_count": 1
+    },
+    "india_wash-B2": {
+      "provenance_distribution": {
+        "document": 12,
+        "unknown": 6
+      },
+      "typed_evidence_counts": {
+        "percent": 1,
+        "count": 6,
+        "money": 1
+      },
+      "key_figure_eligible_count": 1
+    },
+    "unicef_reduced-A3": {
+      "provenance_distribution": {
+        "document": 31,
+        "unknown": 6
+      },
+      "typed_evidence_counts": {
+        "money": 8,
+        "percent": 8,
+        "count": 8,
+        "number": 3
+      },
+      "key_figure_eligible_count": 5
+    },
+    "unicef_reduced-B3": {
+      "provenance_distribution": {
+        "document": 55,
+        "unknown": 4
+      },
+      "typed_evidence_counts": {
+        "money": 9,
+        "percent": 21,
+        "number": 10
+      },
+      "key_figure_eligible_count": 6
+    },
+    "india_wash-A3": {
+      "provenance_distribution": {
+        "document": 10,
+        "unknown": 11
+      },
+      "typed_evidence_counts": {
+        "percent": 1,
+        "count": 5
+      },
+      "key_figure_eligible_count": 0
+    },
+    "india_wash-B3": {
+      "provenance_distribution": {
+        "document": 15,
+        "unknown": 7
+      },
+      "typed_evidence_counts": {
+        "period": 1,
+        "count": 6,
+        "money": 1
+      },
+      "key_figure_eligible_count": 1
+    },
+    "unicef_reduced-A4": {
+      "provenance_distribution": {
+        "document": 30,
+        "unknown": 7
+      },
+      "typed_evidence_counts": {
+        "money": 8,
+        "percent": 7,
+        "count": 7,
+        "number": 2
+      },
+      "key_figure_eligible_count": 5
+    },
+    "unicef_reduced-B4": {
+      "provenance_distribution": {
+        "document": 31,
+        "unknown": 27
+      },
+      "typed_evidence_counts": {
+        "money": 8,
+        "percent": 7,
+        "count": 10
+      },
+      "key_figure_eligible_count": 4
+    },
+    "india_wash-A4": {
+      "provenance_distribution": {
+        "document": 8,
+        "unknown": 11
+      },
+      "typed_evidence_counts": {
+        "count": 4
+      },
+      "key_figure_eligible_count": 0
+    },
+    "india_wash-B4": {
+      "provenance_distribution": {
+        "document": 16,
+        "unknown": 23
+      },
+      "typed_evidence_counts": {
+        "percent": 1,
+        "period": 1,
+        "count": 7,
+        "money": 1
+      },
+      "key_figure_eligible_count": 1
+    },
+    "unicef_reduced-A5": {
+      "provenance_distribution": {
+        "document": 26,
+        "unknown": 32
+      },
+      "typed_evidence_counts": {
+        "money": 8,
+        "percent": 20,
+        "count": 10
+      },
+      "key_figure_eligible_count": 5
+    },
+    "unicef_reduced-B5": {
+      "provenance_distribution": {
+        "document": 38,
+        "unknown": 4
+      },
+      "typed_evidence_counts": {
+        "count": 8,
+        "money": 5,
+        "percent": 5
+      },
+      "key_figure_eligible_count": 2
+    },
+    "india_wash-A5": {
+      "provenance_distribution": {
+        "document": 21,
+        "unknown": 9
+      },
+      "typed_evidence_counts": {
+        "number": 1,
+        "count": 6,
+        "money": 1
+      },
+      "key_figure_eligible_count": 1
+    },
+    "india_wash-B5": {
+      "provenance_distribution": {
+        "document": 16,
+        "unknown": 8
+      },
+      "typed_evidence_counts": {
+        "period": 2,
+        "count": 6,
+        "money": 1
+      },
+      "key_figure_eligible_count": 1
+    }
+  },
+  "groups": {
+    "unicef_reduced": {
+      "A": {
+        "provenance_document": 160,
+        "provenance_unknown": 55,
+        "typed_evidence_counts": {
+          "money": 39,
+          "percent": 42,
+          "count": 43,
+          "number": 13
+        },
+        "key_figure_eligible_count": 24
+      },
+      "B": {
+        "provenance_document": 223,
+        "provenance_unknown": 73,
+        "typed_evidence_counts": {
+          "money": 38,
+          "percent": 62,
+          "number": 28,
+          "count": 18
+        },
+        "key_figure_eligible_count": 22
+      }
+    },
+    "india_wash": {
+      "A": {
+        "provenance_document": 75,
+        "provenance_unknown": 48,
+        "typed_evidence_counts": {
+          "percent": 3,
+          "count": 27,
+          "money": 3,
+          "period": 1,
+          "number": 1
+        },
+        "key_figure_eligible_count": 3
+      },
+      "B": {
+        "provenance_document": 76,
+        "provenance_unknown": 66,
+        "typed_evidence_counts": {
+          "count": 31,
+          "money": 5,
+          "percent": 2,
+          "period": 4
+        },
+        "key_figure_eligible_count": 5
+      }
+    }
+  }
+}

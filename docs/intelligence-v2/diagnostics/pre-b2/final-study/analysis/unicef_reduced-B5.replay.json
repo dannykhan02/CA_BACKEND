@@ -1,0 +1,1191 @@
+{
+    "cell": "unicef_reduced-B5",
+    "response_sha256": "cf51d643b01d44e2d2d4955ce9f4dd30e103c60f163ca1d2ce4094caea32483f",
+    "returned_count": 71,
+    "accepted_count": 42,
+    "rejected_count": 29,
+    "validation": {
+        "records_returned": 71,
+        "records_kept": 42,
+        "records_dropped": 29,
+        "rejections": {
+            "invalid_date": 29
+        },
+        "rejection_reasons": {
+            "due_date_wrong_format": 29
+        },
+        "evidence_grounding_mode": "span_reference",
+        "records_date_metadata_sanitized": 0,
+        "date_metadata_sanitized": [],
+        "date_rejection_reasons_by_kind": {
+            "due_date_wrong_format": {
+                "metric": 29
+            }
+        },
+        "date_metadata_sanitized_by_kind": []
+    },
+    "origin": {
+        "document": 38,
+        "unknown": 4
+    },
+    "key_figure_eligible_count": 2,
+    "premerge_identity_count": 42,
+    "trace": [
+        {
+            "raw_index": 0,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 1,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 2,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 3,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 4,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 5,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 6,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 7,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 8,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 9,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 10,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 11,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 12,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 13,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 14,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 15,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 16,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 17,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 18,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 19,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 20,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 21,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 22,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 23,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 24,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 25,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 26,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 27,
+            "accepted": true,
+            "identity": "e3f52d37e0e654e128e5efa2260b369be93db1711996061f634b7499c4474e6b",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 28,
+            "accepted": true,
+            "identity": "e97fda51fba8525cfc6fbba8c7b38d34f9e462e82ba58233e33c25c7f7dd26e8",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "count",
+                    "raw": "10 million people",
+                    "verbatim": true,
+                    "number": 10000000,
+                    "scale": 1000000,
+                    "scale_source": "stated",
+                    "currency": null,
+                    "unit": "people",
+                    "unit_kind": "count",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "target",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Horn of Africa drought-prone countries"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 29,
+            "accepted": true,
+            "identity": "b1cb3c1f6719375f8d3c1ea1504a51fffff2ff7d525872552943c6cefb24fa34",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": true,
+            "typed": {
+                "value": {
+                    "type": "money",
+                    "raw": "$1 billion",
+                    "verbatim": true,
+                    "number": 1000000000,
+                    "scale": 1000000000,
+                    "scale_source": "stated",
+                    "currency": "$",
+                    "unit": "USD billions",
+                    "unit_kind": "currency",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Guatemala"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 30,
+            "accepted": true,
+            "identity": "03e223e59e90b67065d93c90c4428228e5ebacc4df2d1eab606662b09c8dab2c",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 31,
+            "accepted": true,
+            "identity": "592f005375072ff556bf886fcc39932f4dbc6892a34d6407f8109de546e1e01c",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "count",
+                    "raw": "13 countries",
+                    "verbatim": true,
+                    "number": 13,
+                    "scale": 1,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": "count",
+                    "unit_kind": "count",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Global"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 32,
+            "accepted": true,
+            "identity": "9474b17e30a1bd32916b5c909a3a16d3a3f3fc337308743eade43dd381aa6de9",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "percent",
+                    "raw": "23 per cent drop",
+                    "verbatim": true,
+                    "number": 23,
+                    "scale": 1,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": "percent",
+                    "unit_kind": "percent",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Yemen"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 33,
+            "accepted": true,
+            "identity": "20d7ffd985e3fe16de4414f694ed7ee0d30d41c08a0cc5fd1c6f9c9a3449dd7c",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 34,
+            "accepted": true,
+            "identity": "b1e206907cb279608331944c1616d1137ed5a8a42842290e9d6b1f9582d708c1",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "count",
+                    "raw": "more than 129,000 children",
+                    "verbatim": true,
+                    "number": 129000,
+                    "scale": 1,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": "people",
+                    "unit_kind": "count",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Democratic Republic of the Congo"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 35,
+            "accepted": true,
+            "identity": "193c6f4d9059355dea88adc8b80f65c561d24e06ed19cb4a0e9e2ecfd64d7322",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "count",
+                    "raw": "more than 120,000 people",
+                    "verbatim": true,
+                    "number": 120000,
+                    "scale": 1,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": "people",
+                    "unit_kind": "count",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Madagascar and Mozambique"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 36,
+            "accepted": true,
+            "identity": "62bc6af8a024307d0b74dd1b0f1eaf8f3e807139ac3e478731e75c9c373a5cd7",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "percent",
+                    "raw": "22.7 per cent",
+                    "verbatim": true,
+                    "number": 22.7,
+                    "scale": 1,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": "percent",
+                    "unit_kind": "percent",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Rwanda"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 37,
+            "accepted": true,
+            "identity": "7de0b6d66bcd924caf5be2dae1748f9a37c074341046e4ba7f241b89a15e0592",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 38,
+            "accepted": true,
+            "identity": "653a5c9cad1cbe3accd074dc08894cc8f8e30b46ad438f3552b02ea5b28807b0",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "count",
+                    "raw": "14 provinces",
+                    "verbatim": true,
+                    "number": 14,
+                    "scale": 1,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": "count",
+                    "unit_kind": "count",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Viet Nam"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 39,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 40,
+            "accepted": false,
+            "rejection_class": "invalid_date",
+            "rejection_reason": {
+                "due_date_wrong_format": 1
+            }
+        },
+        {
+            "raw_index": 41,
+            "accepted": true,
+            "identity": "0d8e476252bc68dd995317685991ff660c4c808999cd4f6846d8dad607fa31b3",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": true,
+            "typed": {
+                "value": {
+                    "type": "money",
+                    "raw": "$68 million",
+                    "verbatim": true,
+                    "number": 68000000,
+                    "scale": 1000000,
+                    "scale_source": "stated",
+                    "currency": "$",
+                    "unit": "USD millions",
+                    "unit_kind": "currency",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Republic of Moldova"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 42,
+            "accepted": true,
+            "identity": "415d8579cfa1212b6a7a34323339967b9507fcbe40f5a202438e29653d9c655c",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "percent",
+                    "raw": "3.4 per cent rise",
+                    "verbatim": true,
+                    "number": 3.4,
+                    "scale": 1,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": "percent",
+                    "unit_kind": "percent",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Republic of Moldova"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 43,
+            "accepted": true,
+            "identity": "ab26fb615ef34a41bbcf6a30f99929cace9f263482283646302acad400240ee0",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "percent",
+                    "raw": "42 per cent",
+                    "verbatim": true,
+                    "number": 42,
+                    "scale": 1,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": "percent",
+                    "unit_kind": "percent",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Republic of Moldova"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 44,
+            "accepted": true,
+            "identity": "07d4016dc24bde002a2ef0654f575f4b17660c9e3c345922604f4f392ee660b2",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "percent",
+                    "raw": "40 per cent reduction",
+                    "verbatim": true,
+                    "number": 40,
+                    "scale": 1,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": "percent",
+                    "unit_kind": "percent",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Bangladesh"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 45,
+            "accepted": true,
+            "identity": "614d4c373d3dea916b0a075d131dc20658153ab616c620bfc2baeff74a006b35",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 46,
+            "accepted": true,
+            "identity": "485734d8c303f6a4934a4de0bfaea443267823e8f7ca69d402bba0cdb39d087b",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "count",
+                    "raw": "500 children and women",
+                    "verbatim": true,
+                    "number": 500,
+                    "scale": 1,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": "people",
+                    "unit_kind": "count",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Jordan"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 47,
+            "accepted": true,
+            "identity": "3944759639f02471c9a0eab21f46ffa9bba6eb9f1b3b05c2c6de3bcc054ca738",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "count",
+                    "raw": "more than 675,000 children",
+                    "verbatim": true,
+                    "number": 675000,
+                    "scale": 1,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": "people",
+                    "unit_kind": "count",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Sierra Leone"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 48,
+            "accepted": true,
+            "identity": "6e26de0a6564aaec0b7387d4363045703e0e28859c73daf1c413878c9bb0fcd5",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 49,
+            "accepted": true,
+            "identity": "788a12358597021774c9e5bb4e01a3b90f89ce0c266cfdb64293f1cbfe8461e0",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "count",
+                    "raw": "19 child indicators",
+                    "verbatim": true,
+                    "number": 19,
+                    "scale": 1,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": "count",
+                    "unit_kind": "count",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "UNICEF"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 50,
+            "accepted": true,
+            "identity": "487593a4ce6e0728966e474b0e20071ae98cbee1f806230909b64dc1fec3735c",
+            "premerge_collision": false,
+            "origin": "unknown",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "money",
+                    "raw": "$952 million",
+                    "verbatim": true,
+                    "number": 952000000,
+                    "scale": 1000000,
+                    "scale_source": "stated",
+                    "currency": "$",
+                    "unit": "USD millions",
+                    "unit_kind": "currency",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "UNICEF country programmes advancing children's rights and the SDGs"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 51,
+            "accepted": true,
+            "identity": "ba11f40bd68847b2cedf2652d10eaa0be6bcb5b77f75a988312da28583522e92",
+            "premerge_collision": false,
+            "origin": "unknown",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "money",
+                    "raw": "$227 million",
+                    "verbatim": true,
+                    "number": 227000000,
+                    "scale": 1000000,
+                    "scale_source": "stated",
+                    "currency": "$",
+                    "unit": "USD millions",
+                    "unit_kind": "currency",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "UNICEF"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 52,
+            "accepted": true,
+            "identity": "d437daf6ed7fe66588f768e55f3087ba4e3268ad361ddf4155169bc7cddb2f8e",
+            "premerge_collision": false,
+            "origin": "unknown",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": {
+                    "type": "money",
+                    "raw": "$174 million",
+                    "verbatim": true,
+                    "number": 174000000,
+                    "scale": 1000000,
+                    "scale_source": "stated",
+                    "currency": "$",
+                    "unit": "USD millions",
+                    "unit_kind": "currency",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "UNICEF"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 53,
+            "accepted": true,
+            "identity": "48da6f833c110bef776584b0f62f1a2a4551a5f69f15944e5b15301a915ae597",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 54,
+            "accepted": true,
+            "identity": "61456749712d754a79482e174bf76d2d49a3d512e448bbfc5301aff076f889cb",
+            "premerge_collision": false,
+            "origin": "unknown",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 55,
+            "accepted": true,
+            "identity": "700273cc93b7d7a98a8cfaad61cedf871c4ee5a11c9bd02d3ce14b18fd4ca509",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 56,
+            "accepted": true,
+            "identity": "9db09150ed02bb01de2577416d076fcc21136ce7aa9dc4e2d42b76eb9f973591",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 57,
+            "accepted": true,
+            "identity": "e6de65d607a1d914e5313c14e9add9f9d7be1f2dc14e001a7afd86555494efa0",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 58,
+            "accepted": true,
+            "identity": "9c8909682a20949b054c09590d2d91869d36a211262052c473b0d99e57bc3f8b",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 59,
+            "accepted": true,
+            "identity": "5a1818456163bf7a37f660b4fe2a05e3423c80f4539e14dc70afb95777faf6f2",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 60,
+            "accepted": true,
+            "identity": "fd5eacf71b8b72b9b62e50d527e102c2a26bc34408844b52f3b48a2d39cec0b4",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 61,
+            "accepted": true,
+            "identity": "0d17ee1b648346e1ea7799b234522f3da980d388e6d75233e87d96d16b49ab00",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 62,
+            "accepted": true,
+            "identity": "d508362c70db491d9159a51443d9e4a02d3a5113eca5bf16c096e59d96db11d8",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 63,
+            "accepted": true,
+            "identity": "bf2f9fbef242b9b98261e88c980acb8cee66008988cd7aea6330f8aae92c4419",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 64,
+            "accepted": true,
+            "identity": "a9ad8e146a7097058e3820e4053f354a6b10767bdae88bb048b8d582487fb3d6",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 65,
+            "accepted": true,
+            "identity": "8feb2809a930305dc231c6b32264b6b6ceed7bad9251056685527351229f5917",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 66,
+            "accepted": true,
+            "identity": "038a36b484ba225673db7f9866922e0fee39b2fbd38601f8fd26e035663e7f4e",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 67,
+            "accepted": true,
+            "identity": "46fcc9a63b83c8e1d670185ce4ed042ca426d70bec9c45af698ffac68f450f24",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 68,
+            "accepted": true,
+            "identity": "c0735be352e52c0ea5380a6114d4b76cba758bf13c1ce4ee563a60b52f0fa499",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 69,
+            "accepted": true,
+            "identity": "e219a7ed3cd7fd23f7f317bf8eb2325ebf6ad76f5c43ba4e39a05bcfe98b0002",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        },
+        {
+            "raw_index": 70,
+            "accepted": true,
+            "identity": "94fc1ea4d0103282b0e4ee1b87532480f000b1e8346bef16ad39368654431843",
+            "premerge_collision": false,
+            "origin": "document",
+            "key_figure_eligible": false,
+            "typed": {
+                "value": null,
+                "dates": [],
+                "extras": []
+            }
+        }
+    ]
+}

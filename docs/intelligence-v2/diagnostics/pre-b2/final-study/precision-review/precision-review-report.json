@@ -1,0 +1,7 @@
+{
+  "judgments_sha256": "f50be77a8feba83e70bbf83a057d5072bab27fa11ec545c8e392c15e85477628",
+  "blinded_sha256": "dbabff9a17a72cfb804fd02ed9c657bee7d6ef328097110cb2216f2f891e85dc",
+  "judgment_count": 396,
+  "mapping_applied": false,
+  "reviewer_disclosure": "The precision reviewer was an AI agent using mechanical blinding. The agent conducting the wider experiment had access to study context, so this is not equivalent to an independent human-blinded review."
+}

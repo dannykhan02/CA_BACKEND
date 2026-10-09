@@ -1,0 +1,1644 @@
+{
+  "replay": {
+    "cell": "unicef_reduced-B1",
+    "response_sha256": "22f83a1870727152d16df8135e1cf662ce84cf7d7ee98f2ac45e7b26ead5bb1e",
+    "returned_count": 36,
+    "accepted_count": 34,
+    "rejected_count": 2,
+    "validation": {
+      "records_returned": 36,
+      "records_kept": 34,
+      "records_dropped": 2,
+      "rejections": {
+        "invalid_evidence": 2
+      },
+      "rejection_reasons": {
+        "too_many_evidence_ids": 2
+      },
+      "evidence_grounding_mode": "span_reference",
+      "records_date_metadata_sanitized": 0,
+      "date_metadata_sanitized": [],
+      "date_rejection_reasons_by_kind": [],
+      "date_metadata_sanitized_by_kind": []
+    },
+    "origin": {
+      "document": 5,
+      "unknown": 29
+    },
+    "key_figure_eligible_count": 0,
+    "premerge_identity_count": 34,
+    "trace": [
+      {
+        "raw_index": 0,
+        "accepted": true,
+        "identity": "de915c93a5a8237e1eddd2fdc375dc3c64309c0c6d87d227fef12b0cee3a2ee5",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 1,
+        "accepted": true,
+        "identity": "039b7185c7d0fae3339c143004c685c96d290b4a73328e4afab818a8b79dc4a4",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 2,
+        "accepted": true,
+        "identity": "26769f5b67faafaae76b7ab31c11e2b684535766b54ecd962c0ef4541986a182",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 3,
+        "accepted": true,
+        "identity": "bef90417016db6b44ff3a629b70b1a35269b9c4ea94dfcbd877757a39890773f",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 4,
+        "accepted": true,
+        "identity": "cbf573b2bba75679adb5498c65658c3b20180f340740e02d7c602bc9926743b3",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 5,
+        "accepted": true,
+        "identity": "ccdb9d0bccbf103a0093bd14ad9ef4f95fb9828fb6213399756e2c0e3d167f25",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 6,
+        "accepted": true,
+        "identity": "0ff0d616d977e9eff7202d5c0206c40d5476b3b24c7eaf7000650e3b8771fe46",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 7,
+        "accepted": true,
+        "identity": "92f828c3860a53d94aa377ecbed4b78ea769ed9a7ef3fca1860bd48cfaa8bd2f",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 8,
+        "accepted": true,
+        "identity": "e94bbb6f50b83272a80993b469a3066a2f14df1ca27c0483bd205bf4803dd0d0",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 9,
+        "accepted": true,
+        "identity": "2b9a6e274d09f8ff9a7813000c4dcf6d2e961e67985399ebebf62761e902ab46",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": {
+            "type": "number",
+            "raw": "10 million people in need",
+            "verbatim": true,
+            "number": 10000000,
+            "scale": 1000000,
+            "scale_source": "stated",
+            "currency": null,
+            "unit": null,
+            "unit_kind": "other",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": null,
+            "entity_ref": {
+              "id": null,
+              "text": "Horn of Africa drought-prone countries population"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 10,
+        "accepted": true,
+        "identity": "b4cfac113b45f6ef91bb1355ede3a5fa99bc3c303438293809ec0e161addb8ec",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 11,
+        "accepted": true,
+        "identity": "48c35a2430e56e836af5b4d9945ca4b185728770453b15ba951e07ec2681af57",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 12,
+        "accepted": true,
+        "identity": "cf8bec7a9cc3f11dd1cf5cf815605a488d5226fdeb2105dadf28a532c385490e",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 13,
+        "accepted": true,
+        "identity": "0fd0611cdcaf131139d13c4a28be0e42059ae6e70d5fb661b7fd931a513a308d",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 14,
+        "accepted": true,
+        "identity": "a0f711d9abd6d9e1e3643d62f4be82c3a040622af888d7aa5eab0ace671a7aba",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 15,
+        "accepted": true,
+        "identity": "f75eb072f448ac709938259a6d14774add56d3c7a1d6536a133ee0e360e392c9",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 16,
+        "accepted": true,
+        "identity": "be59ee627f2de46246268c9631c5f7f77cb8ca9ac66c2b7c07a69f9af7f10bff",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 17,
+        "accepted": true,
+        "identity": "8124842620c12144f0877583957f4f7ce61b393e4e415cbd4df50b74ca7c5dd3",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 18,
+        "accepted": true,
+        "identity": "fead2f0ff5fe5cf3af3925d118609d873a3be77e6a0e522814f12a399224e2d3",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 19,
+        "accepted": true,
+        "identity": "8efbf9b82ffa9ab375366e4db92c848bd13ea2516590e785df0bc6921937e97c",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 20,
+        "accepted": true,
+        "identity": "fef3c24a846b457f518cc4017c1892ffde5e00c7542e7273046f437710360151",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 21,
+        "accepted": true,
+        "identity": "5e2b0fbd7183cc83ac39358f2e93e78c308d026dda57a548ae1a601183462ceb",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 22,
+        "accepted": true,
+        "identity": "8b469dff3da13b69164aab299b88604ccc59b324974fe6f817d4f63b4110ec1e",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 23,
+        "accepted": true,
+        "identity": "7fd6036b248e4ccb7a599cee765305b10a7a4fbf774ddd02ddad19f5a7d80435",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 24,
+        "accepted": true,
+        "identity": "f798d534860e2f385d0e0cee04645ed14f0ac1b20c7bcd5363a3ab01aad59ae3",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 25,
+        "accepted": true,
+        "identity": "99810f33cbfb3484f6ff686ba06b59468254ab56499616d1dd464fe134680ffc",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 26,
+        "accepted": true,
+        "identity": "cfd95c007d36a6165726734c59989d229208d481a506cc8f93d85baaf07e8027",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 27,
+        "accepted": true,
+        "identity": "bcdc067e788320e479a90b4acf7fd0540498e87f976cc45c5c6b7ec4923eacd2",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 28,
+        "accepted": true,
+        "identity": "e124e12031c05d770f4ae45bf401d7280bd5a71f7e4b2c4ce46d9e97448692dd",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 29,
+        "accepted": true,
+        "identity": "bd3db379ab000c63004516d3228e13cb34f8f04e99bede9975bfafbb6582df93",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 30,
+        "accepted": true,
+        "identity": "5de4e7972dc204792d13edb5ad9d34efa1abd0cbc651dbeb60fd911607512cc7",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 31,
+        "accepted": false,
+        "rejection_class": "invalid_evidence",
+        "rejection_reason": {
+          "too_many_evidence_ids": 1
+        }
+      },
+      {
+        "raw_index": 32,
+        "accepted": false,
+        "rejection_class": "invalid_evidence",
+        "rejection_reason": {
+          "too_many_evidence_ids": 1
+        }
+      },
+      {
+        "raw_index": 33,
+        "accepted": true,
+        "identity": "80249ee1097f10e4bf57eb22263b334ef9f4cd2c849a6ab6ec4d4378b4856ff1",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 34,
+        "accepted": true,
+        "identity": "0c650236714abcad81fefb8aa095e6fe65eba11a4aeb6e10d897f33794fb9280",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 35,
+        "accepted": true,
+        "identity": "8047a42db0d638d15d768c1bcf91679d76991dc515ad5c8107ac0f9b1e2c14f7",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      }
+    ]
+  },
+  "accepted": [
+    {
+      "label": "Core resources income from public sector",
+      "value": "$512.6 million representing 32% of total core resources income in 2024",
+      "subject": "UNICEF",
+      "reference": "Core resources income by type of partner, 2024",
+      "evidence_ids": [
+        "E101"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.98,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E101",
+          "page": 5,
+          "start_offset": 11226,
+          "end_offset": 11447,
+          "type": "sentence",
+          "text": "Core resources income by type of partner,\n2024\n$512.6 million\nPublic sector, 32%\n$724.9 million\nPrivate sector, 46%\n$346.1 million\nOther, 22%\nTotal\n$1.584\nbillion\nPrivate sector Public sector Tot al\n0\n200\n400\n600\n800\n1000"
+        }
+      ],
+      "quote": "Core resources income by type of partner,\n2024\n$512.6 million\nPublic sector, 32%\n$724.9 million\nPrivate sector, 46%\n$346.1 million\nOther, 22%\nTotal\n$1.584\nbillion\nPrivate sector Public sector Tot al\n0\n200\n400\n600\n800\n1000"
+    },
+    {
+      "label": "Core resources income from private sector",
+      "value": "$724.9 million representing 46% of total core resources income in 2024",
+      "subject": "UNICEF",
+      "reference": "Core resources income by type of partner, 2024",
+      "evidence_ids": [
+        "E101"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.98,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E101",
+          "page": 5,
+          "start_offset": 11226,
+          "end_offset": 11447,
+          "type": "sentence",
+          "text": "Core resources income by type of partner,\n2024\n$512.6 million\nPublic sector, 32%\n$724.9 million\nPrivate sector, 46%\n$346.1 million\nOther, 22%\nTotal\n$1.584\nbillion\nPrivate sector Public sector Tot al\n0\n200\n400\n600\n800\n1000"
+        }
+      ],
+      "quote": "Core resources income by type of partner,\n2024\n$512.6 million\nPublic sector, 32%\n$724.9 million\nPrivate sector, 46%\n$346.1 million\nOther, 22%\nTotal\n$1.584\nbillion\nPrivate sector Public sector Tot al\n0\n200\n400\n600\n800\n1000"
+    },
+    {
+      "label": "Core resources income from other sources",
+      "value": "$346.1 million representing 22% of total core resources income in 2024",
+      "subject": "UNICEF",
+      "reference": "Core resources income by type of partner, 2024",
+      "evidence_ids": [
+        "E101"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.98,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E101",
+          "page": 5,
+          "start_offset": 11226,
+          "end_offset": 11447,
+          "type": "sentence",
+          "text": "Core resources income by type of partner,\n2024\n$512.6 million\nPublic sector, 32%\n$724.9 million\nPrivate sector, 46%\n$346.1 million\nOther, 22%\nTotal\n$1.584\nbillion\nPrivate sector Public sector Tot al\n0\n200\n400\n600\n800\n1000"
+        }
+      ],
+      "quote": "Core resources income by type of partner,\n2024\n$512.6 million\nPublic sector, 32%\n$724.9 million\nPrivate sector, 46%\n$346.1 million\nOther, 22%\nTotal\n$1.584\nbillion\nPrivate sector Public sector Tot al\n0\n200\n400\n600\n800\n1000"
+    },
+    {
+      "label": "Total core resources income",
+      "value": "$1.584 billion in 2024",
+      "subject": "UNICEF",
+      "reference": "Core resources income by type of partner, 2024",
+      "evidence_ids": [
+        "E101"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.98,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E101",
+          "page": 5,
+          "start_offset": 11226,
+          "end_offset": 11447,
+          "type": "sentence",
+          "text": "Core resources income by type of partner,\n2024\n$512.6 million\nPublic sector, 32%\n$724.9 million\nPrivate sector, 46%\n$346.1 million\nOther, 22%\nTotal\n$1.584\nbillion\nPrivate sector Public sector Tot al\n0\n200\n400\n600\n800\n1000"
+        }
+      ],
+      "quote": "Core resources income by type of partner,\n2024\n$512.6 million\nPublic sector, 32%\n$724.9 million\nPrivate sector, 46%\n$346.1 million\nOther, 22%\nTotal\n$1.584\nbillion\nPrivate sector Public sector Tot al\n0\n200\n400\n600\n800\n1000"
+    },
+    {
+      "label": "Core resources income composition by resource type",
+      "value": "Core Resources (RR) 37% of total income in 2024",
+      "subject": "UNICEF",
+      "reference": "Income ratio by type of funding, 2020–2024",
+      "evidence_ids": [
+        "E103"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E103",
+          "page": 5,
+          "start_offset": 11461,
+          "end_offset": 11906,
+          "type": "sentence",
+          "text": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)"
+        }
+      ],
+      "quote": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)"
+    },
+    {
+      "label": "Other Resources Regular income share",
+      "value": "Other Resources Regular (ORR) 45% of total income in 2024",
+      "subject": "UNICEF",
+      "reference": "Income ratio by type of funding, 2020–2024",
+      "evidence_ids": [
+        "E103"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E103",
+          "page": 5,
+          "start_offset": 11461,
+          "end_offset": 11906,
+          "type": "sentence",
+          "text": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)"
+        }
+      ],
+      "quote": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)"
+    },
+    {
+      "label": "Other Resources Emergency income share",
+      "value": "Other Resources Emergency (ORE) 18% of total income in 2024",
+      "subject": "UNICEF",
+      "reference": "Income ratio by type of funding, 2020–2024",
+      "evidence_ids": [
+        "E103"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E103",
+          "page": 5,
+          "start_offset": 11461,
+          "end_offset": 11906,
+          "type": "sentence",
+          "text": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)"
+        }
+      ],
+      "quote": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)"
+    },
+    {
+      "label": "Total voluntary contributions income",
+      "value": "$8.263 billion in 2024",
+      "subject": "UNICEF",
+      "reference": "Core Resources income from voluntary contributions by type of resource partner, 2020–2024",
+      "evidence_ids": [
+        "E103"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.98,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E103",
+          "page": 5,
+          "start_offset": 11461,
+          "end_offset": 11906,
+          "type": "sentence",
+          "text": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)"
+        }
+      ],
+      "quote": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)"
+    },
+    {
+      "label": "Core Resources used to map groundwater in Horn of Africa",
+      "value": "Satellite data technology scaled to detect groundwater, mapping nearly a million square kilometres of territory in drought-prone countries",
+      "subject": "UNICEF",
+      "reference": "Horn of Africa: Core Resources scaled up an innovative solution using satellite data to detect groundwater, mapping nearly a million square kilometres of territory in drought-prone countries, with the potential to benefit 10 million people in need",
+      "evidence_ids": [
+        "E107"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.95,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E107",
+          "page": 6,
+          "start_offset": 12256,
+          "end_offset": 12540,
+          "type": "sentence",
+          "text": "Leading, convening and pioneering\nHorn of Africa: Core Resources scaled up an innovative solution using satellite data \nto detect groundwater, mapping nearly a million square kilometres of territory in \ndrought-prone countries, with the potential to benefit 10 million people in need."
+        }
+      ],
+      "quote": "Leading, convening and pioneering\nHorn of Africa: Core Resources scaled up an innovative solution using satellite data \nto detect groundwater, mapping nearly a million square kilometres of territory in \ndrought-prone countries, with the potential to benefit 10 million people in need."
+    },
+    {
+      "label": "Potential beneficiary population from Horn of Africa groundwater mapping",
+      "value": "10 million people in need",
+      "subject": "Horn of Africa drought-prone countries population",
+      "reference": "Horn of Africa: Core Resources scaled up an innovative solution using satellite data to detect groundwater, mapping nearly a million square kilometres of territory in drought-prone countries, with the potential to benefit 10 million people in need",
+      "evidence_ids": [
+        "E107"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.9,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E107",
+          "page": 6,
+          "start_offset": 12256,
+          "end_offset": 12540,
+          "type": "sentence",
+          "text": "Leading, convening and pioneering\nHorn of Africa: Core Resources scaled up an innovative solution using satellite data \nto detect groundwater, mapping nearly a million square kilometres of territory in \ndrought-prone countries, with the potential to benefit 10 million people in need."
+        }
+      ],
+      "quote": "Leading, convening and pioneering\nHorn of Africa: Core Resources scaled up an innovative solution using satellite data \nto detect groundwater, mapping nearly a million square kilometres of territory in \ndrought-prone countries, with the potential to benefit 10 million people in need."
+    },
+    {
+      "label": "Social protection investment leveraged in Guatemala",
+      "value": "$1 billion investment in social protection programmes by government of Guatemala",
+      "subject": "Government of Guatemala",
+      "reference": "Guatemala: Core Resources positioned UNICEF as a key partner in the transformation of the social protection system, offering the government strategic policy advice and partnerships, which resulted in a $1 billion investment in social protection programmes and mitigation of a three-to-four-fold increase in poverty during the COVID-19 pandemic",
+      "evidence_ids": [
+        "E108"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E108",
+          "page": 6,
+          "start_offset": 12542,
+          "end_offset": 12890,
+          "type": "sentence",
+          "text": "Guatemala: Core Resources positioned UNICEF as a key partner in the transformation \nof the social protection system, offering the government strategic policy advice and \npartnerships, which resulted in a $1 billion investment in social protection \nprogrammes and mitigation of a three-to-four-fold increase in poverty during \nthe COVID-19 pandemic."
+        }
+      ],
+      "quote": "Guatemala: Core Resources positioned UNICEF as a key partner in the transformation \nof the social protection system, offering the government strategic policy advice and \npartnerships, which resulted in a $1 billion investment in social protection \nprogrammes and mitigation of a three-to-four-fold increase in poverty during \nthe COVID-19 pandemic."
+    },
+    {
+      "label": "Mental health services integration in national systems",
+      "value": "Cross-sectoral mental health services and care integrated into national systems in 13 countries",
+      "subject": "UNICEF and 13 countries",
+      "reference": "Global: Core Resources fast tracked the integration of cross-sectoral mental health services and care into national systems in 13 countries, modelling new solutions, and reaching more than 8.8 million children, adolescents, caregivers and service providers",
+      "evidence_ids": [
+        "E109"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E109",
+          "page": 6,
+          "start_offset": 12892,
+          "end_offset": 13152,
+          "type": "sentence",
+          "text": "Global: Core Resources fast tracked the integration of cross-sectoral mental \nhealth services and care into national systems in 13 countries, modelling new \nsolutions, and reaching more than 8.8 million children, adolescents, caregivers and \nservice providers."
+        }
+      ],
+      "quote": "Global: Core Resources fast tracked the integration of cross-sectoral mental \nhealth services and care into national systems in 13 countries, modelling new \nsolutions, and reaching more than 8.8 million children, adolescents, caregivers and \nservice providers."
+    },
+    {
+      "label": "Mental health beneficiaries reached",
+      "value": "More than 8.8 million children, adolescents, caregivers and service providers reached",
+      "subject": "Children, adolescents, caregivers and service providers in 13 countries",
+      "reference": "Global: Core Resources fast tracked the integration of cross-sectoral mental health services and care into national systems in 13 countries, modelling new solutions, and reaching more than 8.8 million children, adolescents, caregivers and service providers",
+      "evidence_ids": [
+        "E109"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E109",
+          "page": 6,
+          "start_offset": 12892,
+          "end_offset": 13152,
+          "type": "sentence",
+          "text": "Global: Core Resources fast tracked the integration of cross-sectoral mental \nhealth services and care into national systems in 13 countries, modelling new \nsolutions, and reaching more than 8.8 million children, adolescents, caregivers and \nservice providers."
+        }
+      ],
+      "quote": "Global: Core Resources fast tracked the integration of cross-sectoral mental \nhealth services and care into national systems in 13 countries, modelling new \nsolutions, and reaching more than 8.8 million children, adolescents, caregivers and \nservice providers."
+    },
+    {
+      "label": "Under-five mortality reduction in Yemen",
+      "value": "23 per cent drop in under-five mortality over the course of the last decade of conflict",
+      "subject": "Children under five in Yemen",
+      "reference": "Yemen: Core Resources safeguarded continued access and expansion of essential health services, contributing to a 23 per cent drop in under-five mortality over the course of the last decade of conflict",
+      "evidence_ids": [
+        "E110"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.9,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E110",
+          "page": 6,
+          "start_offset": 13153,
+          "end_offset": 13394,
+          "type": "sentence",
+          "text": "Before, during and after an emergency\nYemen: Core Resources safeguarded continued access and expansion of \nessential health services, contributing to a 23 per cent drop in under-five \nmortality over the course of the last decade of conflict."
+        }
+      ],
+      "quote": "Before, during and after an emergency\nYemen: Core Resources safeguarded continued access and expansion of \nessential health services, contributing to a 23 per cent drop in under-five \nmortality over the course of the last decade of conflict."
+    },
+    {
+      "label": "Health-care facilities sustained in Democratic Republic of the Congo",
+      "value": "More than 1,700 health-care facilities sustained as operational",
+      "subject": "Health-care facilities in Democratic Republic of the Congo",
+      "reference": "Democratic Republic of the Congo: Core Resources supported more than 1,700 health-care facilities to stay operational, securing lifesaving supplies and treatment for more than 129,000 children facing severe wasting",
+      "evidence_ids": [
+        "E111"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E111",
+          "page": 6,
+          "start_offset": 13395,
+          "end_offset": 13612,
+          "type": "sentence",
+          "text": "Democratic Republic of the Congo: Core Resources supported more than \n1,700 health-care facilities to stay operational, securing lifesaving supplies \nand treatment for more than 129,000 children facing severe wasting."
+        }
+      ],
+      "quote": "Democratic Republic of the Congo: Core Resources supported more than \n1,700 health-care facilities to stay operational, securing lifesaving supplies \nand treatment for more than 129,000 children facing severe wasting."
+    },
+    {
+      "label": "Children facing severe wasting treated in Democratic Republic of the Congo",
+      "value": "More than 129,000 children facing severe wasting received lifesaving supplies and treatment",
+      "subject": "Children facing severe wasting in Democratic Republic of the Congo",
+      "reference": "Democratic Republic of the Congo: Core Resources supported more than 1,700 health-care facilities to stay operational, securing lifesaving supplies and treatment for more than 129,000 children facing severe wasting",
+      "evidence_ids": [
+        "E111"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E111",
+          "page": 6,
+          "start_offset": 13395,
+          "end_offset": 13612,
+          "type": "sentence",
+          "text": "Democratic Republic of the Congo: Core Resources supported more than \n1,700 health-care facilities to stay operational, securing lifesaving supplies \nand treatment for more than 129,000 children facing severe wasting."
+        }
+      ],
+      "quote": "Democratic Republic of the Congo: Core Resources supported more than \n1,700 health-care facilities to stay operational, securing lifesaving supplies \nand treatment for more than 129,000 children facing severe wasting."
+    },
+    {
+      "label": "People supported through Today and Tomorrow Initiative",
+      "value": "More than 120,000 people in Madagascar and Mozambique supported with life-saving services in the aftermath of cyclones",
+      "subject": "Population in Madagascar and Mozambique",
+      "reference": "Madagascar and Mozambique: Core Resources provided the seed funding for UNICEF's Today and Tomorrow Initiative, an integrated climate and disaster finance solution, supporting more that more than 120,000 people in Madagascar and Mozambique with life-saving services in the aftermath of cyclones",
+      "evidence_ids": [
+        "E112"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": [
+        "Today and Tomorrow Initiative"
+      ],
+      "evidence": [
+        {
+          "span_id": "E112",
+          "page": 6,
+          "start_offset": 13613,
+          "end_offset": 13913,
+          "type": "sentence",
+          "text": "Madagascar and Mozambique: Core Resources provided the seed funding \nfor UNICEF's Today and Tomorrow Initiative, an integrated climate and \ndisaster finance solution, supporting more that more than 120,000 people \nin Madagascar and Mozambique with life-saving services in the aftermath  \nof cyclones."
+        }
+      ],
+      "quote": "Madagascar and Mozambique: Core Resources provided the seed funding \nfor UNICEF's Today and Tomorrow Initiative, an integrated climate and \ndisaster finance solution, supporting more that more than 120,000 people \nin Madagascar and Mozambique with life-saving services in the aftermath  \nof cyclones."
+    },
+    {
+      "label": "Marburg disease outbreak fatality rate in Rwanda",
+      "value": "Fatality rate of 22.7 per cent during government response to Marburg disease outbreak",
+      "subject": "Population affected by Marburg disease outbreak in Rwanda",
+      "reference": "Rwanda: Core Resources reinforced the government's response to the Marburg disease outbreak, contributing to more lives being saved and a low fatality rate of 22.7 per cent",
+      "evidence_ids": [
+        "E113"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E113",
+          "page": 6,
+          "start_offset": 13914,
+          "end_offset": 14089,
+          "type": "sentence",
+          "text": "Rwanda: Core Resources reinforced the government’s response to the Marburg \ndisease outbreak, contributing to more lives being saved and a low fatality \nrate of 22.7 per cent."
+        }
+      ],
+      "quote": "Rwanda: Core Resources reinforced the government’s response to the Marburg \ndisease outbreak, contributing to more lives being saved and a low fatality \nrate of 22.7 per cent."
+    },
+    {
+      "label": "Child registration achievement in Côte d'Ivoire and Cabo Verde",
+      "value": "More than 9 in 10 children registered before their first birthdays",
+      "subject": "Children in Côte d'Ivoire and Cabo Verde",
+      "reference": "Côte d'Ivoire and Cabo Verde: Core Resources provided instrumental support to the governments to bring universal child registration within reach, with more than 9 in 10 children registered before their first birthdays",
+      "evidence_ids": [
+        "E118"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E118",
+          "page": 7,
+          "start_offset": 14583,
+          "end_offset": 14860,
+          "type": "sentence",
+          "text": "Meeting the holistic needs of children and adolescents\nCôte d'Ivoire and Cabo Verde: Core Resources provided instrumental support to  \nthe governments to bring universal child registration within reach, with more than  \n9 in 10 children registered before their first birthdays."
+        }
+      ],
+      "quote": "Meeting the holistic needs of children and adolescents\nCôte d'Ivoire and Cabo Verde: Core Resources provided instrumental support to  \nthe governments to bring universal child registration within reach, with more than  \n9 in 10 children registered before their first birthdays."
+    },
+    {
+      "label": "Children with disabilities supported through inclusive education in Viet Nam",
+      "value": "Inclusive Education Resource Centres scaled up across 14 provinces to prepare children with disabilities to enter mainstream classrooms",
+      "subject": "Children with disabilities in Viet Nam",
+      "reference": "Viet Nam: Core Resources supported a more inclusive system for access to learning opportunities for children with disabilities, embedded disability inclusion into national teacher training, and enabled scaling up the Inclusive Education Resource Centres across 14 provinces to prepare children with disabilities to enter mainstream classrooms",
+      "evidence_ids": [
+        "E119"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E119",
+          "page": 7,
+          "start_offset": 14861,
+          "end_offset": 15208,
+          "type": "sentence",
+          "text": "Viet Nam: Core Resources supported a more inclusive system for access to learning \nopportunities for children with disabilities, embedded disability inclusion into national teacher \ntraining, and enabled scaling up the Inclusive Education Resource Centres across  \n14 provinces to prepare children with disabilities to enter mainstream classrooms."
+        }
+      ],
+      "quote": "Viet Nam: Core Resources supported a more inclusive system for access to learning \nopportunities for children with disabilities, embedded disability inclusion into national teacher \ntraining, and enabled scaling up the Inclusive Education Resource Centres across  \n14 provinces to prepare children with disabilities to enter mainstream classrooms."
+    },
+    {
+      "label": "Water supply delivery in India",
+      "value": "59.3 million people provided with safely managed water supplies in 2024",
+      "subject": "Population in India",
+      "reference": "India: Core Resources continued to play a vital role in the delivery and scaling up of the government's flagship water and sanitation programmes, providing safely managed water supplies for 59.3 million people and sanitation services for 17.9 million people in 2024",
+      "evidence_ids": [
+        "E120"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.98,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E120",
+          "page": 7,
+          "start_offset": 15209,
+          "end_offset": 15502,
+          "type": "sentence",
+          "text": "Taking the work to scale\nIndia: Core Resources continued to play a vital role in the delivery and scaling up of the \ngovernment’s flagship water and sanitation programmes, providing safely managed water \nsupplies for 59.3 million people and sanitation services for 17.9 million people in 2024."
+        }
+      ],
+      "quote": "Taking the work to scale\nIndia: Core Resources continued to play a vital role in the delivery and scaling up of the \ngovernment’s flagship water and sanitation programmes, providing safely managed water \nsupplies for 59.3 million people and sanitation services for 17.9 million people in 2024."
+    },
+    {
+      "label": "Sanitation services delivery in India",
+      "value": "17.9 million people provided with sanitation services in 2024",
+      "subject": "Population in India",
+      "reference": "India: Core Resources continued to play a vital role in the delivery and scaling up of the government's flagship water and sanitation programmes, providing safely managed water supplies for 59.3 million people and sanitation services for 17.9 million people in 2024",
+      "evidence_ids": [
+        "E120"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.98,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E120",
+          "page": 7,
+          "start_offset": 15209,
+          "end_offset": 15502,
+          "type": "sentence",
+          "text": "Taking the work to scale\nIndia: Core Resources continued to play a vital role in the delivery and scaling up of the \ngovernment’s flagship water and sanitation programmes, providing safely managed water \nsupplies for 59.3 million people and sanitation services for 17.9 million people in 2024."
+        }
+      ],
+      "quote": "Taking the work to scale\nIndia: Core Resources continued to play a vital role in the delivery and scaling up of the \ngovernment’s flagship water and sanitation programmes, providing safely managed water \nsupplies for 59.3 million people and sanitation services for 17.9 million people in 2024."
+    },
+    {
+      "label": "Government investment leveraged through RESTART reform in Moldova",
+      "value": "$68 million of government and other investment in RESTART social protection reform",
+      "subject": "Government of Republic of Moldova and other investors",
+      "reference": "Republic of Moldova: Core Resources paved the way for $68 million of government and other investment in the RESTART social protection reform, mitigating a 3.4 per cent rise in child poverty and increasing the value of social benefits for families with children, including Ukrainian refugees, by 42 per cent",
+      "evidence_ids": [
+        "E121"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": [
+        "RESTART"
+      ],
+      "evidence": [
+        {
+          "span_id": "E121",
+          "page": 7,
+          "start_offset": 15504,
+          "end_offset": 15814,
+          "type": "sentence",
+          "text": "Republic of Moldova: Core Resources paved the way for $68 million of government and \nother investment in the RESTART social protection reform, mitigating a 3.4 per cent rise in \nchild poverty and increasing the value of social benefits for families with children, including \nUkrainian refugees, by 42 per cent."
+        }
+      ],
+      "quote": "Republic of Moldova: Core Resources paved the way for $68 million of government and \nother investment in the RESTART social protection reform, mitigating a 3.4 per cent rise in \nchild poverty and increasing the value of social benefits for families with children, including \nUkrainian refugees, by 42 per cent."
+    },
+    {
+      "label": "Child poverty increase mitigated in Moldova",
+      "value": "3.4 per cent rise in child poverty mitigated",
+      "subject": "Children in Republic of Moldova",
+      "reference": "Republic of Moldova: Core Resources paved the way for $68 million of government and other investment in the RESTART social protection reform, mitigating a 3.4 per cent rise in child poverty and increasing the value of social benefits for families with children, including Ukrainian refugees, by 42 per cent",
+      "evidence_ids": [
+        "E121"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.85,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E121",
+          "page": 7,
+          "start_offset": 15504,
+          "end_offset": 15814,
+          "type": "sentence",
+          "text": "Republic of Moldova: Core Resources paved the way for $68 million of government and \nother investment in the RESTART social protection reform, mitigating a 3.4 per cent rise in \nchild poverty and increasing the value of social benefits for families with children, including \nUkrainian refugees, by 42 per cent."
+        }
+      ],
+      "quote": "Republic of Moldova: Core Resources paved the way for $68 million of government and \nother investment in the RESTART social protection reform, mitigating a 3.4 per cent rise in \nchild poverty and increasing the value of social benefits for families with children, including \nUkrainian refugees, by 42 per cent."
+    },
+    {
+      "label": "Social benefits increase for families with children in Moldova",
+      "value": "Value of social benefits for families with children, including Ukrainian refugees, increased by 42 per cent",
+      "subject": "Families with children in Republic of Moldova",
+      "reference": "Republic of Moldova: Core Resources paved the way for $68 million of government and other investment in the RESTART social protection reform, mitigating a 3.4 per cent rise in child poverty and increasing the value of social benefits for families with children, including Ukrainian refugees, by 42 per cent",
+      "evidence_ids": [
+        "E121"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E121",
+          "page": 7,
+          "start_offset": 15504,
+          "end_offset": 15814,
+          "type": "sentence",
+          "text": "Republic of Moldova: Core Resources paved the way for $68 million of government and \nother investment in the RESTART social protection reform, mitigating a 3.4 per cent rise in \nchild poverty and increasing the value of social benefits for families with children, including \nUkrainian refugees, by 42 per cent."
+        }
+      ],
+      "quote": "Republic of Moldova: Core Resources paved the way for $68 million of government and \nother investment in the RESTART social protection reform, mitigating a 3.4 per cent rise in \nchild poverty and increasing the value of social benefits for families with children, including \nUkrainian refugees, by 42 per cent."
+    },
+    {
+      "label": "Stunting reduction in Bangladesh children under five",
+      "value": "40 per cent reduction in stunting among children under five",
+      "subject": "Children under five in Bangladesh",
+      "reference": "Bangladesh: Core Resources helped UNICEF mobilize and sustain government action to transform children's nutrition outcomes, contributing to a 40 per cent reduction in stunting among children under five and a nearly tenfold increase in domestic investments in nutrition services over a decade",
+      "evidence_ids": [
+        "E122"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E122",
+          "page": 7,
+          "start_offset": 15816,
+          "end_offset": 16111,
+          "type": "sentence",
+          "text": "Bangladesh: Core Resources helped UNICEF mobilize and sustain government action to \ntransform children’s nutrition outcomes, contributing to a 40 per cent reduction in stunting \namong children under five and a nearly tenfold increase in domestic investments in \nnutrition services over a decade."
+        }
+      ],
+      "quote": "Bangladesh: Core Resources helped UNICEF mobilize and sustain government action to \ntransform children’s nutrition outcomes, contributing to a 40 per cent reduction in stunting \namong children under five and a nearly tenfold increase in domestic investments in \nnutrition services over a decade."
+    },
+    {
+      "label": "Domestic investments increase in nutrition services in Bangladesh",
+      "value": "Nearly tenfold increase in domestic investments in nutrition services over a decade",
+      "subject": "Government of Bangladesh",
+      "reference": "Bangladesh: Core Resources helped UNICEF mobilize and sustain government action to transform children's nutrition outcomes, contributing to a 40 per cent reduction in stunting among children under five and a nearly tenfold increase in domestic investments in nutrition services over a decade",
+      "evidence_ids": [
+        "E122"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.9,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E122",
+          "page": 7,
+          "start_offset": 15816,
+          "end_offset": 16111,
+          "type": "sentence",
+          "text": "Bangladesh: Core Resources helped UNICEF mobilize and sustain government action to \ntransform children’s nutrition outcomes, contributing to a 40 per cent reduction in stunting \namong children under five and a nearly tenfold increase in domestic investments in \nnutrition services over a decade."
+        }
+      ],
+      "quote": "Bangladesh: Core Resources helped UNICEF mobilize and sustain government action to \ntransform children’s nutrition outcomes, contributing to a 40 per cent reduction in stunting \namong children under five and a nearly tenfold increase in domestic investments in \nnutrition services over a decade."
+    },
+    {
+      "label": "One Stop Centre beneficiaries in Jordan",
+      "value": "Initial 500 children and women survivors and witnesses of violence, abuse or exploitation supported with multi-sectoral services",
+      "subject": "Children and women in Jordan",
+      "reference": "Jordan: Core Resources funded the first-ever One Stop Centre which offers a proven model for replication across Jordan including Syrian refugee camps, successfully supporting an initial 500 children and women survivors and witnesses of violence, abuse or exploitation with multi-sectoral services",
+      "evidence_ids": [
+        "E123"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": [
+        "One Stop Centre"
+      ],
+      "evidence": [
+        {
+          "span_id": "E123",
+          "page": 7,
+          "start_offset": 16112,
+          "end_offset": 16425,
+          "type": "sentence",
+          "text": "Expert staff\nJordan: Core Resources funded the first-ever One Stop Centre which offers \na proven model for replication across Jordan including Syrian refugee \ncamps, successfully supporting an initial 500 children and women survivors \nand witnesses of violence, abuse or exploitation with multi-sectoral services."
+        }
+      ],
+      "quote": "Expert staff\nJordan: Core Resources funded the first-ever One Stop Centre which offers \na proven model for replication across Jordan including Syrian refugee \ncamps, successfully supporting an initial 500 children and women survivors \nand witnesses of violence, abuse or exploitation with multi-sectoral services."
+    },
+    {
+      "label": "Child protection and case management system strengthening in Sierra Leone",
+      "value": "Social workers accredited for the first time; protection services facilitated for more than 675,000 children in five years",
+      "subject": "Children in Sierra Leone",
+      "reference": "Sierra Leone: Core Resources strengthened the child protection and case management system, accrediting social workers for the first time and facilitating protection services for more than 675,000 children in five years, including those who have faced violence, exploitation, abuse or neglect",
+      "evidence_ids": [
+        "E124"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E124",
+          "page": 7,
+          "start_offset": 16426,
+          "end_offset": 16724,
+          "type": "sentence",
+          "text": "Sierra Leone: Core Resources strengthened the child protection and case \nmanagement system, accrediting social workers for the first time  \nand facilitating protection services for more than 675,000 children in \nfive years, including those who have faced violence, exploitation,  \nabuse or neglect."
+        }
+      ],
+      "quote": "Sierra Leone: Core Resources strengthened the child protection and case \nmanagement system, accrediting social workers for the first time  \nand facilitating protection services for more than 675,000 children in \nfive years, including those who have faced violence, exploitation,  \nabuse or neglect."
+    },
+    {
+      "label": "Sustainable Development Goals supported by Core Resources",
+      "value": "Core Resources accelerate progress across 12 of the 17 Sustainable Development Goals for children",
+      "subject": "UNICEF",
+      "reference": "Core Resources accelerate progress across 12 of the 17 Sustainable Development Goals for children",
+      "evidence_ids": [
+        "E128"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": [
+        "SDGs"
+      ],
+      "evidence": [
+        {
+          "span_id": "E128",
+          "page": 8,
+          "start_offset": 17048,
+          "end_offset": 17090,
+          "type": "heading",
+          "text": "12 of the 17 Sustainable Development Goals"
+        }
+      ],
+      "quote": "12 of the 17 Sustainable Development Goals"
+    },
+    {
+      "label": "Child indicators supported by Core Resources",
+      "value": "Core Resources support UNICEF's custodian and co-custodian role in 19 child indicators and programmes for every child",
+      "subject": "UNICEF",
+      "reference": "They support UNICEF's custodian and co-custodian role in 19 child indicators and programmes for every child which can be sustained through strong national systems in the long term",
+      "evidence_ids": [
+        "E129"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E129",
+          "page": 8,
+          "start_offset": 17092,
+          "end_offset": 17405,
+          "type": "sentence",
+          "text": "for children.\nThey support UNICEF’s custodian and  \nco-custodian role in 19 child indicators and \nprogrammes for every child which can be \nsustained through strong national systems \nin the long term.\n*Expense – actual expenses made in the year.\n**Expenditure – includes the expenses made and commitments of funds."
+        }
+      ],
+      "quote": "for children.\nThey support UNICEF’s custodian and  \nco-custodian role in 19 child indicators and \nprogrammes for every child which can be \nsustained through strong national systems \nin the long term.\n*Expense – actual expenses made in the year.\n**Expenditure – includes the expenses made and commitments of funds."
+    },
+    {
+      "label": "Development effectiveness capital costs component",
+      "value": "$174 million of the $227 million development effectiveness expenditure allocated to capital costs",
+      "subject": "UNICEF",
+      "reference": "Capital costs aligned with programme goals and strategies (of which Development Effectiveness was $174 million)",
+      "evidence_ids": [
+        "E137"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E137",
+          "page": 8,
+          "start_offset": 18099,
+          "end_offset": 18242,
+          "type": "list_item",
+          "text": "• Capital costs aligned with programme goals and strategies\n(of which \nDevelopment \nEffectiveness \nwas $174 million)\n$227 million\nExpenditure**"
+        }
+      ],
+      "quote": "• Capital costs aligned with programme goals and strategies\n(of which \nDevelopment \nEffectiveness \nwas $174 million)\n$227 million\nExpenditure**"
+    },
+    {
+      "label": "Core Resources enable flexibility and resilience",
+      "value": "Investing flexibly in Core Resources promotes resilience in uncertain times, as well as long-term positive change for children",
+      "subject": "UNICEF programmes",
+      "reference": "Investing flexibly promotes resilience in uncertain times, as well as long-term positive change for children",
+      "evidence_ids": [
+        "E100"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.9,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E100",
+          "page": 5,
+          "start_offset": 11115,
+          "end_offset": 11225,
+          "type": "sentence",
+          "text": "Investing flexibly promotes resilience in uncertain \ntimes, as well as long-term positive change for children."
+        }
+      ],
+      "quote": "Investing flexibly promotes resilience in uncertain \ntimes, as well as long-term positive change for children."
+    },
+    {
+      "label": "Core Resources support three pillars of UNICEF integrated budget",
+      "value": "Core Resources strategically spread spending across three pillars of UNICEF's integrated budget",
+      "subject": "UNICEF",
+      "reference": "UNICEF strategically spreads spending of Core Resources across the three pillars of the organization's integrated budget",
+      "evidence_ids": [
+        "E127"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.9,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E127",
+          "page": 8,
+          "start_offset": 16820,
+          "end_offset": 17046,
+          "type": "sentence",
+          "text": "How we Spend Core Resources to \nAchieve Results for Children \nUNICEF strategically spreads spending of Core Resources across the three pillars of the organization’s \nintegrated budget.\nCore Resources accelerate progress across"
+        }
+      ],
+      "quote": "How we Spend Core Resources to \nAchieve Results for Children \nUNICEF strategically spreads spending of Core Resources across the three pillars of the organization’s \nintegrated budget.\nCore Resources accelerate progress across"
+    }
+  ]
+}

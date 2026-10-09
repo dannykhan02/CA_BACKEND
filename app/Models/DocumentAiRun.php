@@ -19,6 +19,9 @@ class DocumentAiRun extends Model
         'provider_started_at', 'provider_finished_at', 'timeout_source', 'provider_response_received', 'input_tokens_counted',
         'dispatched_at', 'worker_started_at', 'admission_requested_at', 'lease_acquired_at', 'lease_released_at',
         'worker_wait_ms', 'fairness_wait_ms', 'admission_wait_ms', 'dispatch_reason',
+        'wire_format_version', 'compact_codec_version', 'raw_provider_response_hash',
+        'expanded_canonical_response_hash', 'provider_schema_hash', 'canonical_schema_hash',
+        'prompt_hash', 'request_body_hash', 'source_hash', 'span_hash', 'raw_provider_response',
     ];
 
     protected $casts = ['created_at' => 'datetime', 'provider_started_at' => 'datetime', 'provider_finished_at' => 'datetime',

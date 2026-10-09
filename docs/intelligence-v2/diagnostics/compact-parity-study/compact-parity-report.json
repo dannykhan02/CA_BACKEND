@@ -1,0 +1,604 @@
+{
+  "decision": "KEEP_CANONICAL_WIRE_FORMAT",
+  "calls_completed": 12,
+  "calls_failed": 0,
+  "actual_total_cost_usd": "0.289903",
+  "provider_schema_compilation": "accepted in all six compact generation calls",
+  "overall": {
+    "headline_explicit_quantity_representation": {
+      "canonical": {
+        "mean": 0.923992673992674,
+        "minimum": 0.7692307692307693,
+        "maximum": 1.0
+      },
+      "compact": {
+        "mean": 0.8864468864468864,
+        "minimum": 0.7692307692307693,
+        "maximum": 1.0
+      },
+      "absolute_difference_compact_minus_canonical": -0.037545787545787634,
+      "frozen_limit": -0.05,
+      "passes_frozen_threshold": true,
+      "compact_mean_outside_canonical_range": false
+    },
+    "gold_recalled": {
+      "canonical": {
+        "mean": 11.833333333333334,
+        "minimum": 9.0,
+        "maximum": 15.0
+      },
+      "compact": {
+        "mean": 11.666666666666666,
+        "minimum": 8.0,
+        "maximum": 15.0
+      },
+      "absolute_difference_compact_minus_canonical": -0.16666666666666785,
+      "frozen_limit": -1,
+      "passes_frozen_threshold": true,
+      "compact_mean_outside_canonical_range": false
+    },
+    "period_populated_rate": {
+      "canonical": {
+        "mean": 0.6734810292449501,
+        "minimum": 0.4166666666666667,
+        "maximum": 0.9811320754716981
+      },
+      "compact": {
+        "mean": 0.0,
+        "minimum": 0.0,
+        "maximum": 0.0
+      },
+      "absolute_difference_compact_minus_canonical": -0.6734810292449501,
+      "frozen_limit": -0.05,
+      "passes_frozen_threshold": false,
+      "compact_mean_outside_canonical_range": true
+    },
+    "unit_populated_rate": {
+      "canonical": {
+        "mean": 0.9811320754716981,
+        "minimum": 0.8867924528301887,
+        "maximum": 1.0
+      },
+      "compact": {
+        "mean": 0.0,
+        "minimum": 0.0,
+        "maximum": 0.0
+      },
+      "absolute_difference_compact_minus_canonical": -0.9811320754716981,
+      "frozen_limit": -0.05,
+      "passes_frozen_threshold": false,
+      "compact_mean_outside_canonical_range": true
+    },
+    "currency_populated_rate": {
+      "canonical": {
+        "mean": 0.08920908943918608,
+        "minimum": 0.0,
+        "maximum": 0.1951219512195122
+      },
+      "compact": {
+        "mean": 0.042926829268292686,
+        "minimum": 0.0,
+        "maximum": 0.16
+      },
+      "absolute_difference_compact_minus_canonical": -0.046282260170893395,
+      "frozen_limit": -0.05,
+      "passes_frozen_threshold": true,
+      "compact_mean_outside_canonical_range": false
+    },
+    "supported_precision": {
+      "canonical": {
+        "mean": 0.5583333333333333,
+        "minimum": 0.35,
+        "maximum": 0.75
+      },
+      "compact": {
+        "mean": 0.7416666666666667,
+        "minimum": 0.55,
+        "maximum": 0.9
+      },
+      "absolute_difference_compact_minus_canonical": 0.18333333333333335,
+      "frozen_limit": -0.05,
+      "passes_frozen_threshold": true,
+      "compact_mean_outside_canonical_range": false
+    },
+    "rejection_rate": {
+      "canonical": {
+        "mean": 0.043088023088023085,
+        "minimum": 0.0,
+        "maximum": 0.12
+      },
+      "compact": {
+        "mean": 0.05937164519592056,
+        "minimum": 0.0,
+        "maximum": 0.1111111111111111
+      },
+      "absolute_difference_compact_minus_canonical": 0.016283622107897473,
+      "frozen_limit": 0.05,
+      "passes_frozen_threshold": true,
+      "compact_mean_outside_canonical_range": false
+    },
+    "grounding_failure_rate": {
+      "canonical": {
+        "mean": 0.007936507936507936,
+        "minimum": 0.0,
+        "maximum": 0.047619047619047616
+      },
+      "compact": {
+        "mean": 0.018090780998389695,
+        "minimum": 0.0,
+        "maximum": 0.05555555555555555
+      },
+      "absolute_difference_compact_minus_canonical": 0.010154273061881759,
+      "frozen_limit": 0.02,
+      "passes_frozen_threshold": true,
+      "compact_mean_outside_canonical_range": false
+    },
+    "parser_failure": {
+      "canonical": {
+        "mean": 0.0,
+        "minimum": 0.0,
+        "maximum": 0.0
+      },
+      "compact": {
+        "mean": 0.0,
+        "minimum": 0.0,
+        "maximum": 0.0
+      },
+      "absolute_difference_compact_minus_canonical": 0.0,
+      "frozen_limit": null,
+      "passes_frozen_threshold": true,
+      "compact_mean_outside_canonical_range": false
+    },
+    "structured_output_failure": {
+      "canonical": {
+        "mean": 0.0,
+        "minimum": 0.0,
+        "maximum": 0.0
+      },
+      "compact": {
+        "mean": 0.0,
+        "minimum": 0.0,
+        "maximum": 0.0
+      },
+      "absolute_difference_compact_minus_canonical": 0.0,
+      "frozen_limit": null,
+      "passes_frozen_threshold": true,
+      "compact_mean_outside_canonical_range": false
+    },
+    "truncated": {
+      "canonical": {
+        "mean": 0.0,
+        "minimum": 0.0,
+        "maximum": 0.0
+      },
+      "compact": {
+        "mean": 0.0,
+        "minimum": 0.0,
+        "maximum": 0.0
+      },
+      "absolute_difference_compact_minus_canonical": 0.0,
+      "frozen_limit": null,
+      "passes_frozen_threshold": true,
+      "compact_mean_outside_canonical_range": false
+    }
+  },
+  "by_chunk": {
+    "unicef_reduced": {
+      "headline_explicit_quantity_representation": {
+        "canonical": {
+          "mean": 0.9761904761904762,
+          "minimum": 0.9285714285714286,
+          "maximum": 1.0
+        },
+        "compact": {
+          "mean": 0.9523809523809524,
+          "minimum": 0.9285714285714286,
+          "maximum": 1.0
+        },
+        "absolute_difference_compact_minus_canonical": -0.023809523809523725,
+        "frozen_limit": -0.05,
+        "passes_frozen_threshold": true,
+        "compact_mean_outside_canonical_range": false
+      },
+      "gold_recalled": {
+        "canonical": {
+          "mean": 13.666666666666666,
+          "minimum": 13.0,
+          "maximum": 15.0
+        },
+        "compact": {
+          "mean": 14.666666666666666,
+          "minimum": 14.0,
+          "maximum": 15.0
+        },
+        "absolute_difference_compact_minus_canonical": 1.0,
+        "frozen_limit": -1,
+        "passes_frozen_threshold": true,
+        "compact_mean_outside_canonical_range": false
+      },
+      "period_populated_rate": {
+        "canonical": {
+          "mean": 0.7959519574797992,
+          "minimum": 0.4878048780487805,
+          "maximum": 0.9811320754716981
+        },
+        "compact": {
+          "mean": 0.0,
+          "minimum": 0.0,
+          "maximum": 0.0
+        },
+        "absolute_difference_compact_minus_canonical": -0.7959519574797992,
+        "frozen_limit": -0.05,
+        "passes_frozen_threshold": false,
+        "compact_mean_outside_canonical_range": true
+      },
+      "unit_populated_rate": {
+        "canonical": {
+          "mean": 0.9622641509433962,
+          "minimum": 0.8867924528301887,
+          "maximum": 1.0
+        },
+        "compact": {
+          "mean": 0.0,
+          "minimum": 0.0,
+          "maximum": 0.0
+        },
+        "absolute_difference_compact_minus_canonical": -0.9622641509433962,
+        "frozen_limit": -0.05,
+        "passes_frozen_threshold": false,
+        "compact_mean_outside_canonical_range": true
+      },
+      "currency_populated_rate": {
+        "canonical": {
+          "mean": 0.17841817887837216,
+          "minimum": 0.1509433962264151,
+          "maximum": 0.1951219512195122
+        },
+        "compact": {
+          "mean": 0.08585365853658537,
+          "minimum": 0.0,
+          "maximum": 0.16
+        },
+        "absolute_difference_compact_minus_canonical": -0.09256452034178679,
+        "frozen_limit": -0.05,
+        "passes_frozen_threshold": false,
+        "compact_mean_outside_canonical_range": true
+      },
+      "supported_precision": {
+        "canonical": {
+          "mean": 0.45,
+          "minimum": 0.35,
+          "maximum": 0.65
+        },
+        "compact": {
+          "mean": 0.6666666666666667,
+          "minimum": 0.55,
+          "maximum": 0.8
+        },
+        "absolute_difference_compact_minus_canonical": 0.21666666666666673,
+        "frozen_limit": -0.05,
+        "passes_frozen_threshold": true,
+        "compact_mean_outside_canonical_range": true
+      },
+      "rejection_rate": {
+        "canonical": {
+          "mean": 0.015873015873015872,
+          "minimum": 0.0,
+          "maximum": 0.047619047619047616
+        },
+        "compact": {
+          "mean": 0.02576489533011272,
+          "minimum": 0.0,
+          "maximum": 0.05555555555555555
+        },
+        "absolute_difference_compact_minus_canonical": 0.00989187945709685,
+        "frozen_limit": 0.05,
+        "passes_frozen_threshold": true,
+        "compact_mean_outside_canonical_range": false
+      },
+      "grounding_failure_rate": {
+        "canonical": {
+          "mean": 0.015873015873015872,
+          "minimum": 0.0,
+          "maximum": 0.047619047619047616
+        },
+        "compact": {
+          "mean": 0.02576489533011272,
+          "minimum": 0.0,
+          "maximum": 0.05555555555555555
+        },
+        "absolute_difference_compact_minus_canonical": 0.00989187945709685,
+        "frozen_limit": 0.02,
+        "passes_frozen_threshold": true,
+        "compact_mean_outside_canonical_range": false
+      },
+      "parser_failure": {
+        "canonical": {
+          "mean": 0.0,
+          "minimum": 0.0,
+          "maximum": 0.0
+        },
+        "compact": {
+          "mean": 0.0,
+          "minimum": 0.0,
+          "maximum": 0.0
+        },
+        "absolute_difference_compact_minus_canonical": 0.0,
+        "frozen_limit": null,
+        "passes_frozen_threshold": true,
+        "compact_mean_outside_canonical_range": false
+      },
+      "structured_output_failure": {
+        "canonical": {
+          "mean": 0.0,
+          "minimum": 0.0,
+          "maximum": 0.0
+        },
+        "compact": {
+          "mean": 0.0,
+          "minimum": 0.0,
+          "maximum": 0.0
+        },
+        "absolute_difference_compact_minus_canonical": 0.0,
+        "frozen_limit": null,
+        "passes_frozen_threshold": true,
+        "compact_mean_outside_canonical_range": false
+      },
+      "truncated": {
+        "canonical": {
+          "mean": 0.0,
+          "minimum": 0.0,
+          "maximum": 0.0
+        },
+        "compact": {
+          "mean": 0.0,
+          "minimum": 0.0,
+          "maximum": 0.0
+        },
+        "absolute_difference_compact_minus_canonical": 0.0,
+        "frozen_limit": null,
+        "passes_frozen_threshold": true,
+        "compact_mean_outside_canonical_range": false
+      }
+    },
+    "india_wash": {
+      "headline_explicit_quantity_representation": {
+        "canonical": {
+          "mean": 0.8717948717948718,
+          "minimum": 0.7692307692307693,
+          "maximum": 1.0
+        },
+        "compact": {
+          "mean": 0.8205128205128205,
+          "minimum": 0.7692307692307693,
+          "maximum": 0.8461538461538461
+        },
+        "absolute_difference_compact_minus_canonical": -0.05128205128205132,
+        "frozen_limit": -0.05,
+        "passes_frozen_threshold": false,
+        "compact_mean_outside_canonical_range": false
+      },
+      "gold_recalled": {
+        "canonical": {
+          "mean": 10.0,
+          "minimum": 9.0,
+          "maximum": 12.0
+        },
+        "compact": {
+          "mean": 8.666666666666666,
+          "minimum": 8.0,
+          "maximum": 10.0
+        },
+        "absolute_difference_compact_minus_canonical": -1.333333333333334,
+        "frozen_limit": -1,
+        "passes_frozen_threshold": false,
+        "compact_mean_outside_canonical_range": true
+      },
+      "period_populated_rate": {
+        "canonical": {
+          "mean": 0.551010101010101,
+          "minimum": 0.4166666666666667,
+          "maximum": 0.6363636363636364
+        },
+        "compact": {
+          "mean": 0.0,
+          "minimum": 0.0,
+          "maximum": 0.0
+        },
+        "absolute_difference_compact_minus_canonical": -0.551010101010101,
+        "frozen_limit": -0.05,
+        "passes_frozen_threshold": false,
+        "compact_mean_outside_canonical_range": true
+      },
+      "unit_populated_rate": {
+        "canonical": {
+          "mean": 1.0,
+          "minimum": 1.0,
+          "maximum": 1.0
+        },
+        "compact": {
+          "mean": 0.0,
+          "minimum": 0.0,
+          "maximum": 0.0
+        },
+        "absolute_difference_compact_minus_canonical": -1.0,
+        "frozen_limit": -0.05,
+        "passes_frozen_threshold": false,
+        "compact_mean_outside_canonical_range": true
+      },
+      "currency_populated_rate": {
+        "canonical": {
+          "mean": 0.0,
+          "minimum": 0.0,
+          "maximum": 0.0
+        },
+        "compact": {
+          "mean": 0.0,
+          "minimum": 0.0,
+          "maximum": 0.0
+        },
+        "absolute_difference_compact_minus_canonical": 0.0,
+        "frozen_limit": -0.05,
+        "passes_frozen_threshold": true,
+        "compact_mean_outside_canonical_range": false
+      },
+      "supported_precision": {
+        "canonical": {
+          "mean": 0.6666666666666666,
+          "minimum": 0.55,
+          "maximum": 0.75
+        },
+        "compact": {
+          "mean": 0.8166666666666667,
+          "minimum": 0.75,
+          "maximum": 0.9
+        },
+        "absolute_difference_compact_minus_canonical": 0.15000000000000002,
+        "frozen_limit": -0.05,
+        "passes_frozen_threshold": true,
+        "compact_mean_outside_canonical_range": true
+      },
+      "rejection_rate": {
+        "canonical": {
+          "mean": 0.0703030303030303,
+          "minimum": 0.030303030303030304,
+          "maximum": 0.12
+        },
+        "compact": {
+          "mean": 0.09297839506172839,
+          "minimum": 0.07407407407407407,
+          "maximum": 0.1111111111111111
+        },
+        "absolute_difference_compact_minus_canonical": 0.022675364758698094,
+        "frozen_limit": 0.05,
+        "passes_frozen_threshold": true,
+        "compact_mean_outside_canonical_range": false
+      },
+      "grounding_failure_rate": {
+        "canonical": {
+          "mean": 0.0,
+          "minimum": 0.0,
+          "maximum": 0.0
+        },
+        "compact": {
+          "mean": 0.010416666666666666,
+          "minimum": 0.0,
+          "maximum": 0.03125
+        },
+        "absolute_difference_compact_minus_canonical": 0.010416666666666666,
+        "frozen_limit": 0.02,
+        "passes_frozen_threshold": true,
+        "compact_mean_outside_canonical_range": true
+      },
+      "parser_failure": {
+        "canonical": {
+          "mean": 0.0,
+          "minimum": 0.0,
+          "maximum": 0.0
+        },
+        "compact": {
+          "mean": 0.0,
+          "minimum": 0.0,
+          "maximum": 0.0
+        },
+        "absolute_difference_compact_minus_canonical": 0.0,
+        "frozen_limit": null,
+        "passes_frozen_threshold": true,
+        "compact_mean_outside_canonical_range": false
+      },
+      "structured_output_failure": {
+        "canonical": {
+          "mean": 0.0,
+          "minimum": 0.0,
+          "maximum": 0.0
+        },
+        "compact": {
+          "mean": 0.0,
+          "minimum": 0.0,
+          "maximum": 0.0
+        },
+        "absolute_difference_compact_minus_canonical": 0.0,
+        "frozen_limit": null,
+        "passes_frozen_threshold": true,
+        "compact_mean_outside_canonical_range": false
+      },
+      "truncated": {
+        "canonical": {
+          "mean": 0.0,
+          "minimum": 0.0,
+          "maximum": 0.0
+        },
+        "compact": {
+          "mean": 0.0,
+          "minimum": 0.0,
+          "maximum": 0.0
+        },
+        "absolute_difference_compact_minus_canonical": 0.0,
+        "frozen_limit": null,
+        "passes_frozen_threshold": true,
+        "compact_mean_outside_canonical_range": false
+      }
+    }
+  },
+  "arm_totals": {
+    "A": {
+      "returned_records": 230,
+      "accepted_records": 222,
+      "input_tokens": 24441,
+      "output_tokens": 29940,
+      "output_tokens_per_returned_record": 130.17391304347825,
+      "total_cost_usd": "0.174141",
+      "cost_per_accepted_record_usd": "0.0007844189189189189189189189189",
+      "precision_sampled": 120,
+      "precision_supported": 67
+    },
+    "B": {
+      "returned_records": 225,
+      "accepted_records": 214,
+      "input_tokens": 26637,
+      "output_tokens": 17825,
+      "output_tokens_per_returned_record": 79.22222222222223,
+      "total_cost_usd": "0.115762",
+      "cost_per_accepted_record_usd": "0.0005409439252336448598130841121",
+      "precision_sampled": 120,
+      "precision_supported": 89
+    }
+  },
+  "observed_output_token_reduction_per_returned_record": 0.391412454538707,
+  "frozen_threshold_failures_by_chunk": [
+    "unicef_reduced:period_populated_rate",
+    "unicef_reduced:unit_populated_rate",
+    "unicef_reduced:currency_populated_rate",
+    "india_wash:headline_explicit_quantity_representation",
+    "india_wash:gold_recalled",
+    "india_wash:period_populated_rate",
+    "india_wash:unit_populated_rate"
+  ],
+  "precision_review": {
+    "packet_sha256": "4f7725d3a6188b6dfae14bcc3f93b5db8633df6a73eb4669271512d3b39b5f43",
+    "judgment_sha256": "8963639954155455ad8a21546babaa920e44d038180f04e8ff54989390367cc8",
+    "reviewer_identity_type": "independent blinded semantic precision reviewer (Codex AI coding agent)",
+    "unblinding_mapping": "precision-review/precision-review-private-mapping.json",
+    "unblinding_mapping_sha256": "9a2313c7549f9e77ef6ed8dc17e24843d6c3ec68856088761f87a73b42007aa9",
+    "sample_count": 240
+  },
+  "qualitative_review": {
+    "records_reviewed": 20,
+    "unicef_records": 10,
+    "india_records": 10,
+    "raw_to_expanded_literal_changes": 0,
+    "evidence_ids_altered_or_lost": 0,
+    "all_period_fields_omitted_to_null": 20,
+    "all_unit_fields_omitted_to_null": 20,
+    "semantic_concern": "Systematic omission of explicit period/unit/currency metadata in compact output; E103 chart attribution and a few field-role/citation issues also observed."
+  },
+  "secret_scan": {
+    "files_scanned": 117,
+    "secret_values_checked": 9,
+    "findings_count": 0,
+    "finding_paths": [],
+    "status": "PASS"
+  },
+  "protocol_deviation": null,
+  "interpretation": "Engineering acceptance check, not statistical proof"
+}

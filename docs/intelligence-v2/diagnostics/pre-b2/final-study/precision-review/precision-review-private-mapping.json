@@ -1,0 +1,3174 @@
+{
+  "seed": 20261009,
+  "blinded_sha256": "dbabff9a17a72cfb804fd02ed9c657bee7d6ef328097110cb2216f2f891e85dc",
+  "mapping": [
+    {
+      "sample_id": "S0001",
+      "cell": "unicef_reduced-A4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 10
+    },
+    {
+      "sample_id": "S0002",
+      "cell": "unicef_reduced-B2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 67
+    },
+    {
+      "sample_id": "S0003",
+      "cell": "india_wash-A3",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 19
+    },
+    {
+      "sample_id": "S0004",
+      "cell": "unicef_reduced-A5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 57
+    },
+    {
+      "sample_id": "S0005",
+      "cell": "unicef_reduced-B4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 5
+    },
+    {
+      "sample_id": "S0006",
+      "cell": "unicef_reduced-B5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 21
+    },
+    {
+      "sample_id": "S0007",
+      "cell": "unicef_reduced-A4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 8
+    },
+    {
+      "sample_id": "S0008",
+      "cell": "india_wash-A3",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 1
+    },
+    {
+      "sample_id": "S0009",
+      "cell": "unicef_reduced-B1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 34
+    },
+    {
+      "sample_id": "S0010",
+      "cell": "unicef_reduced-A2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 6
+    },
+    {
+      "sample_id": "S0011",
+      "cell": "unicef_reduced-B5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 14
+    },
+    {
+      "sample_id": "S0012",
+      "cell": "unicef_reduced-A5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 41
+    },
+    {
+      "sample_id": "S0013",
+      "cell": "india_wash-A5",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 2
+    },
+    {
+      "sample_id": "S0014",
+      "cell": "india_wash-A3",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 12
+    },
+    {
+      "sample_id": "S0015",
+      "cell": "india_wash-A3",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 13
+    },
+    {
+      "sample_id": "S0016",
+      "cell": "india_wash-B3",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 18
+    },
+    {
+      "sample_id": "S0017",
+      "cell": "india_wash-A1",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 6
+    },
+    {
+      "sample_id": "S0018",
+      "cell": "india_wash-A1",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 29
+    },
+    {
+      "sample_id": "S0019",
+      "cell": "unicef_reduced-A1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 6
+    },
+    {
+      "sample_id": "S0020",
+      "cell": "unicef_reduced-A2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 8
+    },
+    {
+      "sample_id": "S0021",
+      "cell": "india_wash-B1",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 5
+    },
+    {
+      "sample_id": "S0022",
+      "cell": "unicef_reduced-A2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 21
+    },
+    {
+      "sample_id": "S0023",
+      "cell": "india_wash-B3",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 6
+    },
+    {
+      "sample_id": "S0024",
+      "cell": "india_wash-B4",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 10
+    },
+    {
+      "sample_id": "S0025",
+      "cell": "unicef_reduced-A1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 38
+    },
+    {
+      "sample_id": "S0026",
+      "cell": "india_wash-B4",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 27
+    },
+    {
+      "sample_id": "S0027",
+      "cell": "india_wash-A3",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 10
+    },
+    {
+      "sample_id": "S0028",
+      "cell": "india_wash-B1",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 33
+    },
+    {
+      "sample_id": "S0029",
+      "cell": "india_wash-A5",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 23
+    },
+    {
+      "sample_id": "S0030",
+      "cell": "india_wash-A4",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 3
+    },
+    {
+      "sample_id": "S0031",
+      "cell": "unicef_reduced-B4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 45
+    },
+    {
+      "sample_id": "S0032",
+      "cell": "unicef_reduced-A3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 17
+    },
+    {
+      "sample_id": "S0033",
+      "cell": "india_wash-A4",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 5
+    },
+    {
+      "sample_id": "S0034",
+      "cell": "unicef_reduced-A2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 7
+    },
+    {
+      "sample_id": "S0035",
+      "cell": "unicef_reduced-B4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 34
+    },
+    {
+      "sample_id": "S0036",
+      "cell": "unicef_reduced-A2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 25
+    },
+    {
+      "sample_id": "S0037",
+      "cell": "india_wash-B5",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 6
+    },
+    {
+      "sample_id": "S0038",
+      "cell": "unicef_reduced-B4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 57
+    },
+    {
+      "sample_id": "S0039",
+      "cell": "unicef_reduced-A5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 51
+    },
+    {
+      "sample_id": "S0040",
+      "cell": "unicef_reduced-A1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 40
+    },
+    {
+      "sample_id": "S0041",
+      "cell": "india_wash-B2",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 4
+    },
+    {
+      "sample_id": "S0042",
+      "cell": "india_wash-B1",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 31
+    },
+    {
+      "sample_id": "S0043",
+      "cell": "unicef_reduced-B2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 64
+    },
+    {
+      "sample_id": "S0044",
+      "cell": "india_wash-A2",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 12
+    },
+    {
+      "sample_id": "S0045",
+      "cell": "india_wash-B2",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 17
+    },
+    {
+      "sample_id": "S0046",
+      "cell": "unicef_reduced-B3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 58
+    },
+    {
+      "sample_id": "S0047",
+      "cell": "india_wash-B3",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 19
+    },
+    {
+      "sample_id": "S0048",
+      "cell": "unicef_reduced-A3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 7
+    },
+    {
+      "sample_id": "S0049",
+      "cell": "unicef_reduced-B1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 12
+    },
+    {
+      "sample_id": "S0050",
+      "cell": "india_wash-A2",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 3
+    },
+    {
+      "sample_id": "S0051",
+      "cell": "india_wash-A3",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 5
+    },
+    {
+      "sample_id": "S0052",
+      "cell": "unicef_reduced-B3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 50
+    },
+    {
+      "sample_id": "S0053",
+      "cell": "india_wash-A2",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 14
+    },
+    {
+      "sample_id": "S0054",
+      "cell": "india_wash-B2",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 0
+    },
+    {
+      "sample_id": "S0055",
+      "cell": "unicef_reduced-A2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 12
+    },
+    {
+      "sample_id": "S0056",
+      "cell": "india_wash-A2",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 15
+    },
+    {
+      "sample_id": "S0057",
+      "cell": "unicef_reduced-A3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 25
+    },
+    {
+      "sample_id": "S0058",
+      "cell": "unicef_reduced-B5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 25
+    },
+    {
+      "sample_id": "S0059",
+      "cell": "india_wash-A5",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 18
+    },
+    {
+      "sample_id": "S0060",
+      "cell": "unicef_reduced-A5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 42
+    },
+    {
+      "sample_id": "S0061",
+      "cell": "unicef_reduced-A2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 3
+    },
+    {
+      "sample_id": "S0062",
+      "cell": "unicef_reduced-B1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 56
+    },
+    {
+      "sample_id": "S0063",
+      "cell": "unicef_reduced-A2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 29
+    },
+    {
+      "sample_id": "S0064",
+      "cell": "unicef_reduced-B5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 30
+    },
+    {
+      "sample_id": "S0065",
+      "cell": "india_wash-A1",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 23
+    },
+    {
+      "sample_id": "S0066",
+      "cell": "india_wash-B1",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 35
+    },
+    {
+      "sample_id": "S0067",
+      "cell": "india_wash-B4",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 14
+    },
+    {
+      "sample_id": "S0068",
+      "cell": "unicef_reduced-B5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 12
+    },
+    {
+      "sample_id": "S0069",
+      "cell": "india_wash-A3",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 9
+    },
+    {
+      "sample_id": "S0070",
+      "cell": "unicef_reduced-A1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 39
+    },
+    {
+      "sample_id": "S0071",
+      "cell": "unicef_reduced-B3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 16
+    },
+    {
+      "sample_id": "S0072",
+      "cell": "unicef_reduced-B5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 39
+    },
+    {
+      "sample_id": "S0073",
+      "cell": "india_wash-B2",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 6
+    },
+    {
+      "sample_id": "S0074",
+      "cell": "unicef_reduced-A4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 26
+    },
+    {
+      "sample_id": "S0075",
+      "cell": "india_wash-B4",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 33
+    },
+    {
+      "sample_id": "S0076",
+      "cell": "unicef_reduced-A5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 12
+    },
+    {
+      "sample_id": "S0077",
+      "cell": "india_wash-A1",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 20
+    },
+    {
+      "sample_id": "S0078",
+      "cell": "unicef_reduced-A2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 34
+    },
+    {
+      "sample_id": "S0079",
+      "cell": "india_wash-B3",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 15
+    },
+    {
+      "sample_id": "S0080",
+      "cell": "unicef_reduced-B2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 10
+    },
+    {
+      "sample_id": "S0081",
+      "cell": "unicef_reduced-A1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 8
+    },
+    {
+      "sample_id": "S0082",
+      "cell": "unicef_reduced-B3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 21
+    },
+    {
+      "sample_id": "S0083",
+      "cell": "unicef_reduced-B1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 52
+    },
+    {
+      "sample_id": "S0084",
+      "cell": "india_wash-A2",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 8
+    },
+    {
+      "sample_id": "S0085",
+      "cell": "unicef_reduced-A1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 46
+    },
+    {
+      "sample_id": "S0086",
+      "cell": "india_wash-A2",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 2
+    },
+    {
+      "sample_id": "S0087",
+      "cell": "unicef_reduced-B4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 29
+    },
+    {
+      "sample_id": "S0088",
+      "cell": "india_wash-A1",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 3
+    },
+    {
+      "sample_id": "S0089",
+      "cell": "unicef_reduced-A3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 29
+    },
+    {
+      "sample_id": "S0090",
+      "cell": "unicef_reduced-B4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 50
+    },
+    {
+      "sample_id": "S0091",
+      "cell": "unicef_reduced-A4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 36
+    },
+    {
+      "sample_id": "S0092",
+      "cell": "unicef_reduced-B5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 40
+    },
+    {
+      "sample_id": "S0093",
+      "cell": "unicef_reduced-B2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 69
+    },
+    {
+      "sample_id": "S0094",
+      "cell": "unicef_reduced-A1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 5
+    },
+    {
+      "sample_id": "S0095",
+      "cell": "india_wash-A5",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 20
+    },
+    {
+      "sample_id": "S0096",
+      "cell": "unicef_reduced-B5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 17
+    },
+    {
+      "sample_id": "S0097",
+      "cell": "india_wash-B3",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 20
+    },
+    {
+      "sample_id": "S0098",
+      "cell": "india_wash-B1",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 14
+    },
+    {
+      "sample_id": "S0099",
+      "cell": "india_wash-A1",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 12
+    },
+    {
+      "sample_id": "S0100",
+      "cell": "india_wash-B5",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 20
+    },
+    {
+      "sample_id": "S0101",
+      "cell": "india_wash-A2",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 16
+    },
+    {
+      "sample_id": "S0102",
+      "cell": "india_wash-A4",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 11
+    },
+    {
+      "sample_id": "S0103",
+      "cell": "unicef_reduced-A4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 33
+    },
+    {
+      "sample_id": "S0104",
+      "cell": "unicef_reduced-B3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 42
+    },
+    {
+      "sample_id": "S0105",
+      "cell": "india_wash-A5",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 26
+    },
+    {
+      "sample_id": "S0106",
+      "cell": "unicef_reduced-B1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 41
+    },
+    {
+      "sample_id": "S0107",
+      "cell": "unicef_reduced-A2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 5
+    },
+    {
+      "sample_id": "S0108",
+      "cell": "unicef_reduced-B2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 6
+    },
+    {
+      "sample_id": "S0109",
+      "cell": "unicef_reduced-A5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 21
+    },
+    {
+      "sample_id": "S0110",
+      "cell": "india_wash-B2",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 12
+    },
+    {
+      "sample_id": "S0111",
+      "cell": "unicef_reduced-B3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 6
+    },
+    {
+      "sample_id": "S0112",
+      "cell": "india_wash-A2",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 9
+    },
+    {
+      "sample_id": "S0113",
+      "cell": "india_wash-A3",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 6
+    },
+    {
+      "sample_id": "S0114",
+      "cell": "unicef_reduced-A1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 21
+    },
+    {
+      "sample_id": "S0115",
+      "cell": "india_wash-B4",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 38
+    },
+    {
+      "sample_id": "S0116",
+      "cell": "india_wash-B2",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 7
+    },
+    {
+      "sample_id": "S0117",
+      "cell": "unicef_reduced-B2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 43
+    },
+    {
+      "sample_id": "S0118",
+      "cell": "unicef_reduced-A1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 35
+    },
+    {
+      "sample_id": "S0119",
+      "cell": "india_wash-A2",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 18
+    },
+    {
+      "sample_id": "S0120",
+      "cell": "india_wash-A5",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 21
+    },
+    {
+      "sample_id": "S0121",
+      "cell": "india_wash-B1",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 10
+    },
+    {
+      "sample_id": "S0122",
+      "cell": "unicef_reduced-A5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 5
+    },
+    {
+      "sample_id": "S0123",
+      "cell": "india_wash-B4",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 21
+    },
+    {
+      "sample_id": "S0124",
+      "cell": "unicef_reduced-A3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 5
+    },
+    {
+      "sample_id": "S0125",
+      "cell": "india_wash-B3",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 16
+    },
+    {
+      "sample_id": "S0126",
+      "cell": "india_wash-B4",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 37
+    },
+    {
+      "sample_id": "S0127",
+      "cell": "india_wash-B4",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 12
+    },
+    {
+      "sample_id": "S0128",
+      "cell": "unicef_reduced-A3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 26
+    },
+    {
+      "sample_id": "S0129",
+      "cell": "india_wash-B5",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 2
+    },
+    {
+      "sample_id": "S0130",
+      "cell": "india_wash-A5",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 17
+    },
+    {
+      "sample_id": "S0131",
+      "cell": "unicef_reduced-A4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 34
+    },
+    {
+      "sample_id": "S0132",
+      "cell": "india_wash-A2",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 1
+    },
+    {
+      "sample_id": "S0133",
+      "cell": "india_wash-B2",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 11
+    },
+    {
+      "sample_id": "S0134",
+      "cell": "india_wash-B5",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 7
+    },
+    {
+      "sample_id": "S0135",
+      "cell": "unicef_reduced-B3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 52
+    },
+    {
+      "sample_id": "S0136",
+      "cell": "india_wash-B2",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 8
+    },
+    {
+      "sample_id": "S0137",
+      "cell": "india_wash-B3",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 1
+    },
+    {
+      "sample_id": "S0138",
+      "cell": "india_wash-B1",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 28
+    },
+    {
+      "sample_id": "S0139",
+      "cell": "unicef_reduced-A2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 17
+    },
+    {
+      "sample_id": "S0140",
+      "cell": "unicef_reduced-B1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 6
+    },
+    {
+      "sample_id": "S0141",
+      "cell": "unicef_reduced-A5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 47
+    },
+    {
+      "sample_id": "S0142",
+      "cell": "unicef_reduced-A4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 9
+    },
+    {
+      "sample_id": "S0143",
+      "cell": "unicef_reduced-B1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 5
+    },
+    {
+      "sample_id": "S0144",
+      "cell": "india_wash-B4",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 36
+    },
+    {
+      "sample_id": "S0145",
+      "cell": "india_wash-A5",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 27
+    },
+    {
+      "sample_id": "S0146",
+      "cell": "india_wash-A1",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 26
+    },
+    {
+      "sample_id": "S0147",
+      "cell": "india_wash-B4",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 17
+    },
+    {
+      "sample_id": "S0148",
+      "cell": "india_wash-B4",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 3
+    },
+    {
+      "sample_id": "S0149",
+      "cell": "india_wash-A5",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 28
+    },
+    {
+      "sample_id": "S0150",
+      "cell": "unicef_reduced-B5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 29
+    },
+    {
+      "sample_id": "S0151",
+      "cell": "india_wash-A5",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 10
+    },
+    {
+      "sample_id": "S0152",
+      "cell": "india_wash-B2",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 10
+    },
+    {
+      "sample_id": "S0153",
+      "cell": "india_wash-B1",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 20
+    },
+    {
+      "sample_id": "S0154",
+      "cell": "india_wash-A1",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 31
+    },
+    {
+      "sample_id": "S0155",
+      "cell": "unicef_reduced-B1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 16
+    },
+    {
+      "sample_id": "S0156",
+      "cell": "unicef_reduced-A4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 14
+    },
+    {
+      "sample_id": "S0157",
+      "cell": "unicef_reduced-A4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 30
+    },
+    {
+      "sample_id": "S0158",
+      "cell": "unicef_reduced-A4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 21
+    },
+    {
+      "sample_id": "S0159",
+      "cell": "unicef_reduced-B4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 19
+    },
+    {
+      "sample_id": "S0160",
+      "cell": "india_wash-A5",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 7
+    },
+    {
+      "sample_id": "S0161",
+      "cell": "india_wash-A5",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 4
+    },
+    {
+      "sample_id": "S0162",
+      "cell": "unicef_reduced-A2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 35
+    },
+    {
+      "sample_id": "S0163",
+      "cell": "india_wash-B2",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 5
+    },
+    {
+      "sample_id": "S0164",
+      "cell": "india_wash-B1",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 27
+    },
+    {
+      "sample_id": "S0165",
+      "cell": "unicef_reduced-A4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 27
+    },
+    {
+      "sample_id": "S0166",
+      "cell": "india_wash-B4",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 31
+    },
+    {
+      "sample_id": "S0167",
+      "cell": "unicef_reduced-B1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 62
+    },
+    {
+      "sample_id": "S0168",
+      "cell": "india_wash-A4",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 4
+    },
+    {
+      "sample_id": "S0169",
+      "cell": "unicef_reduced-B1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 29
+    },
+    {
+      "sample_id": "S0170",
+      "cell": "india_wash-A1",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 30
+    },
+    {
+      "sample_id": "S0171",
+      "cell": "india_wash-A3",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 20
+    },
+    {
+      "sample_id": "S0172",
+      "cell": "unicef_reduced-A4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 3
+    },
+    {
+      "sample_id": "S0173",
+      "cell": "unicef_reduced-B1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 59
+    },
+    {
+      "sample_id": "S0174",
+      "cell": "india_wash-B2",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 14
+    },
+    {
+      "sample_id": "S0175",
+      "cell": "india_wash-A5",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 6
+    },
+    {
+      "sample_id": "S0176",
+      "cell": "unicef_reduced-B2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 16
+    },
+    {
+      "sample_id": "S0177",
+      "cell": "unicef_reduced-B1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 25
+    },
+    {
+      "sample_id": "S0178",
+      "cell": "india_wash-A4",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 8
+    },
+    {
+      "sample_id": "S0179",
+      "cell": "india_wash-A4",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 18
+    },
+    {
+      "sample_id": "S0180",
+      "cell": "unicef_reduced-B4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 55
+    },
+    {
+      "sample_id": "S0181",
+      "cell": "india_wash-A4",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 17
+    },
+    {
+      "sample_id": "S0182",
+      "cell": "unicef_reduced-A1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 45
+    },
+    {
+      "sample_id": "S0183",
+      "cell": "india_wash-A1",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 33
+    },
+    {
+      "sample_id": "S0184",
+      "cell": "india_wash-B1",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 37
+    },
+    {
+      "sample_id": "S0185",
+      "cell": "india_wash-B1",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 9
+    },
+    {
+      "sample_id": "S0186",
+      "cell": "unicef_reduced-A4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 35
+    },
+    {
+      "sample_id": "S0187",
+      "cell": "unicef_reduced-A5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 45
+    },
+    {
+      "sample_id": "S0188",
+      "cell": "unicef_reduced-B2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 29
+    },
+    {
+      "sample_id": "S0189",
+      "cell": "india_wash-A4",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 1
+    },
+    {
+      "sample_id": "S0190",
+      "cell": "india_wash-A2",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 13
+    },
+    {
+      "sample_id": "S0191",
+      "cell": "unicef_reduced-A5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 29
+    },
+    {
+      "sample_id": "S0192",
+      "cell": "unicef_reduced-B5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 34
+    },
+    {
+      "sample_id": "S0193",
+      "cell": "unicef_reduced-B1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 64
+    },
+    {
+      "sample_id": "S0194",
+      "cell": "india_wash-A4",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 13
+    },
+    {
+      "sample_id": "S0195",
+      "cell": "india_wash-B3",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 2
+    },
+    {
+      "sample_id": "S0196",
+      "cell": "unicef_reduced-A4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 17
+    },
+    {
+      "sample_id": "S0197",
+      "cell": "india_wash-B5",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 12
+    },
+    {
+      "sample_id": "S0198",
+      "cell": "unicef_reduced-B2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 25
+    },
+    {
+      "sample_id": "S0199",
+      "cell": "unicef_reduced-A4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 12
+    },
+    {
+      "sample_id": "S0200",
+      "cell": "unicef_reduced-A3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 8
+    },
+    {
+      "sample_id": "S0201",
+      "cell": "unicef_reduced-B5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 9
+    },
+    {
+      "sample_id": "S0202",
+      "cell": "unicef_reduced-A3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 21
+    },
+    {
+      "sample_id": "S0203",
+      "cell": "india_wash-A3",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 2
+    },
+    {
+      "sample_id": "S0204",
+      "cell": "india_wash-B4",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 29
+    },
+    {
+      "sample_id": "S0205",
+      "cell": "unicef_reduced-A2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 26
+    },
+    {
+      "sample_id": "S0206",
+      "cell": "unicef_reduced-A2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 33
+    },
+    {
+      "sample_id": "S0207",
+      "cell": "unicef_reduced-B1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 14
+    },
+    {
+      "sample_id": "S0208",
+      "cell": "unicef_reduced-A1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 12
+    },
+    {
+      "sample_id": "S0209",
+      "cell": "unicef_reduced-B1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 17
+    },
+    {
+      "sample_id": "S0210",
+      "cell": "india_wash-B3",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 17
+    },
+    {
+      "sample_id": "S0211",
+      "cell": "india_wash-A1",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 2
+    },
+    {
+      "sample_id": "S0212",
+      "cell": "india_wash-A2",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 7
+    },
+    {
+      "sample_id": "S0213",
+      "cell": "unicef_reduced-A3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 30
+    },
+    {
+      "sample_id": "S0214",
+      "cell": "unicef_reduced-A2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 20
+    },
+    {
+      "sample_id": "S0215",
+      "cell": "unicef_reduced-B3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 46
+    },
+    {
+      "sample_id": "S0216",
+      "cell": "india_wash-A4",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 15
+    },
+    {
+      "sample_id": "S0217",
+      "cell": "india_wash-A4",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 10
+    },
+    {
+      "sample_id": "S0218",
+      "cell": "india_wash-B5",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 4
+    },
+    {
+      "sample_id": "S0219",
+      "cell": "india_wash-A5",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 3
+    },
+    {
+      "sample_id": "S0220",
+      "cell": "india_wash-B3",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 5
+    },
+    {
+      "sample_id": "S0221",
+      "cell": "india_wash-A1",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 16
+    },
+    {
+      "sample_id": "S0222",
+      "cell": "unicef_reduced-B1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 43
+    },
+    {
+      "sample_id": "S0223",
+      "cell": "unicef_reduced-B3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 12
+    },
+    {
+      "sample_id": "S0224",
+      "cell": "india_wash-B4",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 25
+    },
+    {
+      "sample_id": "S0225",
+      "cell": "india_wash-B2",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 2
+    },
+    {
+      "sample_id": "S0226",
+      "cell": "unicef_reduced-B5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 6
+    },
+    {
+      "sample_id": "S0227",
+      "cell": "india_wash-A2",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 17
+    },
+    {
+      "sample_id": "S0228",
+      "cell": "unicef_reduced-A2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 32
+    },
+    {
+      "sample_id": "S0229",
+      "cell": "india_wash-A1",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 14
+    },
+    {
+      "sample_id": "S0230",
+      "cell": "india_wash-B1",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 36
+    },
+    {
+      "sample_id": "S0231",
+      "cell": "unicef_reduced-A3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 20
+    },
+    {
+      "sample_id": "S0232",
+      "cell": "india_wash-B3",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 21
+    },
+    {
+      "sample_id": "S0233",
+      "cell": "unicef_reduced-B2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 50
+    },
+    {
+      "sample_id": "S0234",
+      "cell": "india_wash-B4",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 5
+    },
+    {
+      "sample_id": "S0235",
+      "cell": "india_wash-B2",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 1
+    },
+    {
+      "sample_id": "S0236",
+      "cell": "india_wash-A5",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 13
+    },
+    {
+      "sample_id": "S0237",
+      "cell": "unicef_reduced-A3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 12
+    },
+    {
+      "sample_id": "S0238",
+      "cell": "unicef_reduced-A5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 14
+    },
+    {
+      "sample_id": "S0239",
+      "cell": "india_wash-B3",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 13
+    },
+    {
+      "sample_id": "S0240",
+      "cell": "unicef_reduced-A5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 50
+    },
+    {
+      "sample_id": "S0241",
+      "cell": "india_wash-A3",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 16
+    },
+    {
+      "sample_id": "S0242",
+      "cell": "india_wash-A3",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 8
+    },
+    {
+      "sample_id": "S0243",
+      "cell": "india_wash-B5",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 5
+    },
+    {
+      "sample_id": "S0244",
+      "cell": "india_wash-A2",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 4
+    },
+    {
+      "sample_id": "S0245",
+      "cell": "unicef_reduced-B1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 42
+    },
+    {
+      "sample_id": "S0246",
+      "cell": "unicef_reduced-A1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 44
+    },
+    {
+      "sample_id": "S0247",
+      "cell": "india_wash-A5",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 14
+    },
+    {
+      "sample_id": "S0248",
+      "cell": "india_wash-B4",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 35
+    },
+    {
+      "sample_id": "S0249",
+      "cell": "unicef_reduced-B2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 21
+    },
+    {
+      "sample_id": "S0250",
+      "cell": "unicef_reduced-B3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 54
+    },
+    {
+      "sample_id": "S0251",
+      "cell": "unicef_reduced-B3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 53
+    },
+    {
+      "sample_id": "S0252",
+      "cell": "india_wash-A4",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 16
+    },
+    {
+      "sample_id": "S0253",
+      "cell": "india_wash-B3",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 3
+    },
+    {
+      "sample_id": "S0254",
+      "cell": "unicef_reduced-A5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 34
+    },
+    {
+      "sample_id": "S0255",
+      "cell": "unicef_reduced-B2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 59
+    },
+    {
+      "sample_id": "S0256",
+      "cell": "unicef_reduced-A1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 16
+    },
+    {
+      "sample_id": "S0257",
+      "cell": "india_wash-A4",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 7
+    },
+    {
+      "sample_id": "S0258",
+      "cell": "india_wash-B4",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 9
+    },
+    {
+      "sample_id": "S0259",
+      "cell": "unicef_reduced-B5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 35
+    },
+    {
+      "sample_id": "S0260",
+      "cell": "unicef_reduced-B5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 38
+    },
+    {
+      "sample_id": "S0261",
+      "cell": "india_wash-A2",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 10
+    },
+    {
+      "sample_id": "S0262",
+      "cell": "india_wash-B1",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 38
+    },
+    {
+      "sample_id": "S0263",
+      "cell": "india_wash-B2",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 16
+    },
+    {
+      "sample_id": "S0264",
+      "cell": "india_wash-A1",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 9
+    },
+    {
+      "sample_id": "S0265",
+      "cell": "unicef_reduced-B4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 8
+    },
+    {
+      "sample_id": "S0266",
+      "cell": "unicef_reduced-A1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 42
+    },
+    {
+      "sample_id": "S0267",
+      "cell": "india_wash-B1",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 29
+    },
+    {
+      "sample_id": "S0268",
+      "cell": "india_wash-B4",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 28
+    },
+    {
+      "sample_id": "S0269",
+      "cell": "india_wash-B5",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 14
+    },
+    {
+      "sample_id": "S0270",
+      "cell": "unicef_reduced-B4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 12
+    },
+    {
+      "sample_id": "S0271",
+      "cell": "unicef_reduced-B5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 10
+    },
+    {
+      "sample_id": "S0272",
+      "cell": "india_wash-B3",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 7
+    },
+    {
+      "sample_id": "S0273",
+      "cell": "india_wash-B3",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 8
+    },
+    {
+      "sample_id": "S0274",
+      "cell": "unicef_reduced-B3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 41
+    },
+    {
+      "sample_id": "S0275",
+      "cell": "unicef_reduced-A5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 55
+    },
+    {
+      "sample_id": "S0276",
+      "cell": "india_wash-B1",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 17
+    },
+    {
+      "sample_id": "S0277",
+      "cell": "unicef_reduced-B1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 50
+    },
+    {
+      "sample_id": "S0278",
+      "cell": "unicef_reduced-A5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 6
+    },
+    {
+      "sample_id": "S0279",
+      "cell": "unicef_reduced-A3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 14
+    },
+    {
+      "sample_id": "S0280",
+      "cell": "unicef_reduced-A5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 53
+    },
+    {
+      "sample_id": "S0281",
+      "cell": "unicef_reduced-A4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 25
+    },
+    {
+      "sample_id": "S0282",
+      "cell": "unicef_reduced-B3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 5
+    },
+    {
+      "sample_id": "S0283",
+      "cell": "unicef_reduced-B1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 21
+    },
+    {
+      "sample_id": "S0284",
+      "cell": "india_wash-B1",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 3
+    },
+    {
+      "sample_id": "S0285",
+      "cell": "india_wash-B1",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 21
+    },
+    {
+      "sample_id": "S0286",
+      "cell": "india_wash-A3",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 3
+    },
+    {
+      "sample_id": "S0287",
+      "cell": "unicef_reduced-B5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 26
+    },
+    {
+      "sample_id": "S0288",
+      "cell": "unicef_reduced-B2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 56
+    },
+    {
+      "sample_id": "S0289",
+      "cell": "india_wash-A5",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 25
+    },
+    {
+      "sample_id": "S0290",
+      "cell": "india_wash-B5",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 15
+    },
+    {
+      "sample_id": "S0291",
+      "cell": "india_wash-B5",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 19
+    },
+    {
+      "sample_id": "S0292",
+      "cell": "unicef_reduced-A3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 36
+    },
+    {
+      "sample_id": "S0293",
+      "cell": "unicef_reduced-B2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 19
+    },
+    {
+      "sample_id": "S0294",
+      "cell": "unicef_reduced-B2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 24
+    },
+    {
+      "sample_id": "S0295",
+      "cell": "unicef_reduced-B3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 8
+    },
+    {
+      "sample_id": "S0296",
+      "cell": "unicef_reduced-B2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 65
+    },
+    {
+      "sample_id": "S0297",
+      "cell": "india_wash-B2",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 15
+    },
+    {
+      "sample_id": "S0298",
+      "cell": "india_wash-B5",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 21
+    },
+    {
+      "sample_id": "S0299",
+      "cell": "unicef_reduced-B3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 48
+    },
+    {
+      "sample_id": "S0300",
+      "cell": "unicef_reduced-B1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 48
+    },
+    {
+      "sample_id": "S0301",
+      "cell": "unicef_reduced-A1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 28
+    },
+    {
+      "sample_id": "S0302",
+      "cell": "unicef_reduced-B3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 14
+    },
+    {
+      "sample_id": "S0303",
+      "cell": "india_wash-A2",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 6
+    },
+    {
+      "sample_id": "S0304",
+      "cell": "india_wash-A3",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 17
+    },
+    {
+      "sample_id": "S0305",
+      "cell": "india_wash-A4",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 0
+    },
+    {
+      "sample_id": "S0306",
+      "cell": "india_wash-B5",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 9
+    },
+    {
+      "sample_id": "S0307",
+      "cell": "india_wash-B1",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 12
+    },
+    {
+      "sample_id": "S0308",
+      "cell": "india_wash-A1",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 10
+    },
+    {
+      "sample_id": "S0309",
+      "cell": "unicef_reduced-B4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 41
+    },
+    {
+      "sample_id": "S0310",
+      "cell": "india_wash-B2",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 9
+    },
+    {
+      "sample_id": "S0311",
+      "cell": "india_wash-A5",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 15
+    },
+    {
+      "sample_id": "S0312",
+      "cell": "india_wash-A1",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 24
+    },
+    {
+      "sample_id": "S0313",
+      "cell": "unicef_reduced-B4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 6
+    },
+    {
+      "sample_id": "S0314",
+      "cell": "unicef_reduced-A3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 3
+    },
+    {
+      "sample_id": "S0315",
+      "cell": "unicef_reduced-B3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 49
+    },
+    {
+      "sample_id": "S0316",
+      "cell": "unicef_reduced-A1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 29
+    },
+    {
+      "sample_id": "S0317",
+      "cell": "unicef_reduced-A1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 14
+    },
+    {
+      "sample_id": "S0318",
+      "cell": "india_wash-A4",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 6
+    },
+    {
+      "sample_id": "S0319",
+      "cell": "unicef_reduced-A3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 33
+    },
+    {
+      "sample_id": "S0320",
+      "cell": "unicef_reduced-A2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 14
+    },
+    {
+      "sample_id": "S0321",
+      "cell": "india_wash-B2",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 3
+    },
+    {
+      "sample_id": "S0322",
+      "cell": "india_wash-B5",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 11
+    },
+    {
+      "sample_id": "S0323",
+      "cell": "unicef_reduced-B3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 34
+    },
+    {
+      "sample_id": "S0324",
+      "cell": "india_wash-A4",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 2
+    },
+    {
+      "sample_id": "S0325",
+      "cell": "india_wash-A5",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 24
+    },
+    {
+      "sample_id": "S0326",
+      "cell": "unicef_reduced-A3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 9
+    },
+    {
+      "sample_id": "S0327",
+      "cell": "unicef_reduced-B4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 21
+    },
+    {
+      "sample_id": "S0328",
+      "cell": "unicef_reduced-A1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 19
+    },
+    {
+      "sample_id": "S0329",
+      "cell": "india_wash-B5",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 3
+    },
+    {
+      "sample_id": "S0330",
+      "cell": "unicef_reduced-B4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 42
+    },
+    {
+      "sample_id": "S0331",
+      "cell": "unicef_reduced-B4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 53
+    },
+    {
+      "sample_id": "S0332",
+      "cell": "india_wash-B3",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 14
+    },
+    {
+      "sample_id": "S0333",
+      "cell": "india_wash-B5",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 10
+    },
+    {
+      "sample_id": "S0334",
+      "cell": "unicef_reduced-A1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 34
+    },
+    {
+      "sample_id": "S0335",
+      "cell": "india_wash-B4",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 20
+    },
+    {
+      "sample_id": "S0336",
+      "cell": "india_wash-A3",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 11
+    },
+    {
+      "sample_id": "S0337",
+      "cell": "india_wash-A1",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 7
+    },
+    {
+      "sample_id": "S0338",
+      "cell": "india_wash-B1",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 8
+    },
+    {
+      "sample_id": "S0339",
+      "cell": "india_wash-A3",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 15
+    },
+    {
+      "sample_id": "S0340",
+      "cell": "india_wash-B5",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 23
+    },
+    {
+      "sample_id": "S0341",
+      "cell": "unicef_reduced-A5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 8
+    },
+    {
+      "sample_id": "S0342",
+      "cell": "india_wash-A5",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 12
+    },
+    {
+      "sample_id": "S0343",
+      "cell": "unicef_reduced-B4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 16
+    },
+    {
+      "sample_id": "S0344",
+      "cell": "india_wash-B3",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 10
+    },
+    {
+      "sample_id": "S0345",
+      "cell": "unicef_reduced-B3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 29
+    },
+    {
+      "sample_id": "S0346",
+      "cell": "unicef_reduced-B5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 8
+    },
+    {
+      "sample_id": "S0347",
+      "cell": "india_wash-B4",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 8
+    },
+    {
+      "sample_id": "S0348",
+      "cell": "india_wash-A4",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 14
+    },
+    {
+      "sample_id": "S0349",
+      "cell": "unicef_reduced-A4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 20
+    },
+    {
+      "sample_id": "S0350",
+      "cell": "unicef_reduced-B2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 63
+    },
+    {
+      "sample_id": "S0351",
+      "cell": "india_wash-A1",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 21
+    },
+    {
+      "sample_id": "S0352",
+      "cell": "india_wash-A3",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 18
+    },
+    {
+      "sample_id": "S0353",
+      "cell": "unicef_reduced-A4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 7
+    },
+    {
+      "sample_id": "S0354",
+      "cell": "unicef_reduced-A2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 28
+    },
+    {
+      "sample_id": "S0355",
+      "cell": "unicef_reduced-A3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 10
+    },
+    {
+      "sample_id": "S0356",
+      "cell": "unicef_reduced-B3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 56
+    },
+    {
+      "sample_id": "S0357",
+      "cell": "india_wash-B5",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 22
+    },
+    {
+      "sample_id": "S0358",
+      "cell": "india_wash-A4",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 12
+    },
+    {
+      "sample_id": "S0359",
+      "cell": "unicef_reduced-A3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 34
+    },
+    {
+      "sample_id": "S0360",
+      "cell": "unicef_reduced-A5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 19
+    },
+    {
+      "sample_id": "S0361",
+      "cell": "india_wash-A2",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 0
+    },
+    {
+      "sample_id": "S0362",
+      "cell": "unicef_reduced-B4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 54
+    },
+    {
+      "sample_id": "S0363",
+      "cell": "india_wash-A4",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 9
+    },
+    {
+      "sample_id": "S0364",
+      "cell": "unicef_reduced-A2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 10
+    },
+    {
+      "sample_id": "S0365",
+      "cell": "india_wash-B3",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 4
+    },
+    {
+      "sample_id": "S0366",
+      "cell": "india_wash-B3",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 11
+    },
+    {
+      "sample_id": "S0367",
+      "cell": "unicef_reduced-B2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 42
+    },
+    {
+      "sample_id": "S0368",
+      "cell": "india_wash-A3",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 7
+    },
+    {
+      "sample_id": "S0369",
+      "cell": "unicef_reduced-A4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 29
+    },
+    {
+      "sample_id": "S0370",
+      "cell": "unicef_reduced-B4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 14
+    },
+    {
+      "sample_id": "S0371",
+      "cell": "unicef_reduced-A1",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 17
+    },
+    {
+      "sample_id": "S0372",
+      "cell": "unicef_reduced-A5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 54
+    },
+    {
+      "sample_id": "S0373",
+      "cell": "unicef_reduced-A4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 4,
+      "accepted_index_zero_based": 5
+    },
+    {
+      "sample_id": "S0374",
+      "cell": "india_wash-A3",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 4
+    },
+    {
+      "sample_id": "S0375",
+      "cell": "india_wash-A3",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 14
+    },
+    {
+      "sample_id": "S0376",
+      "cell": "unicef_reduced-B4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 51
+    },
+    {
+      "sample_id": "S0377",
+      "cell": "india_wash-B2",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 13
+    },
+    {
+      "sample_id": "S0378",
+      "cell": "unicef_reduced-A3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 35
+    },
+    {
+      "sample_id": "S0379",
+      "cell": "india_wash-A2",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 5
+    },
+    {
+      "sample_id": "S0380",
+      "cell": "india_wash-A2",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 11
+    },
+    {
+      "sample_id": "S0381",
+      "cell": "india_wash-B5",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 8
+    },
+    {
+      "sample_id": "S0382",
+      "cell": "unicef_reduced-B5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 31
+    },
+    {
+      "sample_id": "S0383",
+      "cell": "india_wash-B5",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 1
+    },
+    {
+      "sample_id": "S0384",
+      "cell": "india_wash-A1",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 17
+    },
+    {
+      "sample_id": "S0385",
+      "cell": "unicef_reduced-B2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 34
+    },
+    {
+      "sample_id": "S0386",
+      "cell": "india_wash-B5",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 13
+    },
+    {
+      "sample_id": "S0387",
+      "cell": "unicef_reduced-B4",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 4,
+      "accepted_index_zero_based": 47
+    },
+    {
+      "sample_id": "S0388",
+      "cell": "unicef_reduced-A5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 5,
+      "accepted_index_zero_based": 16
+    },
+    {
+      "sample_id": "S0389",
+      "cell": "unicef_reduced-B5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 5
+    },
+    {
+      "sample_id": "S0390",
+      "cell": "unicef_reduced-A2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 2,
+      "accepted_index_zero_based": 9
+    },
+    {
+      "sample_id": "S0391",
+      "cell": "india_wash-A1",
+      "chunk": "india_wash",
+      "variant": "CONTROL",
+      "run": 1,
+      "accepted_index_zero_based": 8
+    },
+    {
+      "sample_id": "S0392",
+      "cell": "unicef_reduced-A3",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL",
+      "run": 3,
+      "accepted_index_zero_based": 27
+    },
+    {
+      "sample_id": "S0393",
+      "cell": "india_wash-B1",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 1,
+      "accepted_index_zero_based": 25
+    },
+    {
+      "sample_id": "S0394",
+      "cell": "india_wash-B3",
+      "chunk": "india_wash",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 3,
+      "accepted_index_zero_based": 9
+    },
+    {
+      "sample_id": "S0395",
+      "cell": "unicef_reduced-B2",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 2,
+      "accepted_index_zero_based": 17
+    },
+    {
+      "sample_id": "S0396",
+      "cell": "unicef_reduced-B5",
+      "chunk": "unicef_reduced",
+      "variant": "CONTROL_MINUS_MATERIALITY",
+      "run": 5,
+      "accepted_index_zero_based": 41
+    }
+  ]
+}

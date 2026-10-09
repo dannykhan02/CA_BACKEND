@@ -1,0 +1,10 @@
+{
+  "status": "COMPLETE",
+  "reason": null,
+  "cell": null,
+  "calls_completed": 12,
+  "calls_failed": 0,
+  "actual_total_cost_usd": "0.289903",
+  "max_calls": 12,
+  "max_total_cost_usd": "0.60"
+}

@@ -1,0 +1,1816 @@
+{
+  "replay": {
+    "cell": "india_wash-A2",
+    "response_sha256": "1249bc939e59a0bc5fdedabbb39c2a6ddae55d6de0a53c84d4256f6317feeb1e",
+    "returned_count": 33,
+    "accepted_count": 32,
+    "rejected_count": 1,
+    "validation": {
+      "records_returned": 33,
+      "records_kept": 32,
+      "records_dropped": 1,
+      "rejections": {
+        "invalid_date": 1
+      },
+      "rejection_reasons": {
+        "invalid_deadline_date_type": 1
+      },
+      "evidence_grounding_mode": "span_reference",
+      "records_date_metadata_sanitized": 0,
+      "date_metadata_sanitized": [],
+      "date_rejection_reasons_by_kind": {
+        "invalid_deadline_date_type": {
+          "obligation": 1
+        }
+      },
+      "date_metadata_sanitized_by_kind": []
+    },
+    "origin": {
+      "document": 10,
+      "unknown": 22
+    },
+    "key_figure_eligible_count": 0,
+    "premerge_identity_count": 32,
+    "trace": [
+      {
+        "raw_index": 0,
+        "accepted": true,
+        "identity": "7e151c40c848ae3a8aaa489d6410dc4b1ace53bc71384d84cb4ebccbac124f03",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 1,
+        "accepted": true,
+        "identity": "f02cb5322d93bbb1d97e8d6264435206fa0afd66705885cd3ae1115b77e5e60c",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": {
+            "period_covered": {
+              "type": "period",
+              "raw": "2014",
+              "verbatim": true,
+              "number": null,
+              "scale": null,
+              "scale_source": null,
+              "currency": null,
+              "unit": null,
+              "unit_kind": "other",
+              "sign": null,
+              "precision": "exact",
+              "measure_status": null,
+              "entity_ref": {
+                "id": null,
+                "text": "Government of India"
+              },
+              "date": null,
+              "period": {
+                "text": "2014",
+                "grain": "year",
+                "start": "2014-01-01",
+                "end": "2014-12-31",
+                "anchored": true,
+                "fiscal_year_basis": null
+              },
+              "duration": null,
+              "parser_version": "values.v1",
+              "resolution": "period"
+            }
+          },
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 2,
+        "accepted": false,
+        "rejection_class": "invalid_date",
+        "rejection_reason": {
+          "invalid_deadline_date_type": 1
+        }
+      },
+      {
+        "raw_index": 3,
+        "accepted": true,
+        "identity": "56aec7467a86939d05a47584c74d0aa77a2d837bf48770c425aabd12f78fe812",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": {
+            "period_covered": {
+              "type": "period",
+              "raw": "2019",
+              "verbatim": true,
+              "number": null,
+              "scale": null,
+              "scale_source": null,
+              "currency": null,
+              "unit": null,
+              "unit_kind": "other",
+              "sign": null,
+              "precision": "exact",
+              "measure_status": null,
+              "entity_ref": {
+                "id": null,
+                "text": "Government of India"
+              },
+              "date": null,
+              "period": {
+                "text": "2019",
+                "grain": "year",
+                "start": "2019-01-01",
+                "end": "2019-12-31",
+                "anchored": true,
+                "fiscal_year_basis": null
+              },
+              "duration": null,
+              "parser_version": "values.v1",
+              "resolution": "period"
+            }
+          },
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 4,
+        "accepted": true,
+        "identity": "a62ae310584587a8400176036e6f27daa42c85390a956234e3315d2a684fcd24",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": {
+            "type": "count",
+            "raw": "550 million people",
+            "verbatim": true,
+            "number": 550000000,
+            "scale": 1000000,
+            "scale_source": "stated",
+            "currency": null,
+            "unit": "people",
+            "unit_kind": "count",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "India"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 5,
+        "accepted": true,
+        "identity": "d51aed3c7a53d9cc5bbd53aafa2b0237e0db5823e5308ec4dd05eba285bdf143",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": {
+            "type": "count",
+            "raw": "580 million people",
+            "verbatim": true,
+            "number": 580000000,
+            "scale": 1000000,
+            "scale_source": "stated",
+            "currency": null,
+            "unit": "people",
+            "unit_kind": "count",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "India"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 6,
+        "accepted": true,
+        "identity": "31fd9a8f9535741a97699c0eddafe6cf1de87c4ad9a082999e11ddde46ce076a",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": {
+            "period_covered": {
+              "type": "period",
+              "raw": "2024",
+              "verbatim": true,
+              "number": null,
+              "scale": null,
+              "scale_source": null,
+              "currency": null,
+              "unit": null,
+              "unit_kind": "other",
+              "sign": null,
+              "precision": "exact",
+              "measure_status": null,
+              "entity_ref": {
+                "id": null,
+                "text": "India"
+              },
+              "date": null,
+              "period": {
+                "text": "2024",
+                "grain": "year",
+                "start": "2024-01-01",
+                "end": "2024-12-31",
+                "anchored": true,
+                "fiscal_year_basis": null
+              },
+              "duration": null,
+              "parser_version": "values.v1",
+              "resolution": "period"
+            }
+          },
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 7,
+        "accepted": true,
+        "identity": "9616166a61db75c54043fa95a76a869e4de5625796d7e885d5502faf612ae14f",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 8,
+        "accepted": true,
+        "identity": "efd3f3a6b1711a837bad57d82aa8ca8bda36e4ad06605eaa6996a441ef9e36a6",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 9,
+        "accepted": true,
+        "identity": "840a68c51a2e2f1c7af43d0d6fb4aaca07949b8ed795520fb4bc770882a1e3e8",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 10,
+        "accepted": true,
+        "identity": "e0c1bd9a5699922e98f641fd64a970930c10133f389c8a99408018a38fa347ee",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 11,
+        "accepted": true,
+        "identity": "fb9146babf974c5e16e8fba4c636cfc2b05ca98a88ea78305e22c5d9a4325eff",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 12,
+        "accepted": true,
+        "identity": "dc074813a30db5fe2044783153748cfdd2568e8ea558c3fbc571df2800fd7d20",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 13,
+        "accepted": true,
+        "identity": "cb77792b25b9fee89227e0fc998078fce7f09e54080ba30c52519030beca2c11",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": {
+            "type": "count",
+            "raw": "110 million toilets",
+            "verbatim": true,
+            "number": 110000000,
+            "scale": 1000000,
+            "scale_source": "stated",
+            "currency": null,
+            "unit": "toilets",
+            "unit_kind": "count",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "Government of India"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 14,
+        "accepted": true,
+        "identity": "ffe77ac88f75989e7db05c10ee2b4d5bd5607ef6bf22a9e5baa6b45de131819d",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 15,
+        "accepted": true,
+        "identity": "4dbdcaee4184e4658858995f0699bb4d9788cf80c13345d3d32ab64fb4676d38",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 16,
+        "accepted": true,
+        "identity": "d6d87fcc58c12d338281b735087e08422a40ac192255b92208bb3c26c3c0c8f7",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 17,
+        "accepted": true,
+        "identity": "d242ab41b600b231d1525bf6a1087214d2658f45ea60a953ff52964907065323",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 18,
+        "accepted": true,
+        "identity": "5ce5ed5d91bc475b6f8e01dc9ffe54571e0a02b49438a67d6fa91147d00e55a7",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": {
+            "type": "count",
+            "raw": "17.9 million people",
+            "verbatim": true,
+            "number": 17900000,
+            "scale": 1000000,
+            "scale_source": "stated",
+            "currency": null,
+            "unit": "people",
+            "unit_kind": "count",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "India"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": {
+            "period_covered": {
+              "type": "period",
+              "raw": "2024",
+              "verbatim": true,
+              "number": null,
+              "scale": null,
+              "scale_source": null,
+              "currency": null,
+              "unit": null,
+              "unit_kind": "other",
+              "sign": null,
+              "precision": "exact",
+              "measure_status": "actual",
+              "entity_ref": {
+                "id": null,
+                "text": "India"
+              },
+              "date": null,
+              "period": {
+                "text": "2024",
+                "grain": "year",
+                "start": "2024-01-01",
+                "end": "2024-12-31",
+                "anchored": true,
+                "fiscal_year_basis": null
+              },
+              "duration": null,
+              "parser_version": "values.v1",
+              "resolution": "period"
+            }
+          },
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 19,
+        "accepted": true,
+        "identity": "b42e7ace5af5ad706999a523dcc83f62a0d2bc0bc7fd974997893c055ffdb9e4",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": {
+            "type": "count",
+            "raw": "59.3 million people",
+            "verbatim": true,
+            "number": 59300000,
+            "scale": 1000000,
+            "scale_source": "stated",
+            "currency": null,
+            "unit": "people",
+            "unit_kind": "count",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "India"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": {
+            "period_covered": {
+              "type": "period",
+              "raw": "2024",
+              "verbatim": true,
+              "number": null,
+              "scale": null,
+              "scale_source": null,
+              "currency": null,
+              "unit": null,
+              "unit_kind": "other",
+              "sign": null,
+              "precision": "exact",
+              "measure_status": "actual",
+              "entity_ref": {
+                "id": null,
+                "text": "India"
+              },
+              "date": null,
+              "period": {
+                "text": "2024",
+                "grain": "year",
+                "start": "2024-01-01",
+                "end": "2024-12-31",
+                "anchored": true,
+                "fiscal_year_basis": null
+              },
+              "duration": null,
+              "parser_version": "values.v1",
+              "resolution": "period"
+            }
+          },
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 20,
+        "accepted": true,
+        "identity": "406510cbecb8718aa84775e2726a2738d8e3dcfece7a4c46828d7106d6d484a5",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 21,
+        "accepted": true,
+        "identity": "05eca7fca689fa6f6d7624d5cd2a65c216bf0b57e5f879654f5bcddd2c50d9c7",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 22,
+        "accepted": true,
+        "identity": "23727b53c8bd12b42cdea5d6b32c1d1e686a42a0102c8024f197837d284b9e36",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 23,
+        "accepted": true,
+        "identity": "5fb5cfcd696626dc574482d9d8872b48efa93f46fa27e4f4489cca11788e00ac",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 24,
+        "accepted": true,
+        "identity": "c59b0e8fe7a4d0baf99133116b112b5fdf055e8c12bab833e95f79b52f680b9c",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 25,
+        "accepted": true,
+        "identity": "cd6e7335ee320e54a085460f8aca7439f95288f0534ac2bf54c8281d390696e7",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 26,
+        "accepted": true,
+        "identity": "3c75920920c83be6988d2de675f2fec0f202cbced77c716f78a76f88ddc88c47",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 27,
+        "accepted": true,
+        "identity": "95886cb5e64c2a57fad22f971487c5ebdfe384a39b4a39f7a9f4dd89a583a74a",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 28,
+        "accepted": true,
+        "identity": "3f38e815d5c2246d0b9aa1a30f5815c3a3103a00cd52824c023484dab94a43f6",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 29,
+        "accepted": true,
+        "identity": "c02469071e5f62bb776f610e0c824f5fd1d552b2ad07b1085fbdb4f55c4b80ab",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 30,
+        "accepted": true,
+        "identity": "23202bf7e66fb01b883a104f7c63331235f3a7afc49098f1f3751eee0dc55ca1",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 31,
+        "accepted": true,
+        "identity": "904c42db6dd9a9bdaed68a11ebc054d1a1ba7a07cf003aa62db39b0ee09e90bf",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 32,
+        "accepted": true,
+        "identity": "25637b93001801c4ec933d8bcae7882d16087a3016141a3e5471789d9024280a",
+        "premerge_collision": false,
+        "origin": "unknown",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      }
+    ]
+  },
+  "accepted": [
+    {
+      "label": "Child mortality reduction in India",
+      "value": "37 per cent reduction between 2014 and 2022",
+      "subject": "India",
+      "reference": "India child mortality 2014-2022",
+      "evidence_ids": [
+        "E201"
+      ],
+      "entity_type": null,
+      "unit": "percent",
+      "period": "2014-2022",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "change",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E201",
+          "page": 14,
+          "start_offset": 32459,
+          "end_offset": 32535,
+          "type": "sentence",
+          "text": "Between 2014 and 2022, India saw a 37 per cent reduction in child mortality."
+        }
+      ],
+      "quote": "Between 2014 and 2022, India saw a 37 per cent reduction in child mortality."
+    },
+    {
+      "label": "Swachh Bharat Mission launch",
+      "value": "Government of India launched Swachh Bharat (Clean India) Mission",
+      "subject": "Government of India",
+      "reference": "Swachh Bharat Mission 2014",
+      "evidence_ids": [
+        "E205"
+      ],
+      "entity_type": "organization",
+      "unit": null,
+      "period": "2014",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.98,
+      "aliases": [
+        "Clean India Mission"
+      ],
+      "evidence": [
+        {
+          "span_id": "E205",
+          "page": 14,
+          "start_offset": 33114,
+          "end_offset": 33253,
+          "type": "sentence",
+          "text": "In 2014, the Government of India launched the Swachh Bharat \n(Clean India) Mission, one of the largest sanitation programmes \nin the world."
+        }
+      ],
+      "quote": "In 2014, the Government of India launched the Swachh Bharat \n(Clean India) Mission, one of the largest sanitation programmes \nin the world."
+    },
+    {
+      "label": "Swachh Bharat Mission target achievement",
+      "value": "Ambitious target achieved by 2019",
+      "subject": "Government of India",
+      "reference": "Swachh Bharat completion 2019",
+      "evidence_ids": [
+        "E207"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": "2019",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.95,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E207",
+          "page": 14,
+          "start_offset": 33429,
+          "end_offset": 33520,
+          "type": "sentence",
+          "text": "This ambitious target was achieved by 2019.\nVani (5) practises good \nhandwashing technique."
+        }
+      ],
+      "quote": "This ambitious target was achieved by 2019.\nVani (5) practises good \nhandwashing technique."
+    },
+    {
+      "label": "People reached with basic sanitation (10-year period)",
+      "value": "550 million people",
+      "subject": "India",
+      "reference": "basic sanitation coverage last 10 years",
+      "evidence_ids": [
+        "E209"
+      ],
+      "entity_type": null,
+      "unit": "people",
+      "period": "last 10 years",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.98,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E209",
+          "page": 14,
+          "start_offset": 33638,
+          "end_offset": 33886,
+          "type": "sentence",
+          "text": "A Decade of Progress: How \nIndia’s WASH transformation \nis saving lives\nIn the last 10 years, 550 million people  \nhave been reached with at least basic \nsanitation, and 580 million people with \nimproved drinking water in their homes. \nSDG target 6"
+        }
+      ],
+      "quote": "A Decade of Progress: How \nIndia’s WASH transformation \nis saving lives\nIn the last 10 years, 550 million people  \nhave been reached with at least basic \nsanitation, and 580 million people with \nimproved drinking water in their homes. \nSDG target 6"
+    },
+    {
+      "label": "People reached with improved drinking water (10-year period)",
+      "value": "580 million people",
+      "subject": "India",
+      "reference": "improved drinking water coverage last 10 years",
+      "evidence_ids": [
+        "E209"
+      ],
+      "entity_type": null,
+      "unit": "people",
+      "period": "last 10 years",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.98,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E209",
+          "page": 14,
+          "start_offset": 33638,
+          "end_offset": 33886,
+          "type": "sentence",
+          "text": "A Decade of Progress: How \nIndia’s WASH transformation \nis saving lives\nIn the last 10 years, 550 million people  \nhave been reached with at least basic \nsanitation, and 580 million people with \nimproved drinking water in their homes. \nSDG target 6"
+        }
+      ],
+      "quote": "A Decade of Progress: How \nIndia’s WASH transformation \nis saving lives\nIn the last 10 years, 550 million people  \nhave been reached with at least basic \nsanitation, and 580 million people with \nimproved drinking water in their homes. \nSDG target 6"
+    },
+    {
+      "label": "Swachh Bharat national coverage by 2024",
+      "value": "Reached nearly every corner of the country",
+      "subject": "India",
+      "reference": "Swachh Bharat national reach 2024",
+      "evidence_ids": [
+        "E211"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": "2024",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.9,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E211",
+          "page": 15,
+          "start_offset": 33951,
+          "end_offset": 34023,
+          "type": "sentence",
+          "text": "By 2024, Swachh Bharat had reached  \nnearly every corner of the country."
+        }
+      ],
+      "quote": "By 2024, Swachh Bharat had reached  \nnearly every corner of the country."
+    },
+    {
+      "label": "Swachh Bharat Mission shift in approach",
+      "value": "From building toilets to strengthening systems for sustainable sanitation services, including solid and liquid waste management and climate-responsive initiatives",
+      "subject": "Swachh Bharat Mission",
+      "reference": "systems transformation approach",
+      "evidence_ids": [
+        "E212"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": "2024",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.93,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E212",
+          "page": 15,
+          "start_offset": 34026,
+          "end_offset": 34254,
+          "type": "sentence",
+          "text": "But more importantly, it had catalysed \na shift in mindset – from building toilets \nto strengthening systems for sustainable \nsanitation services, including solid and liquid \nwaste management and climate-responsive \ninitiatives."
+        }
+      ],
+      "quote": "But more importantly, it had catalysed \na shift in mindset – from building toilets \nto strengthening systems for sustainable \nsanitation services, including solid and liquid \nwaste management and climate-responsive \ninitiatives."
+    },
+    {
+      "label": "UNICEF role in Swachh Bharat Mission",
+      "value": "Trusted partner in mission's design, delivery and scaling up, helping ensure infrastructure was matched with systems-strengthening, community engagement and behaviour change",
+      "subject": "UNICEF",
+      "reference": "UNICEF partnership Swachh Bharat",
+      "evidence_ids": [
+        "E213"
+      ],
+      "entity_type": "organization",
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.95,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E213",
+          "page": 15,
+          "start_offset": 34255,
+          "end_offset": 34476,
+          "type": "sentence",
+          "text": "From the start, UNICEF has been a \ntrusted partner in the mission’s design, delivery \nand scaling up, helping ensure that infrastructure \nwas matched with systems-strengthening, community \nengagement and behaviour change."
+        }
+      ],
+      "quote": "From the start, UNICEF has been a \ntrusted partner in the mission’s design, delivery \nand scaling up, helping ensure that infrastructure \nwas matched with systems-strengthening, community \nengagement and behaviour change."
+    },
+    {
+      "label": "UNICEF technical support in Swachh Bharat",
+      "value": "Embedded technical advisors in every state and built capacity of local governments to improve and monitor services over time",
+      "subject": "UNICEF",
+      "reference": "UNICEF technical advisors and capacity building",
+      "evidence_ids": [
+        "E214"
+      ],
+      "entity_type": "organization",
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.95,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E214",
+          "page": 15,
+          "start_offset": 34477,
+          "end_offset": 34645,
+          "type": "sentence",
+          "text": "UNICEF supported \nthis shift by embedding technical advisors in every state, \nand building the capacity of local governments to improve and \nmonitor services over time."
+        }
+      ],
+      "quote": "UNICEF supported \nthis shift by embedding technical advisors in every state, \nand building the capacity of local governments to improve and \nmonitor services over time."
+    },
+    {
+      "label": "Jal Jeevan Mission launch",
+      "value": "India launched Jal Jeevan (Water is Life) Mission to achieve universal access to safe and adequate drinking water",
+      "subject": "India",
+      "reference": "Jal Jeevan Mission",
+      "evidence_ids": [
+        "E216"
+      ],
+      "entity_type": "organization",
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.95,
+      "aliases": [
+        "Water is Life Mission"
+      ],
+      "evidence": [
+        {
+          "span_id": "E216",
+          "page": 15,
+          "start_offset": 34770,
+          "end_offset": 35133,
+          "type": "sentence",
+          "text": "I have personally seen how  \nmuch engagement has been shown by your team in water  \nand sanitation.” \nBuilding on the gains of the sanitation movement, India launched \nthe Jal Jeevan (Water is Life) Mission to achieve universal access \nto safe and adequate drinking water – a natural and essential \nnext step in improving child health, development and protection."
+        }
+      ],
+      "quote": "I have personally seen how  \nmuch engagement has been shown by your team in water  \nand sanitation.” \nBuilding on the gains of the sanitation movement, India launched \nthe Jal Jeevan (Water is Life) Mission to achieve universal access \nto safe and adequate drinking water – a natural and essential \nnext step in improving child health, development and protection."
+    },
+    {
+      "label": "Rural households gaining piped water connections (5-year period)",
+      "value": "More than 115 million rural households",
+      "subject": "India",
+      "reference": "piped water connections last five years",
+      "evidence_ids": [
+        "E218"
+      ],
+      "entity_type": null,
+      "unit": "households",
+      "period": "last five years",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E218",
+          "page": 15,
+          "start_offset": 35365,
+          "end_offset": 35502,
+          "type": "sentence",
+          "text": "Over the last five years, \nmore than 115 million rural households have gained piped water \nconnections in their homes for the first time."
+        }
+      ],
+      "quote": "Over the last five years, \nmore than 115 million rural households have gained piped water \nconnections in their homes for the first time."
+    },
+    {
+      "label": "Government of India investment in water and sanitation (10-year period)",
+      "value": "Over $120 billion",
+      "subject": "Government of India",
+      "reference": "water sanitation investment 10 years",
+      "evidence_ids": [
+        "E232"
+      ],
+      "entity_type": null,
+      "unit": "USD billions",
+      "period": "past 10 years",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E232",
+          "page": 16,
+          "start_offset": 37734,
+          "end_offset": 37932,
+          "type": "sentence",
+          "text": "The Government of India has backed its \ncommitment with a game-changing \ninvestment of over $120 billion in water and \nsanitation over the past 10 years. The \nresults speak for themselves: achieving"
+        }
+      ],
+      "quote": "The Government of India has backed its \ncommitment with a game-changing \ninvestment of over $120 billion in water and \nsanitation over the past 10 years. The \nresults speak for themselves: achieving"
+    },
+    {
+      "label": "Toilets constructed through Swachh Bharat Mission",
+      "value": "110 million toilets",
+      "subject": "Government of India",
+      "reference": "toilet construction Swachh Bharat",
+      "evidence_ids": [
+        "E233"
+      ],
+      "entity_type": null,
+      "unit": "toilets",
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.98,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E233",
+          "page": 16,
+          "start_offset": 37934,
+          "end_offset": 37971,
+          "type": "heading",
+          "text": "110 million toilets constructed, more"
+        }
+      ],
+      "quote": "110 million toilets constructed, more"
+    },
+    {
+      "label": "People using improved sanitation through Swachh Bharat Mission",
+      "value": "More than 550 million people",
+      "subject": "India",
+      "reference": "improved sanitation users Swachh Bharat",
+      "evidence_ids": [
+        "E234"
+      ],
+      "entity_type": null,
+      "unit": "people",
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.98,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E234",
+          "page": 16,
+          "start_offset": 37973,
+          "end_offset": 38034,
+          "type": "sentence",
+          "text": "than 550 million people using \nimproved sanitation, more than"
+        }
+      ],
+      "quote": "than 550 million people using \nimproved sanitation, more than"
+    },
+    {
+      "label": "Rural people using improved drinking water through Swachh Bharat Mission",
+      "value": "More than 580 million rural people",
+      "subject": "India",
+      "reference": "improved drinking water users Swachh Bharat",
+      "evidence_ids": [
+        "E235"
+      ],
+      "entity_type": null,
+      "unit": "people",
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.98,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E235",
+          "page": 16,
+          "start_offset": 38036,
+          "end_offset": 38066,
+          "type": "heading",
+          "text": "580 million rural people using"
+        }
+      ],
+      "quote": "580 million rural people using"
+    },
+    {
+      "label": "Household savings from toilet construction",
+      "value": "At least 50,000 rupees ($650) per family",
+      "subject": "India villages",
+      "reference": "toilet construction household savings",
+      "evidence_ids": [
+        "E228"
+      ],
+      "entity_type": null,
+      "unit": "rupees and USD",
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.85,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E228",
+          "page": 15,
+          "start_offset": 36944,
+          "end_offset": 37094,
+          "type": "sentence",
+          "text": "\"UNICEF has estimated that every \nfamily living in the village who are \nconstructing toilets in their homes \nis saving at least 50,000 rupees \n($650)."
+        }
+      ],
+      "quote": "\"UNICEF has estimated that every \nfamily living in the village who are \nconstructing toilets in their homes \nis saving at least 50,000 rupees \n($650)."
+    },
+    {
+      "label": "Ground water quality improvement in India",
+      "value": "Quality of ground water has improved in the last five years",
+      "subject": "India",
+      "reference": "ground water quality improvement",
+      "evidence_ids": [
+        "E229"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": "last five years",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.8,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E229",
+          "page": 15,
+          "start_offset": 37095,
+          "end_offset": 37625,
+          "type": "sentence",
+          "text": "Another UNICEF study has \nrevealed that the quality of ground \nwater has improved in the last five \nyears, and I believe that Swachh \nBharat Mission is also a major \ncontributor to the same.\"\n“When a developing country is \nable to successfully implement \nthe world's biggest sanitation \ncampaign... all its achievements \nand outcomes are an inspirational \nmessage for the entire world.”\n\"Swachh Bharat mission is this \ncentury’s biggest and most successful \npeople’s movement with people’s \nparticipation and people’s leadership.\""
+        }
+      ],
+      "quote": "Another UNICEF study has \nrevealed that the quality of ground \nwater has improved in the last five \nyears, and I believe that Swachh \nBharat Mission is also a major \ncontributor to the same.\"\n“When a developing country is \nable to successfully implement \nthe world's biggest sanitation \ncampaign... all its achievements \nand outcomes are an inspirational \nmessage for the entire world.”\n\"Swachh Bharat mission is this \ncentury’s biggest and most successful \npeople’s movement with people’s \nparticipation and people’s leadership.\""
+    },
+    {
+      "label": "People accessing safely managed sanitation in 2024",
+      "value": "17.9 million people",
+      "subject": "India",
+      "reference": "safely managed sanitation 2024",
+      "evidence_ids": [
+        "E237"
+      ],
+      "entity_type": null,
+      "unit": "people",
+      "period": "2024",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E237",
+          "page": 16,
+          "start_offset": 38141,
+          "end_offset": 40163,
+          "type": "list_item",
+          "text": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+        }
+      ],
+      "quote": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+    },
+    {
+      "label": "People accessing safely managed water in 2024",
+      "value": "59.3 million people",
+      "subject": "India",
+      "reference": "safely managed water 2024",
+      "evidence_ids": [
+        "E237"
+      ],
+      "entity_type": null,
+      "unit": "people",
+      "period": "2024",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "metric",
+      "confidence": 0.95,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E237",
+          "page": 16,
+          "start_offset": 38141,
+          "end_offset": 40163,
+          "type": "list_item",
+          "text": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+        }
+      ],
+      "quote": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+    },
+    {
+      "label": "Diarrhoeal disease reduction through WASH interventions",
+      "value": "Improved access to clean water and sanitation dramatically reduced incidence of diarrhoeal disease",
+      "subject": "India",
+      "reference": "diarrhoeal disease reduction WASH",
+      "evidence_ids": [
+        "E202"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.9,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E202",
+          "page": 14,
+          "start_offset": 32536,
+          "end_offset": 32825,
+          "type": "sentence",
+          "text": "While progress on child health is \nnever the result of a single intervention, improved access to clean water and sanitation played a pivotal role by \ndramatically reducing incidence of diarrhoeal disease, malnutrition and infection – some of the leading causes \nof death in young children."
+        }
+      ],
+      "quote": "While progress on child health is \nnever the result of a single intervention, improved access to clean water and sanitation played a pivotal role by \ndramatically reducing incidence of diarrhoeal disease, malnutrition and infection – some of the leading causes \nof death in young children."
+    },
+    {
+      "label": "Malnutrition and infection reduction through WASH interventions",
+      "value": "Improved access to clean water and sanitation reduced incidence of malnutrition and infection",
+      "subject": "India",
+      "reference": "malnutrition infection reduction WASH",
+      "evidence_ids": [
+        "E202"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.9,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E202",
+          "page": 14,
+          "start_offset": 32536,
+          "end_offset": 32825,
+          "type": "sentence",
+          "text": "While progress on child health is \nnever the result of a single intervention, improved access to clean water and sanitation played a pivotal role by \ndramatically reducing incidence of diarrhoeal disease, malnutrition and infection – some of the leading causes \nof death in young children."
+        }
+      ],
+      "quote": "While progress on child health is \nnever the result of a single intervention, improved access to clean water and sanitation played a pivotal role by \ndramatically reducing incidence of diarrhoeal disease, malnutrition and infection – some of the leading causes \nof death in young children."
+    },
+    {
+      "label": "Waterborne diseases reduction",
+      "value": "Lasting reductions in waterborne diseases achieved",
+      "subject": "India",
+      "reference": "waterborne disease reduction outcome",
+      "evidence_ids": [
+        "E236"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": "past 10 years",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.88,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E236",
+          "page": 16,
+          "start_offset": 38068,
+          "end_offset": 38139,
+          "type": "sentence",
+          "text": "improved drinking water, and lasting \nreductions in waterborne diseases"
+        }
+      ],
+      "quote": "improved drinking water, and lasting \nreductions in waterborne diseases"
+    },
+    {
+      "label": "UNICEF Core Resources role",
+      "value": "Unrestricted Core Resources allowed UNICEF to be a consistent, strategic partner year after year, playing a central role in planning, monitoring and scaling up the programme",
+      "subject": "UNICEF",
+      "reference": "Core Resources strategic partnership",
+      "evidence_ids": [
+        "E220",
+        "E221"
+      ],
+      "entity_type": "organization",
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.93,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E220",
+          "page": 15,
+          "start_offset": 35657,
+          "end_offset": 35721,
+          "type": "sentence",
+          "text": "Unrestricted Core Resources \nhave been critical to this success."
+        },
+        {
+          "span_id": "E221",
+          "page": 15,
+          "start_offset": 35722,
+          "end_offset": 35944,
+          "type": "sentence",
+          "text": "While other resources can be \nfragmented or time-bound, Core Resources allowed UNICEF \nto be a consistent, strategic partner, year after year – playing \na central role in planning, monitoring and scaling up the \nprogramme."
+        }
+      ],
+      "quote": "Unrestricted Core Resources \nhave been critical to this success.\n\nWhile other resources can be \nfragmented or time-bound, Core Resources allowed UNICEF \nto be a consistent, strategic partner, year after year – playing \na central role in planning, monitoring and scaling up the \nprogramme."
+    },
+    {
+      "label": "UNICEF data systems improvement for WASH",
+      "value": "UNICEF worked closely with government to strengthen WASH data systems, enabling more accurate, timely and actionable data to guide decisions and track progress at every level",
+      "subject": "UNICEF",
+      "reference": "WASH data systems improvement",
+      "evidence_ids": [
+        "E225"
+      ],
+      "entity_type": "organization",
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.93,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E225",
+          "page": 15,
+          "start_offset": 36437,
+          "end_offset": 36610,
+          "type": "sentence",
+          "text": "UNICEF worked closely with government to strengthen these \nsystems, enabling more accurate, timely and actionable data to \nguide decisions and track progress at every level."
+        }
+      ],
+      "quote": "UNICEF worked closely with government to strengthen these \nsystems, enabling more accurate, timely and actionable data to \nguide decisions and track progress at every level."
+    },
+    {
+      "label": "Fragmented WASH data systems challenge",
+      "value": "Despite massive public investment, fragmented definitions, reporting formats and data systems had made it difficult to measure progress consistently and spotlight inequalities",
+      "subject": "India",
+      "reference": "WASH data systems fragmentation problem",
+      "evidence_ids": [
+        "E224"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": "high",
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "risk",
+      "confidence": 0.9,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E224",
+          "page": 15,
+          "start_offset": 36257,
+          "end_offset": 36435,
+          "type": "sentence",
+          "text": "Despite massive public investment, fragmented definitions, \nreporting formats and data systems had made it difficult to \nmeasure progress consistently and spotlight inequalities."
+        }
+      ],
+      "quote": "Despite massive public investment, fragmented definitions, \nreporting formats and data systems had made it difficult to \nmeasure progress consistently and spotlight inequalities."
+    },
+    {
+      "label": "School behaviour change from Swachh Bharat",
+      "value": "Children are empowered to carry healthy habits back to their families through WASH education in schools",
+      "subject": "India schools",
+      "reference": "school behaviour change healthy habits",
+      "evidence_ids": [
+        "E237"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.85,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E237",
+          "page": 16,
+          "start_offset": 38141,
+          "end_offset": 40163,
+          "type": "list_item",
+          "text": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+        }
+      ],
+      "quote": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+    },
+    {
+      "label": "Climate-smart sustainable solutions foundation",
+      "value": "The programme has laid the foundation for climate-smart, sustainable solutions through integration of climate change and environmental sustainability in water and sanitation programmes",
+      "subject": "UNICEF and India",
+      "reference": "climate-smart sustainable solutions",
+      "evidence_ids": [
+        "E237"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.85,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E237",
+          "page": 16,
+          "start_offset": 38141,
+          "end_offset": 40163,
+          "type": "list_item",
+          "text": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+        }
+      ],
+      "quote": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+    },
+    {
+      "label": "Ministry of Water Resources Secretary endorsement",
+      "value": "Ms Vini Mahajan, Secretary of the Ministry of Water Resources, stated UNICEF has been a very valuable partner",
+      "subject": "Ministry of Water Resources",
+      "reference": "Secretary Vini Mahajan endorsement",
+      "evidence_ids": [
+        "E215",
+        "E216"
+      ],
+      "entity_type": "person",
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.95,
+      "aliases": [
+        "Vini Mahajan"
+      ],
+      "evidence": [
+        {
+          "span_id": "E215",
+          "page": 15,
+          "start_offset": 34646,
+          "end_offset": 34769,
+          "type": "sentence",
+          "text": "As Ms Vini Mahajan, Secretary  \nof the Ministry of Water Resources, said: “UNICEF has been  \na very valuable partner to us."
+        },
+        {
+          "span_id": "E216",
+          "page": 15,
+          "start_offset": 34770,
+          "end_offset": 35133,
+          "type": "sentence",
+          "text": "I have personally seen how  \nmuch engagement has been shown by your team in water  \nand sanitation.” \nBuilding on the gains of the sanitation movement, India launched \nthe Jal Jeevan (Water is Life) Mission to achieve universal access \nto safe and adequate drinking water – a natural and essential \nnext step in improving child health, development and protection."
+        }
+      ],
+      "quote": "As Ms Vini Mahajan, Secretary  \nof the Ministry of Water Resources, said: “UNICEF has been  \na very valuable partner to us.\n\nI have personally seen how  \nmuch engagement has been shown by your team in water  \nand sanitation.” \nBuilding on the gains of the sanitation movement, India launched \nthe Jal Jeevan (Water is Life) Mission to achieve universal access \nto safe and adequate drinking water – a natural and essential \nnext step in improving child health, development and protection."
+    },
+    {
+      "label": "UNICEF India Representative statement on behaviour change",
+      "value": "Swachh Bharat has created dialogue; children now have the knowledge, talk about it and grow with it",
+      "subject": "Cynthia McCaffrey, UNICEF India Representative",
+      "reference": "Cynthia McCaffrey behaviour change statement",
+      "evidence_ids": [
+        "E237"
+      ],
+      "entity_type": "person",
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.9,
+      "aliases": [
+        "Cynthia McCaffrey"
+      ],
+      "evidence": [
+        {
+          "span_id": "E237",
+          "page": 16,
+          "start_offset": 38141,
+          "end_offset": 40163,
+          "type": "list_item",
+          "text": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+        }
+      ],
+      "quote": "– a major contributor to child \nmortality and morbidity.\nThis impact was made possible by \nunrestricted funding, which gave \nUNICEF the ability to work flexibly across \nsectors, test and adapt approaches in \nreal time, and remain engaged for the long \nhaul. Over 10 years, that flexibility has enabled \nUNICEF to help take the programme from proof \nof concept to national scale, and from rolling out \ninfrastructure to transformation of systems.\nUNICEF’s efforts have also sparked \nlasting behavioural change, \nparticularly in schools, and children \nare empowered to carry healthy \nhabits back to their families. “Swachh \nBharat has created that dialogue,” \nnoted UNICEF India Representative Cynthia McCaffrey, “children now \nhave the knowledge, talk about it and grow with it.” The programme \nhas also laid the foundation for climate-smart, sustainable solutions. \n“UNICEF is working through its water and sanitation programmes to \nadd climate change and environmental sustainability – and in this, \nthe youth becomes very important, helping us to live sustainably,” \nMcCaffrey added.\nThis is more than a national success story – it is a \nglobal milestone. With sustained support from the \nGovernment of India, partners and donors to UNICEF’s \nCore Resources, India has achieved progress at a scale \nthat is shifting the global dial on water and sanitation. \nEvery Core Resources donor should feel immense \npride: your investment has helped transform millions \nof lives and brought the world closer to achieving \nSustainable Development Goal 6. The results are \nmeasurable, replicable and, with continued partnership, \nwithin reach for every child, everywhere. \nIn 2024, 17.9 million people  \naccessed safely managed \nsanitation, and 59.3 million people \naccessed safely managed water  \nin their homes.\nSDG target 6\nAWW helps kids with \nhandwashing and \naccompanies them to \nclean toilets in the AW \ncentre. Suka Village, \nNaramada, Gujarat.\nGrade 11 student \ntaking sanitary pad \nfrom pad bank to give \nto other students"
+    },
+    {
+      "label": "Prime Minister of India statement on Swachh Bharat",
+      "value": "Swachh Bharat mission is this century's biggest and most successful people's movement with people's participation and people's leadership",
+      "subject": "Narendra Modi, Prime Minister of India",
+      "reference": "Prime Minister Modi Swachh Bharat statement",
+      "evidence_ids": [
+        "E230"
+      ],
+      "entity_type": "person",
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.95,
+      "aliases": [
+        "Narendra Modi"
+      ],
+      "evidence": [
+        {
+          "span_id": "E230",
+          "page": 15,
+          "start_offset": 37627,
+          "end_offset": 37669,
+          "type": "list_item",
+          "text": "— Narendra Modi,  \nPrime Minister of India"
+        }
+      ],
+      "quote": "— Narendra Modi,  \nPrime Minister of India"
+    },
+    {
+      "label": "WASH programme impact on child health",
+      "value": "Water, sanitation and hygiene (WASH) revolution played a pivotal role in child mortality reduction by reducing diarrhoeal disease, malnutrition and infection",
+      "subject": "India",
+      "reference": "WASH impact on child health",
+      "evidence_ids": [
+        "E202",
+        "E203"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": "2014-2022",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.93,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E202",
+          "page": 14,
+          "start_offset": 32536,
+          "end_offset": 32825,
+          "type": "sentence",
+          "text": "While progress on child health is \nnever the result of a single intervention, improved access to clean water and sanitation played a pivotal role by \ndramatically reducing incidence of diarrhoeal disease, malnutrition and infection – some of the leading causes \nof death in young children."
+        },
+        {
+          "span_id": "E203",
+          "page": 14,
+          "start_offset": 32826,
+          "end_offset": 32950,
+          "type": "sentence",
+          "text": "Few programmes have had such a far-reaching and systemic impact as India’s \nwater, sanitation and hygiene (WASH) revolution."
+        }
+      ],
+      "quote": "While progress on child health is \nnever the result of a single intervention, improved access to clean water and sanitation played a pivotal role by \ndramatically reducing incidence of diarrhoeal disease, malnutrition and infection – some of the leading causes \nof death in young children.\n\nFew programmes have had such a far-reaching and systemic impact as India’s \nwater, sanitation and hygiene (WASH) revolution."
+    },
+    {
+      "label": "UNICEF technical expertise in Jal Jeevan Mission",
+      "value": "UNICEF provided technical expertise, developed equity-focused tools for state and district governments, and helped improve service delivery for the most marginalized children and communities",
+      "subject": "UNICEF",
+      "reference": "UNICEF Jal Jeevan Mission support",
+      "evidence_ids": [
+        "E217"
+      ],
+      "entity_type": "organization",
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 0.93,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E217",
+          "page": 15,
+          "start_offset": 35135,
+          "end_offset": 35364,
+          "type": "sentence",
+          "text": "UNICEF’s support expanded accordingly, providing technical \nexpertise, developing equity-focused tools for state and district \ngovernments, and helping improve service delivery for the most \nmarginalized children and communities."
+        }
+      ],
+      "quote": "UNICEF’s support expanded accordingly, providing technical \nexpertise, developing equity-focused tools for state and district \ngovernments, and helping improve service delivery for the most \nmarginalized children and communities."
+    }
+  ]
+}

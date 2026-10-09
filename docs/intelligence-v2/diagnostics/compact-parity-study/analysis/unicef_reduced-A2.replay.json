@@ -1,0 +1,3184 @@
+{
+  "replay": {
+    "cell": "unicef_reduced-A2",
+    "response_sha256": "164a7b53b0563686068b001293739d43b291e60c2fc292a2d958d4948313d018",
+    "returned_count": 43,
+    "accepted_count": 43,
+    "rejected_count": 0,
+    "validation": {
+      "records_returned": 43,
+      "records_kept": 43,
+      "records_dropped": 0,
+      "rejections": [],
+      "rejection_reasons": [],
+      "evidence_grounding_mode": "span_reference",
+      "records_date_metadata_sanitized": 0,
+      "date_metadata_sanitized": [],
+      "date_rejection_reasons_by_kind": [],
+      "date_metadata_sanitized_by_kind": []
+    },
+    "origin": {
+      "document": 43,
+      "unknown": 0
+    },
+    "key_figure_eligible_count": 8,
+    "premerge_identity_count": 43,
+    "trace": [
+      {
+        "raw_index": 0,
+        "accepted": true,
+        "identity": "e5417af42a2c604f683a5b831d80285e4fe53b46a7c76c35fe1989b4ce613b85",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": {
+            "period_covered": {
+              "type": "period",
+              "raw": "2024",
+              "verbatim": true,
+              "number": null,
+              "scale": null,
+              "scale_source": null,
+              "currency": null,
+              "unit": null,
+              "unit_kind": "other",
+              "sign": null,
+              "precision": "exact",
+              "measure_status": "actual",
+              "entity_ref": {
+                "id": null,
+                "text": "UNICEF"
+              },
+              "date": null,
+              "period": {
+                "text": "2024",
+                "grain": "year",
+                "start": "2024-01-01",
+                "end": "2024-12-31",
+                "anchored": true,
+                "fiscal_year_basis": null
+              },
+              "duration": null,
+              "parser_version": "values.v1",
+              "resolution": "period"
+            }
+          },
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 1,
+        "accepted": true,
+        "identity": "a0390c56db7a04116f5d2ffb14c01c7851b74739b63f4e5c329199c2280a8ee0",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": true,
+        "typed": {
+          "value": {
+            "type": "money",
+            "raw": "$512.6 million",
+            "verbatim": true,
+            "number": 512600000,
+            "scale": 1000000,
+            "scale_source": "stated",
+            "currency": "$",
+            "unit": "USD",
+            "unit_kind": "currency",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "UNICEF public sector partners"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": {
+            "period_covered": {
+              "type": "period",
+              "raw": "2024",
+              "verbatim": true,
+              "number": null,
+              "scale": null,
+              "scale_source": null,
+              "currency": null,
+              "unit": null,
+              "unit_kind": "other",
+              "sign": null,
+              "precision": "exact",
+              "measure_status": "actual",
+              "entity_ref": {
+                "id": null,
+                "text": "UNICEF public sector partners"
+              },
+              "date": null,
+              "period": {
+                "text": "2024",
+                "grain": "year",
+                "start": "2024-01-01",
+                "end": "2024-12-31",
+                "anchored": true,
+                "fiscal_year_basis": null
+              },
+              "duration": null,
+              "parser_version": "values.v1",
+              "resolution": "period"
+            }
+          },
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 2,
+        "accepted": true,
+        "identity": "2b353e42cb27825704660ce90768587840334a591488739a00b19170c84435c3",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": true,
+        "typed": {
+          "value": {
+            "type": "money",
+            "raw": "$724.9 million",
+            "verbatim": true,
+            "number": 724900000,
+            "scale": 1000000,
+            "scale_source": "stated",
+            "currency": "$",
+            "unit": "USD",
+            "unit_kind": "currency",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "UNICEF private sector partners"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": {
+            "period_covered": {
+              "type": "period",
+              "raw": "2024",
+              "verbatim": true,
+              "number": null,
+              "scale": null,
+              "scale_source": null,
+              "currency": null,
+              "unit": null,
+              "unit_kind": "other",
+              "sign": null,
+              "precision": "exact",
+              "measure_status": "actual",
+              "entity_ref": {
+                "id": null,
+                "text": "UNICEF private sector partners"
+              },
+              "date": null,
+              "period": {
+                "text": "2024",
+                "grain": "year",
+                "start": "2024-01-01",
+                "end": "2024-12-31",
+                "anchored": true,
+                "fiscal_year_basis": null
+              },
+              "duration": null,
+              "parser_version": "values.v1",
+              "resolution": "period"
+            }
+          },
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 3,
+        "accepted": true,
+        "identity": "3e868d64c2c188f0f40a888122d573b343b80772dfc8bfbbf91f0b38b6591988",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": true,
+        "typed": {
+          "value": {
+            "type": "money",
+            "raw": "$346.1 million",
+            "verbatim": true,
+            "number": 346100000,
+            "scale": 1000000,
+            "scale_source": "stated",
+            "currency": "$",
+            "unit": "USD",
+            "unit_kind": "currency",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "UNICEF other partners"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": {
+            "period_covered": {
+              "type": "period",
+              "raw": "2024",
+              "verbatim": true,
+              "number": null,
+              "scale": null,
+              "scale_source": null,
+              "currency": null,
+              "unit": null,
+              "unit_kind": "other",
+              "sign": null,
+              "precision": "exact",
+              "measure_status": "actual",
+              "entity_ref": {
+                "id": null,
+                "text": "UNICEF other partners"
+              },
+              "date": null,
+              "period": {
+                "text": "2024",
+                "grain": "year",
+                "start": "2024-01-01",
+                "end": "2024-12-31",
+                "anchored": true,
+                "fiscal_year_basis": null
+              },
+              "duration": null,
+              "parser_version": "values.v1",
+              "resolution": "period"
+            }
+          },
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 4,
+        "accepted": true,
+        "identity": "4bb7249b2885f9d42215dadcc93b74c751c4b058a389be1ae011c0e2e99d155c",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": {
+            "type": "percent",
+            "raw": "32%",
+            "verbatim": true,
+            "number": 32,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": "percent",
+            "unit_kind": "percent",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "UNICEF core resources by partner type"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": {
+            "period_covered": {
+              "type": "period",
+              "raw": "2024",
+              "verbatim": true,
+              "number": null,
+              "scale": null,
+              "scale_source": null,
+              "currency": null,
+              "unit": null,
+              "unit_kind": "other",
+              "sign": null,
+              "precision": "exact",
+              "measure_status": "actual",
+              "entity_ref": {
+                "id": null,
+                "text": "UNICEF core resources by partner type"
+              },
+              "date": null,
+              "period": {
+                "text": "2024",
+                "grain": "year",
+                "start": "2024-01-01",
+                "end": "2024-12-31",
+                "anchored": true,
+                "fiscal_year_basis": null
+              },
+              "duration": null,
+              "parser_version": "values.v1",
+              "resolution": "period"
+            }
+          },
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 5,
+        "accepted": true,
+        "identity": "e2ffa36afec68576c2565000469453b596053162f8c88e84229f52dccd2a1f70",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": {
+            "type": "percent",
+            "raw": "46%",
+            "verbatim": true,
+            "number": 46,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": "percent",
+            "unit_kind": "percent",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "UNICEF core resources by partner type"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": {
+            "period_covered": {
+              "type": "period",
+              "raw": "2024",
+              "verbatim": true,
+              "number": null,
+              "scale": null,
+              "scale_source": null,
+              "currency": null,
+              "unit": null,
+              "unit_kind": "other",
+              "sign": null,
+              "precision": "exact",
+              "measure_status": "actual",
+              "entity_ref": {
+                "id": null,
+                "text": "UNICEF core resources by partner type"
+              },
+              "date": null,
+              "period": {
+                "text": "2024",
+                "grain": "year",
+                "start": "2024-01-01",
+                "end": "2024-12-31",
+                "anchored": true,
+                "fiscal_year_basis": null
+              },
+              "duration": null,
+              "parser_version": "values.v1",
+              "resolution": "period"
+            }
+          },
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 6,
+        "accepted": true,
+        "identity": "995aecdcf3a3a235e342060b334a6933f5696b31186256d563475b963d4ad696",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": {
+            "type": "percent",
+            "raw": "22%",
+            "verbatim": true,
+            "number": 22,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": "percent",
+            "unit_kind": "percent",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "UNICEF core resources by partner type"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": {
+            "period_covered": {
+              "type": "period",
+              "raw": "2024",
+              "verbatim": true,
+              "number": null,
+              "scale": null,
+              "scale_source": null,
+              "currency": null,
+              "unit": null,
+              "unit_kind": "other",
+              "sign": null,
+              "precision": "exact",
+              "measure_status": "actual",
+              "entity_ref": {
+                "id": null,
+                "text": "UNICEF core resources by partner type"
+              },
+              "date": null,
+              "period": {
+                "text": "2024",
+                "grain": "year",
+                "start": "2024-01-01",
+                "end": "2024-12-31",
+                "anchored": true,
+                "fiscal_year_basis": null
+              },
+              "duration": null,
+              "parser_version": "values.v1",
+              "resolution": "period"
+            }
+          },
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 7,
+        "accepted": true,
+        "identity": "c478964f6ec10fbb4b2ac4c5ced7878d90b43e110dc63ebb0c619e9cddc06181",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": {
+            "period_covered": {
+              "type": "period",
+              "raw": "2024",
+              "verbatim": true,
+              "number": null,
+              "scale": null,
+              "scale_source": null,
+              "currency": null,
+              "unit": null,
+              "unit_kind": "other",
+              "sign": null,
+              "precision": "exact",
+              "measure_status": "actual",
+              "entity_ref": {
+                "id": null,
+                "text": "UNICEF voluntary contributions"
+              },
+              "date": null,
+              "period": {
+                "text": "2024",
+                "grain": "year",
+                "start": "2024-01-01",
+                "end": "2024-12-31",
+                "anchored": true,
+                "fiscal_year_basis": null
+              },
+              "duration": null,
+              "parser_version": "values.v1",
+              "resolution": "period"
+            }
+          },
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 8,
+        "accepted": true,
+        "identity": "8936669b73965384c16e00b2c862610bedfe01ddc3dbc62f882da2b2f68f3a5b",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": {
+            "period_covered": {
+              "type": "period",
+              "raw": "2023",
+              "verbatim": true,
+              "number": null,
+              "scale": null,
+              "scale_source": null,
+              "currency": null,
+              "unit": null,
+              "unit_kind": "other",
+              "sign": null,
+              "precision": "exact",
+              "measure_status": "actual",
+              "entity_ref": {
+                "id": null,
+                "text": "UNICEF voluntary contributions"
+              },
+              "date": null,
+              "period": {
+                "text": "2023",
+                "grain": "year",
+                "start": "2023-01-01",
+                "end": "2023-12-31",
+                "anchored": true,
+                "fiscal_year_basis": null
+              },
+              "duration": null,
+              "parser_version": "values.v1",
+              "resolution": "period"
+            }
+          },
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 9,
+        "accepted": true,
+        "identity": "1235073e843e6932c5cdc404ca035a00d801d902939390e935bd35a8e0253502",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": {
+            "period_covered": {
+              "type": "period",
+              "raw": "2022",
+              "verbatim": true,
+              "number": null,
+              "scale": null,
+              "scale_source": null,
+              "currency": null,
+              "unit": null,
+              "unit_kind": "other",
+              "sign": null,
+              "precision": "exact",
+              "measure_status": "actual",
+              "entity_ref": {
+                "id": null,
+                "text": "UNICEF voluntary contributions"
+              },
+              "date": null,
+              "period": {
+                "text": "2022",
+                "grain": "year",
+                "start": "2022-01-01",
+                "end": "2022-12-31",
+                "anchored": true,
+                "fiscal_year_basis": null
+              },
+              "duration": null,
+              "parser_version": "values.v1",
+              "resolution": "period"
+            }
+          },
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 10,
+        "accepted": true,
+        "identity": "26a73800fceb6890e5dd480cf3cdd8a7769eb16465a6a2c38a91895d7e40e4d9",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": {
+            "period_covered": {
+              "type": "period",
+              "raw": "2021",
+              "verbatim": true,
+              "number": null,
+              "scale": null,
+              "scale_source": null,
+              "currency": null,
+              "unit": null,
+              "unit_kind": "other",
+              "sign": null,
+              "precision": "exact",
+              "measure_status": "actual",
+              "entity_ref": {
+                "id": null,
+                "text": "UNICEF voluntary contributions"
+              },
+              "date": null,
+              "period": {
+                "text": "2021",
+                "grain": "year",
+                "start": "2021-01-01",
+                "end": "2021-12-31",
+                "anchored": true,
+                "fiscal_year_basis": null
+              },
+              "duration": null,
+              "parser_version": "values.v1",
+              "resolution": "period"
+            }
+          },
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 11,
+        "accepted": true,
+        "identity": "8d7c5d4ba0392a7149ec0c07de4a9c14e6b939b73b40bee408f32249dd6b2937",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": {
+            "period_covered": {
+              "type": "period",
+              "raw": "2020",
+              "verbatim": true,
+              "number": null,
+              "scale": null,
+              "scale_source": null,
+              "currency": null,
+              "unit": null,
+              "unit_kind": "other",
+              "sign": null,
+              "precision": "exact",
+              "measure_status": "actual",
+              "entity_ref": {
+                "id": null,
+                "text": "UNICEF voluntary contributions"
+              },
+              "date": null,
+              "period": {
+                "text": "2020",
+                "grain": "year",
+                "start": "2020-01-01",
+                "end": "2020-12-31",
+                "anchored": true,
+                "fiscal_year_basis": null
+              },
+              "duration": null,
+              "parser_version": "values.v1",
+              "resolution": "period"
+            }
+          },
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 12,
+        "accepted": true,
+        "identity": "1c65e7ab0b7d7c9706798f4c7f05b97dfe8a41e32c0217b8334a64b233c80c22",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": {
+            "type": "percent",
+            "raw": "46%",
+            "verbatim": true,
+            "number": 46,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": "percent",
+            "unit_kind": "percent",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "UNICEF income by resource type"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": {
+            "period_covered": {
+              "type": "period",
+              "raw": "2024",
+              "verbatim": true,
+              "number": null,
+              "scale": null,
+              "scale_source": null,
+              "currency": null,
+              "unit": null,
+              "unit_kind": "other",
+              "sign": null,
+              "precision": "exact",
+              "measure_status": "actual",
+              "entity_ref": {
+                "id": null,
+                "text": "UNICEF income by resource type"
+              },
+              "date": null,
+              "period": {
+                "text": "2024",
+                "grain": "year",
+                "start": "2024-01-01",
+                "end": "2024-12-31",
+                "anchored": true,
+                "fiscal_year_basis": null
+              },
+              "duration": null,
+              "parser_version": "values.v1",
+              "resolution": "period"
+            }
+          },
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 13,
+        "accepted": true,
+        "identity": "df5f82eea09801bb8364b4374d9cacd557f39ef827483d8fd43c1a1bb47106a0",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": {
+            "type": "percent",
+            "raw": "37%",
+            "verbatim": true,
+            "number": 37,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": "percent",
+            "unit_kind": "percent",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "UNICEF income by resource type"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": {
+            "period_covered": {
+              "type": "period",
+              "raw": "2024",
+              "verbatim": true,
+              "number": null,
+              "scale": null,
+              "scale_source": null,
+              "currency": null,
+              "unit": null,
+              "unit_kind": "other",
+              "sign": null,
+              "precision": "exact",
+              "measure_status": "actual",
+              "entity_ref": {
+                "id": null,
+                "text": "UNICEF income by resource type"
+              },
+              "date": null,
+              "period": {
+                "text": "2024",
+                "grain": "year",
+                "start": "2024-01-01",
+                "end": "2024-12-31",
+                "anchored": true,
+                "fiscal_year_basis": null
+              },
+              "duration": null,
+              "parser_version": "values.v1",
+              "resolution": "period"
+            }
+          },
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 14,
+        "accepted": true,
+        "identity": "c1a469ac9127e108e0a0c8dd8ef007f6f87543f60a185a3ea92bfe8a0f8a19d2",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": {
+            "type": "percent",
+            "raw": "17%",
+            "verbatim": true,
+            "number": 17,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": "percent",
+            "unit_kind": "percent",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "UNICEF income by resource type"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": {
+            "period_covered": {
+              "type": "period",
+              "raw": "2024",
+              "verbatim": true,
+              "number": null,
+              "scale": null,
+              "scale_source": null,
+              "currency": null,
+              "unit": null,
+              "unit_kind": "other",
+              "sign": null,
+              "precision": "exact",
+              "measure_status": "actual",
+              "entity_ref": {
+                "id": null,
+                "text": "UNICEF income by resource type"
+              },
+              "date": null,
+              "period": {
+                "text": "2024",
+                "grain": "year",
+                "start": "2024-01-01",
+                "end": "2024-12-31",
+                "anchored": true,
+                "fiscal_year_basis": null
+              },
+              "duration": null,
+              "parser_version": "values.v1",
+              "resolution": "period"
+            }
+          },
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 15,
+        "accepted": true,
+        "identity": "4bc56f896606e55d87e71886c5dbe3474c08cd65db0b7b53ceedf0a527d25852",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 16,
+        "accepted": true,
+        "identity": "3cb33177c482db7fcee502039c03fc07e5ba23a37cfca4cc6cfe709fa5d18a78",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": {
+            "type": "count",
+            "raw": "10 million people",
+            "verbatim": true,
+            "number": 10000000,
+            "scale": 1000000,
+            "scale_source": "stated",
+            "currency": null,
+            "unit": "people",
+            "unit_kind": "count",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "target",
+            "entity_ref": {
+              "id": null,
+              "text": "Horn of Africa drought-prone countries"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 17,
+        "accepted": true,
+        "identity": "e3c7c7d94f1cfa2b629160ade29850646496f1e561d826979f6ed37d70df34f4",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": true,
+        "typed": {
+          "value": {
+            "type": "money",
+            "raw": "$1 billion",
+            "verbatim": true,
+            "number": 1000000000,
+            "scale": 1000000000,
+            "scale_source": "stated",
+            "currency": "$",
+            "unit": "USD",
+            "unit_kind": "currency",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "Guatemala government social protection programmes"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 18,
+        "accepted": true,
+        "identity": "90c1abd0d861a13d7738718e35a38f8d199cb1321975931f6697fe7fa9db5f46",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": {
+            "type": "count",
+            "raw": "13 countries",
+            "verbatim": true,
+            "number": 13,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": "countries",
+            "unit_kind": "count",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "Global health systems"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 19,
+        "accepted": true,
+        "identity": "a93610b5ccdc276a4b3a52d935672818eb6403c16e5096f34977f1d13a536705",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": {
+            "type": "count",
+            "raw": "more than 8.8 million",
+            "verbatim": true,
+            "number": 8800000,
+            "scale": 1000000,
+            "scale_source": "stated",
+            "currency": null,
+            "unit": "people",
+            "unit_kind": "count",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "children, adolescents, caregivers and service providers"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 20,
+        "accepted": true,
+        "identity": "3f1f45636ef90961e4219b0722416949ad03dc8c6cf9c994a9a34228d1b9cba2",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": {
+            "type": "percent",
+            "raw": "23 per cent drop",
+            "verbatim": true,
+            "number": 23,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": "percent",
+            "unit_kind": "percent",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": null,
+            "entity_ref": {
+              "id": null,
+              "text": "Yemen children under five"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 21,
+        "accepted": true,
+        "identity": "e8eac088af73e69c1d68578bdf22dad3cf53f23384e83033680fb6a288d1f4f6",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 22,
+        "accepted": true,
+        "identity": "77abd3a95bf33ecc113022f4944d99af7849c469ae25d820f300c9e744fad2ce",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": {
+            "type": "count",
+            "raw": "more than 129,000",
+            "verbatim": true,
+            "number": 129000,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": "children",
+            "unit_kind": "count",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "Democratic Republic of the Congo children"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 23,
+        "accepted": true,
+        "identity": "720565a65bd804e92f8167f881931f0be495ed7551b9c6d4dc305bb0d5e2f9e9",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": {
+            "type": "count",
+            "raw": "more than 120,000 people",
+            "verbatim": true,
+            "number": 120000,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": "people",
+            "unit_kind": "count",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "Madagascar and Mozambique"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 24,
+        "accepted": true,
+        "identity": "cebe6af0129db49358926146ad7d935ff24200600200da99e305c527c056feb0",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": {
+            "type": "percent",
+            "raw": "22.7 per cent",
+            "verbatim": true,
+            "number": 22.7,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": "percent",
+            "unit_kind": "percent",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "Rwanda disease outbreak"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 25,
+        "accepted": true,
+        "identity": "62e6d21b06c3a38d9378b9aab4df51a330148e59c548f0b61c301d301eb65c2c",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 26,
+        "accepted": true,
+        "identity": "6b6974b704b5e835507b143287e7dbe80cf323f488a39c24f3670d8da132212e",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": {
+            "type": "count",
+            "raw": "14 provinces",
+            "verbatim": true,
+            "number": 14,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": "provinces",
+            "unit_kind": "count",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "Viet Nam education system"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 27,
+        "accepted": true,
+        "identity": "bed1d11ef2e6ed962e8951a6216544655a750e5f6bdb6139f51a124f79067e09",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": {
+            "type": "count",
+            "raw": "59.3 million people",
+            "verbatim": true,
+            "number": 59300000,
+            "scale": 1000000,
+            "scale_source": "stated",
+            "currency": null,
+            "unit": "people",
+            "unit_kind": "count",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "India water and sanitation programmes"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": {
+            "period_covered": {
+              "type": "period",
+              "raw": "2024",
+              "verbatim": true,
+              "number": null,
+              "scale": null,
+              "scale_source": null,
+              "currency": null,
+              "unit": null,
+              "unit_kind": "other",
+              "sign": null,
+              "precision": "exact",
+              "measure_status": "actual",
+              "entity_ref": {
+                "id": null,
+                "text": "India water and sanitation programmes"
+              },
+              "date": null,
+              "period": {
+                "text": "2024",
+                "grain": "year",
+                "start": "2024-01-01",
+                "end": "2024-12-31",
+                "anchored": true,
+                "fiscal_year_basis": null
+              },
+              "duration": null,
+              "parser_version": "values.v1",
+              "resolution": "period"
+            }
+          },
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 28,
+        "accepted": true,
+        "identity": "3c07286c4463f425a16cb87a9b25cb36d05edf8932b3ae151658657747d841e9",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": {
+            "type": "count",
+            "raw": "17.9 million people",
+            "verbatim": true,
+            "number": 17900000,
+            "scale": 1000000,
+            "scale_source": "stated",
+            "currency": null,
+            "unit": "people",
+            "unit_kind": "count",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "India water and sanitation programmes"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": {
+            "period_covered": {
+              "type": "period",
+              "raw": "2024",
+              "verbatim": true,
+              "number": null,
+              "scale": null,
+              "scale_source": null,
+              "currency": null,
+              "unit": null,
+              "unit_kind": "other",
+              "sign": null,
+              "precision": "exact",
+              "measure_status": "actual",
+              "entity_ref": {
+                "id": null,
+                "text": "India water and sanitation programmes"
+              },
+              "date": null,
+              "period": {
+                "text": "2024",
+                "grain": "year",
+                "start": "2024-01-01",
+                "end": "2024-12-31",
+                "anchored": true,
+                "fiscal_year_basis": null
+              },
+              "duration": null,
+              "parser_version": "values.v1",
+              "resolution": "period"
+            }
+          },
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 29,
+        "accepted": true,
+        "identity": "45582afbecbcac61dbc5258d3ab6ae1ba4e4ff7ae2cc0badd0a15e37ab6a1560",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": true,
+        "typed": {
+          "value": {
+            "type": "money",
+            "raw": "$68 million",
+            "verbatim": true,
+            "number": 68000000,
+            "scale": 1000000,
+            "scale_source": "stated",
+            "currency": "$",
+            "unit": "USD",
+            "unit_kind": "currency",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "Republic of Moldova government and other investment"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 30,
+        "accepted": true,
+        "identity": "18ff378680b79cce9fdbfedf7cc52b80153d941d34983c38c203b199d15b6809",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": {
+            "type": "percent",
+            "raw": "3.4 per cent",
+            "verbatim": true,
+            "number": 3.4,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": "percent",
+            "unit_kind": "percent",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "target",
+            "entity_ref": {
+              "id": null,
+              "text": "Republic of Moldova children"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 31,
+        "accepted": true,
+        "identity": "12ca63af0534be53381028dc2d7f87974a3231fef160ca91951ec82881987723",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": {
+            "type": "percent",
+            "raw": "42 per cent",
+            "verbatim": true,
+            "number": 42,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": "percent",
+            "unit_kind": "percent",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": null,
+            "entity_ref": {
+              "id": null,
+              "text": "Republic of Moldova families with children including Ukrainian refugees"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 32,
+        "accepted": true,
+        "identity": "37ec59c1e3d01a957f8761f9f382923288d01c12f6c6ae7d7f5e6162394e9d29",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": {
+            "type": "percent",
+            "raw": "40 per cent reduction",
+            "verbatim": true,
+            "number": 40,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": "percent",
+            "unit_kind": "percent",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": null,
+            "entity_ref": {
+              "id": null,
+              "text": "Bangladesh children under five"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 33,
+        "accepted": true,
+        "identity": "fb151019ba11a3bf4dfb2c0075e70c62bb49156f851b8b5a9e542f3248c30892",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 34,
+        "accepted": true,
+        "identity": "1ea9a2bb80b17f652e3dfcebb77c7bf99f52ae0b8027cce9c9ce5b01afb1b39e",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": {
+            "type": "count",
+            "raw": "500 children and women",
+            "verbatim": true,
+            "number": 500,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": "people",
+            "unit_kind": "count",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "Jordan children and women survivors and witnesses of violence, abuse or exploitation"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 35,
+        "accepted": true,
+        "identity": "c144a669241b513571b4c7306ab84b4c18ac3d12e3251e32644d87323e4ea008",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 36,
+        "accepted": true,
+        "identity": "6d3b41f978f2c655a1c9526a424dbb7205333d2599cba0c3ebc1e27bbab9c0ef",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": {
+            "type": "count",
+            "raw": "more than 675,000 children",
+            "verbatim": true,
+            "number": 675000,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": "children",
+            "unit_kind": "count",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "Sierra Leone children including those facing violence, exploitation, abuse or neglect"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 37,
+        "accepted": true,
+        "identity": "644abb56b944fab82f8ed496e43300cd56eca651deaae217dc34a4fa761d21a9",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 38,
+        "accepted": true,
+        "identity": "44e2c542d137202c8a1231c8452f0dff35eec83b535d3765acedd3bd2cb866e0",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": null,
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 39,
+        "accepted": true,
+        "identity": "72b573aaaf1f17e135a560b48ad2229c56d2c8c5b8a99dde6db0611a3095d78b",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": false,
+        "typed": {
+          "value": {
+            "type": "count",
+            "raw": "19 child indicators",
+            "verbatim": true,
+            "number": 19,
+            "scale": 1,
+            "scale_source": null,
+            "currency": null,
+            "unit": "indicators",
+            "unit_kind": "count",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "UNICEF programmes"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 40,
+        "accepted": true,
+        "identity": "bfd54c14fca08071b2a7dea1788badd1f97a059c3c73051fff317766574dba15",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": true,
+        "typed": {
+          "value": {
+            "type": "money",
+            "raw": "$952 million",
+            "verbatim": true,
+            "number": 952000000,
+            "scale": 1000000,
+            "scale_source": "stated",
+            "currency": "$",
+            "unit": "USD",
+            "unit_kind": "currency",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "UNICEF advancing children's rights and SDGs country programmes"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 41,
+        "accepted": true,
+        "identity": "c9ed162daa76e178c9a2d6e4741a2329e6212f471b6fcd04bfcf54e912a3b0bf",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": true,
+        "typed": {
+          "value": {
+            "type": "money",
+            "raw": "$227 million",
+            "verbatim": true,
+            "number": 227000000,
+            "scale": 1000000,
+            "scale_source": "stated",
+            "currency": "$",
+            "unit": "USD",
+            "unit_kind": "currency",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "UNICEF development effectiveness programmes"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": [],
+          "extras": []
+        }
+      },
+      {
+        "raw_index": 42,
+        "accepted": true,
+        "identity": "48a2469ca6a845248a5d98d2e6b1789c837626118055d4e9baa92035ed702f2a",
+        "premerge_collision": false,
+        "origin": "document",
+        "key_figure_eligible": true,
+        "typed": {
+          "value": {
+            "type": "money",
+            "raw": "$174 million",
+            "verbatim": true,
+            "number": 174000000,
+            "scale": 1000000,
+            "scale_source": "stated",
+            "currency": "$",
+            "unit": "USD",
+            "unit_kind": "currency",
+            "sign": 1,
+            "precision": "exact",
+            "measure_status": "actual",
+            "entity_ref": {
+              "id": null,
+              "text": "UNICEF development effectiveness capital costs"
+            },
+            "date": null,
+            "period": null,
+            "duration": null,
+            "parser_version": "values.v1"
+          },
+          "dates": [],
+          "extras": []
+        }
+      }
+    ]
+  },
+  "accepted": [
+    {
+      "label": "Core resources income total 2024",
+      "value": "$1.584 billion",
+      "subject": "UNICEF",
+      "reference": "Core resources income by type of partner, 2024",
+      "evidence_ids": [
+        "E101"
+      ],
+      "entity_type": null,
+      "unit": "USD",
+      "period": "2024",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "financial",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E101",
+          "page": 5,
+          "start_offset": 11226,
+          "end_offset": 11447,
+          "type": "sentence",
+          "text": "Core resources income by type of partner,\n2024\n$512.6 million\nPublic sector, 32%\n$724.9 million\nPrivate sector, 46%\n$346.1 million\nOther, 22%\nTotal\n$1.584\nbillion\nPrivate sector Public sector Tot al\n0\n200\n400\n600\n800\n1000"
+        }
+      ],
+      "quote": "Core resources income by type of partner,\n2024\n$512.6 million\nPublic sector, 32%\n$724.9 million\nPrivate sector, 46%\n$346.1 million\nOther, 22%\nTotal\n$1.584\nbillion\nPrivate sector Public sector Tot al\n0\n200\n400\n600\n800\n1000"
+    },
+    {
+      "label": "Core resources income from public sector 2024",
+      "value": "$512.6 million",
+      "subject": "UNICEF public sector partners",
+      "reference": "Core resources income by type of partner, 2024",
+      "evidence_ids": [
+        "E101"
+      ],
+      "entity_type": null,
+      "unit": "USD",
+      "period": "2024",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "financial",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E101",
+          "page": 5,
+          "start_offset": 11226,
+          "end_offset": 11447,
+          "type": "sentence",
+          "text": "Core resources income by type of partner,\n2024\n$512.6 million\nPublic sector, 32%\n$724.9 million\nPrivate sector, 46%\n$346.1 million\nOther, 22%\nTotal\n$1.584\nbillion\nPrivate sector Public sector Tot al\n0\n200\n400\n600\n800\n1000"
+        }
+      ],
+      "quote": "Core resources income by type of partner,\n2024\n$512.6 million\nPublic sector, 32%\n$724.9 million\nPrivate sector, 46%\n$346.1 million\nOther, 22%\nTotal\n$1.584\nbillion\nPrivate sector Public sector Tot al\n0\n200\n400\n600\n800\n1000"
+    },
+    {
+      "label": "Core resources income from private sector 2024",
+      "value": "$724.9 million",
+      "subject": "UNICEF private sector partners",
+      "reference": "Core resources income by type of partner, 2024",
+      "evidence_ids": [
+        "E101"
+      ],
+      "entity_type": null,
+      "unit": "USD",
+      "period": "2024",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "financial",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E101",
+          "page": 5,
+          "start_offset": 11226,
+          "end_offset": 11447,
+          "type": "sentence",
+          "text": "Core resources income by type of partner,\n2024\n$512.6 million\nPublic sector, 32%\n$724.9 million\nPrivate sector, 46%\n$346.1 million\nOther, 22%\nTotal\n$1.584\nbillion\nPrivate sector Public sector Tot al\n0\n200\n400\n600\n800\n1000"
+        }
+      ],
+      "quote": "Core resources income by type of partner,\n2024\n$512.6 million\nPublic sector, 32%\n$724.9 million\nPrivate sector, 46%\n$346.1 million\nOther, 22%\nTotal\n$1.584\nbillion\nPrivate sector Public sector Tot al\n0\n200\n400\n600\n800\n1000"
+    },
+    {
+      "label": "Core resources income from other partners 2024",
+      "value": "$346.1 million",
+      "subject": "UNICEF other partners",
+      "reference": "Core resources income by type of partner, 2024",
+      "evidence_ids": [
+        "E101"
+      ],
+      "entity_type": null,
+      "unit": "USD",
+      "period": "2024",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "financial",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E101",
+          "page": 5,
+          "start_offset": 11226,
+          "end_offset": 11447,
+          "type": "sentence",
+          "text": "Core resources income by type of partner,\n2024\n$512.6 million\nPublic sector, 32%\n$724.9 million\nPrivate sector, 46%\n$346.1 million\nOther, 22%\nTotal\n$1.584\nbillion\nPrivate sector Public sector Tot al\n0\n200\n400\n600\n800\n1000"
+        }
+      ],
+      "quote": "Core resources income by type of partner,\n2024\n$512.6 million\nPublic sector, 32%\n$724.9 million\nPrivate sector, 46%\n$346.1 million\nOther, 22%\nTotal\n$1.584\nbillion\nPrivate sector Public sector Tot al\n0\n200\n400\n600\n800\n1000"
+    },
+    {
+      "label": "Public sector income proportion of total core resources",
+      "value": "32%",
+      "subject": "UNICEF core resources by partner type",
+      "reference": "Core resources income by type of partner, 2024",
+      "evidence_ids": [
+        "E101"
+      ],
+      "entity_type": null,
+      "unit": "percent",
+      "period": "2024",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "proportion",
+      "aggregation": null,
+      "quantity_kind": "financial",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E101",
+          "page": 5,
+          "start_offset": 11226,
+          "end_offset": 11447,
+          "type": "sentence",
+          "text": "Core resources income by type of partner,\n2024\n$512.6 million\nPublic sector, 32%\n$724.9 million\nPrivate sector, 46%\n$346.1 million\nOther, 22%\nTotal\n$1.584\nbillion\nPrivate sector Public sector Tot al\n0\n200\n400\n600\n800\n1000"
+        }
+      ],
+      "quote": "Core resources income by type of partner,\n2024\n$512.6 million\nPublic sector, 32%\n$724.9 million\nPrivate sector, 46%\n$346.1 million\nOther, 22%\nTotal\n$1.584\nbillion\nPrivate sector Public sector Tot al\n0\n200\n400\n600\n800\n1000"
+    },
+    {
+      "label": "Private sector income proportion of total core resources",
+      "value": "46%",
+      "subject": "UNICEF core resources by partner type",
+      "reference": "Core resources income by type of partner, 2024",
+      "evidence_ids": [
+        "E101"
+      ],
+      "entity_type": null,
+      "unit": "percent",
+      "period": "2024",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "proportion",
+      "aggregation": null,
+      "quantity_kind": "financial",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E101",
+          "page": 5,
+          "start_offset": 11226,
+          "end_offset": 11447,
+          "type": "sentence",
+          "text": "Core resources income by type of partner,\n2024\n$512.6 million\nPublic sector, 32%\n$724.9 million\nPrivate sector, 46%\n$346.1 million\nOther, 22%\nTotal\n$1.584\nbillion\nPrivate sector Public sector Tot al\n0\n200\n400\n600\n800\n1000"
+        }
+      ],
+      "quote": "Core resources income by type of partner,\n2024\n$512.6 million\nPublic sector, 32%\n$724.9 million\nPrivate sector, 46%\n$346.1 million\nOther, 22%\nTotal\n$1.584\nbillion\nPrivate sector Public sector Tot al\n0\n200\n400\n600\n800\n1000"
+    },
+    {
+      "label": "Other partners income proportion of total core resources",
+      "value": "22%",
+      "subject": "UNICEF core resources by partner type",
+      "reference": "Core resources income by type of partner, 2024",
+      "evidence_ids": [
+        "E101"
+      ],
+      "entity_type": null,
+      "unit": "percent",
+      "period": "2024",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "proportion",
+      "aggregation": null,
+      "quantity_kind": "financial",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E101",
+          "page": 5,
+          "start_offset": 11226,
+          "end_offset": 11447,
+          "type": "sentence",
+          "text": "Core resources income by type of partner,\n2024\n$512.6 million\nPublic sector, 32%\n$724.9 million\nPrivate sector, 46%\n$346.1 million\nOther, 22%\nTotal\n$1.584\nbillion\nPrivate sector Public sector Tot al\n0\n200\n400\n600\n800\n1000"
+        }
+      ],
+      "quote": "Core resources income by type of partner,\n2024\n$512.6 million\nPublic sector, 32%\n$724.9 million\nPrivate sector, 46%\n$346.1 million\nOther, 22%\nTotal\n$1.584\nbillion\nPrivate sector Public sector Tot al\n0\n200\n400\n600\n800\n1000"
+    },
+    {
+      "label": "Total income from voluntary contributions 2024",
+      "value": "$8.263 billion",
+      "subject": "UNICEF voluntary contributions",
+      "reference": "Core Resources income from voluntary contributions by type of resource partner, 2020–2024",
+      "evidence_ids": [
+        "E103"
+      ],
+      "entity_type": null,
+      "unit": "USD",
+      "period": "2024",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "financial",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E103",
+          "page": 5,
+          "start_offset": 11461,
+          "end_offset": 11906,
+          "type": "sentence",
+          "text": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)"
+        }
+      ],
+      "quote": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)"
+    },
+    {
+      "label": "Total income from voluntary contributions 2023",
+      "value": "$8.920 billion",
+      "subject": "UNICEF voluntary contributions",
+      "reference": "Core Resources income from voluntary contributions by type of resource partner, 2020–2024",
+      "evidence_ids": [
+        "E103"
+      ],
+      "entity_type": null,
+      "unit": "USD",
+      "period": "2023",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "financial",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E103",
+          "page": 5,
+          "start_offset": 11461,
+          "end_offset": 11906,
+          "type": "sentence",
+          "text": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)"
+        }
+      ],
+      "quote": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)"
+    },
+    {
+      "label": "Total income from voluntary contributions 2022",
+      "value": "$9.326 billion",
+      "subject": "UNICEF voluntary contributions",
+      "reference": "Core Resources income from voluntary contributions by type of resource partner, 2020–2024",
+      "evidence_ids": [
+        "E103"
+      ],
+      "entity_type": null,
+      "unit": "USD",
+      "period": "2022",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "financial",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E103",
+          "page": 5,
+          "start_offset": 11461,
+          "end_offset": 11906,
+          "type": "sentence",
+          "text": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)"
+        }
+      ],
+      "quote": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)"
+    },
+    {
+      "label": "Total income from voluntary contributions 2021",
+      "value": "$8.122 billion",
+      "subject": "UNICEF voluntary contributions",
+      "reference": "Core Resources income from voluntary contributions by type of resource partner, 2020–2024",
+      "evidence_ids": [
+        "E103"
+      ],
+      "entity_type": null,
+      "unit": "USD",
+      "period": "2021",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "financial",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E103",
+          "page": 5,
+          "start_offset": 11461,
+          "end_offset": 11906,
+          "type": "sentence",
+          "text": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)"
+        }
+      ],
+      "quote": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)"
+    },
+    {
+      "label": "Total income from voluntary contributions 2020",
+      "value": "$7.219 billion",
+      "subject": "UNICEF voluntary contributions",
+      "reference": "Core Resources income from voluntary contributions by type of resource partner, 2020–2024",
+      "evidence_ids": [
+        "E103"
+      ],
+      "entity_type": null,
+      "unit": "USD",
+      "period": "2020",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "financial",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E103",
+          "page": 5,
+          "start_offset": 11461,
+          "end_offset": 11906,
+          "type": "sentence",
+          "text": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)"
+        }
+      ],
+      "quote": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)"
+    },
+    {
+      "label": "Core Resources proportion 2024",
+      "value": "46%",
+      "subject": "UNICEF income by resource type",
+      "reference": "Income ratio by type of funding, 2020–2024",
+      "evidence_ids": [
+        "E103"
+      ],
+      "entity_type": null,
+      "unit": "percent",
+      "period": "2024",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "proportion",
+      "aggregation": null,
+      "quantity_kind": "financial",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E103",
+          "page": 5,
+          "start_offset": 11461,
+          "end_offset": 11906,
+          "type": "sentence",
+          "text": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)"
+        }
+      ],
+      "quote": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)"
+    },
+    {
+      "label": "Other Resources Regular proportion 2024",
+      "value": "37%",
+      "subject": "UNICEF income by resource type",
+      "reference": "Income ratio by type of funding, 2020–2024",
+      "evidence_ids": [
+        "E103"
+      ],
+      "entity_type": null,
+      "unit": "percent",
+      "period": "2024",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "proportion",
+      "aggregation": null,
+      "quantity_kind": "financial",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E103",
+          "page": 5,
+          "start_offset": 11461,
+          "end_offset": 11906,
+          "type": "sentence",
+          "text": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)"
+        }
+      ],
+      "quote": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)"
+    },
+    {
+      "label": "Other Resources Emergency proportion 2024",
+      "value": "17%",
+      "subject": "UNICEF income by resource type",
+      "reference": "Income ratio by type of funding, 2020–2024",
+      "evidence_ids": [
+        "E103"
+      ],
+      "entity_type": null,
+      "unit": "percent",
+      "period": "2024",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "proportion",
+      "aggregation": null,
+      "quantity_kind": "financial",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E103",
+          "page": 5,
+          "start_offset": 11461,
+          "end_offset": 11906,
+          "type": "sentence",
+          "text": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)"
+        }
+      ],
+      "quote": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)"
+    },
+    {
+      "label": "Horn of Africa groundwater detection territory mapped",
+      "value": "nearly a million square kilometres",
+      "subject": "Horn of Africa drought-prone countries",
+      "reference": "Horn of Africa: Core Resources scaled up an innovative solution using satellite data to detect groundwater, mapping nearly a million square kilometres of territory in drought-prone countries, with the potential to benefit 10 million people in need.",
+      "evidence_ids": [
+        "E107"
+      ],
+      "entity_type": "location",
+      "unit": "square kilometres",
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "area",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E107",
+          "page": 6,
+          "start_offset": 12256,
+          "end_offset": 12540,
+          "type": "sentence",
+          "text": "Leading, convening and pioneering\nHorn of Africa: Core Resources scaled up an innovative solution using satellite data \nto detect groundwater, mapping nearly a million square kilometres of territory in \ndrought-prone countries, with the potential to benefit 10 million people in need."
+        }
+      ],
+      "quote": "Leading, convening and pioneering\nHorn of Africa: Core Resources scaled up an innovative solution using satellite data \nto detect groundwater, mapping nearly a million square kilometres of territory in \ndrought-prone countries, with the potential to benefit 10 million people in need."
+    },
+    {
+      "label": "Horn of Africa potential beneficiaries of groundwater mapping",
+      "value": "10 million people",
+      "subject": "Horn of Africa drought-prone countries",
+      "reference": "Horn of Africa: Core Resources scaled up an innovative solution using satellite data to detect groundwater, mapping nearly a million square kilometres of territory in drought-prone countries, with the potential to benefit 10 million people in need.",
+      "evidence_ids": [
+        "E107"
+      ],
+      "entity_type": null,
+      "unit": "people",
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "target",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "population",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E107",
+          "page": 6,
+          "start_offset": 12256,
+          "end_offset": 12540,
+          "type": "sentence",
+          "text": "Leading, convening and pioneering\nHorn of Africa: Core Resources scaled up an innovative solution using satellite data \nto detect groundwater, mapping nearly a million square kilometres of territory in \ndrought-prone countries, with the potential to benefit 10 million people in need."
+        }
+      ],
+      "quote": "Leading, convening and pioneering\nHorn of Africa: Core Resources scaled up an innovative solution using satellite data \nto detect groundwater, mapping nearly a million square kilometres of territory in \ndrought-prone countries, with the potential to benefit 10 million people in need."
+    },
+    {
+      "label": "Guatemala social protection investment",
+      "value": "$1 billion",
+      "subject": "Guatemala government social protection programmes",
+      "reference": "Guatemala: Core Resources positioned UNICEF as a key partner in the transformation of the social protection system, offering the government strategic policy advice and partnerships, which resulted in a $1 billion investment in social protection programmes and mitigation of a three-to-four-fold increase in poverty during the COVID-19 pandemic.",
+      "evidence_ids": [
+        "E108"
+      ],
+      "entity_type": null,
+      "unit": "USD",
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "financial",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E108",
+          "page": 6,
+          "start_offset": 12542,
+          "end_offset": 12890,
+          "type": "sentence",
+          "text": "Guatemala: Core Resources positioned UNICEF as a key partner in the transformation \nof the social protection system, offering the government strategic policy advice and \npartnerships, which resulted in a $1 billion investment in social protection \nprogrammes and mitigation of a three-to-four-fold increase in poverty during \nthe COVID-19 pandemic."
+        }
+      ],
+      "quote": "Guatemala: Core Resources positioned UNICEF as a key partner in the transformation \nof the social protection system, offering the government strategic policy advice and \npartnerships, which resulted in a $1 billion investment in social protection \nprogrammes and mitigation of a three-to-four-fold increase in poverty during \nthe COVID-19 pandemic."
+    },
+    {
+      "label": "Global mental health services integration countries",
+      "value": "13 countries",
+      "subject": "Global health systems",
+      "reference": "Global: Core Resources fast tracked the integration of cross-sectoral mental health services and care into national systems in 13 countries, modelling new solutions, and reaching more than 8.8 million children, adolescents, caregivers and service providers.",
+      "evidence_ids": [
+        "E109"
+      ],
+      "entity_type": null,
+      "unit": "countries",
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "count",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E109",
+          "page": 6,
+          "start_offset": 12892,
+          "end_offset": 13152,
+          "type": "sentence",
+          "text": "Global: Core Resources fast tracked the integration of cross-sectoral mental \nhealth services and care into national systems in 13 countries, modelling new \nsolutions, and reaching more than 8.8 million children, adolescents, caregivers and \nservice providers."
+        }
+      ],
+      "quote": "Global: Core Resources fast tracked the integration of cross-sectoral mental \nhealth services and care into national systems in 13 countries, modelling new \nsolutions, and reaching more than 8.8 million children, adolescents, caregivers and \nservice providers."
+    },
+    {
+      "label": "Global mental health services reach",
+      "value": "more than 8.8 million",
+      "subject": "children, adolescents, caregivers and service providers",
+      "reference": "Global: Core Resources fast tracked the integration of cross-sectoral mental health services and care into national systems in 13 countries, modelling new solutions, and reaching more than 8.8 million children, adolescents, caregivers and service providers.",
+      "evidence_ids": [
+        "E109"
+      ],
+      "entity_type": null,
+      "unit": "people",
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "population",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E109",
+          "page": 6,
+          "start_offset": 12892,
+          "end_offset": 13152,
+          "type": "sentence",
+          "text": "Global: Core Resources fast tracked the integration of cross-sectoral mental \nhealth services and care into national systems in 13 countries, modelling new \nsolutions, and reaching more than 8.8 million children, adolescents, caregivers and \nservice providers."
+        }
+      ],
+      "quote": "Global: Core Resources fast tracked the integration of cross-sectoral mental \nhealth services and care into national systems in 13 countries, modelling new \nsolutions, and reaching more than 8.8 million children, adolescents, caregivers and \nservice providers."
+    },
+    {
+      "label": "Yemen under-five mortality reduction over decade",
+      "value": "23 per cent drop",
+      "subject": "Yemen children under five",
+      "reference": "Yemen: Core Resources safeguarded continued access and expansion of essential health services, contributing to a 23 per cent drop in under-five mortality over the course of the last decade of conflict.",
+      "evidence_ids": [
+        "E110"
+      ],
+      "entity_type": null,
+      "unit": "percent",
+      "period": "last decade",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "change",
+      "value_basis": "rate",
+      "aggregation": null,
+      "quantity_kind": "health",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E110",
+          "page": 6,
+          "start_offset": 13153,
+          "end_offset": 13394,
+          "type": "sentence",
+          "text": "Before, during and after an emergency\nYemen: Core Resources safeguarded continued access and expansion of \nessential health services, contributing to a 23 per cent drop in under-five \nmortality over the course of the last decade of conflict."
+        }
+      ],
+      "quote": "Before, during and after an emergency\nYemen: Core Resources safeguarded continued access and expansion of \nessential health services, contributing to a 23 per cent drop in under-five \nmortality over the course of the last decade of conflict."
+    },
+    {
+      "label": "Democratic Republic of the Congo health facilities operational",
+      "value": "more than 1,700",
+      "subject": "Democratic Republic of the Congo health-care facilities",
+      "reference": "Democratic Republic of the Congo: Core Resources supported more than 1,700 health-care facilities to stay operational, securing lifesaving supplies and treatment for more than 129,000 children facing severe wasting.",
+      "evidence_ids": [
+        "E111"
+      ],
+      "entity_type": null,
+      "unit": "facilities",
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "count",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E111",
+          "page": 6,
+          "start_offset": 13395,
+          "end_offset": 13612,
+          "type": "sentence",
+          "text": "Democratic Republic of the Congo: Core Resources supported more than \n1,700 health-care facilities to stay operational, securing lifesaving supplies \nand treatment for more than 129,000 children facing severe wasting."
+        }
+      ],
+      "quote": "Democratic Republic of the Congo: Core Resources supported more than \n1,700 health-care facilities to stay operational, securing lifesaving supplies \nand treatment for more than 129,000 children facing severe wasting."
+    },
+    {
+      "label": "Democratic Republic of the Congo children treated for severe wasting",
+      "value": "more than 129,000",
+      "subject": "Democratic Republic of the Congo children",
+      "reference": "Democratic Republic of the Congo: Core Resources supported more than 1,700 health-care facilities to stay operational, securing lifesaving supplies and treatment for more than 129,000 children facing severe wasting.",
+      "evidence_ids": [
+        "E111"
+      ],
+      "entity_type": null,
+      "unit": "children",
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "population",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E111",
+          "page": 6,
+          "start_offset": 13395,
+          "end_offset": 13612,
+          "type": "sentence",
+          "text": "Democratic Republic of the Congo: Core Resources supported more than \n1,700 health-care facilities to stay operational, securing lifesaving supplies \nand treatment for more than 129,000 children facing severe wasting."
+        }
+      ],
+      "quote": "Democratic Republic of the Congo: Core Resources supported more than \n1,700 health-care facilities to stay operational, securing lifesaving supplies \nand treatment for more than 129,000 children facing severe wasting."
+    },
+    {
+      "label": "Madagascar and Mozambique cyclone relief beneficiaries",
+      "value": "more than 120,000 people",
+      "subject": "Madagascar and Mozambique",
+      "reference": "Madagascar and Mozambique: Core Resources provided the seed funding for UNICEF's Today and Tomorrow Initiative, an integrated climate and disaster finance solution, supporting more that more than 120,000 people in Madagascar and Mozambique with life-saving services in the aftermath of cyclones.",
+      "evidence_ids": [
+        "E112"
+      ],
+      "entity_type": null,
+      "unit": "people",
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "population",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E112",
+          "page": 6,
+          "start_offset": 13613,
+          "end_offset": 13913,
+          "type": "sentence",
+          "text": "Madagascar and Mozambique: Core Resources provided the seed funding \nfor UNICEF's Today and Tomorrow Initiative, an integrated climate and \ndisaster finance solution, supporting more that more than 120,000 people \nin Madagascar and Mozambique with life-saving services in the aftermath  \nof cyclones."
+        }
+      ],
+      "quote": "Madagascar and Mozambique: Core Resources provided the seed funding \nfor UNICEF's Today and Tomorrow Initiative, an integrated climate and \ndisaster finance solution, supporting more that more than 120,000 people \nin Madagascar and Mozambique with life-saving services in the aftermath  \nof cyclones."
+    },
+    {
+      "label": "Rwanda Marburg disease outbreak fatality rate",
+      "value": "22.7 per cent",
+      "subject": "Rwanda disease outbreak",
+      "reference": "Rwanda: Core Resources reinforced the government's response to the Marburg disease outbreak, contributing to more lives being saved and a low fatality rate of 22.7 per cent.",
+      "evidence_ids": [
+        "E113"
+      ],
+      "entity_type": null,
+      "unit": "percent",
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "rate",
+      "aggregation": null,
+      "quantity_kind": "health",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E113",
+          "page": 6,
+          "start_offset": 13914,
+          "end_offset": 14089,
+          "type": "sentence",
+          "text": "Rwanda: Core Resources reinforced the government’s response to the Marburg \ndisease outbreak, contributing to more lives being saved and a low fatality \nrate of 22.7 per cent."
+        }
+      ],
+      "quote": "Rwanda: Core Resources reinforced the government’s response to the Marburg \ndisease outbreak, contributing to more lives being saved and a low fatality \nrate of 22.7 per cent."
+    },
+    {
+      "label": "Côte d'Ivoire and Cabo Verde child registration rate at first birthday",
+      "value": "more than 9 in 10 children",
+      "subject": "Côte d'Ivoire and Cabo Verde children",
+      "reference": "Côte d'Ivoire and Cabo Verde: Core Resources provided instrumental support to the governments to bring universal child registration within reach, with more than 9 in 10 children registered before their first birthdays.",
+      "evidence_ids": [
+        "E118"
+      ],
+      "entity_type": null,
+      "unit": "proportion",
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "proportion",
+      "aggregation": null,
+      "quantity_kind": "population",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E118",
+          "page": 7,
+          "start_offset": 14583,
+          "end_offset": 14860,
+          "type": "sentence",
+          "text": "Meeting the holistic needs of children and adolescents\nCôte d'Ivoire and Cabo Verde: Core Resources provided instrumental support to  \nthe governments to bring universal child registration within reach, with more than  \n9 in 10 children registered before their first birthdays."
+        }
+      ],
+      "quote": "Meeting the holistic needs of children and adolescents\nCôte d'Ivoire and Cabo Verde: Core Resources provided instrumental support to  \nthe governments to bring universal child registration within reach, with more than  \n9 in 10 children registered before their first birthdays."
+    },
+    {
+      "label": "Viet Nam inclusive education resource centres provinces",
+      "value": "14 provinces",
+      "subject": "Viet Nam education system",
+      "reference": "Viet Nam: Core Resources supported a more inclusive system for access to learning opportunities for children with disabilities, embedded disability inclusion into national teacher training, and enabled scaling up the Inclusive Education Resource Centres across 14 provinces to prepare children with disabilities to enter mainstream classrooms.",
+      "evidence_ids": [
+        "E119"
+      ],
+      "entity_type": null,
+      "unit": "provinces",
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "count",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E119",
+          "page": 7,
+          "start_offset": 14861,
+          "end_offset": 15208,
+          "type": "sentence",
+          "text": "Viet Nam: Core Resources supported a more inclusive system for access to learning \nopportunities for children with disabilities, embedded disability inclusion into national teacher \ntraining, and enabled scaling up the Inclusive Education Resource Centres across  \n14 provinces to prepare children with disabilities to enter mainstream classrooms."
+        }
+      ],
+      "quote": "Viet Nam: Core Resources supported a more inclusive system for access to learning \nopportunities for children with disabilities, embedded disability inclusion into national teacher \ntraining, and enabled scaling up the Inclusive Education Resource Centres across  \n14 provinces to prepare children with disabilities to enter mainstream classrooms."
+    },
+    {
+      "label": "India water supply 2024",
+      "value": "59.3 million people",
+      "subject": "India water and sanitation programmes",
+      "reference": "India: Core Resources continued to play a vital role in the delivery and scaling up of the government's flagship water and sanitation programmes, providing safely managed water supplies for 59.3 million people and sanitation services for 17.9 million people in 2024.",
+      "evidence_ids": [
+        "E120"
+      ],
+      "entity_type": null,
+      "unit": "people",
+      "period": "2024",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "population",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E120",
+          "page": 7,
+          "start_offset": 15209,
+          "end_offset": 15502,
+          "type": "sentence",
+          "text": "Taking the work to scale\nIndia: Core Resources continued to play a vital role in the delivery and scaling up of the \ngovernment’s flagship water and sanitation programmes, providing safely managed water \nsupplies for 59.3 million people and sanitation services for 17.9 million people in 2024."
+        }
+      ],
+      "quote": "Taking the work to scale\nIndia: Core Resources continued to play a vital role in the delivery and scaling up of the \ngovernment’s flagship water and sanitation programmes, providing safely managed water \nsupplies for 59.3 million people and sanitation services for 17.9 million people in 2024."
+    },
+    {
+      "label": "India sanitation services 2024",
+      "value": "17.9 million people",
+      "subject": "India water and sanitation programmes",
+      "reference": "India: Core Resources continued to play a vital role in the delivery and scaling up of the government's flagship water and sanitation programmes, providing safely managed water supplies for 59.3 million people and sanitation services for 17.9 million people in 2024.",
+      "evidence_ids": [
+        "E120"
+      ],
+      "entity_type": null,
+      "unit": "people",
+      "period": "2024",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "population",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E120",
+          "page": 7,
+          "start_offset": 15209,
+          "end_offset": 15502,
+          "type": "sentence",
+          "text": "Taking the work to scale\nIndia: Core Resources continued to play a vital role in the delivery and scaling up of the \ngovernment’s flagship water and sanitation programmes, providing safely managed water \nsupplies for 59.3 million people and sanitation services for 17.9 million people in 2024."
+        }
+      ],
+      "quote": "Taking the work to scale\nIndia: Core Resources continued to play a vital role in the delivery and scaling up of the \ngovernment’s flagship water and sanitation programmes, providing safely managed water \nsupplies for 59.3 million people and sanitation services for 17.9 million people in 2024."
+    },
+    {
+      "label": "Republic of Moldova RESTART investment",
+      "value": "$68 million",
+      "subject": "Republic of Moldova government and other investment",
+      "reference": "Republic of Moldova: Core Resources paved the way for $68 million of government and other investment in the RESTART social protection reform, mitigating a 3.4 per cent rise in child poverty and increasing the value of social benefits for families with children, including Ukrainian refugees, by 42 per cent.",
+      "evidence_ids": [
+        "E121"
+      ],
+      "entity_type": null,
+      "unit": "USD",
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "financial",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E121",
+          "page": 7,
+          "start_offset": 15504,
+          "end_offset": 15814,
+          "type": "sentence",
+          "text": "Republic of Moldova: Core Resources paved the way for $68 million of government and \nother investment in the RESTART social protection reform, mitigating a 3.4 per cent rise in \nchild poverty and increasing the value of social benefits for families with children, including \nUkrainian refugees, by 42 per cent."
+        }
+      ],
+      "quote": "Republic of Moldova: Core Resources paved the way for $68 million of government and \nother investment in the RESTART social protection reform, mitigating a 3.4 per cent rise in \nchild poverty and increasing the value of social benefits for families with children, including \nUkrainian refugees, by 42 per cent."
+    },
+    {
+      "label": "Republic of Moldova child poverty rise mitigation",
+      "value": "3.4 per cent",
+      "subject": "Republic of Moldova children",
+      "reference": "Republic of Moldova: Core Resources paved the way for $68 million of government and other investment in the RESTART social protection reform, mitigating a 3.4 per cent rise in child poverty and increasing the value of social benefits for families with children, including Ukrainian refugees, by 42 per cent.",
+      "evidence_ids": [
+        "E121"
+      ],
+      "entity_type": null,
+      "unit": "percent",
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "target",
+      "value_basis": "rate",
+      "aggregation": null,
+      "quantity_kind": "social",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E121",
+          "page": 7,
+          "start_offset": 15504,
+          "end_offset": 15814,
+          "type": "sentence",
+          "text": "Republic of Moldova: Core Resources paved the way for $68 million of government and \nother investment in the RESTART social protection reform, mitigating a 3.4 per cent rise in \nchild poverty and increasing the value of social benefits for families with children, including \nUkrainian refugees, by 42 per cent."
+        }
+      ],
+      "quote": "Republic of Moldova: Core Resources paved the way for $68 million of government and \nother investment in the RESTART social protection reform, mitigating a 3.4 per cent rise in \nchild poverty and increasing the value of social benefits for families with children, including \nUkrainian refugees, by 42 per cent."
+    },
+    {
+      "label": "Republic of Moldova social benefits increase for families with children",
+      "value": "42 per cent",
+      "subject": "Republic of Moldova families with children including Ukrainian refugees",
+      "reference": "Republic of Moldova: Core Resources paved the way for $68 million of government and other investment in the RESTART social protection reform, mitigating a 3.4 per cent rise in child poverty and increasing the value of social benefits for families with children, including Ukrainian refugees, by 42 per cent.",
+      "evidence_ids": [
+        "E121"
+      ],
+      "entity_type": null,
+      "unit": "percent",
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "change",
+      "value_basis": "rate",
+      "aggregation": null,
+      "quantity_kind": "financial",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E121",
+          "page": 7,
+          "start_offset": 15504,
+          "end_offset": 15814,
+          "type": "sentence",
+          "text": "Republic of Moldova: Core Resources paved the way for $68 million of government and \nother investment in the RESTART social protection reform, mitigating a 3.4 per cent rise in \nchild poverty and increasing the value of social benefits for families with children, including \nUkrainian refugees, by 42 per cent."
+        }
+      ],
+      "quote": "Republic of Moldova: Core Resources paved the way for $68 million of government and \nother investment in the RESTART social protection reform, mitigating a 3.4 per cent rise in \nchild poverty and increasing the value of social benefits for families with children, including \nUkrainian refugees, by 42 per cent."
+    },
+    {
+      "label": "Bangladesh stunting reduction among children under five",
+      "value": "40 per cent reduction",
+      "subject": "Bangladesh children under five",
+      "reference": "Bangladesh: Core Resources helped UNICEF mobilize and sustain government action to transform children's nutrition outcomes, contributing to a 40 per cent reduction in stunting among children under five and a nearly tenfold increase in domestic investments in nutrition services over a decade.",
+      "evidence_ids": [
+        "E122"
+      ],
+      "entity_type": null,
+      "unit": "percent",
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "change",
+      "value_basis": "rate",
+      "aggregation": null,
+      "quantity_kind": "health",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E122",
+          "page": 7,
+          "start_offset": 15816,
+          "end_offset": 16111,
+          "type": "sentence",
+          "text": "Bangladesh: Core Resources helped UNICEF mobilize and sustain government action to \ntransform children’s nutrition outcomes, contributing to a 40 per cent reduction in stunting \namong children under five and a nearly tenfold increase in domestic investments in \nnutrition services over a decade."
+        }
+      ],
+      "quote": "Bangladesh: Core Resources helped UNICEF mobilize and sustain government action to \ntransform children’s nutrition outcomes, contributing to a 40 per cent reduction in stunting \namong children under five and a nearly tenfold increase in domestic investments in \nnutrition services over a decade."
+    },
+    {
+      "label": "Bangladesh nutrition services domestic investment increase",
+      "value": "nearly tenfold",
+      "subject": "Bangladesh nutrition services",
+      "reference": "Bangladesh: Core Resources helped UNICEF mobilize and sustain government action to transform children's nutrition outcomes, contributing to a 40 per cent reduction in stunting among children under five and a nearly tenfold increase in domestic investments in nutrition services over a decade.",
+      "evidence_ids": [
+        "E122"
+      ],
+      "entity_type": null,
+      "unit": "times",
+      "period": "over a decade",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "change",
+      "value_basis": "rate",
+      "aggregation": null,
+      "quantity_kind": "financial",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E122",
+          "page": 7,
+          "start_offset": 15816,
+          "end_offset": 16111,
+          "type": "sentence",
+          "text": "Bangladesh: Core Resources helped UNICEF mobilize and sustain government action to \ntransform children’s nutrition outcomes, contributing to a 40 per cent reduction in stunting \namong children under five and a nearly tenfold increase in domestic investments in \nnutrition services over a decade."
+        }
+      ],
+      "quote": "Bangladesh: Core Resources helped UNICEF mobilize and sustain government action to \ntransform children’s nutrition outcomes, contributing to a 40 per cent reduction in stunting \namong children under five and a nearly tenfold increase in domestic investments in \nnutrition services over a decade."
+    },
+    {
+      "label": "Jordan One Stop Centre initial beneficiaries",
+      "value": "500 children and women",
+      "subject": "Jordan children and women survivors and witnesses of violence, abuse or exploitation",
+      "reference": "Jordan: Core Resources funded the first-ever One Stop Centre which offers a proven model for replication across Jordan including Syrian refugee camps, successfully supporting an initial 500 children and women survivors and witnesses of violence, abuse or exploitation with multi-sectoral services.",
+      "evidence_ids": [
+        "E123"
+      ],
+      "entity_type": null,
+      "unit": "people",
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "population",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E123",
+          "page": 7,
+          "start_offset": 16112,
+          "end_offset": 16425,
+          "type": "sentence",
+          "text": "Expert staff\nJordan: Core Resources funded the first-ever One Stop Centre which offers \na proven model for replication across Jordan including Syrian refugee \ncamps, successfully supporting an initial 500 children and women survivors \nand witnesses of violence, abuse or exploitation with multi-sectoral services."
+        }
+      ],
+      "quote": "Expert staff\nJordan: Core Resources funded the first-ever One Stop Centre which offers \na proven model for replication across Jordan including Syrian refugee \ncamps, successfully supporting an initial 500 children and women survivors \nand witnesses of violence, abuse or exploitation with multi-sectoral services."
+    },
+    {
+      "label": "Sierra Leone child protection and case management system social workers accreditation",
+      "value": "first time",
+      "subject": "Sierra Leone social workers",
+      "reference": "Sierra Leone: Core Resources strengthened the child protection and case management system, accrediting social workers for the first time and facilitating protection services for more than 675,000 children in five years, including those who have faced violence, exploitation, abuse or neglect.",
+      "evidence_ids": [
+        "E124"
+      ],
+      "entity_type": null,
+      "unit": "event",
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "count",
+      "kind": "fact",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E124",
+          "page": 7,
+          "start_offset": 16426,
+          "end_offset": 16724,
+          "type": "sentence",
+          "text": "Sierra Leone: Core Resources strengthened the child protection and case \nmanagement system, accrediting social workers for the first time  \nand facilitating protection services for more than 675,000 children in \nfive years, including those who have faced violence, exploitation,  \nabuse or neglect."
+        }
+      ],
+      "quote": "Sierra Leone: Core Resources strengthened the child protection and case \nmanagement system, accrediting social workers for the first time  \nand facilitating protection services for more than 675,000 children in \nfive years, including those who have faced violence, exploitation,  \nabuse or neglect."
+    },
+    {
+      "label": "Sierra Leone child protection services five-year cumulative reach",
+      "value": "more than 675,000 children",
+      "subject": "Sierra Leone children including those facing violence, exploitation, abuse or neglect",
+      "reference": "Sierra Leone: Core Resources strengthened the child protection and case management system, accrediting social workers for the first time and facilitating protection services for more than 675,000 children in five years, including those who have faced violence, exploitation, abuse or neglect.",
+      "evidence_ids": [
+        "E124"
+      ],
+      "entity_type": null,
+      "unit": "children",
+      "period": "five years",
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "population",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E124",
+          "page": 7,
+          "start_offset": 16426,
+          "end_offset": 16724,
+          "type": "sentence",
+          "text": "Sierra Leone: Core Resources strengthened the child protection and case \nmanagement system, accrediting social workers for the first time  \nand facilitating protection services for more than 675,000 children in \nfive years, including those who have faced violence, exploitation,  \nabuse or neglect."
+        }
+      ],
+      "quote": "Sierra Leone: Core Resources strengthened the child protection and case \nmanagement system, accrediting social workers for the first time  \nand facilitating protection services for more than 675,000 children in \nfive years, including those who have faced violence, exploitation,  \nabuse or neglect."
+    },
+    {
+      "label": "UNICEF strategic budget pillars",
+      "value": "three pillars",
+      "subject": "UNICEF budget",
+      "reference": "UNICEF strategically spreads spending of Core Resources across the three pillars of the organization's integrated budget.",
+      "evidence_ids": [
+        "E127"
+      ],
+      "entity_type": null,
+      "unit": null,
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": null,
+      "value_basis": null,
+      "aggregation": null,
+      "quantity_kind": null,
+      "kind": "fact",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E127",
+          "page": 8,
+          "start_offset": 16820,
+          "end_offset": 17046,
+          "type": "sentence",
+          "text": "How we Spend Core Resources to \nAchieve Results for Children \nUNICEF strategically spreads spending of Core Resources across the three pillars of the organization’s \nintegrated budget.\nCore Resources accelerate progress across"
+        }
+      ],
+      "quote": "How we Spend Core Resources to \nAchieve Results for Children \nUNICEF strategically spreads spending of Core Resources across the three pillars of the organization’s \nintegrated budget.\nCore Resources accelerate progress across"
+    },
+    {
+      "label": "UNICEF Sustainable Development Goals coverage",
+      "value": "12 of the 17 Sustainable Development Goals",
+      "subject": "UNICEF programmes for children",
+      "reference": "Core Resources accelerate progress across 12 of the 17 Sustainable Development Goals for children.",
+      "evidence_ids": [
+        "E128",
+        "E129"
+      ],
+      "entity_type": null,
+      "unit": "goals",
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "count",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E128",
+          "page": 8,
+          "start_offset": 17048,
+          "end_offset": 17090,
+          "type": "heading",
+          "text": "12 of the 17 Sustainable Development Goals"
+        },
+        {
+          "span_id": "E129",
+          "page": 8,
+          "start_offset": 17092,
+          "end_offset": 17405,
+          "type": "sentence",
+          "text": "for children.\nThey support UNICEF’s custodian and  \nco-custodian role in 19 child indicators and \nprogrammes for every child which can be \nsustained through strong national systems \nin the long term.\n*Expense – actual expenses made in the year.\n**Expenditure – includes the expenses made and commitments of funds."
+        }
+      ],
+      "quote": "12 of the 17 Sustainable Development Goals\n\nfor children.\nThey support UNICEF’s custodian and  \nco-custodian role in 19 child indicators and \nprogrammes for every child which can be \nsustained through strong national systems \nin the long term.\n*Expense – actual expenses made in the year.\n**Expenditure – includes the expenses made and commitments of funds."
+    },
+    {
+      "label": "UNICEF child indicators custodian and co-custodian role",
+      "value": "19 child indicators",
+      "subject": "UNICEF programmes",
+      "reference": "They support UNICEF's custodian and co-custodian role in 19 child indicators and programmes for every child which can be sustained through strong national systems in the long term.",
+      "evidence_ids": [
+        "E129"
+      ],
+      "entity_type": null,
+      "unit": "indicators",
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "count",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E129",
+          "page": 8,
+          "start_offset": 17092,
+          "end_offset": 17405,
+          "type": "sentence",
+          "text": "for children.\nThey support UNICEF’s custodian and  \nco-custodian role in 19 child indicators and \nprogrammes for every child which can be \nsustained through strong national systems \nin the long term.\n*Expense – actual expenses made in the year.\n**Expenditure – includes the expenses made and commitments of funds."
+        }
+      ],
+      "quote": "for children.\nThey support UNICEF’s custodian and  \nco-custodian role in 19 child indicators and \nprogrammes for every child which can be \nsustained through strong national systems \nin the long term.\n*Expense – actual expenses made in the year.\n**Expenditure – includes the expenses made and commitments of funds."
+    },
+    {
+      "label": "UNICEF country programmes expense",
+      "value": "$952 million",
+      "subject": "UNICEF advancing children's rights and SDGs country programmes",
+      "reference": "UNICEF country programmes advancing children's rights and the SDGs for children around the world",
+      "evidence_ids": [
+        "E130",
+        "E133"
+      ],
+      "entity_type": null,
+      "unit": "USD",
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "financial",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E130",
+          "page": 8,
+          "start_offset": 17406,
+          "end_offset": 17505,
+          "type": "list_item",
+          "text": "• UNICEF country programmes advancing children’s rights \nand the SDGs for children around the world"
+        },
+        {
+          "span_id": "E133",
+          "page": 8,
+          "start_offset": 17691,
+          "end_offset": 17812,
+          "type": "list_item",
+          "text": "• Emergency Programme Fund (EPF) protecting children and \nsaving lives in sudden-onset emergencies \n$952 million\nExpense*"
+        }
+      ],
+      "quote": "• UNICEF country programmes advancing children’s rights \nand the SDGs for children around the world\n\n• Emergency Programme Fund (EPF) protecting children and \nsaving lives in sudden-onset emergencies \n$952 million\nExpense*"
+    },
+    {
+      "label": "UNICEF development effectiveness expenditure",
+      "value": "$227 million",
+      "subject": "UNICEF development effectiveness programmes",
+      "reference": "Capital costs aligned with programme goals and strategies (of which Development Effectiveness was $174 million)",
+      "evidence_ids": [
+        "E137"
+      ],
+      "entity_type": null,
+      "unit": "USD",
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "financial",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E137",
+          "page": 8,
+          "start_offset": 18099,
+          "end_offset": 18242,
+          "type": "list_item",
+          "text": "• Capital costs aligned with programme goals and strategies\n(of which \nDevelopment \nEffectiveness \nwas $174 million)\n$227 million\nExpenditure**"
+        }
+      ],
+      "quote": "• Capital costs aligned with programme goals and strategies\n(of which \nDevelopment \nEffectiveness \nwas $174 million)\n$227 million\nExpenditure**"
+    },
+    {
+      "label": "UNICEF development effectiveness capital costs",
+      "value": "$174 million",
+      "subject": "UNICEF development effectiveness capital costs",
+      "reference": "Capital costs aligned with programme goals and strategies (of which Development Effectiveness was $174 million)",
+      "evidence_ids": [
+        "E137"
+      ],
+      "entity_type": null,
+      "unit": "USD",
+      "period": null,
+      "date_type": null,
+      "due_date": null,
+      "severity": null,
+      "metric_type": "actual",
+      "value_basis": "total",
+      "aggregation": null,
+      "quantity_kind": "financial",
+      "kind": "metric",
+      "confidence": 1,
+      "aliases": [],
+      "evidence": [
+        {
+          "span_id": "E137",
+          "page": 8,
+          "start_offset": 18099,
+          "end_offset": 18242,
+          "type": "list_item",
+          "text": "• Capital costs aligned with programme goals and strategies\n(of which \nDevelopment \nEffectiveness \nwas $174 million)\n$227 million\nExpenditure**"
+        }
+      ],
+      "quote": "• Capital costs aligned with programme goals and strategies\n(of which \nDevelopment \nEffectiveness \nwas $174 million)\n$227 million\nExpenditure**"
+    }
+  ]
+}

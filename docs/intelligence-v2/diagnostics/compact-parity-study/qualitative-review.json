@@ -1,0 +1,218 @@
+{
+  "review_type": "unblinded qualitative semantic check, separate from blinded precision review",
+  "sampling": "10 accepted compact-produced records per frozen chunk; deterministic seed 20261009",
+  "sample_file": "qualitative-sample.json",
+  "sample_sha256": "6e89b78dce0f2b6ca6752d0bd9994203c0566ceee8c6b0d37da04eb0b09dadd8",
+  "summary": {
+    "records_reviewed": 20,
+    "unicef_records": 10,
+    "india_records": 10,
+    "raw_to_expanded_literal_changes": 0,
+    "evidence_ids_altered_or_lost": 0,
+    "all_period_fields_omitted_to_null": 20,
+    "all_unit_fields_omitted_to_null": 20,
+    "semantic_concern": "Systematic omission of explicit period/unit/currency metadata in compact output; E103 chart attribution and a few field-role/citation issues also observed."
+  },
+  "records": [
+    {
+      "sample_number": 1,
+      "cell": "unicef_reduced-B2",
+      "raw_index": 17,
+      "evidence_ids_preserved": true,
+      "literal_label_value_subject_preserved": true,
+      "period_omitted_to_null": true,
+      "unit_omitted_to_null": true,
+      "observation": "Explicit counted population is children; compact omits unit."
+    },
+    {
+      "sample_number": 2,
+      "cell": "unicef_reduced-B3",
+      "raw_index": 27,
+      "evidence_ids_preserved": true,
+      "literal_label_value_subject_preserved": true,
+      "period_omitted_to_null": true,
+      "unit_omitted_to_null": true,
+      "observation": "Fatality rate explicitly uses per cent; compact omits unit."
+    },
+    {
+      "sample_number": 3,
+      "cell": "unicef_reduced-B2",
+      "raw_index": 1,
+      "evidence_ids_preserved": true,
+      "literal_label_value_subject_preserved": true,
+      "period_omitted_to_null": true,
+      "unit_omitted_to_null": true,
+      "observation": "E101 states 2024 and $724.9 million; compact omits period and currency unit. Alias 46% is a share, not an alias of the money observation."
+    },
+    {
+      "sample_number": 4,
+      "cell": "unicef_reduced-B2",
+      "raw_index": 51,
+      "evidence_ids_preserved": true,
+      "literal_label_value_subject_preserved": true,
+      "period_omitted_to_null": true,
+      "unit_omitted_to_null": true,
+      "observation": "Compact omits 2021 period and percentage unit; flattened E103 chart does not make the 20% series/year association secure."
+    },
+    {
+      "sample_number": 5,
+      "cell": "unicef_reduced-B1",
+      "raw_index": 21,
+      "evidence_ids_preserved": true,
+      "literal_label_value_subject_preserved": true,
+      "period_omitted_to_null": true,
+      "unit_omitted_to_null": true,
+      "observation": "Source states 2024 and people; compact omits period and unit."
+    },
+    {
+      "sample_number": 6,
+      "cell": "unicef_reduced-B2",
+      "raw_index": 15,
+      "evidence_ids_preserved": true,
+      "literal_label_value_subject_preserved": true,
+      "period_omitted_to_null": true,
+      "unit_omitted_to_null": true,
+      "observation": "Source says last decade; compact puts it in value and leaves period null."
+    },
+    {
+      "sample_number": 7,
+      "cell": "unicef_reduced-B2",
+      "raw_index": 25,
+      "evidence_ids_preserved": true,
+      "literal_label_value_subject_preserved": true,
+      "period_omitted_to_null": true,
+      "unit_omitted_to_null": true,
+      "observation": "Source states $68 million; compact omits currency unit."
+    },
+    {
+      "sample_number": 8,
+      "cell": "unicef_reduced-B1",
+      "raw_index": 24,
+      "evidence_ids_preserved": true,
+      "literal_label_value_subject_preserved": true,
+      "period_omitted_to_null": true,
+      "unit_omitted_to_null": true,
+      "observation": "Source states 42 per cent increase; compact omits percentage unit."
+    },
+    {
+      "sample_number": 9,
+      "cell": "unicef_reduced-B2",
+      "raw_index": 32,
+      "evidence_ids_preserved": true,
+      "literal_label_value_subject_preserved": true,
+      "period_omitted_to_null": true,
+      "unit_omitted_to_null": true,
+      "observation": "Source states more than 675,000 children in five years; compact omits unit and period."
+    },
+    {
+      "sample_number": 10,
+      "cell": "unicef_reduced-B2",
+      "raw_index": 53,
+      "evidence_ids_preserved": true,
+      "literal_label_value_subject_preserved": true,
+      "period_omitted_to_null": true,
+      "unit_omitted_to_null": true,
+      "observation": "Compact omits 2020 period and percentage unit; flattened E103 chart association is uncertain."
+    },
+    {
+      "sample_number": 11,
+      "cell": "india_wash-B2",
+      "raw_index": 11,
+      "evidence_ids_preserved": true,
+      "literal_label_value_subject_preserved": true,
+      "period_omitted_to_null": true,
+      "unit_omitted_to_null": true,
+      "observation": "Core fact is present in E214; absent optional fields are not material for this nonquantitative fact."
+    },
+    {
+      "sample_number": 12,
+      "cell": "india_wash-B3",
+      "raw_index": 16,
+      "evidence_ids_preserved": true,
+      "literal_label_value_subject_preserved": true,
+      "period_omitted_to_null": true,
+      "unit_omitted_to_null": true,
+      "observation": "Core fact is present in E214; absent optional fields are not material for this nonquantitative fact."
+    },
+    {
+      "sample_number": 13,
+      "cell": "india_wash-B2",
+      "raw_index": 23,
+      "evidence_ids_preserved": true,
+      "literal_label_value_subject_preserved": true,
+      "period_omitted_to_null": true,
+      "unit_omitted_to_null": true,
+      "observation": "E236 only states lasting reductions in waterborne diseases. The added child-mortality qualifier is outside the cited span, and kind metric is questionable for this unquantified claim."
+    },
+    {
+      "sample_number": 14,
+      "cell": "india_wash-B3",
+      "raw_index": 24,
+      "evidence_ids_preserved": true,
+      "literal_label_value_subject_preserved": true,
+      "period_omitted_to_null": true,
+      "unit_omitted_to_null": true,
+      "observation": "Source supports a qualitative assessment; absent period/unit are not material."
+    },
+    {
+      "sample_number": 15,
+      "cell": "india_wash-B3",
+      "raw_index": 8,
+      "evidence_ids_preserved": true,
+      "literal_label_value_subject_preserved": true,
+      "period_omitted_to_null": true,
+      "unit_omitted_to_null": true,
+      "observation": "Source states at least 50,000 rupees ($650) saved per family. Compact emits a fact with no unit; quantitative role may be lost."
+    },
+    {
+      "sample_number": 16,
+      "cell": "india_wash-B1",
+      "raw_index": 6,
+      "evidence_ids_preserved": true,
+      "literal_label_value_subject_preserved": true,
+      "period_omitted_to_null": true,
+      "unit_omitted_to_null": true,
+      "observation": "Source supports mission launch. Alias Water is Life Mission extends the parenthetical Water is Life wording; not clearly verbatim."
+    },
+    {
+      "sample_number": 17,
+      "cell": "india_wash-B3",
+      "raw_index": 15,
+      "evidence_ids_preserved": true,
+      "literal_label_value_subject_preserved": true,
+      "period_omitted_to_null": true,
+      "unit_omitted_to_null": true,
+      "observation": "Source supports the qualitative UNICEF role; absent period/unit are not material."
+    },
+    {
+      "sample_number": 18,
+      "cell": "india_wash-B3",
+      "raw_index": 7,
+      "evidence_ids_preserved": true,
+      "literal_label_value_subject_preserved": true,
+      "period_omitted_to_null": true,
+      "unit_omitted_to_null": true,
+      "observation": "Source explicitly states last five years and more than 115 million households; compact omits period and unit."
+    },
+    {
+      "sample_number": 19,
+      "cell": "india_wash-B2",
+      "raw_index": 25,
+      "evidence_ids_preserved": true,
+      "literal_label_value_subject_preserved": true,
+      "period_omitted_to_null": true,
+      "unit_omitted_to_null": true,
+      "observation": "Source explicitly states 2024 and 17.9 million people; compact omits period and unit."
+    },
+    {
+      "sample_number": 20,
+      "cell": "india_wash-B1",
+      "raw_index": 28,
+      "evidence_ids_preserved": true,
+      "literal_label_value_subject_preserved": true,
+      "period_omitted_to_null": true,
+      "unit_omitted_to_null": true,
+      "observation": "Source explicitly names Cynthia McCaffrey as UNICEF India Representative; kind entity has omitted entity_type, expanded to null despite person being explicit."
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "cell": "india_wash-A3",
+  "chunk": "india_wash",
+  "variant": "CONTROL",
+  "run": 3,
+  "status": "success",
+  "failure_class": null,
+  "http_status": 200,
+  "transport_error": null,
+  "provider_request_id": "req_011Cfs14HW5cKeFetKL56UMc",
+  "started_at_utc": "2026-10-09T16:45:52.025729+00:00",
+  "latency_ms": 24465,
+  "request_sha256": "716df69a1607827b5994b68e1cadd5b61433c950397a69995cc31e3a2ac6e42e",
+  "response_sha256": "a1185a9e9cba268147bb310e655e7415c740748d00b0c10bd45799a7a6689e5f",
+  "contract": {
+    "model_id": "claude-haiku-4-5-20251001",
+    "prompt_version": "pre-b2-control-v1",
+    "system_prompt_sha256": "026063bffca0cfc4c82dd9f4eddd7330cf1be26fc316e62cbac387ec54f56985",
+    "schema_version": "evidence-schema-span-v1-snapshot",
+    "schema_sha256": "69dcb0125c131c024670b325496d8abcc868a2a23cebb9df8c21b7071380c873",
+    "wire_format_version": "canonical-json-span-v1",
+    "source_sha256": "0709f82d8ff76517e2617ca88e17a1e21a4bbefbcd60a2c18c678ee50b23171f",
+    "span_set_sha256": "8a4539f31dfd0ccfdba2d844ab9285034c0c7c50ad0d92189470f7ee7aa58df7",
+    "planner_config_sha256": "e55066f545a0b42a4570f0d48dfe447a6a56984602f69b63a65d53708c3051d2",
+    "detector_version": "candidate-inventory-v1.0.0",
+    "matcher_version": "candidate-representation-v1.0.0",
+    "request_body_sha256": "716df69a1607827b5994b68e1cadd5b61433c950397a69995cc31e3a2ac6e42e"
+  },
+  "budget_before_send": {
+    "actual_spent_usd": "0.338776",
+    "unknown_reserved_usd": "0",
+    "next_call_worst_case_usd": "0.1022578125",
+    "remaining_cells_worst_case_usd": "1.0162312500",
+    "pair_spent_usd": "0",
+    "total_limit_usd": "1.50",
+    "pair_limit_usd": "0.15"
+  },
+  "stop_reason": "end_turn",
+  "usage": {
+    "input_tokens": 4128,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 2811,
+    "service_tier": "standard",
+    "inference_geo": "not_available"
+  },
+  "actual_cost_usd": "0.018183",
+  "unknown_cost_reserve_usd": null,
+  "returned_records": 23,
+  "max_records_prompt": 79,
+  "returned_over_max_records": 0.2911392405063291,
+  "max_tokens": 16000,
+  "output_over_max_tokens": 0.1756875
+}

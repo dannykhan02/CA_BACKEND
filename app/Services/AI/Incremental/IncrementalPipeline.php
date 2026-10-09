@@ -218,6 +218,11 @@ class IncrementalPipeline
             $metadata['key'] = $key;
             $metadata['route'] = 'incremental';
             $metadata['grounding'] = $mode;
+            $wireFormat = (string) config('document_intelligence.extraction_wire_format', 'canonical-json-span-v1');
+            if (! in_array($wireFormat, ['canonical-json-span-v1', \App\Services\AI\Incremental\CompactEvidenceExpander::VERSION], true)) {
+                throw new \InvalidArgumentException('Unsupported extraction wire format');
+            }
+            $metadata['extraction_wire_format'] = $mode === EvidenceGrounding::SPANS ? $wireFormat : 'canonical-json-span-v1';
             // Evidence IDs are only meaningful for the extraction version they were generated
             // against; a re-extraction produces a new version rather than reusing these IDs.
             $metadata['extraction_version'] = $mode === EvidenceGrounding::SPANS ? $spans->version : null;

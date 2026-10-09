@@ -13,6 +13,8 @@ use App\Models\DocumentEvidence;
 use App\Models\DocumentSourceSpan;
 use App\Models\User;
 use App\Services\AI\Incremental\EvidenceBudget;
+use App\Services\AI\Incremental\CompactEvidenceExpander;
+use App\Exceptions\AiProcessingException;
 use App\Services\AI\Incremental\EvidenceGrounding;
 use App\Services\AI\Incremental\EvidenceMerger;
 use App\Services\AI\Incremental\IncrementalPipeline;
@@ -112,6 +114,61 @@ class EvidenceSpanPipelineTest extends TestCase
     private function chunkIds(Document $document, DocumentChunk $chunk): array
     {
         return app(EvidenceGrounding::class)->chunkSpans($document, $chunk)->keys();
+    }
+
+    public function test_canonical_wire_format_survives_flag_flip(): void
+    {
+        $this->assertWireFormatSurvivesFlagFlip('canonical-json-span-v1', CompactEvidenceExpander::VERSION);
+    }
+
+    public function test_compact_wire_format_survives_flag_flip(): void
+    {
+        $this->assertWireFormatSurvivesFlagFlip(CompactEvidenceExpander::VERSION, 'canonical-json-span-v1');
+    }
+
+    private function assertWireFormatSurvivesFlagFlip(string $initial, string $flipped): void
+    {
+            config(['document_intelligence.extraction_wire_format' => $initial]);
+            $document = $this->plan($this->document());
+            $chunk = $this->leaves($document)->first();
+            self::assertSame($initial, $document->ai_pipeline['extraction_wire_format']);
+            config(['document_intelligence.extraction_wire_format' => $flipped]);
+            app(IncrementalPipeline::class)->start($document->fresh());
+            self::assertSame($initial, $document->fresh()->ai_pipeline['extraction_wire_format']);
+            Http::fake(['*/messages' => function ($request) use ($initial) {
+                self::assertSame($initial === CompactEvidenceExpander::VERSION ? 'm' : 'records',
+                    array_key_first($request['output_config']['format']['schema']['properties']));
+                return Http::response($this->response($initial === CompactEvidenceExpander::VERSION ? ['m' => []] : ['records' => []]));
+            }]);
+            app(AnthropicClient::class)->extractChunk($document->fresh(), $chunk,
+                mb_substr($document->extracted_text, $chunk->start_offset, $chunk->end_offset - $chunk->start_offset));
+            self::assertSame($initial, DocumentAiRun::where('document_id', $document->id)->where('purpose', 'entities')->latest('created_at')->first()->wire_format_version);
+    }
+
+    public function test_compact_max_tokens_salvages_complete_prefix_and_keeps_raw_response(): void
+    {
+        config(['document_intelligence.extraction_wire_format' => CompactEvidenceExpander::VERSION]);
+        $document = $this->plan($this->document());
+        $chunk = $this->leaves($document)->first();
+        $record = $this->record(['evidence_ids' => [$this->chunkIds($document, $chunk)[0]]]);
+        $row = CompactEvidenceExpander::encode(['records' => [$record]])['m'][0];
+        $raw = '{"m":['.json_encode($row, JSON_UNESCAPED_UNICODE).',{"l":"unfinished';
+        $response = $this->response([], 'max_tokens');
+        $response['content'][0]['text'] = $raw;
+        Http::fake(['*/messages' => Http::response($response)]);
+        try {
+            app(AnthropicClient::class)->extractChunk($document->fresh(), $chunk,
+                mb_substr($document->extracted_text, $chunk->start_offset, $chunk->end_offset - $chunk->start_offset));
+            self::fail('Expected max_tokens');
+        } catch (AiProcessingException $e) {
+            self::assertSame('max_tokens', $e->classification);
+            self::assertCount(1, $e->partial['records']);
+            self::assertSame($record['value'], $e->partial['records'][0]['value']);
+        }
+        $run = DocumentAiRun::where('document_id', $document->id)->where('purpose', 'entities')->sole();
+        self::assertSame($raw, $run->raw_provider_response);
+        self::assertSame(hash('sha256', $raw), $run->raw_provider_response_hash);
+        self::assertSame(CompactEvidenceExpander::VERSION, $run->wire_format_version);
     }
 
     // --- planning and chunking -------------------------------------------------------------

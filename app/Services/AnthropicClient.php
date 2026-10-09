@@ -12,6 +12,7 @@ use App\Models\DocumentChunk;
 use App\Services\AI\AiModels;
 use App\Services\AI\AiPricing;
 use App\Services\AI\Incremental\EvidenceBudget;
+use App\Services\AI\Incremental\CompactEvidenceExpander;
 use App\Services\AI\Incremental\EvidenceGrounding;
 use App\Services\AI\Incremental\EvidenceSchema;
 use App\Services\AI\Incremental\ExtractionCapacity;
@@ -147,6 +148,15 @@ class AnthropicClient
             $this->throttle(wait: false);
             $model = $this->modelFor('extraction');
             $schema = EvidenceSchema::extraction(app(EvidenceGrounding::class)->mode($document));
+            $canonicalSchemaHash = hash('sha256', json_encode(['type' => 'json_schema', 'schema' => $schema], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
+            $wireFormat = $document->ai_pipeline['extraction_wire_format'] ?? 'canonical-json-span-v1';
+            if (! in_array($wireFormat, ['canonical-json-span-v1', CompactEvidenceExpander::VERSION], true)) {
+                throw new AiProcessingException('invalid_wire_format');
+            }
+            if ($wireFormat === CompactEvidenceExpander::VERSION) {
+                $schema = CompactEvidenceExpander::schema();
+            }
+            $providerSchemaHash = hash('sha256', json_encode(['type' => 'json_schema', 'schema' => $schema], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
             if (! in_array($model, config('document_intelligence.structured_models'), true)) {
                 throw new AiProcessingException('unsupported_structured_model');
             }
@@ -162,19 +172,33 @@ class AnthropicClient
                 ? ['source_text' => $text]
                 : ['max_evidence_ids' => EvidenceSchema::maxEvidenceIds(), 'evidence_spans' => $spans->render()];
             // Continuations of a truncated response list what was already returned, so only the remainder is generated.
+            $systemText = $experiment?->instructions(EvidenceSchema::instructions($grounding->mode($document)))
+                ?? EvidenceSchema::instructions($grounding->mode($document));
             $response = $this->callWithRetry([['role' => 'user', 'content' => json_encode(['document_name' => $document->name, 'start_page' => $chunk->start_page,
                 'end_page' => $chunk->end_page, 'max_records' => $limit, ...app(IncrementalPipeline::class)->continuationContext($chunk),
                 ...$source], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)]], options: [
                     'model' => $model, 'max_attempts' => 1, 'timeout' => (int) config('document_intelligence.extraction_timeout_seconds'), 'connect_timeout' => 10,
                     'max_tokens' => app(ExtractionCapacity::class)->outputTokens(),
                     'intelligence_document' => $document, 'typed_errors' => true,
-                    'system' => [['type' => 'text', 'text' => $experiment?->instructions(EvidenceSchema::instructions($grounding->mode($document)))
-                        ?? EvidenceSchema::instructions($grounding->mode($document)),
+                    'system' => [['type' => 'text', 'text' => $systemText,
                         'cache_control' => ['type' => 'ephemeral']]],
                     'output_config' => ['format' => ['type' => 'json_schema', 'schema' => $schema]],
                 ]);
 
+            $response['_telemetry'] = [...($response['_telemetry'] ?? []), 'wire_format_version' => $wireFormat,
+                'compact_codec_version' => $wireFormat === CompactEvidenceExpander::VERSION ? CompactEvidenceExpander::VERSION : null,
+                'provider_schema_hash' => $providerSchemaHash, 'canonical_schema_hash' => $canonicalSchemaHash,
+                'prompt_hash' => hash('sha256', $systemText), 'source_hash' => hash('sha256', $text),
+                'span_hash' => $spans === null ? null : hash('sha256', $spans->render()),
+                'raw_provider_response' => $this->responseText($response),
+                'raw_provider_response_hash' => hash('sha256', $this->responseText($response))];
+
             $decoded = $this->decodeJsonContent($response);
+            if ($wireFormat === CompactEvidenceExpander::VERSION) {
+                try { $decoded = CompactEvidenceExpander::expand($decoded); }
+                catch (\InvalidArgumentException) { throw new AiProcessingException('compact_expansion_error'); }
+            }
+            $response['_telemetry']['expanded_canonical_response_hash'] = hash('sha256', json_encode($decoded, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
             $returned = is_array($decoded['records'] ?? null) ? count($decoded['records']) : 0;
             $result = EvidenceSchema::validate($decoded, $text, $spans, $grounding->pipelineVersion($document));
             // A response at the limit may have omitted lower-priority evidence: coverage must say so.
@@ -190,7 +214,19 @@ class AnthropicClient
                 // the same strict validation (verbatim quote, schema, dates). Never repair a partial one.
                 try {
                     $grounding = app(EvidenceGrounding::class);
-                    $salvaged = EvidenceSchema::validate(['records' => EvidenceSchema::salvage($this->responseText($response))], $text,
+                    $raw = $this->responseText($response);
+                    $response['_telemetry'] = [...($response['_telemetry'] ?? []), 'wire_format_version' => $wireFormat ?? 'canonical-json-span-v1',
+                        'raw_provider_response' => $raw, 'raw_provider_response_hash' => hash('sha256', $raw),
+                        'provider_schema_hash' => $providerSchemaHash ?? null, 'canonical_schema_hash' => $canonicalSchemaHash ?? null,
+                        'prompt_hash' => isset($systemText) ? hash('sha256', $systemText) : null,
+                        'source_hash' => hash('sha256', $text),
+                        'span_hash' => isset($spans) && $spans !== null ? hash('sha256', $spans->render()) : null,
+                        'compact_codec_version' => ($wireFormat ?? null) === CompactEvidenceExpander::VERSION ? CompactEvidenceExpander::VERSION : null];
+                    $salvagePayload = ($wireFormat ?? null) === CompactEvidenceExpander::VERSION
+                        ? CompactEvidenceExpander::expand(['m' => CompactEvidenceExpander::salvage($raw)])
+                        : ['records' => EvidenceSchema::salvage($raw)];
+                    $response['_telemetry']['expanded_canonical_response_hash'] = hash('sha256', json_encode($salvagePayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
+                    $salvaged = EvidenceSchema::validate($salvagePayload, $text,
                         $grounding->usesSpans($document) ? $grounding->chunkSpans($document, $chunk) : null,
                         $grounding->pipelineVersion($document));
                     $partial = $salvaged['records'] === [] ? null : $salvaged + ['_salvaged_records' => count($salvaged['records'])];
@@ -651,11 +687,13 @@ PROMPT;
             }
             // Global admission at the HTTP boundary: one permit per request attempt, so retries and
             // repairs re-acquire and no permit is held while sleeping between attempts.
-            $response = app(ProviderGate::class)->call(fn () => $request->post('https://api.anthropic.com/v1/messages', [
+            $requestBody = [
                 'model' => $this->requestModel,
                 'max_tokens' => $options['max_tokens'] ?? config('services.anthropic.max_tokens'),
                 'messages' => $messages,
-            ] + array_intersect_key($options, array_flip(['system', 'output_config']))), $document?->id);
+            ] + array_intersect_key($options, array_flip(['system', 'output_config']));
+            $requestBodyHash = hash('sha256', json_encode($requestBody, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
+            $response = app(ProviderGate::class)->call(fn () => $request->post('https://api.anthropic.com/v1/messages', $requestBody), $document?->id);
         } catch (ConnectionException $e) {
             $kind = str_contains($e->getMessage(), '28') || str_contains(strtolower($e->getMessage()), 'timed out') ? 'timeout' : 'transient';
             $elapsed = (int) ((hrtime(true) - $started) / 1000000);
@@ -730,6 +768,7 @@ PROMPT;
             'created_at' => now(), 'provider_started_at' => now()->subMilliseconds($duration),
             'provider_finished_at' => now(), 'provider_response_received' => true,
             'request_attempt' => $attempt, 'provider_request_id' => $response->header('request-id'),
+            'request_body_hash' => $requestBodyHash,
         ]];
     }
 
