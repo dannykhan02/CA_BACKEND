@@ -276,8 +276,8 @@ class IntelligenceBriefNarrativeTest extends TestCase
         self::assertStringNotContainsString('"quote"', $encoded);
     }
 
-    // F. With B2 off every existing API response is identical to today's.
-    public function test_the_api_response_is_unchanged_when_b2_is_off(): void
+    // B1 is available with B2 off; every pre-existing API field remains identical.
+    public function test_the_api_response_adds_b1_when_b2_is_off_without_changing_existing_fields(): void
     {
         $document = $this->document();
         $user = $document->workspace->owner ?? User::whereKey($document->uploaded_by)->sole();
@@ -288,7 +288,9 @@ class IntelligenceBriefNarrativeTest extends TestCase
         config(['intelligence_v2.b2.enabled' => false]);
         $off = $this->actingAs($user)->getJson("/api/documents/{$document->id}/intelligence")
             ->assertOk()->json('data');
-        self::assertArrayNotHasKey('brief', $off);
+        self::assertArrayHasKey('brief', $off);
+        self::assertSame('disabled', $off['brief']['status']);
+        self::assertNull($off['brief']['narrative']);
 
         config(['intelligence_v2.b2.enabled' => true]);
         $on = $this->actingAs($user)->getJson("/api/documents/{$document->id}/intelligence")
@@ -302,7 +304,8 @@ class IntelligenceBriefNarrativeTest extends TestCase
             '/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:[+-]\d{2}:\d{2}|Z)/',
             '<instant>', json_encode($analysis));
         self::assertSame($stable($off['analysis']), $stable($on['analysis']));
-        unset($on['brief']);
+        self::assertSame($off['brief']['blocks'], $on['brief']['blocks']);
+        unset($on['brief'], $off['brief']);
         self::assertSame(array_keys($off), array_keys($on));
     }
 
@@ -456,6 +459,9 @@ class IntelligenceBriefNarrativeTest extends TestCase
             ->handle(app(NarrativeSynthesizer::class));
         Http::assertNothingSent();
         self::assertSame(0, DocumentChunk::where('stage', 'brief_synthesis')->count());
-        self::assertNull(app(BriefReadService::class)->forDocument($document, $this->asOf()));
+        $brief = app(BriefReadService::class)->forDocument($document, $this->asOf());
+        self::assertSame('disabled', $brief['status']);
+        self::assertNull($brief['narrative']);
+        self::assertNotEmpty($brief['blocks']);
     }
 }
