@@ -15,6 +15,7 @@ use App\Services\Intelligence\Brief\BriefAssembler;
 use App\Services\WorkspaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Http;
 use Tests\Concerns\BuildsIntelligenceFixtures;
 use Tests\TestCase;
 
@@ -38,9 +39,21 @@ class IntelligenceBriefApiWiringTest extends TestCase
             $this->metricFinding($document, $label, $value, 'USD billion', 'FY2025',
                 ['quote' => $label.': '.$value.' USD billion (FY2025)']);
         }
+        // Written the way the evaluation documents write money - symbol beside the number, ISO
+        // code in the unit - so these invariants cover the shape that defect 1 was dropping.
+        $this->metricFinding($document, 'Government investment in water', 'over $120 billion',
+            'USD', '10 years', ['subject' => 'Government of India', 'quantity_kind' => 'monetary',
+                'quote' => 'an investment of over $120 billion in water and sanitation over the past 10 years']);
         $this->riskFinding($document, 'Concentration of exposure in three markets', 'critical');
 
         return $document->fresh();
+    }
+
+    /** Blocks carrying a figure: what defect 1 removed from the served Brief entirely. */
+    private function figureBearing(array $blocks): array
+    {
+        return array_values(array_filter($blocks, static fn (array $block): bool => is_numeric(
+            $block['typed']['value']['number'] ?? null)));
     }
 
     private function read(Document $document): array
@@ -61,7 +74,19 @@ class IntelligenceBriefApiWiringTest extends TestCase
 
     private function canonical(mixed $value): string
     {
-        $sort = static function (mixed $item) use (&$sort): mixed {
+        // Recursively sorted object keys, stable array order, stable numeric formatting and a
+        // stable null.
+        //
+        // Numbers are rendered to a canonical decimal string rather than left to json_encode. The
+        // API's payload has already been through Laravel's own serialization by the time it gets
+        // here, and that drops the fraction from a whole float: the assembler's `scale` of 1.0e9
+        // arrives back as the integer 1000000000. They are the same number, so the canonical form
+        // has to say so - otherwise the invariant fails on a formatting artifact instead of on a
+        // real difference. A null stays null, and so cannot compare equal to a missing key.
+        $normalize = static function (mixed $item) use (&$normalize): mixed {
+            if (is_float($item) || is_int($item)) {
+                return sprintf('%.17G', $item);
+            }
             if (! is_array($item)) {
                 return $item;
             }
@@ -69,10 +94,10 @@ class IntelligenceBriefApiWiringTest extends TestCase
                 ksort($item);
             }
 
-            return array_map($sort, $item);
+            return array_map($normalize, $item);
         };
 
-        return json_encode($sort($value), JSON_THROW_ON_ERROR);
+        return json_encode($normalize($value), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
     }
 
     private function assertDirectEquality(Document $document, array $payload): void
@@ -110,6 +135,9 @@ class IntelligenceBriefApiWiringTest extends TestCase
         $this->assertDirectEquality($rich, $richPayload);
         self::assertSame('disabled', $richPayload['brief']['status']);
         self::assertNotEmpty($richPayload['brief']['blocks']);
+        // The rich invariant is only worth anything if the rich Brief carries figures at all.
+        self::assertNotEmpty($this->figureBearing($richPayload['brief']['blocks']),
+            'the rich fixture served no figure-bearing block');
 
         $thin = $this->intelligenceDocument('Thin document.pdf');
         $thinPayload = $this->read($thin);
@@ -119,6 +147,8 @@ class IntelligenceBriefApiWiringTest extends TestCase
         self::assertNull($thinPayload['brief']['narrative']);
         self::assertSame('headline', $thinPayload['brief']['blocks'][0]['type']);
         self::assertContains('coverage_note', array_column($thinPayload['brief']['blocks'], 'type'));
+        // Empty evidence: no figures, and the direct/API equality above still holds on it.
+        self::assertSame([], $this->figureBearing($thinPayload['brief']['blocks']));
         config(['intelligence_v2.b2.enabled' => true]);
         $thinWithB2On = $this->read($thin);
         self::assertSame('empty_evidence', $thinWithB2On['brief']['status']);
@@ -136,15 +166,20 @@ class IntelligenceBriefApiWiringTest extends TestCase
         Bus::fake();
         $beforeRuns = DocumentAiRun::count();
         $beforeCheckpoints = DocumentChunk::where('stage', 'brief_synthesis')->count();
+        $beforeChunks = DocumentChunk::count();
         for ($i = 0; $i < 10; $i++) {
             $payload = $this->read($document);
             self::assertSame('not_generated', $payload['brief']['status']);
+            self::assertNotEmpty($this->figureBearing($payload['brief']['blocks']));
             $this->assertDirectEquality($document, $payload);
         }
         Bus::assertNotDispatched(SynthesizeBriefNarrativeJob::class);
         Bus::assertNothingDispatched();
+        // No request, no run, no unit of any stage, and no retry: a read is purely read-side.
+        Http::assertNothingSent();
         self::assertSame($beforeRuns, DocumentAiRun::count());
         self::assertSame($beforeCheckpoints, DocumentChunk::where('stage', 'brief_synthesis')->count());
+        self::assertSame($beforeChunks, DocumentChunk::count());
     }
 
     public function test_only_verified_b2_claims_are_exposed_and_transitions_are_fresh(): void
@@ -182,12 +217,21 @@ class IntelligenceBriefApiWiringTest extends TestCase
             $beforeRuns = DocumentAiRun::count();
             $beforeUnits = DocumentChunk::where('stage', 'brief_synthesis')->count();
             for ($i = 0; $i < 10; $i++) {
-                $payload = $this->read($document);
+                $response = $this->actingAs(User::findOrFail($document->uploaded_by))
+                    ->getJson("/api/documents/{$document->id}/intelligence")->assertOk();
+                $payload = $response->json('data');
                 self::assertSame($apiStatus, $payload['brief']['status']);
                 self::assertNull($payload['brief']['narrative']);
-                self::assertStringNotContainsString($marker, json_encode($payload['brief']));
+                // Searched across the whole serialized response, not just the trusted narrative
+                // field: a rejected claim must not reach a reader through any key, audit or
+                // diagnostic included.
+                self::assertStringNotContainsString($marker, $response->getContent());
+                self::assertStringNotContainsString($marker, json_encode($payload));
+                // Deterministic B1 stays visible in every fallback state, figures and all.
+                self::assertNotEmpty($this->figureBearing($payload['brief']['blocks']), $apiStatus);
                 $this->assertDirectEquality($document, $payload);
             }
+            Http::assertNothingSent();
             Bus::assertNothingDispatched();
             self::assertSame($beforeRuns, DocumentAiRun::count());
             self::assertSame($beforeUnits, DocumentChunk::where('stage', 'brief_synthesis')->count());

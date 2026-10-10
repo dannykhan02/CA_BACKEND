@@ -11,6 +11,38 @@ use App\Services\Intelligence\Brief\Templates\DeterministicTemplates;
 /** Local verification of prose against the records it cites. No provider or persistence path. */
 class BriefVerifier
 {
+    /** Lowercase particles a single proper name may contain: "Government of India". */
+    private const ENTITY_PARTICLES = ['of', 'de', 'del', 'della', 'da', 'dos', 'van', 'von',
+        'der', 'den', 'bin', 'al'];
+
+    /**
+     * Grammatical wrappers a sentence can put in front of a name without them becoming part of it.
+     * Only ever removed from the front, and only one of them, so "The Hague" keeps its article.
+     */
+    private const ENTITY_WRAPPERS = ['the', 'a', 'an', 'in', 'on', 'at', 'by', 'for', 'from', 'to',
+        'of', 'with', 'within', 'during', 'under', 'over', 'across', 'into', 'after', 'before',
+        'since', 'between', 'through', 'per', 'and', 'but', 'as', 'that', 'this', 'these', 'those'];
+
+    /** Units a time span can be written in, mapped to the stem a span is compared on. */
+    private const DURATION_UNITS = ['second' => 'second', 'seconds' => 'second',
+        'minute' => 'minute', 'minutes' => 'minute', 'hour' => 'hour', 'hours' => 'hour',
+        'day' => 'day', 'days' => 'day', 'week' => 'week', 'weeks' => 'week',
+        'month' => 'month', 'months' => 'month', 'quarter' => 'quarter', 'quarters' => 'quarter',
+        'year' => 'year', 'years' => 'year', 'decade' => 'decade', 'decades' => 'decade'];
+
+    /** Spelled-out counts a duration can use. */
+    private const DURATION_WORDS = ['one' => 1, 'two' => 2, 'three' => 3, 'four' => 4, 'five' => 5,
+        'six' => 6, 'seven' => 7, 'eight' => 8, 'nine' => 9, 'ten' => 10, 'eleven' => 11,
+        'twelve' => 12];
+
+    /** Words that mark what follows as a time span rather than a quantity. */
+    private const DURATION_QUALIFIERS = ['over', 'within', 'for', 'in', 'during', 'across',
+        'after', 'before', 'past', 'last', 'next', 'previous', 'every', 'per', 'of'];
+
+    /** Determiners and fillers that may sit between the qualifier and the count. */
+    private const DURATION_FILLERS = ['the', 'a', 'an', 'course', 'past', 'last', 'next',
+        'previous', 'coming', 'recent', 'first', 'final'];
+
     public function __construct(private NegativeClaimGuard $negativeClaims,
         private MeasurementParser $measurements, private EvidenceMerger $normalizer,
         private DeterministicTemplates $templates) {}
@@ -51,6 +83,9 @@ class BriefVerifier
         $add('dates_grounded', $dates === [] ? null : $this->datesGrounded($dates, $records));
         $periods = $this->periods($text);
         $add('periods_grounded', $periods === [] ? null : $this->periodsGrounded($periods, $records));
+        $durations = $this->durations($text);
+        $add('durations_grounded', $durations === [] ? null
+            : $this->durationsGrounded($durations, $records));
         $entities = $this->entities($text);
         $add('entities_grounded', $entities === [] ? null : $this->entitiesGrounded($entities, $records, $recordsBySource));
         $unitTokens = $this->unitTokens($text);
@@ -193,7 +228,11 @@ class BriefVerifier
     /** @return list<array{raw:string,number:float,unit:string|null}> */
     private function numbers(string $text): array
     {
-        foreach ([...$this->dates($text), ...$this->periods($text)] as $temporal) {
+        // A duration is a time span, not a quantity: "over the last 10 years" must not leave the
+        // number 10 behind for numbersGrounded() to hunt for in a typed value. Spans are checked
+        // as spans by durationsGrounded() instead.
+        foreach ([...$this->dates($text), ...$this->periods($text), ...$this->durations($text)]
+            as $temporal) {
             $text = str_replace($temporal, ' ', $text);
         }
         preg_match_all('/(?<![\p{L}\d])(?:[A-Z]{3}\s+)?[+-]?\d[\d,]*(?:\.\d+)?(?:\s*(?:trillion|billion|million|thousand|%|percent))?/iu',
@@ -224,7 +263,10 @@ class BriefVerifier
                 if (! $this->validNumericValue($value)) {
                     continue;
                 }
-                if ($number['unit'] !== null && $number['unit'] !== ($value['currency'] ?? null)
+                // The claim's own code is compared against the code this record owns, so a claim
+                // written "USD 97.4 million" grounds on a record that states USD in either field
+                // and never on one that states CAD.
+                if ($number['unit'] !== null && $number['unit'] !== $this->currencyKey($value)
                     && ! ($number['unit'] === '%' && ($value['unit_kind'] ?? null) === 'percent')) {
                     continue;
                 }
@@ -237,22 +279,6 @@ class BriefVerifier
                 if (abs($number['number'] - $target) <= $tolerance) {
                     $matched = true;
                     break;
-                }
-            }
-            if (! $matched) {
-                foreach ($records as $record) {
-                    foreach ($record['typed']['dates'] ?? [] as $typedDate) {
-                        $duration = $typedDate['duration']['text'] ?? null;
-                        if (($typedDate['type'] ?? null) === 'duration'
-                            && ($typedDate['resolution'] ?? null) === 'relative'
-                            && ($typedDate['duration']['anchor_resolved'] ?? null) === false
-                            && is_string($duration) && $duration !== ''
-                            && ($typedDate['raw'] ?? null) === $duration
-                            && preg_match('/(?<!\d)'.preg_quote($number['raw'], '/').'(?!\d)/u', $duration)) {
-                            $matched = true;
-                            break 2;
-                        }
-                    }
                 }
             }
             if (! $matched && ! $this->derivedNumberMatches($number['number'], $block, $records)) {
@@ -294,7 +320,7 @@ class BriefVerifier
             return false;
         }
         if ($value['type'] === 'money') {
-            if (! is_string($value['currency'] ?? null) || ! preg_match('/^[A-Z]{3}$/D', $value['currency'])) {
+            if ($this->recordCurrency($value) === null) {
                 return false;
             }
         } elseif (($value['currency'] ?? null) !== null) {
@@ -309,6 +335,60 @@ class BriefVerifier
                 'money' => ['currency'], 'percent' => ['percent'], 'ratio' => ['ratio'],
                 'count' => ['count'], default => ['unknown', 'change'],
             }, true);
+    }
+
+    /** Whether one stored typed value is complete enough to ground a numeric claim. Read-only. */
+    public function groundableValue(mixed $value): bool
+    {
+        return $this->validNumericValue($value);
+    }
+
+    /**
+     * The ISO currency code a stored typed value owns, read the same way grounding reads it.
+     * Read-only, and exposed so B2's money gate and the production diagnostic share one answer.
+     *
+     * @param  array<string,mixed>  $value
+     */
+    public function recordCurrencyCode(array $value): ?string
+    {
+        return $this->recordCurrency($value);
+    }
+
+    /**
+     * The ISO currency code the cited record itself owns, or null.
+     *
+     * The values parser stores what the document wrote beside the number in `currency` and the unit
+     * the record was extracted with in `unit`, so a figure written "$97.4 million" with unit "USD"
+     * carries the symbol in one field and the code in the other. Both fields belong to this one
+     * record, so reading the code off `unit` keeps monetary grounding record-local: nothing is
+     * borrowed from a neighbouring record or from the document text.
+     *
+     * A bare "$" is completed from nowhere else. "$" is not provably USD - it is as much CAD or AUD
+     * - so a record whose own fields state no code cannot ground a monetary claim at all.
+     */
+    private function recordCurrency(array $value): ?string
+    {
+        $currency = $value['currency'] ?? null;
+        if (is_string($currency) && preg_match('/^[A-Z]{3}$/D', $currency)) {
+            return $currency;
+        }
+        if ($currency !== '$' || ! is_string($value['unit'] ?? null)) {
+            return null;
+        }
+
+        return $this->measurements->isoCurrency($value['unit']);
+    }
+
+    /**
+     * The currency identity a typed value is compared on. Resolved for money, so two records that
+     * both wrote "$" are not treated as one currency when their units say USD and CAD; an
+     * unresolvable money value keeps its stored marker rather than collapsing onto null.
+     */
+    private function currencyKey(array $value): ?string
+    {
+        return ($value['type'] ?? null) === 'money'
+            ? ($this->recordCurrency($value) ?? ($value['currency'] ?? null))
+            : ($value['currency'] ?? null);
     }
 
     /** @param list<array<string,mixed>> $records */
@@ -396,12 +476,44 @@ class BriefVerifier
         return true;
     }
 
-    /** @return list<string> */
+    /**
+     * Capitalised runs a sentence names, with the lowercase particles a single name may contain
+     * read as part of it, so "Government of India" is one mention rather than "The Government" and
+     * a dropped "India". Conjunctions are deliberately not particles: they would weld two separate
+     * names into one mention.
+     *
+     * @return list<string>
+     */
     private function entities(string $text): array
     {
-        preg_match_all('/\b(?:\p{Lu}[\p{L}\p{M}]+\s+){1,}\p{Lu}[\p{L}\p{M}]+\b/u', $text, $matches);
+        $word = '\p{Lu}[\p{L}\p{M}]+';
+        $particle = '(?:'.implode('|', self::ENTITY_PARTICLES).')';
+        preg_match_all('/\b'.$word.'(?:\s+(?:'.$particle.'\s+)?'.$word.')+\b/u', $text, $matches);
 
         return $matches[0];
+    }
+
+    /**
+     * The normalized forms one mention may be compared in: the mention itself, and the mention with
+     * a single leading grammatical wrapper removed, so a sentence-initial "In India" can be read as
+     * the name "India".
+     *
+     * Nothing is added to a name and nothing is taken from another record. "Government" never
+     * becomes "Government of India"; only the words the sentence put in front of the name are
+     * removed, and the unstripped form is kept as a candidate so a record whose own subject begins
+     * with an article still matches.
+     *
+     * @return list<string>
+     */
+    private function entitySurfaces(string $entity): array
+    {
+        $surfaces = [$this->normalizer->normalize($entity)];
+        $words = preg_split('/\s+/u', trim($entity)) ?: [];
+        if (count($words) > 1 && in_array(mb_strtolower($words[0]), self::ENTITY_WRAPPERS, true)) {
+            $surfaces[] = $this->normalizer->normalize(implode(' ', array_slice($words, 1)));
+        }
+
+        return array_values(array_filter(array_unique($surfaces), static fn ($s) => $s !== ''));
     }
 
     /** @param list<string> $entities @param list<array<string,mixed>> $records */
@@ -429,12 +541,119 @@ class BriefVerifier
             }
         }
         foreach ($entities as $entity) {
-            if (! in_array($this->normalizer->normalize($entity), $known, true)) {
+            if (array_intersect($this->entitySurfaces($entity), $known) === []) {
                 return false;
             }
         }
 
         return true;
+    }
+
+    /**
+     * Time spans the prose states: a qualifier, then a count, then a duration unit. The count is
+     * required, which is what keeps a calendar phrase like "for the year ended 2024" out of the
+     * duration path - that is a period, and periodsGrounded() already owns it.
+     *
+     * @return list<string>
+     */
+    private function durations(string $text): array
+    {
+        $qualifier = '(?:'.implode('|', self::DURATION_QUALIFIERS).')';
+        $filler = '(?:'.implode('|', [...self::DURATION_FILLERS, ...self::DURATION_QUALIFIERS]).')';
+        $count = '(?:\d[\d,]*|'.implode('|', array_keys(self::DURATION_WORDS)).')';
+        $unit = '(?:'.implode('|', array_keys(self::DURATION_UNITS)).')';
+        preg_match_all('/\b'.$qualifier.'(?:\s+'.$filler.'){0,6}\s+'.$count.'\s+'.$unit.'\b/iu',
+            $text, $matches);
+
+        return $matches[0];
+    }
+
+    /**
+     * A duration expression reduced to the span it states, as "<count> <unit>", or null when it
+     * states no span. Spelled-out counts become digits and units are stemmed, so "five years" and
+     * "5 years" are the same span written twice and neither is the span "5 months".
+     */
+    private function durationSpan(string $text): ?string
+    {
+        $count = '(\d[\d,]*|'.implode('|', array_keys(self::DURATION_WORDS)).')';
+        $unit = '('.implode('|', array_keys(self::DURATION_UNITS)).')';
+        if (! preg_match('/\b'.$count.'\s+'.$unit.'\b/iu', $text, $parts)) {
+            return null;
+        }
+        $written = mb_strtolower($parts[1]);
+        $number = self::DURATION_WORDS[$written] ?? (float) str_replace(',', '', $written);
+
+        return sprintf('%.4F %s', (float) $number, self::DURATION_UNITS[mb_strtolower($parts[2])]);
+    }
+
+    /**
+     * The time spans one record states itself: the period it was extracted with, when that period
+     * is a span and the record's own quote states it, and any typed relative duration. Both sources
+     * belong to this record; a span is never read off a neighbour.
+     *
+     * @param  array<string,mixed>  $record
+     * @return list<string>
+     */
+    private function recordDurations(array $record): array
+    {
+        $spans = [];
+        $period = $record['data']['period'] ?? null;
+        if (is_string($period) && ($span = $this->durationSpan($period)) !== null
+            && $this->statedInSources($period, $record)) {
+            $spans[] = $span;
+        }
+        foreach ($record['typed']['dates'] ?? [] as $date) {
+            $text = $date['duration']['text'] ?? null;
+            if (($date['type'] ?? null) === 'duration' && ($date['resolution'] ?? null) === 'relative'
+                && ($date['duration']['anchor_resolved'] ?? null) === false
+                && is_string($text) && ($span = $this->durationSpan($text)) !== null) {
+                $spans[] = $span;
+            }
+        }
+
+        return array_values(array_unique($spans));
+    }
+
+    /** @param list<string> $durations @param list<array<string,mixed>> $records */
+    private function durationsGrounded(array $durations, array $records): bool
+    {
+        $known = [];
+        foreach ($records as $record) {
+            foreach ($this->recordDurations($record) as $span) {
+                $known[$span] = true;
+            }
+        }
+        foreach ($durations as $duration) {
+            $span = $this->durationSpan($duration);
+            if ($span === null || ! isset($known[$span])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Whether one of the record's own cited quotes states this text, ignoring how the source wrapped
+     * its lines. Scoped to the record passed in, so this stays a record-local check.
+     *
+     * @param  array<string,mixed>  $record
+     */
+    private function statedInSources(string $text, array $record): bool
+    {
+        $needle = trim((string) preg_replace('/\s+/u', ' ', $text));
+        if ($needle === '') {
+            return false;
+        }
+        foreach ($record['sources'] ?? [] as $source) {
+            $quote = $source['quote'] ?? null;
+            if (is_string($quote)
+                && str_contains(trim((string) preg_replace('/\s+/u', ' ', $quote)), $needle)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** @return list<string> */
@@ -499,7 +718,7 @@ class BriefVerifier
     {
         return ($a['type'] ?? null) === ($b['type'] ?? null)
             && ($a['unit_kind'] ?? null) === ($b['unit_kind'] ?? null)
-            && ($a['currency'] ?? null) === ($b['currency'] ?? null)
+            && $this->currencyKey($a) === $this->currencyKey($b)
             && (($a['type'] ?? null) !== 'percent' || ($a['basis'] ?? null) === ($b['basis'] ?? null));
     }
 
