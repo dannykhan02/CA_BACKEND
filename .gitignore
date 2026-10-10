@@ -69,3 +69,7 @@ update-horizon-config.sh
 
 # Synthetic five-page PDF generated for rasterizer/extraction tests (no report content).
 !tests/Fixtures/test_5page.pdf
+
+# Python cache
+__pycache__/
+*.pyc
