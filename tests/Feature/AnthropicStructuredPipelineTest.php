@@ -38,15 +38,13 @@ class AnthropicStructuredPipelineTest extends TestCase
 
     private function response(string $text, string $stop = 'end_turn'): array
     {
-        return ['model' => 'claude-test', 'stop_reason' => $stop,
+        return ['model' => 'claude-haiku-4-5-20251001', 'stop_reason' => $stop,
             'usage' => ['input_tokens' => 500, 'output_tokens' => 40],
             'content' => [['type' => 'text', 'text' => $text]]];
     }
 
     public function test_malformed_then_valid_response_audits_both_and_persists_once(): void
     {
-        // The configured request model must agree with this test's provider fixture.
-        config(['services.anthropic.extraction_model' => 'claude-test']);
         $document = $this->document();
         $valid = json_encode(['entities' => [['entity_type' => 'organization', 'value' => 'Acme Ltd',
             'normalized_value' => 'Acme Ltd', 'confidence' => 0.9, 'context' => 'Acme Ltd is named']]]);
@@ -62,7 +60,7 @@ class AnthropicStructuredPipelineTest extends TestCase
         $this->assertSame(['malformed_output', 'success'], DocumentAiRun::where('document_id', $document->id)
             ->where('purpose', 'entities')->pluck('status')->sort()->values()->all());
         $this->assertDatabaseHas('document_ai_runs', ['document_id' => $document->id,
-            'purpose' => 'entities', 'status' => 'success', 'model' => 'claude-test',
+            'purpose' => 'entities', 'status' => 'success', 'model' => 'claude-haiku-4-5-20251001',
             'input_tokens' => 500, 'output_tokens' => 40, 'stop_reason' => 'end_turn']);
         $this->assertSame(1, $document->processingJobs()->where('stage', 'entities')->where('status', 'completed')->count());
         $this->assertSame(1, DB::table('billing_operations')->where('resource_id', $document->id)->count());

@@ -470,6 +470,7 @@ class IncrementalDocumentPipelineTest extends TestCase
     public function test_malformed_visual_response_logs_usage_as_failure(): void
     {
         $document = $this->document();
+        $document->update(['status' => 'Ready']);
         $this->fakeProvider($this->response(['wrong' => 'shape']));
         try {
             app(AnthropicClient::class)->extractChartDataFromImage(base64_encode('synthetic'), 'image/png', $document);

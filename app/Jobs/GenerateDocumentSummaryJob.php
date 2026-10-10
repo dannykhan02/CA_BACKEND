@@ -171,7 +171,7 @@ class GenerateDocumentSummaryJob implements ShouldQueue
             if (! $checkpoint && $this->abandonIntelligence($document, $stage)) {
                 return;
             }
-            $recorder->fail($stage, $e->getMessage());
+            $recorder->fail($stage, 'Document summary failed.');
             if (! $retryScheduled) {
                 $this->fail($e);
             }

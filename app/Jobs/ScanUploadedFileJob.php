@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Exceptions\MalwareScannerUnavailableException;
 use App\Models\Document;
 use App\Services\Pipeline\DocumentProgress;
+use App\Services\Pipeline\DocumentStagePolicy;
 use App\Services\Pipeline\PipelineStageRecorder;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -31,6 +32,9 @@ class ScanUploadedFileJob implements ShouldQueue
         if (! $document) {
             Log::warning("ScanUploadedFileJob: Document {$this->documentId} not found — unexpected null, possible soft-delete race.");
 
+            return;
+        }
+        if (! app(DocumentStagePolicy::class)->permits($document, 'scan')) {
             return;
         }
 

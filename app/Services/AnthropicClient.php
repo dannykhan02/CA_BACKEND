@@ -15,19 +15,25 @@ use App\Services\AI\Incremental\EvidenceBudget;
 use App\Services\AI\Incremental\EvidenceGrounding;
 use App\Services\AI\Incremental\EvidenceSchema;
 use App\Services\AI\Incremental\ExtractionCapacity;
+use App\Services\AI\Incremental\ExtractionExperiment;
 use App\Services\AI\Incremental\IncrementalPipeline;
 use App\Services\AI\Incremental\SynthesisSchema;
 use App\Services\AI\PromptManager;
 use App\Services\AI\ProviderGate;
+use App\Services\AI\ProviderRequestAdmission;
 use App\Services\AI\ResponseValidator;
 use App\Services\AiCredits\OperationSpend;
 use App\Services\AiCredits\QuoteService;
+use App\Services\Intelligence\B2\NarrativePrompt;
+use App\Services\Intelligence\B2\NarrativeSchema;
+use App\Services\Pipeline\DocumentStagePolicy;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use JsonException;
 use Sentry\State\Scope;
 
@@ -58,6 +64,8 @@ class AnthropicClient
     private array $runContext = [];
 
     private ?string $requestModel = null;
+
+    private ?string $providerAttemptId = null;
 
     private ?string $operationQuoteId = null;
 
@@ -109,6 +117,13 @@ class AnthropicClient
     public function countTokens(string $text, ?string $model = null): int
     {
         $model ??= $this->modelFor('extraction');
+        $prices = config('document_intelligence.pricing', []);
+        $capabilities = config('document_intelligence.model_capabilities', []);
+        if ($model !== $this->modelFor('extraction')
+            || ! in_array($model, config('document_intelligence.approved_models', []), true)
+            || ! isset($prices[$model], $capabilities[$model])) {
+            throw new AiProcessingException('unsupported_model');
+        }
         $started = hrtime(true);
         $response = null;
         try {
@@ -132,7 +147,7 @@ class AnthropicClient
     }
 
     /** One billable attempt. Queue orchestration owns retries and input splitting. */
-    public function extractChunk(Document $document, DocumentChunk $chunk, string $text, ?\App\Services\AI\Incremental\ExtractionExperiment $experiment = null): array
+    public function extractChunk(Document $document, DocumentChunk $chunk, string $text, ?ExtractionExperiment $experiment = null): array
     {
         $this->currentOperation = 'entities';
         $this->activeDocument = $document; // Existing durable AI-purpose vocabulary.
@@ -488,6 +503,7 @@ PROMPT;
         return DocumentAiRun::create([
             ...$this->runContext,
             ...$this->operationAttribution($document, $purpose),
+            'provider_attempt_id' => $this->providerAttemptId,
             ...($response['_telemetry'] ?? []),
             'request_attempt' => max($this->runContext['request_attempt'] ?? 1, $response['_telemetry']['request_attempt'] ?? 1),
             'process_peak_memory_bytes' => memory_get_peak_usage(true),
@@ -564,7 +580,8 @@ PROMPT;
             } catch (ProviderBusyException $e) {
                 throw $e; // Admission control: nothing was sent, so nothing is recorded or billed.
             } catch (\Throwable $e) {
-                if (! $this->transportFailureRecorded && (! $document || $document->fresh()?->canGenerateIntelligence())) {
+                if (! $e instanceof AiProcessingException && ! $this->transportFailureRecorded
+                    && (! $document || $document->fresh()?->canGenerateIntelligence())) {
                     $this->recordAiRun($document, $purpose, [], 'provider_error');
                 }
                 throw $e;
@@ -615,15 +632,22 @@ PROMPT;
 
     private function callWithRetry(array $messages, int $attempt = 1, array $options = []): array
     {
+        $this->providerAttemptId = null;
         $document = $options['intelligence_document'] ?? $this->activeDocument;
         $this->transportFailureRecorded = false;
+        $currentDocument = $document?->fresh();
         if ($document && isset($options['allowed_statuses'])
-            && ! in_array($document->fresh()?->status, $options['allowed_statuses'], true)) {
+            && ! in_array($currentDocument?->status, $options['allowed_statuses'], true)) {
             throw new \RuntimeException('Document processing no longer permits this analysis.');
         }
-        if ($document && ! $document->fresh()?->canGenerateIntelligence(
-            requiresExtractedText: $options['requires_extracted_text'] ?? ($this->currentOperation !== 'ocr'),
-        )) {
+        if ($document && (! $currentDocument || ! app(DocumentStagePolicy::class)->permits(
+            $currentDocument, match ($this->currentOperation) {
+                'ocr' => 'ocr', 'brief_synthesis' => 'brief_synthesis',
+                'chart_vision' => 'visual', default => 'intelligence',
+            })
+            || ! $currentDocument->canGenerateIntelligence(
+                requiresExtractedText: $options['requires_extracted_text'] ?? ($this->currentOperation !== 'ocr'),
+            ))) {
             throw new \RuntimeException('Document processing no longer permits intelligence.');
         }
 
@@ -632,13 +656,21 @@ PROMPT;
 
         $maxAttempts = max(1, min(4, (int) ($options['max_attempts'] ?? 4)));
         $this->requestModel = $options['model'] ?? $this->modelFor($this->currentOperation ?? 'extraction');
-        if (! in_array($this->requestModel, config('document_intelligence.approved_models', []), true)) {
-            // Metadata only. Usually a deployment env override (ANTHROPIC_*_MODEL) pointing elsewhere.
-            Log::warning('Anthropic request uses an unapproved model', ['purpose' => $this->currentOperation,
-                'model' => $this->requestModel, 'document_id' => $document?->id]);
+        $estimate = app(ProviderRequestAdmission::class)->assertAllowed(
+            $document, $this->currentOperation, $this->requestModel, $messages, $options);
+
+        $spend = app(OperationSpend::class);
+        $quoteId = QuoteService::enabled() && $document
+            ? ($this->operationQuoteId ?? $spend->activeQuote($document, $this->currentOperation)?->id)
+            : $this->operationQuoteId;
+        $attemptId = $quoteId ? (string) Str::uuid() : null;
+        if ($attemptId !== null) {
+            $spend->reserveAttempt($quoteId, $attemptId, $this->currentOperation, $estimate);
+            $this->providerAttemptId = $attemptId;
         }
 
         $started = hrtime(true);
+        $dispatched = false;
         try {
             $request = Http::withHeaders([
                 'x-api-key' => $this->apiKey(),
@@ -651,12 +683,29 @@ PROMPT;
             }
             // Global admission at the HTTP boundary: one permit per request attempt, so retries and
             // repairs re-acquire and no permit is held while sleeping between attempts.
-            $response = app(ProviderGate::class)->call(fn () => $request->post('https://api.anthropic.com/v1/messages', [
-                'model' => $this->requestModel,
-                'max_tokens' => $options['max_tokens'] ?? config('services.anthropic.max_tokens'),
-                'messages' => $messages,
-            ] + array_intersect_key($options, array_flip(['system', 'output_config']))), $document?->id);
+            $response = app(ProviderGate::class)->call(function () use ($request, $messages, $options, $attemptId, $spend, $document, &$dispatched) {
+                $fresh = $document?->fresh();
+                if ($document && (! $fresh || ! app(DocumentStagePolicy::class)->permits($fresh, match ($this->currentOperation) {
+                    'ocr' => 'ocr', 'brief_synthesis' => 'brief_synthesis',
+                    'chart_vision' => 'visual', default => 'intelligence',
+                }))) {
+                    throw new AiProcessingException('terminal_document');
+                }
+                if ($attemptId !== null) {
+                    $spend->markDispatched($attemptId);
+                }
+                $dispatched = true;
+
+                return $request->post('https://api.anthropic.com/v1/messages', [
+                    'model' => $this->requestModel,
+                    'max_tokens' => $options['max_tokens'] ?? config('services.anthropic.max_tokens'),
+                    'messages' => $messages,
+                ] + array_intersect_key($options, array_flip(['system', 'output_config'])));
+            }, $document?->id);
         } catch (ConnectionException $e) {
+            if ($attemptId !== null) {
+                $dispatched ? $spend->finishAttempt($attemptId, null) : $spend->releaseAttempt($attemptId);
+            }
             $kind = str_contains($e->getMessage(), '28') || str_contains(strtolower($e->getMessage()), 'timed out') ? 'timeout' : 'transient';
             $elapsed = (int) ((hrtime(true) - $started) / 1000000);
             $timeoutSource = $kind === 'timeout'
@@ -679,6 +728,17 @@ PROMPT;
             sleep(2 ** $attempt);
 
             return $this->callWithRetry($messages, $attempt + 1, $options);
+        } catch (\Throwable $e) {
+            if ($attemptId !== null) {
+                $dispatched ? $spend->finishAttempt($attemptId, null) : $spend->releaseAttempt($attemptId);
+            }
+            throw $e;
+        }
+
+        if ($attemptId !== null) {
+            $usage = $response->json('usage');
+            $actual = is_array($usage) ? app(AiPricing::class)->estimate($this->requestModel, $usage) : null;
+            $spend->finishAttempt($attemptId, $actual);
         }
 
         $providerRequestId = null;
@@ -739,9 +799,8 @@ PROMPT;
      * deterministic rejection reached the logs as nothing but result=provider_error.
      *
      * Deliberately excluded: the API key, request headers, the request body, the prompt, the
-     * source text and the raw response body. error.message is provider-authored but can quote
-     * the offending part of the request, so it is redacted, flattened and capped; error.type
-     * and the request id are accepted only in their documented shapes.
+     * source text and the raw response body. Provider-authored error.message can quote document
+     * content, so it is not retained. error.type and request id have restricted shapes.
      *
      * @return string|null the provider request id, for the run row
      */
@@ -752,7 +811,6 @@ PROMPT;
         Log::error('Anthropic provider error', [
             'status' => $response->status(),
             'error_type' => is_string($type) && preg_match('/\A[a-z0-9_]{1,64}\z/i', $type) === 1 ? $type : null,
-            'error_message' => $this->sanitizeProviderMessage($response->json('error.message')),
             'request_id' => $requestId,
             'purpose' => $this->currentOperation,
             'model' => $this->requestModel,
@@ -777,22 +835,6 @@ PROMPT;
         }
 
         return null;
-    }
-
-    private const PROVIDER_MESSAGE_MAX_CHARS = 400;
-
-    private function sanitizeProviderMessage(mixed $message): ?string
-    {
-        if (! is_string($message) || trim($message) === '') {
-            return null;
-        }
-        // Never let a credential survive into a log, whichever side of the call echoed it back.
-        $clean = preg_replace('/sk-(?:ant|live|test)-[A-Za-z0-9_\-]+/i', '[redacted]', $message);
-        $clean = trim((string) preg_replace('/\s+/', ' ', (string) $clean));
-
-        return mb_strlen($clean) > self::PROVIDER_MESSAGE_MAX_CHARS
-            ? mb_substr($clean, 0, self::PROVIDER_MESSAGE_MAX_CHARS).'...[truncated]'
-            : $clean;
     }
 
     private function classifyFailure(int $status, string $message): string
@@ -1162,10 +1204,10 @@ PROMPT;
             'timeout' => (int) $settings['timeout_seconds'],
             'connect_timeout' => (int) $settings['connect_timeout_seconds'],
             'max_tokens' => (int) $settings['max_output_tokens'],
-            'system' => [['type' => 'text', 'text' => \App\Services\Intelligence\B2\NarrativePrompt::system(),
+            'system' => [['type' => 'text', 'text' => NarrativePrompt::system(),
                 'cache_control' => ['type' => 'ephemeral']]],
             'output_config' => ['format' => ['type' => 'json_schema',
-                'schema' => \App\Services\Intelligence\B2\NarrativeSchema::schema()]],
+                'schema' => NarrativeSchema::schema()]],
         ];
         if (in_array($model, config('document_intelligence.effort_models'), true)) {
             $options['output_config']['effort'] = config('services.anthropic.synthesis_effort');

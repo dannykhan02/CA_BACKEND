@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\WorkspaceType;
+use App\Exceptions\AiProcessingException;
 use App\Exceptions\ProviderBusyException;
 use App\Jobs\Concerns\DefersWhenProviderBusy;
 use App\Jobs\Concerns\DispatchesIntelligenceChain;
@@ -11,6 +12,7 @@ use App\Models\OcrResult;
 use App\Services\Documents\DocumentStorageService;
 use App\Services\EntitlementService;
 use App\Services\Ocr\OcrEngineResolver;
+use App\Services\Pipeline\DocumentStagePolicy;
 use App\Services\Pipeline\PipelineStageRecorder;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -75,14 +77,22 @@ class OcrPageBatchJob implements ShouldQueue
     public function handle(OcrEngineResolver $resolver, PipelineStageRecorder $recorder): void
     {
         $document = Document::find($this->documentId);
-        if ($document) {
-            app(EntitlementService::class)->reserveDocument($document);
-        }
-        if (! $document || $document->status === 'Failed') {
+        if (! $document || ! app(DocumentStagePolicy::class)->permits($document, 'ocr')) {
             $this->cleanupTempDir();
 
             return;
         }
+        $batchLimit = config('document_processing.ocr_batch_max_pages');
+        if (! is_int($batchLimit) || $batchLimit < 1 || $batchLimit > 3
+            || count($this->pageImagePaths) > $batchLimit) {
+            $document->forceFill(['status' => 'Failed', 'progress' => 100,
+                'error_message' => 'OCR batch exceeds the configured page limit.'])->save();
+            app(EntitlementService::class)->releaseStaleReservations($document->workspace_id);
+            $this->cleanupTempDir();
+
+            return;
+        }
+        app(EntitlementService::class)->reserveDocument($document);
 
         $batchStage = $recorder->start($document, 'ocr_check');
 
@@ -147,7 +157,7 @@ class OcrPageBatchJob implements ShouldQueue
             if ($fetchedSourcePath) {
                 @unlink($fetchedSourcePath);
             }
-            $recorder->fail($batchStage, $e->getMessage());
+            $recorder->fail($batchStage, 'OCR processing failed.');
             $document->forceFill([
                 'status' => $document->workspace?->type === WorkspaceType::Personal ? 'Failed' : 'Needs Review',
                 'error_message' => 'OCR could not process this scanned document.',
@@ -230,7 +240,7 @@ class OcrPageBatchJob implements ShouldQueue
             'document_id' => $this->documentId,
             'starting_page_number' => $this->startingPageNumber,
             'exception' => get_class($e),
-            'message' => $e->getMessage(),
+            'failure_class' => $e instanceof AiProcessingException ? $e->classification : 'ocr_failure',
         ]);
 
         $document = Document::find($this->documentId);

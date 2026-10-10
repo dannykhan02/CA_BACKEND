@@ -2,11 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Exceptions\AiProcessingException;
 use App\Models\Document;
 use App\Models\OperationQuote;
 use App\Models\User;
 use App\Models\WorkspaceCredit;
 use App\Services\AiCredits\CreditAccountant;
+use App\Services\AiCredits\OperationSpend;
 use App\Services\AiCredits\QuoteService;
 use App\Services\WorkspaceService;
 use Illuminate\Foundation\Testing\DatabaseTruncation;
@@ -65,6 +67,8 @@ class WorkspaceAiCreditsConcurrencyTest extends TestCase
                     exit(0);
                 } catch (HttpException $e) {
                     exit($e->getStatusCode() === 402 ? 2 : 1);
+                } catch (AiProcessingException $e) {
+                    exit($e->getMessage() === 'AI operation stopped: budget_exceeded' ? 2 : 1);
                 } catch (\Throwable $e) {
                     file_put_contents($directory.'/error-'.$index, $e->getMessage());
                     exit(1);
@@ -157,5 +161,57 @@ class WorkspaceAiCreditsConcurrencyTest extends TestCase
         $releases = DB::table('credit_ledger')->where('direction', 'release')->count();
         $this->assertSame(1, $debits + $releases);
         $this->assertSame($status === 'completed' ? 0 : 10, (int) WorkspaceCredit::firstOrFail()->ai_credits_remaining);
+    }
+
+    public function test_provider_attempts_compete_under_the_same_quote_lock(): void
+    {
+        [$user, $workspace] = $this->fixture(10);
+        $document = $this->document($workspace, $user);
+        $quote = app(QuoteService::class)->quoteDocument($document)['quote'];
+        app(CreditAccountant::class)->reserve($quote, $user->id);
+        $estimate = round($quote->provider_cost_cap_usd * 0.7, 6);
+
+        $codes = $this->race(array_map(fn () => function () use ($quote, $estimate) {
+            app(OperationSpend::class)->reserveAttempt($quote->id, (string) Str::uuid(), 'entities', $estimate);
+        }, [1, 2]));
+
+        $this->assertSame([0, 2], $codes);
+        $this->assertSame(1, DB::table('provider_call_attempts')->where('status', 'reserved')->count());
+        $this->assertLessThanOrEqual($quote->provider_cost_cap_usd,
+            app(OperationSpend::class)->spentUsd($quote->id));
+    }
+
+    public function test_provider_attempts_both_pass_when_quote_has_room(): void
+    {
+        [$user, $workspace] = $this->fixture(10);
+        $quote = app(QuoteService::class)->quoteDocument($this->document($workspace, $user))['quote'];
+        app(CreditAccountant::class)->reserve($quote, $user->id);
+        $estimate = round($quote->provider_cost_cap_usd * 0.3, 6);
+
+        $codes = $this->race(array_map(fn () => function () use ($quote, $estimate) {
+            app(OperationSpend::class)->reserveAttempt($quote->id, (string) Str::uuid(), 'entities', $estimate);
+        }, [1, 2]));
+
+        $this->assertSame([0, 0], $codes);
+        $this->assertSame(2, DB::table('provider_call_attempts')->where('status', 'reserved')->count());
+    }
+
+    public function test_dispatched_attempt_settlement_racing_with_release_keeps_one_charge(): void
+    {
+        [$user, $workspace] = $this->fixture(10);
+        $quote = app(QuoteService::class)->quoteDocument($this->document($workspace, $user))['quote'];
+        app(CreditAccountant::class)->reserve($quote, $user->id);
+        $attempt = (string) Str::uuid();
+        $spend = app(OperationSpend::class);
+        $spend->reserveAttempt($quote->id, $attempt, 'entities', 0.05);
+        $spend->markDispatched($attempt);
+
+        $this->race([
+            fn () => app(OperationSpend::class)->finishAttempt($attempt, 0.03),
+            fn () => app(OperationSpend::class)->releaseAttempt($attempt),
+        ]);
+
+        $this->assertSame('settled', DB::table('provider_call_attempts')->where('id', $attempt)->value('status'));
+        $this->assertEqualsWithDelta(0.03, $spend->spentUsd($quote->id), 0.000001);
     }
 }

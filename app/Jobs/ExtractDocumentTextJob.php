@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\WorkspaceType;
+use App\Exceptions\AiProcessingException;
 use App\Jobs\Concerns\DispatchesIntelligenceChain;
 use App\Models\Document;
 use App\Services\AiCredits\AiCreditAdmission;
@@ -13,6 +14,7 @@ use App\Services\Extraction\SpreadsheetTextExtractor;
 use App\Services\Ocr\OcrEngineResolver;
 use App\Services\Ocr\PdfRasterizer;
 use App\Services\Pipeline\DocumentProgress;
+use App\Services\Pipeline\DocumentStagePolicy;
 use App\Services\Pipeline\PipelineStageRecorder;
 use App\Support\QueueTopology;
 use Illuminate\Bus\Queueable;
@@ -41,16 +43,14 @@ class ExtractDocumentTextJob implements ShouldQueue
         PdfRasterizer $rasterizer,
     ): void {
         $document = Document::find($this->documentId);
-        if ($document) {
-            app(EntitlementService::class)->reserveDocument($document);
-        }
-        if (! $document || $document->status === 'Failed') {
+        if (! $document || ! app(DocumentStagePolicy::class)->permits($document, 'extract')) {
             if (! $document) {
                 Log::warning("ExtractDocumentTextJob: Document {$this->documentId} not found — unexpected null, possible soft-delete race.");
             }
 
             return;
         }
+        app(EntitlementService::class)->reserveDocument($document);
 
         $extractStage = $recorder->start($document, 'extract');
         $document->forceFill(['progress' => max(25, (int) $document->progress)])->save();
@@ -83,11 +83,13 @@ class ExtractDocumentTextJob implements ShouldQueue
             }
         } catch (\Throwable $e) {
             @unlink($absolutePath);
-            $recorder->fail($extractStage, $e->getMessage());
+            $recorder->fail($extractStage, 'Document extraction failed or exceeded a resource limit.');
             $document->forceFill([
                 'status' => 'Failed',
+                'progress' => 100,
                 'error_message' => 'Could not extract text: the file may be corrupted or password-protected.',
             ])->save();
+            app(EntitlementService::class)->releaseStaleReservations($document->workspace_id);
             $this->fail($e);
 
             return;
@@ -148,6 +150,10 @@ class ExtractDocumentTextJob implements ShouldQueue
         PipelineStageRecorder $recorder,
         string $absolutePath,
     ): ?string {
+        $batchLimit = config('document_processing.ocr_batch_max_pages');
+        if (! is_int($batchLimit) || $batchLimit < 1 || $batchLimit > 3) {
+            throw new \RuntimeException('Invalid OCR batch resource policy.');
+        }
         $ocrEnabled = $document->workspace?->settings?->ocr_enabled ?? false;
         $ocrEligibleTypes = ['PDF', 'JPG', 'PNG'];
         $isOcrEligibleType = in_array($document->type, $ocrEligibleTypes, true);
@@ -174,7 +180,7 @@ class ExtractDocumentTextJob implements ShouldQueue
             $resolver->resolve($document);
         } catch (\Throwable $e) {
             @unlink($absolutePath);
-            $recorder->fail($recorder->start($document, 'ocr_check'), $e->getMessage());
+            $recorder->fail($recorder->start($document, 'ocr_check'), 'OCR provider unavailable.');
             $document->forceFill([
                 'status' => $document->workspace?->type === WorkspaceType::Personal ? 'Failed' : 'Needs Review',
                 'error_message' => 'OCR could not process this scanned document.',
@@ -198,7 +204,7 @@ class ExtractDocumentTextJob implements ShouldQueue
             @unlink($absolutePath);
         } catch (\Throwable $e) {
             @unlink($absolutePath);
-            $recorder->fail($recorder->start($document, 'ocr_check'), $e->getMessage());
+            $recorder->fail($recorder->start($document, 'ocr_check'), 'OCR rasterization failed.');
             $document->forceFill([
                 'status' => $document->workspace?->type === WorkspaceType::Personal ? 'Failed' : 'Needs Review',
                 'error_message' => 'OCR could not process this scanned document.',
@@ -245,7 +251,7 @@ class ExtractDocumentTextJob implements ShouldQueue
                 $rasterizer->cleanup($localImages);
             }
         }
-        $batches = array_chunk($imagePaths, 3);
+        $batches = array_chunk($imagePaths, $batchLimit);
         // Only a real PDF rasterization produces a disposable temp
         // directory — a bare JPG/PNG upload's "image path" IS the
         // original stored file, which must never be cleaned up here.
@@ -286,7 +292,7 @@ class ExtractDocumentTextJob implements ShouldQueue
         Log::error('ExtractDocumentTextJob failed', [
             'document_id' => $this->documentId,
             'exception' => get_class($e),
-            'message' => $e->getMessage(),
+            'failure_class' => $e instanceof AiProcessingException ? $e->classification : 'extraction_failure',
         ]);
 
         $document = Document::find($this->documentId);

@@ -21,6 +21,12 @@ class ClaudeVisionOcrProvider implements OcrProviderInterface
 
     public function extractPage(string $imagePath, Document $document): OcrPageResult
     {
+        $limit = config('document_processing.image_max_pixels');
+        $size = @getimagesize($imagePath);
+        if (! is_int($limit) || $limit < 1 || ! is_array($size) || $size[0] < 1 || $size[1] < 1
+            || $limit < $size[0] * $size[1]) {
+            throw new \RuntimeException('Image dimensions are invalid or exceed the processing limit.');
+        }
         $mediaType = match (strtolower(pathinfo($imagePath, PATHINFO_EXTENSION))) {
             'jpg', 'jpeg' => 'image/jpeg',
             'webp' => 'image/webp',

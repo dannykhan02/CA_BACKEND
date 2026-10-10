@@ -3,7 +3,7 @@
 namespace Tests\Unit\Services;
 
 use App\Services\DocumentTextExtractor;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
 class DocumentTextExtractorTest extends TestCase
 {
@@ -34,7 +34,7 @@ class DocumentTextExtractorTest extends TestCase
         try {
             file_put_contents($path, substr(file_get_contents(dirname(__DIR__, 2).'/Fixtures/embedded-emf.docx'), 0, 100));
             $this->expectException(\RuntimeException::class);
-            $this->expectExceptionMessage('Invalid DOCX');
+            $this->expectExceptionMessage('Invalid document archive');
             (new DocumentTextExtractor)->extractDocxText($path);
         } finally {
             unlink($path);
@@ -71,5 +71,28 @@ class DocumentTextExtractorTest extends TestCase
         self::assertSame(4, substr_count($text, "\f"));
         self::assertSame(5, $extractor->countPdfPages($path));
         self::assertStringContainsString('Synthetic benchmark page 5', explode("\f", $text)[4]);
+    }
+
+    public function test_pdf_page_limit_and_malformed_file_fail_before_parser(): void
+    {
+        $path = dirname(__DIR__, 2).'/Fixtures/test_5page.pdf';
+        config(['document_processing.pdf_max_pages' => 4]);
+        try {
+            (new DocumentTextExtractor)->extractPdfText($path);
+            $this->fail('Over-limit PDF must be rejected.');
+        } catch (\RuntimeException $e) {
+            $this->assertSame('PDF page limit exceeded.', $e->getMessage());
+        }
+
+        config(['document_processing.pdf_max_pages' => 1000]);
+        $bad = tempnam(sys_get_temp_dir(), 'bad_pdf_');
+        try {
+            file_put_contents($bad, 'invalid PDF');
+            $this->expectException(\RuntimeException::class);
+            $this->expectExceptionMessage('PDF is malformed or encrypted');
+            (new DocumentTextExtractor)->extractPdfText($bad);
+        } finally {
+            unlink($bad);
+        }
     }
 }

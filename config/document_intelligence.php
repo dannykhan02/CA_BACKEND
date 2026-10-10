@@ -134,6 +134,13 @@ return [
     'budget_base_usd' => 0.50,
     'budget_per_1000_tokens_usd' => 0.025,
     'budget_max_usd' => (float) env('DOCINTEL_MAX_DOCUMENT_COST_USD', 10),
+    'provider_call_max_usd' => (float) env('DOCINTEL_MAX_PROVIDER_CALL_USD', min(10, (float) env('DOCINTEL_MAX_DOCUMENT_COST_USD', 10))),
+    'visual_input_token_reserve' => (int) env('DOCINTEL_VISUAL_INPUT_TOKEN_RESERVE', 6000),
+    // A task must choose the model configured for its role; the global approved list is an
+    // additional deployment guard. B2 may use its explicit model override.
+    'model_roles' => array_fill_keys(['entities', 'insights', 'risks', 'deadlines', 'document_type',
+        'context_resolution', 'kpi_identity', 'ocr', 'chart_vision'], 'extraction')
+        + array_fill_keys(['document_summary', 'document_comparison', 'document_qa', 'brief_synthesis'], 'synthesis'),
     'pricing' => [ // USD / million tokens; 5 minute cache writes only.
         'claude-haiku-4-5-20251001' => [1, 5, 1.25, 0.10],
         'claude-haiku-4-5' => [1, 5, 1.25, 0.10],
@@ -143,7 +150,7 @@ return [
         'claude-sonnet-5-5' => [2, 10, 2.50, 0.20],
     ],
     // The only models DocIntel is meant to call: FAST (extraction) and SMART (synthesis).
-    // Requests are not blocked; any other model is logged and fails docintel:verify-models.
+    // ProviderRequestAdmission refuses requests for models outside this set.
     'approved_models' => ['claude-haiku-4-5-20251001', 'claude-sonnet-5-5'],
     'structured_models' => ['claude-haiku-4-5-20251001', 'claude-haiku-4-5', 'claude-sonnet-4-6', 'claude-sonnet-4-5-20250929', 'claude-sonnet-5-5'],
     'effort_models' => ['claude-sonnet-4-6', 'claude-sonnet-5-5'],

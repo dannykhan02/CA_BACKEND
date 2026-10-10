@@ -12,6 +12,14 @@ use Tests\TestCase;
 
 class AnthropicStructuredOutputTest extends TestCase
 {
+    private function entitiesClient(): AnthropicClient
+    {
+        $client = app(AnthropicClient::class);
+        (new \ReflectionProperty($client, 'currentOperation'))->setValue($client, 'entities');
+
+        return $client;
+    }
+
     private function decode(array $response): array
     {
         return (new \ReflectionMethod(AnthropicClient::class, 'decodeJsonContent'))
@@ -77,7 +85,7 @@ class AnthropicStructuredOutputTest extends TestCase
         Http::fake(['api.anthropic.com/*' => Http::sequence()
             ->push($this->response('invalid'))
             ->push($this->response('{"entities":[]}'))]);
-        $client = app(AnthropicClient::class);
+        $client = $this->entitiesClient();
         $parse = fn (array $response) => (new \ReflectionMethod(AnthropicClient::class, 'decodeJsonContent'))
             ->invoke($client, $response);
         $result = (new \ReflectionMethod(AnthropicClient::class, 'structuredCall'))
@@ -90,7 +98,7 @@ class AnthropicStructuredOutputTest extends TestCase
     {
         Http::fake(['api.anthropic.com/*' => Http::sequence()
             ->push($this->response('bad'))->push($this->response('still bad'))]);
-        $client = app(AnthropicClient::class);
+        $client = $this->entitiesClient();
         try {
             (new \ReflectionMethod(AnthropicClient::class, 'structuredCall'))->invoke(
                 $client, 'Return JSON', null, 'entities',
@@ -109,7 +117,7 @@ class AnthropicStructuredOutputTest extends TestCase
         Http::fake(['api.anthropic.com/*' => Http::sequence()
             ->push($this->response('{"entities":', 'max_tokens'))
             ->push($this->response('{"entities":[]}'))]);
-        $client = app(AnthropicClient::class);
+        $client = $this->entitiesClient();
         (new \ReflectionMethod(AnthropicClient::class, 'structuredCall'))->invoke(
             $client, 'Return JSON', null, 'entities',
             fn (array $response) => (new \ReflectionMethod(AnthropicClient::class, 'decodeJsonContent'))->invoke($client, $response)
@@ -154,7 +162,7 @@ class AnthropicStructuredOutputTest extends TestCase
     {
         config(['services.anthropic.max_tokens' => 200, 'services.anthropic.structured_max_tokens_ceiling' => 200]);
         Http::fake(['api.anthropic.com/*' => Http::response($this->response('{"entities":', 'max_tokens'))]);
-        $client = app(AnthropicClient::class);
+        $client = $this->entitiesClient();
         try {
             (new \ReflectionMethod(AnthropicClient::class, 'structuredCall'))->invoke(
                 $client, 'Return JSON', null, 'entities',
@@ -170,7 +178,7 @@ class AnthropicStructuredOutputTest extends TestCase
     public function test_refusal_is_not_retried_as_malformed_json(): void
     {
         Http::fake(['api.anthropic.com/*' => Http::response($this->response('', 'refusal'))]);
-        $client = app(AnthropicClient::class);
+        $client = $this->entitiesClient();
         try {
             (new \ReflectionMethod(AnthropicClient::class, 'structuredCall'))->invoke(
                 $client, 'Return JSON', null, 'entities',

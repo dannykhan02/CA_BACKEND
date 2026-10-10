@@ -2,6 +2,7 @@
 
 namespace App\Services\Ocr;
 
+use App\Services\DocumentTextExtractor;
 use Symfony\Component\Process\Process;
 
 class PdfRasterizer
@@ -16,6 +17,9 @@ class PdfRasterizer
      */
     public function toPageImages(string $pdfPath, ?array $pageNumbers = null): array
     {
+        // This is also called for visuals on older Ready documents, so it cannot rely on the
+        // extraction job having run the current resource policy.
+        app(DocumentTextExtractor::class)->preflightPdf($pdfPath);
         $outputDir = sys_get_temp_dir().'/ocr_'.uniqid();
         mkdir($outputDir);
         $prefix = $outputDir.'/page';
@@ -57,6 +61,18 @@ class PdfRasterizer
 
         $files = glob($prefix.'*.png');
         sort($files, SORT_NATURAL);
+        $pixels = config('document_processing.image_max_pixels');
+        foreach ($files as $file) {
+            $size = @getimagesize($file);
+            if (! is_int($pixels) || $pixels < 1 || ! is_array($size)
+                || $pixels < $size[0] * $size[1]) {
+                foreach ($files as $generated) {
+                    @unlink($generated);
+                }
+                @rmdir($outputDir);
+                throw new \RuntimeException('Rasterized PDF page exceeds the image limit.');
+            }
+        }
 
         // pdftoppm names output <prefix>-<actual_page_number>.png even when
         // -f/-l narrows the range. Map by the real page number embedded in

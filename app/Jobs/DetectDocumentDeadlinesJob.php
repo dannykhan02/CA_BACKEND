@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Exceptions\AiProcessingException;
 use App\Jobs\Concerns\GuardsDocumentIntelligence;
 use App\Jobs\Concerns\SkipsUnchangedDocuments;
 use App\Models\Document;
@@ -56,7 +57,7 @@ class DetectDocumentDeadlinesJob implements ShouldQueue
             if ($this->abandonIntelligence($document, $stage)) {
                 return;
             }
-            $recorder->fail($stage, $e->getMessage());
+            $recorder->fail($stage, 'Document analysis failed.');
             $this->fail($e);
 
             return;
@@ -95,7 +96,7 @@ class DetectDocumentDeadlinesJob implements ShouldQueue
         $this->finalizeIntelligenceFailure('deadlines', $e);
         Log::error('DetectDocumentDeadlinesJob failed after retries', [
             'document_id' => $this->documentId,
-            'error' => $e->getMessage(),
+            'failure_class' => $e instanceof AiProcessingException ? $e->classification : 'analysis_failure',
         ]);
     }
 }

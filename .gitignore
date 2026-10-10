@@ -73,3 +73,8 @@ update-horizon-config.sh
 # Python cache
 __pycache__/
 *.pyc
+
+# Local DocIntel diagnostic scratch/cache output. Reviewed evidence remains tracked.
+/docs/tasks/**/.cache/
+/docs/intelligence-v2/diagnostics/**/.cache/
+/docs/tasks/**/tmp/

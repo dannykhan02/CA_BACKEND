@@ -190,7 +190,7 @@ class AnthropicProviderErrorDiagnosticsTest extends TestCase
         $context = $this->captureProviderError($handler);
         self::assertSame(400, $context['status']);
         self::assertSame('invalid_request_error', $context['error_type']);
-        self::assertSame('output_config.format.schema: maxItems is not supported', $context['error_message']);
+        self::assertArrayNotHasKey('error_message', $context);
         self::assertSame('req_011CQxSpanReject', $context['request_id']);
         self::assertSame('entities', $context['purpose']);
         self::assertSame('claude-haiku-4-5-20251001', $context['model']);
@@ -298,24 +298,21 @@ class AnthropicProviderErrorDiagnosticsTest extends TestCase
         self::assertStringNotContainsString('evidence_spans', $logged, 'The request body must never be logged.');
 
         $context = $this->captureProviderError($handler);
-        self::assertSame(['status', 'error_type', 'error_message', 'request_id', 'purpose', 'model',
+        self::assertSame(['status', 'error_type', 'request_id', 'purpose', 'model',
             'document_id', 'chunk_id', 'failure_class', 'request_attempt', 'duration_ms'], array_keys($context),
             'The diagnostic is a fixed, reviewed field set; nothing else travels with it.');
     }
 
-    public function test_provider_message_is_redacted_flattened_and_capped(): void
+    public function test_provider_message_is_not_logged_even_when_it_contains_a_secret(): void
     {
         $document = $this->document(spans: true);
         $chunk = $this->firstLeaf($document);
         $handler = $this->runExtraction($document, $chunk, $this->rejection(
             "key \n\n ".self::SECRET_KEY." used\t".str_repeat('A', 600)));
 
-        $message = $this->captureProviderError($handler)['error_message'];
-        self::assertStringNotContainsString(self::SECRET_KEY, $message);
-        self::assertStringContainsString('[redacted]', $message);
-        self::assertStringNotContainsString("\n", $message, 'Whitespace is collapsed to one line.');
-        self::assertStringEndsWith('...[truncated]', $message);
-        self::assertLessThanOrEqual(420, mb_strlen($message));
+        $context = $this->captureProviderError($handler);
+        self::assertArrayNotHasKey('error_message', $context);
+        self::assertStringNotContainsString(self::SECRET_KEY, json_encode($handler->getRecords()));
     }
 
     /** A provider body that is not the documented error shape must degrade, never throw or leak. */
@@ -329,7 +326,7 @@ class AnthropicProviderErrorDiagnosticsTest extends TestCase
         $context = $this->captureProviderError($handler);
         self::assertSame(400, $context['status']);
         self::assertNull($context['error_type']);
-        self::assertNull($context['error_message']);
+        self::assertArrayNotHasKey('error_message', $context);
         self::assertNull($context['request_id']);
         self::assertSame('deterministic', $context['failure_class']);
     }

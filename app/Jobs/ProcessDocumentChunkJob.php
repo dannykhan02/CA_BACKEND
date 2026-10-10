@@ -273,7 +273,7 @@ class ProcessDocumentChunkJob implements ShouldQueue
                 'document_id' => $document->id,
                 'chunk_id' => $chunk->id,
                 'exception' => $e::class,
-                'message' => $e->getMessage(),
+                'failure_class' => $e instanceof AiProcessingException ? $e->classification : 'chunk_failure',
                 'file' => basename($e->getFile()),
                 'line' => $e->getLine(),
             ]);
@@ -283,7 +283,7 @@ class ProcessDocumentChunkJob implements ShouldQueue
                 'failure_class' => 'deterministic',
                 'completed_at' => now(),
             ]);
-        }finally {
+        } finally {
             $pipeline->settleCost($chunk, $providerCalled);
             $this->logOutcome($chunk);
         }

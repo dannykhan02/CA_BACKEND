@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Services\Extraction\ArchivePreflight;
 use Smalot\PdfParser\Parser as PdfParser;
+use Symfony\Component\Process\Process;
 
 /**
  * Shared text-extraction logic used by ExtractDocumentTextJob (initial
@@ -17,6 +19,7 @@ class DocumentTextExtractor
 
     public function extractPdfText(string $path): string
     {
+        $this->preflightPdf($path);
         $parser = new PdfParser;
 
         $pages = $parser->parseFile($path)->getPages();
@@ -101,6 +104,8 @@ class DocumentTextExtractor
             return $this->pdfPageCounts[$path];
         }
 
+        $this->preflightPdf($path);
+
         $parser = new PdfParser;
 
         return count(
@@ -115,6 +120,7 @@ class DocumentTextExtractor
      */
     public function extractDocxText(string $path): string
     {
+        app(ArchivePreflight::class)->check($path);
         $zip = new \ZipArchive;
 
         if (
@@ -232,6 +238,39 @@ class DocumentTextExtractor
         }
     }
 
+    public function preflightPdf(string $path): int
+    {
+        $maxPages = config('document_processing.pdf_max_pages');
+        $timeout = config('document_processing.pdf_preflight_timeout_seconds');
+        $uploadKb = config('document_processing.max_upload_size_kb');
+        if (! is_int($maxPages) || $maxPages < 1 || ! is_int($timeout) || $timeout < 1
+            || ! is_int($uploadKb) || $uploadKb < 1) {
+            throw new \RuntimeException('Invalid PDF resource policy.');
+        }
+        if (filesize($path) === false || filesize($path) > $uploadKb * 1024) {
+            throw new \RuntimeException('PDF file size limit exceeded.');
+        }
+        $process = new Process(['pdfinfo', $path]);
+        $process->setTimeout($timeout);
+        try {
+            $process->run();
+        } catch (\Throwable) {
+            throw new \RuntimeException('PDF preflight failed.');
+        }
+        $info = $process->getOutput();
+        if (! $process->isSuccessful() || preg_match('/^Encrypted:\s+yes\b/im', $info)) {
+            throw new \RuntimeException('PDF is malformed or encrypted.');
+        }
+        if (! preg_match('/^Pages:\s+(\d+)\s*$/im', $info, $match) || (int) $match[1] < 1) {
+            throw new \RuntimeException('PDF page count is unavailable.');
+        }
+        if ((int) $match[1] > $maxPages) {
+            throw new \RuntimeException('PDF page limit exceeded.');
+        }
+
+        return (int) $match[1];
+    }
+
     private function extractWordXml(
         \DOMNode $node,
         string $namespace
@@ -277,17 +316,14 @@ class DocumentTextExtractor
 
         if ($node->namespaceURI === $namespace) {
             return match ($node->localName) {
-                'p', 'tr' =>
-                    rtrim(
-                        $text,
-                        "\n |"
-                    )."\n",
-
-                'tc' =>
-                    trim($text).' | ',
-
-                default =>
+                'p', 'tr' => rtrim(
                     $text,
+                    "\n |"
+                )."\n",
+
+                'tc' => trim($text).' | ',
+
+                default => $text,
             };
         }
 

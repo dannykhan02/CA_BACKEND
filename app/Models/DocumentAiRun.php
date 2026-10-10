@@ -17,7 +17,7 @@ class DocumentAiRun extends Model
         'duration_ms', 'process_peak_memory_bytes', 'estimated_cost_usd', 'failure_class', 'provider_request_id', 'partial',
         'evidence_trimmed', 'optional_items_dropped', 'model', 'prompt_version', 'input_tokens', 'output_tokens', 'status', 'stop_reason', 'created_at', 'operation_quote_id', 'user_id', 'comparison_id',
         'provider_started_at', 'provider_finished_at', 'timeout_source', 'provider_response_received', 'input_tokens_counted',
-        'dispatched_at', 'worker_started_at', 'admission_requested_at', 'lease_acquired_at', 'lease_released_at',
+        'dispatched_at', 'worker_started_at', 'admission_requested_at', 'lease_acquired_at', 'lease_released_at', 'provider_attempt_id',
         'worker_wait_ms', 'fairness_wait_ms', 'admission_wait_ms', 'dispatch_reason',
     ];
 

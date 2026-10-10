@@ -17,11 +17,97 @@ class OperationSpend
     /** Known run cost plus a conservative amount for every run whose usage is unknown (timeouts). */
     public function spentUsd(string $quoteId): float
     {
-        $runs = DocumentAiRun::where('operation_quote_id', $quoteId);
+        $runs = DocumentAiRun::where('operation_quote_id', $quoteId)->whereNull('provider_attempt_id');
         $known = (float) (clone $runs)->whereNotNull('estimated_cost_usd')->sum('estimated_cost_usd');
         $unknown = (clone $runs)->whereNull('estimated_cost_usd')->count();
+        $attempts = (int) DB::table('provider_call_attempts')->where('operation_quote_id', $quoteId)
+            ->whereIn('status', ['reserved', 'dispatched', 'settled', 'uncertain'])
+            ->sum(DB::raw('COALESCE(settled_microusd, reserved_microusd)'));
 
-        return round($known + $unknown * (float) config('ai_credits.unknown_usage_cost_usd'), 6);
+        return round($known + $unknown * (float) config('ai_credits.unknown_usage_cost_usd') + $attempts / 1000000, 6);
+    }
+
+    /** Quote row serializes competing workers. Amounts are integer micro-USD to avoid float comparisons in admission. */
+    public function reserveAttempt(string $quoteId, string $attemptId, string $purpose, float $estimateUsd): void
+    {
+        $micros = (int) ceil($estimateUsd * 1000000);
+        if ($micros < 1) {
+            throw new AiProcessingException('invalid_provider_config');
+        }
+        DB::transaction(function () use ($quoteId, $attemptId, $purpose, $micros) {
+            $quote = OperationQuote::whereKey($quoteId)->lockForUpdate()->first();
+            if (! $quote || ! in_array($quote->status, ['reserved', 'settled'], true)) {
+                throw new AiProcessingException('credits_not_reserved');
+            }
+            if (DB::table('provider_call_attempts')->where('id', $attemptId)->exists()) {
+                throw new AiProcessingException('duplicate_provider_attempt');
+            }
+            $cap = (int) floor($quote->provider_cost_cap_usd * 1000000);
+            $spent = (int) round($this->spentUsd($quoteId) * 1000000);
+            if ($spent + $micros > $cap) {
+                throw new AiProcessingException('budget_exceeded');
+            }
+            DB::table('provider_call_attempts')->insert(['id' => $attemptId, 'operation_quote_id' => $quoteId,
+                'purpose' => $purpose, 'status' => 'reserved', 'reserved_microusd' => $micros,
+                'created_at' => now(), 'updated_at' => now()]);
+        }, 3);
+    }
+
+    /** A reservation may authorize one dispatch only. A crash after this point is an uncertain outcome. */
+    public function markDispatched(string $attemptId): void
+    {
+        DB::transaction(function () use ($attemptId) {
+            $probe = DB::table('provider_call_attempts')->where('id', $attemptId)->first();
+            if (! $probe) {
+                throw new AiProcessingException('duplicate_provider_attempt');
+            }
+            $quote = OperationQuote::whereKey($probe->operation_quote_id)->lockForUpdate()->first();
+            if (! $quote || ! in_array($quote->status, ['reserved', 'settled'], true)) {
+                throw new AiProcessingException('credits_not_reserved');
+            }
+            if (DB::table('provider_call_attempts')->where('id', $attemptId)->where('status', 'reserved')
+                ->update(['status' => 'dispatched', 'updated_at' => now()]) !== 1) {
+                throw new AiProcessingException('duplicate_provider_attempt');
+            }
+        }, 3);
+    }
+
+    /** Idempotent finalization. A dispatched attempt without a reliable usage count retains its full hold. */
+    public function finishAttempt(string $attemptId, ?float $actualUsd): void
+    {
+        if ($actualUsd !== null && (! is_finite($actualUsd) || $actualUsd < 0)) {
+            $actualUsd = null;
+        }
+        DB::transaction(function () use ($attemptId, $actualUsd) {
+            $probe = DB::table('provider_call_attempts')->where('id', $attemptId)->first();
+            if (! $probe) {
+                return;
+            }
+            OperationQuote::whereKey($probe->operation_quote_id)->lockForUpdate()->firstOrFail();
+            $attempt = DB::table('provider_call_attempts')->where('id', $attemptId)->lockForUpdate()->first();
+            if ($attempt->status !== 'dispatched') {
+                return;
+            }
+            $actual = $actualUsd === null ? null : max(0, (int) ceil($actualUsd * 1000000));
+            DB::table('provider_call_attempts')->where('id', $attemptId)->update([
+                'status' => $actual === null ? 'uncertain' : 'settled',
+                'settled_microusd' => $actual, 'updated_at' => now(),
+            ]);
+        }, 3);
+    }
+
+    /** Only an attempt that never reached the HTTP dispatch point can be released as free. */
+    public function releaseAttempt(string $attemptId): void
+    {
+        DB::transaction(function () use ($attemptId) {
+            $probe = DB::table('provider_call_attempts')->where('id', $attemptId)->first();
+            if (! $probe) {
+                return;
+            }
+            OperationQuote::whereKey($probe->operation_quote_id)->lockForUpdate()->firstOrFail();
+            DB::table('provider_call_attempts')->where('id', $attemptId)->where('status', 'reserved')
+                ->update(['status' => 'released', 'settled_microusd' => 0, 'updated_at' => now()]);
+        }, 3);
     }
 
     /** The quote whose cap governs paid calls for this document/purpose, if AI-credit accounting applies. */
