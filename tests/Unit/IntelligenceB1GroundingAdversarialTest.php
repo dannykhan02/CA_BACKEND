@@ -224,6 +224,10 @@ class IntelligenceB1GroundingAdversarialTest extends TestCase
         return [
             'span the record states' => [
                 'In India, 580 million people were reached over the last 10 years.', '10 years', true],
+            'singular year alias' => [
+                'In India, 580 million people were reached over the last 10 year.', '10 years', true],
+            'singular day alias' => [
+                'In India, 580 million people were reached within 10 day.', '10 days', true],
             'spelled-out span the record states' => [
                 'In India, 580 million people were reached within five years.', 'five years', true],
             'span the record does not state' => [

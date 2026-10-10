@@ -1,0 +1,45 @@
+{
+    "reads": 60,
+    "runs_before": 6,
+    "runs_after": 6,
+    "dispatches": 0,
+    "provider_constructions": 0,
+    "calls": [
+        {
+            "call": 1,
+            "status": "rejected",
+            "reads": 10,
+            "rejected_text_leaked": false
+        },
+        {
+            "call": 2,
+            "status": "verified",
+            "reads": 10,
+            "rejected_text_leaked": false
+        },
+        {
+            "call": 3,
+            "status": "rejected",
+            "reads": 10,
+            "rejected_text_leaked": false
+        },
+        {
+            "call": 4,
+            "status": "rejected",
+            "reads": 10,
+            "rejected_text_leaked": false
+        },
+        {
+            "call": 5,
+            "status": "rejected",
+            "reads": 10,
+            "rejected_text_leaked": false
+        },
+        {
+            "call": 6,
+            "status": "rejected",
+            "reads": 10,
+            "rejected_text_leaked": false
+        }
+    ]
+}

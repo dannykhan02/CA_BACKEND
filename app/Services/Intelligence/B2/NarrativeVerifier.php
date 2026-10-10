@@ -15,8 +15,8 @@ use App\Services\Intelligence\Brief\BriefVerifier;
  * offers: `stated` additionally requires that no cited record has unknown provenance.
  *
  * Added here are the checks that are specific to a free-text narrative rather than a template:
- * output shape, claim count and length, renderable plain text, citation supply, and that a monetary
- * claim rests on a figure Stage A found eligible to headline.
+ * output shape, claim count and length, renderable plain text, citation supply, and per-number
+ * binding to cited canonical values.
  *
  * Fail closed. A claim whose verdict is not `passed` is rejected, and by default (max_rejected_claims
  * = 0) one rejected claim rejects the whole narrative, so a partly-hallucinated brief never reaches
@@ -27,13 +27,14 @@ class NarrativeVerifier
     /** Markdown, link and markup characters a claim may never contain, so the text is safe to render. */
     private const UNSAFE = ['`', '*', '_', '#', '[', ']', '{', '}', '<', '>', '|', '~', 'http://', 'https://', 'www.'];
 
-    public function __construct(private BriefVerifier $briefVerifier) {}
+    public function __construct(private BriefVerifier $briefVerifier,
+        private NumericClaimGrounder $numericGrounder) {}
 
     /**
      * @param  array<string,mixed>  $decoded  the parsed provider response
      * @param  list<string>  $supplied  source ids actually sent in the B2 context
      * @param  array<string,array<string,mixed>>  $records  Stage A records keyed by source id, restricted to $supplied
-     * @param  list<string>  $keyFigureIds
+     * @param  list<string>  $keyFigureIds  B1 display selection; retained for caller compatibility
      * @return array{status:string,reasons:list<string>,claims:list<array<string,mixed>>,
      *               rejected:list<array<string,mixed>>,verifier_version:string}
      */
@@ -56,15 +57,13 @@ class NarrativeVerifier
         }
 
         $available = array_fill_keys($supplied, true);
-        $keyFigures = array_fill_keys(array_intersect($keyFigureIds, $supplied), true);
-        $currencies = $this->currencies($records, $supplied);
         $accepted = [];
         $rejected = [];
         $reasons = [];
         $seen = [];
 
         foreach ($narrative as $index => $item) {
-            $verdict = $this->claim($item, $available, $records, $keyFigures, $currencies, $seen, $settings);
+            $verdict = $this->claim($item, $available, $records, $seen, $settings);
             if ($verdict['reasons'] === []) {
                 $accepted[] = ['text' => $verdict['text'], 'cites' => $verdict['cites']];
                 $seen[$verdict['normalized']] = true;
@@ -93,14 +92,12 @@ class NarrativeVerifier
     /**
      * @param  array<string,bool>  $available
      * @param  array<string,array<string,mixed>>  $records
-     * @param  array<string,bool>  $keyFigures
-     * @param  list<string>  $currencies
      * @param  array<string,bool>  $seen
      * @param  array<string,mixed>  $settings
      * @return array{text:string,cites:list<string>,normalized:string,reasons:list<string>}
      */
-    private function claim(mixed $item, array $available, array $records, array $keyFigures,
-        array $currencies, array $seen, array $settings): array
+    private function claim(mixed $item, array $available, array $records,
+        array $seen, array $settings): array
     {
         $reasons = [];
         $text = is_array($item) && is_string($item['claim'] ?? null) ? trim($item['claim']) : '';
@@ -168,18 +165,11 @@ class NarrativeVerifier
         $cited = array_values(array_filter(array_map(
             static fn (string $id) => $records[$id] ?? null, $cites)));
 
-        // A monetary claim must rest on a figure Stage A found eligible to headline: document
-        // origin, typed currency and a finite number. Anything else is an unsupported key figure.
-        // The trigger is restricted to currency codes that actually occur in the supplied evidence,
-        // so an ordinary three-letter token before a number ("ISO 9001") is not mistaken for money;
-        // a code that occurs nowhere in the evidence is already caught by the grounding checks.
-        if ($this->statesMoney($text, $currencies)
-            && array_filter($cites, static fn (string $id) => isset($keyFigures[$id])) === []) {
-            $reasons[] = 'unsupported_key_figure';
-        }
-
         if ($cited !== []) {
             $reasons = [...$reasons, ...$this->grounding($text, $cites, $cited, $records, array_keys($available))];
+            if (! $this->numericGrounder->grounded($text, $cited)) {
+                $reasons[] = 'numeric_fact_grounded';
+            }
         }
 
         return ['text' => $text, 'cites' => $cites, 'normalized' => $normalized,
@@ -223,50 +213,6 @@ class NarrativeVerifier
 
         return array_values(array_map(static fn (string $check) => 'brief_'.$check,
             $verification['failed_reasons']));
-    }
-
-    /** @param list<string> $currencies */
-    private function statesMoney(string $text, array $currencies): bool
-    {
-        if (preg_match('/[$€£¥]\s*\d/u', $text) === 1) {
-            return true;
-        }
-        foreach ($currencies as $code) {
-            if (preg_match('/(?<!\p{L})'.preg_quote($code, '/').'\s*\d/u', $text) === 1) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Currency codes Stage A actually typed on the supplied records.
-     *
-     * @param  array<string,array<string,mixed>>  $records
-     * @param  list<string>  $supplied
-     * @return list<string>
-     */
-    private function currencies(array $records, array $supplied): array
-    {
-        $codes = [];
-        foreach ($supplied as $id) {
-            // Read through BriefVerifier's own record-local resolution, so the money gate and the
-            // grounding checks cannot disagree about what currency a record states: a figure
-            // written "$97.4 million" with unit "USD" is a USD record to both.
-            $value = $records[$id]['typed']['value'] ?? null;
-            $code = is_array($value) ? ($value['currency'] ?? null) : null;
-            if (is_array($value) && $this->briefVerifier->groundableValue($value)
-                && ($value['type'] ?? null) === 'money' && is_string($value['unit'] ?? null)
-                && ! (is_string($code) && preg_match('/^[A-Z]{3}$/D', $code) === 1)) {
-                $code = $this->briefVerifier->recordCurrencyCode($value);
-            }
-            if (is_string($code) && preg_match('/^[A-Z]{3}$/D', $code) === 1) {
-                $codes[$code] = true;
-            }
-        }
-
-        return array_keys($codes);
     }
 
     /** @param array<string,mixed> $record @return list<string> */

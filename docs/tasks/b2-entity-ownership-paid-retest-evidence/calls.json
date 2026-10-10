@@ -1,0 +1,439 @@
+[
+    {
+        "set": "india_wash",
+        "n": 1,
+        "document_id": "01a126fa-f1fc-70ab-a472-6edec36061f9",
+        "pipeline_key": "b2owner-india_wash-1",
+        "input_hash": "aaf553bd4d5002786913d277a8b62811b1fe9fdd22079f17bc82238df09103da",
+        "prompt_version": "1",
+        "contract_version": "1",
+        "model": "claude-sonnet-5-5",
+        "temperature": "unset\/default",
+        "top_p": "unset\/default",
+        "top_k": "unset\/default",
+        "outcome": {
+            "status": "rejected",
+            "fallback_reason": "verifier_rejected",
+            "unit_id": "01a126fb-9280-7143-9070-3b1363e66cdd",
+            "provider_called": true
+        },
+        "request_count": 1,
+        "unit_count": 1,
+        "run_count": 1,
+        "unit_id": "01a126fb-9280-7143-9070-3b1363e66cdd",
+        "unit_status": "completed",
+        "unit_failure_class": "verifier_rejected",
+        "reserved_usd": 0.022658,
+        "actual_usd": 0.010166,
+        "input_tokens": 2114,
+        "output_tokens": 357,
+        "cache_creation_tokens": 947,
+        "cache_read_tokens": 0,
+        "run_status": "success",
+        "provider_response_received": true,
+        "timeout_source": null,
+        "read_status": "rejected",
+        "b1_block_count": 3,
+        "b1_fallback": true,
+        "stored_result": {
+            "audit": {
+                "as_of": "2026-10-10T00:00:00+00:00",
+                "model": "claude-sonnet-5-5",
+                "claim_count": 0,
+                "prompt_hash": "b970235062f3f7dec8f923dc59c341d1a0da4b80e8a6438afe2842b2de71ce84",
+                "generated_at": "2026-10-10T18:03:07+00:00",
+                "pipeline_key": "b2owner-india_wash-1",
+                "response_hash": "6cc0449e07866798e0df4370740ca2a268c5e611e16ca4af867524d954cdb2c0",
+                "prompt_version": "1",
+                "verifier_status": "rejected",
+                "contract_version": "1",
+                "omitted_evidence": 0,
+                "verifier_reasons": [
+                    "brief_entities_grounded"
+                ],
+                "verifier_version": "2",
+                "supplied_evidence": 15,
+                "extraction_version": "8acd7d011fac21b31b65c5dfa251423d",
+                "evidence_input_hash": "aaf553bd4d5002786913d277a8b62811b1fe9fdd22079f17bc82238df09103da",
+                "rejected_claim_count": 1
+            },
+            "claims": [],
+            "status": "rejected",
+            "fallback_reason": "verifier_rejected"
+        },
+        "raw_response_file": "\/home\/collins\/boys\/CA_BACKEND\/docs\/tasks\/b2-entity-ownership-paid-retest-evidence\/raw-response-0.json",
+        "quote_actual_ratio": 2.229
+    },
+    {
+        "set": "india_wash",
+        "n": 2,
+        "document_id": "01a126fa-f441-7257-ac6f-728dbfe7fcdb",
+        "pipeline_key": "b2owner-india_wash-2",
+        "input_hash": "09f938485cb41284f695aed2a923fcefc393da2b5a1bfda577ca91503e72707a",
+        "prompt_version": "1",
+        "contract_version": "1",
+        "model": "claude-sonnet-5-5",
+        "temperature": "unset\/default",
+        "top_p": "unset\/default",
+        "top_k": "unset\/default",
+        "outcome": {
+            "status": "verified",
+            "fallback_reason": null,
+            "unit_id": "01a126fb-cfc0-72c2-9cee-bd29a6536a3e",
+            "provider_called": true
+        },
+        "request_count": 1,
+        "unit_count": 1,
+        "run_count": 1,
+        "unit_id": "01a126fb-cfc0-72c2-9cee-bd29a6536a3e",
+        "unit_status": "completed",
+        "unit_failure_class": null,
+        "reserved_usd": 0.022658,
+        "actual_usd": 0.008751,
+        "input_tokens": 2116,
+        "output_tokens": 433,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 947,
+        "run_status": "success",
+        "provider_response_received": true,
+        "timeout_source": null,
+        "read_status": "verified",
+        "b1_block_count": 3,
+        "b1_fallback": true,
+        "stored_result": {
+            "audit": {
+                "as_of": "2026-10-10T00:00:00+00:00",
+                "model": "claude-sonnet-5-5",
+                "claim_count": 6,
+                "prompt_hash": "b970235062f3f7dec8f923dc59c341d1a0da4b80e8a6438afe2842b2de71ce84",
+                "generated_at": "2026-10-10T18:03:23+00:00",
+                "pipeline_key": "b2owner-india_wash-2",
+                "response_hash": "d1a84af414ef90ee1ab6cd161a85aa5069643b56f057c2ae9ab4f009aebe6495",
+                "prompt_version": "1",
+                "verifier_status": "verified",
+                "contract_version": "1",
+                "omitted_evidence": 0,
+                "verifier_reasons": [],
+                "verifier_version": "2",
+                "supplied_evidence": 15,
+                "extraction_version": "8acd7d011fac21b31b65c5dfa251423d",
+                "evidence_input_hash": "09f938485cb41284f695aed2a923fcefc393da2b5a1bfda577ca91503e72707a",
+                "rejected_claim_count": 0
+            },
+            "claims": [
+                {
+                    "text": "India faced a data fragmentation challenge in WASH measurement, with fragmented definitions, reporting formats and data systems making it difficult to measure progress consistently and spotlight inequalities.",
+                    "cites": [
+                        "risk:44"
+                    ]
+                },
+                {
+                    "text": "The Government of India launched the Swachh Bharat (Clean India) Mission in 2014, and 110 million toilets were constructed under it.",
+                    "cites": [
+                        "fact:01a126fa-f450-72e0-ab2e-5337393aa52d",
+                        "kpi:156"
+                    ]
+                },
+                {
+                    "text": "India reached 580 million people with improved drinking water and 550 million people with basic sanitation in the last 10 years.",
+                    "cites": [
+                        "kpi:153",
+                        "kpi:152"
+                    ]
+                },
+                {
+                    "text": "In 2024, 59.3 million people in India accessed safely managed water and 17.9 million accessed safely managed sanitation.",
+                    "cites": [
+                        "kpi:160",
+                        "kpi:159"
+                    ]
+                },
+                {
+                    "text": "The Government of India invested over $120 billion in water and sanitation.",
+                    "cites": [
+                        "kpi:155"
+                    ]
+                },
+                {
+                    "text": "India launched the Jal Jeevan (Water is Life) Mission to achieve universal access to safe and adequate drinking water.",
+                    "cites": [
+                        "fact:01a126fa-f451-72b9-826e-fffe994c4da6"
+                    ]
+                }
+            ],
+            "status": "verified",
+            "fallback_reason": null
+        },
+        "raw_response_file": "\/home\/collins\/boys\/CA_BACKEND\/docs\/tasks\/b2-entity-ownership-paid-retest-evidence\/raw-response-1.json",
+        "quote_actual_ratio": 2.589
+    },
+    {
+        "set": "india_wash",
+        "n": 3,
+        "document_id": "01a126fa-f64e-7330-b556-2f1486e6485b",
+        "pipeline_key": "b2owner-india_wash-3",
+        "input_hash": "1af0650e2e318d8345671efb860e23610bff9166b38357edcda100d96ed1199e",
+        "prompt_version": "1",
+        "contract_version": "1",
+        "model": "claude-sonnet-5-5",
+        "temperature": "unset\/default",
+        "top_p": "unset\/default",
+        "top_k": "unset\/default",
+        "outcome": {
+            "status": "rejected",
+            "fallback_reason": "verifier_rejected",
+            "unit_id": "01a126fb-e65a-71e6-9ad5-28b8b7e98215",
+            "provider_called": true
+        },
+        "request_count": 1,
+        "unit_count": 1,
+        "run_count": 1,
+        "unit_id": "01a126fb-e65a-71e6-9ad5-28b8b7e98215",
+        "unit_status": "completed",
+        "unit_failure_class": "verifier_rejected",
+        "reserved_usd": 0.022658,
+        "actual_usd": 0.009127,
+        "input_tokens": 2114,
+        "output_tokens": 471,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 947,
+        "run_status": "success",
+        "provider_response_received": true,
+        "timeout_source": null,
+        "read_status": "rejected",
+        "b1_block_count": 3,
+        "b1_fallback": true,
+        "stored_result": {
+            "audit": {
+                "as_of": "2026-10-10T00:00:00+00:00",
+                "model": "claude-sonnet-5-5",
+                "claim_count": 0,
+                "prompt_hash": "b970235062f3f7dec8f923dc59c341d1a0da4b80e8a6438afe2842b2de71ce84",
+                "generated_at": "2026-10-10T18:03:29+00:00",
+                "pipeline_key": "b2owner-india_wash-3",
+                "response_hash": "05de1aa5f811e8bc9dd9221806d4d5a325006882dbe3b8eef743d35caf0efcd3",
+                "prompt_version": "1",
+                "verifier_status": "rejected",
+                "contract_version": "1",
+                "omitted_evidence": 0,
+                "verifier_reasons": [
+                    "brief_entities_grounded"
+                ],
+                "verifier_version": "2",
+                "supplied_evidence": 15,
+                "extraction_version": "8acd7d011fac21b31b65c5dfa251423d",
+                "evidence_input_hash": "1af0650e2e318d8345671efb860e23610bff9166b38357edcda100d96ed1199e",
+                "rejected_claim_count": 1
+            },
+            "claims": [],
+            "status": "rejected",
+            "fallback_reason": "verifier_rejected"
+        },
+        "raw_response_file": "\/home\/collins\/boys\/CA_BACKEND\/docs\/tasks\/b2-entity-ownership-paid-retest-evidence\/raw-response-2.json",
+        "quote_actual_ratio": 2.483
+    },
+    {
+        "set": "unicef_reduced",
+        "n": 1,
+        "document_id": "01a126fa-f855-70a2-aee4-f9c8b4a0ad6e",
+        "pipeline_key": "b2owner-unicef_reduced-1",
+        "input_hash": "452990859fa345309b67b11c6a94436322b277a20ef74092bd53127204e4a886",
+        "prompt_version": "1",
+        "contract_version": "1",
+        "model": "claude-sonnet-5-5",
+        "temperature": "unset\/default",
+        "top_p": "unset\/default",
+        "top_k": "unset\/default",
+        "outcome": {
+            "status": "rejected",
+            "fallback_reason": "verifier_rejected",
+            "unit_id": "01a126fb-fbf2-7183-b77c-a0a63e5ae886",
+            "provider_called": true
+        },
+        "request_count": 1,
+        "unit_count": 1,
+        "run_count": 1,
+        "unit_id": "01a126fb-fbf2-7183-b77c-a0a63e5ae886",
+        "unit_status": "completed",
+        "unit_failure_class": "verifier_rejected",
+        "reserved_usd": 0.023995,
+        "actual_usd": 0.010143,
+        "input_tokens": 2897,
+        "output_tokens": 416,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 947,
+        "run_status": "success",
+        "provider_response_received": true,
+        "timeout_source": null,
+        "read_status": "rejected",
+        "b1_block_count": 8,
+        "b1_fallback": true,
+        "stored_result": {
+            "audit": {
+                "as_of": "2026-10-10T00:00:00+00:00",
+                "model": "claude-sonnet-5-5",
+                "claim_count": 0,
+                "prompt_hash": "b970235062f3f7dec8f923dc59c341d1a0da4b80e8a6438afe2842b2de71ce84",
+                "generated_at": "2026-10-10T18:03:34+00:00",
+                "pipeline_key": "b2owner-unicef_reduced-1",
+                "response_hash": "82c7c02db6eb4add762650d16d431d37e32389bd283a4a9511b6c137a91f7d83",
+                "prompt_version": "1",
+                "verifier_status": "rejected",
+                "contract_version": "1",
+                "omitted_evidence": 0,
+                "verifier_reasons": [
+                    "brief_entities_grounded",
+                    "unsupported_key_figure",
+                    "brief_numbers_grounded",
+                    "brief_units_consistent"
+                ],
+                "verifier_version": "2",
+                "supplied_evidence": 18,
+                "extraction_version": "8acd7d011fac21b31b65c5dfa251423d",
+                "evidence_input_hash": "452990859fa345309b67b11c6a94436322b277a20ef74092bd53127204e4a886",
+                "rejected_claim_count": 3
+            },
+            "claims": [],
+            "status": "rejected",
+            "fallback_reason": "verifier_rejected"
+        },
+        "raw_response_file": "\/home\/collins\/boys\/CA_BACKEND\/docs\/tasks\/b2-entity-ownership-paid-retest-evidence\/raw-response-3.json",
+        "quote_actual_ratio": 2.366
+    },
+    {
+        "set": "unicef_reduced",
+        "n": 2,
+        "document_id": "01a126fa-fb22-73c2-88b4-b188a46b7e77",
+        "pipeline_key": "b2owner-unicef_reduced-2",
+        "input_hash": "5d6934738f6a71a11181beba31057de314897e8a4a1a9694f2c64fec67d5a140",
+        "prompt_version": "1",
+        "contract_version": "1",
+        "model": "claude-sonnet-5-5",
+        "temperature": "unset\/default",
+        "top_p": "unset\/default",
+        "top_k": "unset\/default",
+        "outcome": {
+            "status": "rejected",
+            "fallback_reason": "verifier_rejected",
+            "unit_id": "01a126fc-10cc-7028-a231-e50493650229",
+            "provider_called": true
+        },
+        "request_count": 1,
+        "unit_count": 1,
+        "run_count": 1,
+        "unit_id": "01a126fc-10cc-7028-a231-e50493650229",
+        "unit_status": "completed",
+        "unit_failure_class": "verifier_rejected",
+        "reserved_usd": 0.023995,
+        "actual_usd": 0.009855,
+        "input_tokens": 2898,
+        "output_tokens": 387,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 947,
+        "run_status": "success",
+        "provider_response_received": true,
+        "timeout_source": null,
+        "read_status": "rejected",
+        "b1_block_count": 8,
+        "b1_fallback": true,
+        "stored_result": {
+            "audit": {
+                "as_of": "2026-10-10T00:00:00+00:00",
+                "model": "claude-sonnet-5-5",
+                "claim_count": 0,
+                "prompt_hash": "b970235062f3f7dec8f923dc59c341d1a0da4b80e8a6438afe2842b2de71ce84",
+                "generated_at": "2026-10-10T18:03:39+00:00",
+                "pipeline_key": "b2owner-unicef_reduced-2",
+                "response_hash": "d2ff2a6950c44cffc01bb94974b280bbf79ccbde9a2852982cede2f95281780e",
+                "prompt_version": "1",
+                "verifier_status": "rejected",
+                "contract_version": "1",
+                "omitted_evidence": 0,
+                "verifier_reasons": [
+                    "brief_entities_grounded",
+                    "unsupported_key_figure",
+                    "brief_numbers_grounded",
+                    "brief_units_consistent"
+                ],
+                "verifier_version": "2",
+                "supplied_evidence": 18,
+                "extraction_version": "8acd7d011fac21b31b65c5dfa251423d",
+                "evidence_input_hash": "5d6934738f6a71a11181beba31057de314897e8a4a1a9694f2c64fec67d5a140",
+                "rejected_claim_count": 3
+            },
+            "claims": [],
+            "status": "rejected",
+            "fallback_reason": "verifier_rejected"
+        },
+        "raw_response_file": "\/home\/collins\/boys\/CA_BACKEND\/docs\/tasks\/b2-entity-ownership-paid-retest-evidence\/raw-response-4.json",
+        "quote_actual_ratio": 2.435
+    },
+    {
+        "set": "unicef_reduced",
+        "n": 3,
+        "document_id": "01a126fa-fda2-730e-9602-ca3df058d634",
+        "pipeline_key": "b2owner-unicef_reduced-3",
+        "input_hash": "741aac83e6074ff390ab7be9029aa19000a2acca2a3dcc92598d33e60468ab2a",
+        "prompt_version": "1",
+        "contract_version": "1",
+        "model": "claude-sonnet-5-5",
+        "temperature": "unset\/default",
+        "top_p": "unset\/default",
+        "top_k": "unset\/default",
+        "outcome": {
+            "status": "rejected",
+            "fallback_reason": "verifier_rejected",
+            "unit_id": "01a126fc-25c2-716d-b55d-c1344dcc73d9",
+            "provider_called": true
+        },
+        "request_count": 1,
+        "unit_count": 1,
+        "run_count": 1,
+        "unit_id": "01a126fc-25c2-716d-b55d-c1344dcc73d9",
+        "unit_status": "completed",
+        "unit_failure_class": "verifier_rejected",
+        "reserved_usd": 0.023995,
+        "actual_usd": 0.009929,
+        "input_tokens": 2900,
+        "output_tokens": 394,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 947,
+        "run_status": "success",
+        "provider_response_received": true,
+        "timeout_source": null,
+        "read_status": "rejected",
+        "b1_block_count": 8,
+        "b1_fallback": true,
+        "stored_result": {
+            "audit": {
+                "as_of": "2026-10-10T00:00:00+00:00",
+                "model": "claude-sonnet-5-5",
+                "claim_count": 0,
+                "prompt_hash": "b970235062f3f7dec8f923dc59c341d1a0da4b80e8a6438afe2842b2de71ce84",
+                "generated_at": "2026-10-10T18:03:44+00:00",
+                "pipeline_key": "b2owner-unicef_reduced-3",
+                "response_hash": "e48d2f10f2680c32603780f97da8610c38347483f68b42eb83a109f85aca762d",
+                "prompt_version": "1",
+                "verifier_status": "rejected",
+                "contract_version": "1",
+                "omitted_evidence": 0,
+                "verifier_reasons": [
+                    "brief_entities_grounded",
+                    "unsupported_key_figure",
+                    "brief_numbers_grounded",
+                    "brief_units_consistent"
+                ],
+                "verifier_version": "2",
+                "supplied_evidence": 18,
+                "extraction_version": "8acd7d011fac21b31b65c5dfa251423d",
+                "evidence_input_hash": "741aac83e6074ff390ab7be9029aa19000a2acca2a3dcc92598d33e60468ab2a",
+                "rejected_claim_count": 3
+            },
+            "claims": [],
+            "status": "rejected",
+            "fallback_reason": "verifier_rejected"
+        },
+        "raw_response_file": "\/home\/collins\/boys\/CA_BACKEND\/docs\/tasks\/b2-entity-ownership-paid-retest-evidence\/raw-response-5.json",
+        "quote_actual_ratio": 2.417
+    }
+]

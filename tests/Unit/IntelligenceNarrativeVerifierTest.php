@@ -48,8 +48,7 @@ class IntelligenceNarrativeVerifierTest extends TestCase
             $bySource[$record['source_id']] = $record;
         }
         $supplied = array_keys($bySource);
-        $keyFigures ??= array_values(array_filter($supplied,
-            fn (string $id) => ($bySource[$id]['typed']['value']['unit_kind'] ?? null) === 'currency'));
+        $keyFigures ??= [];
 
         return app(NarrativeVerifier::class)->verify(['narrative' => $claims], $supplied, $bySource, $keyFigures);
     }
@@ -66,7 +65,7 @@ class IntelligenceNarrativeVerifierTest extends TestCase
         self::assertSame('verified', $verdict['status'], implode(',', $verdict['reasons']));
         self::assertCount(2, $verdict['claims']);
         self::assertSame(['metric:total'], $verdict['claims'][0]['cites']);
-        self::assertSame('2', $verdict['verifier_version']);
+        self::assertSame('3', $verdict['verifier_version']);
     }
 
     // 11. Fabricated evidence citation, and a citation to evidence outside the supplied context.
@@ -156,16 +155,16 @@ class IntelligenceNarrativeVerifierTest extends TestCase
         }
     }
 
-    // A monetary amount must rest on a figure Stage A found eligible to headline.
-    public function test_monetary_claim_without_an_eligible_key_figure_is_rejected(): void
+    // B1's display ranking must not decide whether a fully grounded B2 amount is safe.
+    public function test_grounded_monetary_claim_needs_no_b1_key_figure_slot(): void
     {
         $total = $this->money('total', 'Total financing', 12.4e9, 'USD 12.4 billion', 'FY2025');
         $verdict = $this->verify([$total], [
             ['claim' => 'Total financing reached USD 12.4 billion in FY2025.', 'cites' => ['metric:total']],
             ['claim' => 'Total financing was reported for the period.', 'cites' => ['metric:total']],
         ], keyFigures: []);
-        self::assertSame('rejected', $verdict['status']);
-        self::assertContains('unsupported_key_figure', $verdict['reasons']);
+        self::assertSame('verified', $verdict['status']);
+        self::assertCount(2, $verdict['claims']);
     }
 
     // D. Prompt injection inside untrusted evidence text. The prompt tells the model to ignore it;
@@ -183,10 +182,8 @@ class IntelligenceNarrativeVerifierTest extends TestCase
             ['claim' => 'Total financing reached USD 12.4 billion in FY2025.', 'cites' => ['metric:total']],
         ]);
         self::assertSame('rejected', $verdict['status']);
-        // Rejected both because the amount is not grounded in the cited record and because the
-        // cited record is not a figure Stage A found eligible to headline.
+        // The fabricated amount has no typed value in its cited record.
         self::assertContains('brief_numbers_grounded', $verdict['reasons']);
-        self::assertContains('unsupported_key_figure', $verdict['reasons']);
         self::assertSame([], $verdict['claims']);
 
         // Documented residual, asserted rather than wished away: a claim that merely restates the

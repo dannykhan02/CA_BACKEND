@@ -1,0 +1,11 @@
+{
+  "packet_sha256": "4bd2669aa0de28662cc0e69e1d604f5dfd7e70b3490155a6cbe4471f14942f1a",
+  "judgments_sha256": "9e9eb3e9b91e8a41cfe9c913b950cefe416da5df1757104c41071f5f0608d5e6",
+  "claim_count": 36,
+  "labels": {
+    "supported": 30,
+    "partial": 6,
+    "unsupported": 0,
+    "ambiguous": 0
+  }
+}

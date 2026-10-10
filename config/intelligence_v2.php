@@ -22,7 +22,7 @@ return [
         // Bumping any of these invalidates every stored B2 result (they are part of the input hash).
         'contract_version' => '1',
         'prompt_version' => '1',
-        'verifier_version' => '2',
+        'verifier_version' => '3',
         // Empty means AiModels::forTask('brief_synthesis'), i.e. the configured synthesis model.
         'model' => env('DOCINTEL_V2_BRIEF_NARRATIVE_MODEL') ?: null,
         // Hard bound on the serialized context sent to the provider (conservative strlen/3 estimate).

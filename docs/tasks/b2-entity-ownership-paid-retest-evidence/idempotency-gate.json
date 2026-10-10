@@ -1,0 +1,38 @@
+[
+    {
+        "call": 1,
+        "status": "rejected",
+        "original_provider_runs": 1,
+        "repeat_provider_calls": 0
+    },
+    {
+        "call": 2,
+        "status": "verified",
+        "original_provider_runs": 1,
+        "repeat_provider_calls": 0
+    },
+    {
+        "call": 3,
+        "status": "rejected",
+        "original_provider_runs": 1,
+        "repeat_provider_calls": 0
+    },
+    {
+        "call": 4,
+        "status": "rejected",
+        "original_provider_runs": 1,
+        "repeat_provider_calls": 0
+    },
+    {
+        "call": 5,
+        "status": "rejected",
+        "original_provider_runs": 1,
+        "repeat_provider_calls": 0
+    },
+    {
+        "call": 6,
+        "status": "rejected",
+        "original_provider_runs": 1,
+        "repeat_provider_calls": 0
+    }
+]

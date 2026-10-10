@@ -50,16 +50,13 @@ class IntelligenceEntityOwnershipReplayTest extends TestCase
         sort($recovered);
         self::assertSame([], $regressions, json_encode($regressions));
         self::assertSame([], $unsafe, 'OWNERSHIP_SAFETY_REGRESSION: '.implode(',', $unsafe));
-        self::assertSame(['F02', 'F05', 'F10', 'F18', 'F22'], $recovered);
-        self::assertSame(['F19', 'F28', 'F37', 'F44'], array_keys($still));
+        self::assertSame(['F02', 'F05', 'F10', 'F18', 'F22', 'F28', 'F37', 'F44'], $recovered);
+        self::assertSame(['F19'], array_keys($still));
         self::assertSame(['brief_entities_grounded'], $still['F19']);
-        foreach (['F28', 'F37', 'F44'] as $id) {
-            self::assertSame(['unsupported_key_figure'], $still[$id], $id);
-        }
         self::assertSame(2, count(array_filter($verified, fn ($status) => $status === 'verified')));
     }
 
-    public function test_seven_paired_replay_claims_keep_key_figure_and_partial_gates(): void
+    public function test_seven_paired_replay_claims_use_grounding_without_b1_ranking(): void
     {
         $items = array_column($this->fixture('b1-grounding/reviewed-claims.json')['items'], null, 'item');
         $recovered = [];
@@ -92,9 +89,7 @@ class IntelligenceEntityOwnershipReplayTest extends TestCase
         } finally {
             config()->set('intelligence_v2.b2.min_claims', $priorMin);
         }
-        self::assertSame(['C01', 'C02', 'C17', 'C18', 'C23'], $recovered, json_encode($still));
-        self::assertSame(['C21', 'C24'], array_keys($still));
-        self::assertSame(['unsupported_key_figure'], $still['C21']);
-        self::assertSame(['unsupported_key_figure'], $still['C24']);
+        self::assertSame(['C01', 'C02', 'C17', 'C18', 'C21', 'C23', 'C24'], $recovered, json_encode($still));
+        self::assertSame([], $still);
     }
 }

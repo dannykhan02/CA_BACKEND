@@ -65,7 +65,7 @@ class IntelligenceEntityOwnershipAdversarialTest extends TestCase
         try {
             $verdict = app(NarrativeVerifier::class)->verify(['narrative' => [[
                 'claim' => $claim, 'cites' => $cites ?? array_keys($byId),
-            ]]], array_keys($byId), $byId, array_keys($byId));
+            ]]], array_keys($byId), $byId, []);
 
             return $verdict['rejected'][0]['reasons'] ?? [];
         } finally {
