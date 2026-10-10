@@ -1,0 +1,437 @@
+[
+  {
+    "item": "C25",
+    "call": "b2eval-india_wash-1",
+    "idx": 0,
+    "verifier": "accepted",
+    "reasons": [],
+    "review": "supported",
+    "components": [
+      "none"
+    ],
+    "basis": "E1 is a risk record, status 'open', severity 'medium', subject India, provenance stated in the document, with value and verbatim quote matching the claim's description of fragmented definitions, reporting formats and data systems.",
+    "claim": "The report identifies as an open, medium-severity risk in India that fragmented definitions, reporting formats and data systems had made it difficult to measure progress consistently and spotlight inequalities."
+  },
+  {
+    "item": "C23",
+    "call": "b2eval-india_wash-1",
+    "idx": 1,
+    "verifier": "rejected",
+    "reasons": [
+      "brief_entities_grounded"
+    ],
+    "review": "supported",
+    "components": [
+      "none"
+    ],
+    "basis": "E1 establishes the 2014 launch of the Swachh Bharat (Clean India) Mission by the Government of India and E2 the 110 million toilets constructed under that mission.",
+    "claim": "The Government of India launched the Swachh Bharat (Clean India) Mission in 2014, and 110 million toilets were constructed under it."
+  },
+  {
+    "item": "C03",
+    "call": "b2eval-india_wash-1",
+    "idx": 2,
+    "verifier": "rejected",
+    "reasons": [
+      "brief_numbers_grounded",
+      "brief_entities_grounded"
+    ],
+    "review": "supported",
+    "components": [
+      "none"
+    ],
+    "basis": "E1 attributes 'over $120 billion' in water and sanitation investment to the Government of India, verbatim in the quote; the claim states no period, so the record's '10 years' window is dropped but not contradicted.",
+    "claim": "The Government of India invested over $120 billion in water and sanitation."
+  },
+  {
+    "item": "C26",
+    "call": "b2eval-india_wash-1",
+    "idx": 3,
+    "verifier": "rejected",
+    "reasons": [
+      "brief_numbers_grounded",
+      "brief_entities_grounded"
+    ],
+    "review": "supported",
+    "components": [
+      "none"
+    ],
+    "basis": "E1 (580 million, improved drinking water) and E2 (550 million, at least basic sanitation) are both subject India over the last 10 years, verbatim in the quote.",
+    "claim": "In India, 580 million people were reached with improved drinking water and 550 million with basic sanitation over the last 10 years."
+  },
+  {
+    "item": "C10",
+    "call": "b2eval-india_wash-1",
+    "idx": 4,
+    "verifier": "accepted",
+    "reasons": [],
+    "review": "supported",
+    "components": [
+      "none"
+    ],
+    "basis": "E1 (59.3 million, water) and E2 (17.9 million, sanitation) are subject India, period 2024, and the shared quote reads 'In 2024, 17.9 million people accessed safely managed sanitation, and 59.3 million people accessed safely managed water in their homes.'",
+    "claim": "In 2024, 59.3 million people in India accessed safely managed water and 17.9 million accessed safely managed sanitation."
+  },
+  {
+    "item": "C14",
+    "call": "b2eval-india_wash-1",
+    "idx": 5,
+    "verifier": "accepted",
+    "reasons": [],
+    "review": "supported",
+    "components": [
+      "none"
+    ],
+    "basis": "E1 is a fact record whose value and verbatim quote contain exactly the 'played a pivotal role by dramatically reducing incidence of diarrhoeal disease, malnutrition and infection' language, with provenance origin 'document' and assertion 'stated', which matches the claim's 'the report states that' framing.",
+    "claim": "The report states that improved access to clean water and sanitation played a pivotal role by dramatically reducing incidence of diarrhoeal disease, malnutrition and infection."
+  },
+  {
+    "item": "C12",
+    "call": "b2eval-india_wash-3",
+    "idx": 0,
+    "verifier": "accepted",
+    "reasons": [],
+    "review": "supported",
+    "components": [
+      "none"
+    ],
+    "basis": "E1 is a risk record with subject India, severity 'medium', status 'open', and a value/quote matching the claim's wording about fragmented definitions, reporting formats and data systems.",
+    "claim": "India faced a medium-severity, open risk in that fragmented definitions, reporting formats and data systems had made it difficult to measure progress consistently and spotlight inequalities."
+  },
+  {
+    "item": "C18",
+    "call": "b2eval-india_wash-3",
+    "idx": 1,
+    "verifier": "rejected",
+    "reasons": [
+      "brief_entities_grounded"
+    ],
+    "review": "supported",
+    "components": [
+      "none"
+    ],
+    "basis": "E1 states verbatim that in 2014 the Government of India launched the Swachh Bharat (Clean India) Mission, and E2 gives 110 million toilets constructed under that mission; the claim adds no period for the toilets, which E2 also leaves open.",
+    "claim": "The Government of India launched the Swachh Bharat (Clean India) Mission in 2014, and 110 million toilets were constructed under the mission."
+  },
+  {
+    "item": "C09",
+    "call": "b2eval-india_wash-3",
+    "idx": 2,
+    "verifier": "rejected",
+    "reasons": [
+      "brief_numbers_grounded",
+      "brief_entities_grounded"
+    ],
+    "review": "supported",
+    "components": [
+      "none"
+    ],
+    "basis": "E1 attributes 'over $120 billion' of water and sanitation investment to the Government of India in its verbatim quote; the claim makes no period assertion to conflict with the record's '10 years'.",
+    "claim": "The Government of India's investment in water and sanitation was over $120 billion."
+  },
+  {
+    "item": "C19",
+    "call": "b2eval-india_wash-3",
+    "idx": 3,
+    "verifier": "accepted",
+    "reasons": [],
+    "review": "supported",
+    "components": [
+      "none"
+    ],
+    "basis": "E1/E2 give 59.3 million people accessing safely managed water and 17.9 million accessing safely managed sanitation, subject India, period 2024, verbatim in the quote.",
+    "claim": "In 2024, 59.3 million people in India accessed safely managed water and 17.9 million people accessed safely managed sanitation."
+  },
+  {
+    "item": "C16",
+    "call": "b2eval-india_wash-3",
+    "idx": 4,
+    "verifier": "rejected",
+    "reasons": [
+      "brief_numbers_grounded"
+    ],
+    "review": "supported",
+    "components": [
+      "none"
+    ],
+    "basis": "E1 (580 million, improved drinking water) and E2 (550 million, basic sanitation) are subject India, period '10 years', and the quote reads 'In the last 10 years, 550 million people have been reached with at least basic sanitation, and 580 million people with improved drinking water in their homes.'",
+    "claim": "Over the last 10 years, 580 million people in India were reached with improved drinking water and 550 million with basic sanitation."
+  },
+  {
+    "item": "C22",
+    "call": "b2eval-india_wash-3",
+    "idx": 5,
+    "verifier": "accepted",
+    "reasons": [],
+    "review": "supported",
+    "components": [
+      "none"
+    ],
+    "basis": "Same fact record as C14: the pivotal-role and 'dramatically reducing' language is the record's own stated value and verbatim quote, and the claim attributes it to the report rather than asserting it independently.",
+    "claim": "The report states that improved access to clean water and sanitation played a pivotal role by dramatically reducing incidence of diarrhoeal disease, malnutrition and infection."
+  },
+  {
+    "item": "C17",
+    "call": "b2eval-unicef_reduced-1",
+    "idx": 0,
+    "verifier": "rejected",
+    "reasons": [
+      "unsupported_key_figure",
+      "brief_numbers_grounded",
+      "brief_entities_grounded"
+    ],
+    "review": "supported",
+    "components": [
+      "none"
+    ],
+    "basis": "E1 again gives Core Resources income of $1.584 billion, UNICEF, 2024, with the total visible in the verbatim quote.",
+    "claim": "UNICEF's Core Resources income in 2024 was $1.584 billion."
+  },
+  {
+    "item": "C24",
+    "call": "b2eval-unicef_reduced-1",
+    "idx": 1,
+    "verifier": "rejected",
+    "reasons": [
+      "brief_numbers_grounded",
+      "brief_entities_grounded"
+    ],
+    "review": "supported",
+    "components": [
+      "none"
+    ],
+    "basis": "E1/E2/E3 attach $724.9 million (private sector), $512.6 million (public sector) and $346.1 million (other partners) to UNICEF Core Resources income for 2024, matching the claim in value, unit and period.",
+    "claim": "In 2024 UNICEF's Core Resources income from the private sector was $724.9 million, from the public sector was $512.6 million, and from other partners was $346.1 million."
+  },
+  {
+    "item": "C20",
+    "call": "b2eval-unicef_reduced-1",
+    "idx": 2,
+    "verifier": "rejected",
+    "reasons": [
+      "brief_entities_grounded"
+    ],
+    "review": "partially_supported",
+    "components": [
+      "figure"
+    ],
+    "basis": "As in C13, 46% (E1) and 49% (E2) appear in the cited chart quote but the 5% ORE figure (E3) appears nowhere in that quote and reads as a residual derivation; the quote also does not establish which of its fifteen percentages are the 2024 column.",
+    "claim": "Core Resources made up 46% of UNICEF's total income in 2024, while Other Resources Regular made up 49% and Other Resources Emergency made up 5%."
+  },
+  {
+    "item": "C28",
+    "call": "b2eval-unicef_reduced-1",
+    "idx": 3,
+    "verifier": "rejected",
+    "reasons": [
+      "unsupported_key_figure",
+      "brief_numbers_grounded"
+    ],
+    "review": "supported",
+    "components": [
+      "none"
+    ],
+    "basis": "E1/E2/E3 state $8.263 billion (2024), $8.920 billion (2023) and $9.326 billion (2022) as UNICEF total income from voluntary contributions, and each amount appears verbatim in the shared quote.",
+    "claim": "UNICEF's total income from voluntary contributions was $8.263 billion in 2024, compared with $8.920 billion in 2023 and $9.326 billion in 2022."
+  },
+  {
+    "item": "C05",
+    "call": "b2eval-unicef_reduced-1",
+    "idx": 4,
+    "verifier": "rejected",
+    "reasons": [
+      "brief_entities_grounded"
+    ],
+    "review": "supported",
+    "components": [
+      "none"
+    ],
+    "basis": "Identical claim and identical records to C04: E1 and E2 establish 59.3 million (water supplies) and 17.9 million (sanitation services) for India in 2024, verbatim in the quote.",
+    "claim": "In India in 2024, safely managed water supplies were provided to 59.3 million people and sanitation services to 17.9 million people."
+  },
+  {
+    "item": "C01",
+    "call": "b2eval-unicef_reduced-2",
+    "idx": 0,
+    "verifier": "rejected",
+    "reasons": [
+      "unsupported_key_figure",
+      "brief_numbers_grounded",
+      "brief_entities_grounded"
+    ],
+    "review": "supported",
+    "components": [
+      "none"
+    ],
+    "basis": "E1 is a metric labelled 'Core Resources income', value $1.584 billion, unit USD, period 2024, subject UNICEF, and its verbatim quote shows 'Total $1.584 billion' under 'Core resources income by type of partner, 2024'.",
+    "claim": "UNICEF's Core Resources income in 2024 was $1.584 billion."
+  },
+  {
+    "item": "C21",
+    "call": "b2eval-unicef_reduced-2",
+    "idx": 1,
+    "verifier": "rejected",
+    "reasons": [
+      "brief_numbers_grounded",
+      "brief_entities_grounded"
+    ],
+    "review": "supported",
+    "components": [
+      "none"
+    ],
+    "basis": "E1/E2/E3 give $724.9m private sector, $512.6m public sector and $346.1m other partners as Core Resources income for 2024, subject UNICEF, each verbatim in the shared quote.",
+    "claim": "Core Resources income in 2024 included $724.9 million from the private sector, $512.6 million from the public sector and $346.1 million from other partners."
+  },
+  {
+    "item": "C13",
+    "call": "b2eval-unicef_reduced-2",
+    "idx": 2,
+    "verifier": "rejected",
+    "reasons": [
+      "brief_entities_grounded"
+    ],
+    "review": "partially_supported",
+    "components": [
+      "figure"
+    ],
+    "basis": "E1 (46%) and E2 (49%) appear verbatim in the shared chart quote, but the 5% ORE share the claim states appears nowhere in E3's quote (the quote's percentages are 37/41/30/49/46/45/20/17/14/33/49/18/31/50/19), so that component rests only on the record's asserted value and looks like a 100-46-49 derivation; the quote also does not fix which percentages belong to 2024.",
+    "claim": "For 2024, Core Resources made up 46% of UNICEF's total income, while Other Resources Regular made up 49% and Other Resources Emergency made up 5%."
+  },
+  {
+    "item": "C15",
+    "call": "b2eval-unicef_reduced-2",
+    "idx": 3,
+    "verifier": "rejected",
+    "reasons": [
+      "unsupported_key_figure",
+      "brief_numbers_grounded"
+    ],
+    "review": "supported",
+    "components": [
+      "none"
+    ],
+    "basis": "Same records as C11: E1/E2/E3 attach $8.263bn, $8.920bn and $9.326bn to UNICEF total voluntary-contribution income for 2024, 2023 and 2022, and all three figures are in the verbatim quote.",
+    "claim": "UNICEF's total income from voluntary contributions was $8.263 billion in 2024, compared with $8.920 billion in 2023 and $9.326 billion in 2022."
+  },
+  {
+    "item": "C06",
+    "call": "b2eval-unicef_reduced-2",
+    "idx": 4,
+    "verifier": "rejected",
+    "reasons": [
+      "brief_entities_grounded"
+    ],
+    "review": "supported",
+    "components": [
+      "none"
+    ],
+    "basis": "Identical claim and identical records again: E1/E2 establish the 59.3 million and 17.9 million figures, unit people, subject India, period 2024.",
+    "claim": "In India in 2024, safely managed water supplies were provided to 59.3 million people and sanitation services to 17.9 million people."
+  },
+  {
+    "item": "C08",
+    "call": "b2eval-unicef_reduced-2",
+    "idx": 5,
+    "verifier": "rejected",
+    "reasons": [
+      "brief_entities_grounded"
+    ],
+    "review": "supported",
+    "components": [
+      "none"
+    ],
+    "basis": "E1 states protection services for 'more than 675,000 children' with subject Sierra Leone, verbatim in the quote; the record's five-year window is omitted by the claim rather than misstated.",
+    "claim": "In Sierra Leone, more than 675,000 children received protection services."
+  },
+  {
+    "item": "C02",
+    "call": "b2eval-unicef_reduced-3",
+    "idx": 0,
+    "verifier": "rejected",
+    "reasons": [
+      "brief_numbers_grounded",
+      "brief_entities_grounded"
+    ],
+    "review": "supported",
+    "components": [
+      "none"
+    ],
+    "basis": "E1 gives the $1.584 billion 2024 total and E2/E3/E4 give $724.9m private sector, $512.6m public sector and $346.1m other, all for UNICEF in 2024; the same verbatim quote in each record lists all four figures with those partner labels.",
+    "claim": "UNICEF's Core Resources income in 2024 was $1.584 billion, of which $724.9 million came from the private sector, $512.6 million from the public sector and $346.1 million from other partners."
+  },
+  {
+    "item": "C27",
+    "call": "b2eval-unicef_reduced-3",
+    "idx": 1,
+    "verifier": "rejected",
+    "reasons": [
+      "brief_entities_grounded"
+    ],
+    "review": "partially_supported",
+    "components": [
+      "figure"
+    ],
+    "basis": "Same defect as C13/C20: the Core Resources 46% (E1) and ORR 49% (E2) figures are in the cited quote, but the ORE 5% figure (E3) does not appear in it at all and is only asserted in the record's value field, so that component is not established by the cited source text.",
+    "claim": "In 2024 Core Resources made up 46% of UNICEF's total income, while Other Resources Regular made up 49% and Other Resources Emergency made up 5%."
+  },
+  {
+    "item": "C11",
+    "call": "b2eval-unicef_reduced-3",
+    "idx": 2,
+    "verifier": "rejected",
+    "reasons": [
+      "unsupported_key_figure",
+      "brief_numbers_grounded"
+    ],
+    "review": "supported",
+    "components": [
+      "none"
+    ],
+    "basis": "E1/E2/E3 are each labelled 'Total income from voluntary contributions' for UNICEF with $8.263 billion in 2024, $8.920 billion in 2023 and $9.326 billion in 2022; all three amounts appear verbatim in the shared chart quote whose legend covers RR, ORR and ORE.",
+    "claim": "UNICEF's total income from voluntary contributions was $8.263 billion in 2024, compared with $8.920 billion in 2023 and $9.326 billion in 2022."
+  },
+  {
+    "item": "C29",
+    "call": "b2eval-unicef_reduced-3",
+    "idx": 3,
+    "verifier": "rejected",
+    "reasons": [
+      "unsupported_key_figure",
+      "brief_numbers_grounded"
+    ],
+    "review": "supported",
+    "components": [
+      "none"
+    ],
+    "basis": "E1 gives $8.122 billion for 2021 and E2 $7.219 billion for 2020 as total income from voluntary contributions (subject UNICEF), both amounts verbatim in the quote.",
+    "claim": "Total income from voluntary contributions was $8.122 billion in 2021 and $7.219 billion in 2020."
+  },
+  {
+    "item": "C04",
+    "call": "b2eval-unicef_reduced-3",
+    "idx": 4,
+    "verifier": "rejected",
+    "reasons": [
+      "brief_entities_grounded"
+    ],
+    "review": "supported",
+    "components": [
+      "none"
+    ],
+    "basis": "E1 (59.3 million people, safely managed water supplies) and E2 (17.9 million people, sanitation services) are both for subject India, period 2024, and the shared verbatim quote states both figures for 2024.",
+    "claim": "In India in 2024, safely managed water supplies were provided to 59.3 million people and sanitation services to 17.9 million people."
+  },
+  {
+    "item": "C07",
+    "call": "b2eval-unicef_reduced-3",
+    "idx": 5,
+    "verifier": "accepted",
+    "reasons": [],
+    "review": "supported",
+    "components": [
+      "none"
+    ],
+    "basis": "E1 establishes 'more than 675,000 children' receiving protection services in Sierra Leone and E2 a '23 per cent drop' in under-five mortality in Yemen; the claim drops each record's multi-year window ('in five years', 'last decade of conflict') but asserts no conflicting period, and its 'Yemen saw' wording is weaker than E2's 'contributing to'.",
+    "claim": "Sierra Leone had more than 675,000 children receiving protection services, and Yemen saw a 23 per cent drop in under-five mortality."
+  }
+]

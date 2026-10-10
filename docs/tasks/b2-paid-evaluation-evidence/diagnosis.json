@@ -1,0 +1,1025 @@
+[
+    {
+        "item": "C23",
+        "call": "b2eval-india_wash-1",
+        "idx": 1,
+        "verifier_reasons": [
+            "brief_entities_grounded"
+        ],
+        "claim": "The Government of India launched the Swachh Bharat (Clean India) Mission in 2014, and 110 million toilets were constructed under it.",
+        "numbers_in_claim": [
+            {
+                "n": 110000000,
+                "unit": null
+            }
+        ],
+        "ungrounded_numbers": [],
+        "entities_in_claim": [
+            "The Government",
+            "Swachh Bharat",
+            "Clean India"
+        ],
+        "ungrounded_entities": [
+            "The Government",
+            "Swachh Bharat",
+            "Clean India"
+        ],
+        "cited_records": [
+            {
+                "label": "Swachh Bharat Mission launch",
+                "subject": "Government of India",
+                "data_value": "Government of India launched the Swachh Bharat (Clean India) Mission",
+                "typed_number": null,
+                "typed_currency": null,
+                "typed_unit_kind": null,
+                "typed_value_present": false
+            },
+            {
+                "label": "Toilets constructed under Swachh Bharat Mission",
+                "subject": "Government of India",
+                "data_value": "110 million",
+                "typed_number": 110000000,
+                "typed_currency": null,
+                "typed_unit_kind": "count",
+                "typed_value_present": true
+            }
+        ]
+    },
+    {
+        "item": "C03",
+        "call": "b2eval-india_wash-1",
+        "idx": 2,
+        "verifier_reasons": [
+            "brief_numbers_grounded",
+            "brief_entities_grounded"
+        ],
+        "claim": "The Government of India invested over $120 billion in water and sanitation.",
+        "numbers_in_claim": [
+            {
+                "n": 120000000000,
+                "unit": null
+            }
+        ],
+        "ungrounded_numbers": [
+            {
+                "n": 120000000000,
+                "unit": null
+            }
+        ],
+        "entities_in_claim": [
+            "The Government"
+        ],
+        "ungrounded_entities": [
+            "The Government"
+        ],
+        "cited_records": [
+            {
+                "label": "Government of India investment in water and sanitation",
+                "subject": "Government of India",
+                "data_value": "over $120 billion",
+                "typed_number": 120000000000,
+                "typed_currency": "$",
+                "typed_unit_kind": "currency",
+                "typed_value_present": true
+            }
+        ]
+    },
+    {
+        "item": "C26",
+        "call": "b2eval-india_wash-1",
+        "idx": 3,
+        "verifier_reasons": [
+            "brief_numbers_grounded",
+            "brief_entities_grounded"
+        ],
+        "claim": "In India, 580 million people were reached with improved drinking water and 550 million with basic sanitation over the last 10 years.",
+        "numbers_in_claim": [
+            {
+                "n": 580000000,
+                "unit": null
+            },
+            {
+                "n": 550000000,
+                "unit": null
+            },
+            {
+                "n": 10,
+                "unit": null
+            }
+        ],
+        "ungrounded_numbers": [
+            {
+                "n": 10,
+                "unit": null
+            }
+        ],
+        "entities_in_claim": [
+            "In India"
+        ],
+        "ungrounded_entities": [
+            "In India"
+        ],
+        "cited_records": [
+            {
+                "label": "People reached with improved drinking water in last 10 years",
+                "subject": "India",
+                "data_value": "580 million",
+                "typed_number": 580000000,
+                "typed_currency": null,
+                "typed_unit_kind": "count",
+                "typed_value_present": true
+            },
+            {
+                "label": "People reached with basic sanitation in last 10 years",
+                "subject": "India",
+                "data_value": "550 million",
+                "typed_number": 550000000,
+                "typed_currency": null,
+                "typed_unit_kind": "count",
+                "typed_value_present": true
+            }
+        ]
+    },
+    {
+        "item": "C18",
+        "call": "b2eval-india_wash-3",
+        "idx": 1,
+        "verifier_reasons": [
+            "brief_entities_grounded"
+        ],
+        "claim": "The Government of India launched the Swachh Bharat (Clean India) Mission in 2014, and 110 million toilets were constructed under the mission.",
+        "numbers_in_claim": [
+            {
+                "n": 110000000,
+                "unit": null
+            }
+        ],
+        "ungrounded_numbers": [],
+        "entities_in_claim": [
+            "The Government",
+            "Swachh Bharat",
+            "Clean India"
+        ],
+        "ungrounded_entities": [
+            "The Government",
+            "Swachh Bharat",
+            "Clean India"
+        ],
+        "cited_records": [
+            {
+                "label": "Swachh Bharat Mission launch",
+                "subject": "Government of India",
+                "data_value": "Government of India launched the Swachh Bharat (Clean India) Mission",
+                "typed_number": null,
+                "typed_currency": null,
+                "typed_unit_kind": null,
+                "typed_value_present": false
+            },
+            {
+                "label": "Toilets constructed under Swachh Bharat Mission",
+                "subject": "Government of India",
+                "data_value": "110 million",
+                "typed_number": 110000000,
+                "typed_currency": null,
+                "typed_unit_kind": "count",
+                "typed_value_present": true
+            }
+        ]
+    },
+    {
+        "item": "C09",
+        "call": "b2eval-india_wash-3",
+        "idx": 2,
+        "verifier_reasons": [
+            "brief_numbers_grounded",
+            "brief_entities_grounded"
+        ],
+        "claim": "The Government of India's investment in water and sanitation was over $120 billion.",
+        "numbers_in_claim": [
+            {
+                "n": 120000000000,
+                "unit": null
+            }
+        ],
+        "ungrounded_numbers": [
+            {
+                "n": 120000000000,
+                "unit": null
+            }
+        ],
+        "entities_in_claim": [
+            "The Government"
+        ],
+        "ungrounded_entities": [
+            "The Government"
+        ],
+        "cited_records": [
+            {
+                "label": "Government of India investment in water and sanitation",
+                "subject": "Government of India",
+                "data_value": "over $120 billion",
+                "typed_number": 120000000000,
+                "typed_currency": "$",
+                "typed_unit_kind": "currency",
+                "typed_value_present": true
+            }
+        ]
+    },
+    {
+        "item": "C16",
+        "call": "b2eval-india_wash-3",
+        "idx": 4,
+        "verifier_reasons": [
+            "brief_numbers_grounded"
+        ],
+        "claim": "Over the last 10 years, 580 million people in India were reached with improved drinking water and 550 million with basic sanitation.",
+        "numbers_in_claim": [
+            {
+                "n": 10,
+                "unit": null
+            },
+            {
+                "n": 580000000,
+                "unit": null
+            },
+            {
+                "n": 550000000,
+                "unit": null
+            }
+        ],
+        "ungrounded_numbers": [
+            {
+                "n": 10,
+                "unit": null
+            }
+        ],
+        "entities_in_claim": [],
+        "ungrounded_entities": [],
+        "cited_records": [
+            {
+                "label": "People reached with improved drinking water in last 10 years",
+                "subject": "India",
+                "data_value": "580 million",
+                "typed_number": 580000000,
+                "typed_currency": null,
+                "typed_unit_kind": "count",
+                "typed_value_present": true
+            },
+            {
+                "label": "People reached with basic sanitation in last 10 years",
+                "subject": "India",
+                "data_value": "550 million",
+                "typed_number": 550000000,
+                "typed_currency": null,
+                "typed_unit_kind": "count",
+                "typed_value_present": true
+            }
+        ]
+    },
+    {
+        "item": "C17",
+        "call": "b2eval-unicef_reduced-1",
+        "idx": 0,
+        "verifier_reasons": [
+            "unsupported_key_figure",
+            "brief_numbers_grounded",
+            "brief_entities_grounded"
+        ],
+        "claim": "UNICEF's Core Resources income in 2024 was $1.584 billion.",
+        "numbers_in_claim": [
+            {
+                "n": 1584000000,
+                "unit": null
+            }
+        ],
+        "ungrounded_numbers": [
+            {
+                "n": 1584000000,
+                "unit": null
+            }
+        ],
+        "entities_in_claim": [
+            "Core Resources"
+        ],
+        "ungrounded_entities": [
+            "Core Resources"
+        ],
+        "cited_records": [
+            {
+                "label": "Core Resources income",
+                "subject": "UNICEF",
+                "data_value": "$1.584 billion",
+                "typed_number": null,
+                "typed_currency": null,
+                "typed_unit_kind": null,
+                "typed_value_present": false
+            }
+        ]
+    },
+    {
+        "item": "C24",
+        "call": "b2eval-unicef_reduced-1",
+        "idx": 1,
+        "verifier_reasons": [
+            "brief_numbers_grounded",
+            "brief_entities_grounded"
+        ],
+        "claim": "In 2024 UNICEF's Core Resources income from the private sector was $724.9 million, from the public sector was $512.6 million, and from other partners was $346.1 million.",
+        "numbers_in_claim": [
+            {
+                "n": 724900000,
+                "unit": null
+            },
+            {
+                "n": 512600000,
+                "unit": null
+            },
+            {
+                "n": 346100000,
+                "unit": null
+            }
+        ],
+        "ungrounded_numbers": [
+            {
+                "n": 724900000,
+                "unit": null
+            },
+            {
+                "n": 512600000,
+                "unit": null
+            },
+            {
+                "n": 346100000,
+                "unit": null
+            }
+        ],
+        "entities_in_claim": [
+            "Core Resources"
+        ],
+        "ungrounded_entities": [
+            "Core Resources"
+        ],
+        "cited_records": [
+            {
+                "label": "Core Resources income from private sector",
+                "subject": "UNICEF",
+                "data_value": "$724.9 million",
+                "typed_number": 724900000,
+                "typed_currency": "$",
+                "typed_unit_kind": "currency",
+                "typed_value_present": true
+            },
+            {
+                "label": "Core Resources income from public sector",
+                "subject": "UNICEF",
+                "data_value": "$512.6 million",
+                "typed_number": 512600000,
+                "typed_currency": "$",
+                "typed_unit_kind": "currency",
+                "typed_value_present": true
+            },
+            {
+                "label": "Core Resources income from other partners",
+                "subject": "UNICEF",
+                "data_value": "$346.1 million",
+                "typed_number": 346100000,
+                "typed_currency": "$",
+                "typed_unit_kind": "currency",
+                "typed_value_present": true
+            }
+        ]
+    },
+    {
+        "item": "C28",
+        "call": "b2eval-unicef_reduced-1",
+        "idx": 3,
+        "verifier_reasons": [
+            "unsupported_key_figure",
+            "brief_numbers_grounded"
+        ],
+        "claim": "UNICEF's total income from voluntary contributions was $8.263 billion in 2024, compared with $8.920 billion in 2023 and $9.326 billion in 2022.",
+        "numbers_in_claim": [
+            {
+                "n": 8263000000,
+                "unit": null
+            },
+            {
+                "n": 8920000000,
+                "unit": null
+            },
+            {
+                "n": 9326000000,
+                "unit": null
+            }
+        ],
+        "ungrounded_numbers": [
+            {
+                "n": 8263000000,
+                "unit": null
+            },
+            {
+                "n": 8920000000,
+                "unit": null
+            },
+            {
+                "n": 9326000000,
+                "unit": null
+            }
+        ],
+        "entities_in_claim": [],
+        "ungrounded_entities": [],
+        "cited_records": [
+            {
+                "label": "Total income from voluntary contributions",
+                "subject": "UNICEF",
+                "data_value": "$8.263 billion",
+                "typed_number": null,
+                "typed_currency": null,
+                "typed_unit_kind": null,
+                "typed_value_present": false
+            },
+            {
+                "label": "Total income from voluntary contributions",
+                "subject": "UNICEF",
+                "data_value": "$8.920 billion",
+                "typed_number": null,
+                "typed_currency": null,
+                "typed_unit_kind": null,
+                "typed_value_present": false
+            },
+            {
+                "label": "Total income from voluntary contributions",
+                "subject": "UNICEF",
+                "data_value": "$9.326 billion",
+                "typed_number": null,
+                "typed_currency": null,
+                "typed_unit_kind": null,
+                "typed_value_present": false
+            }
+        ]
+    },
+    {
+        "item": "C05",
+        "call": "b2eval-unicef_reduced-1",
+        "idx": 4,
+        "verifier_reasons": [
+            "brief_entities_grounded"
+        ],
+        "claim": "In India in 2024, safely managed water supplies were provided to 59.3 million people and sanitation services to 17.9 million people.",
+        "numbers_in_claim": [
+            {
+                "n": 59300000,
+                "unit": null
+            },
+            {
+                "n": 17900000,
+                "unit": null
+            }
+        ],
+        "ungrounded_numbers": [],
+        "entities_in_claim": [
+            "In India"
+        ],
+        "ungrounded_entities": [
+            "In India"
+        ],
+        "cited_records": [
+            {
+                "label": "Safely managed water supplies provided",
+                "subject": "India",
+                "data_value": "59.3 million people",
+                "typed_number": 59300000,
+                "typed_currency": null,
+                "typed_unit_kind": "count",
+                "typed_value_present": true
+            },
+            {
+                "label": "Sanitation services provided",
+                "subject": "India",
+                "data_value": "17.9 million people",
+                "typed_number": 17900000,
+                "typed_currency": null,
+                "typed_unit_kind": "count",
+                "typed_value_present": true
+            }
+        ]
+    },
+    {
+        "item": "C01",
+        "call": "b2eval-unicef_reduced-2",
+        "idx": 0,
+        "verifier_reasons": [
+            "unsupported_key_figure",
+            "brief_numbers_grounded",
+            "brief_entities_grounded"
+        ],
+        "claim": "UNICEF's Core Resources income in 2024 was $1.584 billion.",
+        "numbers_in_claim": [
+            {
+                "n": 1584000000,
+                "unit": null
+            }
+        ],
+        "ungrounded_numbers": [
+            {
+                "n": 1584000000,
+                "unit": null
+            }
+        ],
+        "entities_in_claim": [
+            "Core Resources"
+        ],
+        "ungrounded_entities": [
+            "Core Resources"
+        ],
+        "cited_records": [
+            {
+                "label": "Core Resources income",
+                "subject": "UNICEF",
+                "data_value": "$1.584 billion",
+                "typed_number": null,
+                "typed_currency": null,
+                "typed_unit_kind": null,
+                "typed_value_present": false
+            }
+        ]
+    },
+    {
+        "item": "C21",
+        "call": "b2eval-unicef_reduced-2",
+        "idx": 1,
+        "verifier_reasons": [
+            "brief_numbers_grounded",
+            "brief_entities_grounded"
+        ],
+        "claim": "Core Resources income in 2024 included $724.9 million from the private sector, $512.6 million from the public sector and $346.1 million from other partners.",
+        "numbers_in_claim": [
+            {
+                "n": 724900000,
+                "unit": null
+            },
+            {
+                "n": 512600000,
+                "unit": null
+            },
+            {
+                "n": 346100000,
+                "unit": null
+            }
+        ],
+        "ungrounded_numbers": [
+            {
+                "n": 724900000,
+                "unit": null
+            },
+            {
+                "n": 512600000,
+                "unit": null
+            },
+            {
+                "n": 346100000,
+                "unit": null
+            }
+        ],
+        "entities_in_claim": [
+            "Core Resources"
+        ],
+        "ungrounded_entities": [
+            "Core Resources"
+        ],
+        "cited_records": [
+            {
+                "label": "Core Resources income from private sector",
+                "subject": "UNICEF",
+                "data_value": "$724.9 million",
+                "typed_number": 724900000,
+                "typed_currency": "$",
+                "typed_unit_kind": "currency",
+                "typed_value_present": true
+            },
+            {
+                "label": "Core Resources income from public sector",
+                "subject": "UNICEF",
+                "data_value": "$512.6 million",
+                "typed_number": 512600000,
+                "typed_currency": "$",
+                "typed_unit_kind": "currency",
+                "typed_value_present": true
+            },
+            {
+                "label": "Core Resources income from other partners",
+                "subject": "UNICEF",
+                "data_value": "$346.1 million",
+                "typed_number": 346100000,
+                "typed_currency": "$",
+                "typed_unit_kind": "currency",
+                "typed_value_present": true
+            }
+        ]
+    },
+    {
+        "item": "C15",
+        "call": "b2eval-unicef_reduced-2",
+        "idx": 3,
+        "verifier_reasons": [
+            "unsupported_key_figure",
+            "brief_numbers_grounded"
+        ],
+        "claim": "UNICEF's total income from voluntary contributions was $8.263 billion in 2024, compared with $8.920 billion in 2023 and $9.326 billion in 2022.",
+        "numbers_in_claim": [
+            {
+                "n": 8263000000,
+                "unit": null
+            },
+            {
+                "n": 8920000000,
+                "unit": null
+            },
+            {
+                "n": 9326000000,
+                "unit": null
+            }
+        ],
+        "ungrounded_numbers": [
+            {
+                "n": 8263000000,
+                "unit": null
+            },
+            {
+                "n": 8920000000,
+                "unit": null
+            },
+            {
+                "n": 9326000000,
+                "unit": null
+            }
+        ],
+        "entities_in_claim": [],
+        "ungrounded_entities": [],
+        "cited_records": [
+            {
+                "label": "Total income from voluntary contributions",
+                "subject": "UNICEF",
+                "data_value": "$8.263 billion",
+                "typed_number": null,
+                "typed_currency": null,
+                "typed_unit_kind": null,
+                "typed_value_present": false
+            },
+            {
+                "label": "Total income from voluntary contributions",
+                "subject": "UNICEF",
+                "data_value": "$8.920 billion",
+                "typed_number": null,
+                "typed_currency": null,
+                "typed_unit_kind": null,
+                "typed_value_present": false
+            },
+            {
+                "label": "Total income from voluntary contributions",
+                "subject": "UNICEF",
+                "data_value": "$9.326 billion",
+                "typed_number": null,
+                "typed_currency": null,
+                "typed_unit_kind": null,
+                "typed_value_present": false
+            }
+        ]
+    },
+    {
+        "item": "C06",
+        "call": "b2eval-unicef_reduced-2",
+        "idx": 4,
+        "verifier_reasons": [
+            "brief_entities_grounded"
+        ],
+        "claim": "In India in 2024, safely managed water supplies were provided to 59.3 million people and sanitation services to 17.9 million people.",
+        "numbers_in_claim": [
+            {
+                "n": 59300000,
+                "unit": null
+            },
+            {
+                "n": 17900000,
+                "unit": null
+            }
+        ],
+        "ungrounded_numbers": [],
+        "entities_in_claim": [
+            "In India"
+        ],
+        "ungrounded_entities": [
+            "In India"
+        ],
+        "cited_records": [
+            {
+                "label": "Safely managed water supplies provided",
+                "subject": "India",
+                "data_value": "59.3 million people",
+                "typed_number": 59300000,
+                "typed_currency": null,
+                "typed_unit_kind": "count",
+                "typed_value_present": true
+            },
+            {
+                "label": "Sanitation services provided",
+                "subject": "India",
+                "data_value": "17.9 million people",
+                "typed_number": 17900000,
+                "typed_currency": null,
+                "typed_unit_kind": "count",
+                "typed_value_present": true
+            }
+        ]
+    },
+    {
+        "item": "C08",
+        "call": "b2eval-unicef_reduced-2",
+        "idx": 5,
+        "verifier_reasons": [
+            "brief_entities_grounded"
+        ],
+        "claim": "In Sierra Leone, more than 675,000 children received protection services.",
+        "numbers_in_claim": [
+            {
+                "n": 675000,
+                "unit": null
+            }
+        ],
+        "ungrounded_numbers": [],
+        "entities_in_claim": [
+            "In Sierra Leone"
+        ],
+        "ungrounded_entities": [
+            "In Sierra Leone"
+        ],
+        "cited_records": [
+            {
+                "label": "Children receiving protection services",
+                "subject": "Sierra Leone",
+                "data_value": "more than 675,000 children",
+                "typed_number": 675000,
+                "typed_currency": null,
+                "typed_unit_kind": "count",
+                "typed_value_present": true
+            }
+        ]
+    },
+    {
+        "item": "C02",
+        "call": "b2eval-unicef_reduced-3",
+        "idx": 0,
+        "verifier_reasons": [
+            "brief_numbers_grounded",
+            "brief_entities_grounded"
+        ],
+        "claim": "UNICEF's Core Resources income in 2024 was $1.584 billion, of which $724.9 million came from the private sector, $512.6 million from the public sector and $346.1 million from other partners.",
+        "numbers_in_claim": [
+            {
+                "n": 1584000000,
+                "unit": null
+            },
+            {
+                "n": 724900000,
+                "unit": null
+            },
+            {
+                "n": 512600000,
+                "unit": null
+            },
+            {
+                "n": 346100000,
+                "unit": null
+            }
+        ],
+        "ungrounded_numbers": [
+            {
+                "n": 1584000000,
+                "unit": null
+            },
+            {
+                "n": 724900000,
+                "unit": null
+            },
+            {
+                "n": 512600000,
+                "unit": null
+            },
+            {
+                "n": 346100000,
+                "unit": null
+            }
+        ],
+        "entities_in_claim": [
+            "Core Resources"
+        ],
+        "ungrounded_entities": [
+            "Core Resources"
+        ],
+        "cited_records": [
+            {
+                "label": "Core Resources income",
+                "subject": "UNICEF",
+                "data_value": "$1.584 billion",
+                "typed_number": null,
+                "typed_currency": null,
+                "typed_unit_kind": null,
+                "typed_value_present": false
+            },
+            {
+                "label": "Core Resources income from private sector",
+                "subject": "UNICEF",
+                "data_value": "$724.9 million",
+                "typed_number": 724900000,
+                "typed_currency": "$",
+                "typed_unit_kind": "currency",
+                "typed_value_present": true
+            },
+            {
+                "label": "Core Resources income from public sector",
+                "subject": "UNICEF",
+                "data_value": "$512.6 million",
+                "typed_number": 512600000,
+                "typed_currency": "$",
+                "typed_unit_kind": "currency",
+                "typed_value_present": true
+            },
+            {
+                "label": "Core Resources income from other partners",
+                "subject": "UNICEF",
+                "data_value": "$346.1 million",
+                "typed_number": 346100000,
+                "typed_currency": "$",
+                "typed_unit_kind": "currency",
+                "typed_value_present": true
+            }
+        ]
+    },
+    {
+        "item": "C11",
+        "call": "b2eval-unicef_reduced-3",
+        "idx": 2,
+        "verifier_reasons": [
+            "unsupported_key_figure",
+            "brief_numbers_grounded"
+        ],
+        "claim": "UNICEF's total income from voluntary contributions was $8.263 billion in 2024, compared with $8.920 billion in 2023 and $9.326 billion in 2022.",
+        "numbers_in_claim": [
+            {
+                "n": 8263000000,
+                "unit": null
+            },
+            {
+                "n": 8920000000,
+                "unit": null
+            },
+            {
+                "n": 9326000000,
+                "unit": null
+            }
+        ],
+        "ungrounded_numbers": [
+            {
+                "n": 8263000000,
+                "unit": null
+            },
+            {
+                "n": 8920000000,
+                "unit": null
+            },
+            {
+                "n": 9326000000,
+                "unit": null
+            }
+        ],
+        "entities_in_claim": [],
+        "ungrounded_entities": [],
+        "cited_records": [
+            {
+                "label": "Total income from voluntary contributions",
+                "subject": "UNICEF",
+                "data_value": "$8.263 billion",
+                "typed_number": null,
+                "typed_currency": null,
+                "typed_unit_kind": null,
+                "typed_value_present": false
+            },
+            {
+                "label": "Total income from voluntary contributions",
+                "subject": "UNICEF",
+                "data_value": "$8.920 billion",
+                "typed_number": null,
+                "typed_currency": null,
+                "typed_unit_kind": null,
+                "typed_value_present": false
+            },
+            {
+                "label": "Total income from voluntary contributions",
+                "subject": "UNICEF",
+                "data_value": "$9.326 billion",
+                "typed_number": null,
+                "typed_currency": null,
+                "typed_unit_kind": null,
+                "typed_value_present": false
+            }
+        ]
+    },
+    {
+        "item": "C29",
+        "call": "b2eval-unicef_reduced-3",
+        "idx": 3,
+        "verifier_reasons": [
+            "unsupported_key_figure",
+            "brief_numbers_grounded"
+        ],
+        "claim": "Total income from voluntary contributions was $8.122 billion in 2021 and $7.219 billion in 2020.",
+        "numbers_in_claim": [
+            {
+                "n": 8122000000,
+                "unit": null
+            },
+            {
+                "n": 7219000000,
+                "unit": null
+            }
+        ],
+        "ungrounded_numbers": [
+            {
+                "n": 8122000000,
+                "unit": null
+            },
+            {
+                "n": 7219000000,
+                "unit": null
+            }
+        ],
+        "entities_in_claim": [],
+        "ungrounded_entities": [],
+        "cited_records": [
+            {
+                "label": "Total income from voluntary contributions",
+                "subject": "UNICEF",
+                "data_value": "$8.122 billion",
+                "typed_number": null,
+                "typed_currency": null,
+                "typed_unit_kind": null,
+                "typed_value_present": false
+            },
+            {
+                "label": "Total income from voluntary contributions",
+                "subject": "UNICEF",
+                "data_value": "$7.219 billion",
+                "typed_number": null,
+                "typed_currency": null,
+                "typed_unit_kind": null,
+                "typed_value_present": false
+            }
+        ]
+    },
+    {
+        "item": "C04",
+        "call": "b2eval-unicef_reduced-3",
+        "idx": 4,
+        "verifier_reasons": [
+            "brief_entities_grounded"
+        ],
+        "claim": "In India in 2024, safely managed water supplies were provided to 59.3 million people and sanitation services to 17.9 million people.",
+        "numbers_in_claim": [
+            {
+                "n": 59300000,
+                "unit": null
+            },
+            {
+                "n": 17900000,
+                "unit": null
+            }
+        ],
+        "ungrounded_numbers": [],
+        "entities_in_claim": [
+            "In India"
+        ],
+        "ungrounded_entities": [
+            "In India"
+        ],
+        "cited_records": [
+            {
+                "label": "Safely managed water supplies provided",
+                "subject": "India",
+                "data_value": "59.3 million people",
+                "typed_number": 59300000,
+                "typed_currency": null,
+                "typed_unit_kind": "count",
+                "typed_value_present": true
+            },
+            {
+                "label": "Sanitation services provided",
+                "subject": "India",
+                "data_value": "17.9 million people",
+                "typed_number": 17900000,
+                "typed_currency": null,
+                "typed_unit_kind": "count",
+                "typed_value_present": true
+            }
+        ]
+    }
+]

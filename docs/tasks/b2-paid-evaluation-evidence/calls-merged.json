@@ -1,0 +1,833 @@
+[
+  {
+    "label": "b2eval-india_wash-1",
+    "document_id": "01a12569-c7c3-73dd-9bce-cfb69287d1ac",
+    "supplied_records": 15,
+    "eligible_records": 15,
+    "omitted_records": 0,
+    "key_figures_supplied": 1,
+    "key_figure_ids": [
+      "kpi:5"
+    ],
+    "context_tokens_estimated": 1782,
+    "input_hash": "c7d4aac9ebc000c37a396669b9306ea64df39d5dc8f13b19a023a53eb1bfd875",
+    "outcome": {
+      "status": "rejected",
+      "fallback_reason": "verifier_rejected",
+      "unit_id": "01a1257d-f329-714e-8567-7fd2a9e2d41e",
+      "provider_called": true
+    },
+    "model": "claude-sonnet-5-5",
+    "stop_reason": "end_turn",
+    "input_tokens": 2141,
+    "output_tokens": 448,
+    "cache_write_tokens": 947,
+    "cache_read_tokens": 0,
+    "cost_usd": 0.01113,
+    "latency_ms": 12147,
+    "reserved_usd": 0.02268,
+    "unit_status": "completed",
+    "unit_failure_class": "verifier_rejected",
+    "stored_audit": {
+      "as_of": "2026-10-10T00:00:00+00:00",
+      "model": "claude-sonnet-5-5",
+      "claim_count": 0,
+      "prompt_hash": "b970235062f3f7dec8f923dc59c341d1a0da4b80e8a6438afe2842b2de71ce84",
+      "generated_at": "2026-10-10T11:06:25+00:00",
+      "pipeline_key": "b2eval-india_wash-1",
+      "response_hash": "aa38bfb667e6499132aca4e61e4846e105378e6ea312fa22fbd04e614812922e",
+      "prompt_version": "1",
+      "verifier_status": "rejected",
+      "contract_version": "1",
+      "omitted_evidence": 0,
+      "verifier_reasons": [
+        "brief_entities_grounded",
+        "brief_numbers_grounded"
+      ],
+      "verifier_version": "1",
+      "supplied_evidence": 15,
+      "extraction_version": "8acd7d011fac21b31b65c5dfa251423d",
+      "evidence_input_hash": "c7d4aac9ebc000c37a396669b9306ea64df39d5dc8f13b19a023a53eb1bfd875",
+      "rejected_claim_count": 3
+    },
+    "stored_claims": [],
+    "raw_narrative": [
+      {
+        "claim": "The report identifies as an open, medium-severity risk in India that fragmented definitions, reporting formats and data systems had made it difficult to measure progress consistently and spotlight inequalities.",
+        "cites": [
+          "risk:1"
+        ]
+      },
+      {
+        "claim": "The Government of India launched the Swachh Bharat (Clean India) Mission in 2014, and 110 million toilets were constructed under it.",
+        "cites": [
+          "fact:01a12569-c8b4-714a-b1d2-5067d4d6f000",
+          "kpi:6"
+        ]
+      },
+      {
+        "claim": "The Government of India invested over $120 billion in water and sanitation.",
+        "cites": [
+          "kpi:5"
+        ]
+      },
+      {
+        "claim": "In India, 580 million people were reached with improved drinking water and 550 million with basic sanitation over the last 10 years.",
+        "cites": [
+          "kpi:3",
+          "kpi:2"
+        ]
+      },
+      {
+        "claim": "In 2024, 59.3 million people in India accessed safely managed water and 17.9 million accessed safely managed sanitation.",
+        "cites": [
+          "kpi:10",
+          "kpi:9"
+        ]
+      },
+      {
+        "claim": "The report states that improved access to clean water and sanitation played a pivotal role by dramatically reducing incidence of diarrhoeal disease, malnutrition and infection.",
+        "cites": [
+          "fact:01a12569-c8b8-7202-9f00-558d4b9fc263"
+        ]
+      }
+    ],
+    "reverified": {
+      "status": "rejected",
+      "reasons": [
+        "brief_entities_grounded",
+        "brief_numbers_grounded"
+      ],
+      "claims": [],
+      "rejected": [
+        {
+          "index": 1,
+          "reasons": [
+            "brief_entities_grounded"
+          ],
+          "cites": [
+            "fact:01a12569-c8b4-714a-b1d2-5067d4d6f000",
+            "kpi:6"
+          ]
+        },
+        {
+          "index": 2,
+          "reasons": [
+            "brief_numbers_grounded",
+            "brief_entities_grounded"
+          ],
+          "cites": [
+            "kpi:5"
+          ]
+        },
+        {
+          "index": 3,
+          "reasons": [
+            "brief_numbers_grounded",
+            "brief_entities_grounded"
+          ],
+          "cites": [
+            "kpi:3",
+            "kpi:2"
+          ]
+        }
+      ],
+      "verifier_version": "1"
+    },
+    "settled_before_usd": 0,
+    "settled_after_usd": 0.01113
+  },
+  {
+    "label": "b2eval-india_wash-2",
+    "document_id": "01a12569-c96c-71bb-a724-d33c9e51e993",
+    "supplied_records": 15,
+    "eligible_records": 15,
+    "omitted_records": 0,
+    "key_figures_supplied": 1,
+    "key_figure_ids": [
+      "kpi:18"
+    ],
+    "context_tokens_estimated": 1784,
+    "input_hash": "d8e765cd9cbb31865d12aac4a886518aa220341a9978fed90cb55fab541e7d1a",
+    "outcome": {
+      "status": "failed",
+      "fallback_reason": "timeout",
+      "unit_id": "01a1257e-23a2-70e7-b1c5-0686e59d4f18",
+      "provider_called": true
+    },
+    "model": "claude-sonnet-5-5",
+    "stop_reason": null,
+    "input_tokens": null,
+    "output_tokens": null,
+    "cache_write_tokens": 0,
+    "cache_read_tokens": 0,
+    "cost_usd": null,
+    "latency_ms": 15426,
+    "reserved_usd": 0.022685,
+    "unit_status": "failed",
+    "unit_failure_class": "timeout",
+    "stored_audit": null,
+    "stored_claims": null,
+    "raw_narrative": null,
+    "reverified": null,
+    "settled_before_usd": 0.01113,
+    "settled_after_usd": 0.01113
+  },
+  {
+    "label": "b2eval-india_wash-3",
+    "document_id": "01a12569-c9e3-72c2-87ab-8999580e2874",
+    "supplied_records": 15,
+    "eligible_records": 15,
+    "omitted_records": 0,
+    "key_figures_supplied": 1,
+    "key_figure_ids": [
+      "kpi:31"
+    ],
+    "context_tokens_estimated": 1784,
+    "input_hash": "7c4e521e496b529d3166612ba9735f1d7f5e51055401c50ce5d4927501a004f1",
+    "outcome": {
+      "status": "rejected",
+      "fallback_reason": "verifier_rejected",
+      "unit_id": "01a12582-0fd6-71a3-89b1-85d3650040d8",
+      "provider_called": true
+    },
+    "model": "claude-sonnet-5-5",
+    "stop_reason": "end_turn",
+    "input_tokens": 2125,
+    "output_tokens": 444,
+    "cache_write_tokens": 0,
+    "cache_read_tokens": 947,
+    "cost_usd": 0.008879,
+    "latency_ms": 15262,
+    "reserved_usd": 0.022685,
+    "unit_status": "completed",
+    "unit_failure_class": "verifier_rejected",
+    "stored_audit": {
+      "as_of": "2026-10-10T00:00:00+00:00",
+      "model": "claude-sonnet-5-5",
+      "claim_count": 0,
+      "prompt_hash": "b970235062f3f7dec8f923dc59c341d1a0da4b80e8a6438afe2842b2de71ce84",
+      "generated_at": "2026-10-10T11:10:58+00:00",
+      "pipeline_key": "b2eval-india_wash-3",
+      "response_hash": "b9b9b6cc1c82c78605b514fa19b7aecf442e5b5698baac171751f56d87edf781",
+      "prompt_version": "1",
+      "verifier_status": "rejected",
+      "contract_version": "1",
+      "omitted_evidence": 0,
+      "verifier_reasons": [
+        "brief_entities_grounded",
+        "brief_numbers_grounded"
+      ],
+      "verifier_version": "1",
+      "supplied_evidence": 15,
+      "extraction_version": "8acd7d011fac21b31b65c5dfa251423d",
+      "evidence_input_hash": "7c4e521e496b529d3166612ba9735f1d7f5e51055401c50ce5d4927501a004f1",
+      "rejected_claim_count": 3
+    },
+    "stored_claims": [],
+    "raw_narrative": [
+      {
+        "claim": "India faced a medium-severity, open risk in that fragmented definitions, reporting formats and data systems had made it difficult to measure progress consistently and spotlight inequalities.",
+        "cites": [
+          "risk:3"
+        ]
+      },
+      {
+        "claim": "The Government of India launched the Swachh Bharat (Clean India) Mission in 2014, and 110 million toilets were constructed under the mission.",
+        "cites": [
+          "fact:01a12569-ca36-73f2-9069-d78683957edb",
+          "kpi:32"
+        ]
+      },
+      {
+        "claim": "The Government of India's investment in water and sanitation was over $120 billion.",
+        "cites": [
+          "kpi:31"
+        ]
+      },
+      {
+        "claim": "In 2024, 59.3 million people in India accessed safely managed water and 17.9 million people accessed safely managed sanitation.",
+        "cites": [
+          "kpi:36",
+          "kpi:35"
+        ]
+      },
+      {
+        "claim": "Over the last 10 years, 580 million people in India were reached with improved drinking water and 550 million with basic sanitation.",
+        "cites": [
+          "kpi:29",
+          "kpi:28"
+        ]
+      },
+      {
+        "claim": "The report states that improved access to clean water and sanitation played a pivotal role by dramatically reducing incidence of diarrhoeal disease, malnutrition and infection.",
+        "cites": [
+          "fact:01a12569-ca38-7247-8fed-116df1be6c52"
+        ]
+      }
+    ],
+    "reverified": {
+      "status": "rejected",
+      "reasons": [
+        "brief_entities_grounded",
+        "brief_numbers_grounded"
+      ],
+      "claims": [],
+      "rejected": [
+        {
+          "index": 1,
+          "reasons": [
+            "brief_entities_grounded"
+          ],
+          "cites": [
+            "fact:01a12569-ca36-73f2-9069-d78683957edb",
+            "kpi:32"
+          ]
+        },
+        {
+          "index": 2,
+          "reasons": [
+            "brief_numbers_grounded",
+            "brief_entities_grounded"
+          ],
+          "cites": [
+            "kpi:31"
+          ]
+        },
+        {
+          "index": 4,
+          "reasons": [
+            "brief_numbers_grounded"
+          ],
+          "cites": [
+            "kpi:29",
+            "kpi:28"
+          ]
+        }
+      ],
+      "verifier_version": "1"
+    },
+    "settled_before_usd": 0.01113,
+    "settled_after_usd": 0.020009
+  },
+  {
+    "label": "b2eval-unicef_reduced-1",
+    "document_id": "01a12569-caaf-701f-b359-c1319487cb5a",
+    "supplied_records": 18,
+    "eligible_records": 18,
+    "omitted_records": 0,
+    "key_figures_supplied": 3,
+    "key_figure_ids": [
+      "kpi:42",
+      "kpi:41",
+      "kpi:43"
+    ],
+    "context_tokens_estimated": 2084,
+    "input_hash": "22880bb190b4ca4e1797bbacfdd5ff83fcb9807bb7879aecee7ece9055eb3b48",
+    "outcome": {
+      "status": "rejected",
+      "fallback_reason": "verifier_rejected",
+      "unit_id": "01a12582-4c43-719f-be22-204f6b2eba7a",
+      "provider_called": true
+    },
+    "model": "claude-sonnet-5-5",
+    "stop_reason": "end_turn",
+    "input_tokens": 2601,
+    "output_tokens": 382,
+    "cache_write_tokens": 0,
+    "cache_read_tokens": 947,
+    "cost_usd": 0.009211,
+    "latency_ms": 3907,
+    "reserved_usd": 0.023435,
+    "unit_status": "completed",
+    "unit_failure_class": "verifier_rejected",
+    "stored_audit": {
+      "as_of": "2026-10-10T00:00:00+00:00",
+      "model": "claude-sonnet-5-5",
+      "claim_count": 0,
+      "prompt_hash": "b970235062f3f7dec8f923dc59c341d1a0da4b80e8a6438afe2842b2de71ce84",
+      "generated_at": "2026-10-10T11:11:02+00:00",
+      "pipeline_key": "b2eval-unicef_reduced-1",
+      "response_hash": "7d5b3f8515eb564de403a9c0f06e0f1498154fb79332473be76f420cbac08973",
+      "prompt_version": "1",
+      "verifier_status": "rejected",
+      "contract_version": "1",
+      "omitted_evidence": 0,
+      "verifier_reasons": [
+        "unsupported_key_figure",
+        "brief_numbers_grounded",
+        "brief_entities_grounded"
+      ],
+      "verifier_version": "1",
+      "supplied_evidence": 18,
+      "extraction_version": "8acd7d011fac21b31b65c5dfa251423d",
+      "evidence_input_hash": "22880bb190b4ca4e1797bbacfdd5ff83fcb9807bb7879aecee7ece9055eb3b48",
+      "rejected_claim_count": 5
+    },
+    "stored_claims": [],
+    "raw_narrative": [
+      {
+        "claim": "UNICEF's Core Resources income in 2024 was $1.584 billion.",
+        "cites": [
+          "kpi:40"
+        ]
+      },
+      {
+        "claim": "In 2024 UNICEF's Core Resources income from the private sector was $724.9 million, from the public sector was $512.6 million, and from other partners was $346.1 million.",
+        "cites": [
+          "kpi:42",
+          "kpi:41",
+          "kpi:43"
+        ]
+      },
+      {
+        "claim": "Core Resources made up 46% of UNICEF's total income in 2024, while Other Resources Regular made up 49% and Other Resources Emergency made up 5%.",
+        "cites": [
+          "kpi:46",
+          "kpi:47",
+          "kpi:48"
+        ]
+      },
+      {
+        "claim": "UNICEF's total income from voluntary contributions was $8.263 billion in 2024, compared with $8.920 billion in 2023 and $9.326 billion in 2022.",
+        "cites": [
+          "kpi:45",
+          "kpi:52",
+          "kpi:51"
+        ]
+      },
+      {
+        "claim": "In India in 2024, safely managed water supplies were provided to 59.3 million people and sanitation services to 17.9 million people.",
+        "cites": [
+          "kpi:61",
+          "kpi:62"
+        ]
+      }
+    ],
+    "reverified": {
+      "status": "rejected",
+      "reasons": [
+        "unsupported_key_figure",
+        "brief_numbers_grounded",
+        "brief_entities_grounded"
+      ],
+      "claims": [],
+      "rejected": [
+        {
+          "index": 0,
+          "reasons": [
+            "unsupported_key_figure",
+            "brief_numbers_grounded",
+            "brief_entities_grounded"
+          ],
+          "cites": [
+            "kpi:40"
+          ]
+        },
+        {
+          "index": 1,
+          "reasons": [
+            "brief_numbers_grounded",
+            "brief_entities_grounded"
+          ],
+          "cites": [
+            "kpi:42",
+            "kpi:41",
+            "kpi:43"
+          ]
+        },
+        {
+          "index": 2,
+          "reasons": [
+            "brief_entities_grounded"
+          ],
+          "cites": [
+            "kpi:46",
+            "kpi:47",
+            "kpi:48"
+          ]
+        },
+        {
+          "index": 3,
+          "reasons": [
+            "unsupported_key_figure",
+            "brief_numbers_grounded"
+          ],
+          "cites": [
+            "kpi:45",
+            "kpi:52",
+            "kpi:51"
+          ]
+        },
+        {
+          "index": 4,
+          "reasons": [
+            "brief_entities_grounded"
+          ],
+          "cites": [
+            "kpi:61",
+            "kpi:62"
+          ]
+        }
+      ],
+      "verifier_version": "1"
+    },
+    "settled_before_usd": 0.020009,
+    "settled_after_usd": 0.02922
+  },
+  {
+    "label": "b2eval-unicef_reduced-2",
+    "document_id": "01a12569-cbbf-7172-9c53-9f477c05135c",
+    "supplied_records": 18,
+    "eligible_records": 18,
+    "omitted_records": 0,
+    "key_figures_supplied": 3,
+    "key_figure_ids": [
+      "kpi:76",
+      "kpi:75",
+      "kpi:77"
+    ],
+    "context_tokens_estimated": 2085,
+    "input_hash": "fdf13d346810d355ebcdb1cdc48ece7e1357f4be8f8ce67136d7a859b07dd6df",
+    "outcome": {
+      "status": "rejected",
+      "fallback_reason": "verifier_rejected",
+      "unit_id": "01a12582-5c32-71f0-bec7-2da7add8b619",
+      "provider_called": true
+    },
+    "model": "claude-sonnet-5-5",
+    "stop_reason": "end_turn",
+    "input_tokens": 2604,
+    "output_tokens": 415,
+    "cache_write_tokens": 0,
+    "cache_read_tokens": 947,
+    "cost_usd": 0.009547,
+    "latency_ms": 3617,
+    "reserved_usd": 0.023438,
+    "unit_status": "completed",
+    "unit_failure_class": "verifier_rejected",
+    "stored_audit": {
+      "as_of": "2026-10-10T00:00:00+00:00",
+      "model": "claude-sonnet-5-5",
+      "claim_count": 0,
+      "prompt_hash": "b970235062f3f7dec8f923dc59c341d1a0da4b80e8a6438afe2842b2de71ce84",
+      "generated_at": "2026-10-10T11:11:06+00:00",
+      "pipeline_key": "b2eval-unicef_reduced-2",
+      "response_hash": "81b8f36c7ec74c72309eab318741dbe48ca44ef33b23f98da916ad8348d0d364",
+      "prompt_version": "1",
+      "verifier_status": "rejected",
+      "contract_version": "1",
+      "omitted_evidence": 0,
+      "verifier_reasons": [
+        "unsupported_key_figure",
+        "brief_numbers_grounded",
+        "brief_entities_grounded"
+      ],
+      "verifier_version": "1",
+      "supplied_evidence": 18,
+      "extraction_version": "8acd7d011fac21b31b65c5dfa251423d",
+      "evidence_input_hash": "fdf13d346810d355ebcdb1cdc48ece7e1357f4be8f8ce67136d7a859b07dd6df",
+      "rejected_claim_count": 6
+    },
+    "stored_claims": [],
+    "raw_narrative": [
+      {
+        "claim": "UNICEF's Core Resources income in 2024 was $1.584 billion.",
+        "cites": [
+          "kpi:74"
+        ]
+      },
+      {
+        "claim": "Core Resources income in 2024 included $724.9 million from the private sector, $512.6 million from the public sector and $346.1 million from other partners.",
+        "cites": [
+          "kpi:76",
+          "kpi:75",
+          "kpi:77"
+        ]
+      },
+      {
+        "claim": "For 2024, Core Resources made up 46% of UNICEF's total income, while Other Resources Regular made up 49% and Other Resources Emergency made up 5%.",
+        "cites": [
+          "kpi:80",
+          "kpi:81",
+          "kpi:82"
+        ]
+      },
+      {
+        "claim": "UNICEF's total income from voluntary contributions was $8.263 billion in 2024, compared with $8.920 billion in 2023 and $9.326 billion in 2022.",
+        "cites": [
+          "kpi:79",
+          "kpi:86",
+          "kpi:85"
+        ]
+      },
+      {
+        "claim": "In India in 2024, safely managed water supplies were provided to 59.3 million people and sanitation services to 17.9 million people.",
+        "cites": [
+          "kpi:95",
+          "kpi:96"
+        ]
+      },
+      {
+        "claim": "In Sierra Leone, more than 675,000 children received protection services.",
+        "cites": [
+          "kpi:102"
+        ]
+      }
+    ],
+    "reverified": {
+      "status": "rejected",
+      "reasons": [
+        "unsupported_key_figure",
+        "brief_numbers_grounded",
+        "brief_entities_grounded"
+      ],
+      "claims": [],
+      "rejected": [
+        {
+          "index": 0,
+          "reasons": [
+            "unsupported_key_figure",
+            "brief_numbers_grounded",
+            "brief_entities_grounded"
+          ],
+          "cites": [
+            "kpi:74"
+          ]
+        },
+        {
+          "index": 1,
+          "reasons": [
+            "brief_numbers_grounded",
+            "brief_entities_grounded"
+          ],
+          "cites": [
+            "kpi:76",
+            "kpi:75",
+            "kpi:77"
+          ]
+        },
+        {
+          "index": 2,
+          "reasons": [
+            "brief_entities_grounded"
+          ],
+          "cites": [
+            "kpi:80",
+            "kpi:81",
+            "kpi:82"
+          ]
+        },
+        {
+          "index": 3,
+          "reasons": [
+            "unsupported_key_figure",
+            "brief_numbers_grounded"
+          ],
+          "cites": [
+            "kpi:79",
+            "kpi:86",
+            "kpi:85"
+          ]
+        },
+        {
+          "index": 4,
+          "reasons": [
+            "brief_entities_grounded"
+          ],
+          "cites": [
+            "kpi:95",
+            "kpi:96"
+          ]
+        },
+        {
+          "index": 5,
+          "reasons": [
+            "brief_entities_grounded"
+          ],
+          "cites": [
+            "kpi:102"
+          ]
+        }
+      ],
+      "verifier_version": "1"
+    },
+    "settled_before_usd": 0.02922,
+    "settled_after_usd": 0.038767
+  },
+  {
+    "label": "b2eval-unicef_reduced-3",
+    "document_id": "01a12569-cc33-7164-96d5-6df74c497d27",
+    "supplied_records": 18,
+    "eligible_records": 18,
+    "omitted_records": 0,
+    "key_figures_supplied": 3,
+    "key_figure_ids": [
+      "kpi:110",
+      "kpi:109",
+      "kpi:111"
+    ],
+    "context_tokens_estimated": 2090,
+    "input_hash": "ce160f9cdb2c28e4241e636b00b232dab519ae1d2a321c1dd89a09a71051a0b9",
+    "outcome": {
+      "status": "rejected",
+      "fallback_reason": "verifier_rejected",
+      "unit_id": "01a12582-6c19-709e-b6b8-a586740d7913",
+      "provider_called": true
+    },
+    "model": "claude-sonnet-5-5",
+    "stop_reason": "end_turn",
+    "input_tokens": 2601,
+    "output_tokens": 486,
+    "cache_write_tokens": 0,
+    "cache_read_tokens": 947,
+    "cost_usd": 0.010251,
+    "latency_ms": 9180,
+    "reserved_usd": 0.02345,
+    "unit_status": "completed",
+    "unit_failure_class": "verifier_rejected",
+    "stored_audit": {
+      "as_of": "2026-10-10T00:00:00+00:00",
+      "model": "claude-sonnet-5-5",
+      "claim_count": 0,
+      "prompt_hash": "b970235062f3f7dec8f923dc59c341d1a0da4b80e8a6438afe2842b2de71ce84",
+      "generated_at": "2026-10-10T11:11:15+00:00",
+      "pipeline_key": "b2eval-unicef_reduced-3",
+      "response_hash": "97e19f252141c6d0e5fa576da932f14f9080e79aba1cc7f257226e7d85011646",
+      "prompt_version": "1",
+      "verifier_status": "rejected",
+      "contract_version": "1",
+      "omitted_evidence": 0,
+      "verifier_reasons": [
+        "brief_numbers_grounded",
+        "brief_entities_grounded",
+        "unsupported_key_figure"
+      ],
+      "verifier_version": "1",
+      "supplied_evidence": 18,
+      "extraction_version": "8acd7d011fac21b31b65c5dfa251423d",
+      "evidence_input_hash": "ce160f9cdb2c28e4241e636b00b232dab519ae1d2a321c1dd89a09a71051a0b9",
+      "rejected_claim_count": 5
+    },
+    "stored_claims": [],
+    "raw_narrative": [
+      {
+        "claim": "UNICEF's Core Resources income in 2024 was $1.584 billion, of which $724.9 million came from the private sector, $512.6 million from the public sector and $346.1 million from other partners.",
+        "cites": [
+          "kpi:108",
+          "kpi:110",
+          "kpi:109",
+          "kpi:111"
+        ]
+      },
+      {
+        "claim": "In 2024 Core Resources made up 46% of UNICEF's total income, while Other Resources Regular made up 49% and Other Resources Emergency made up 5%.",
+        "cites": [
+          "kpi:114",
+          "kpi:115",
+          "kpi:116"
+        ]
+      },
+      {
+        "claim": "UNICEF's total income from voluntary contributions was $8.263 billion in 2024, compared with $8.920 billion in 2023 and $9.326 billion in 2022.",
+        "cites": [
+          "kpi:113",
+          "kpi:120",
+          "kpi:119"
+        ]
+      },
+      {
+        "claim": "Total income from voluntary contributions was $8.122 billion in 2021 and $7.219 billion in 2020.",
+        "cites": [
+          "kpi:118",
+          "kpi:117"
+        ]
+      },
+      {
+        "claim": "In India in 2024, safely managed water supplies were provided to 59.3 million people and sanitation services to 17.9 million people.",
+        "cites": [
+          "kpi:129",
+          "kpi:130"
+        ]
+      },
+      {
+        "claim": "Sierra Leone had more than 675,000 children receiving protection services, and Yemen saw a 23 per cent drop in under-five mortality.",
+        "cites": [
+          "kpi:136",
+          "kpi:122"
+        ]
+      }
+    ],
+    "reverified": {
+      "status": "rejected",
+      "reasons": [
+        "brief_numbers_grounded",
+        "brief_entities_grounded",
+        "unsupported_key_figure"
+      ],
+      "claims": [],
+      "rejected": [
+        {
+          "index": 0,
+          "reasons": [
+            "brief_numbers_grounded",
+            "brief_entities_grounded"
+          ],
+          "cites": [
+            "kpi:108",
+            "kpi:110",
+            "kpi:109",
+            "kpi:111"
+          ]
+        },
+        {
+          "index": 1,
+          "reasons": [
+            "brief_entities_grounded"
+          ],
+          "cites": [
+            "kpi:114",
+            "kpi:115",
+            "kpi:116"
+          ]
+        },
+        {
+          "index": 2,
+          "reasons": [
+            "unsupported_key_figure",
+            "brief_numbers_grounded"
+          ],
+          "cites": [
+            "kpi:113",
+            "kpi:120",
+            "kpi:119"
+          ]
+        },
+        {
+          "index": 3,
+          "reasons": [
+            "unsupported_key_figure",
+            "brief_numbers_grounded"
+          ],
+          "cites": [
+            "kpi:118",
+            "kpi:117"
+          ]
+        },
+        {
+          "index": 4,
+          "reasons": [
+            "brief_entities_grounded"
+          ],
+          "cites": [
+            "kpi:129",
+            "kpi:130"
+          ]
+        }
+      ],
+      "verifier_version": "1"
+    },
+    "settled_before_usd": 0.038767,
+    "settled_after_usd": 0.049018
+  }
+]
