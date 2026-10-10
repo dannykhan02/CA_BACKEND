@@ -162,6 +162,34 @@ class MeasurementParser
         return null;
     }
 
+    /**
+     * Whether this value text states a time span rather than a quantity: "within 10 days",
+     * "10 years".
+     *
+     * `kind()` can only see a duration when the *unit* field names one, so a finding whose unit is
+     * empty and whose value carries the span reads as an untyped number. Exposed so the typing layer
+     * can refuse to call such a value a metric, using this class's own duration vocabulary rather
+     * than a second copy of it.
+     */
+    public function statesDuration(?string $value): bool
+    {
+        return array_intersect($this->tokens((string) $value), self::DURATIONS) !== [];
+    }
+
+    /**
+     * The ISO code a piece of currency text states, or null when it states none.
+     *
+     * Same judgement `currency()` makes, exposed so a caller can ask whether a record owns a
+     * knowable currency without re-implementing the table. A bare "$" is not a code: it answers
+     * null, because "$" is not provably USD and must never be read as it.
+     */
+    public function isoCurrency(?string $text): ?string
+    {
+        $code = $this->currency(trim((string) $text));
+
+        return is_string($code) && preg_match('/^[A-Z]{3}$/D', $code) ? $code : null;
+    }
+
     private function currency(string $text): ?string
     {
         foreach (self::CURRENCIES as $needle => $code) {

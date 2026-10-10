@@ -25,7 +25,7 @@ class ValueParser
         $quote = implode("\n", $quotes);
         $typed = ['value' => null, 'dates' => [], 'extras' => []];
 
-        if ($value !== '' && $this->cited($value, $quotes)) {
+        if ($value !== '' && $this->citesValue($value, $quotes)) {
             $measurement = $this->measurements->parse($value, $record['unit'] ?? null, $record['label'] ?? null);
             if ($measurement !== null) {
                 $kind = match ($measurement->kind) {
@@ -34,6 +34,14 @@ class ValueParser
                 };
                 $unitKind = in_array($measurement->kind, ['currency', 'percent', 'ratio', 'count', 'duration'], true)
                     ? $measurement->kind : 'other';
+                // A value that is itself a time span is a span, not a metric. The parser can only
+                // read a duration off the `unit` field, so "within 10 days" with no unit arrives as
+                // an unclassified number - and a bare number grounds any claim that happens to
+                // mention 10. Typed as a duration it grounds none of them, and the span is still
+                // checked as a span through the record's relative date below.
+                if ($measurement->kind === 'unknown' && $this->measurements->statesDuration($value)) {
+                    $unitKind = 'duration';
+                }
                 $rawOnly = $this->measurements->parse($value, null, $record['label'] ?? null);
                 $typed['value'] = $this->shape($kind, $value, $record, $confirmedEntityId) + [];
                 $typed['value']['number'] = $measurement->magnitude;
@@ -111,16 +119,65 @@ class ValueParser
         return $this->shape($type, $raw, $record, $confirmedEntityId);
     }
 
-    /** @param list<string> $quotes */
+    /**
+     * Whether one of the record's own cited quotes states this value.
+     *
+     * Compared with runs of whitespace collapsed, because a figure in a chart label reaches the
+     * quote the way the source laid it out - "Total\n$1.584\nbillion", "$8.263 \nbillion" - while
+     * the extracted value reads "$1.584 billion". Same characters, broken by the wrapping. Nothing
+     * else is normalized: the digits, the scale word and the currency marker must all still be
+     * present, in that order, in this record's own quote.
+     *
+     * @param  list<string>  $quotes
+     */
     private function cited(string $raw, array $quotes): bool
     {
+        $needle = $this->collapse($raw);
+        if ($needle === '') {
+            return false;
+        }
         foreach ($quotes as $quote) {
-            if (str_contains($quote, $raw)) {
+            if (str_contains($this->collapse($quote), $needle)) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * The same check for the observed value, plus the digit guard a figure needs.
+     *
+     * A match sitting inside a longer number is not a statement of this value: "5%" occurs in a
+     * funding chart's quote only inside "45%", which is the neighbouring bar, not this record's
+     * figure. Typing it would hand a claim a number the chart never carried.
+     *
+     * Scoped to the value deliberately. A period is not a figure, and the same guard applied to one
+     * would refuse "2022" out of an axis rendered "20242023202220212020" - where, unlike "5%" in
+     * "45%", the digits really are that period, merely unseparated by the extractor.
+     *
+     * @param  list<string>  $quotes
+     */
+    private function citesValue(string $raw, array $quotes): bool
+    {
+        $needle = $this->collapse($raw);
+        if ($needle === '') {
+            return false;
+        }
+        $pattern = '/(?<![\d.,])'.preg_quote($needle, '/').'(?![\d])(?![.,]\d)/u';
+        foreach ($quotes as $quote) {
+            if (preg_match($pattern, $this->collapse($quote)) === 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** Runs of whitespace reduced to one space, so a wrapped source line compares as written. */
+    private function collapse(string $text): string
+    {
+        return trim((string) preg_replace('/\s+/u', ' ', $text));
     }
 
     /** @return array<string,mixed> */

@@ -40,7 +40,9 @@ class IntelligenceBriefVerifierTest extends TestCase
             ['kpi:1' => $record], ['kpi:1']);
         self::assertSame('passed', $result['status']);
         self::assertSame([], $result['failed_reasons']);
-        self::assertCount(11, $result['checks']);
+        // 12 with durations_grounded, which this claim states none of.
+        self::assertCount(12, $result['checks']);
+        self::assertSame('skipped', $this->check($result, 'durations_grounded'));
         self::assertSame('passed', $this->check($result, 'numbers_grounded'));
         self::assertSame('passed', $this->check($result, 'periods_grounded'));
         self::assertSame('skipped', $this->check($result, 'dates_grounded'));
@@ -231,13 +233,28 @@ class IntelligenceBriefVerifierTest extends TestCase
         self::assertSame('failed', $this->check($result, 'numbers_grounded'));
         self::assertSame('failed', $this->check($result, 'units_consistent'));
 
+        // A time span is checked as a span, not as a loose number: "within 30 days" leaves no 30
+        // behind for numbersGrounded() to chase, and the span itself has to be one the cited record
+        // owns. This record's typed date is incomplete - no `type` - so it owns none.
         $duration = $this->record();
         $duration['typed']['value'] = null;
         $duration['typed']['dates']['due_date'] = ['resolution' => 'relative',
             'duration' => ['text' => 'within 30 days', 'anchor_resolved' => false]];
         $result = $verifier->verify($this->block('Submit within 30 days.'),
             ['kpi:1' => $duration], ['kpi:1']);
-        self::assertSame('failed', $this->check($result, 'numbers_grounded'));
+        self::assertSame('skipped', $this->check($result, 'numbers_grounded'));
+        self::assertSame('failed', $this->check($result, 'durations_grounded'));
+
+        // Completed into the shape ValueParser actually writes, the same span grounds.
+        $duration['typed']['dates']['due_date'] += ['type' => 'duration', 'raw' => 'within 30 days'];
+        $good = $verifier->verify($this->block('Submit within 30 days.'),
+            ['kpi:1' => $duration], ['kpi:1']);
+        self::assertSame('passed', $this->check($good, 'durations_grounded'));
+
+        // And a span the record does not state is refused.
+        $wrong = $verifier->verify($this->block('Submit within 60 days.'),
+            ['kpi:1' => $duration], ['kpi:1']);
+        self::assertSame('failed', $this->check($wrong, 'durations_grounded'));
     }
 
     public function test_fallback_is_registered_rendered_and_verified_or_omitted(): void

@@ -251,7 +251,16 @@ class NarrativeVerifier
     {
         $codes = [];
         foreach ($supplied as $id) {
-            $code = $records[$id]['typed']['value']['currency'] ?? null;
+            // Read through BriefVerifier's own record-local resolution, so the money gate and the
+            // grounding checks cannot disagree about what currency a record states: a figure
+            // written "$97.4 million" with unit "USD" is a USD record to both.
+            $value = $records[$id]['typed']['value'] ?? null;
+            $code = is_array($value) ? ($value['currency'] ?? null) : null;
+            if (is_array($value) && $this->briefVerifier->groundableValue($value)
+                && ($value['type'] ?? null) === 'money' && is_string($value['unit'] ?? null)
+                && ! (is_string($code) && preg_match('/^[A-Z]{3}$/D', $code) === 1)) {
+                $code = $this->briefVerifier->recordCurrencyCode($value);
+            }
             if (is_string($code) && preg_match('/^[A-Z]{3}$/D', $code) === 1) {
                 $codes[$code] = true;
             }
