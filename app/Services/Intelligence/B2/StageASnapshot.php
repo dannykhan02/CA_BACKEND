@@ -65,7 +65,7 @@ class StageASnapshot
     }
 
     /** @return array<string,mixed> */
-    private function project(Document $document, \DateTimeImmutable $asOf): array
+    protected function project(Document $document, \DateTimeImmutable $asOf): array
     {
         $document->loadMissing(['risks', 'deadlines', 'intelligenceSummary']);
         $evidence = $this->evidence($document);

@@ -23,10 +23,10 @@ class BriefReadService
         private BriefAssembler $assembler,
     ) {}
 
-    /** @return array<string,mixed>|null null means the B2 feature is off and the API adds nothing */
+    /** @return array<string,mixed>|null null means the V2 Brief feature is off */
     public function forDocument(Document $document, ?\DateTimeImmutable $asOf = null): ?array
     {
-        if (! config('intelligence_v2.enabled') || ! config('intelligence_v2.b2.enabled')) {
+        if (! config('intelligence_v2.enabled') || ! config('intelligence_v2.brief.enabled')) {
             return null;
         }
         $asOf ??= StageASnapshot::today();
@@ -40,28 +40,32 @@ class BriefReadService
         $reason = 'not_generated';
         $audit = null;
 
-        $built = $this->contexts->build($snapshot);
-        if ($built['supplied'] === []) {
-            [$status, $reason] = ['empty_evidence', 'empty_evidence'];
-        } elseif (count($built['supplied']) < (int) config('intelligence_v2.b2.min_records')) {
-            [$status, $reason] = ['insufficient_evidence', 'insufficient_evidence'];
+        if (! config('intelligence_v2.b2.enabled')) {
+            [$status, $reason] = ['disabled', 'disabled'];
         } else {
-            $hash = $this->contexts->inputHash($built['context'], $this->contexts->model());
-            $unit = $this->unit($document, $hash);
-            if ($unit === null) {
-                [$status, $reason] = ['not_generated', 'not_generated'];
-            } elseif ($unit->status === 'completed' && ($unit->result['status'] ?? null) === 'verified') {
-                $claims = is_array($unit->result['claims'] ?? null) ? $unit->result['claims'] : [];
-                $narrative = ['claims' => array_values(array_map(static fn (array $claim) => [
-                    'text' => (string) ($claim['text'] ?? ''),
-                    'cites' => array_values(array_filter((array) ($claim['cites'] ?? []), 'is_string')),
-                ], $claims))];
-                [$status, $reason] = ['verified', null];
-                $audit = $unit->result['audit'] ?? null;
+            $built = $this->contexts->build($snapshot);
+            if ($built['supplied'] === []) {
+                [$status, $reason] = ['empty_evidence', 'empty_evidence'];
+            } elseif (count($built['supplied']) < (int) config('intelligence_v2.b2.min_records')) {
+                [$status, $reason] = ['insufficient_evidence', 'insufficient_evidence'];
             } else {
-                $status = $unit->status === 'completed' ? 'rejected' : $unit->status;
-                $reason = $unit->result['fallback_reason'] ?? $unit->failure_class ?? 'unavailable';
-                $audit = $unit->result['audit'] ?? null;
+                $hash = $this->contexts->inputHash($built['context'], $this->contexts->model());
+                $unit = $this->unit($document, $hash);
+                if ($unit === null) {
+                    [$status, $reason] = ['not_generated', 'not_generated'];
+                } elseif ($unit->status === 'completed' && ($unit->result['status'] ?? null) === 'verified') {
+                    $claims = is_array($unit->result['claims'] ?? null) ? $unit->result['claims'] : [];
+                    $narrative = ['claims' => array_values(array_map(static fn (array $claim) => [
+                        'text' => (string) ($claim['text'] ?? ''),
+                        'cites' => array_values(array_filter((array) ($claim['cites'] ?? []), 'is_string')),
+                    ], $claims))];
+                    [$status, $reason] = ['verified', null];
+                    $audit = $unit->result['audit'] ?? null;
+                } else {
+                    $status = $unit->status === 'completed' ? 'rejected' : $unit->status;
+                    $reason = $unit->result['fallback_reason'] ?? $unit->failure_class ?? 'unavailable';
+                    $audit = $unit->result['audit'] ?? null;
+                }
             }
         }
 

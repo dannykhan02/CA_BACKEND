@@ -114,9 +114,8 @@ class DocumentIntelligenceResource extends JsonResource
                     : null
             ),
             'analysis' => $analysis,
-            // B2 off (the default) omits the key entirely, so the response is byte-for-byte what
-            // it was before. On, it carries B1's deterministic blocks plus the verified narrative
-            // when one exists for exactly this evidence set.
+            // The V2 Brief adds deterministic B1 blocks whenever enabled. B2 only adds an
+            // already-verified narrative for this exact evidence set.
             ...($brief === null ? [] : ['brief' => $brief]),
             'evidence' => (object) $evidence,
             'processingDetails' => $service->processingDetails($this->resource),
