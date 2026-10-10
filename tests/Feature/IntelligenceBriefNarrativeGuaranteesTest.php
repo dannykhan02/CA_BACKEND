@@ -389,9 +389,53 @@ class IntelligenceBriefNarrativeGuaranteesTest extends TestCase
         self::assertSame($pure['template_version'], $served['templateVersion'], $state);
         self::assertFalse($pure['ai_blocks_available'], $state);
 
-        // With B2 off the read path adds nothing at all — not an empty narrative, no key.
+        // The flag-off half, testable since B1 was wired to the API (343593f): with B2 off the
+        // served Brief is still B1, and still byte-identical to BriefAssembler's own output. This
+        // is the invariant that catches an integration change altering B1 by accident.
         config(['intelligence_v2.b2.enabled' => false]);
+        $off = app(BriefReadService::class)->forDocument($document->fresh(), $asOf);
+        self::assertSame(json_encode($pure['blocks']), json_encode($off['blocks']), $state);
+        self::assertSame($pure['template_version'], $off['templateVersion'], $state);
+        self::assertSame('disabled', $off['status'], $state);
+        self::assertSame('disabled', $off['fallbackReason'], $state);
+        self::assertNull($off['narrative'], $state);
+        self::assertNull($off['audit'], $state);
+
+        // And with the V2 Brief itself off there is no key at all.
+        config(['intelligence_v2.brief.enabled' => false]);
         self::assertNull(app(BriefReadService::class)->forDocument($document->fresh(), $asOf), $state);
+    }
+
+    /**
+     * The same invariant through the HTTP API rather than the service, because that is what a
+     * reader actually receives: with B2 off, `data.brief.blocks` is byte-identical to B1's own
+     * output, and turning B2 on cannot change those bytes.
+     */
+    public function test_the_api_serves_byte_identical_b1_blocks_with_b2_off_and_on(): void
+    {
+        $document = $this->arrange('verified');
+        $user = $this->owner($document);
+        $asOf = StageASnapshot::today();
+        $snapshot = app(StageASnapshot::class)->build($document, $asOf);
+        $pure = app(BriefAssembler::class)->assemble($snapshot['document_name'],
+            $snapshot['document_type'], $snapshot['records'], $snapshot['assignments'],
+            $snapshot['coverage'], $asOf, $snapshot['forced_overflow']);
+
+        config(['intelligence_v2.b2.enabled' => false]);
+        $off = $this->actingAs($user)->getJson("/api/documents/{$document->id}/intelligence")
+            ->assertOk()->json('data.brief');
+
+        config(['intelligence_v2.b2.enabled' => true]);
+        $on = $this->actingAs($user)->getJson("/api/documents/{$document->id}/intelligence")
+            ->assertOk()->json('data.brief');
+
+        self::assertSame(json_encode($pure['blocks']), json_encode($off['blocks']));
+        self::assertSame(json_encode($off['blocks']), json_encode($on['blocks']));
+        self::assertSame('disabled', $off['status']);
+        self::assertNull($off['narrative']);
+        // B2 on only adds the narrative beside those same bytes.
+        self::assertSame('verified', $on['status']);
+        self::assertCount(2, $on['narrative']['claims']);
     }
 
     // ------------------------------------------------- fault injection (spec sections 8 and 9)
