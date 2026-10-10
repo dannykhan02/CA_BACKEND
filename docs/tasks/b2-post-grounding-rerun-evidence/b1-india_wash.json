@@ -1,0 +1,166 @@
+{
+    "set": "india_wash",
+    "block_count": 3,
+    "types": [
+        "headline",
+        "measure",
+        "coverage_note"
+    ],
+    "figure_bearing": [
+        {
+            "type": "measure",
+            "text": "Government of India investment in water and sanitation: over $120 billion",
+            "cites": [
+                "kpi:1"
+            ],
+            "typed_value": {
+                "type": "money",
+                "raw": "over $120 billion",
+                "verbatim": true,
+                "number": 120000000000,
+                "scale": 1000000000,
+                "scale_source": "stated",
+                "currency": "$",
+                "unit": "USD",
+                "unit_kind": "currency",
+                "sign": 1,
+                "precision": "exact",
+                "measure_status": "actual",
+                "entity_ref": {
+                    "id": null,
+                    "text": "Government of India"
+                },
+                "date": null,
+                "period": null,
+                "duration": null,
+                "parser_version": "values.v1"
+            }
+        }
+    ],
+    "blocks": [
+        {
+            "id": "headline.document_identity:document",
+            "type": "headline",
+            "order": 0,
+            "text": "PDF — india_wash.pdf",
+            "detail": null,
+            "origin": "docintel_deterministic",
+            "assertion": "derived",
+            "attribution": {
+                "speaker": null,
+                "role": "unattributed",
+                "reported": false,
+                "evidence_ref": null
+            },
+            "cites": [],
+            "evidence": [],
+            "typed": [],
+            "template_id": "headline.document_identity",
+            "template_version": "1",
+            "verification": null,
+            "absence_check": null,
+            "tier": 1,
+            "attention": null,
+            "chart_id": null,
+            "ai_generated": false
+        },
+        {
+            "id": "measure.period_value:a9df880d152b63d6ed6e522410cb25b902eafcd8777ea9f4b45f3084cfa23f61",
+            "type": "measure",
+            "order": 1,
+            "text": "Government of India investment in water and sanitation: over $120 billion",
+            "detail": null,
+            "origin": "docintel_deterministic",
+            "assertion": "derived",
+            "attribution": {
+                "speaker": null,
+                "role": "unattributed",
+                "reported": false,
+                "evidence_ref": null
+            },
+            "cites": [
+                "kpi:1"
+            ],
+            "evidence": [
+                {
+                    "record_id": "01a126aa-c850-736b-baab-c0fe53221cdd",
+                    "source_id": "kpi:1",
+                    "span_id": "E001",
+                    "extraction_version": null,
+                    "chunk_id": "864f6209-c0b5-4734-851d-98574cf4c94c",
+                    "start_offset": 10,
+                    "end_offset": 60,
+                    "quote": "The Government of India has backed its \ncommitment with a game-changing \ninvestment of over $120 billion in water and \nsanitation over the past 10 years. The \nresults speak for themselves: achieving",
+                    "page": 14,
+                    "highlight": {
+                        "mode": "page_only",
+                        "start_offset": null,
+                        "end_offset": null,
+                        "needle": null,
+                        "occurrence": null,
+                        "occurrences": null,
+                        "page": 14
+                    }
+                }
+            ],
+            "typed": {
+                "value": {
+                    "type": "money",
+                    "raw": "over $120 billion",
+                    "verbatim": true,
+                    "number": 120000000000,
+                    "scale": 1000000000,
+                    "scale_source": "stated",
+                    "currency": "$",
+                    "unit": "USD",
+                    "unit_kind": "currency",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "Government of India"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                }
+            },
+            "template_id": "measure.period_value",
+            "template_version": "1",
+            "verification": null,
+            "absence_check": null,
+            "tier": 3,
+            "attention": null,
+            "chart_id": null,
+            "ai_generated": false
+        },
+        {
+            "id": "coverage_note.bounded:document",
+            "type": "coverage_note",
+            "order": 2,
+            "text": "Coverage: evidence_total_unknown, evidence_omitted_unknown, unresolved_references_unknown, failed_chunks_unknown, total_chunks_unknown, dropped_records_unknown, saturated_chunks_unknown, source_text_unknown, synthesis_level_unknown.",
+            "detail": null,
+            "origin": "docintel_deterministic",
+            "assertion": "derived",
+            "attribution": {
+                "speaker": null,
+                "role": "unattributed",
+                "reported": false,
+                "evidence_ref": null
+            },
+            "cites": [],
+            "evidence": [],
+            "typed": [],
+            "template_id": "coverage_note.bounded",
+            "template_version": "1",
+            "verification": null,
+            "absence_check": null,
+            "tier": 3,
+            "attention": null,
+            "chart_id": null,
+            "ai_generated": false
+        }
+    ]
+}

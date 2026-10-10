@@ -1,0 +1,57 @@
+{
+    "reads": 60,
+    "runs_before": 6,
+    "runs_after": 6,
+    "dispatches": 0,
+    "provider_constructions": 0,
+    "documents": [
+        {
+            "set": "india_wash",
+            "n": 1,
+            "reads": 10,
+            "status": "rejected",
+            "b1_blocks": 3,
+            "narrative_leaked": false
+        },
+        {
+            "set": "india_wash",
+            "n": 2,
+            "reads": 10,
+            "status": "rejected",
+            "b1_blocks": 3,
+            "narrative_leaked": false
+        },
+        {
+            "set": "india_wash",
+            "n": 3,
+            "reads": 10,
+            "status": "rejected",
+            "b1_blocks": 3,
+            "narrative_leaked": false
+        },
+        {
+            "set": "unicef_reduced",
+            "n": 1,
+            "reads": 10,
+            "status": "rejected",
+            "b1_blocks": 8,
+            "narrative_leaked": false
+        },
+        {
+            "set": "unicef_reduced",
+            "n": 2,
+            "reads": 10,
+            "status": "rejected",
+            "b1_blocks": 8,
+            "narrative_leaked": false
+        },
+        {
+            "set": "unicef_reduced",
+            "n": 3,
+            "reads": 10,
+            "status": "rejected",
+            "b1_blocks": 8,
+            "narrative_leaked": false
+        }
+    ]
+}

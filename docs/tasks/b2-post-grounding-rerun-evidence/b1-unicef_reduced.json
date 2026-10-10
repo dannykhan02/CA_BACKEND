@@ -1,0 +1,856 @@
+{
+    "set": "unicef_reduced",
+    "block_count": 8,
+    "types": [
+        "headline",
+        "measure",
+        "measure",
+        "measure",
+        "measure",
+        "measure",
+        "measure",
+        "coverage_note"
+    ],
+    "figure_bearing": [
+        {
+            "type": "measure",
+            "text": "Total income from voluntary contributions: $9.326 billion (2022)",
+            "cites": [
+                "kpi:21"
+            ],
+            "typed_value": {
+                "type": "money",
+                "raw": "$9.326 billion",
+                "verbatim": true,
+                "number": 9326000000,
+                "scale": 1000000000,
+                "scale_source": "stated",
+                "currency": "$",
+                "unit": "USD",
+                "unit_kind": "currency",
+                "sign": 1,
+                "precision": "exact",
+                "measure_status": "actual",
+                "entity_ref": {
+                    "id": null,
+                    "text": "UNICEF"
+                },
+                "date": null,
+                "period": null,
+                "duration": null,
+                "parser_version": "values.v1"
+            }
+        },
+        {
+            "type": "measure",
+            "text": "Total income from voluntary contributions: $8.920 billion (2023)",
+            "cites": [
+                "kpi:20"
+            ],
+            "typed_value": {
+                "type": "money",
+                "raw": "$8.920 billion",
+                "verbatim": true,
+                "number": 8920000000,
+                "scale": 1000000000,
+                "scale_source": "stated",
+                "currency": "$",
+                "unit": "USD",
+                "unit_kind": "currency",
+                "sign": 1,
+                "precision": "exact",
+                "measure_status": "actual",
+                "entity_ref": {
+                    "id": null,
+                    "text": "UNICEF"
+                },
+                "date": null,
+                "period": null,
+                "duration": null,
+                "parser_version": "values.v1"
+            }
+        },
+        {
+            "type": "measure",
+            "text": "Total income from voluntary contributions: $8.263 billion (2024)",
+            "cites": [
+                "kpi:19"
+            ],
+            "typed_value": {
+                "type": "money",
+                "raw": "$8.263 billion",
+                "verbatim": true,
+                "number": 8263000000,
+                "scale": 1000000000,
+                "scale_source": "stated",
+                "currency": "$",
+                "unit": "USD",
+                "unit_kind": "currency",
+                "sign": 1,
+                "precision": "exact",
+                "measure_status": "actual",
+                "entity_ref": {
+                    "id": null,
+                    "text": "UNICEF"
+                },
+                "date": null,
+                "period": null,
+                "duration": null,
+                "parser_version": "values.v1"
+            }
+        },
+        {
+            "type": "measure",
+            "text": "Total income from voluntary contributions: $8.122 billion (2021)",
+            "cites": [
+                "kpi:18"
+            ],
+            "typed_value": {
+                "type": "money",
+                "raw": "$8.122 billion",
+                "verbatim": true,
+                "number": 8122000000,
+                "scale": 1000000000,
+                "scale_source": "stated",
+                "currency": "$",
+                "unit": "USD",
+                "unit_kind": "currency",
+                "sign": 1,
+                "precision": "exact",
+                "measure_status": "actual",
+                "entity_ref": {
+                    "id": null,
+                    "text": "UNICEF"
+                },
+                "date": null,
+                "period": null,
+                "duration": null,
+                "parser_version": "values.v1"
+            }
+        },
+        {
+            "type": "measure",
+            "text": "Total income from voluntary contributions: $7.219 billion (2020)",
+            "cites": [
+                "kpi:17"
+            ],
+            "typed_value": {
+                "type": "money",
+                "raw": "$7.219 billion",
+                "verbatim": true,
+                "number": 7219000000,
+                "scale": 1000000000,
+                "scale_source": "stated",
+                "currency": "$",
+                "unit": "USD",
+                "unit_kind": "currency",
+                "sign": 1,
+                "precision": "exact",
+                "measure_status": "actual",
+                "entity_ref": {
+                    "id": null,
+                    "text": "UNICEF"
+                },
+                "date": null,
+                "period": null,
+                "duration": null,
+                "parser_version": "values.v1"
+            }
+        },
+        {
+            "type": "measure",
+            "text": "Core Resources income: $1.584 billion (2024)",
+            "cites": [
+                "kpi:8"
+            ],
+            "typed_value": {
+                "type": "money",
+                "raw": "$1.584 billion",
+                "verbatim": true,
+                "number": 1584000000,
+                "scale": 1000000000,
+                "scale_source": "stated",
+                "currency": "$",
+                "unit": "USD",
+                "unit_kind": "currency",
+                "sign": 1,
+                "precision": "exact",
+                "measure_status": "actual",
+                "entity_ref": {
+                    "id": null,
+                    "text": "UNICEF"
+                },
+                "date": null,
+                "period": null,
+                "duration": null,
+                "parser_version": "values.v1"
+            }
+        }
+    ],
+    "blocks": [
+        {
+            "id": "headline.document_identity:document",
+            "type": "headline",
+            "order": 0,
+            "text": "PDF — unicef_reduced.pdf",
+            "detail": null,
+            "origin": "docintel_deterministic",
+            "assertion": "derived",
+            "attribution": {
+                "speaker": null,
+                "role": "unattributed",
+                "reported": false,
+                "evidence_ref": null
+            },
+            "cites": [],
+            "evidence": [],
+            "typed": [],
+            "template_id": "headline.document_identity",
+            "template_version": "1",
+            "verification": null,
+            "absence_check": null,
+            "tier": 1,
+            "attention": null,
+            "chart_id": null,
+            "ai_generated": false
+        },
+        {
+            "id": "measure.period_value:22e81b5a43224f1be04a0e95997041365f573acd82e612f393e7a82ff28970b2",
+            "type": "measure",
+            "order": 1,
+            "text": "Total income from voluntary contributions: $9.326 billion (2022)",
+            "detail": null,
+            "origin": "docintel_deterministic",
+            "assertion": "derived",
+            "attribution": {
+                "speaker": null,
+                "role": "unattributed",
+                "reported": false,
+                "evidence_ref": null
+            },
+            "cites": [
+                "kpi:21"
+            ],
+            "evidence": [
+                {
+                    "record_id": "01a126aa-c973-73ba-8030-84467d597fac",
+                    "source_id": "kpi:21",
+                    "span_id": "E001",
+                    "extraction_version": null,
+                    "chunk_id": "37b1d7d1-9230-4c64-a110-8e76db476d41",
+                    "start_offset": 10,
+                    "end_offset": 60,
+                    "quote": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)",
+                    "page": 14,
+                    "highlight": {
+                        "mode": "page_only",
+                        "start_offset": null,
+                        "end_offset": null,
+                        "needle": null,
+                        "occurrence": null,
+                        "occurrences": null,
+                        "page": 14
+                    }
+                }
+            ],
+            "typed": {
+                "value": {
+                    "type": "money",
+                    "raw": "$9.326 billion",
+                    "verbatim": true,
+                    "number": 9326000000,
+                    "scale": 1000000000,
+                    "scale_source": "stated",
+                    "currency": "$",
+                    "unit": "USD",
+                    "unit_kind": "currency",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "UNICEF"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "period_covered": {
+                    "type": "period",
+                    "raw": "2022",
+                    "verbatim": true,
+                    "number": null,
+                    "scale": null,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": null,
+                    "unit_kind": "other",
+                    "sign": null,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "UNICEF"
+                    },
+                    "date": null,
+                    "period": {
+                        "text": "2022",
+                        "grain": "year",
+                        "start": "2022-01-01",
+                        "end": "2022-12-31",
+                        "anchored": true,
+                        "fiscal_year_basis": null
+                    },
+                    "duration": null,
+                    "parser_version": "values.v1",
+                    "resolution": "period"
+                }
+            },
+            "template_id": "measure.period_value",
+            "template_version": "1",
+            "verification": null,
+            "absence_check": null,
+            "tier": 1,
+            "attention": null,
+            "chart_id": null,
+            "ai_generated": false
+        },
+        {
+            "id": "measure.period_value:299c4c360114945443b13230a259b4b2d6d472fa817824a9ca14793027b09443",
+            "type": "measure",
+            "order": 2,
+            "text": "Total income from voluntary contributions: $8.920 billion (2023)",
+            "detail": null,
+            "origin": "docintel_deterministic",
+            "assertion": "derived",
+            "attribution": {
+                "speaker": null,
+                "role": "unattributed",
+                "reported": false,
+                "evidence_ref": null
+            },
+            "cites": [
+                "kpi:20"
+            ],
+            "evidence": [
+                {
+                    "record_id": "01a126aa-c970-73ef-9937-8ef30aa9e3c1",
+                    "source_id": "kpi:20",
+                    "span_id": "E001",
+                    "extraction_version": null,
+                    "chunk_id": "40886490-f148-4dcd-abd6-92fb04ac8736",
+                    "start_offset": 10,
+                    "end_offset": 60,
+                    "quote": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)",
+                    "page": 14,
+                    "highlight": {
+                        "mode": "page_only",
+                        "start_offset": null,
+                        "end_offset": null,
+                        "needle": null,
+                        "occurrence": null,
+                        "occurrences": null,
+                        "page": 14
+                    }
+                }
+            ],
+            "typed": {
+                "value": {
+                    "type": "money",
+                    "raw": "$8.920 billion",
+                    "verbatim": true,
+                    "number": 8920000000,
+                    "scale": 1000000000,
+                    "scale_source": "stated",
+                    "currency": "$",
+                    "unit": "USD",
+                    "unit_kind": "currency",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "UNICEF"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "period_covered": {
+                    "type": "period",
+                    "raw": "2023",
+                    "verbatim": true,
+                    "number": null,
+                    "scale": null,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": null,
+                    "unit_kind": "other",
+                    "sign": null,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "UNICEF"
+                    },
+                    "date": null,
+                    "period": {
+                        "text": "2023",
+                        "grain": "year",
+                        "start": "2023-01-01",
+                        "end": "2023-12-31",
+                        "anchored": true,
+                        "fiscal_year_basis": null
+                    },
+                    "duration": null,
+                    "parser_version": "values.v1",
+                    "resolution": "period"
+                }
+            },
+            "template_id": "measure.period_value",
+            "template_version": "1",
+            "verification": null,
+            "absence_check": null,
+            "tier": 3,
+            "attention": null,
+            "chart_id": null,
+            "ai_generated": false
+        },
+        {
+            "id": "measure.period_value:51248309de6489b18f1b8e7e604ff77bcfd8e8123a1d78e86df5c7945588e344",
+            "type": "measure",
+            "order": 3,
+            "text": "Total income from voluntary contributions: $8.263 billion (2024)",
+            "detail": null,
+            "origin": "docintel_deterministic",
+            "assertion": "derived",
+            "attribution": {
+                "speaker": null,
+                "role": "unattributed",
+                "reported": false,
+                "evidence_ref": null
+            },
+            "cites": [
+                "kpi:19"
+            ],
+            "evidence": [
+                {
+                    "record_id": "01a126aa-c96d-72a8-884b-9e90afb016c2",
+                    "source_id": "kpi:19",
+                    "span_id": "E001",
+                    "extraction_version": null,
+                    "chunk_id": "f2bb7e78-272d-43bc-b48e-e3040d6eb5e8",
+                    "start_offset": 10,
+                    "end_offset": 60,
+                    "quote": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)",
+                    "page": 14,
+                    "highlight": {
+                        "mode": "page_only",
+                        "start_offset": null,
+                        "end_offset": null,
+                        "needle": null,
+                        "occurrence": null,
+                        "occurrences": null,
+                        "page": 14
+                    }
+                }
+            ],
+            "typed": {
+                "value": {
+                    "type": "money",
+                    "raw": "$8.263 billion",
+                    "verbatim": true,
+                    "number": 8263000000,
+                    "scale": 1000000000,
+                    "scale_source": "stated",
+                    "currency": "$",
+                    "unit": "USD",
+                    "unit_kind": "currency",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "UNICEF"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "period_covered": {
+                    "type": "period",
+                    "raw": "2024",
+                    "verbatim": true,
+                    "number": null,
+                    "scale": null,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": null,
+                    "unit_kind": "other",
+                    "sign": null,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "UNICEF"
+                    },
+                    "date": null,
+                    "period": {
+                        "text": "2024",
+                        "grain": "year",
+                        "start": "2024-01-01",
+                        "end": "2024-12-31",
+                        "anchored": true,
+                        "fiscal_year_basis": null
+                    },
+                    "duration": null,
+                    "parser_version": "values.v1",
+                    "resolution": "period"
+                }
+            },
+            "template_id": "measure.period_value",
+            "template_version": "1",
+            "verification": null,
+            "absence_check": null,
+            "tier": 3,
+            "attention": null,
+            "chart_id": null,
+            "ai_generated": false
+        },
+        {
+            "id": "measure.period_value:758482524060fc259358b3b87dbdbd89f3d25018553dd73a5bfbaae548669e81",
+            "type": "measure",
+            "order": 4,
+            "text": "Total income from voluntary contributions: $8.122 billion (2021)",
+            "detail": null,
+            "origin": "docintel_deterministic",
+            "assertion": "derived",
+            "attribution": {
+                "speaker": null,
+                "role": "unattributed",
+                "reported": false,
+                "evidence_ref": null
+            },
+            "cites": [
+                "kpi:18"
+            ],
+            "evidence": [
+                {
+                    "record_id": "01a126aa-c963-7337-ac41-2c8d87e1ecaa",
+                    "source_id": "kpi:18",
+                    "span_id": "E001",
+                    "extraction_version": null,
+                    "chunk_id": "b6bdae50-fb3c-4b93-8939-2e8b3afed1f2",
+                    "start_offset": 10,
+                    "end_offset": 60,
+                    "quote": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)",
+                    "page": 14,
+                    "highlight": {
+                        "mode": "page_only",
+                        "start_offset": null,
+                        "end_offset": null,
+                        "needle": null,
+                        "occurrence": null,
+                        "occurrences": null,
+                        "page": 14
+                    }
+                }
+            ],
+            "typed": {
+                "value": {
+                    "type": "money",
+                    "raw": "$8.122 billion",
+                    "verbatim": true,
+                    "number": 8122000000,
+                    "scale": 1000000000,
+                    "scale_source": "stated",
+                    "currency": "$",
+                    "unit": "USD",
+                    "unit_kind": "currency",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "UNICEF"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "period_covered": {
+                    "type": "period",
+                    "raw": "2021",
+                    "verbatim": true,
+                    "number": null,
+                    "scale": null,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": null,
+                    "unit_kind": "other",
+                    "sign": null,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "UNICEF"
+                    },
+                    "date": null,
+                    "period": {
+                        "text": "2021",
+                        "grain": "year",
+                        "start": "2021-01-01",
+                        "end": "2021-12-31",
+                        "anchored": true,
+                        "fiscal_year_basis": null
+                    },
+                    "duration": null,
+                    "parser_version": "values.v1",
+                    "resolution": "period"
+                }
+            },
+            "template_id": "measure.period_value",
+            "template_version": "1",
+            "verification": null,
+            "absence_check": null,
+            "tier": 3,
+            "attention": null,
+            "chart_id": null,
+            "ai_generated": false
+        },
+        {
+            "id": "measure.period_value:8c08a4212adb6242f5319c05b1c83d79782e71118a9173d597750e1309a361da",
+            "type": "measure",
+            "order": 5,
+            "text": "Total income from voluntary contributions: $7.219 billion (2020)",
+            "detail": null,
+            "origin": "docintel_deterministic",
+            "assertion": "derived",
+            "attribution": {
+                "speaker": null,
+                "role": "unattributed",
+                "reported": false,
+                "evidence_ref": null
+            },
+            "cites": [
+                "kpi:17"
+            ],
+            "evidence": [
+                {
+                    "record_id": "01a126aa-c956-73e5-90cb-e4ad6460ec0f",
+                    "source_id": "kpi:17",
+                    "span_id": "E001",
+                    "extraction_version": null,
+                    "chunk_id": "8215ad9e-093f-4b53-8841-0dbe6a2e1d79",
+                    "start_offset": 10,
+                    "end_offset": 60,
+                    "quote": "20242023202220212020\nCore Resources income from voluntary \ncontributions by type of resource partner, \n2020–2024\nIncome ratio by type of funding, \n2020–2024\n0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%\n100%\n20242023202220212020\n37%\n41%\n30%\n49%\n46%\n45%\n20%\n17%\n14%\n33%\n49%\n18%\n31%\n50%\n19%\n$7.219 \nbillion\n$8.122 \nbillion\n$9.326 \nbillion\n$8.920 \nbillion\n$8.263 \nbillion\nOther Resources \nEmergency (ORE)\nOther Resources \nRegular (ORR)\nCore Resources (RR)",
+                    "page": 14,
+                    "highlight": {
+                        "mode": "page_only",
+                        "start_offset": null,
+                        "end_offset": null,
+                        "needle": null,
+                        "occurrence": null,
+                        "occurrences": null,
+                        "page": 14
+                    }
+                }
+            ],
+            "typed": {
+                "value": {
+                    "type": "money",
+                    "raw": "$7.219 billion",
+                    "verbatim": true,
+                    "number": 7219000000,
+                    "scale": 1000000000,
+                    "scale_source": "stated",
+                    "currency": "$",
+                    "unit": "USD",
+                    "unit_kind": "currency",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "UNICEF"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "period_covered": {
+                    "type": "period",
+                    "raw": "2020",
+                    "verbatim": true,
+                    "number": null,
+                    "scale": null,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": null,
+                    "unit_kind": "other",
+                    "sign": null,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "UNICEF"
+                    },
+                    "date": null,
+                    "period": {
+                        "text": "2020",
+                        "grain": "year",
+                        "start": "2020-01-01",
+                        "end": "2020-12-31",
+                        "anchored": true,
+                        "fiscal_year_basis": null
+                    },
+                    "duration": null,
+                    "parser_version": "values.v1",
+                    "resolution": "period"
+                }
+            },
+            "template_id": "measure.period_value",
+            "template_version": "1",
+            "verification": null,
+            "absence_check": null,
+            "tier": 3,
+            "attention": null,
+            "chart_id": null,
+            "ai_generated": false
+        },
+        {
+            "id": "measure.period_value:af0f2a324665a14df1a2919fee1ee65b797f988a9084b889eb6c491fb27e4e95",
+            "type": "measure",
+            "order": 6,
+            "text": "Core Resources income: $1.584 billion (2024)",
+            "detail": null,
+            "origin": "docintel_deterministic",
+            "assertion": "derived",
+            "attribution": {
+                "speaker": null,
+                "role": "unattributed",
+                "reported": false,
+                "evidence_ref": null
+            },
+            "cites": [
+                "kpi:8"
+            ],
+            "evidence": [
+                {
+                    "record_id": "01a126aa-c92f-7343-b6ac-67278121538d",
+                    "source_id": "kpi:8",
+                    "span_id": "E001",
+                    "extraction_version": null,
+                    "chunk_id": "f66ddaa0-f932-45be-9054-5de81b2ad781",
+                    "start_offset": 10,
+                    "end_offset": 60,
+                    "quote": "Core resources income by type of partner,\n2024\n$512.6 million\nPublic sector, 32%\n$724.9 million\nPrivate sector, 46%\n$346.1 million\nOther, 22%\nTotal\n$1.584\nbillion\nPrivate sector Public sector Tot al\n0\n200\n400\n600\n800\n1000",
+                    "page": 14,
+                    "highlight": {
+                        "mode": "page_only",
+                        "start_offset": null,
+                        "end_offset": null,
+                        "needle": null,
+                        "occurrence": null,
+                        "occurrences": null,
+                        "page": 14
+                    }
+                }
+            ],
+            "typed": {
+                "value": {
+                    "type": "money",
+                    "raw": "$1.584 billion",
+                    "verbatim": true,
+                    "number": 1584000000,
+                    "scale": 1000000000,
+                    "scale_source": "stated",
+                    "currency": "$",
+                    "unit": "USD",
+                    "unit_kind": "currency",
+                    "sign": 1,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "UNICEF"
+                    },
+                    "date": null,
+                    "period": null,
+                    "duration": null,
+                    "parser_version": "values.v1"
+                },
+                "period_covered": {
+                    "type": "period",
+                    "raw": "2024",
+                    "verbatim": true,
+                    "number": null,
+                    "scale": null,
+                    "scale_source": null,
+                    "currency": null,
+                    "unit": null,
+                    "unit_kind": "other",
+                    "sign": null,
+                    "precision": "exact",
+                    "measure_status": "actual",
+                    "entity_ref": {
+                        "id": null,
+                        "text": "UNICEF"
+                    },
+                    "date": null,
+                    "period": {
+                        "text": "2024",
+                        "grain": "year",
+                        "start": "2024-01-01",
+                        "end": "2024-12-31",
+                        "anchored": true,
+                        "fiscal_year_basis": null
+                    },
+                    "duration": null,
+                    "parser_version": "values.v1",
+                    "resolution": "period"
+                }
+            },
+            "template_id": "measure.period_value",
+            "template_version": "1",
+            "verification": null,
+            "absence_check": null,
+            "tier": 3,
+            "attention": null,
+            "chart_id": null,
+            "ai_generated": false
+        },
+        {
+            "id": "coverage_note.bounded:document",
+            "type": "coverage_note",
+            "order": 7,
+            "text": "Coverage: evidence_total_unknown, evidence_omitted_unknown, unresolved_references_unknown, failed_chunks_unknown, total_chunks_unknown, dropped_records_unknown, saturated_chunks_unknown, source_text_unknown, synthesis_level_unknown.",
+            "detail": null,
+            "origin": "docintel_deterministic",
+            "assertion": "derived",
+            "attribution": {
+                "speaker": null,
+                "role": "unattributed",
+                "reported": false,
+                "evidence_ref": null
+            },
+            "cites": [],
+            "evidence": [],
+            "typed": [],
+            "template_id": "coverage_note.bounded",
+            "template_version": "1",
+            "verification": null,
+            "absence_check": null,
+            "tier": 3,
+            "attention": null,
+            "chart_id": null,
+            "ai_generated": false
+        }
+    ]
+}

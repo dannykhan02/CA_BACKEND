@@ -1,0 +1,9 @@
+{
+  "frozen_at_utc": "2026-10-10T16:49:09.845635+00:00",
+  "packet_sha256": "17e9c788c30cd4feafe9ca8f7f4c29a58d0041ffdb25b7ae1433c89cb42c50c8",
+  "judgements_sha256": "1539113d22f7b1ee3011bf1058a91bee79483d0a7b4d9482f0aee4bcec40ed57",
+  "sealed_key_sha256": "80f2baf01db0184d6f10fe7d1872a770ae0fc98c0d5e7dbc0b6216445997eaa2",
+  "items": 37,
+  "reviewer_independent": true,
+  "packet_version": 2
+}

@@ -1,0 +1,370 @@
+[
+    {
+        "call": "b2eval-india_wash-1",
+        "set": "india_wash",
+        "document_id": "01a126b0-e89f-7060-b825-2dcfc62de7da",
+        "stage_a_records": 30,
+        "supplied": 15,
+        "key_figures": 1,
+        "narrative_verdict": "rejected",
+        "narrative_reasons": [
+            "brief_entities_grounded"
+        ],
+        "claim_rows": [
+            {
+                "item": "C25",
+                "post_verdict": "accepted",
+                "post_reasons": [],
+                "new_cites": [
+                    "risk:1"
+                ]
+            },
+            {
+                "item": "C23",
+                "post_verdict": "rejected",
+                "post_reasons": [
+                    "brief_entities_grounded"
+                ],
+                "new_cites": [
+                    "fact:01a126b0-e8c0-733e-a071-60efb264ab08",
+                    "kpi:6"
+                ]
+            },
+            {
+                "item": "C03",
+                "post_verdict": "accepted",
+                "post_reasons": [],
+                "new_cites": [
+                    "kpi:5"
+                ]
+            },
+            {
+                "item": "C26",
+                "post_verdict": "accepted",
+                "post_reasons": [],
+                "new_cites": [
+                    "kpi:3",
+                    "kpi:2"
+                ]
+            },
+            {
+                "item": "C10",
+                "post_verdict": "accepted",
+                "post_reasons": [],
+                "new_cites": [
+                    "kpi:10",
+                    "kpi:9"
+                ]
+            },
+            {
+                "item": "C14",
+                "post_verdict": "accepted",
+                "post_reasons": [],
+                "new_cites": [
+                    "fact:01a126b0-e8c4-7164-9cf4-25c8f2955010"
+                ]
+            }
+        ]
+    },
+    {
+        "call": "b2eval-india_wash-3",
+        "set": "india_wash",
+        "document_id": "01a126b0-ed6d-73a3-8d92-d9edd14b8fa8",
+        "stage_a_records": 30,
+        "supplied": 15,
+        "key_figures": 1,
+        "narrative_verdict": "rejected",
+        "narrative_reasons": [
+            "brief_entities_grounded"
+        ],
+        "claim_rows": [
+            {
+                "item": "C12",
+                "post_verdict": "accepted",
+                "post_reasons": [],
+                "new_cites": [
+                    "risk:3"
+                ]
+            },
+            {
+                "item": "C18",
+                "post_verdict": "rejected",
+                "post_reasons": [
+                    "brief_entities_grounded"
+                ],
+                "new_cites": [
+                    "fact:01a126b0-ed8a-71ce-8683-1ec079f39bba",
+                    "kpi:32"
+                ]
+            },
+            {
+                "item": "C09",
+                "post_verdict": "accepted",
+                "post_reasons": [],
+                "new_cites": [
+                    "kpi:31"
+                ]
+            },
+            {
+                "item": "C19",
+                "post_verdict": "accepted",
+                "post_reasons": [],
+                "new_cites": [
+                    "kpi:36",
+                    "kpi:35"
+                ]
+            },
+            {
+                "item": "C16",
+                "post_verdict": "accepted",
+                "post_reasons": [],
+                "new_cites": [
+                    "kpi:29",
+                    "kpi:28"
+                ]
+            },
+            {
+                "item": "C22",
+                "post_verdict": "accepted",
+                "post_reasons": [],
+                "new_cites": [
+                    "fact:01a126b0-ed8d-70ec-a034-c0ea028a2434"
+                ]
+            }
+        ]
+    },
+    {
+        "call": "b2eval-unicef_reduced-1",
+        "set": "unicef_reduced",
+        "document_id": "01a126b0-efac-71ca-8117-4f99d5abbfd3",
+        "stage_a_records": 41,
+        "supplied": 18,
+        "key_figures": 6,
+        "narrative_verdict": "rejected",
+        "narrative_reasons": [
+            "brief_entities_grounded",
+            "unsupported_key_figure",
+            "brief_numbers_grounded",
+            "brief_units_consistent"
+        ],
+        "claim_rows": [
+            {
+                "item": "C17",
+                "post_verdict": "rejected",
+                "post_reasons": [
+                    "brief_entities_grounded"
+                ],
+                "new_cites": [
+                    "kpi:40"
+                ]
+            },
+            {
+                "item": "C24",
+                "post_verdict": "rejected",
+                "post_reasons": [
+                    "unsupported_key_figure",
+                    "brief_entities_grounded"
+                ],
+                "new_cites": [
+                    "kpi:42",
+                    "kpi:41",
+                    "kpi:43"
+                ]
+            },
+            {
+                "item": "C20",
+                "post_verdict": "rejected",
+                "post_reasons": [
+                    "brief_numbers_grounded",
+                    "brief_entities_grounded",
+                    "brief_units_consistent"
+                ],
+                "new_cites": [
+                    "kpi:46",
+                    "kpi:47",
+                    "kpi:48"
+                ]
+            },
+            {
+                "item": "C28",
+                "post_verdict": "accepted",
+                "post_reasons": [],
+                "new_cites": [
+                    "kpi:45",
+                    "kpi:52",
+                    "kpi:51"
+                ]
+            },
+            {
+                "item": "C05",
+                "post_verdict": "accepted",
+                "post_reasons": [],
+                "new_cites": [
+                    "kpi:61",
+                    "kpi:62"
+                ]
+            }
+        ]
+    },
+    {
+        "call": "b2eval-unicef_reduced-2",
+        "set": "unicef_reduced",
+        "document_id": "01a126b0-f1c9-700f-b8d3-85791c841aa9",
+        "stage_a_records": 41,
+        "supplied": 18,
+        "key_figures": 6,
+        "narrative_verdict": "rejected",
+        "narrative_reasons": [
+            "brief_entities_grounded",
+            "unsupported_key_figure",
+            "brief_numbers_grounded",
+            "brief_units_consistent"
+        ],
+        "claim_rows": [
+            {
+                "item": "C01",
+                "post_verdict": "rejected",
+                "post_reasons": [
+                    "brief_entities_grounded"
+                ],
+                "new_cites": [
+                    "kpi:74"
+                ]
+            },
+            {
+                "item": "C21",
+                "post_verdict": "rejected",
+                "post_reasons": [
+                    "unsupported_key_figure",
+                    "brief_entities_grounded"
+                ],
+                "new_cites": [
+                    "kpi:76",
+                    "kpi:75",
+                    "kpi:77"
+                ]
+            },
+            {
+                "item": "C13",
+                "post_verdict": "rejected",
+                "post_reasons": [
+                    "brief_numbers_grounded",
+                    "brief_entities_grounded",
+                    "brief_units_consistent"
+                ],
+                "new_cites": [
+                    "kpi:80",
+                    "kpi:81",
+                    "kpi:82"
+                ]
+            },
+            {
+                "item": "C15",
+                "post_verdict": "accepted",
+                "post_reasons": [],
+                "new_cites": [
+                    "kpi:79",
+                    "kpi:86",
+                    "kpi:85"
+                ]
+            },
+            {
+                "item": "C06",
+                "post_verdict": "accepted",
+                "post_reasons": [],
+                "new_cites": [
+                    "kpi:95",
+                    "kpi:96"
+                ]
+            },
+            {
+                "item": "C08",
+                "post_verdict": "accepted",
+                "post_reasons": [],
+                "new_cites": [
+                    "kpi:102"
+                ]
+            }
+        ]
+    },
+    {
+        "call": "b2eval-unicef_reduced-3",
+        "set": "unicef_reduced",
+        "document_id": "01a126b0-f47e-738f-82d5-3e3a559a0759",
+        "stage_a_records": 41,
+        "supplied": 18,
+        "key_figures": 6,
+        "narrative_verdict": "rejected",
+        "narrative_reasons": [
+            "brief_entities_grounded",
+            "brief_numbers_grounded",
+            "brief_units_consistent"
+        ],
+        "claim_rows": [
+            {
+                "item": "C02",
+                "post_verdict": "rejected",
+                "post_reasons": [
+                    "brief_entities_grounded"
+                ],
+                "new_cites": [
+                    "kpi:108",
+                    "kpi:110",
+                    "kpi:109",
+                    "kpi:111"
+                ]
+            },
+            {
+                "item": "C27",
+                "post_verdict": "rejected",
+                "post_reasons": [
+                    "brief_numbers_grounded",
+                    "brief_entities_grounded",
+                    "brief_units_consistent"
+                ],
+                "new_cites": [
+                    "kpi:114",
+                    "kpi:115",
+                    "kpi:116"
+                ]
+            },
+            {
+                "item": "C11",
+                "post_verdict": "accepted",
+                "post_reasons": [],
+                "new_cites": [
+                    "kpi:113",
+                    "kpi:120",
+                    "kpi:119"
+                ]
+            },
+            {
+                "item": "C29",
+                "post_verdict": "accepted",
+                "post_reasons": [],
+                "new_cites": [
+                    "kpi:118",
+                    "kpi:117"
+                ]
+            },
+            {
+                "item": "C04",
+                "post_verdict": "accepted",
+                "post_reasons": [],
+                "new_cites": [
+                    "kpi:129",
+                    "kpi:130"
+                ]
+            },
+            {
+                "item": "C07",
+                "post_verdict": "accepted",
+                "post_reasons": [],
+                "new_cites": [
+                    "kpi:136",
+                    "kpi:122"
+                ]
+            }
+        ]
+    }
+]

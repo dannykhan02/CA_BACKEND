@@ -6,6 +6,7 @@ use App\Services\AI\Incremental\EvidenceMerger;
 use App\Services\AI\Incremental\EvidenceDateRecognizer;
 use App\Services\Intelligence\MeasurementParser;
 use App\Services\Intelligence\NegativeClaimGuard;
+use App\Services\Intelligence\RecordOwnedMentionProjector;
 use App\Services\Intelligence\Brief\Templates\DeterministicTemplates;
 
 /** Local verification of prose against the records it cites. No provider or persistence path. */
@@ -45,7 +46,7 @@ class BriefVerifier
 
     public function __construct(private NegativeClaimGuard $negativeClaims,
         private MeasurementParser $measurements, private EvidenceMerger $normalizer,
-        private DeterministicTemplates $templates) {}
+        private DeterministicTemplates $templates, private RecordOwnedMentionProjector $ownedMentions) {}
 
     /** @param array<string,mixed> $block @param array<string,array<string,mixed>> $recordsBySource
      *  @param list<string> $availableSourceIds @return array<string,mixed>
@@ -87,7 +88,8 @@ class BriefVerifier
         $add('durations_grounded', $durations === [] ? null
             : $this->durationsGrounded($durations, $records));
         $entities = $this->entities($text);
-        $add('entities_grounded', $entities === [] ? null : $this->entitiesGrounded($entities, $records, $recordsBySource));
+        $add('entities_grounded', $entities === [] ? null
+            : $this->entitiesGrounded($entities, $records, $recordsBySource, $numbers, $text));
         $unitTokens = $this->unitTokens($text);
         $add('units_consistent', $unitTokens === [] ? null : $this->unitsConsistent($unitTokens, $numbers, $records, $block));
         $direction = $this->comparisonDirection($text);
@@ -517,7 +519,8 @@ class BriefVerifier
     }
 
     /** @param list<string> $entities @param list<array<string,mixed>> $records */
-    private function entitiesGrounded(array $entities, array $records, array $recordsBySource): bool
+    private function entitiesGrounded(array $entities, array $records, array $recordsBySource,
+        array $numbers, string $text): bool
     {
         $known = [];
         foreach ($records as $record) {
@@ -541,12 +544,106 @@ class BriefVerifier
             }
         }
         foreach ($entities as $entity) {
-            if (array_intersect($this->entitySurfaces($entity), $known) === []) {
+            if (array_intersect($this->entitySurfaces($entity), $known) === []
+                && ! $this->ownedMentionGrounds($entity, $records, $numbers, $text)) {
                 return false;
             }
         }
 
         return true;
+    }
+
+    /** A newly owned mention is useful only for the same cited record's measured/action relation. */
+    private function ownedMentionGrounds(string $entity, array $records, array $numbers, string $text): bool
+    {
+        $subjectsInClaim = [];
+        foreach ($records as $record) {
+            $subject = trim((string) ($record['data']['subject'] ?? ''));
+            if ($subject !== '' && $this->ownedMentions->literal($text, $subject)) {
+                $subjectsInClaim[$this->normalizer->normalize($subject)] = $subject;
+            }
+        }
+        $namedSubjects = [];
+        foreach ($subjectsInClaim as $key => $subject) {
+            $insideLongerName = false;
+            foreach ($subjectsInClaim as $other) {
+                if (mb_strlen($other) > mb_strlen($subject)
+                    && $this->ownedMentions->literal($other, $subject)) {
+                    $insideLongerName = true;
+                    break;
+                }
+            }
+            if (! $insideLongerName) {
+                $namedSubjects[] = $key;
+            }
+        }
+        foreach ($records as $owner) {
+            if ($namedSubjects !== [] && ! in_array($this->normalizer->normalize(
+                (string) ($owner['data']['subject'] ?? '')), $namedSubjects, true)) {
+                continue;
+            }
+            foreach ($this->ownedMentions->project($owner) as $mention) {
+                if (! in_array($this->normalizer->normalize($mention['surface']),
+                    $this->entitySurfaces($entity), true)) {
+                    continue;
+                }
+                if ($mention['role'] === 'program_or_initiative'
+                    && preg_match('/\blaunched\s+the\b/iu', $text) === 1) {
+                    $value = (string) ($owner['data']['value'] ?? '');
+                    if (! preg_match('/^(.+?)\s+launched\s+the\b/iu', $value, $actor)
+                        || preg_match('/\b(?:The\s+)?'.preg_quote($actor[1], '/').
+                            '\s+launched\s+the\b/iu', $text) !== 1) {
+                        continue;
+                    }
+                }
+                $allFiguresBound = true;
+                foreach ($numbers as $number) {
+                    $linked = false;
+                    foreach ($records as $record) {
+                        $value = $record['typed']['value'] ?? null;
+                        if (! is_array($value) || ! is_numeric($value['number'] ?? null)
+                            || abs((float) $value['number'] - (float) $number['number']) > 0.000001) {
+                            continue;
+                        }
+                        if ($mention['role'] === 'metric_concept') {
+                            foreach ($this->ownedMentions->project($record) as $candidate) {
+                                if ($candidate['role'] === 'metric_concept'
+                                    && $this->normalizer->normalize($candidate['canonical'])
+                                        === $this->normalizer->normalize($mention['canonical'])
+                                    && $this->normalizer->normalize((string) ($record['data']['subject'] ?? ''))
+                                        === $this->normalizer->normalize((string) ($owner['data']['subject'] ?? ''))) {
+                                    $linked = true;
+                                    break;
+                                }
+                            }
+                        } else {
+                            $label = (string) ($record['data']['label'] ?? '');
+                            // The reviewed cross-record numeric relation is specifically a
+                            // constructed-toilets metric under the named Mission. A mere reuse of
+                            // the program string on another metric cannot attach that number.
+                            $linked = preg_match('/^Toilets constructed under\s+'.
+                                preg_quote($mention['canonical'], '/').'$/iu', $label) === 1
+                                && preg_match('/\btoilets\b/iu', $text) === 1
+                                && preg_match('/\bconstructed\b/iu', $text) === 1
+                                && $this->normalizer->normalize((string) ($record['data']['subject'] ?? ''))
+                                    === $this->normalizer->normalize((string) ($owner['data']['subject'] ?? ''));
+                        }
+                        if ($linked) {
+                            break;
+                        }
+                    }
+                    if (! $linked) {
+                        $allFiguresBound = false;
+                        break;
+                    }
+                }
+                if ($allFiguresBound) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**

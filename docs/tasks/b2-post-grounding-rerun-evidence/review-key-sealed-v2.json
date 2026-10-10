@@ -1,0 +1,479 @@
+{
+    "F01": {
+        "call_index": 0,
+        "claim_index": 0,
+        "document_id": "01a126b0-e89f-7060-b825-2dcfc62de7da",
+        "set": "india_wash",
+        "cites": [
+            "risk:1"
+        ],
+        "verifier_verdict": "accepted",
+        "verifier_reasons": []
+    },
+    "F02": {
+        "call_index": 0,
+        "claim_index": 1,
+        "document_id": "01a126b0-e89f-7060-b825-2dcfc62de7da",
+        "set": "india_wash",
+        "cites": [
+            "fact:01a126b0-e8c0-733e-a071-60efb264ab08",
+            "kpi:6"
+        ],
+        "verifier_verdict": "rejected",
+        "verifier_reasons": [
+            "brief_entities_grounded"
+        ]
+    },
+    "F03": {
+        "call_index": 0,
+        "claim_index": 2,
+        "document_id": "01a126b0-e89f-7060-b825-2dcfc62de7da",
+        "set": "india_wash",
+        "cites": [
+            "kpi:3",
+            "kpi:2"
+        ],
+        "verifier_verdict": "accepted",
+        "verifier_reasons": []
+    },
+    "F04": {
+        "call_index": 0,
+        "claim_index": 3,
+        "document_id": "01a126b0-e89f-7060-b825-2dcfc62de7da",
+        "set": "india_wash",
+        "cites": [
+            "kpi:10",
+            "kpi:9"
+        ],
+        "verifier_verdict": "accepted",
+        "verifier_reasons": []
+    },
+    "F05": {
+        "call_index": 0,
+        "claim_index": 4,
+        "document_id": "01a126b0-e89f-7060-b825-2dcfc62de7da",
+        "set": "india_wash",
+        "cites": [
+            "fact:01a126b0-e8c0-733e-a071-60efb3a6acd3"
+        ],
+        "verifier_verdict": "rejected",
+        "verifier_reasons": [
+            "brief_entities_grounded"
+        ]
+    },
+    "F06": {
+        "call_index": 0,
+        "claim_index": 5,
+        "document_id": "01a126b0-e89f-7060-b825-2dcfc62de7da",
+        "set": "india_wash",
+        "cites": [
+            "kpi:5"
+        ],
+        "verifier_verdict": "accepted",
+        "verifier_reasons": []
+    },
+    "F09": {
+        "call_index": 1,
+        "claim_index": 0,
+        "document_id": "01a126b0-eacb-722d-b4a0-1061379ce2aa",
+        "set": "india_wash",
+        "cites": [
+            "risk:2"
+        ],
+        "verifier_verdict": "accepted",
+        "verifier_reasons": []
+    },
+    "F10": {
+        "call_index": 1,
+        "claim_index": 1,
+        "document_id": "01a126b0-eacb-722d-b4a0-1061379ce2aa",
+        "set": "india_wash",
+        "cites": [
+            "fact:01a126b0-eae7-7093-95d5-28fef2b994be",
+            "kpi:19"
+        ],
+        "verifier_verdict": "rejected",
+        "verifier_reasons": [
+            "brief_entities_grounded"
+        ]
+    },
+    "F11": {
+        "call_index": 1,
+        "claim_index": 2,
+        "document_id": "01a126b0-eacb-722d-b4a0-1061379ce2aa",
+        "set": "india_wash",
+        "cites": [
+            "kpi:16",
+            "kpi:15"
+        ],
+        "verifier_verdict": "accepted",
+        "verifier_reasons": []
+    },
+    "F12": {
+        "call_index": 1,
+        "claim_index": 3,
+        "document_id": "01a126b0-eacb-722d-b4a0-1061379ce2aa",
+        "set": "india_wash",
+        "cites": [
+            "kpi:23",
+            "kpi:22"
+        ],
+        "verifier_verdict": "accepted",
+        "verifier_reasons": []
+    },
+    "F13": {
+        "call_index": 1,
+        "claim_index": 4,
+        "document_id": "01a126b0-eacb-722d-b4a0-1061379ce2aa",
+        "set": "india_wash",
+        "cites": [
+            "fact:01a126b0-eaeb-7085-93ba-272b9b509583"
+        ],
+        "verifier_verdict": "accepted",
+        "verifier_reasons": []
+    },
+    "F14": {
+        "call_index": 1,
+        "claim_index": 5,
+        "document_id": "01a126b0-eacb-722d-b4a0-1061379ce2aa",
+        "set": "india_wash",
+        "cites": [
+            "kpi:18"
+        ],
+        "verifier_verdict": "accepted",
+        "verifier_reasons": []
+    },
+    "F17": {
+        "call_index": 2,
+        "claim_index": 0,
+        "document_id": "01a126b0-ed6d-73a3-8d92-d9edd14b8fa8",
+        "set": "india_wash",
+        "cites": [
+            "risk:3"
+        ],
+        "verifier_verdict": "accepted",
+        "verifier_reasons": []
+    },
+    "F18": {
+        "call_index": 2,
+        "claim_index": 1,
+        "document_id": "01a126b0-ed6d-73a3-8d92-d9edd14b8fa8",
+        "set": "india_wash",
+        "cites": [
+            "fact:01a126b0-ed8a-71ce-8683-1ec079f39bba",
+            "kpi:38"
+        ],
+        "verifier_verdict": "rejected",
+        "verifier_reasons": [
+            "brief_entities_grounded"
+        ]
+    },
+    "F19": {
+        "call_index": 2,
+        "claim_index": 2,
+        "document_id": "01a126b0-ed6d-73a3-8d92-d9edd14b8fa8",
+        "set": "india_wash",
+        "cites": [
+            "kpi:32",
+            "kpi:31"
+        ],
+        "verifier_verdict": "rejected",
+        "verifier_reasons": [
+            "brief_entities_grounded"
+        ]
+    },
+    "F20": {
+        "call_index": 2,
+        "claim_index": 3,
+        "document_id": "01a126b0-ed6d-73a3-8d92-d9edd14b8fa8",
+        "set": "india_wash",
+        "cites": [
+            "kpi:29",
+            "kpi:28"
+        ],
+        "verifier_verdict": "accepted",
+        "verifier_reasons": []
+    },
+    "F21": {
+        "call_index": 2,
+        "claim_index": 4,
+        "document_id": "01a126b0-ed6d-73a3-8d92-d9edd14b8fa8",
+        "set": "india_wash",
+        "cites": [
+            "kpi:36",
+            "kpi:35"
+        ],
+        "verifier_verdict": "accepted",
+        "verifier_reasons": []
+    },
+    "F22": {
+        "call_index": 2,
+        "claim_index": 5,
+        "document_id": "01a126b0-ed6d-73a3-8d92-d9edd14b8fa8",
+        "set": "india_wash",
+        "cites": [
+            "fact:01a126b0-ed8b-72d5-a947-4e59d98400da"
+        ],
+        "verifier_verdict": "rejected",
+        "verifier_reasons": [
+            "brief_entities_grounded"
+        ]
+    },
+    "F25": {
+        "call_index": 3,
+        "claim_index": 0,
+        "document_id": "01a126b0-efac-71ca-8117-4f99d5abbfd3",
+        "set": "unicef_reduced",
+        "cites": [
+            "kpi:51",
+            "kpi:52",
+            "kpi:45"
+        ],
+        "verifier_verdict": "accepted",
+        "verifier_reasons": []
+    },
+    "F26": {
+        "call_index": 3,
+        "claim_index": 1,
+        "document_id": "01a126b0-efac-71ca-8117-4f99d5abbfd3",
+        "set": "unicef_reduced",
+        "cites": [
+            "kpi:49",
+            "kpi:50"
+        ],
+        "verifier_verdict": "accepted",
+        "verifier_reasons": []
+    },
+    "F27": {
+        "call_index": 3,
+        "claim_index": 2,
+        "document_id": "01a126b0-efac-71ca-8117-4f99d5abbfd3",
+        "set": "unicef_reduced",
+        "cites": [
+            "kpi:40",
+            "kpi:46"
+        ],
+        "verifier_verdict": "rejected",
+        "verifier_reasons": [
+            "brief_entities_grounded"
+        ]
+    },
+    "F28": {
+        "call_index": 3,
+        "claim_index": 3,
+        "document_id": "01a126b0-efac-71ca-8117-4f99d5abbfd3",
+        "set": "unicef_reduced",
+        "cites": [
+            "kpi:42",
+            "kpi:41",
+            "kpi:43"
+        ],
+        "verifier_verdict": "rejected",
+        "verifier_reasons": [
+            "unsupported_key_figure",
+            "brief_entities_grounded"
+        ]
+    },
+    "F29": {
+        "call_index": 3,
+        "claim_index": 4,
+        "document_id": "01a126b0-efac-71ca-8117-4f99d5abbfd3",
+        "set": "unicef_reduced",
+        "cites": [
+            "kpi:47",
+            "kpi:48"
+        ],
+        "verifier_verdict": "rejected",
+        "verifier_reasons": [
+            "brief_numbers_grounded",
+            "brief_entities_grounded",
+            "brief_units_consistent"
+        ]
+    },
+    "F30": {
+        "call_index": 3,
+        "claim_index": 5,
+        "document_id": "01a126b0-efac-71ca-8117-4f99d5abbfd3",
+        "set": "unicef_reduced",
+        "cites": [
+            "kpi:61",
+            "kpi:62"
+        ],
+        "verifier_verdict": "accepted",
+        "verifier_reasons": []
+    },
+    "F33": {
+        "call_index": 4,
+        "claim_index": 0,
+        "document_id": "01a126b0-f1c9-700f-b8d3-85791c841aa9",
+        "set": "unicef_reduced",
+        "cites": [
+            "kpi:85"
+        ],
+        "verifier_verdict": "accepted",
+        "verifier_reasons": []
+    },
+    "F34": {
+        "call_index": 4,
+        "claim_index": 1,
+        "document_id": "01a126b0-f1c9-700f-b8d3-85791c841aa9",
+        "set": "unicef_reduced",
+        "cites": [
+            "kpi:86",
+            "kpi:79"
+        ],
+        "verifier_verdict": "accepted",
+        "verifier_reasons": []
+    },
+    "F35": {
+        "call_index": 4,
+        "claim_index": 2,
+        "document_id": "01a126b0-f1c9-700f-b8d3-85791c841aa9",
+        "set": "unicef_reduced",
+        "cites": [
+            "kpi:83",
+            "kpi:84"
+        ],
+        "verifier_verdict": "accepted",
+        "verifier_reasons": []
+    },
+    "F36": {
+        "call_index": 4,
+        "claim_index": 3,
+        "document_id": "01a126b0-f1c9-700f-b8d3-85791c841aa9",
+        "set": "unicef_reduced",
+        "cites": [
+            "kpi:74",
+            "kpi:80"
+        ],
+        "verifier_verdict": "rejected",
+        "verifier_reasons": [
+            "brief_entities_grounded"
+        ]
+    },
+    "F37": {
+        "call_index": 4,
+        "claim_index": 4,
+        "document_id": "01a126b0-f1c9-700f-b8d3-85791c841aa9",
+        "set": "unicef_reduced",
+        "cites": [
+            "kpi:76",
+            "kpi:75",
+            "kpi:77"
+        ],
+        "verifier_verdict": "rejected",
+        "verifier_reasons": [
+            "unsupported_key_figure",
+            "brief_entities_grounded"
+        ]
+    },
+    "F38": {
+        "call_index": 4,
+        "claim_index": 5,
+        "document_id": "01a126b0-f1c9-700f-b8d3-85791c841aa9",
+        "set": "unicef_reduced",
+        "cites": [
+            "kpi:81",
+            "kpi:82"
+        ],
+        "verifier_verdict": "rejected",
+        "verifier_reasons": [
+            "brief_numbers_grounded",
+            "brief_entities_grounded",
+            "brief_units_consistent"
+        ]
+    },
+    "F39": {
+        "call_index": 4,
+        "claim_index": 6,
+        "document_id": "01a126b0-f1c9-700f-b8d3-85791c841aa9",
+        "set": "unicef_reduced",
+        "cites": [
+            "kpi:95",
+            "kpi:96"
+        ],
+        "verifier_verdict": "accepted",
+        "verifier_reasons": []
+    },
+    "F41": {
+        "call_index": 5,
+        "claim_index": 0,
+        "document_id": "01a126b0-f47e-738f-82d5-3e3a559a0759",
+        "set": "unicef_reduced",
+        "cites": [
+            "kpi:119"
+        ],
+        "verifier_verdict": "accepted",
+        "verifier_reasons": []
+    },
+    "F42": {
+        "call_index": 5,
+        "claim_index": 1,
+        "document_id": "01a126b0-f47e-738f-82d5-3e3a559a0759",
+        "set": "unicef_reduced",
+        "cites": [
+            "kpi:120",
+            "kpi:113"
+        ],
+        "verifier_verdict": "accepted",
+        "verifier_reasons": []
+    },
+    "F43": {
+        "call_index": 5,
+        "claim_index": 2,
+        "document_id": "01a126b0-f47e-738f-82d5-3e3a559a0759",
+        "set": "unicef_reduced",
+        "cites": [
+            "kpi:108",
+            "kpi:114"
+        ],
+        "verifier_verdict": "rejected",
+        "verifier_reasons": [
+            "brief_entities_grounded"
+        ]
+    },
+    "F44": {
+        "call_index": 5,
+        "claim_index": 3,
+        "document_id": "01a126b0-f47e-738f-82d5-3e3a559a0759",
+        "set": "unicef_reduced",
+        "cites": [
+            "kpi:110",
+            "kpi:109",
+            "kpi:111"
+        ],
+        "verifier_verdict": "rejected",
+        "verifier_reasons": [
+            "unsupported_key_figure",
+            "brief_entities_grounded"
+        ]
+    },
+    "F45": {
+        "call_index": 5,
+        "claim_index": 4,
+        "document_id": "01a126b0-f47e-738f-82d5-3e3a559a0759",
+        "set": "unicef_reduced",
+        "cites": [
+            "kpi:115",
+            "kpi:116"
+        ],
+        "verifier_verdict": "rejected",
+        "verifier_reasons": [
+            "brief_numbers_grounded",
+            "brief_entities_grounded",
+            "brief_units_consistent"
+        ]
+    },
+    "F46": {
+        "call_index": 5,
+        "claim_index": 5,
+        "document_id": "01a126b0-f47e-738f-82d5-3e3a559a0759",
+        "set": "unicef_reduced",
+        "cites": [
+            "kpi:129",
+            "kpi:130"
+        ],
+        "verifier_verdict": "accepted",
+        "verifier_reasons": []
+    }
+}
