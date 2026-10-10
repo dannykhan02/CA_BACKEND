@@ -1,0 +1,176 @@
+[
+  {
+    "item_id": "C01",
+    "judgement": "supported",
+    "basis": "E1 is a metric labelled 'Core Resources income', value $1.584 billion, unit USD, period 2024, subject UNICEF, and its verbatim quote shows 'Total $1.584 billion' under 'Core resources income by type of partner, 2024'.",
+    "components_failing": ["none"]
+  },
+  {
+    "item_id": "C02",
+    "judgement": "supported",
+    "basis": "E1 gives the $1.584 billion 2024 total and E2/E3/E4 give $724.9m private sector, $512.6m public sector and $346.1m other, all for UNICEF in 2024; the same verbatim quote in each record lists all four figures with those partner labels.",
+    "components_failing": ["none"]
+  },
+  {
+    "item_id": "C03",
+    "judgement": "supported",
+    "basis": "E1 attributes 'over $120 billion' in water and sanitation investment to the Government of India, verbatim in the quote; the claim states no period, so the record's '10 years' window is dropped but not contradicted.",
+    "components_failing": ["none"]
+  },
+  {
+    "item_id": "C04",
+    "judgement": "supported",
+    "basis": "E1 (59.3 million people, safely managed water supplies) and E2 (17.9 million people, sanitation services) are both for subject India, period 2024, and the shared verbatim quote states both figures for 2024.",
+    "components_failing": ["none"]
+  },
+  {
+    "item_id": "C05",
+    "judgement": "supported",
+    "basis": "Identical claim and identical records to C04: E1 and E2 establish 59.3 million (water supplies) and 17.9 million (sanitation services) for India in 2024, verbatim in the quote.",
+    "components_failing": ["none"]
+  },
+  {
+    "item_id": "C06",
+    "judgement": "supported",
+    "basis": "Identical claim and identical records again: E1/E2 establish the 59.3 million and 17.9 million figures, unit people, subject India, period 2024.",
+    "components_failing": ["none"]
+  },
+  {
+    "item_id": "C07",
+    "judgement": "supported",
+    "basis": "E1 establishes 'more than 675,000 children' receiving protection services in Sierra Leone and E2 a '23 per cent drop' in under-five mortality in Yemen; the claim drops each record's multi-year window ('in five years', 'last decade of conflict') but asserts no conflicting period, and its 'Yemen saw' wording is weaker than E2's 'contributing to'.",
+    "components_failing": ["none"]
+  },
+  {
+    "item_id": "C08",
+    "judgement": "supported",
+    "basis": "E1 states protection services for 'more than 675,000 children' with subject Sierra Leone, verbatim in the quote; the record's five-year window is omitted by the claim rather than misstated.",
+    "components_failing": ["none"]
+  },
+  {
+    "item_id": "C09",
+    "judgement": "supported",
+    "basis": "E1 attributes 'over $120 billion' of water and sanitation investment to the Government of India in its verbatim quote; the claim makes no period assertion to conflict with the record's '10 years'.",
+    "components_failing": ["none"]
+  },
+  {
+    "item_id": "C10",
+    "judgement": "supported",
+    "basis": "E1 (59.3 million, water) and E2 (17.9 million, sanitation) are subject India, period 2024, and the shared quote reads 'In 2024, 17.9 million people accessed safely managed sanitation, and 59.3 million people accessed safely managed water in their homes.'",
+    "components_failing": ["none"]
+  },
+  {
+    "item_id": "C11",
+    "judgement": "supported",
+    "basis": "E1/E2/E3 are each labelled 'Total income from voluntary contributions' for UNICEF with $8.263 billion in 2024, $8.920 billion in 2023 and $9.326 billion in 2022; all three amounts appear verbatim in the shared chart quote whose legend covers RR, ORR and ORE.",
+    "components_failing": ["none"]
+  },
+  {
+    "item_id": "C12",
+    "judgement": "supported",
+    "basis": "E1 is a risk record with subject India, severity 'medium', status 'open', and a value/quote matching the claim's wording about fragmented definitions, reporting formats and data systems.",
+    "components_failing": ["none"]
+  },
+  {
+    "item_id": "C13",
+    "judgement": "partially_supported",
+    "basis": "E1 (46%) and E2 (49%) appear verbatim in the shared chart quote, but the 5% ORE share the claim states appears nowhere in E3's quote (the quote's percentages are 37/41/30/49/46/45/20/17/14/33/49/18/31/50/19), so that component rests only on the record's asserted value and looks like a 100-46-49 derivation; the quote also does not fix which percentages belong to 2024.",
+    "components_failing": ["figure"]
+  },
+  {
+    "item_id": "C14",
+    "judgement": "supported",
+    "basis": "E1 is a fact record whose value and verbatim quote contain exactly the 'played a pivotal role by dramatically reducing incidence of diarrhoeal disease, malnutrition and infection' language, with provenance origin 'document' and assertion 'stated', which matches the claim's 'the report states that' framing.",
+    "components_failing": ["none"]
+  },
+  {
+    "item_id": "C15",
+    "judgement": "supported",
+    "basis": "Same records as C11: E1/E2/E3 attach $8.263bn, $8.920bn and $9.326bn to UNICEF total voluntary-contribution income for 2024, 2023 and 2022, and all three figures are in the verbatim quote.",
+    "components_failing": ["none"]
+  },
+  {
+    "item_id": "C16",
+    "judgement": "supported",
+    "basis": "E1 (580 million, improved drinking water) and E2 (550 million, basic sanitation) are subject India, period '10 years', and the quote reads 'In the last 10 years, 550 million people have been reached with at least basic sanitation, and 580 million people with improved drinking water in their homes.'",
+    "components_failing": ["none"]
+  },
+  {
+    "item_id": "C17",
+    "judgement": "supported",
+    "basis": "E1 again gives Core Resources income of $1.584 billion, UNICEF, 2024, with the total visible in the verbatim quote.",
+    "components_failing": ["none"]
+  },
+  {
+    "item_id": "C18",
+    "judgement": "supported",
+    "basis": "E1 states verbatim that in 2014 the Government of India launched the Swachh Bharat (Clean India) Mission, and E2 gives 110 million toilets constructed under that mission; the claim adds no period for the toilets, which E2 also leaves open.",
+    "components_failing": ["none"]
+  },
+  {
+    "item_id": "C19",
+    "judgement": "supported",
+    "basis": "E1/E2 give 59.3 million people accessing safely managed water and 17.9 million accessing safely managed sanitation, subject India, period 2024, verbatim in the quote.",
+    "components_failing": ["none"]
+  },
+  {
+    "item_id": "C20",
+    "judgement": "partially_supported",
+    "basis": "As in C13, 46% (E1) and 49% (E2) appear in the cited chart quote but the 5% ORE figure (E3) appears nowhere in that quote and reads as a residual derivation; the quote also does not establish which of its fifteen percentages are the 2024 column.",
+    "components_failing": ["figure"]
+  },
+  {
+    "item_id": "C21",
+    "judgement": "supported",
+    "basis": "E1/E2/E3 give $724.9m private sector, $512.6m public sector and $346.1m other partners as Core Resources income for 2024, subject UNICEF, each verbatim in the shared quote.",
+    "components_failing": ["none"]
+  },
+  {
+    "item_id": "C22",
+    "judgement": "supported",
+    "basis": "Same fact record as C14: the pivotal-role and 'dramatically reducing' language is the record's own stated value and verbatim quote, and the claim attributes it to the report rather than asserting it independently.",
+    "components_failing": ["none"]
+  },
+  {
+    "item_id": "C23",
+    "judgement": "supported",
+    "basis": "E1 establishes the 2014 launch of the Swachh Bharat (Clean India) Mission by the Government of India and E2 the 110 million toilets constructed under that mission.",
+    "components_failing": ["none"]
+  },
+  {
+    "item_id": "C24",
+    "judgement": "supported",
+    "basis": "E1/E2/E3 attach $724.9 million (private sector), $512.6 million (public sector) and $346.1 million (other partners) to UNICEF Core Resources income for 2024, matching the claim in value, unit and period.",
+    "components_failing": ["none"]
+  },
+  {
+    "item_id": "C25",
+    "judgement": "supported",
+    "basis": "E1 is a risk record, status 'open', severity 'medium', subject India, provenance stated in the document, with value and verbatim quote matching the claim's description of fragmented definitions, reporting formats and data systems.",
+    "components_failing": ["none"]
+  },
+  {
+    "item_id": "C26",
+    "judgement": "supported",
+    "basis": "E1 (580 million, improved drinking water) and E2 (550 million, at least basic sanitation) are both subject India over the last 10 years, verbatim in the quote.",
+    "components_failing": ["none"]
+  },
+  {
+    "item_id": "C27",
+    "judgement": "partially_supported",
+    "basis": "Same defect as C13/C20: the Core Resources 46% (E1) and ORR 49% (E2) figures are in the cited quote, but the ORE 5% figure (E3) does not appear in it at all and is only asserted in the record's value field, so that component is not established by the cited source text.",
+    "components_failing": ["figure"]
+  },
+  {
+    "item_id": "C28",
+    "judgement": "supported",
+    "basis": "E1/E2/E3 state $8.263 billion (2024), $8.920 billion (2023) and $9.326 billion (2022) as UNICEF total income from voluntary contributions, and each amount appears verbatim in the shared quote.",
+    "components_failing": ["none"]
+  },
+  {
+    "item_id": "C29",
+    "judgement": "supported",
+    "basis": "E1 gives $8.122 billion for 2021 and E2 $7.219 billion for 2020 as total income from voluntary contributions (subject UNICEF), both amounts verbatim in the quote.",
+    "components_failing": ["none"]
+  }
+]

@@ -1,0 +1,118 @@
+{
+    "C01": {
+        "call": "b2eval-unicef_reduced-2",
+        "claim_index": 0
+    },
+    "C02": {
+        "call": "b2eval-unicef_reduced-3",
+        "claim_index": 0
+    },
+    "C03": {
+        "call": "b2eval-india_wash-1",
+        "claim_index": 2
+    },
+    "C04": {
+        "call": "b2eval-unicef_reduced-3",
+        "claim_index": 4
+    },
+    "C05": {
+        "call": "b2eval-unicef_reduced-1",
+        "claim_index": 4
+    },
+    "C06": {
+        "call": "b2eval-unicef_reduced-2",
+        "claim_index": 4
+    },
+    "C07": {
+        "call": "b2eval-unicef_reduced-3",
+        "claim_index": 5
+    },
+    "C08": {
+        "call": "b2eval-unicef_reduced-2",
+        "claim_index": 5
+    },
+    "C09": {
+        "call": "b2eval-india_wash-3",
+        "claim_index": 2
+    },
+    "C10": {
+        "call": "b2eval-india_wash-1",
+        "claim_index": 4
+    },
+    "C11": {
+        "call": "b2eval-unicef_reduced-3",
+        "claim_index": 2
+    },
+    "C12": {
+        "call": "b2eval-india_wash-3",
+        "claim_index": 0
+    },
+    "C13": {
+        "call": "b2eval-unicef_reduced-2",
+        "claim_index": 2
+    },
+    "C14": {
+        "call": "b2eval-india_wash-1",
+        "claim_index": 5
+    },
+    "C15": {
+        "call": "b2eval-unicef_reduced-2",
+        "claim_index": 3
+    },
+    "C16": {
+        "call": "b2eval-india_wash-3",
+        "claim_index": 4
+    },
+    "C17": {
+        "call": "b2eval-unicef_reduced-1",
+        "claim_index": 0
+    },
+    "C18": {
+        "call": "b2eval-india_wash-3",
+        "claim_index": 1
+    },
+    "C19": {
+        "call": "b2eval-india_wash-3",
+        "claim_index": 3
+    },
+    "C20": {
+        "call": "b2eval-unicef_reduced-1",
+        "claim_index": 2
+    },
+    "C21": {
+        "call": "b2eval-unicef_reduced-2",
+        "claim_index": 1
+    },
+    "C22": {
+        "call": "b2eval-india_wash-3",
+        "claim_index": 5
+    },
+    "C23": {
+        "call": "b2eval-india_wash-1",
+        "claim_index": 1
+    },
+    "C24": {
+        "call": "b2eval-unicef_reduced-1",
+        "claim_index": 1
+    },
+    "C25": {
+        "call": "b2eval-india_wash-1",
+        "claim_index": 0
+    },
+    "C26": {
+        "call": "b2eval-india_wash-1",
+        "claim_index": 3
+    },
+    "C27": {
+        "call": "b2eval-unicef_reduced-3",
+        "claim_index": 1
+    },
+    "C28": {
+        "call": "b2eval-unicef_reduced-1",
+        "claim_index": 3
+    },
+    "C29": {
+        "call": "b2eval-unicef_reduced-3",
+        "claim_index": 3
+    }
+}

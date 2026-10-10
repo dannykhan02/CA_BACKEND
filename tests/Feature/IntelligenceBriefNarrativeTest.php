@@ -325,6 +325,11 @@ class IntelligenceBriefNarrativeTest extends TestCase
             ->build(app(StageASnapshot::class)->build($document->fresh(), $this->asOf()));
 
         self::assertSame($first['context'], $second['context']);
+        // Byte-identical, not merely equal: the serialized payload is what is sent and what the
+        // attempt identity is computed over, so key order counts.
+        self::assertSame(
+            json_encode($first['context'], JSON_UNESCAPED_UNICODE),
+            json_encode($second['context'], JSON_UNESCAPED_UNICODE));
         self::assertSame(
             app(NarrativeContextBuilder::class)->inputHash($first['context'], 'claude-sonnet-5-5'),
             app(NarrativeContextBuilder::class)->inputHash($second['context'], 'claude-sonnet-5-5'));
