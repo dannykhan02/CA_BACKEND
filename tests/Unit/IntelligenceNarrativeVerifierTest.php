@@ -66,7 +66,7 @@ class IntelligenceNarrativeVerifierTest extends TestCase
         self::assertSame('verified', $verdict['status'], implode(',', $verdict['reasons']));
         self::assertCount(2, $verdict['claims']);
         self::assertSame(['metric:total'], $verdict['claims'][0]['cites']);
-        self::assertSame('1', $verdict['verifier_version']);
+        self::assertSame('2', $verdict['verifier_version']);
     }
 
     // 11. Fabricated evidence citation, and a citation to evidence outside the supplied context.

@@ -51,24 +51,10 @@ class IntelligenceB1GroundingReviewedClaimsTest extends TestCase
             'C16' => [], 'C19' => [], 'C22' => [], 'C25' => [], 'C26' => [], 'C28' => [],
             'C29' => [],
 
-            // --- reviewed `supported`, still refused, and why ---------------------------------
-            // A claim naming "Core Resources" against records whose subject is "UNICEF" and whose
-            // labels are "Core Resources income", "Core Resources income from private sector" and
-            // so on. The mention is a prefix of a record *label*, not a name the record owns, and
-            // matching it would mean inferring a longer entity from a shorter one - which the
-            // contract refuses on purpose, and which this branch does not change.
-            'C01' => ['entities_grounded'],
-            'C02' => ['entities_grounded'],
-            'C17' => ['entities_grounded'],
-            'C21' => ['entities_grounded'],
-            'C24' => ['entities_grounded'],
-            // "Swachh Bharat" and "Clean India" appear only inside the free-text `value` of a
-            // non-entity record. The contract reads entity names from `subject`, an entity record's
-            // `value`/`aliases`, `confirmed_entity_names` and a confirmed `entity_ref` - never from
-            // arbitrary record prose. Grounding them would need substring search inside a record's
-            // value, which is the fuzzy matching this layer exists to refuse.
-            'C18' => ['entities_grounded'],
-            'C23' => ['entities_grounded'],
+            // V2 record-local concepts and launch facts clear entity grounding. B2's independent
+            // key-figure gate still rejects the out-ranked partner amounts in C21 and C24.
+            'C01' => [], 'C02' => [], 'C17' => [], 'C21' => [], 'C24' => [],
+            'C18' => [], 'C23' => [],
 
             // --- reviewed `partially_supported`: the residual percentage -----------------------
             // The reviewer found 46% and 49% in the cited chart quote and 5% nowhere in it, reading

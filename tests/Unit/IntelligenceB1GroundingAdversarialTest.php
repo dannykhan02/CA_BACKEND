@@ -192,13 +192,13 @@ class IntelligenceB1GroundingAdversarialTest extends TestCase
         ];
     }
 
-    /** A generic fragment of a record's label is not the entity the record owns. */
-    public function test_a_generic_fragment_is_not_expanded_into_the_record_name(): void
+    /** A complete measured concept is owned when the same quote corroborates it. */
+    public function test_a_measured_concept_is_owned_by_its_cited_record(): void
     {
         $records = ['m:1' => $this->record('m:1', ['label' => 'Core Resources income',
             'value' => '$1.584 billion', 'unit' => 'USD', 'period' => '2024', 'subject' => 'UNICEF',
             'quote' => 'Core resources income by type of partner, 2024 Total $1.584 billion'])];
-        self::assertContains('entities_grounded',
+        self::assertNotContains('entities_grounded',
             $this->reasons("UNICEF's Core Resources income was USD 1.584 billion in 2024.", $records));
     }
 

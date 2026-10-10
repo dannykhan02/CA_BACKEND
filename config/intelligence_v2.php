@@ -7,7 +7,7 @@ return [
     'brief' => [
         'enabled' => (bool) env('DOCINTEL_V2_BRIEF', true),
         'template_version' => '1',
-        'verifier_version' => '1',
+        'verifier_version' => '2',
         'max_quote_chars' => 160,
         'numeric_tolerance' => ['exact_for' => ['integer', 'currency'], 'rounded' => 'half_last_digit'],
         'key_figures' => [
@@ -22,7 +22,7 @@ return [
         // Bumping any of these invalidates every stored B2 result (they are part of the input hash).
         'contract_version' => '1',
         'prompt_version' => '1',
-        'verifier_version' => '1',
+        'verifier_version' => '2',
         // Empty means AiModels::forTask('brief_synthesis'), i.e. the configured synthesis model.
         'model' => env('DOCINTEL_V2_BRIEF_NARRATIVE_MODEL') ?: null,
         // Hard bound on the serialized context sent to the provider (conservative strlen/3 estimate).
