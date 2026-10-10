@@ -15,6 +15,34 @@ return [
             'total_label_patterns' => ['total', 'overall', 'aggregate', 'net', 'gross'],
         ],
     ],
+    // B2: verified AI narrative over Stage A evidence. Off by default; B1 is the fallback.
+    // Nothing in this block is read unless 'enabled' below is true.
+    'b2' => [
+        'enabled' => (bool) env('DOCINTEL_V2_BRIEF_NARRATIVE', false),
+        // Bumping any of these invalidates every stored B2 result (they are part of the input hash).
+        'contract_version' => '1',
+        'prompt_version' => '1',
+        'verifier_version' => '1',
+        // Empty means AiModels::forTask('brief_synthesis'), i.e. the configured synthesis model.
+        'model' => env('DOCINTEL_V2_BRIEF_NARRATIVE_MODEL') ?: null,
+        // Hard bound on the serialized context sent to the provider (conservative strlen/3 estimate).
+        'context_token_budget' => (int) env('DOCINTEL_V2_BRIEF_NARRATIVE_CONTEXT_TOKENS', 8000),
+        'max_records' => 60,
+        'max_output_tokens' => 1500,
+        // HTTP timeout < job timeout (120s) < provider-gate lease (240s) < synthesis worker (360s).
+        'timeout_seconds' => 60,
+        'connect_timeout_seconds' => 10,
+        // Below this many trusted records B2 is not attempted at all; nothing is paid.
+        'min_records' => 3,
+        'min_claims' => 2,
+        'max_claims' => 8,
+        'min_claim_chars' => 20,
+        'max_claim_chars' => 320,
+        'max_cites_per_claim' => 4,
+        // Fail closed: one unverifiable claim rejects the whole narrative and B1 is served.
+        'max_rejected_claims' => 0,
+        'attempts' => 2,
+    ],
     'charts' => (bool) env('DOCINTEL_V2_CHARTS', true),
     'values' => ['parser_version' => 'values.v1'],
     'negative_claim' => [

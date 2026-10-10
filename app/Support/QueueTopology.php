@@ -20,6 +20,7 @@ use App\Jobs\ResumeAfterCreditConfirmationJob;
 use App\Jobs\RetryDeferredBillingEvent;
 use App\Jobs\ScanUploadedFileJob;
 use App\Jobs\SendTrackedDeadlineReminder;
+use App\Jobs\SynthesizeBriefNarrativeJob;
 
 /**
  * The single job-to-queue map. Every dispatch site uses for(); the same map is
@@ -51,6 +52,7 @@ final class QueueTopology
 
         MergeDocumentEvidenceJob::class => self::SYNTHESIS,
         GenerateDocumentSummaryJob::class => self::SYNTHESIS,
+        SynthesizeBriefNarrativeJob::class => self::SYNTHESIS, // B2 narrative; runs after Ready.
 
         ScanUploadedFileJob::class => self::DEFAULT,
         ExtractDocumentTextJob::class => self::DEFAULT, // Parsing only; its token count is non-blocking.

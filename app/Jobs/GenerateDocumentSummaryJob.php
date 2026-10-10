@@ -247,6 +247,12 @@ class GenerateDocumentSummaryJob implements ShouldQueue
                 'status' => 'Ready', 'progress' => 100, 'error_message' => null])->save();
             AnalyzeEmbeddedVisualsJob::dispatch($document->id)->onQueue(QueueTopology::for(AnalyzeEmbeddedVisualsJob::class));
             GenerateEmbeddingsJob::dispatch($document->id)->onQueue(QueueTopology::for(GenerateEmbeddingsJob::class));
+            // B2 is additive work over evidence this document already has: the document is Ready
+            // either way, and nothing here waits for it. Off by default.
+            if (config('intelligence_v2.enabled') && config('intelligence_v2.b2.enabled')) {
+                SynthesizeBriefNarrativeJob::dispatch($document->id)
+                    ->onQueue(QueueTopology::for(SynthesizeBriefNarrativeJob::class));
+            }
         }
     }
 

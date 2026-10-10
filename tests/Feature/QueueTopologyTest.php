@@ -13,6 +13,7 @@ use App\Jobs\MergeDocumentEvidenceJob;
 use App\Jobs\ProcessDocumentChunkJob;
 use App\Jobs\ProcessDocumentVisualJob;
 use App\Jobs\ScanUploadedFileJob;
+use App\Jobs\SynthesizeBriefNarrativeJob;
 use App\Models\Document;
 use App\Models\DocumentChunk;
 use App\Models\User;
@@ -239,7 +240,8 @@ class QueueTopologyTest extends TestCase
             $production['supervisor-synthesis']['maxProcesses'], $production['supervisor-1']['maxProcesses']]);
         self::assertSame(['redis:default' => 30, 'redis:synthesis' => 60, 'redis:extraction' => 120], config('horizon.waits'));
         // A permit held for a whole job must outlive that job.
-        foreach ([ProcessDocumentChunkJob::class, GenerateDocumentSummaryJob::class, CompareDocumentsJob::class, ProcessDocumentVisualJob::class] as $holder) {
+        foreach ([ProcessDocumentChunkJob::class, GenerateDocumentSummaryJob::class, CompareDocumentsJob::class,
+            ProcessDocumentVisualJob::class, SynthesizeBriefNarrativeJob::class] as $holder) {
             self::assertLessThan(config('document_intelligence.provider_gate.lease_seconds'), (new \ReflectionClass($holder))->getDefaultProperties()['timeout'], $holder);
         }
         self::assertSame(2, app(ProviderGate::class)->max());

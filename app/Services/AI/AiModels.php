@@ -6,7 +6,7 @@ class AiModels
 {
     public function forTask(string $task): string
     {
-        if (in_array($task, ['document_summary', 'synthesis', 'summary_repair', 'document_comparison', 'document_qa'], true)) {
+        if (in_array($task, ['document_summary', 'synthesis', 'summary_repair', 'document_comparison', 'document_qa', 'brief_synthesis'], true)) {
             return config('services.anthropic.synthesis_model') ?: 'claude-sonnet-5-5';
         }
 
