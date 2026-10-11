@@ -8,6 +8,7 @@ use App\Services\AI\Incremental\ContextResolver;
 use App\Services\AI\Incremental\EvidenceBudget;
 use App\Services\AI\Incremental\EvidenceMerger;
 use App\Services\AI\Incremental\IncrementalPipeline;
+use App\Services\Intelligence\TextRoleProvenanceProducer;
 use App\Services\Pipeline\DocumentProgress;
 use App\Services\Pipeline\PipelineStageRecorder;
 use App\Services\WorkspaceCreditService;
@@ -141,6 +142,18 @@ class MergeDocumentEvidenceJob implements ShouldQueue
             $document->refresh();
 
             $diagnostics = $merger->merge($document);
+
+            // Optional additive provenance. A failed or not-yet-migrated graph leaves the
+            // already verified textual evidence available at its truthful weaker level.
+            try {
+                app(TextRoleProvenanceProducer::class)->publish($document);
+                $diagnostics['provenance'] = 'published';
+            } catch (\Throwable $e) {
+                $diagnostics['provenance'] = 'textual_only';
+                Log::warning('Document source provenance unavailable', [
+                    'document_id' => $document->id, 'exception' => $e::class,
+                ]);
+            }
 
             $clock = hrtime(true);
             app(ContextResolver::class)->resolve($document);

@@ -19,6 +19,7 @@ class ProvenanceProjector
         $origin = $this->direct($data) ? 'document' : 'unknown';
 
         return ['origin' => $origin, 'assertion' => $origin === 'document' ? 'stated' : 'unspecified',
+            'level' => 'TEXTUAL',
             'attribution' => $origin === 'document' ? $this->attribution->match($row, $entityIds)
                 : ['speaker' => null, 'role' => 'unattributed', 'reported' => false, 'evidence_ref' => null]];
     }

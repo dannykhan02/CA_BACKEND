@@ -74,6 +74,7 @@ class LegacyBriefAdapter
             default => $kind.':'.$id,
         }, 'kind' => $kind, 'data' => $data, 'typed' => $typed,
             'provenance' => ['origin' => $origin, 'assertion' => $direct ? 'stated' : 'unspecified',
+                'level' => 'TEXTUAL',
                 'attribution' => ['speaker' => null, 'role' => 'unattributed',
                     'reported' => false, 'evidence_ref' => null]],
             'sources' => [], 'status' => $status, 'span_type' => null,

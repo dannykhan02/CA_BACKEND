@@ -62,7 +62,7 @@ class NarrativeSynthesizer
             return $this->outcome('unavailable', 'unsupported_structured_model');
         }
         $tokens = $this->contexts->tokens($built['context']);
-        $hash = $this->contexts->inputHash($built['context'], $model);
+        $hash = $this->contexts->inputHash($built['context'], $model, $built['records']);
         $claim = $this->checkpoints->claim($document, $hash, $tokens, $model);
         $unit = $claim['unit'];
         if (! $unit) {

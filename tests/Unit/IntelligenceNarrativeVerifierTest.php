@@ -2,7 +2,9 @@
 
 namespace Tests\Unit;
 
+use App\Services\Intelligence\B2\NarrativeContextBuilder;
 use App\Services\Intelligence\B2\NarrativeVerifier;
+use App\Services\Intelligence\B2\NumericClaimGrounder;
 use Tests\TestCase;
 
 /**
@@ -12,6 +14,17 @@ use Tests\TestCase;
  */
 class IntelligenceNarrativeVerifierTest extends TestCase
 {
+    public function test_provenance_policy_changes_only_role_proven_b2_attempt_identity(): void
+    {
+        $contexts = app(NarrativeContextBuilder::class);
+        $context = ['evidence' => [['id' => 'metric:1']]];
+        $legacy = $contexts->inputHash($context, 'model');
+        self::assertSame($legacy, $contexts->inputHash($context, 'model',
+            [['source_provenance' => ['level' => 'TEXTUAL', 'roles' => []]]]));
+        self::assertNotSame($legacy, $contexts->inputHash($context, 'model',
+            [['source_provenance' => ['level' => 'FIELD_ROLE', 'roles' => ['value' => [['text' => '12.4']]]]]]));
+    }
+
     /** @return array<string,mixed> */
     private function record(string $id, string $kind, string $label, array $typed = [],
         string $origin = 'document', ?string $quote = null): array
@@ -107,6 +120,17 @@ class IntelligenceNarrativeVerifierTest extends TestCase
         ]);
         self::assertSame('rejected', $period['status']);
         self::assertContains('brief_periods_grounded', $period['reasons']);
+    }
+
+    public function test_structural_period_contradiction_has_no_textual_rescue(): void
+    {
+        $record = $this->money('revenue', 'Revenue', 12.4e9, 'USD 12.4 billion', 'FY2024');
+        $record['source_provenance'] = ['level' => 'FIELD_ROLE', 'roles' => [
+            'value' => [['text' => 'USD 12.4 billion']],
+            'period' => [['text' => 'FY2025']],
+        ]];
+        self::assertFalse(app(NumericClaimGrounder::class)->grounded(
+            'Revenue reached USD 12.4 billion in FY2024.', [$record]));
     }
 
     // 4. Unknown-origin evidence may never support a factual claim.

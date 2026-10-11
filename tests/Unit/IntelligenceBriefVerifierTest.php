@@ -48,6 +48,17 @@ class IntelligenceBriefVerifierTest extends TestCase
         self::assertSame('skipped', $this->check($result, 'dates_grounded'));
     }
 
+    public function test_proven_period_contradiction_cannot_fall_back_to_typed_text(): void
+    {
+        $record = $this->record();
+        $record['source_provenance'] = ['level' => 'FIELD_ROLE', 'roles' => [
+            'value' => [['text' => '11']], 'period' => [['text' => 'FY2024']],
+        ]];
+        $result = app(BriefVerifier::class)->verify($this->block('Revenue was USD 11 billion in FY2025.'),
+            ['kpi:1' => $record], ['kpi:1']);
+        self::assertContains('numbers_grounded', $result['failed_reasons']);
+    }
+
     public function test_number_date_and_unit_mismatches_fail_their_checks(): void
     {
         $record = $this->record();

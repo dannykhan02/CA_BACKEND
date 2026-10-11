@@ -56,7 +56,7 @@ class SynthesizeBriefNarrative extends Command
             'model' => $model,
             'contract_version' => (string) config('intelligence_v2.b2.contract_version'),
             'prompt_version' => (string) config('intelligence_v2.b2.prompt_version'),
-            'input_hash' => $contexts->inputHash($built['context'], $model),
+            'input_hash' => $contexts->inputHash($built['context'], $model, $built['records']),
             'executed' => false,
         ];
 

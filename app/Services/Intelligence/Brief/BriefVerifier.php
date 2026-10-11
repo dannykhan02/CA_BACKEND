@@ -9,6 +9,7 @@ use App\Services\Intelligence\MeasurementParser;
 use App\Services\Intelligence\NegativeClaimGuard;
 use App\Services\Intelligence\RecordOwnedMentionProjector;
 use App\Services\Intelligence\SemanticCompatibility;
+use App\Services\Intelligence\StructuralClaimGuard;
 
 /** Local verification of prose against the records it cites. No provider or persistence path. */
 class BriefVerifier
@@ -48,7 +49,7 @@ class BriefVerifier
     public function __construct(private NegativeClaimGuard $negativeClaims,
         private MeasurementParser $measurements, private EvidenceMerger $normalizer,
         private DeterministicTemplates $templates, private RecordOwnedMentionProjector $ownedMentions,
-        private SemanticCompatibility $semantics) {}
+        private SemanticCompatibility $semantics, private StructuralClaimGuard $structuralClaims) {}
 
     /** @param array<string,mixed> $block @param array<string,array<string,mixed>> $recordsBySource
      * @param  list<string>  $availableSourceIds  @return array<string,mixed>
@@ -274,6 +275,9 @@ class BriefVerifier
                 $context = count($numbers) === 1 ? trim((string) ($block['text'] ?? '').' '.
                     (string) ($block['detail'] ?? '')) : null;
                 if ($context !== null && ! $this->singleFactOwner($context, $number['raw'], $record, $records)) {
+                    continue;
+                }
+                if (! $this->structuralClaims->compatible($claimText, $record)) {
                     continue;
                 }
                 if ($this->semantics->compare($number['raw'], $value, $context)['ok']) {

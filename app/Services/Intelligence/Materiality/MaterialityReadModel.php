@@ -6,13 +6,15 @@ use App\Models\Document;
 use App\Models\DocumentEntity;
 use App\Models\DocumentEvidence;
 use App\Models\DocumentSourceSpan;
+use App\Services\Intelligence\SourceProvenanceReader;
 use App\Services\Intelligence\Values\TypedEvidenceProjector;
 use Illuminate\Support\Collection;
 
 /** Projects only already-stored rows; never creates or changes a span set. */
 class MaterialityReadModel
 {
-    public function __construct(private TypedEvidenceProjector $projector, private DateRoleResolver $dates) {}
+    public function __construct(private TypedEvidenceProjector $projector, private DateRoleResolver $dates,
+        private SourceProvenanceReader $sourceProvenance) {}
 
     /** @param Collection<int,DocumentEvidence> $evidence @param list<array<string,mixed>> $charts @param list<string> $cited @return array{records:list<array<string,mixed>>,context:array<string,mixed>} */
     public function build(Document $document, Collection $evidence, array $charts, array $cited): array
@@ -22,6 +24,7 @@ class MaterialityReadModel
             ->where('document_id', $document->id)->where('extraction_version', $version)
             ->orderBy('ordinal')->get() : collect();
         $spans = $spanRows->keyBy('span_key');
+        $roleProofs = $this->sourceProvenance->forEvidence($document, $evidence->pluck('id')->all());
         $sections = [];
         $heading = null;
         foreach ($spanRows as $span) {
@@ -47,6 +50,8 @@ class MaterialityReadModel
         foreach ($evidence as $row) {
             $data = is_array($row->data) ? $row->data : [];
             $projected = $this->projector->project($row, $entityIds);
+            $proof = $roleProofs[$row->id] ?? ['level' => 'TEXTUAL', 'roles' => []];
+            $projected['provenance']['level'] = $proof['level'];
             $source = $row->sources[0] ?? [];
             $span = $spans->get($source['span_id'] ?? null);
             $status = null;
@@ -65,6 +70,7 @@ class MaterialityReadModel
                 'kind' => $row->kind, 'data' => $data,
                 'typed' => $this->dates->resolve($projected['typed'], $data + ['kind' => $row->kind], $quotes),
                 'provenance' => $projected['provenance'], 'sources' => $row->sources ?? [],
+                'source_provenance' => $proof,
                 'status' => $status, 'span_type' => $span?->type, 'span_ordinal' => $span?->ordinal,
                 'section' => $sections[$source['span_id'] ?? ''] ?? null, 'page' => $source['page'] ?? null,
             ];

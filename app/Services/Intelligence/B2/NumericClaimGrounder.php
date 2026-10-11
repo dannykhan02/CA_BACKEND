@@ -5,6 +5,7 @@ namespace App\Services\Intelligence\B2;
 use App\Services\Intelligence\Brief\BriefVerifier;
 use App\Services\Intelligence\MeasurementParser;
 use App\Services\Intelligence\SemanticCompatibility;
+use App\Services\Intelligence\StructuralClaimGuard;
 
 /** Binds each prose quantity to one cited typed Stage A value. */
 class NumericClaimGrounder
@@ -12,7 +13,7 @@ class NumericClaimGrounder
     private const PATTERN = '/(?<![\p{L}\d])(?:(USD|EUR|GBP|CAD|AUD|KES|US\s+dollars?|\$|€|£)\s*)?([+-]?\d(?:\d|,(?=\d))*(?:\.\d+)?(?:\s*(?:trillion|billion|million|thousand))?)(\s*(?:%|per\s+cent|percent(?:age)?(?:\s+points?)?|basis\s+points?|people|person|beneficiar(?:y|ies)|customers?|employees?|households?|cases?|toilets?|litres?|liters?|tonnes?|tons?|days?|years?|USD|EUR|GBP|CAD|AUD|KES))?/iu';
 
     public function __construct(private MeasurementParser $parser, private BriefVerifier $brief,
-        private SemanticCompatibility $semantics) {}
+        private SemanticCompatibility $semantics, private StructuralClaimGuard $structuralClaims) {}
 
     /** @param list<array<string,mixed>> $records */
     public function grounded(string $text, array $records): bool
@@ -70,6 +71,9 @@ class NumericClaimGrounder
     {
         $value = $record['typed']['value'] ?? null;
         if (! $this->brief->groundableValue($value)) {
+            return false;
+        }
+        if (! $this->structuralClaims->compatible($local, $record)) {
             return false;
         }
         if (! $this->metricIdentified($local, $record)

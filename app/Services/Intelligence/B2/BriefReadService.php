@@ -49,7 +49,7 @@ class BriefReadService
             } elseif (count($built['supplied']) < (int) config('intelligence_v2.b2.min_records')) {
                 [$status, $reason] = ['insufficient_evidence', 'insufficient_evidence'];
             } else {
-                $hash = $this->contexts->inputHash($built['context'], $this->contexts->model());
+                $hash = $this->contexts->inputHash($built['context'], $this->contexts->model(), $built['records']);
                 $unit = $this->unit($document, $hash);
                 if ($unit === null) {
                     [$status, $reason] = ['not_generated', 'not_generated'];

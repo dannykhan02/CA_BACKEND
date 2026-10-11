@@ -5,6 +5,7 @@ namespace App\Services\Intelligence\B2;
 use App\Services\AI\AiModels;
 use App\Services\AI\Incremental\ChunkPlanner;
 use App\Services\Intelligence\SemanticCompatibility;
+use App\Services\Intelligence\SourceProvenance;
 
 /**
  * The B2 input contract. Turns one Stage A snapshot into the bounded, deterministically ordered
@@ -89,11 +90,10 @@ class NarrativeContextBuilder
      *
      * @param  array<string,mixed>  $context
      */
-    public function inputHash(array $context, string $model): string
+    public function inputHash(array $context, string $model, array $records = []): string
     {
         $settings = config('intelligence_v2.b2');
-
-        return hash('sha256', json_encode([
+        $identity = [
             'context' => $context,
             'contract_version' => $settings['contract_version'],
             'prompt_version' => $settings['prompt_version'],
@@ -101,7 +101,15 @@ class NarrativeContextBuilder
             'verifier_version' => $settings['verifier_version'],
             'semantic_policy' => SemanticCompatibility::POLICY,
             'model' => $model,
-        ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+        ];
+        foreach ($records as $record) {
+            if (isset($record['source_provenance']['roles']['value'])) {
+                $identity['provenance_policy'] = SourceProvenance::POLICY;
+                break;
+            }
+        }
+
+        return hash('sha256', json_encode($identity, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
     }
 
     /**
