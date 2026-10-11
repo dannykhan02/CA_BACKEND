@@ -4,13 +4,12 @@ namespace App\Services\Intelligence;
 
 use App\Exceptions\AiProcessingException;
 use App\Models\DocumentEvidence;
-use App\Services\AI\Incremental\EvidenceMerger;
 use App\Services\AI\Incremental\EvidenceSchema;
 
 /** Conservative provenance from accepted stored evidence, never model-reported axes. */
 class ProvenanceProjector
 {
-    public function __construct(private EvidenceMerger $merger, private AttributionMatcher $attribution,
+    public function __construct(private MatchingTextNormalizer $matching, private AttributionMatcher $attribution,
         private NumericEquivalentGrounding $numericEquivalence) {}
 
     /** @param array<string,string>|null $entityIds @return array<string,mixed> */
@@ -38,8 +37,8 @@ class ProvenanceProjector
     private function direct(array $data): bool
     {
         $quote = is_string($data['quote'] ?? null) ? $data['quote'] : '';
-        $value = $this->merger->normalize((string) ($data['value'] ?? ''));
-        $normalQuote = $this->merger->normalize($quote);
+        $value = $this->matching->fold((string) ($data['value'] ?? ''));
+        $normalQuote = $this->matching->fold($quote);
         if ($value === '' || $normalQuote === '') {
             return false;
         }
@@ -51,7 +50,7 @@ class ProvenanceProjector
             return false;
         }
         if ($data['period'] ?? null) {
-            $period = $this->merger->normalize((string) $data['period']);
+            $period = $this->matching->fold((string) $data['period']);
             if ($period !== '' && ! str_contains($normalQuote, $period)) {
                 return false;
             }

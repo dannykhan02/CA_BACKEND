@@ -109,7 +109,7 @@ class IntelligenceNumericClaimGroundingTest extends TestCase
         $points = $this->record('m:points', 'Share change', '5', 'percentage points');
         self::assertFalse($this->grounded('Share increased by 5%.', [$points]));
         $basis = $this->record('m:basis', 'Rate change', '5', 'basis points');
-        self::assertFalse($this->grounded('Rate increased by 5 basis points.', [$basis]));
+        self::assertTrue($this->grounded('Rate increased by 5 basis points.', [$basis]));
         $ratio = $this->record('m:ratio', 'Liquidity ratio', '2', 'ratio');
         self::assertTrue($this->grounded('Liquidity ratio was 2.', [$ratio]));
         self::assertFalse($this->grounded('Liquidity ratio was 2 people.', [$ratio]));
@@ -171,5 +171,17 @@ class IntelligenceNumericClaimGroundingTest extends TestCase
         $percent = $this->record('m:share', 'Share', '5%', 'percent');
         self::assertTrue($this->grounded('Share was 5 percent.', [$percent]));
         self::assertTrue($this->grounded('Share was 5%.', [$percent]));
+    }
+
+    public function test_single_record_cannot_borrow_period_entity_currency_or_unit_from_another(): void
+    {
+        $acme = $this->record('m:acme', 'Revenue', 'USD 12.4 billion', 'USD', 'ACME', '2025');
+        $beta = $this->record('m:beta', 'Employees', '60,000', 'employees', 'Beta', '2024');
+        self::assertFalse($this->grounded('ACME employed 60,000 employees in 2025.', [$acme, $beta]));
+        self::assertFalse($this->grounded('Beta employed 60,000 employees in 2025.', [$acme, $beta]));
+        self::assertFalse($this->grounded('Beta employed USD 60,000 employees in 2024.', [$acme, $beta]));
+        self::assertFalse($this->grounded('Beta employed 60,000 households in 2024.', [$acme, $beta]));
+        self::assertTrue($this->grounded('Beta employed 60,000 employees in 2024.', [$acme, $beta]));
+        self::assertFalse($this->grounded('ACME revenue was 12.4 billion KES in 2025.', [$acme]));
     }
 }

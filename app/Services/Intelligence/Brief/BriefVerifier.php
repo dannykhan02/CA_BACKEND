@@ -2,12 +2,13 @@
 
 namespace App\Services\Intelligence\Brief;
 
-use App\Services\AI\Incremental\EvidenceMerger;
 use App\Services\AI\Incremental\EvidenceDateRecognizer;
+use App\Services\AI\Incremental\EvidenceMerger;
+use App\Services\Intelligence\Brief\Templates\DeterministicTemplates;
 use App\Services\Intelligence\MeasurementParser;
 use App\Services\Intelligence\NegativeClaimGuard;
 use App\Services\Intelligence\RecordOwnedMentionProjector;
-use App\Services\Intelligence\Brief\Templates\DeterministicTemplates;
+use App\Services\Intelligence\SemanticCompatibility;
 
 /** Local verification of prose against the records it cites. No provider or persistence path. */
 class BriefVerifier
@@ -46,10 +47,11 @@ class BriefVerifier
 
     public function __construct(private NegativeClaimGuard $negativeClaims,
         private MeasurementParser $measurements, private EvidenceMerger $normalizer,
-        private DeterministicTemplates $templates, private RecordOwnedMentionProjector $ownedMentions) {}
+        private DeterministicTemplates $templates, private RecordOwnedMentionProjector $ownedMentions,
+        private SemanticCompatibility $semantics) {}
 
     /** @param array<string,mixed> $block @param array<string,array<string,mixed>> $recordsBySource
-     *  @param list<string> $availableSourceIds @return array<string,mixed>
+     * @param  list<string>  $availableSourceIds  @return array<string,mixed>
      */
     public function verify(array $block, array $recordsBySource, array $availableSourceIds): array
     {
@@ -125,8 +127,8 @@ class BriefVerifier
     }
 
     /** @param array<string,mixed> $block @param array<string,array<string,mixed>> $recordsBySource
-     *  @param list<string> $availableSourceIds @param list<array<string,mixed>> $allRecords
-     *  @param array<string,string>|null $absenceRequest @return array{block:array<string,mixed>|null,rejected:bool,verification:array<string,mixed>}
+     * @param  list<string>  $availableSourceIds  @param list<array<string,mixed>> $allRecords
+     * @param  array<string,string>|null  $absenceRequest  @return array{block:array<string,mixed>|null,rejected:bool,verification:array<string,mixed>}
      */
     public function admit(array $block, array $recordsBySource, array $availableSourceIds,
         array $coverage, array $allRecords, ?array $absenceRequest = null,
@@ -233,11 +235,10 @@ class BriefVerifier
         // A duration is a time span, not a quantity: "over the last 10 years" must not leave the
         // number 10 behind for numbersGrounded() to hunt for in a typed value. Spans are checked
         // as spans by durationsGrounded() instead.
-        foreach ([...$this->dates($text), ...$this->periods($text), ...$this->durations($text)]
-            as $temporal) {
+        foreach ([...$this->dates($text), ...$this->periods($text), ...$this->durations($text)] as $temporal) {
             $text = str_replace($temporal, ' ', $text);
         }
-        preg_match_all('/(?<![\p{L}\d])(?:[A-Z]{3}\s+)?[+-]?\d[\d,]*(?:\.\d+)?(?:\s*(?:trillion|billion|million|thousand|%|percent))?/iu',
+        preg_match_all('/(?<![\p{L}\d])(?:(?:(?:more than|less than|at least|at most|up to|no more than|about|approximately|around|circa|nearly|over|under)\s+|~\s*))?(?:[A-Z]{3}\s+|[$€£]\s*)?[+-]?\d[\d,]*(?:\.\d+)?(?:\s*(?:trillion|billion|million|thousand|%|per\s+cent|percent(?:age)?(?:\s+points?)?|basis\s+points?|children|child|people|persons?|beneficiaries|customers?|employees?|households?|cases?|toilets?|litres?|liters?|tonnes?|tons?|USD|EUR|GBP|CAD|AUD|KES))?/iu',
             $text, $matches);
         $out = [];
         foreach ($matches[0] as $raw) {
@@ -258,6 +259,10 @@ class BriefVerifier
     /** @param list<array<string,mixed>> $numbers @param list<array<string,mixed>> $records */
     private function numbersGrounded(array $numbers, array $records, array $block): bool
     {
+        $claimText = (string) ($block['text'] ?? '').' '.(string) ($block['detail'] ?? '');
+        if (preg_match('/\bbetween\s+\d[\d,.]*\s+and\s+\d[\d,.]*\b|(?<!\d)(?!\d{4}-\d{2})\d[\d,.]*\s*[-–]\s*\d[\d,.]*/iu', $claimText)) {
+            return false;
+        }
         foreach ($numbers as $number) {
             $matched = false;
             foreach ($records as $record) {
@@ -265,25 +270,61 @@ class BriefVerifier
                 if (! $this->validNumericValue($value)) {
                     continue;
                 }
-                // The claim's own code is compared against the code this record owns, so a claim
-                // written "USD 97.4 million" grounds on a record that states USD in either field
-                // and never on one that states CAD.
-                if ($number['unit'] !== null && $number['unit'] !== $this->currencyKey($value)
-                    && ! ($number['unit'] === '%' && ($value['unit_kind'] ?? null) === 'percent')) {
+                $value['label'] = $record['data']['label'] ?? null;
+                $context = count($numbers) === 1 ? trim((string) ($block['text'] ?? '').' '.
+                    (string) ($block['detail'] ?? '')) : null;
+                if ($context !== null && ! $this->singleFactOwner($context, $number['raw'], $record, $records)) {
                     continue;
                 }
-                $target = (float) $value['number'];
-                $exactFor = config('intelligence_v2.brief.numeric_tolerance.exact_for');
-                $tolerance = ($value['precision'] ?? 'exact') === 'exact'
-                    || (in_array('currency', $exactFor, true) && ($value['unit_kind'] ?? null) === 'currency')
-                    || (in_array('integer', $exactFor, true) && floor($target) === $target)
-                    ? 0.0 : $this->lastDigitTolerance((string) ($value['raw'] ?? $target));
-                if (abs($number['number'] - $target) <= $tolerance) {
+                if ($this->semantics->compare($number['raw'], $value, $context)['ok']) {
                     $matched = true;
                     break;
                 }
             }
-            if (! $matched && ! $this->derivedNumberMatches($number['number'], $block, $records)) {
+            if (! $matched && ! ($number['unit'] === '%'
+                && $this->derivedNumberMatches($number['number'], $block, $records))) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /** One explicit subject/period in a single-number clause must belong to its numeric record. */
+    private function singleFactOwner(string $text, string $quantity, array $record, array $records): bool
+    {
+        $named = [];
+        foreach ($records as $candidate) {
+            $subject = trim((string) ($candidate['data']['subject'] ?? ''));
+            if ($subject !== '' && preg_match('/(?<!\p{L})'.preg_quote($subject, '/').'(?!\p{L})/iu', $text)) {
+                $named[$this->normalizer->normalize($subject)] = true;
+            }
+        }
+        if (count($named) === 1 && ! isset($named[$this->normalizer->normalize(
+            (string) ($record['data']['subject'] ?? ''))])) {
+            return false;
+        }
+        $numberAt = strpos($text, $quantity);
+        if ($numberAt === false) {
+            return true;
+        }
+        foreach ($this->periods($text) as $period) {
+            $periodAt = strpos($text, $period);
+            if ($periodAt === false) {
+                continue;
+            }
+            $between = $periodAt < $numberAt
+                ? substr($text, $periodAt + strlen($period), $numberAt - $periodAt - strlen($period))
+                : substr($text, $numberAt + strlen($quantity), $periodAt - $numberAt - strlen($quantity));
+            if (preg_match('/[,;.]|\b(?:and|but)\b/iu', $between)) {
+                continue;
+            }
+            $owned = false;
+            foreach ($record['typed']['dates'] ?? [] as $date) {
+                $owned = $owned || $this->normalizer->normalize((string) ($date['period']['text'] ?? ''))
+                    === $this->normalizer->normalize($period);
+            }
+            if (! $owned) {
                 return false;
             }
         }
@@ -370,15 +411,7 @@ class BriefVerifier
      */
     private function recordCurrency(array $value): ?string
     {
-        $currency = $value['currency'] ?? null;
-        if (is_string($currency) && preg_match('/^[A-Z]{3}$/D', $currency)) {
-            return $currency;
-        }
-        if ($currency !== '$' || ! is_string($value['unit'] ?? null)) {
-            return null;
-        }
-
-        return $this->measurements->isoCurrency($value['unit']);
+        return $this->semantics->recordCurrency($value);
     }
 
     /**

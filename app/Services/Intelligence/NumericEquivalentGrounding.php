@@ -2,8 +2,6 @@
 
 namespace App\Services\Intelligence;
 
-use App\Services\AI\Incremental\EvidenceMerger;
-
 /** A narrow, single-quote notation exception to CR-001's value substring test. */
 class NumericEquivalentGrounding
 {
@@ -11,7 +9,8 @@ class NumericEquivalentGrounding
         .'(?:(?:USD|KES|EUR|GBP|NGN|ZAR|TZS|UGX|RWF|GHS|ZMW|XAF|XOF|INR|CNY|JPY|AED|SAR|CAD|AUD|CHF|SEK|NOK|DKK|BRL|MXN|TRY|EGP|MAD|ETB|MUR|SDR)\s*|[$€£₹₦]\s*)?[+-]?\d[\d,]*(?:\.\d+)?\s*'
         .'(?:%|per\s+cent|percent|thousands?|millions?|billions?|trillions?|[kmbt])?';
 
-    public function __construct(private MeasurementParser $measurements, private EvidenceMerger $normalizer) {}
+    public function __construct(private MeasurementParser $measurements, private MatchingTextNormalizer $normalizer,
+        private SemanticCompatibility $semantics) {}
 
     /** @param array<string,mixed> $data */
     public function equivalent(array $data, string $quote): bool
@@ -38,7 +37,8 @@ class NumericEquivalentGrounding
         if (count($candidates) !== 1) {
             return false;
         }
-        return $this->sameMeasurement($value, $stored, $candidates[0]);
+
+        return $this->sameMeasurement($value, $stored, $candidates[0], $data);
     }
 
     /** A narrow guard for substring matches such as `20` inside `20%`. */
@@ -91,15 +91,15 @@ class NumericEquivalentGrounding
         return $candidates;
     }
 
-    private function sameMeasurement(string $value, Measurement $stored, array $candidate): bool
+    private function sameMeasurement(string $value, Measurement $stored, array $candidate, array $data): bool
     {
         $cited = $candidate['measurement'];
 
-        return $this->qualifier($value) === $this->qualifier($candidate['token'])
-            && $stored->magnitude === $cited->magnitude
+        return $this->semantics->compare($this->percentNotation($candidate['token']),
+            ['raw' => $this->percentNotation($value), 'unit' => $data['unit'] ?? null,
+                'currency' => $stored->currency, 'number' => $stored->magnitude])['ok']
             && $stored->kind === $cited->kind
             && $stored->currency === $cited->currency
-            && $stored->scale === $cited->scale
             && $stored->family === $cited->family;
     }
 
@@ -134,9 +134,9 @@ class NumericEquivalentGrounding
         // A stated denominator is part of the metric's meaning. Never borrow a percentage
         // about a different denominator merely because the digits happen to agree.
         if (preg_match('/\b(?:percentage|share)\s+of\s+(.+)$/iu', $label, $match)) {
-            $denominator = $this->normalizer->normalize($match[1]);
+            $denominator = $this->normalizer->fold($match[1]);
 
-            return $denominator !== '' && str_contains($this->normalizer->normalize($quote), $denominator);
+            return $denominator !== '' && str_contains($this->normalizer->fold($quote), $denominator);
         }
 
         return true;

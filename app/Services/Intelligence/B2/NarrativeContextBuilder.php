@@ -4,6 +4,7 @@ namespace App\Services\Intelligence\B2;
 
 use App\Services\AI\AiModels;
 use App\Services\AI\Incremental\ChunkPlanner;
+use App\Services\Intelligence\SemanticCompatibility;
 
 /**
  * The B2 input contract. Turns one Stage A snapshot into the bounded, deterministically ordered
@@ -98,6 +99,7 @@ class NarrativeContextBuilder
             'prompt_version' => $settings['prompt_version'],
             'prompt_hash' => NarrativePrompt::hash(),
             'verifier_version' => $settings['verifier_version'],
+            'semantic_policy' => SemanticCompatibility::POLICY,
             'model' => $model,
         ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
     }

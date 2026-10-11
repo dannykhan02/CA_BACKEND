@@ -312,6 +312,24 @@ class IntelligenceB1GroundingAdversarialTest extends TestCase
             $this->reasons('Acme Holdings reported USD 11 billion.', $records, ['m:2']));
     }
 
+    public function test_one_numeric_fact_cannot_borrow_subject_and_period_from_other_records(): void
+    {
+        $records = [
+            'm:acme' => $this->record('m:acme', ['label' => 'Revenue', 'value' => '12.4',
+                'unit' => 'USD billion', 'period' => 'FY2025', 'subject' => 'ACME',
+                'quote' => 'ACME revenue was 12.4 USD billion in FY2025.']),
+            'm:beta' => $this->record('m:beta', ['label' => 'Employees', 'value' => '60,000',
+                'unit' => 'employees', 'period' => 'FY2024', 'subject' => 'Beta',
+                'quote' => 'Beta had 60,000 employees in FY2024.']),
+        ];
+        self::assertContains('numbers_grounded', $this->reasons(
+            'ACME employed 60,000 employees in FY2025.', $records));
+        $sameSubject = $records;
+        $sameSubject['m:beta']['data']['subject'] = 'ACME';
+        self::assertContains('numbers_grounded', $this->reasons(
+            'ACME employed 60,000 employees in FY2025.', $sameSubject));
+    }
+
     /** A wrong calendar year, against a record whose date the quote does state. */
     public function test_a_wrong_year_fails(): void
     {
@@ -328,6 +346,28 @@ class IntelligenceB1GroundingAdversarialTest extends TestCase
         $records = ['m:1' => $this->record('m:1', ['label' => 'Margin', 'value' => '11%',
             'unit' => 'percent', 'subject' => 'Acme'])];
         self::assertContains('numbers_grounded', $this->reasons('Acme reported a 14% margin.', $records));
+    }
+
+    public function test_percent_points_and_basis_points_remain_distinct_in_b1(): void
+    {
+        $percent = ['m:1' => $this->record('m:1', ['label' => 'Operating margin',
+            'value' => '15.5%', 'unit' => 'percent', 'subject' => 'Acme'])];
+        self::assertContains('numbers_grounded', $this->reasons(
+            'Acme operating margin improved by 15.5 percentage points.', $percent));
+        $basis = ['m:1' => $this->record('m:1', ['label' => 'Interest rate change',
+            'value' => '50', 'unit' => 'basis points', 'subject' => 'Acme'])];
+        self::assertContains('numbers_grounded', $this->reasons(
+            'Acme interest rates rose 50%.', $basis));
+        self::assertSame([], $this->reasons('Acme interest rate change was 50 basis points.', $basis));
+    }
+
+    public function test_range_and_approximation_do_not_become_exact_claims(): void
+    {
+        $records = ['m:1' => $this->record('m:1', ['label' => 'Employees',
+            'value' => 'about 10', 'unit' => 'employees', 'subject' => 'Acme'])];
+        self::assertContains('numbers_grounded', $this->reasons('Acme employed 10 employees.', $records));
+        self::assertSame([], $this->reasons('Acme employed about 10 employees.', $records));
+        self::assertContains('numbers_grounded', $this->reasons('Acme employed 10–12 employees.', $records));
     }
 
     /**

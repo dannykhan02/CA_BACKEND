@@ -39,6 +39,7 @@ class IntelligenceNumericEquivalentGroundingTest extends TestCase
         foreach ([
             ['20%', 'The rate was 20.', null, null, 'Rate'],
             ['20', 'The rate was 20%.', null, null, 'Rate'],
+            ['15.5', 'The metric was 155 and 20.', null, null, 'Metric'],
             ['$1.9 million', 'Funding reached $1.9 billion.', null, null, 'Funding'],
             ['USD 1.9 million', 'Funding reached EUR 1.9 million.', null, null, 'Funding'],
             ['ABC 1.9M', 'Funding reached ABC 1.9 million.', null, null, 'Funding'],

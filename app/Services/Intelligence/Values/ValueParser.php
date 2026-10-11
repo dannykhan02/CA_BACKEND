@@ -3,6 +3,7 @@
 namespace App\Services\Intelligence\Values;
 
 use App\Services\AI\Incremental\EvidenceDateRecognizer;
+use App\Services\Intelligence\MatchingTextNormalizer;
 use App\Services\Intelligence\MeasurementParser;
 use App\Services\Intelligence\PeriodParser;
 use App\Services\Intelligence\ReportingPeriod;
@@ -10,7 +11,8 @@ use App\Services\Intelligence\ReportingPeriod;
 /** Derives typed values from accepted, stored evidence without changing its source strings. */
 class ValueParser
 {
-    public function __construct(private MeasurementParser $measurements, private PeriodParser $periods) {}
+    public function __construct(private MeasurementParser $measurements, private PeriodParser $periods,
+        private MatchingTextNormalizer $matching) {}
 
     /**
      * @param  array<string,mixed>  $record
@@ -177,7 +179,7 @@ class ValueParser
     /** Runs of whitespace reduced to one space, so a wrapped source line compares as written. */
     private function collapse(string $text): string
     {
-        return trim((string) preg_replace('/\s+/u', ' ', $text));
+        return $this->matching->normalize($text);
     }
 
     /** @return array<string,mixed> */

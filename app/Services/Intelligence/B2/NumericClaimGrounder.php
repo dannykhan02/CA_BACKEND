@@ -4,28 +4,22 @@ namespace App\Services\Intelligence\B2;
 
 use App\Services\Intelligence\Brief\BriefVerifier;
 use App\Services\Intelligence\MeasurementParser;
+use App\Services\Intelligence\SemanticCompatibility;
 
 /** Binds each prose quantity to one cited typed Stage A value. */
 class NumericClaimGrounder
 {
-    private const NOUNS = [
-        'person' => 'people', 'people' => 'people', 'beneficiary' => 'people',
-        'beneficiaries' => 'people', 'customer' => 'customers', 'customers' => 'customers',
-        'employee' => 'employees', 'employees' => 'employees', 'household' => 'households',
-        'households' => 'households', 'case' => 'cases', 'cases' => 'cases',
-        'toilet' => 'toilets', 'toilets' => 'toilets', 'litre' => 'litres', 'litres' => 'litres',
-        'liter' => 'litres', 'liters' => 'litres', 'tonne' => 'tonnes', 'tonnes' => 'tonnes',
-        'ton' => 'tonnes', 'tons' => 'tonnes', 'day' => 'days', 'days' => 'days',
-        'year' => 'years', 'years' => 'years',
-    ];
+    private const PATTERN = '/(?<![\p{L}\d])(?:(USD|EUR|GBP|CAD|AUD|KES|US\s+dollars?|\$|€|£)\s*)?([+-]?\d(?:\d|,(?=\d))*(?:\.\d+)?(?:\s*(?:trillion|billion|million|thousand))?)(\s*(?:%|per\s+cent|percent(?:age)?(?:\s+points?)?|basis\s+points?|people|person|beneficiar(?:y|ies)|customers?|employees?|households?|cases?|toilets?|litres?|liters?|tonnes?|tons?|days?|years?|USD|EUR|GBP|CAD|AUD|KES))?/iu';
 
-    private const PATTERN = '/(?<![\p{L}\d])(?:(USD|EUR|GBP|CAD|AUD|KES|US\s+dollars?|\$|€|£)\s*)?([+-]?\d(?:\d|,(?=\d))*(?:\.\d+)?(?:\s*(?:trillion|billion|million|thousand))?)(\s*(?:%|percent(?:age)?(?:\s+points?)?|basis\s+points?|people|person|beneficiar(?:y|ies)|customers?|employees?|households?|cases?|toilets?|litres?|liters?|tonnes?|tons?|days?|years?))?/iu';
-
-    public function __construct(private MeasurementParser $parser, private BriefVerifier $brief) {}
+    public function __construct(private MeasurementParser $parser, private BriefVerifier $brief,
+        private SemanticCompatibility $semantics) {}
 
     /** @param list<array<string,mixed>> $records */
     public function grounded(string $text, array $records): bool
     {
+        if (preg_match('/\bbetween\s+\d[\d,.]*\s+and\s+\d[\d,.]*\b|(?<!\d)(?!\d{4}-\d{2})\d[\d,.]*\s*[-–]\s*\d[\d,.]*/iu', $text)) {
+            return false;
+        }
         preg_match_all(self::PATTERN, $text, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
         $mentions = [];
         foreach ($matches as $match) {
@@ -78,41 +72,25 @@ class NumericClaimGrounder
         if (! $this->brief->groundableValue($value)) {
             return false;
         }
-        if ((float) $value['number'] !== (float) $mention['number']) {
-            return false;
-        }
         if (! $this->metricIdentified($local, $record)
             && ! ($this->allLabelsSame($records) && $this->metricIdentified($text, $record))) {
             return false;
         }
-        $type = $value['type'];
-        $currency = $mention['currency'];
-        if ($currency !== '') {
-            if ($type !== 'money' || ! $this->currencyMatches($currency, $value)) {
-                return false;
-            }
-        }
-        $claimUnit = $this->unitClass($mention['suffix']);
-        $recordUnit = $this->unitClass((string) ($value['unit'] ?? ''));
-        if ($claimUnit !== null) {
-            if ($claimUnit === 'percent' && $type !== 'percent') {
-                return false;
-            }
-            if ($claimUnit !== 'percent' && $claimUnit !== $recordUnit) {
-                return false;
-            }
-        } elseif ($currency === '' && ! $this->metricUnambiguous($local, $record, $records)) {
+        if ($mention['suffix'] === '' && $mention['currency'] === ''
+            && ! $this->metricUnambiguous($local, $record, $records)) {
             // An untyped number needs the same record's metric wording to recover its meaning.
             return false;
         }
-        if ($recordUnit === 'basis_points'
-            || ($recordUnit === 'percentage_points' && $claimUnit !== 'percentage_points')) {
+        if (preg_match('/\bper\s+(?!cent\b)\w+|\/\s*\w+/iu', $local)
+            && $this->denominator($local) === null) {
             return false;
         }
-        if ($this->denominator((string) ($value['unit'] ?? '')) !== $this->denominator($local)) {
-            return false;
+        $claim = $this->qualifierPrefix($local, $mention['raw']).trim($mention['raw']);
+        if ($this->denominator($local) !== null) {
+            $claim .= ' per '.$this->denominator($local);
         }
-        if ($this->qualifier($local, $mention['raw']) !== $this->qualifier((string) $value['raw'])) {
+        $value['label'] = $record['data']['label'] ?? null;
+        if (! $this->semantics->compare($claim, $value, $local)['ok']) {
             return false;
         }
         if (! $this->relationOwned($local, $record, $records)
@@ -124,70 +102,24 @@ class NumericClaimGrounder
         return true;
     }
 
-    private function currencyMatches(string $claim, array $value): bool
+    private function qualifierPrefix(string $local, string $raw): string
     {
-        $code = $this->brief->recordCurrencyCode($value);
-        $claim = mb_strtoupper(trim($claim));
-        if (in_array($claim, ['$', 'US DOLLAR', 'US DOLLARS'], true)) {
-            return $code === 'USD' && ($claim !== '$' || str_contains((string) $value['raw'], '$'));
+        $at = strpos($local, $raw);
+        $before = $at === false ? '' : substr($local, 0, $at);
+        if (preg_match('/(?:\b(more than|over|greater than|less than|under|at least|at most|up to|no more than|about|approximately|around|circa|nearly)|(~))\s*$/iu', $before, $m)) {
+            return ($m[1] ?: $m[2]).' ';
         }
 
-        return match ($claim) {
-            '€' => $code === 'EUR', '£' => $code === 'GBP', default => $code === $claim,
-        };
-    }
-
-    private function unitClass(string $text): ?string
-    {
-        if (preg_match('/\bbasis\s+points?\b/iu', $text)) {
-            return 'basis_points';
-        }
-        if (preg_match('/\bpercent(?:age)?\s+points?\b/iu', $text)) {
-            return 'percentage_points';
-        }
-        if (preg_match('/%|\bpercent(?:age)?\b/iu', $text)) {
-            return 'percent';
-        }
-        foreach (self::NOUNS as $word => $class) {
-            if (preg_match('/\b'.preg_quote($word, '/').'\b/iu', $text)) {
-                return $class;
-            }
-        }
-
-        return null;
+        return '';
     }
 
     private function denominator(string $text): ?string
     {
         if (preg_match('/\bper\s+(person|people|household|households|unit|year|years)\b/iu', $text, $match)) {
-            return self::NOUNS[mb_strtolower($match[1])] ?? mb_strtolower($match[1]);
+            return $this->semantics->canonicalUnit($match[1]);
         }
 
         return null;
-    }
-
-    private function qualifier(string $text, ?string $needle = null): string
-    {
-        $position = $needle === null ? (preg_match('/\d/u', $text, $match, PREG_OFFSET_CAPTURE)
-            ? $match[0][1] : 0) : strpos($text, $needle);
-        $before = substr($text, 0, $position === false ? 0 : $position);
-        if (preg_match('/\b(?:more than|over|greater than)\s*[$€£]?\s*$/iu', $before)) {
-            return 'strict_lower_bound';
-        }
-        if (preg_match('/\bat least\s*[$€£]?\s*$/iu', $before)) {
-            return 'inclusive_lower_bound';
-        }
-        if (preg_match('/\b(?:less than|under)\s*[$€£]?\s*$/iu', $before)) {
-            return 'strict_upper_bound';
-        }
-        if (preg_match('/\b(?:up to|at most)\s*[$€£]?\s*$/iu', $before)) {
-            return 'inclusive_upper_bound';
-        }
-        if (preg_match('/(?:\b(?:approximately|about|around|circa)|~)\s*[$€£]?\s*$/iu', $before)) {
-            return 'approximate';
-        }
-
-        return 'exact';
     }
 
     private function metricIdentified(string $local, array $record): bool
@@ -274,9 +206,6 @@ class NumericClaimGrounder
         $subjects = array_values(array_unique(array_filter(array_map(
             static fn (array $item) => $item['data']['subject'] ?? null, $records),
             static fn ($subject) => is_string($subject) && $subject !== '')));
-        if (count($subjects) <= 1) {
-            return true;
-        }
         usort($subjects, static fn (string $a, string $b) => strlen($b) <=> strlen($a));
         foreach ($subjects as $subject) {
             if (preg_match('/(?<!\p{L})'.preg_quote($subject, '/').'(?!\p{L})/iu', $local)) {
@@ -284,28 +213,30 @@ class NumericClaimGrounder
             }
         }
 
-        return false;
+        return count($subjects) <= 1;
     }
 
     /** @param list<array<string,mixed>> $records */
     private function periodOwned(string $local, string $raw, array $record, array $records): bool
     {
         $periods = array_unique(array_filter(array_map(fn (array $item) => $item['typed']['dates']['period_covered']['period']['text'] ?? null, $records), 'is_string'));
-        if (count($periods) <= 1) {
-            return true;
-        }
         $at = strpos($local, $raw);
         $after = $at === false ? '' : substr($local, $at + strlen($raw), 35);
         $before = $at === false ? '' : substr($local, max(0, $at - 35), min(35, $at));
         $year = null;
         if (preg_match('/\b(?:19|20)\d{2}\b/u', $after, $m)) {
             $year = $m[0];
-        } elseif (preg_match_all('/\b(?:19|20)\d{2}\b/u', $before, $m) && $m[0] !== []) {
-            $year = end($m[0]);
+        } elseif (preg_match_all('/\b(?:19|20)\d{2}\b/u', $before, $m, PREG_OFFSET_CAPTURE)
+            && $m[0] !== []) {
+            $last = end($m[0]);
+            $between = substr($before, $last[1] + strlen($last[0]));
+            if (! preg_match('/[,;.]\s*(?:and|but)?\b|\b(?:and|but)\b/iu', $between)) {
+                $year = $last[0];
+            }
         }
         $recordPeriod = $record['typed']['dates']['period_covered']['period']['text'] ?? null;
 
-        return $year !== null && $recordPeriod === $year;
+        return $year === null ? count($periods) <= 1 : $recordPeriod === $year;
     }
 
     private function labelWords(array $record): array

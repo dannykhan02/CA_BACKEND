@@ -81,6 +81,11 @@ class MeasurementParser
 
         $currency = $this->currency($valueText) ?? $this->currency($unitText);
         $percent = $hadPercentSign || $this->isPercent($valueText, $unitTokens);
+        if (($hadPercentSign || str_contains($valueText, '%'))
+            && array_intersect($unitTokens, ['point', 'points']) !== []) {
+            // A percent sign states a ratio; a point unit states a change on a percent scale.
+            return null;
+        }
         if ($percent && $currency !== null) {
             // "12% of USD 4bn" and similar are two measurements in one string.
             return null;
