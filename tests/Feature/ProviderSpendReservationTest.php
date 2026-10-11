@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Exceptions\AiProcessingException;
 use App\Models\Document;
 use App\Models\User;
+use App\Services\AI\ProviderRequestAdmission;
 use App\Services\AiCredits\CreditAccountant;
 use App\Services\AiCredits\OperationSpend;
 use App\Services\AiCredits\QuoteService;
@@ -148,5 +149,59 @@ class ProviderSpendReservationTest extends TestCase
         $spend->finishAttempt($attempt, -1.0);
         $this->assertSame('uncertain', DB::table('provider_call_attempts')->where('id', $attempt)->value('status'));
         $this->assertEqualsWithDelta(0.02, $spend->spentUsd($quote->id), 0.000001);
+    }
+
+    public function test_request_maximum_is_held_then_unused_amount_is_released_on_measured_settlement(): void
+    {
+        [$document, $quote] = $this->quote();
+        $spend = app(OperationSpend::class);
+        $maximum = app(ProviderRequestAdmission::class)->assertAllowed($document, 'entities',
+            config('services.anthropic.extraction_model'), [['role' => 'user', 'content' => 'Fixture text.']], ['max_tokens' => 400]);
+        $this->assertGreaterThan(0, $maximum);
+        $this->assertLessThanOrEqual($quote->provider_cost_cap_usd, $maximum);
+
+        $first = (string) Str::uuid();
+        $spend->reserveAttempt($quote->id, $first, 'entities', $maximum);
+        $this->assertSame((int) ceil($maximum * 1000000), (int) DB::table('provider_call_attempts')->where('id', $first)->value('reserved_microusd'));
+        $spend->markDispatched($first);
+        $actual = round($maximum / 2, 6);
+        $spend->finishAttempt($first, $actual);
+        $this->assertEqualsWithDelta($actual, $spend->spentUsd($quote->id), 0.000001);
+        $this->assertGreaterThan(0, (int) DB::table('provider_call_attempts')->where('id', $first)->value('reserved_microusd')
+            - (int) DB::table('provider_call_attempts')->where('id', $first)->value('settled_microusd'));
+
+        $second = (string) Str::uuid();
+        $spend->reserveAttempt($quote->id, $second, 'entities', $maximum);
+        $spend->markDispatched($second);
+        $spend->finishAttempt($second, $maximum);
+        $this->assertSame((int) DB::table('provider_call_attempts')->where('id', $second)->value('reserved_microusd'),
+            (int) DB::table('provider_call_attempts')->where('id', $second)->value('settled_microusd'));
+        $this->assertLessThanOrEqual($quote->provider_cost_cap_usd + 0.000001, $spend->spentUsd($quote->id));
+    }
+
+    public function test_internal_scope_holds_uncertain_maximum_without_customer_credit_effect(): void
+    {
+        config(['ai_credits.enabled' => false, 'document_intelligence.budget_max_usd' => 0.10]);
+        $user = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->createPersonalWorkspaceFor($user);
+        $document = Document::create(['name' => 'Fixture.pdf', 'type' => 'PDF', 'size_kb' => 1,
+            'status' => 'Processing', 'classification' => 'Public', 'year' => 2026,
+            'workspace_id' => $workspace->id, 'uploaded_by' => $user->id, 'extracted_text' => 'Fixture text.']);
+        $spend = app(OperationSpend::class);
+        $scope = $spend->internalScope($document, 'entities', null, null);
+        $first = (string) Str::uuid();
+        $spend->reserveInternalAttempt($scope, $first, 'entities', 0.07);
+        $spend->markDispatched($first);
+        $spend->finishAttempt($first, null);
+        $spend->releaseAttempt($first);
+        $this->assertSame('uncertain', DB::table('provider_call_attempts')->where('id', $first)->value('status'));
+        try {
+            $spend->reserveInternalAttempt($scope, (string) Str::uuid(), 'entities', 0.07);
+            $this->fail('An uncertain internal attempt must retain its maximum hold.');
+        } catch (AiProcessingException $e) {
+            $this->assertSame('budget_exceeded', $e->classification);
+        }
+        $this->assertSame(0, DB::table('credit_ledger')->count());
+        $this->assertSame(0, DB::table('operation_quotes')->count());
     }
 }

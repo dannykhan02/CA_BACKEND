@@ -273,8 +273,11 @@ class ProviderGateTest extends TestCase
         config(['document_intelligence.provider_gate.job_wait_seconds' => 1]);
         Http::fake(['*/messages' => Http::sequence()->push([], 503)->push($this->response(['ok' => true]))]);
         $client = app(AnthropicClient::class);
+        (new \ReflectionProperty($client, 'currentOperation'))->setValue($client, 'entities');
+        $document = $this->document();
         $call = (new \ReflectionClass($client))->getMethod('callWithRetry');
-        $call->invoke($client, [['role' => 'user', 'content' => 'x']], 1, ['max_attempts' => 2, 'timeout' => 5]);
+        $call->invoke($client, [['role' => 'user', 'content' => 'x']], 1,
+            ['max_attempts' => 2, 'timeout' => 5, 'intelligence_document' => $document]);
         self::assertSame(2, $this->gate()->snapshot()['counters']['acquired']);
         self::assertSame(0, $this->gate()->snapshot()['active']);
     }
@@ -287,14 +290,19 @@ class ProviderGateTest extends TestCase
         Http::fake();
         Storage::fake('documents');
         $document = $this->document();
+        $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9WlTZm8AAAAASUVORK5CYII=');
+        $path = tempnam(sys_get_temp_dir(), 'ocr');
+        file_put_contents($path, $png);
         try {
-            app(ClaudeVisionOcrProvider::class)->extractPage(tempnam(sys_get_temp_dir(), 'ocr'), $document);
+            app(ClaudeVisionOcrProvider::class)->extractPage($path, $document);
             self::fail('OCR bypassed the provider gate.');
         } catch (ProviderBusyException) {
+        } finally {
+            unlink($path);
         }
         Http::assertNothingSent();
 
-        Storage::disk('documents')->put('ai-ocr/page.png', 'image');
+        Storage::disk('documents')->put('ai-ocr/page.png', $png);
         $provider = \Mockery::mock(OcrProviderInterface::class);
         $provider->shouldReceive('extractPage')->andThrow(new ProviderBusyException('global', 15));
         $resolver = $this->mock(OcrEngineResolver::class);

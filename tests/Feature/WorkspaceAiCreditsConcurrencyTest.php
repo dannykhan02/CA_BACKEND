@@ -214,4 +214,37 @@ class WorkspaceAiCreditsConcurrencyTest extends TestCase
         $this->assertSame('settled', DB::table('provider_call_attempts')->where('id', $attempt)->value('status'));
         $this->assertEqualsWithDelta(0.03, $spend->spentUsd($quote->id), 0.000001);
     }
+
+    public function test_unquoted_attempts_compete_atomically_under_workspace_lock(): void
+    {
+        [$user, $workspace] = $this->fixture(0);
+        config(['ai_credits.enabled' => false, 'document_intelligence.budget_max_usd' => 0.10]);
+        $document = $this->document($workspace, $user);
+        $scope = app(OperationSpend::class)->internalScope($document, 'entities', null, null);
+
+        $codes = $this->race(array_map(fn () => function () use ($scope) {
+            app(OperationSpend::class)->reserveInternalAttempt($scope, (string) Str::uuid(), 'entities', 0.07);
+        }, [1, 2]));
+
+        $this->assertSame([0, 2], $codes);
+        $this->assertSame(1, DB::table('provider_call_attempts')->where('scope_key', $scope['key'])->count());
+        $this->assertSame(0, DB::table('operation_quotes')->count());
+        $this->assertSame(0, DB::table('credit_ledger')->count());
+    }
+
+    public function test_unquoted_attempts_both_pass_when_cumulative_budget_has_room(): void
+    {
+        [$user, $workspace] = $this->fixture(0);
+        config(['ai_credits.enabled' => false, 'document_intelligence.budget_max_usd' => 0.10]);
+        $document = $this->document($workspace, $user);
+        $scope = app(OperationSpend::class)->internalScope($document, 'entities', null, null);
+
+        $codes = $this->race(array_map(fn () => function () use ($scope) {
+            app(OperationSpend::class)->reserveInternalAttempt($scope, (string) Str::uuid(), 'entities', 0.03);
+        }, [1, 2]));
+
+        $this->assertSame([0, 0], $codes);
+        $this->assertSame(2, DB::table('provider_call_attempts')->where('scope_key', $scope['key'])->count());
+        $this->assertSame(0, DB::table('credit_ledger')->count());
+    }
 }

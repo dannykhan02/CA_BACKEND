@@ -73,6 +73,12 @@ class AnthropicClient
 
     private ?string $operationComparisonId = null;
 
+    private ?string $operationWorkspaceId = null;
+
+    private ?string $operationResourceId = null;
+
+    private ?string $resolvedQuoteId = null;
+
     private function apiKey(): string
     {
         return trim((string) config('services.anthropic.api_key'));
@@ -84,9 +90,11 @@ class AnthropicClient
     }
 
     /** Attributes every following paid call to one billable operation (comparison, Q&A). Pass nulls to clear. */
-    public function forOperation(?string $quoteId, ?string $userId = null, ?string $comparisonId = null): static
+    public function forOperation(?string $quoteId, ?string $userId = null, ?string $comparisonId = null,
+        ?string $workspaceId = null, ?string $resourceId = null): static
     {
         [$this->operationQuoteId, $this->operationUserId, $this->operationComparisonId] = [$quoteId, $userId, $comparisonId];
+        [$this->operationWorkspaceId, $this->operationResourceId] = [$workspaceId, $resourceId];
 
         return $this;
     }
@@ -541,7 +549,7 @@ PROMPT;
         if (! QuoteService::enabled()) {
             return [];
         }
-        $quoteId = $this->operationQuoteId ?? app(OperationSpend::class)->activeQuote($document, $purpose)?->id;
+        $quoteId = $this->resolvedQuoteId;
 
         return array_filter(['operation_quote_id' => $quoteId, 'user_id' => $this->operationUserId, 'comparison_id' => $this->operationComparisonId], fn ($v) => $v !== null);
     }
@@ -633,6 +641,7 @@ PROMPT;
     private function callWithRetry(array $messages, int $attempt = 1, array $options = []): array
     {
         $this->providerAttemptId = null;
+        $this->resolvedQuoteId = null;
         $document = $options['intelligence_document'] ?? $this->activeDocument;
         $this->transportFailureRecorded = false;
         $currentDocument = $document?->fresh();
@@ -642,7 +651,7 @@ PROMPT;
         }
         if ($document && (! $currentDocument || ! app(DocumentStagePolicy::class)->permits(
             $currentDocument, match ($this->currentOperation) {
-                'ocr' => 'ocr', 'brief_synthesis' => 'brief_synthesis',
+                'ocr' => 'ocr', 'brief_synthesis' => 'brief_synthesis', 'kpi_identity' => 'kpi_identity',
                 'chart_vision' => 'visual', default => 'intelligence',
             })
             || ! $currentDocument->canGenerateIntelligence(
@@ -652,22 +661,27 @@ PROMPT;
         }
 
         // AI credits: no reservation or no cap left means no paid call, whichever path got here.
-        app(OperationSpend::class)->assertCallAllowed($document, $this->currentOperation, $this->operationQuoteId);
+        $quote = app(OperationSpend::class)->assertCallAllowed($document, $this->currentOperation, $this->operationQuoteId,
+            $this->currentOperation === 'document_comparison' ? $this->operationComparisonId : $this->operationResourceId,
+            $this->operationWorkspaceId);
+        $this->resolvedQuoteId = $quote?->id;
 
         $maxAttempts = max(1, min(4, (int) ($options['max_attempts'] ?? 4)));
         $this->requestModel = $options['model'] ?? $this->modelFor($this->currentOperation ?? 'extraction');
-        $estimate = app(ProviderRequestAdmission::class)->assertAllowed(
+        $maximum = app(ProviderRequestAdmission::class)->assertAllowed(
             $document, $this->currentOperation, $this->requestModel, $messages, $options);
 
         $spend = app(OperationSpend::class);
-        $quoteId = QuoteService::enabled() && $document
-            ? ($this->operationQuoteId ?? $spend->activeQuote($document, $this->currentOperation)?->id)
-            : $this->operationQuoteId;
-        $attemptId = $quoteId ? (string) Str::uuid() : null;
-        if ($attemptId !== null) {
-            $spend->reserveAttempt($quoteId, $attemptId, $this->currentOperation, $estimate);
-            $this->providerAttemptId = $attemptId;
+        $quoteId = $this->resolvedQuoteId;
+        $attemptId = (string) Str::uuid();
+        if ($quoteId) {
+            $spend->reserveAttempt($quoteId, $attemptId, $this->currentOperation, $maximum);
+        } else {
+            $scope = $spend->internalScope($document, $this->currentOperation, $this->operationWorkspaceId,
+                $this->operationComparisonId);
+            $spend->reserveInternalAttempt($scope, $attemptId, $this->currentOperation, $maximum);
         }
+        $this->providerAttemptId = $attemptId;
 
         $started = hrtime(true);
         $dispatched = false;
@@ -686,7 +700,7 @@ PROMPT;
             $response = app(ProviderGate::class)->call(function () use ($request, $messages, $options, $attemptId, $spend, $document, &$dispatched) {
                 $fresh = $document?->fresh();
                 if ($document && (! $fresh || ! app(DocumentStagePolicy::class)->permits($fresh, match ($this->currentOperation) {
-                    'ocr' => 'ocr', 'brief_synthesis' => 'brief_synthesis',
+                    'ocr' => 'ocr', 'brief_synthesis' => 'brief_synthesis', 'kpi_identity' => 'kpi_identity',
                     'chart_vision' => 'visual', default => 'intelligence',
                 }))) {
                     throw new AiProcessingException('terminal_document');

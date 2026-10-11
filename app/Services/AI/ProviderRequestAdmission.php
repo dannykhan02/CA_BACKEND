@@ -4,6 +4,7 @@ namespace App\Services\AI;
 
 use App\Exceptions\AiProcessingException;
 use App\Models\Document;
+use Illuminate\Support\Facades\Log;
 
 /** Local admission for every paid Anthropic message, including each retry. */
 class ProviderRequestAdmission
@@ -21,6 +22,11 @@ class ProviderRequestAdmission
         }
         if (! is_string($selected) || $selected === '' || $model !== $selected
             || ! in_array($model, config('document_intelligence.approved_models', []), true)) {
+            Log::warning('Anthropic request uses an unapproved model', [
+                'purpose' => $task,
+                'model' => preg_match('/\A[a-zA-Z0-9._-]{1,100}\z/', $model) ? $model : '[invalid]',
+                'document_id' => $document?->id,
+            ]);
             throw new AiProcessingException('unsupported_model');
         }
 
@@ -45,30 +51,51 @@ class ProviderRequestAdmission
         $budget = config('document_intelligence.budget_max_usd');
         $callCap = config('document_intelligence.provider_call_max_usd');
         $visualReserve = config('document_intelligence.visual_input_token_reserve');
+        $maxImages = config('document_intelligence.max_images_per_request');
         if (! is_numeric($budget) || $budget <= 0 || ! is_numeric($callCap) || $callCap <= 0
-            || $callCap > $budget || ! is_int($visualReserve) || $visualReserve < 1) {
+            || $callCap > $budget || ! is_int($visualReserve) || $visualReserve < 1
+            || ! is_int($maxImages) || $maxImages < 1) {
             throw new AiProcessingException('invalid_provider_config');
         }
-        // Byte length is an upper bound for text tokens; base64 image bytes are not text tokens.
-        // Each image receives the configured conservative visual-token reserve instead.
-        $input = 512;
+        // Count the serialized request bytes (excluding base64 pixels) as a text-token ceiling.
+        // Provider image tokens have a separate documented per-image model ceiling.
+        $boundedMessages = [];
+        $images = 0;
         foreach ($messages as $message) {
             if (($message['role'] ?? null) !== 'user') {
                 throw new AiProcessingException('invalid_provider_config');
             }
             $content = $message['content'] ?? null;
             if (is_string($content)) {
-                $input += strlen($content);
+                $boundedMessages[] = $message;
             } elseif (is_array($content)) {
+                $boundedParts = [];
                 foreach ($content as $part) {
                     if (($part['type'] ?? null) === 'image') {
-                        $input += $visualReserve;
+                        $images++;
+                        if (! is_string($part['source']['data'] ?? null)
+                            || ($part['source']['type'] ?? null) !== 'base64') {
+                            throw new AiProcessingException('invalid_provider_config');
+                        }
+                        $part['source']['data'] = '';
+                        $boundedParts[] = $part;
                     } elseif (is_string($part['text'] ?? null)) {
-                        $input += strlen($part['text']);
+                        $boundedParts[] = $part;
+                    } else {
+                        throw new AiProcessingException('invalid_provider_config');
                     }
                 }
+                $boundedMessages[] = ['role' => 'user', 'content' => $boundedParts];
+            } else {
+                throw new AiProcessingException('invalid_provider_config');
             }
         }
+        if (count($messages) > 4 || $images > $maxImages
+            || ($images && (! is_int($capabilities['max_image_tokens'] ?? null)
+                || $visualReserve < $capabilities['max_image_tokens']))) {
+            throw new AiProcessingException('invalid_provider_config');
+        }
+        $input = 512 + strlen(json_encode($boundedMessages, JSON_THROW_ON_ERROR)) + $images * $visualReserve;
         if (isset($options['system'])) {
             $input += strlen(json_encode($options['system'], JSON_THROW_ON_ERROR));
         }
@@ -78,7 +105,8 @@ class ProviderRequestAdmission
         if ($input + (int) $output > (int) $capabilities['context_window']) {
             throw new AiProcessingException('context_overflow');
         }
-        $cost = $this->pricing->reserve($model, $input, (int) $output, cacheWrite: true);
+        $cost = $this->pricing->maximum($model, $input, (int) $output,
+            $this->mayUseCache($messages) || $this->mayUseCache($options['system'] ?? []));
         if ($cost === null || ! is_finite($cost)) {
             throw new AiProcessingException('unknown_price');
         }
@@ -87,5 +115,20 @@ class ProviderRequestAdmission
         }
 
         return $cost;
+    }
+
+    private function mayUseCache(array $blocks): bool
+    {
+        foreach ($blocks as $block) {
+            if (! is_array($block)) {
+                continue;
+            }
+            if (array_key_exists('cache_control', $block)
+                || $this->mayUseCache(array_filter($block, 'is_array'))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

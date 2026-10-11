@@ -68,11 +68,12 @@ class CompareDocumentsJob implements ShouldQueue
         if (isset($metadata['ai_context'])) {
             app(EntitlementService::class)->reserveComparison($item);
             $client = app(AnthropicClient::class);
+            $quoteId = null;
             if (QuoteService::enabled()) {
                 // Durable attribution: every paid call is stamped with this comparison and its quote.
                 $quoteId = OperationQuote::where('kind', 'comparison')->where('resource_id', $item->id)->where('status', 'reserved')->value('id');
-                $client->forOperation($quoteId, $item->created_by, $item->id);
             }
+            $client->forOperation($quoteId, $item->created_by, $item->id);
             $result = $client->compareDocumentIntelligence($metadata['ai_context'], $item->baseDocument);
             $changes = [...$changes, ...$result['changes']];
             $metadata['model'] = $result['model'];

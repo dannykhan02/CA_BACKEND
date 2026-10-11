@@ -143,6 +143,7 @@ class DocumentQaTest extends TestCase
         $this->insertEmbeddingRow($workspace->id, $doc->id, 'Total budget for Q3 was 64.2 million.');
 
         $this->mock(AnthropicClient::class, function ($mock) use ($doc) {
+            $mock->shouldReceive('forOperation')->once()->andReturnSelf();
             $mock->shouldReceive('answerDocumentQuestion')
                 ->once()
                 ->andReturn([
@@ -237,6 +238,7 @@ class DocumentQaTest extends TestCase
         $this->insertEmbeddingRow($workspace->id, $doc->id);
 
         $this->mock(AnthropicClient::class, function ($mock) {
+            $mock->shouldReceive('forOperation')->once()->andReturnSelf();
             $mock->shouldReceive('answerDocumentQuestion')
                 ->once()
                 ->andThrow(new \RuntimeException('Anthropic API request failed with status 529.'));
@@ -275,6 +277,7 @@ class DocumentQaTest extends TestCase
         $this->mockEmbeddingClient();
         $this->insertEmbeddingRow($workspace->id, $doc->id, 'Private document text must not be logged.');
         $this->mock(AnthropicClient::class, function ($mock) {
+            $mock->shouldReceive('forOperation')->once()->andReturnSelf();
             $mock->shouldReceive('answerDocumentQuestion')->once()->andThrow(new \RuntimeException(
                 'Provider rejected request (401). Authorization: Bearer secret-fixture-token'
                 ."\nResponse body: private provider payload"

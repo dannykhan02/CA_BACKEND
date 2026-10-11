@@ -4,14 +4,31 @@ namespace Tests\Unit;
 
 use App\Exceptions\AnthropicStructuredOutputException;
 use App\Models\AiPrompt;
+use App\Models\Document;
+use App\Models\User;
 use App\Services\AI\PromptManager;
 use App\Services\AnthropicClient;
+use App\Services\WorkspaceService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
 class AnthropicStructuredOutputTest extends TestCase
 {
+    use RefreshDatabase;
+
+    private function document(): Document
+    {
+        config(['ai_credits.enabled' => false]);
+        $user = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->createPersonalWorkspaceFor($user);
+
+        return Document::create(['name' => 'Report.pdf', 'type' => 'PDF', 'size_kb' => 1,
+            'status' => 'Processing', 'classification' => 'Public', 'year' => 2026,
+            'workspace_id' => $workspace->id, 'uploaded_by' => $user->id, 'extracted_text' => 'Fixture text.']);
+    }
+
     private function entitiesClient(): AnthropicClient
     {
         $client = app(AnthropicClient::class);
@@ -89,7 +106,7 @@ class AnthropicStructuredOutputTest extends TestCase
         $parse = fn (array $response) => (new \ReflectionMethod(AnthropicClient::class, 'decodeJsonContent'))
             ->invoke($client, $response);
         $result = (new \ReflectionMethod(AnthropicClient::class, 'structuredCall'))
-            ->invoke($client, 'Return JSON', null, 'entities', $parse);
+            ->invoke($client, 'Return JSON', $this->document(), 'entities', $parse);
         $this->assertSame(['entities' => []], $result);
         Http::assertSentCount(2);
     }
@@ -101,7 +118,7 @@ class AnthropicStructuredOutputTest extends TestCase
         $client = $this->entitiesClient();
         try {
             (new \ReflectionMethod(AnthropicClient::class, 'structuredCall'))->invoke(
-                $client, 'Return JSON', null, 'entities',
+                $client, 'Return JSON', $this->document(), 'entities',
                 fn (array $response) => (new \ReflectionMethod(AnthropicClient::class, 'decodeJsonContent'))->invoke($client, $response)
             );
             $this->fail('Second malformed response accepted.');
@@ -119,7 +136,7 @@ class AnthropicStructuredOutputTest extends TestCase
             ->push($this->response('{"entities":[]}'))]);
         $client = $this->entitiesClient();
         (new \ReflectionMethod(AnthropicClient::class, 'structuredCall'))->invoke(
-            $client, 'Return JSON', null, 'entities',
+            $client, 'Return JSON', $this->document(), 'entities',
             fn (array $response) => (new \ReflectionMethod(AnthropicClient::class, 'decodeJsonContent'))->invoke($client, $response)
         );
         $requests = Http::recorded()->map(fn ($entry) => $entry[0]['max_tokens'])->all();
@@ -165,7 +182,7 @@ class AnthropicStructuredOutputTest extends TestCase
         $client = $this->entitiesClient();
         try {
             (new \ReflectionMethod(AnthropicClient::class, 'structuredCall'))->invoke(
-                $client, 'Return JSON', null, 'entities',
+                $client, 'Return JSON', $this->document(), 'entities',
                 fn (array $response) => (new \ReflectionMethod(AnthropicClient::class, 'decodeJsonContent'))->invoke($client, $response)
             );
             $this->fail('Truncated response accepted.');
@@ -181,7 +198,7 @@ class AnthropicStructuredOutputTest extends TestCase
         $client = $this->entitiesClient();
         try {
             (new \ReflectionMethod(AnthropicClient::class, 'structuredCall'))->invoke(
-                $client, 'Return JSON', null, 'entities',
+                $client, 'Return JSON', $this->document(), 'entities',
                 fn (array $response) => (new \ReflectionMethod(AnthropicClient::class, 'decodeJsonContent'))->invoke($client, $response)
             );
             $this->fail('Refusal accepted.');

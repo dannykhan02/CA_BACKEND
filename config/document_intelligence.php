@@ -32,11 +32,11 @@ return [
     'large_tokens' => 14000,
     // Published limits (https://platform.claude.com/docs/en/about-claude/models/overview).
     'model_capabilities' => [
-        'claude-haiku-4-5-20251001' => ['context_window' => 200000, 'max_output_tokens' => 64000],
-        'claude-haiku-4-5' => ['context_window' => 200000, 'max_output_tokens' => 64000],
-        'claude-sonnet-4-5-20250929' => ['context_window' => 200000, 'max_output_tokens' => 64000],
-        'claude-sonnet-4-6' => ['context_window' => 1000000, 'max_output_tokens' => 128000],
-        'claude-sonnet-5-5' => ['context_window' => 1000000, 'max_output_tokens' => 128000],
+        'claude-haiku-4-5-20251001' => ['context_window' => 200000, 'max_output_tokens' => 64000, 'max_image_tokens' => 1568],
+        'claude-haiku-4-5' => ['context_window' => 200000, 'max_output_tokens' => 64000, 'max_image_tokens' => 1568],
+        'claude-sonnet-4-5-20250929' => ['context_window' => 200000, 'max_output_tokens' => 64000, 'max_image_tokens' => 1568],
+        'claude-sonnet-4-6' => ['context_window' => 1000000, 'max_output_tokens' => 128000, 'max_image_tokens' => 1568],
+        'claude-sonnet-5-5' => ['context_window' => 1000000, 'max_output_tokens' => 128000, 'max_image_tokens' => 4784],
     ],
     // Unused context kept free for tokenizer/JSON-escaping drift.
     'context_safety_ratio' => 0.10,
@@ -136,6 +136,7 @@ return [
     'budget_max_usd' => (float) env('DOCINTEL_MAX_DOCUMENT_COST_USD', 10),
     'provider_call_max_usd' => (float) env('DOCINTEL_MAX_PROVIDER_CALL_USD', min(10, (float) env('DOCINTEL_MAX_DOCUMENT_COST_USD', 10))),
     'visual_input_token_reserve' => (int) env('DOCINTEL_VISUAL_INPUT_TOKEN_RESERVE', 6000),
+    'max_images_per_request' => (int) env('DOCINTEL_MAX_IMAGES_PER_REQUEST', 1),
     // A task must choose the model configured for its role; the global approved list is an
     // additional deployment guard. B2 may use its explicit model override.
     'model_roles' => array_fill_keys(['entities', 'insights', 'risks', 'deadlines', 'document_type',

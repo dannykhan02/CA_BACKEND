@@ -28,7 +28,9 @@ return new class extends Migration
              CHECK (type IN ('PDF','DOCX'))"
         );
         Schema::table('documents', function ($table) {
-            $table->enum('type', ['PDF', 'DOCX'])->change();
+            // PostgreSQL implements this enum as VARCHAR plus the check above.
+            // Laravel's enum()->change() emits invalid ALTER COLUMN SQL here.
+            $table->string('type', 255)->change();
         });
     }
 };

@@ -535,21 +535,140 @@ class AiCreditsTest extends TestCase
         $admission = app(AiCreditAdmission::class);
         $this->assertTrue($admission->admitOcr($document, 3));
         $this->assertTrue($this->admit($document));
-        $comparison = app(QuoteService::class)->quoteComparison($ws->id, $document->id);
+        $comparisonId = (string) Str::uuid();
+        $comparison = app(QuoteService::class)->quoteComparison($ws->id, $comparisonId);
         app(CreditAccountant::class)->reserve($comparison, $this->user->id);
 
-        Http::fake(['api.anthropic.com/*' => Http::response(['id' => 'msg', 'model' => 'claude-haiku-4-5-20251001', 'stop_reason' => 'end_turn',
-            'content' => [['type' => 'text', 'text' => json_encode(['text' => 'page one', 'confidence' => 0.9])]],
-            'usage' => ['input_tokens' => 1000, 'output_tokens' => 100]])]);
+        Http::fakeSequence('api.anthropic.com/*')
+            ->push(['id' => 'ocr', 'model' => 'claude-haiku-4-5-20251001', 'stop_reason' => 'end_turn',
+                'content' => [['type' => 'text', 'text' => json_encode(['text' => 'page one', 'confidence' => 0.9])]],
+                'usage' => ['input_tokens' => 1000, 'output_tokens' => 100]])
+            ->push(['id' => 'comparison', 'model' => 'claude-sonnet-5-5', 'stop_reason' => 'end_turn',
+                'content' => [['type' => 'text', 'text' => json_encode(['changes' => []])]],
+                'usage' => ['input_tokens' => 1000, 'output_tokens' => 100]]);
         $client = app(AnthropicClient::class);
         $client->extractTextFromImage(base64_encode('png'), 'image/png', $document->fresh());
-        $client->forOperation($comparison->id, $this->user->id, $document->id)->extractTextFromImage(base64_encode('png'), 'image/png', $document->fresh());
+        $client->forOperation($comparison->id, $this->user->id, $comparisonId)->compareDocumentIntelligence([], $document->fresh());
 
         $runs = DocumentAiRun::orderBy('created_at')->get();
         $this->assertSame($this->op($document, 'ocr')->quote_id, $runs[0]->operation_quote_id);
         $this->assertSame($comparison->id, $runs[1]->operation_quote_id);
-        $this->assertSame([$this->user->id, $document->id], [$runs[1]->user_id, $runs[1]->comparison_id]);
-        $this->assertEqualsWithDelta(0.0015, app(OperationSpend::class)->spentUsd($comparison->id), 0.000001);
+        $this->assertSame([$this->user->id, $comparisonId], [$runs[1]->user_id, $runs[1]->comparison_id]);
+        $this->assertEqualsWithDelta(0.003, app(OperationSpend::class)->spentUsd($comparison->id), 0.000001);
+    }
+
+    public function test_comparison_cannot_borrow_a_document_quote_when_its_quote_is_missing(): void
+    {
+        $ws = $this->workspace(100);
+        $document = $this->document($ws, 1000);
+        $this->assertTrue($this->admit($document));
+        Http::fake();
+
+        try {
+            app(AnthropicClient::class)->forOperation(null, $this->user->id, (string) Str::uuid())
+                ->compareDocumentIntelligence([], $document->fresh());
+            $this->fail('A comparison without its own quote must stop before HTTP.');
+        } catch (AiProcessingException $e) {
+            $this->assertSame('credits_not_reserved', $e->classification);
+        }
+        $documentQuote = OperationQuote::where('kind', 'document')->firstOrFail();
+        try {
+            app(AnthropicClient::class)->forOperation($documentQuote->id, $this->user->id, (string) Str::uuid())
+                ->compareDocumentIntelligence([], $document->fresh());
+            $this->fail('A comparison cannot spend from the base document quote.');
+        } catch (AiProcessingException $e) {
+            $this->assertSame('quote_scope_mismatch', $e->classification);
+        }
+        Http::assertNothingSent();
+        $this->assertSame(0, DB::table('provider_call_attempts')->count());
+    }
+
+    public function test_existing_legacy_comparison_reservation_remains_eligible_without_a_quote(): void
+    {
+        $ws = $this->workspace(100);
+        $document = $this->document($ws, 1000);
+        $comparisonId = (string) Str::uuid();
+        DB::table('billing_operations')->insert(['workspace_id' => $ws->id, 'kind' => 'comparison',
+            'resource_id' => $comparisonId, 'status' => 'reserved', 'amount_reserved' => null,
+            'created_at' => now(), 'updated_at' => now()]);
+
+        $this->assertNull(app(OperationSpend::class)->assertCallAllowed($document, 'document_comparison', null, $comparisonId));
+        try {
+            app(OperationSpend::class)->assertCallAllowed($document, 'document_comparison', null, (string) Str::uuid());
+            $this->fail('An unrelated legacy comparison reservation must not authorize this request.');
+        } catch (AiProcessingException $e) {
+            $this->assertSame('credits_not_reserved', $e->classification);
+        }
+    }
+
+    public function test_explicit_quote_must_match_kind_resource_and_workspace(): void
+    {
+        $ws = $this->workspace(100);
+        $document = $this->document($ws, 1000);
+        $this->assertTrue($this->admit($document));
+        $documentQuote = OperationQuote::where('kind', 'document')->firstOrFail();
+        $comparisonId = (string) Str::uuid();
+        $comparisonQuote = app(QuoteService::class)->quoteComparison($ws->id, $comparisonId);
+        app(CreditAccountant::class)->reserve($comparisonQuote, $this->user->id);
+        $qaResourceId = (string) Str::uuid();
+        $qaQuote = app(QuoteService::class)->issue($ws->id, 'qa', $qaResourceId,
+            ['band' => 'qa', 'credits' => 2, 'cap' => 0.054, 'preflight' => ['kind' => 'document_qa']]);
+        app(CreditAccountant::class)->reserve($qaQuote, $this->user->id);
+        $spend = app(OperationSpend::class);
+
+        foreach ([
+            [$document, 'document_comparison', $documentQuote->id, $comparisonId, null],
+            [$document, 'document_comparison', $comparisonQuote->id, (string) Str::uuid(), null],
+            [$document, 'ocr', $comparisonQuote->id, null, null],
+            [null, 'document_qa', $comparisonQuote->id, $comparisonId, $ws->id],
+            [null, 'document_qa', $qaQuote->id, $qaResourceId, (string) Str::uuid()],
+            [null, 'document_qa', $qaQuote->id, (string) Str::uuid(), $ws->id],
+        ] as [$doc, $purpose, $quoteId, $resourceId, $workspaceId]) {
+            try {
+                $spend->assertCallAllowed($doc, $purpose, $quoteId, $resourceId, $workspaceId);
+                $this->fail('An explicit quote with a mismatched scope must be rejected.');
+            } catch (AiProcessingException $e) {
+                $this->assertSame('quote_scope_mismatch', $e->classification);
+            }
+        }
+
+        $this->assertSame($comparisonQuote->id, $spend->assertCallAllowed($document, 'document_comparison',
+            $comparisonQuote->id, $comparisonId)?->id);
+        $this->assertSame($qaQuote->id, $spend->assertCallAllowed(null, 'document_qa',
+            $qaQuote->id, $qaResourceId, $ws->id)?->id);
+
+        config(['ai_credits.qa.credits' => 2]);
+        foreach ([$ws->id, null] as $workspaceId) {
+            try {
+                $spend->assertCallAllowed(null, 'document_qa', null, null, $workspaceId);
+                $this->fail('Metered Q&A needs its own quote before HTTP.');
+            } catch (AiProcessingException $e) {
+                $this->assertSame('credits_not_reserved', $e->classification);
+            }
+        }
+    }
+
+    public function test_free_qa_never_attributes_its_provider_run_to_a_cited_document_quote(): void
+    {
+        $ws = $this->workspace(100);
+        $document = $this->document($ws, 1000);
+        $this->assertTrue($this->admit($document));
+        AiPrompt::create(['name' => 'document_qa', 'version' => 99, 'provider' => 'anthropic', 'model' => 'test-model',
+            'active' => true, 'template' => 'Question: {{question}} Context: {{document_text}}']);
+        Http::fake(['api.anthropic.com/*' => Http::response(['id' => 'qa', 'model' => 'claude-sonnet-5-5', 'stop_reason' => 'end_turn',
+            'content' => [['type' => 'text', 'text' => json_encode(['answer' => 'Revenue grew.', 'confidence' => 'strong',
+                'cited_document_ids' => [$document->id]])]], 'usage' => ['input_tokens' => 1000, 'output_tokens' => 50]])]);
+
+        app(AnthropicClient::class)->forOperation(null, $this->user->id, null, $ws->id)
+            ->answerDocumentQuestion('What grew?', '[]', [$document->id], $document);
+
+        $run = DocumentAiRun::where('purpose', 'document_qa')->firstOrFail();
+        $this->assertNull($run->operation_quote_id);
+        $this->assertSame($ws->id, $run->workspace_id);
+        $this->assertSame(1, DB::table('provider_call_attempts')->whereNull('operation_quote_id')
+            ->where('scope_key', 'qa:'.$ws->id.':'.now()->toDateString())->where('status', 'settled')->count());
+        $this->assertSame(0, DB::table('credit_ledger')->where('direction', 'debit')->count());
+        Http::assertSentCount(1);
     }
 
     public function test_provider_boundary_refuses_paid_calls_without_a_reservation_but_not_for_legacy_work(): void
@@ -751,7 +870,8 @@ class AiCreditsTest extends TestCase
             'template' => 'Question: {{question}} Context: {{document_text}}']);
         $error = null;
         try {
-            app(AnthropicClient::class)->forOperation(null, $user->id)->answerDocumentQuestion('What grew?', '[]', [$document->id], $document);
+            app(AnthropicClient::class)->forOperation(null, $user->id, null, $ws->id)
+                ->answerDocumentQuestion('What grew?', '[]', [$document->id], $document);
         } catch (\Throwable $e) {
             $error = get_class($e).': '.$e->getMessage(); // the answer shape is irrelevant; the paid call and its run record are the subject
         }

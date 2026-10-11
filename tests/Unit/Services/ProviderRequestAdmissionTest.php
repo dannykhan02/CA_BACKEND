@@ -71,4 +71,43 @@ class ProviderRequestAdmissionTest extends TestCase
             $this->assertSame('invalid_provider_config', $e->classification);
         }
     }
+
+    public function test_maximum_uses_serialized_request_bytes_and_configured_output_cap(): void
+    {
+        $messages = [['role' => 'user', 'content' => 'Short request.']];
+        $input = 512 + strlen(json_encode($messages));
+        $admission = app(ProviderRequestAdmission::class);
+        $model = 'claude-haiku-4-5-20251001';
+        $maximum = $admission->assertAllowed(null, 'entities', $model, $messages, ['max_tokens' => 400]);
+        $this->assertSame(ceil($input * 1 + 400 * 5) / 1000000, $maximum);
+        $this->assertGreaterThan($admission->assertAllowed(null, 'entities', $model, $messages,
+            ['max_tokens' => 40]), $maximum);
+
+        $system = [['type' => 'text', 'text' => 'Rules', 'cache_control' => ['type' => 'ephemeral']]];
+        $cached = $admission->assertAllowed(null, 'entities', $model, $messages,
+            ['max_tokens' => 400, 'system' => $system]);
+        $cachedInput = $input + strlen(json_encode($system));
+        $this->assertSame(ceil($cachedInput * 1.25 + 400 * 5) / 1000000, $cached);
+    }
+
+    public function test_visual_request_uses_configured_model_image_ceiling_and_bounded_count(): void
+    {
+        $part = ['type' => 'image', 'source' => ['type' => 'base64', 'media_type' => 'image/png', 'data' => 'aGVsbG8=']];
+        $messages = [['role' => 'user', 'content' => [$part, ['type' => 'text', 'text' => 'Read image']]]];
+        $maximum = app(ProviderRequestAdmission::class)->assertAllowed(null, 'ocr',
+            'claude-haiku-4-5-20251001', $messages, ['max_tokens' => 100]);
+        $bounded = $messages;
+        $bounded[0]['content'][0]['source']['data'] = '';
+        $input = 512 + strlen(json_encode($bounded)) + (int) config('document_intelligence.visual_input_token_reserve');
+        $this->assertSame(ceil($input + 100 * 5) / 1000000, $maximum);
+
+        config(['document_intelligence.visual_input_token_reserve' => 100]);
+        try {
+            app(ProviderRequestAdmission::class)->assertAllowed(null, 'ocr',
+                'claude-haiku-4-5-20251001', $messages, ['max_tokens' => 100]);
+            $this->fail('An image allowance below the model ceiling must fail closed.');
+        } catch (AiProcessingException $e) {
+            $this->assertSame('invalid_provider_config', $e->classification);
+        }
+    }
 }

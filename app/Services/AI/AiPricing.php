@@ -27,4 +27,17 @@ class AiPricing
             'output_tokens' => $outputTokens,
         ]);
     }
+
+    /** Hard request bound: any input token may be billed at the highest configured input/cache rate. */
+    public function maximum(string $model, int $inputTokens, int $maxOutputTokens, bool $mayUseCache = false): ?float
+    {
+        $rates = config('document_intelligence.pricing', [])[$model] ?? null;
+        if (! is_array($rates) || count($rates) !== 4) {
+            return null;
+        }
+
+        $inputRate = $mayUseCache ? max($rates[0], $rates[2], $rates[3]) : $rates[0];
+
+        return ceil($inputTokens * $inputRate + $maxOutputTokens * $rates[1]) / 1000000;
+    }
 }

@@ -19,6 +19,7 @@ class DocumentStagePolicy
             'scan', 'extract', 'ocr' => $document->status === 'Processing',
             'brief_synthesis', 'visual' => $document->status === 'Ready',
             'intelligence' => $document->canGenerateIntelligence(),
+            'kpi_identity' => $document->canGenerateIntelligence(requiresExtractedText: false),
             default => false,
         };
     }

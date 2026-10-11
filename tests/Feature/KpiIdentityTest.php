@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\WorkspaceType;
+use App\Exceptions\AiProcessingException;
 use App\Jobs\GenerateInsightsJob;
 use App\Models\AiPrompt;
 use App\Models\Document;
@@ -12,16 +13,20 @@ use App\Models\KpiDefinition;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Services\AI\ResponseValidator;
+use App\Services\AiCredits\CreditAccountant;
+use App\Services\AiCredits\QuoteService;
 use App\Services\AnthropicClient;
 use App\Services\DocumentComparisonService;
 use App\Services\Kpis\KpiIdentityProfile;
 use App\Services\Kpis\KpiIdentityResolver;
 use App\Services\Pipeline\PipelineStageRecorder;
+use App\Services\WorkspaceService;
 use Database\Seeders\DocumentInsightsPromptSeederV7;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class KpiIdentityTest extends TestCase
@@ -155,6 +160,39 @@ class KpiIdentityTest extends TestCase
         Http::assertSent(fn ($request) => $request['max_tokens'] === 400 && ! str_contains($request->body(), 'extracted_text'));
         $this->assertDatabaseHas('document_ai_runs', ['document_id' => $doc->id, 'purpose' => 'kpi_identity', 'input_tokens' => 300, 'output_tokens' => 40]);
         $this->assertSame('semantic', KpiAlias::where('label', $input[0]['label'])->sole()->method);
+    }
+
+    public function test_structured_kpi_adjudication_requires_a_quote_in_ai_credit_mode(): void
+    {
+        config(['ai_credits.enabled' => true]);
+        $user = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->createPersonalWorkspaceFor($user);
+        $workspace->credits()->update(['ai_credits_remaining' => 20, 'documents_remaining' => 0]);
+        $document = Document::create(['workspace_id' => $workspace->id, 'uploaded_by' => $user->id,
+            'name' => 'Metrics.pdf', 'type' => 'PDF', 'size_kb' => 1, 'status' => 'Ready',
+            'classification' => 'Public', 'year' => 2026, 'file_hash' => hash('sha256', 'kpi-quote')]);
+        $id = (string) Str::uuid();
+        $observation = ['label' => 'Average Case Handling Time', 'unit' => 'days'];
+        $candidates = [$id => ['label' => 'Average Case Resolution Time', 'unit' => 'days']];
+        Http::fake(['api.anthropic.com/*' => Http::response(['content' => [['type' => 'text',
+            'text' => json_encode(['relationship' => 'same', 'candidate_id' => $id, 'confidence' => 0.99])]],
+            'usage' => ['input_tokens' => 300, 'output_tokens' => 40]])]);
+
+        try {
+            app(AnthropicClient::class)->adjudicateKpiIdentity($observation, $candidates, $document);
+            $this->fail('Unquoted paid adjudication must be refused.');
+        } catch (AiProcessingException $e) {
+            $this->assertSame('credits_not_reserved', $e->classification);
+        }
+        Http::assertNothingSent();
+
+        $quote = app(QuoteService::class)->quoteDocument($document)['quote'];
+        app(CreditAccountant::class)->reserve($quote, $user->id);
+        $decision = app(AnthropicClient::class)->adjudicateKpiIdentity($observation, $candidates, $document);
+        $this->assertSame('same', $decision['relationship']);
+        Http::assertSentCount(1);
+        $this->assertDatabaseHas('provider_call_attempts', ['operation_quote_id' => $quote->id,
+            'purpose' => 'kpi_identity', 'status' => 'settled']);
     }
 
     public function test_semantic_matching_is_bounded_and_related_metrics_stay_separate(): void

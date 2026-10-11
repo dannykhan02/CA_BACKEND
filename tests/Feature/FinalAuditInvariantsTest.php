@@ -451,7 +451,8 @@ class FinalAuditInvariantsTest extends TestCase
             'template' => 'Question: {{question}} Context: {{document_text}}']);
 
         try {
-            app(AnthropicClient::class)->answerDocumentQuestion('What grew?', '[]', [$document->id], $document);
+            app(AnthropicClient::class)->forOperation(null, $this->user->id, null, $ws->id)
+                ->answerDocumentQuestion('What grew?', '[]', [$document->id], $document);
         } catch (\Throwable) {
             // The answer shape is irrelevant: the paid call and its usage record are the subject.
         }
@@ -554,13 +555,26 @@ class FinalAuditInvariantsTest extends TestCase
             $this->assertTrue($column->is_nullable === 'YES' || $column->column_default !== null, "{$column->table_name}.{$column->column_name} would lock or fail on a populated table");
         }
 
+        $scopeMigration = require database_path('migrations/2026_10_11_000002_allow_internal_provider_spend_scopes.php');
+        $attemptMigration = require database_path('migrations/2026_10_11_000001_add_provider_call_attempts.php');
         $migration = require database_path('migrations/2026_10_07_000001_add_ai_credit_accounting.php');
+        // Roll back in the reverse order of the real migration chain: the newer
+        // provider-attempt FK depends on operation_quotes.
+        $scopeMigration->down();
+        $attemptMigration->down();
+        $this->assertFalse(Schema::hasTable('provider_call_attempts'));
+        $this->assertFalse(Schema::hasColumn('document_ai_runs', 'provider_attempt_id'));
         $migration->down();
         $this->assertFalse(Schema::hasTable('operation_quotes'));
         $this->assertFalse(Schema::hasColumn('billing_operations', 'amount_reserved'));
         $this->assertFalse(Schema::hasColumn('workspace_credits', 'ai_credits_remaining'));
         $migration->up();
+        $attemptMigration->up();
+        $scopeMigration->up();
         $this->assertTrue(Schema::hasTable('operation_quotes'));
         $this->assertTrue(Schema::hasColumn('document_ai_runs', 'operation_quote_id'));
+        $this->assertTrue(Schema::hasTable('provider_call_attempts'));
+        $this->assertTrue(Schema::hasColumn('provider_call_attempts', 'scope_key'));
+        $this->assertTrue(Schema::hasColumn('document_ai_runs', 'provider_attempt_id'));
     }
 }

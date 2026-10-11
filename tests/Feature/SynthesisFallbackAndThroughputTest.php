@@ -44,7 +44,7 @@ class SynthesisFallbackAndThroughputTest extends TestCase
         Http::preventStrayRequests();
         $this->seed(DocumentSummaryPromptSeederV3::class);
         config(['services.anthropic.extraction_model' => 'claude-haiku-4-5-20251001',
-            'services.anthropic.synthesis_model' => 'claude-sonnet-4-6',
+            'services.anthropic.synthesis_model' => 'claude-sonnet-5-5',
             'document_intelligence.large_tokens' => 100, 'document_intelligence.budget_base_usd' => 2]);
     }
 
@@ -77,7 +77,7 @@ class SynthesisFallbackAndThroughputTest extends TestCase
             'critical_risks' => [], 'upcoming_deadlines' => [], 'important_entities' => [], 'recommended_attention' => []];
     }
 
-    private function response(array $data, string $model = 'claude-sonnet-4-6', int $input = 100, int $output = 20): array
+    private function response(array $data, string $model = 'claude-sonnet-5-5', int $input = 100, int $output = 20): array
     {
         return ['model' => $model, 'stop_reason' => 'end_turn', 'usage' => ['input_tokens' => $input, 'output_tokens' => $output],
             'content' => [['type' => 'text', 'text' => json_encode($data)]]];
@@ -273,11 +273,11 @@ class SynthesisFallbackAndThroughputTest extends TestCase
         self::assertSame(round($synthesis, 6), (float) $failed->reserved_cost);
         self::assertSame(round($synthesis, 6), $failed->cost_accounting['cost']);
 
-        // Known usage settles the fallback at actual cost: Sonnet 4.6 at $3 / $15 per million.
+        // Known usage settles the fallback at actual configured Sonnet 5.5 rates.
         $this->runSynthesis($document, true);
         $success = $this->synthesisUnits($document)->last();
         self::assertTrue($success->cost_accounting['actual_known']);
-        self::assertSame(round((2000 * 3 + 500 * 15) / 1000000, 6), (float) $success->reserved_cost);
+        self::assertSame(round((2000 * 2 + 500 * 10) / 1000000, 6), (float) $success->reserved_cost);
         self::assertLessThan($success->cost_accounting['estimate'], (float) $success->reserved_cost);
     }
 
@@ -375,12 +375,12 @@ class SynthesisFallbackAndThroughputTest extends TestCase
         $document = $this->merged();
         Http::fake(['*/messages' => Http::response($this->response($this->summary(), input: 1000, output: 100))]);
         $this->runSynthesis($document);
-        Http::assertSent(fn ($request) => $request['model'] === 'claude-sonnet-4-6' && $request['max_tokens'] === 8192
+        Http::assertSent(fn ($request) => $request['model'] === 'claude-sonnet-5-5' && $request['max_tokens'] === 8192
             && $request['output_config']['effort'] === 'medium');
-        self::assertSame('claude-sonnet-4-6', $document->fresh()->ai_pipeline['synthesis_model']);
-        self::assertSame('claude-sonnet-4-6', DocumentAiRun::where('purpose', 'document_summary')->sole()->model);
-        self::assertSame('claude-sonnet-4-6', $document->fresh()->intelligenceSummary->model);
-        self::assertSame(round((1000 * 3 + 100 * 15) / 1000000, 6), (float) $this->synthesisUnits($document)->sole()->reserved_cost);
+        self::assertSame('claude-sonnet-5-5', $document->fresh()->ai_pipeline['synthesis_model']);
+        self::assertSame('claude-sonnet-5-5', DocumentAiRun::where('purpose', 'document_summary')->sole()->model);
+        self::assertSame('claude-sonnet-5-5', $document->fresh()->intelligenceSummary->model);
+        self::assertSame(round((1000 * 2 + 100 * 10) / 1000000, 6), (float) $this->synthesisUnits($document)->sole()->reserved_cost);
     }
 
     // EXTRACTION PLANNING AND RECOVERY

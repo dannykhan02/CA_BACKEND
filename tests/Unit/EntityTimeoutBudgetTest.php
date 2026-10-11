@@ -4,13 +4,30 @@ namespace Tests\Unit;
 
 use App\Jobs\ExtractDocumentEntitiesJob;
 use App\Models\AiPrompt;
+use App\Models\Document;
+use App\Models\User;
 use App\Services\AI\PromptManager;
 use App\Services\AnthropicClient;
+use App\Services\WorkspaceService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class EntityTimeoutBudgetTest extends TestCase
 {
+    use RefreshDatabase;
+
+    private function document(): Document
+    {
+        config(['ai_credits.enabled' => false]);
+        $user = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->createPersonalWorkspaceFor($user);
+
+        return Document::create(['name' => 'Report.pdf', 'type' => 'PDF', 'size_kb' => 1,
+            'status' => 'Processing', 'classification' => 'Public', 'year' => 2026,
+            'workspace_id' => $workspace->id, 'uploaded_by' => $user->id, 'extracted_text' => 'Acme Ltd']);
+    }
+
     private function prompt(): void
     {
         $prompt = new AiPrompt(['name' => 'document_entities', 'version' => 1,
@@ -55,7 +72,7 @@ class EntityTimeoutBudgetTest extends TestCase
             ->push($this->response('{"entities":', 'max_tokens'))
             ->push($this->response('{"entities":[]}', 'end_turn'))]);
 
-        $result = app(AnthropicClient::class)->extractDocumentEntities('Acme Ltd', 'Report.pdf');
+        $result = app(AnthropicClient::class)->extractDocumentEntities('Acme Ltd', 'Report.pdf', $this->document());
 
         $this->assertSame([], $result['entities']);
         $this->assertSame([4096, 8192], Http::recorded()
@@ -69,7 +86,7 @@ class EntityTimeoutBudgetTest extends TestCase
         Http::fake(['api.anthropic.com/*' => Http::response([], 503)]);
 
         try {
-            app(AnthropicClient::class)->extractDocumentEntities('Acme Ltd', 'Report.pdf');
+            app(AnthropicClient::class)->extractDocumentEntities('Acme Ltd', 'Report.pdf', $this->document());
             $this->fail('A provider error must escape the entity stage.');
         } catch (\RuntimeException $e) {
             $this->assertStringContainsString('status 503', $e->getMessage());

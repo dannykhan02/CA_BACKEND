@@ -16,15 +16,15 @@ return new class extends Migration
             return;
         }
 
-        DB::statement("
-            DO \$\$
+        DB::statement('
+            DO $$
             BEGIN
                 CREATE ROLE powerbi_reader NOLOGIN;
             EXCEPTION
                 WHEN duplicate_object THEN NULL;
             END
-            \$\$
-        ");
+            $$
+        ');
     }
 
     public function down(): void
@@ -33,6 +33,14 @@ return new class extends Migration
             return;
         }
 
+        // The later grant-hardening migration intentionally does not restore its old,
+        // over-broad grants on rollback. Revoke the role's remaining narrow grants
+        // before dropping it; PostgreSQL will not drop a role with ACL dependencies.
+        if (! DB::selectOne('SELECT 1 FROM pg_roles WHERE rolname = ?', ['powerbi_reader'])) {
+            return;
+        }
+        DB::statement('REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public FROM powerbi_reader');
+        DB::statement('REVOKE ALL PRIVILEGES ON SCHEMA public FROM powerbi_reader');
         DB::statement('DROP ROLE IF EXISTS powerbi_reader');
     }
 };

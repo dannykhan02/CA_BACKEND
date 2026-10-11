@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Document;
 use App\Services\AI\DocumentContextRetriever;
 use App\Services\AiCredits\QaGuard;
-use App\Services\AiCredits\QuoteService;
 use App\Services\AnthropicClient;
 use App\Services\AuditLogger;
 use App\Services\EntitlementService;
@@ -53,12 +52,13 @@ class DocumentQaController extends Controller
             // The first cited document carries the run record, so every Q&A call is attributable
             // to a workspace, user and (when metered) quote.
             // Recorded whether or not credits are on, so Q&A spend is never invisible to the usage report.
-            $result = (QuoteService::enabled() ? $client->forOperation($quote?->id, $user->id) : $client)->answerDocumentQuestion(
-                $validated['question'],
-                $context->toPromptContext(),
-                $context->documentIds(),
-                Str::isUuid($first = $context->documentIds()[0] ?? null) ? Document::find($first) : null,
-            );
+            $result = $client->forOperation($quote?->id, $user->id, null,
+                $user->current_workspace_id, $quote?->resource_id)->answerDocumentQuestion(
+                    $validated['question'],
+                    $context->toPromptContext(),
+                    $context->documentIds(),
+                    Str::isUuid($first = $context->documentIds()[0] ?? null) ? Document::find($first) : null,
+                );
             app(QaGuard::class)->finish($quote, true, $user->id);
         } catch (ProviderBusyException $e) {
             app(QaGuard::class)->finish($quote, false, $user->id);
