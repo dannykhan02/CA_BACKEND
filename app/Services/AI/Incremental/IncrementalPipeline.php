@@ -14,6 +14,8 @@ use App\Services\AI\AiModels;
 use App\Services\AI\AiPricing;
 use App\Services\AiCredits\OperationSpend;
 use App\Services\AnthropicClient;
+use App\Services\Extraction\StructuredDocument;
+use App\Services\Extraction\StructuredExtractionStore;
 use App\Services\Pipeline\DocumentProgress;
 use App\Support\QueueInspector;
 use App\Support\QueueTopology;
@@ -119,21 +121,27 @@ class IncrementalPipeline
          */
         $spans = $grounding->enabled() ? $grounding->spans($document) : null;
         $mode = $spans !== null && ! $spans->isEmpty() ? EvidenceGrounding::SPANS : EvidenceGrounding::LEGACY;
+        $structured = app(StructuredExtractionStore::class)->active($document);
+        $chunkPolicy = $structured !== null && in_array($structured->format, ['DOCX', 'XLSX'], true)
+            && $mode === EvidenceGrounding::SPANS ? StructuredChunkPlanner::POLICY : 'legacy';
 
         // The mode is part of the key: flipping the flag starts a new pipeline instead of mixing
         // quote-based and span-based records inside one.
-        $key = hash(
-            'sha256',
-            implode('|', [
-                $document->workspace_id,
-                $document->id,
-                hash('sha256', $document->extracted_text),
-                $version,
-                $prompt,
-                app(AiModels::class)->forTask('extraction'),
-                $mode,
-            ])
-        );
+        $keyParts = [
+            $document->workspace_id,
+            $document->id,
+            hash('sha256', $document->extracted_text),
+            $version,
+            $prompt,
+            app(AiModels::class)->forTask('extraction'),
+            $mode,
+        ];
+        if ($chunkPolicy !== 'legacy') {
+            $keyParts[] = $chunkPolicy;
+            $keyParts[] = $structured->parserVersion;
+            $keyParts[] = StructuredDocument::POLICY;
+        }
+        $key = hash('sha256', implode('|', $keyParts));
 
         /*
          * Existing pipeline:
@@ -160,7 +168,9 @@ class IncrementalPipeline
         $tokens = (int) ($document->ai_pipeline['tokens'] ?? $this->planner->estimate($document->extracted_text));
         $routing = $this->capacity->decide($tokens, $this->capacity->density($document->extracted_text, $document->type));
         $plan = $mode === EvidenceGrounding::SPANS
-            ? $this->planner->planFromSpans($spans, $document->extracted_text, $routing['partition_tokens'], true, $density)
+            ? ($structured !== null && in_array($structured->format, ['DOCX', 'XLSX'], true)
+                ? app(StructuredChunkPlanner::class)->plan($structured, $spans, $routing['partition_tokens'], $density)
+                : $this->planner->planFromSpans($spans, $document->extracted_text, $routing['partition_tokens'], true, $density))
             : $this->planner->partition(
                 $document->extracted_text,
                 $routing['partition_tokens'],
@@ -169,6 +179,7 @@ class IncrementalPipeline
         $routing['root_chunks'] = count($plan);
         $routing['grounding'] = $mode;
         $routing['source_spans'] = $spans?->count() ?? 0;
+        $routing['chunk_policy'] = $chunkPolicy;
 
         DB::transaction(function () use (
             $document,

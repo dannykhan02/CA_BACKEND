@@ -102,11 +102,17 @@ class NarrativeContextBuilder
             'semantic_policy' => SemanticCompatibility::POLICY,
             'model' => $model,
         ];
-        foreach ($records as $record) {
+        $proofs = [];
+        foreach ($records as $sourceId => $record) {
             if (isset($record['source_provenance']['roles']['value'])) {
-                $identity['provenance_policy'] = SourceProvenance::POLICY;
-                break;
+                $proofs[(string) $sourceId] = $record['source_provenance']['roles'];
             }
+        }
+        if ($proofs !== []) {
+            ksort($proofs, SORT_STRING);
+            $identity['provenance_policy'] = SourceProvenance::POLICY;
+            $identity['provenance_roles_hash'] = hash('sha256', json_encode($proofs,
+                JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
         }
 
         return hash('sha256', json_encode($identity, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));

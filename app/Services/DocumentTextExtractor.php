@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Services\Extraction\ArchivePreflight;
+use App\Services\Extraction\StructuredDocument;
 use Smalot\PdfParser\Parser as PdfParser;
 use Symfony\Component\Process\Process;
 
@@ -17,7 +18,21 @@ class DocumentTextExtractor
 {
     private array $pdfPageCounts = [];
 
+    private ?StructuredDocument $lastPdfStructure = null;
+
     public function extractPdfText(string $path): string
+    {
+        $this->lastPdfStructure = $this->extractPdfStructured($path);
+
+        return $this->lastPdfStructure->text;
+    }
+
+    public function pdfStructuredResult(): ?StructuredDocument
+    {
+        return $this->lastPdfStructure;
+    }
+
+    public function extractPdfStructured(string $path): StructuredDocument
     {
         $this->preflightPdf($path);
         $parser = new PdfParser;
@@ -25,15 +40,29 @@ class DocumentTextExtractor
         $pages = $parser->parseFile($path)->getPages();
         $this->pdfPageCounts[$path] = count($pages);
 
-        $text = implode(
-            "\f",
-            array_map(
-                fn ($page) => $page->getText(),
-                $pages
-            )
-        );
+        $parts = [];
+        $nodes = [];
+        $offset = 0;
+        foreach ($pages as $index => $page) {
+            if ($index > 0) {
+                $offset++;
+            }
+            $pageText = $this->sanitizeUtf8($page->getText());
+            $parts[] = $pageText;
+            $node = ['id' => 'page:'.($index + 1), 'type' => 'page', 'page' => $index + 1,
+                'path' => 'page:'.($index + 1), 'meta' => ['modality' => 'embedded_pdf_text',
+                    'reading_order' => 'parser_order_unverified']];
+            if ($pageText !== '') {
+                $node += ['start' => $offset, 'end' => $offset + mb_strlen($pageText), 'text' => $pageText];
+            }
+            $nodes[] = $node;
+            $offset += mb_strlen($pageText);
+        }
+        $text = implode("\f", $parts);
 
-        return $this->sanitizeUtf8($text);
+        return new StructuredDocument('PDF', 'smalot-page.v1', $text, $nodes,
+            ['pages' => 'complete', 'text' => 'parser_text', 'blocks' => 'unavailable',
+                'geometry' => 'unavailable', 'tables' => 'unavailable', 'visibility' => 'unverified']);
     }
 
     /**
@@ -238,6 +267,102 @@ class DocumentTextExtractor
         }
     }
 
+    /** Preserve Word body paths while keeping the established text serializer unchanged. */
+    public function extractDocxStructured(string $path): StructuredDocument
+    {
+        $text = $this->extractDocxText($path);
+        $zip = new \ZipArchive;
+        if ($zip->open($path, \ZipArchive::CHECKCONS) !== true) {
+            throw new \RuntimeException('Invalid DOCX archive.');
+        }
+        try {
+            $xml = $zip->getFromName('word/document.xml');
+        } finally {
+            $zip->close();
+        }
+        $dom = new \DOMDocument;
+        if (! is_string($xml) || ! $dom->loadXML($xml, LIBXML_NONET) || $dom->doctype !== null) {
+            throw new \RuntimeException('Invalid DOCX: unsafe document XML.');
+        }
+        $namespace = $dom->documentElement->namespaceURI;
+        $xpath = new \DOMXPath($dom);
+        $xpath->registerNamespace('w', $namespace);
+        $body = $xpath->query('/w:document/w:body')->item(0);
+        if (! $body) {
+            throw new \RuntimeException('Invalid DOCX: missing document body.');
+        }
+        $nodes = [['id' => 'body', 'type' => 'document', 'path' => 'body']];
+        $cursor = 0;
+        $walk = function (\DOMNode $container, string $parent, int $depth) use (&$walk, &$nodes, &$cursor,
+            $text, $namespace, $xpath): void {
+            if ($depth > 12) {
+                throw new \RuntimeException('DOCX nested structure limit exceeded.');
+            }
+            $ordinals = [];
+            foreach ($container->childNodes as $child) {
+                if ($child->namespaceURI !== $namespace || ! in_array($child->localName,
+                    ['p', 'tbl', 'tr', 'tc'], true)) {
+                    continue;
+                }
+                $type = $child->localName;
+                $ordinals[$type] = ($ordinals[$type] ?? 0) + 1;
+                $id = $parent.'/'.$type.'['.$ordinals[$type].']';
+                $node = ['id' => $id, 'parent' => $parent, 'path' => $id,
+                    'type' => match ($type) {
+                        'p' => 'paragraph', 'tbl' => 'table', 'tr' => 'row', 'tc' => 'cell'
+                    }];
+                if ($type === 'p') {
+                    $style = $xpath->query('./w:pPr/w:pStyle', $child)->item(0);
+                    $node['meta'] = ['style' => $style instanceof \DOMElement
+                        ? $style->getAttributeNS($namespace, 'val') : null];
+                    $segment = rtrim($this->extractWordXml($child, $namespace), "\n |");
+                } elseif ($type === 'tc') {
+                    $span = $xpath->query('./w:tcPr/w:gridSpan', $child)->item(0);
+                    $merge = $xpath->query('./w:tcPr/w:vMerge', $child)->item(0);
+                    $node['meta'] = ['grid_span' => $span instanceof \DOMElement
+                        ? (int) $span->getAttributeNS($namespace, 'val') : 1,
+                        'vertical_merge' => $merge instanceof \DOMElement
+                            ? ($merge->getAttributeNS($namespace, 'val') ?: 'continue') : null];
+                    $serializedCell = $this->extractWordXml($child, $namespace);
+                    $segment = trim(str_ends_with($serializedCell, ' | ')
+                        ? substr($serializedCell, 0, -3) : $serializedCell);
+                } else {
+                    if ($type === 'tr') {
+                        $header = $xpath->query('./w:trPr/w:tblHeader', $child)->item(0);
+                        $headerValue = $header instanceof \DOMElement
+                            ? $header->getAttributeNS($namespace, 'val') : null;
+                        $node['meta'] = ['explicit_header' => $header instanceof \DOMElement
+                            && ! in_array($headerValue, ['0', 'false', 'off'], true)];
+                    }
+                    $segment = '';
+                }
+                if ($segment !== '') {
+                    $at = mb_strpos($text, $segment, $cursor);
+                    if ($at !== false) {
+                        $node += ['start' => $at, 'end' => $at + mb_strlen($segment), 'text' => $segment];
+                    }
+                }
+                $nodes[] = $node;
+                if (count($nodes) > 100000) {
+                    throw new \RuntimeException('Structured node limit exceeded.');
+                }
+                if ($type !== 'p') {
+                    $walk($child, $id, $depth + 1);
+                }
+                if (isset($node['end'])) {
+                    $cursor = max($cursor, $node['end']);
+                }
+            }
+        };
+        $walk($body, 'body', 0);
+
+        return new StructuredDocument('DOCX', 'wordprocessingml-body.v1', $text, $nodes,
+            ['text' => 'complete', 'body_order' => 'complete', 'tables' => 'native_paths',
+                'merged_cells' => 'grid_span_and_v_merge', 'headings' => 'style_id_only',
+                'footnotes' => 'unavailable', 'headers_footers' => 'unavailable',
+                'tracked_changes' => 'deleted_text_excluded']);
+    }
+
     public function preflightPdf(string $path): int
     {
         $maxPages = config('document_processing.pdf_max_pages');
@@ -273,13 +398,17 @@ class DocumentTextExtractor
 
     private function extractWordXml(
         \DOMNode $node,
-        string $namespace
+        string $namespace,
+        int $depth = 0
     ): string {
+        if ($depth > 64) {
+            throw new \RuntimeException('DOCX XML nesting limit exceeded.');
+        }
         if ($node->namespaceURI === $namespace) {
             if (
                 in_array(
                     $node->localName,
-                    ['del', 'instrText'],
+                    ['del', 'moveFrom', 'instrText'],
                     true
                 )
             ) {
@@ -310,7 +439,8 @@ class DocumentTextExtractor
         foreach ($node->childNodes as $child) {
             $text .= $this->extractWordXml(
                 $child,
-                $namespace
+                $namespace,
+                $depth + 1
             );
         }
 

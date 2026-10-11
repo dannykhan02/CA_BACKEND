@@ -42,8 +42,16 @@ class SourceProvenance
         return DB::transaction(function () use ($document, $parserVersion, $anchors, $relations, $bindings,
             $revision, $pipeline, $graphHash): string {
             // Serializes two workers publishing the same revision; a failed build rolls back in full.
-            DB::table('documents')->where('id', $document->id)->where('workspace_id', $document->workspace_id)
-                ->lockForUpdate()->first(['id']);
+            $current = DB::table('documents')->where('id', $document->id)
+                ->where('workspace_id', $document->workspace_id)->lockForUpdate()
+                ->first(['id', 'extracted_text', 'ai_pipeline', 'status', 'deleted_at']);
+            $currentPipeline = $current === null ? null : json_decode($current->ai_pipeline ?? '{}', true);
+            if ($current === null || $current->deleted_at !== null
+                || ! in_array($current->status, ['Processing', 'Ready'], true)
+                || hash('sha256', (string) $current->extracted_text) !== $revision
+                || (string) ($currentPipeline['key'] ?? 'legacy') !== $pipeline) {
+                throw new \LogicException('Stale provenance publisher cannot activate a source revision.');
+            }
             $existing = DB::table('source_provenance_sets')->where('document_id', $document->id)
                 ->where('workspace_id', $document->workspace_id)->where('source_revision', $revision)
                 ->where('parser_version', $parserVersion)->where('policy_version', self::POLICY)
@@ -114,6 +122,8 @@ class SourceProvenance
                     'start_offset' => $start, 'end_offset' => $end, 'source_text' => $source,
                     'source_hash' => $source === null ? null : hash('sha256', $source),
                     'geometry' => isset($anchor['geometry']) ? json_encode($anchor['geometry'], JSON_THROW_ON_ERROR) : null,
+                    'navigation_metadata' => isset($anchor['navigation_metadata'])
+                        ? json_encode($anchor['navigation_metadata'], JSON_THROW_ON_ERROR) : null,
                     'created_at' => now(), 'updated_at' => now()];
             }
             foreach (array_chunk($anchorRows, 500) as $batch) {

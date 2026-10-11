@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\DocumentReportController;
 use App\Http\Controllers\Api\DocumentReprocessController;
 use App\Http\Controllers\Api\DocumentRiskReviewController;
 use App\Http\Controllers\Api\DocumentSearchController;
+use App\Http\Controllers\Api\DocumentSourceReferenceController;
 use App\Http\Controllers\Api\DocumentUploadController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\MatterController;
@@ -128,6 +129,9 @@ Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(functio
 
     Route::get('/documents/{document}/intelligence', [DocumentIntelligenceController::class, 'show'])
         ->name('documents.intelligence');
+
+    Route::get('/documents/{document}/sources/{sourceId}', [DocumentSourceReferenceController::class, 'show'])
+        ->middleware('throttle:60,1')->name('documents.sources.show');
 
     Route::get('/documents/{document}/entities', [DocumentIntelligenceController::class, 'entities'])
         ->name('documents.entities');

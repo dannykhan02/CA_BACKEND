@@ -4,6 +4,8 @@ namespace App\Services\Intelligence;
 
 use App\Models\Document;
 use App\Models\DocumentEvidence;
+use App\Services\Extraction\StructuredDocument;
+use App\Services\Extraction\StructuredExtractionStore;
 
 /** Binds only unique literal occurrences inside one stored source quote using raw character offsets. */
 class TextRoleProvenanceProducer
@@ -23,7 +25,25 @@ class TextRoleProvenanceProducer
         };
         $rows = DocumentEvidence::where('workspace_id', $document->workspace_id)
             ->where('document_id', $document->id)->where('pipeline_key', $key)->get();
+        $structured = app(StructuredExtractionStore::class)->active($document);
+        $structurallyBound = [];
+        $parserVersion = 'raw-text.v1';
+        if ($structured !== null) {
+            [$nativeAnchors, $nativeRelations, $nativeBindings, $structurallyBound] =
+                app(StructuredProvenanceProducer::class)->build($structured, $rows);
+            foreach ($nativeAnchors as $anchor) {
+                $anchors[$anchor['key']] = $anchor;
+            }
+            foreach ($nativeRelations as $relation) {
+                $relations[$relation['from'].'|'.$relation['to'].'|'.$relation['type']] = $relation;
+            }
+            array_push($bindings, ...$nativeBindings);
+            $parserVersion = $structured->parserVersion.'@'.StructuredDocument::POLICY;
+        }
         foreach ($rows as $row) {
+            if (isset($structurallyBound[$row->id])) {
+                continue;
+            }
             $data = $row->data ?? [];
             foreach ($row->sources ?? [] as $source) {
                 $start = $source['start_offset'] ?? null;
@@ -92,7 +112,7 @@ class TextRoleProvenanceProducer
             }
         }
 
-        return $this->store->publish($document, 'raw-text.v1', array_values($anchors),
+        return $this->store->publish($document, $parserVersion, array_values($anchors),
             array_values($relations), $bindings);
     }
 }

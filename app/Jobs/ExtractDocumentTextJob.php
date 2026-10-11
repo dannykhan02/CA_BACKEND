@@ -11,6 +11,7 @@ use App\Services\Documents\DocumentStorageService;
 use App\Services\DocumentTextExtractor;
 use App\Services\EntitlementService;
 use App\Services\Extraction\SpreadsheetTextExtractor;
+use App\Services\Extraction\StructuredExtractionStore;
 use App\Services\Ocr\OcrEngineResolver;
 use App\Services\Ocr\PdfRasterizer;
 use App\Services\Pipeline\DocumentProgress;
@@ -66,13 +67,24 @@ class ExtractDocumentTextJob implements ShouldQueue
         $cleanupAbsolutePath = true;
 
         try {
-            $text = match ($document->type) {
-                'PDF' => $extractor->extractPdfText($absolutePath),
-                'DOCX' => $extractor->extractDocxText($absolutePath),
-                'XLSX' => app(SpreadsheetTextExtractor::class)->extract($absolutePath),
-                'JPG', 'PNG' => '', // no native text layer — forces straight to OCR fallback below
+            $structured = match ($document->type) {
+                'PDF' => null,
+                'DOCX' => $extractor->extractDocxStructured($absolutePath),
+                'XLSX' => app(SpreadsheetTextExtractor::class)->extractStructured($absolutePath),
+                'JPG', 'PNG' => null, // no native text layer — forces straight to OCR fallback below
                 default => throw new \RuntimeException("Unsupported document type: {$document->type}"),
             };
+            if ($document->type === 'PDF') {
+                $text = $extractor->extractPdfText($absolutePath);
+                // Test and legacy adapters may supply only the established text method.
+                $structured = get_class($extractor) === DocumentTextExtractor::class
+                    ? $extractor->pdfStructuredResult() : null;
+            } else {
+                $text = $structured?->text ?? '';
+            }
+            if ($structured !== null && hash_file('sha256', $absolutePath) !== $document->file_hash) {
+                throw new \RuntimeException('Document source hash changed before extraction.');
+            }
 
             // Page count only has a reliable, well-defined answer for PDF —
             // DOCX reflows dynamically with no fixed page count until
@@ -112,14 +124,28 @@ class ExtractDocumentTextJob implements ShouldQueue
             $recorder->complete($extractStage, ['native_text_found' => true]);
         }
 
-        if ($cleanupAbsolutePath) {
-            @unlink($absolutePath);
-        }
-
         // Persistent source of truth — previously this only went to cache,
         // which expires in 2 hours and silently starved every downstream
         // job (embeddings, and likely AI insights) that ran after that.
-        $document->forceFill(['extracted_text' => $text])->save();
+        try {
+            if ($structured !== null) {
+                app(StructuredExtractionStore::class)->publish($document, $structured);
+            } else {
+                $document->forceFill(['extracted_text' => $text])->save();
+            }
+        } catch (\Throwable $e) {
+            $recorder->fail($extractStage, 'Document extraction revision could not be published.');
+            $document->forceFill(['status' => 'Failed', 'progress' => 100,
+                'error_message' => 'Could not publish document extraction.'])->save();
+            app(EntitlementService::class)->releaseStaleReservations($document->workspace_id);
+            $this->fail($e);
+
+            return;
+        } finally {
+            if ($cleanupAbsolutePath) {
+                @unlink($absolutePath);
+            }
+        }
 
         // Cache retained as a short-lived read-through optimisation only —
         // nothing downstream should treat it as authoritative anymore.
