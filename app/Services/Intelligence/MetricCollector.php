@@ -109,6 +109,7 @@ class MetricCollector
         }
 
         foreach (DocumentKpi::where('document_id', $document->id)
+            ->where('intelligence_revision_id', $document->intelligenceRevisionForRelations())
             ->where(fn ($query) => $query->where('workspace_id', $document->workspace_id)->orWhereNull('workspace_id'))
             ->orderBy('id')->get() as $kpi) {
             $metadata = is_array($kpi->identity_metadata) ? $kpi->identity_metadata : [];
@@ -151,6 +152,7 @@ class MetricCollector
             return $records;
         }
         $definitions = DocumentKpi::where('document_id', $document->id)->whereIn('id', $ids)
+            ->where('intelligence_revision_id', $document->intelligenceRevisionForRelations())
             ->pluck('kpi_definition_id', 'id');
         foreach ($records as $index => $record) {
             if (str_starts_with($record['source_id'], 'kpi:')) {

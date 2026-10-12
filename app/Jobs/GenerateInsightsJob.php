@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Jobs\Concerns\DispatchesIntelligenceChain;
 use App\Jobs\Concerns\GuardsDocumentIntelligence;
 use App\Jobs\Concerns\SkipsUnchangedDocuments;
 use App\Models\Document;
@@ -11,6 +12,7 @@ use App\Models\DocumentChartPoint;
 use App\Models\DocumentKpi;
 use App\Services\AI\Incremental\IncrementalPipeline;
 use App\Services\AnthropicClient;
+use App\Services\Intelligence\DocumentRevisionPublisher;
 use App\Services\Kpis\KpiIdentityResolver;
 use App\Services\Pipeline\PipelineStageRecorder;
 use App\Services\WorkspaceCreditService;
@@ -25,7 +27,7 @@ use Illuminate\Support\Facades\Log;
 
 class GenerateInsightsJob implements ShouldQueue
 {
-    use Dispatchable, GuardsDocumentIntelligence, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments;
+    use Dispatchable, DispatchesIntelligenceChain, GuardsDocumentIntelligence, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments;
 
     public int $tries = 2;
 
@@ -33,7 +35,7 @@ class GenerateInsightsJob implements ShouldQueue
 
     public bool $failOnTimeout = true;
 
-    public function __construct(public string $documentId, public bool $forceReprocess = false) {}
+    public function __construct(public string $documentId, public bool $forceReprocess = false, public ?string $revisionId = null) {}
 
     public function handle(AnthropicClient $client, PipelineStageRecorder $recorder): void
     {
@@ -45,7 +47,8 @@ class GenerateInsightsJob implements ShouldQueue
         // without cancelling the chain: Personal becomes Failed, Organization
         // becomes Needs Review. Neither should be marked Ready without analysis.
         // This also guards standalone dispatch from DocumentReprocessController.
-        if (! $document || $document->status !== 'Processing') {
+        if (! $document || $document->status !== 'Processing'
+            || ! app(DocumentRevisionPublisher::class)->owns($document, $this->revisionId)) {
             if (! $document) {
                 Log::warning("GenerateInsightsJob: Document {$this->documentId} not found — unexpected null, possible soft-delete race.");
             }
@@ -62,7 +65,7 @@ class GenerateInsightsJob implements ShouldQueue
         // Unlike the other intelligence jobs, this one owns the document's
         // terminal status transition — a skip must still finalize the
         // document as Ready, or it would be stuck at 'Processing' forever.
-        if ($this->skipIfUnchanged(
+        if ($this->revisionId === null && $this->skipIfUnchanged(
             $document,
             'insights',
             'ai_analysis',
@@ -73,7 +76,8 @@ class GenerateInsightsJob implements ShouldQueue
         )) {
             DB::transaction(function () use ($document) {
                 $document = Document::whereKey($document->id)->lockForUpdate()->first();
-                if (! $document || $document->status !== 'Processing') {
+                if (! $document || $document->status !== 'Processing'
+                    || ! app(DocumentRevisionPublisher::class)->owns($document, $this->revisionId)) {
                     if (! $document) {
                         Log::warning("GenerateInsightsJob: Document {$this->documentId} disappeared during skip-transaction.");
                     }
@@ -97,6 +101,9 @@ class GenerateInsightsJob implements ShouldQueue
                 'status' => 'Failed',
                 'error_message' => 'No extracted text available for AI analysis.',
             ])->save();
+            if ($this->revisionId !== null) {
+                app(DocumentRevisionPublisher::class)->fail($document, $this->revisionId);
+            }
             $this->fail(new \RuntimeException('Empty extracted_text at insights stage.'));
 
             return;
@@ -112,7 +119,8 @@ class GenerateInsightsJob implements ShouldQueue
         } catch (\Throwable $e) {
             $failed = DB::transaction(function () use ($document, $recorder, $insightsStage) {
                 $current = Document::whereKey($document->id)->lockForUpdate()->first();
-                if (! $current || $current->status !== 'Processing') {
+                if (! $current || $current->status !== 'Processing'
+                    || ! app(DocumentRevisionPublisher::class)->owns($current, $this->revisionId)) {
                     $insightsStage->update(['status' => 'skipped', 'completed_at' => now()]);
 
                     return false;
@@ -122,6 +130,9 @@ class GenerateInsightsJob implements ShouldQueue
                     'status' => 'Needs Review',
                     'error_message' => 'Analysis could not be completed. Please try again.',
                 ])->save();
+                if ($this->revisionId !== null) {
+                    app(DocumentRevisionPublisher::class)->fail($current, $this->revisionId);
+                }
 
                 return true;
             });
@@ -151,7 +162,8 @@ class GenerateInsightsJob implements ShouldQueue
 
             DB::transaction(function () use ($document, $kpis, $charts, $insights, $recorder, $insightsStage, $aiRunId) {
                 $document = Document::whereKey($document->id)->lockForUpdate()->first();
-                if (! $document || $document->status !== 'Processing') {
+                if (! $document || $document->status !== 'Processing'
+                    || ! app(DocumentRevisionPublisher::class)->owns($document, $this->revisionId)) {
                     if (! $document) {
                         Log::warning("GenerateInsightsJob: Document {$this->documentId} disappeared during insights-save transaction.");
                     }
@@ -168,11 +180,12 @@ class GenerateInsightsJob implements ShouldQueue
                 // stale kpis/charts from a prior version sitting alongside the
                 // current ones. Same reasoning as GenerateEmbeddingsJob's
                 // chunk replacement.
-                DocumentKpi::where('document_id', $document->id)->delete();
-                DocumentChart::where('document_id', $document->id)->delete();
+                DocumentKpi::where('document_id', $document->id)->where('intelligence_revision_id', $this->revisionId)->delete();
+                DocumentChart::where('document_id', $document->id)->where('intelligence_revision_id', $this->revisionId)->delete();
 
                 foreach ($kpis as $kpi) {
                     DocumentKpi::create([
+                        'intelligence_revision_id' => $this->revisionId,
                         'workspace_id' => $document->workspace_id,
                         'document_id' => $document->id,
                         'label' => $kpi['label'] ?? '',
@@ -189,6 +202,7 @@ class GenerateInsightsJob implements ShouldQueue
 
                 foreach ($charts as $chart) {
                     $documentChart = DocumentChart::create([
+                        'intelligence_revision_id' => $this->revisionId,
                         'workspace_id' => $document->workspace_id,
                         'document_id' => $document->id,
                         'type' => $chart['type'] ?? 'bar',
@@ -249,6 +263,9 @@ class GenerateInsightsJob implements ShouldQueue
         } catch (\Throwable $e) {
             $recorder->fail($insightsStage, 'Analysis results could not be saved. Please retry.');
             throw $e;
+        }
+        if ($this->revisionId !== null && app(DocumentRevisionPublisher::class)->owns($document->fresh(), $this->revisionId)) {
+            $this->dispatchIntelligenceChain($document->fresh());
         }
     }
 
@@ -314,11 +331,17 @@ class GenerateInsightsJob implements ShouldQueue
     {
         $this->finalizeIntelligenceFailure('ai_analysis', $e);
         $document = Document::find($this->documentId);
+        if (! $document || ! app(DocumentRevisionPublisher::class)->owns($document, $this->revisionId)) {
+            return;
+        }
         if ($document && in_array($document->status, ['Processing', 'Needs Review'], true)) {
             $document->forceFill([
                 'status' => $document->extracted_text ? 'Needs Review' : 'Failed',
                 'error_message' => $document->error_message ?? 'AI insights generation failed.',
             ])->save();
+        }
+        if ($this->revisionId !== null) {
+            app(DocumentRevisionPublisher::class)->fail($document, $this->revisionId);
         }
 
         Log::error('GenerateInsightsJob failed after retries', [

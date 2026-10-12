@@ -5,6 +5,7 @@ namespace App\Jobs\Concerns;
 use App\Models\Document;
 use App\Models\ProcessingJob;
 use App\Services\EntitlementService;
+use App\Services\Intelligence\DocumentRevisionPublisher;
 use App\Services\Pipeline\PipelineStageRecorder;
 use Illuminate\Support\Facades\DB;
 
@@ -18,14 +19,29 @@ trait GuardsDocumentIntelligence
         // Match document completion: lock the document before billing's workspace lock.
         return DB::transaction(function () use ($document, $stage, $recorder) {
             $current = Document::whereKey($document->id)->lockForUpdate()->first();
-            if (! $current?->canGenerateIntelligence()) {
+            if (! $current?->canGenerateIntelligence()
+                || ! app(DocumentRevisionPublisher::class)->owns($current, $this->revisionId ?? null)) {
                 return null;
+            }
+            if (($this->revisionId ?? null) !== null) {
+                $latest = $current->processingJobs()->where('stage', $stage)
+                    ->where('intelligence_revision_id', $this->revisionId)
+                    ->orderByDesc('created_at')->orderByDesc('id')->first();
+                if ($latest && in_array($latest->status, ['pending', 'processing', 'completed'], true)
+                    && ($this->queuedStageId ?? null) !== $latest->id
+                    && ! ($latest->status === 'processing' && $this->job
+                        && ($latest->input['queue_job_uuid'] ?? null) === $this->job->uuid()
+                        && $this->attempts() > 1)) {
+                    return null;
+                }
             }
             $pendingId = $this->queuedStageId ?? null;
             if ($pendingId) {
                 $reserved = ProcessingJob::whereKey($pendingId)
-                    ->where('document_id', $current->id)->where('stage', $stage)->first();
+                    ->where('document_id', $current->id)->where('stage', $stage)
+                    ->where('intelligence_revision_id', $this->revisionId ?? null)->first();
                 $latestId = $current->processingJobs()->where('stage', $stage)
+                    ->where('intelligence_revision_id', $this->revisionId ?? null)
                     ->orderByDesc('created_at')->orderByDesc('id')->value('id');
                 if (! $reserved || $latestId !== $pendingId
                     || in_array($reserved->status, ['completed', 'skipped'], true)) {
@@ -62,6 +78,10 @@ trait GuardsDocumentIntelligence
 
     private function finalizeIntelligenceFailure(string $stage, \Throwable $e): void
     {
+        $owner = Document::find($this->documentId);
+        if (! $owner || ! app(DocumentRevisionPublisher::class)->owns($owner, $this->revisionId ?? null)) {
+            return;
+        }
         $queueUuid = $this->job?->uuid();
         $queueAttempt = $this->job ? $this->attempts() : null;
         $attempt = null;
@@ -70,7 +90,8 @@ trait GuardsDocumentIntelligence
         }
         if (! $attempt && $queueUuid) {
             $attempt = ProcessingJob::where('document_id', $this->documentId)
-                ->where('stage', $stage)->where('input->queue_job_uuid', $queueUuid)
+                ->where('stage', $stage)->where('intelligence_revision_id', $this->revisionId ?? null)
+                ->where('input->queue_job_uuid', $queueUuid)
                 ->where('input->queue_attempt', $queueAttempt)
                 ->orderByDesc('created_at')->orderByDesc('id')->first();
         }
@@ -78,7 +99,8 @@ trait GuardsDocumentIntelligence
             // Rows created before queue-attempt metadata existed can still be
             // finalized, but a later retry must never claim that older row.
             $attempt = ProcessingJob::where('document_id', $this->documentId)
-                ->where('stage', $stage)->where('input->queue_job_uuid', $queueUuid)
+                ->where('stage', $stage)->where('intelligence_revision_id', $this->revisionId ?? null)
+                ->where('input->queue_job_uuid', $queueUuid)
                 ->whereNull('input->queue_attempt')
                 ->whereIn('status', ['pending', 'processing'])
                 ->orderByDesc('created_at')->orderByDesc('id')->first();
@@ -87,8 +109,10 @@ trait GuardsDocumentIntelligence
             DB::transaction(function () use ($stage, $queueUuid, $queueAttempt): void {
                 $document = Document::whereKey($this->documentId)->lockForUpdate()->first();
                 $reserved = ProcessingJob::whereKey($this->queuedStageId)
-                    ->where('document_id', $this->documentId)->where('stage', $stage)->first();
+                    ->where('document_id', $this->documentId)->where('stage', $stage)
+                    ->where('intelligence_revision_id', $this->revisionId ?? null)->first();
                 if (! $document || ! $reserved || $document->processingJobs()->where('stage', $stage)
+                    ->where('intelligence_revision_id', $this->revisionId ?? null)
                     ->orderByDesc('created_at')->orderByDesc('id')->value('id') !== $reserved->id) {
                     return;
                 }
@@ -122,8 +146,9 @@ trait GuardsDocumentIntelligence
     ): void {
         try {
             DB::transaction(function () use ($document, $stage, $recorder, $persist, $output) {
-                Document::whereKey($document->id)->lockForUpdate()->firstOrFail();
-                if (! $recorder->isCurrent($stage)) {
+                $current = Document::whereKey($document->id)->lockForUpdate()->firstOrFail();
+                if (! app(DocumentRevisionPublisher::class)->owns($current, $this->revisionId ?? null)
+                    || ! $recorder->isCurrent($stage)) {
                     return;
                 }
                 $persist();
@@ -140,7 +165,9 @@ trait GuardsDocumentIntelligence
         if (! app(PipelineStageRecorder::class)->isCurrent($stage)) {
             return true;
         }
-        if ($document->fresh()?->canGenerateIntelligence()) {
+        $fresh = $document->fresh();
+        if ($fresh?->canGenerateIntelligence()
+            && app(DocumentRevisionPublisher::class)->owns($fresh, $this->revisionId ?? null)) {
             return false;
         }
 

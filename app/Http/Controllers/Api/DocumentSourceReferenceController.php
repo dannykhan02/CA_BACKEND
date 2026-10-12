@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Document;
+use App\Services\DocumentIntelligenceService;
 use App\Services\Intelligence\SourceReferenceResolver;
 use Illuminate\Http\JsonResponse;
 
@@ -12,6 +13,7 @@ class DocumentSourceReferenceController extends Controller
     public function show(Document $document, string $sourceId, SourceReferenceResolver $resolver): JsonResponse
     {
         $this->authorize('view', $document);
+        $document = app(DocumentIntelligenceService::class)->publishedView($document);
         $source = $resolver->resolve($document, $sourceId);
         if ($source === null) {
             abort(404);

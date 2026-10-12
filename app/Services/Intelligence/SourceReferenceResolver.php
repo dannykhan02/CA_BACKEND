@@ -3,6 +3,7 @@
 namespace App\Services\Intelligence;
 
 use App\Models\Document;
+use App\Models\DocumentIntelligenceRevision;
 use Illuminate\Support\Facades\DB;
 
 /** Bounded read of the exact provenance occurrence used by verification. */
@@ -19,7 +20,8 @@ class SourceReferenceResolver
         if (strlen($sourceId) > 200 || $sourceId === '') {
             return null;
         }
-        if (! in_array($document->status, ['Ready', 'Needs Review'], true)) {
+        if (! in_array($document->status, ['Ready', 'Needs Review'], true)
+            || ($document->published_intelligence_revision_id === null && (int) $document->intelligence_generation > 0)) {
             return ['state' => 'NOT_READY'];
         }
         $pipeline = (string) ($document->ai_pipeline['key'] ?? 'legacy');
@@ -32,14 +34,32 @@ class SourceReferenceResolver
         }
         $evidence = $matches->first();
         if ($evidence === null) {
-            return (clone $owner)->exists() ? ['state' => 'STALE_REFERENCE']
-                : $this->legacy($document, $sourceId);
+            if ($document->published_intelligence_revision_id === null) {
+                return (clone $owner)->exists() ? ['state' => 'STALE_REFERENCE']
+                    : $this->legacy($document, $sourceId);
+            }
+            $historical = DB::table('document_evidence as e')
+                ->join('document_intelligence_revisions as r', function ($join): void {
+                    $join->on('r.document_id', '=', 'e.document_id')
+                        ->on('r.workspace_id', '=', 'e.workspace_id')
+                        ->on('r.pipeline_key', '=', 'e.pipeline_key');
+                })->where('e.workspace_id', $document->workspace_id)->where('e.document_id', $document->id)
+                ->where('e.source_id', $sourceId)->where('r.state', 'published')->exists();
+
+            return $historical ? ['state' => 'STALE_REFERENCE'] : $this->legacy($document, $sourceId);
         }
         $revision = hash('sha256', (string) $document->extracted_text);
-        $set = DB::table('source_provenance_sets')->where('workspace_id', $document->workspace_id)
+        $published = $document->published_intelligence_revision_id
+            ? DocumentIntelligenceRevision::whereKey($document->published_intelligence_revision_id)
+                ->where('document_id', $document->id)->where('workspace_id', $document->workspace_id)->first()
+            : null;
+        $setQuery = DB::table('source_provenance_sets')->where('workspace_id', $document->workspace_id)
             ->where('document_id', $document->id)->where('pipeline_key', $pipeline)
             ->where('source_revision', $revision)->where('policy_version', SourceProvenance::POLICY)
-            ->where('published', true)->where('active', true)->first(['id']);
+            ->where('published', true);
+        $set = $published
+            ? ($published->provenance_set_id ? $setQuery->where('id', $published->provenance_set_id)->first(['id']) : null)
+            : $setQuery->where('active', true)->first(['id']);
         $roles = [];
         $relationships = [];
         if ($set !== null) {
@@ -119,6 +139,7 @@ class SourceReferenceResolver
 
         return [
             'state' => 'CURRENT', 'sourceId' => $sourceId, 'documentId' => $document->id,
+            'intelligenceRevisionId' => $published?->id,
             'sourceFormat' => in_array($document->type, ['DOCX', 'XLSX', 'PDF'], true) ? $document->type : 'OTHER',
             'revision' => $revision, 'provenancePolicy' => $set === null ? null : SourceProvenance::POLICY,
             'capability' => $structural ? 'STRUCTURAL_PARTIAL' : 'TEXTUAL',
@@ -171,16 +192,27 @@ class SourceReferenceResolver
             'kpi' => ['document_kpis', null],
         };
         $query = DB::table($table)->where('workspace_id', $document->workspace_id)
-            ->where('document_id', $document->id)->where('id', $match[2]);
+            ->where('document_id', $document->id)
+            ->where('intelligence_revision_id', $document->intelligenceRevisionForRelations())
+            ->where('id', $match[2]);
         $row = $query->first($field === null ? ['id'] : ['id', $field]);
         if ($row === null) {
-            return null;
+            $historical = DB::table($table.' as t')
+                ->join('document_intelligence_revisions as r', 'r.id', '=', 't.intelligence_revision_id')
+                ->where('t.workspace_id', $document->workspace_id)->where('t.document_id', $document->id)
+                ->where('t.id', $match[2])->where('r.state', 'published')->exists();
+
+            return $historical ? ['state' => 'STALE_REFERENCE'] : null;
         }
         $text = $field === null ? null : $row->$field;
+        $policy = $document->published_intelligence_revision_id
+            ? DocumentIntelligenceRevision::whereKey($document->published_intelligence_revision_id)
+                ->value('provenance_policy') : null;
 
         return ['state' => 'CURRENT', 'sourceId' => $sourceId, 'documentId' => $document->id,
+            'intelligenceRevisionId' => $document->published_intelligence_revision_id,
             'sourceFormat' => in_array($document->type, ['DOCX', 'XLSX', 'PDF'], true) ? $document->type : 'OTHER',
-            'revision' => null, 'provenancePolicy' => null, 'capability' => 'TEXTUAL',
+            'revision' => null, 'provenancePolicy' => $policy, 'capability' => 'TEXTUAL',
             'source' => ['text' => $text === null ? null : mb_substr($text, 0, self::MAX_TEXT),
                 'length' => $text === null ? null : mb_strlen($text),
                 'truncated' => $text !== null && mb_strlen($text) > self::MAX_TEXT,

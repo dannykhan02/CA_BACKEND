@@ -22,6 +22,7 @@ class Document extends Model
     ];
 
     protected $casts = [
+        'intelligence_generation' => 'integer',
         'ai_pipeline' => 'array',
         'has_structured_data' => 'boolean',
         'insights' => 'array',
@@ -45,12 +46,12 @@ class Document extends Model
     // ✅ Fixed: method name and parameter list
     public function kpis()
     {
-        return $this->hasMany(DocumentKpi::class)->orderBy('id');
+        return $this->hasMany(DocumentKpi::class)->where('intelligence_revision_id', $this->intelligenceRevisionForRelations())->orderBy('id');
     }
 
     public function charts()
     {
-        return $this->hasMany(DocumentChart::class)->orderBy('id');
+        return $this->hasMany(DocumentChart::class)->where('intelligence_revision_id', $this->intelligenceRevisionForRelations())->orderBy('id');
     }
 
     public function pageFlags()
@@ -87,27 +88,42 @@ class Document extends Model
      */
     public function documentTypeClassification()
     {
-        return $this->hasOne(DocumentTypeClassification::class);
+        return $this->hasOne(DocumentTypeClassification::class)->where('intelligence_revision_id', $this->intelligenceRevisionForRelations());
     }
 
     public function entities()
     {
-        return $this->hasMany(DocumentEntity::class);
+        return $this->hasMany(DocumentEntity::class)->where('intelligence_revision_id', $this->intelligenceRevisionForRelations());
     }
 
     public function risks()
     {
-        return $this->hasMany(DocumentRisk::class);
+        return $this->hasMany(DocumentRisk::class)->where('intelligence_revision_id', $this->intelligenceRevisionForRelations());
     }
 
     public function deadlines()
     {
-        return $this->hasMany(DocumentDeadline::class);
+        return $this->hasMany(DocumentDeadline::class)->where('intelligence_revision_id', $this->intelligenceRevisionForRelations());
     }
 
     public function intelligenceSummary()
     {
-        return $this->hasOne(DocumentIntelligenceSummary::class);
+        return $this->hasOne(DocumentIntelligenceSummary::class)->where('intelligence_revision_id', $this->intelligenceRevisionForRelations());
+    }
+
+    /** Explicit read pin wins over the candidate writer pointer. Null identifies legacy rows. */
+    public function intelligenceRevisionForRelations(): ?string
+    {
+        if (array_key_exists('read_intelligence_revision_id', $this->attributes)) {
+            return $this->attributes['read_intelligence_revision_id'];
+        }
+
+        return $this->active_intelligence_revision_id ?? $this->published_intelligence_revision_id;
+    }
+
+    public function publishedIntelligenceRevision()
+    {
+        return $this->belongsTo(DocumentIntelligenceRevision::class, 'published_intelligence_revision_id');
     }
 
     public function workspace()

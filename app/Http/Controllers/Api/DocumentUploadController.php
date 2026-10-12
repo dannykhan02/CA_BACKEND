@@ -16,6 +16,7 @@ use App\Services\AuditLogger;
 use App\Services\Documents\DocumentStorageService;
 use App\Services\Documents\SupportedDocumentTypes;
 use App\Services\EntitlementService;
+use App\Services\Intelligence\DocumentRevisionPublisher;
 use App\Support\QueueTopology;
 use App\Support\SafeExceptionContext;
 use Illuminate\Database\QueryException;
@@ -111,6 +112,7 @@ class DocumentUploadController extends Controller
                     'progress' => 0,
                 ]);
                 app(EntitlementService::class)->reserveDocument($document);
+                app(DocumentRevisionPublisher::class)->begin($document);
 
                 return $document;
             }, 3);
@@ -165,12 +167,13 @@ class DocumentUploadController extends Controller
         // 3. Generate insights from extracted text
         // 4. Analyze embedded visual content (charts, images) not captured in text extraction
         // 5. Generate embeddings for vector search
+        $revisionId = $document->fresh()->active_intelligence_revision_id;
         ScanUploadedFileJob::withChain([
-            (new ExtractDocumentTextJob($document->id))->onQueue(QueueTopology::for(ExtractDocumentTextJob::class)),
-            (new GenerateInsightsJob($document->id))->onQueue(QueueTopology::for(GenerateInsightsJob::class)),
-            (new AnalyzeEmbeddedVisualsJob($document->id))->onQueue(QueueTopology::for(AnalyzeEmbeddedVisualsJob::class)),
+            (new ExtractDocumentTextJob($document->id, $revisionId))->onQueue(QueueTopology::for(ExtractDocumentTextJob::class)),
+            (new GenerateInsightsJob($document->id, revisionId: $revisionId))->onQueue(QueueTopology::for(GenerateInsightsJob::class)),
+            (new AnalyzeEmbeddedVisualsJob($document->id, $revisionId))->onQueue(QueueTopology::for(AnalyzeEmbeddedVisualsJob::class)),
             (new GenerateEmbeddingsJob($document->id))->onQueue(QueueTopology::for(GenerateEmbeddingsJob::class)),
-        ])->onQueue(QueueTopology::for(ScanUploadedFileJob::class))->dispatch($document->id);
+        ])->onQueue(QueueTopology::for(ScanUploadedFileJob::class))->dispatch($document->id, $revisionId);
 
         return response()->json([
             'message' => 'Upload accepted, processing started.',

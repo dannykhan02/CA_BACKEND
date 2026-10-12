@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class DocumentIntelligenceSummary extends Model
 {
     protected $fillable = [
+        'intelligence_revision_id',
         'workspace_id', 'document_id', 'executive_summary', 'key_findings',
         'critical_risks', 'upcoming_deadlines', 'important_entities',
         'recommended_attention', 'executive_assessment', 'material_findings',

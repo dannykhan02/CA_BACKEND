@@ -1,6 +1,8 @@
 <?php
 
 return [
+    // Migrate schema, drain old workers, deploy revision-aware readers/writers, then enable.
+    'revision_v1' => (bool) env('DOCINTEL_REVISION_V1', false),
     // Explicit rollout switch; legacy ENV names retain their meaning.
     'incremental' => (bool) env('DOCINTEL_INCREMENTAL_PROCESSING', true),
     'pipeline_version' => '1',

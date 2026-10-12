@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class DocumentRisk extends Model
 {
     protected $fillable = [
+        'intelligence_revision_id',
         'workspace_id',
         'document_id',
         'risk_type',

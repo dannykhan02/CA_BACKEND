@@ -42,10 +42,11 @@ class DocumentIntelligenceController extends Controller
         $this->authorize('view', $document);
 
         $perPage = min((int) $request->query('per_page', self::DEFAULT_PER_PAGE), self::MAX_PER_PAGE);
+        $document = $this->service->publishedView($document);
 
         return DocumentEntityResource::collection(
             $document->entities()->orderByDesc('confidence')->paginate($perPage)->withQueryString()
-        );
+        )->additional(['intelligenceRevisionId' => $document->published_intelligence_revision_id]);
     }
 
     public function risks(Request $request, Document $document): AnonymousResourceCollection
@@ -53,10 +54,11 @@ class DocumentIntelligenceController extends Controller
         $this->authorize('view', $document);
 
         $perPage = min((int) $request->query('per_page', self::DEFAULT_PER_PAGE), self::MAX_PER_PAGE);
+        $document = $this->service->publishedView($document);
 
         return DocumentRiskResource::collection(
             $document->risks()->orderByDesc('confidence')->paginate($perPage)->withQueryString()
-        );
+        )->additional(['intelligenceRevisionId' => $document->published_intelligence_revision_id]);
     }
 
     public function deadlines(Request $request, Document $document): AnonymousResourceCollection
@@ -64,10 +66,11 @@ class DocumentIntelligenceController extends Controller
         $this->authorize('view', $document);
 
         $perPage = min((int) $request->query('per_page', self::DEFAULT_PER_PAGE), self::MAX_PER_PAGE);
+        $document = $this->service->publishedView($document);
 
         return DocumentDeadlineResource::collection(
             $document->deadlines()->orderByDesc('confidence')->paginate($perPage)->withQueryString()
-        );
+        )->additional(['intelligenceRevisionId' => $document->published_intelligence_revision_id]);
     }
 
     /**
@@ -84,6 +87,7 @@ class DocumentIntelligenceController extends Controller
         $document = $this->service->loadIntelligence($document);
 
         return response()->json([
+            'intelligenceRevisionId' => $document->published_intelligence_revision_id,
             'data' => $document->intelligenceSummary
                 ? new DocumentIntelligenceSummaryResource($document->intelligenceSummary)
                 : null,

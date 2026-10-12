@@ -43,7 +43,9 @@ class MaterialityReadModel
         $deadlines = $document->deadlines->keyBy('id');
         $entityIds = [];
         foreach (DocumentEntity::where('workspace_id', $document->workspace_id)
-            ->where('document_id', $document->id)->orderBy('id')->get(['id', 'normalized_value']) as $entity) {
+            ->where('document_id', $document->id)
+            ->where('intelligence_revision_id', $document->intelligenceRevisionForRelations())
+            ->orderBy('id')->get(['id', 'normalized_value']) as $entity) {
             $entityIds[$entity->normalized_value] ??= 'entity:'.$entity->id;
         }
         $records = [];

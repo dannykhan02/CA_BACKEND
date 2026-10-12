@@ -42,7 +42,7 @@ use Illuminate\Support\Facades\Bus;
  */
 trait DispatchesIntelligenceChain
 {
-    private function dispatchIntelligenceChain(Document $document): void
+    private function dispatchIntelligenceChain(Document $document, bool $normalReady = true): void
     {
         if (! $document->fresh()?->canGenerateIntelligence()) {
             return;
@@ -56,23 +56,27 @@ trait DispatchesIntelligenceChain
         if (app(IncrementalPipeline::class)->route($document)) {
             return;
         }
+        if (! $normalReady) {
+            return;
+        }
 
         $documentId = $document->id;
+        $revisionId = $this->revisionId ?? null;
 
         Bus::batch([
-            new ClassifyDocumentTypeJob($documentId),
-            new ExtractDocumentEntitiesJob($documentId),
-            new DetectDocumentRisksJob($documentId),
-            new DetectDocumentDeadlinesJob($documentId),
+            new ClassifyDocumentTypeJob($documentId, revisionId: $revisionId),
+            new ExtractDocumentEntitiesJob($documentId, revisionId: $revisionId),
+            new DetectDocumentRisksJob($documentId, revisionId: $revisionId),
+            new DetectDocumentDeadlinesJob($documentId, revisionId: $revisionId),
         ])
             ->name("document-intelligence:{$documentId}")
             ->onQueue(QueueTopology::EXTRACTION)
             ->allowFailures()
-            ->finally(function () use ($documentId) {
+            ->finally(function () use ($documentId, $revisionId) {
                 if (! Document::find($documentId)?->canGenerateIntelligence()) {
                     return;
                 }
-                GenerateDocumentSummaryJob::dispatch($documentId)
+                GenerateDocumentSummaryJob::dispatch($documentId, revisionId: $revisionId)
                     ->onQueue(QueueTopology::for(GenerateDocumentSummaryJob::class));
             })
             ->dispatch();

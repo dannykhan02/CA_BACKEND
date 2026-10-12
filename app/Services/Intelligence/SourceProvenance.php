@@ -44,13 +44,17 @@ class SourceProvenance
             // Serializes two workers publishing the same revision; a failed build rolls back in full.
             $current = DB::table('documents')->where('id', $document->id)
                 ->where('workspace_id', $document->workspace_id)->lockForUpdate()
-                ->first(['id', 'extracted_text', 'ai_pipeline', 'status', 'deleted_at']);
+                ->first(['id', 'extracted_text', 'ai_pipeline', 'status', 'deleted_at',
+                    'active_intelligence_revision_id', 'intelligence_generation']);
             $currentPipeline = $current === null ? null : json_decode($current->ai_pipeline ?? '{}', true);
             if ($current === null || $current->deleted_at !== null
                 || ! in_array($current->status, ['Processing', 'Ready'], true)
                 || hash('sha256', (string) $current->extracted_text) !== $revision
                 || (string) ($currentPipeline['key'] ?? 'legacy') !== $pipeline) {
                 throw new \LogicException('Stale provenance publisher cannot activate a source revision.');
+            }
+            if (! app(DocumentRevisionPublisher::class)->ownsPipeline(Document::whereKey($document->id)->firstOrFail(), $pipeline)) {
+                throw new \LogicException('Stale generation cannot publish provenance.');
             }
             $existing = DB::table('source_provenance_sets')->where('document_id', $document->id)
                 ->where('workspace_id', $document->workspace_id)->where('source_revision', $revision)

@@ -10,10 +10,17 @@ class DocumentEmbedding extends Model
     use HasUuids;
 
     protected $fillable = [
-        'workspace_id', 'document_id', 'chunk_index',
+        'workspace_id', 'document_id', 'intelligence_revision_id', 'chunk_index',
         'chunk_text', 'provider', 'model', 'embedding',
     ];
 
-    public function document() { return $this->belongsTo(Document::class); }
-    public function workspace() { return $this->belongsTo(Workspace::class); }
+    public function document()
+    {
+        return $this->belongsTo(Document::class);
+    }
+
+    public function workspace()
+    {
+        return $this->belongsTo(Workspace::class);
+    }
 }

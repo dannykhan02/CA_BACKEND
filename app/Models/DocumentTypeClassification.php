@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class DocumentTypeClassification extends Model
 {
     protected $fillable = [
+        'intelligence_revision_id',
         'workspace_id',
         'document_id',
         'document_type',
@@ -26,9 +27,3 @@ class DocumentTypeClassification extends Model
         return $this->belongsTo(Document::class);
     }
 }
-
-
-
-
-
-

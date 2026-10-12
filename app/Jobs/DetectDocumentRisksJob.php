@@ -28,7 +28,7 @@ class DetectDocumentRisksJob implements ShouldQueue
 
     public bool $failOnTimeout = true;
 
-    public function __construct(public string $documentId, public bool $forceReprocess = false, public ?string $queuedStageId = null) {}
+    public function __construct(public string $documentId, public bool $forceReprocess = false, public ?string $queuedStageId = null, public ?string $revisionId = null) {}
 
     public function handle(AnthropicClient $client, PipelineStageRecorder $recorder): void
     {
@@ -69,10 +69,11 @@ class DetectDocumentRisksJob implements ShouldQueue
 
         $this->persistIntelligence($document, $stage, $recorder, function () use ($document, $result) {
             $reviewedStatuses = $document->risks()->get()->keyBy(fn ($risk) => hash('sha256', $risk->title.'|'.$risk->evidence))->map->status;
-            DocumentRisk::where('document_id', $document->id)->delete();
+            DocumentRisk::where('document_id', $document->id)->where('intelligence_revision_id', $this->revisionId)->delete();
 
             foreach ($result['risks'] as $risk) {
                 DocumentRisk::create([
+                    'intelligence_revision_id' => $this->revisionId,
                     'workspace_id' => $document->workspace_id,
                     'document_id' => $document->id,
                     'risk_type' => $risk['risk_type'] ?? null,

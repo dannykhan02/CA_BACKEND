@@ -18,6 +18,7 @@ use App\Services\AI\Incremental\IncrementalPipeline;
 use App\Services\AI\Incremental\ProactiveChunkRisk;
 use App\Services\AI\ProviderGate;
 use App\Services\AnthropicClient;
+use App\Services\Intelligence\DocumentRevisionPublisher;
 use App\Support\QueueTopology;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -46,7 +47,8 @@ class ProcessDocumentChunkJob implements ShouldQueue
         $chunk = DocumentChunk::find($this->chunkId);
         $document = $chunk ? Document::find($chunk->document_id) : null;
         if (! $document?->canGenerateIntelligence() || $chunk->workspace_id !== $document->workspace_id
-            || $chunk->pipeline_key !== ($document->ai_pipeline['key'] ?? null)) {
+            || $chunk->pipeline_key !== ($document->ai_pipeline['key'] ?? null)
+            || ! app(DocumentRevisionPublisher::class)->ownsPipeline($document, $chunk->pipeline_key)) {
             return;
         }
         // A superseded dispatch (recovery re-issued this chunk) is dropped before any provider call.
@@ -180,7 +182,8 @@ class ProcessDocumentChunkJob implements ShouldQueue
         $claimed = DB::transaction(function () use ($chunk, $document, $pipeline, $counted, $grounding, $mode) {
             $locked = Document::whereKey($document->id)->lockForUpdate()->firstOrFail();
             $unit = DocumentChunk::whereKey($chunk->id)->lockForUpdate()->firstOrFail();
-            if (! $locked->canGenerateIntelligence() || $unit->pipeline_key !== ($locked->ai_pipeline['key'] ?? null)) {
+            if (! $locked->canGenerateIntelligence() || $unit->pipeline_key !== ($locked->ai_pipeline['key'] ?? null)
+                || ! app(DocumentRevisionPublisher::class)->ownsPipeline($locked, $unit->pipeline_key)) {
                 return false;
             }
             if (! in_array($unit->status, ['queued', 'pending'], true)) {

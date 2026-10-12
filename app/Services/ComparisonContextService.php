@@ -11,7 +11,13 @@ class ComparisonContextService
     /** Reuse indexed text; no embedding/provider call. Bound both candidate and submitted text. */
     public function excerpts(Document $document): array
     {
+        $document = app(DocumentIntelligenceService::class)->publishedView($document);
+        if ($document->published_intelligence_revision_id === null
+            && (int) $document->intelligence_generation > 0) {
+            return [];
+        }
         $stored = DocumentEmbedding::where('document_id', $document->id)
+            ->where('intelligence_revision_id', $document->published_intelligence_revision_id)
             ->where('workspace_id', $document->workspace_id)->orderBy('chunk_index')->limit(200)
             ->get(['chunk_index', 'chunk_text']);
         $chunks = $stored->isEmpty()

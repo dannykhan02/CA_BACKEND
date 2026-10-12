@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Document;
 use App\Models\DocumentChunk;
+use App\Models\DocumentIntelligenceRevision;
 use App\Services\Pipeline\ProcessingStageReconciler;
 
 /**
@@ -17,6 +18,7 @@ class DocumentIntelligenceService
 
     public function loadIntelligence(Document $document): Document
     {
+        $document = $this->publishedView($document);
         $document->loadMissing([
             'documentTypeClassification', 'entities', 'risks', 'deadlines', 'intelligenceSummary',
         ]);
@@ -25,6 +27,50 @@ class DocumentIntelligenceService
         }
 
         return $document;
+    }
+
+    /** A single pointer read pins every subsequent read to one immutable revision. */
+    public function publishedView(Document $document): Document
+    {
+        if (array_key_exists('read_intelligence_revision_id', $document->getAttributes())) {
+            return $document;
+        }
+        $id = $document->published_intelligence_revision_id;
+        if ($id === null) {
+            if ($document->active_intelligence_revision_id !== null || (int) $document->intelligence_generation > 0) {
+                $view = clone $document;
+                $view->unsetRelations();
+                $state = $document->active_intelligence_revision_id !== null ? 'Processing'
+                    : (in_array($document->status, ['Failed', 'Needs Review'], true)
+                        ? $document->status : 'Needs Review');
+                $view->forceFill(['read_intelligence_revision_id' => '00000000-0000-0000-0000-000000000000',
+                    'extracted_text' => null, 'insights' => null, 'ai_pipeline' => null,
+                    'status' => $state]);
+
+                return $view;
+            }
+
+            return $document; // Historical unversioned document, never claimed coherent by V1.
+        }
+        $revision = DocumentIntelligenceRevision::whereKey($id)
+            ->where('document_id', $document->id)->where('workspace_id', $document->workspace_id)
+            ->where('state', 'published')->first();
+        if ($revision === null || hash('sha256', (string) $revision->extracted_text) !== $revision->extracted_text_hash) {
+            throw new \LogicException('Published intelligence revision is unavailable or corrupt.');
+        }
+        $view = clone $document;
+        $view->unsetRelations();
+        $view->forceFill(['read_intelligence_revision_id' => $revision->id,
+            'intelligence_processing_status' => $document->status,
+            'intelligence_processing_error' => $document->error_message,
+            'extracted_text' => $revision->extracted_text,
+            'ai_pipeline' => $revision->ai_pipeline,
+            'insights' => $revision->insights,
+            'has_structured_data' => $revision->has_structured_data,
+            'pages' => $revision->pages,
+            'status' => 'Ready', 'progress' => 100, 'error_message' => null]);
+
+        return $view;
     }
 
     /**
@@ -37,6 +83,8 @@ class DocumentIntelligenceService
     {
         app(ProcessingStageReconciler::class)->reconcile($document);
         $latestPerStage = $document->processingJobs()
+            ->where('intelligence_revision_id', $document->getAttribute('read_intelligence_revision_id')
+                ?? $document->active_intelligence_revision_id)
             ->whereIn('stage', self::STAGES)
             ->orderByDesc('created_at')->orderByDesc('id')
             ->get()

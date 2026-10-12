@@ -11,9 +11,12 @@ class PipelineStageRecorder
 
     public function start(Document $document, string $stage, ?string $queueJobUuid = null, ?string $pendingId = null, ?int $queueAttempt = null): ProcessingJob
     {
+        $revisionId = $document->getAttribute('read_intelligence_revision_id')
+            ?? $document->active_intelligence_revision_id;
         $input = $queueJobUuid ? ['queue_job_uuid' => $queueJobUuid, 'queue_attempt' => $queueAttempt ?? 1] : null;
         if (in_array($stage, self::MANAGED_STAGES, true)) {
             $open = $document->processingJobs()->where('stage', $stage)
+                ->where('intelligence_revision_id', $revisionId)
                 ->whereIn('status', ['pending', 'processing'])
                 ->orderByDesc('created_at')->orderByDesc('id')->lockForUpdate()->get();
             $pending = $pendingId ? $open->firstWhere('id', $pendingId) : null;
@@ -37,6 +40,7 @@ class PipelineStageRecorder
         return ProcessingJob::create([
             'workspace_id' => $document->workspace_id,
             'document_id' => $document->id,
+            'intelligence_revision_id' => $revisionId,
             'stage' => $stage,
             'status' => 'processing',
             'started_at' => now(),
@@ -62,15 +66,19 @@ class PipelineStageRecorder
     {
         return $job->status === 'processing'
             && ProcessingJob::where('document_id', $job->document_id)->where('stage', $job->stage)
+                ->where('intelligence_revision_id', $job->intelligence_revision_id)
                 ->orderByDesc('created_at')->orderByDesc('id')->value('id') === $job->id
             && ProcessingJob::whereKey($job->id)->where('status', 'processing')->exists();
     }
 
     public function skip(Document $document, string $stage, string $reason): void
     {
+        $revisionId = $document->getAttribute('read_intelligence_revision_id')
+            ?? $document->active_intelligence_revision_id;
         ProcessingJob::create([
             'workspace_id' => $document->workspace_id,
             'document_id' => $document->id,
+            'intelligence_revision_id' => $revisionId,
             'stage' => $stage,
             'status' => 'skipped',
             'output' => ['reason' => $reason],

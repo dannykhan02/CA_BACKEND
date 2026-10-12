@@ -55,6 +55,7 @@ class DocumentSearchController extends Controller
                 SELECT * FROM (
                     SELECT
                         de.document_id,
+                        de.intelligence_revision_id,
                         d.name AS document_name,
                         d.classification,
                         de.chunk_text,
@@ -63,6 +64,8 @@ class DocumentSearchController extends Controller
                     FROM document_embeddings de
                     JOIN documents d ON d.id = de.document_id
                     WHERE de.workspace_id = ?
+                      AND (de.intelligence_revision_id = d.published_intelligence_revision_id
+                        OR (d.intelligence_generation = 0 AND de.intelligence_revision_id IS NULL))
                       AND d.uploaded_by = ?
                     ORDER BY de.embedding <=> ?
                     LIMIT ?
@@ -81,6 +84,7 @@ class DocumentSearchController extends Controller
                     SELECT * FROM (
                         SELECT
                             de.document_id,
+                            de.intelligence_revision_id,
                             d.name AS document_name,
                             d.classification,
                             de.chunk_text,
@@ -89,6 +93,8 @@ class DocumentSearchController extends Controller
                         FROM document_embeddings de
                         JOIN documents d ON d.id = de.document_id
                         WHERE de.workspace_id = ?
+                          AND (de.intelligence_revision_id = d.published_intelligence_revision_id
+                            OR (d.intelligence_generation = 0 AND de.intelligence_revision_id IS NULL))
                           AND d.classification IN ({$placeholders})
                         ORDER BY de.embedding <=> ?
                         LIMIT ?
@@ -112,6 +118,7 @@ class DocumentSearchController extends Controller
             'message' => 'Search completed.',
             'data' => array_map(fn ($row) => [
                 'document_id' => $row->document_id,
+                'intelligenceRevisionId' => $row->intelligence_revision_id,
                 'document_name' => $row->document_name,
                 'classification' => $row->classification,
                 'excerpt' => $row->chunk_text,

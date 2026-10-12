@@ -7,6 +7,7 @@ use App\Jobs\Concerns\DefersWhenProviderBusy;
 use App\Models\Document;
 use App\Models\DocumentChunk;
 use App\Services\AI\ProviderGate;
+use App\Services\DocumentIntelligenceService;
 use App\Services\Intelligence\B2\NarrativeSynthesizer;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -37,7 +38,7 @@ class SynthesizeBriefNarrativeJob implements ShouldQueue
 
     public bool $failOnTimeout = true;
 
-    public function __construct(public string $documentId) {}
+    public function __construct(public string $documentId, public ?string $revisionId = null) {}
 
     public function handle(NarrativeSynthesizer $synthesizer): void
     {
@@ -47,9 +48,12 @@ class SynthesizeBriefNarrativeJob implements ShouldQueue
         $document = Document::find($this->documentId);
         // 'Ready' only. canGenerateIntelligence() refuses a provider call for anything else, and a
         // document in Needs Review has incomplete Stage A coverage, where B1 is the honest answer.
-        if (! $document || $document->status !== 'Ready') {
+        if (! $document || $document->status !== 'Ready'
+            || ($this->revisionId !== null && $document->published_intelligence_revision_id !== $this->revisionId)
+            || ($document->published_intelligence_revision_id !== null && $this->revisionId === null)) {
             return;
         }
+        $document = app(DocumentIntelligenceService::class)->publishedView($document);
         try {
             // One permit for the whole attempt. Priority: B2 is completion work for a document the
             // reader is already looking at, so it must not queue behind bulk extraction forever —
@@ -71,6 +75,13 @@ class SynthesizeBriefNarrativeJob implements ShouldQueue
         // answer `in_flight` and B2 would never be retried for this evidence set. Mark it terminal
         // instead. The reservation stays committed, because the request may well have been paid for.
         $document = Document::find($this->documentId);
+        if ($document && $this->revisionId !== null
+            && $document->published_intelligence_revision_id !== $this->revisionId) {
+            return;
+        }
+        if ($document && ($this->revisionId === null || $document->published_intelligence_revision_id === $this->revisionId)) {
+            $document = app(DocumentIntelligenceService::class)->publishedView($document);
+        }
         if ($document && is_string($document->ai_pipeline['key'] ?? null)) {
             DocumentChunk::where('document_id', $document->id)
                 ->where('pipeline_key', $document->ai_pipeline['key'])

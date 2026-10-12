@@ -11,6 +11,7 @@ use App\Models\Document;
 use App\Models\OcrResult;
 use App\Services\Documents\DocumentStorageService;
 use App\Services\EntitlementService;
+use App\Services\Intelligence\DocumentRevisionPublisher;
 use App\Services\Ocr\OcrEngineResolver;
 use App\Services\Pipeline\DocumentStagePolicy;
 use App\Services\Pipeline\PipelineStageRecorder;
@@ -20,6 +21,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -72,12 +74,14 @@ class OcrPageBatchJob implements ShouldQueue
         public ?string $tempDir = null,
         public bool $fetchPageFromSourceDisk = false,
         public bool $storedPageImages = false,
+        public ?string $revisionId = null,
     ) {}
 
     public function handle(OcrEngineResolver $resolver, PipelineStageRecorder $recorder): void
     {
         $document = Document::find($this->documentId);
-        if (! $document || ! app(DocumentStagePolicy::class)->permits($document, 'ocr')) {
+        if (! $document || ! app(DocumentStagePolicy::class)->permits($document, 'ocr')
+            || ! app(DocumentRevisionPublisher::class)->owns($document, $this->revisionId)) {
             $this->cleanupTempDir();
 
             return;
@@ -114,6 +118,7 @@ class OcrPageBatchJob implements ShouldQueue
 
             foreach ($this->pageImagePaths as $offset => $imagePath) {
                 if (OcrResult::where('document_id', $document->id)->where('workspace_id', $document->workspace_id)
+                    ->where('intelligence_revision_id', $this->revisionId)
                     ->where('page_number', $this->startingPageNumber + $offset)->exists()) {
                     if ($this->storedPageImages) {
                         Storage::disk('documents')->delete($imagePath);
@@ -131,10 +136,12 @@ class OcrPageBatchJob implements ShouldQueue
                     }
                 }
 
-                OcrResult::create([
+                OcrResult::firstOrCreate([
                     'workspace_id' => $document->workspace_id,
                     'document_id' => $document->id,
+                    'intelligence_revision_id' => $this->revisionId,
                     'page_number' => $this->startingPageNumber + $offset,
+                ], [
                     'engine' => $provider->engine(),
                     'raw_text' => $result->text,
                     'confidence' => $result->confidence,
@@ -158,10 +165,7 @@ class OcrPageBatchJob implements ShouldQueue
                 @unlink($fetchedSourcePath);
             }
             $recorder->fail($batchStage, 'OCR processing failed.');
-            $document->forceFill([
-                'status' => $document->workspace?->type === WorkspaceType::Personal ? 'Failed' : 'Needs Review',
-                'error_message' => 'OCR could not process this scanned document.',
-            ])->save();
+            $this->markOcrFailure($document, 'OCR could not process this scanned document.');
             $this->cleanupTempDir();
 
             // Deliberately not calling $this->fail() — matches the
@@ -193,7 +197,7 @@ class OcrPageBatchJob implements ShouldQueue
 
     private function finalizeDocument(Document $document): void
     {
-        $text = $document->ocrResults()
+        $text = $document->ocrResults()->where('intelligence_revision_id', $this->revisionId)
             ->orderBy('page_number')
             ->pluck('raw_text')
             ->map(fn ($t) => $t ?? '')
@@ -202,12 +206,9 @@ class OcrPageBatchJob implements ShouldQueue
         $this->cleanupTempDir();
 
         if (trim($text) === '') {
-            $document->forceFill([
-                'status' => $document->workspace?->type === WorkspaceType::Personal ? 'Failed' : 'Needs Review',
-                'error_message' => $document->workspace?->type === WorkspaceType::Personal
-                    ? 'OCR ran but found no readable text.'
-                    : 'OCR ran but found no readable text — needs manual review.',
-            ])->save();
+            $this->markOcrFailure($document, $document->workspace?->type === WorkspaceType::Personal
+                ? 'OCR ran but found no readable text.'
+                : 'OCR ran but found no readable text — needs manual review.');
 
             return;
         }
@@ -215,11 +216,37 @@ class OcrPageBatchJob implements ShouldQueue
         // Persistent source of truth — same reasoning as
         // ExtractDocumentTextJob's native-text path: nothing downstream
         // should treat the 2hr cache entry as authoritative.
-        $document->forceFill(['extracted_text' => $text])->save();
-        Cache::put("document:{$document->id}:extracted_text", $text, now()->addHours(2));
-        $document->forceFill(['progress' => 50])->save();
+        $written = DB::transaction(function () use ($document, $text): bool {
+            $locked = Document::whereKey($document->id)->lockForUpdate()->first();
+            if (! $locked || ! app(DocumentRevisionPublisher::class)->owns($locked, $this->revisionId)) {
+                return false;
+            }
+            $locked->forceFill(['extracted_text' => $text, 'progress' => 50])->save();
 
-        $this->dispatchIntelligenceChain($document);
+            return true;
+        });
+        if (! $written) {
+            return;
+        }
+        Cache::put("document:{$document->id}:extracted_text", $text, now()->addHours(2));
+        $document->refresh();
+
+        $this->dispatchIntelligenceChain($document, $this->revisionId === null);
+    }
+
+    private function markOcrFailure(Document $document, string $message): void
+    {
+        DB::transaction(function () use ($document, $message): void {
+            $locked = Document::whereKey($document->id)->lockForUpdate()->first();
+            if (! $locked || ! app(DocumentRevisionPublisher::class)->owns($locked, $this->revisionId)) {
+                return;
+            }
+            $locked->forceFill(['status' => $locked->workspace?->type === WorkspaceType::Personal ? 'Failed' : 'Needs Review',
+                'error_message' => $message])->save();
+            if ($this->revisionId !== null) {
+                app(DocumentRevisionPublisher::class)->fail($locked, $this->revisionId);
+            }
+        });
     }
 
     private function cleanupTempDir(): void
@@ -244,11 +271,19 @@ class OcrPageBatchJob implements ShouldQueue
         ]);
 
         $document = Document::find($this->documentId);
+        if (! $document || ! app(DocumentRevisionPublisher::class)->owns($document, $this->revisionId)) {
+            $this->cleanupTempDir();
+
+            return;
+        }
         if ($document && $document->status !== 'Failed') {
             $document->forceFill([
                 'status' => 'Failed',
                 'error_message' => 'Document processing could not be completed. Please try again.',
             ])->save();
+        }
+        if ($this->revisionId !== null) {
+            app(DocumentRevisionPublisher::class)->fail($document, $this->revisionId);
         }
 
         $this->cleanupTempDir();

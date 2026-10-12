@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class DocumentDeadline extends Model
 {
     protected $fillable = [
+        'intelligence_revision_id',
         'workspace_id',
         'document_id',
         'deadline_type',

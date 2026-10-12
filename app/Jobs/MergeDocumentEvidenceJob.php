@@ -8,6 +8,7 @@ use App\Services\AI\Incremental\ContextResolver;
 use App\Services\AI\Incremental\EvidenceBudget;
 use App\Services\AI\Incremental\EvidenceMerger;
 use App\Services\AI\Incremental\IncrementalPipeline;
+use App\Services\Intelligence\DocumentRevisionPublisher;
 use App\Services\Intelligence\TextRoleProvenanceProducer;
 use App\Services\Pipeline\DocumentProgress;
 use App\Services\Pipeline\PipelineStageRecorder;
@@ -67,6 +68,7 @@ class MergeDocumentEvidenceJob implements ShouldQueue
                     && ($document->ai_pipeline['synthesis'] ?? 'pending') === 'pending'))
             || $unit->workspace_id !== $document->workspace_id
             || $unit->pipeline_key !== ($document->ai_pipeline['key'] ?? null)
+            || ! app(DocumentRevisionPublisher::class)->ownsPipeline($document, $unit->pipeline_key)
         ) {
             return;
         }
@@ -92,6 +94,7 @@ class MergeDocumentEvidenceJob implements ShouldQueue
         $claimed = DB::transaction(function () use ($unit) {
             $document = Document::whereKey($unit->document_id)->lockForUpdate()->firstOrFail();
             if (! $document->canGenerateIntelligence() || $unit->pipeline_key !== ($document->ai_pipeline['key'] ?? null)
+                || ! app(DocumentRevisionPublisher::class)->ownsPipeline($document, $unit->pipeline_key)
                 || DocumentChunk::where('document_id', $document->id)->where('pipeline_key', $unit->pipeline_key)
                     ->where('stage', 'extraction')->whereIn('status', ['pending', 'queued', 'running'])->exists()) {
                 return false;
@@ -189,7 +192,8 @@ class MergeDocumentEvidenceJob implements ShouldQueue
                     return;
                 }
 
-                if (! $lockedDocument->canGenerateIntelligence()) {
+                if (! $lockedDocument->canGenerateIntelligence()
+                    || ! app(DocumentRevisionPublisher::class)->ownsPipeline($lockedDocument, $lockedUnit->pipeline_key)) {
                     return;
                 }
 
@@ -249,7 +253,8 @@ class MergeDocumentEvidenceJob implements ShouldQueue
 
             $freshDocument = $document->fresh();
 
-            if ($freshDocument?->status === 'Processing') {
+            if ($freshDocument?->status === 'Processing'
+                && app(DocumentRevisionPublisher::class)->ownsPipeline($freshDocument, $unit->pipeline_key)) {
                 $freshDocument->forceFill([
                     'status' => 'Needs Review',
                     'error_message' => 'Document intelligence is partially available, but finalization could not be completed.',
@@ -278,11 +283,20 @@ class MergeDocumentEvidenceJob implements ShouldQueue
     /** Repeatable after a crash between the merge checkpoint and credit settlement. */
     private function finalizeMerge(Document $document): void
     {
+        $expectedKey = $document->ai_pipeline['key'] ?? null;
         $fresh = $document->fresh();
+        if (! $fresh || $expectedKey === null || ($fresh->ai_pipeline['key'] ?? null) !== $expectedKey
+            || ! app(DocumentRevisionPublisher::class)->ownsPipeline($fresh, $expectedKey)) {
+            return;
+        }
         $coverage = app(EvidenceBudget::class)->forDocument($fresh)['coverage'];
         if ($coverage['evidence_total'] > $coverage['evidence_omitted']) {
-            DB::transaction(function () use ($fresh) {
+            DB::transaction(function () use ($fresh, $expectedKey) {
                 $locked = Document::whereKey($fresh->id)->lockForUpdate()->firstOrFail();
+                if (($locked->ai_pipeline['key'] ?? null) !== $expectedKey
+                    || ! app(DocumentRevisionPublisher::class)->ownsPipeline($locked, $expectedKey)) {
+                    return;
+                }
                 app(WorkspaceCreditService::class)->accountForReadyDocument($locked, false);
                 if ($locked->status === 'Needs Review' && ($locked->ai_pipeline['synthesis'] ?? 'pending') === 'pending') {
                     $locked->forceFill(['status' => 'Processing', 'progress' => 95, 'error_message' => null]);
@@ -320,6 +334,7 @@ class MergeDocumentEvidenceJob implements ShouldQueue
         if (
             $document
             && $document->status === 'Processing'
+            && app(DocumentRevisionPublisher::class)->ownsPipeline($document, $unit->pipeline_key)
         ) {
             $document->forceFill([
                 'status' => 'Needs Review',

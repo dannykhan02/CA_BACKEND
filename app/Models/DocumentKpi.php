@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class DocumentKpi extends Model
 {
     protected $fillable = [
+        'intelligence_revision_id',
         'document_id',
         'workspace_id',
         'kpi_definition_id',

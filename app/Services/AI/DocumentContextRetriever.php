@@ -7,6 +7,7 @@ use App\Enums\WorkspaceType;
 use App\Models\Document;
 use App\Models\User;
 use App\Policies\DocumentPolicy;
+use App\Services\DocumentIntelligenceService;
 use App\Services\Embeddings\VoyageEmbeddingClient;
 use Illuminate\Support\Facades\DB;
 
@@ -39,7 +40,7 @@ class DocumentContextRetriever
         $isPersonal = $workspace?->type === WorkspaceType::Personal;
 
         $result = $this->embeddingClient->embed([$query], 'query');
-        $queryVector = '[' . implode(',', $result['embeddings'][0]) . ']';
+        $queryVector = '['.implode(',', $result['embeddings'][0]).']';
 
         // Audit finding (MEDIUM) — same missing relevance floor as
         // DocumentSearchController; previously always handed Claude
@@ -54,12 +55,15 @@ class DocumentContextRetriever
                 SELECT * FROM (
                     SELECT
                         de.document_id,
+                        de.intelligence_revision_id,
                         de.chunk_text,
                         de.chunk_index,
                         1 - (de.embedding <=> ?) AS similarity
                     FROM document_embeddings de
                     JOIN documents d ON d.id = de.document_id
                     WHERE de.workspace_id = ?
+                      AND (de.intelligence_revision_id = d.published_intelligence_revision_id
+                        OR (d.intelligence_generation = 0 AND de.intelligence_revision_id IS NULL))
                       AND d.uploaded_by = ?
                     ORDER BY de.embedding <=> ?
                     LIMIT ?
@@ -78,12 +82,15 @@ class DocumentContextRetriever
                     SELECT * FROM (
                         SELECT
                             de.document_id,
+                            de.intelligence_revision_id,
                             de.chunk_text,
                             de.chunk_index,
                             1 - (de.embedding <=> ?) AS similarity
                         FROM document_embeddings de
                         JOIN documents d ON d.id = de.document_id
                         WHERE de.workspace_id = ?
+                          AND (de.intelligence_revision_id = d.published_intelligence_revision_id
+                            OR (d.intelligence_generation = 0 AND de.intelligence_revision_id IS NULL))
                           AND d.classification IN ({$placeholders})
                         ORDER BY de.embedding <=> ?
                         LIMIT ?
@@ -104,9 +111,23 @@ class DocumentContextRetriever
         // metadata — the WHERE clauses above already enforced the
         // authorization boundary, so this is a plain lookup, not a second
         // authorization check.
-        $documents = Document::with(['documentTypeClassification', 'entities', 'risks', 'deadlines'])
-            ->whereIn('id', $documentIds)
-            ->get();
+        $owned = Document::whereIn('id', $documentIds)->get()->keyBy('id');
+        $rows = array_values(array_filter($rows, static function ($row) use ($owned): bool {
+            $document = $owned->get($row->document_id);
+            if (! $document) {
+                return false;
+            }
+
+            return $document->published_intelligence_revision_id === $row->intelligence_revision_id
+                && ($row->intelligence_revision_id !== null || (int) $document->intelligence_generation === 0);
+        }));
+        if ($rows === []) {
+            return new DocumentContext([], [], [], [], []);
+        }
+        $documents = collect($rows)->pluck('document_id')->unique()->map(function ($id) use ($owned) {
+            return app(DocumentIntelligenceService::class)
+                ->publishedView($owned->get($id))->load(['documentTypeClassification', 'entities', 'risks', 'deadlines']);
+        });
 
         $documentsMeta = $documents->map(fn (Document $d) => [
             'id' => $d->id,

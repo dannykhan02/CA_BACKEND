@@ -12,6 +12,7 @@ use App\Services\DocumentTextExtractor;
 use App\Services\EntitlementService;
 use App\Services\Extraction\SpreadsheetTextExtractor;
 use App\Services\Extraction\StructuredExtractionStore;
+use App\Services\Intelligence\DocumentRevisionPublisher;
 use App\Services\Ocr\OcrEngineResolver;
 use App\Services\Ocr\PdfRasterizer;
 use App\Services\Pipeline\DocumentProgress;
@@ -24,6 +25,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -35,7 +37,7 @@ class ExtractDocumentTextJob implements ShouldQueue
 
     public int $timeout = 120;
 
-    public function __construct(public string $documentId) {}
+    public function __construct(public string $documentId, public ?string $revisionId = null) {}
 
     public function handle(
         DocumentTextExtractor $extractor,
@@ -44,7 +46,8 @@ class ExtractDocumentTextJob implements ShouldQueue
         PdfRasterizer $rasterizer,
     ): void {
         $document = Document::find($this->documentId);
-        if (! $document || ! app(DocumentStagePolicy::class)->permits($document, 'extract')) {
+        if (! $document || ! app(DocumentStagePolicy::class)->permits($document, 'extract')
+            || ! app(DocumentRevisionPublisher::class)->owns($document, $this->revisionId)) {
             if (! $document) {
                 Log::warning("ExtractDocumentTextJob: Document {$this->documentId} not found — unexpected null, possible soft-delete race.");
             }
@@ -96,11 +99,7 @@ class ExtractDocumentTextJob implements ShouldQueue
         } catch (\Throwable $e) {
             @unlink($absolutePath);
             $recorder->fail($extractStage, 'Document extraction failed or exceeded a resource limit.');
-            $document->forceFill([
-                'status' => 'Failed',
-                'progress' => 100,
-                'error_message' => 'Could not extract text: the file may be corrupted or password-protected.',
-            ])->save();
+            $this->markExtractionFailed('Could not extract text: the file may be corrupted or password-protected.');
             app(EntitlementService::class)->releaseStaleReservations($document->workspace_id);
             $this->fail($e);
 
@@ -129,14 +128,24 @@ class ExtractDocumentTextJob implements ShouldQueue
         // job (embeddings, and likely AI insights) that ran after that.
         try {
             if ($structured !== null) {
-                app(StructuredExtractionStore::class)->publish($document, $structured);
+                app(StructuredExtractionStore::class)->publish($document, $structured, $this->revisionId);
             } else {
-                $document->forceFill(['extracted_text' => $text])->save();
+                $written = DB::transaction(function () use ($document, $text): bool {
+                    $locked = Document::whereKey($document->id)->lockForUpdate()->first();
+                    if (! $locked || ! app(DocumentRevisionPublisher::class)->owns($locked, $this->revisionId)) {
+                        return false;
+                    }
+                    $locked->forceFill(['extracted_text' => $text])->save();
+
+                    return true;
+                });
+                if (! $written) {
+                    return;
+                }
             }
         } catch (\Throwable $e) {
             $recorder->fail($extractStage, 'Document extraction revision could not be published.');
-            $document->forceFill(['status' => 'Failed', 'progress' => 100,
-                'error_message' => 'Could not publish document extraction.'])->save();
+            $this->markExtractionFailed('Could not publish document extraction.');
             app(EntitlementService::class)->releaseStaleReservations($document->workspace_id);
             $this->fail($e);
 
@@ -150,8 +159,11 @@ class ExtractDocumentTextJob implements ShouldQueue
         // Cache retained as a short-lived read-through optimisation only —
         // nothing downstream should treat it as authoritative anymore.
         Cache::put("document:{$document->id}:extracted_text", $text, now()->addHours(2));
+        if (! app(DocumentRevisionPublisher::class)->owns($document->fresh(), $this->revisionId)) {
+            return;
+        }
         $document->forceFill(['progress' => 50])->save();
-        $this->dispatchIntelligenceChain($document);
+        $this->dispatchIntelligenceChain($document, $this->revisionId === null);
     }
 
     /**
@@ -186,12 +198,9 @@ class ExtractDocumentTextJob implements ShouldQueue
 
         if (! $isOcrEligibleType || ! $ocrEnabled) {
             $recorder->skip($document, 'ocr_check', $ocrEnabled ? 'document type not eligible for OCR' : 'ocr disabled for workspace');
-            $document->forceFill([
-                'status' => 'Failed',
-                'error_message' => $isOcrEligibleType
-                    ? 'No extractable text found and OCR is disabled for this workspace.'
-                    : 'No extractable text found in this document.',
-            ])->save();
+            $this->markExtractionFailed($isOcrEligibleType
+                ? 'No extractable text found and OCR is disabled for this workspace.'
+                : 'No extractable text found in this document.');
             $this->fail(new \RuntimeException('Empty extracted text, OCR unavailable.'));
             @unlink($absolutePath);
 
@@ -207,10 +216,8 @@ class ExtractDocumentTextJob implements ShouldQueue
         } catch (\Throwable $e) {
             @unlink($absolutePath);
             $recorder->fail($recorder->start($document, 'ocr_check'), 'OCR provider unavailable.');
-            $document->forceFill([
-                'status' => $document->workspace?->type === WorkspaceType::Personal ? 'Failed' : 'Needs Review',
-                'error_message' => 'OCR could not process this scanned document.',
-            ])->save();
+            $this->markExtractionFailed('OCR could not process this scanned document.',
+                $document->workspace?->type === WorkspaceType::Personal ? 'Failed' : 'Needs Review');
 
             return null;
         }
@@ -231,10 +238,8 @@ class ExtractDocumentTextJob implements ShouldQueue
         } catch (\Throwable $e) {
             @unlink($absolutePath);
             $recorder->fail($recorder->start($document, 'ocr_check'), 'OCR rasterization failed.');
-            $document->forceFill([
-                'status' => $document->workspace?->type === WorkspaceType::Personal ? 'Failed' : 'Needs Review',
-                'error_message' => 'OCR could not process this scanned document.',
-            ])->save();
+            $this->markExtractionFailed('OCR could not process this scanned document.',
+                $document->workspace?->type === WorkspaceType::Personal ? 'Failed' : 'Needs Review');
 
             return null;
         }
@@ -300,6 +305,7 @@ class ExtractDocumentTextJob implements ShouldQueue
                 tempDir: $isLastBatch ? $tempDir : null,
                 fetchPageFromSourceDisk: $fetchFromSourceDisk,
                 storedPageImages: $storedPageImages,
+                revisionId: $this->revisionId,
             ))->onQueue(QueueTopology::for(OcrPageBatchJob::class));
             $startingPage += count($batchPaths);
         }
@@ -307,6 +313,21 @@ class ExtractDocumentTextJob implements ShouldQueue
         $this->prependToChain($batchJobs);
 
         return null;
+    }
+
+    private function markExtractionFailed(string $message, string $status = 'Failed'): void
+    {
+        DB::transaction(function () use ($message, $status): void {
+            $locked = Document::whereKey($this->documentId)->lockForUpdate()->first();
+            if (! $locked || $locked->status === 'Failed'
+                || ! app(DocumentRevisionPublisher::class)->owns($locked, $this->revisionId)) {
+                return;
+            }
+            $locked->forceFill(['status' => $status, 'progress' => 100, 'error_message' => $message])->save();
+            if ($this->revisionId !== null) {
+                app(DocumentRevisionPublisher::class)->fail($locked, $this->revisionId);
+            }
+        });
     }
 
     public function failed(\Throwable $e): void
@@ -321,13 +342,6 @@ class ExtractDocumentTextJob implements ShouldQueue
             'failure_class' => $e instanceof AiProcessingException ? $e->classification : 'extraction_failure',
         ]);
 
-        $document = Document::find($this->documentId);
-        if (! $document || $document->status === 'Failed') {
-            return;
-        }
-        $document->forceFill([
-            'status' => 'Failed',
-            'error_message' => 'Document processing could not be completed. Please try again.',
-        ])->save();
+        $this->markExtractionFailed('Document processing could not be completed. Please try again.');
     }
 }

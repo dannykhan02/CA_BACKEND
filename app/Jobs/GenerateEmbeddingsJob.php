@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Document;
 use App\Models\DocumentEmbedding;
+use App\Services\DocumentIntelligenceService;
 use App\Services\Embeddings\TextChunker;
 use App\Services\Embeddings\VoyageEmbeddingClient;
 use App\Services\EntitlementService;
@@ -25,7 +26,7 @@ class GenerateEmbeddingsJob implements ShouldQueue
 
     public int $timeout = 90;
 
-    public function __construct(public string $documentId) {}
+    public function __construct(public string $documentId, public ?string $revisionId = null) {}
 
     public function middleware(): array
     {
@@ -49,6 +50,15 @@ class GenerateEmbeddingsJob implements ShouldQueue
 
             return;
         }
+        if ($this->revisionId !== null) {
+            if ($document->published_intelligence_revision_id !== $this->revisionId) {
+                return;
+            }
+            $document = app(DocumentIntelligenceService::class)->publishedView($document);
+        } elseif ($document->published_intelligence_revision_id !== null
+            || (int) $document->intelligence_generation > 0) {
+            return;
+        }
 
         // Read from the persisted column, not the 2hr cache — same fix
         // ExtractDocumentTextJob already applied for every other downstream
@@ -65,8 +75,10 @@ class GenerateEmbeddingsJob implements ShouldQueue
 
         $inputHash = hash('sha256', $text);
         if ($document->processingJobs()->where('stage', 'chunk')->where('status', 'completed')
+            ->where('intelligence_revision_id', $this->revisionId)
             ->where('output->input_hash', $inputHash)->where('output->model', config('services.voyage.model'))->exists()
-            && DocumentEmbedding::where('document_id', $document->id)->exists()) {
+            && DocumentEmbedding::where('document_id', $document->id)
+                ->where('intelligence_revision_id', $this->revisionId)->exists()) {
             return;
         }
         app(EntitlementService::class)->reserveDocument($document);
@@ -89,17 +101,25 @@ class GenerateEmbeddingsJob implements ShouldQueue
             return;
         }
 
-        DB::transaction(function () use ($document, $chunks, $result) {
+        $written = DB::transaction(function () use ($document, $chunks, $result): bool {
+            $locked = Document::whereKey($document->id)->lockForUpdate()->first();
+            if (! $locked || ($this->revisionId !== null
+                ? $locked->published_intelligence_revision_id !== $this->revisionId
+                : ($locked->published_intelligence_revision_id !== null || (int) $locked->intelligence_generation > 0))) {
+                return false;
+            }
             // Replace, not accumulate — same reasoning as kpis()/charts()
             // delete-before-insert in GenerateInsightsJob: a reprocessed
             // document must not leave stale chunks from a prior version
             // searchable alongside the current ones.
-            DocumentEmbedding::where('document_id', $document->id)->delete();
+            DocumentEmbedding::where('document_id', $document->id)
+                ->where('intelligence_revision_id', $this->revisionId)->delete();
 
             foreach ($chunks as $index => $chunkText) {
                 DocumentEmbedding::create([
                     'workspace_id' => $document->workspace_id,
                     'document_id' => $document->id,
+                    'intelligence_revision_id' => $this->revisionId,
                     'chunk_index' => $index,
                     'chunk_text' => $chunkText,
                     'provider' => 'voyage',
@@ -107,7 +127,15 @@ class GenerateEmbeddingsJob implements ShouldQueue
                     'embedding' => '['.implode(',', $result['embeddings'][$index]).']',
                 ]);
             }
+
+            return true;
         });
+
+        if (! $written) {
+            $recorder->fail($chunkStage, 'Document revision changed before search indexing.');
+
+            return;
+        }
 
         $recorder->complete($chunkStage, ['chunks' => count($chunks), 'model' => $result['model'], 'input_hash' => $inputHash]);
     }

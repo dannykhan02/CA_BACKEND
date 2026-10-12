@@ -23,7 +23,9 @@ class LegacyBriefAdapter
     {
         $records = [];
         $scope = static fn ($query) => $query->where('workspace_id', $document->workspace_id)
-            ->where('document_id', $document->id)->orderBy('id')->get();
+            ->where('document_id', $document->id)
+            ->where('intelligence_revision_id', $document->intelligenceRevisionForRelations())
+            ->orderBy('id')->get();
         foreach ($scope(DocumentEntity::query()) as $row) {
             $records[] = $this->record($document, 'entity', $row->id, [
                 'label' => $row->value, 'value' => $row->value, 'subject' => '',

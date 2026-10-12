@@ -9,15 +9,21 @@ use App\Http\Resources\DocumentListResource;
 use App\Http\Resources\DocumentResource;
 use App\Models\Document;
 use App\Policies\DocumentPolicy;
+use App\Services\AuditLogger;
+use App\Services\DocumentIntelligenceService;
+use App\Services\IntelligenceAccess;
 use App\Support\EscapesLikeWildcards;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 
 class DocumentController extends Controller
 {
     use EscapesLikeWildcards;
 
     private const DEFAULT_PER_PAGE = 20;
+
     private const MAX_PER_PAGE = 100;
 
     private const SORT_COLUMN_MAP = [
@@ -42,7 +48,7 @@ class DocumentController extends Controller
         // that stops an Organization Administrator from ever seeing another
         // Organization's Restricted documents just because their role matches.
         $query = Document::query()
-            ->with(['uploader:id,full_name', 'lastUpdater:id,full_name'])
+            ->with(['uploader:id,full_name', 'lastUpdater:id,full_name', 'publishedIntelligenceRevision'])
             ->where('workspace_id', $user->current_workspace_id);
 
         $isPersonal = $user->currentWorkspace?->type === WorkspaceType::Personal;
@@ -61,15 +67,15 @@ class DocumentController extends Controller
         }
 
         if (! empty($validated['matter_id'])) {
-            $matter = app(\App\Services\IntelligenceAccess::class)->matter($user, $validated['matter_id']);
+            $matter = app(IntelligenceAccess::class)->matter($user, $validated['matter_id']);
             $query->where('matter_id', $matter->id);
         }
 
         if (! empty($validated['q'])) {
             $term = $this->escapeLike(mb_strtolower($validated['q']));
             $query->whereRaw(
-                "LOWER(name) LIKE ? ESCAPE '" . $this->likeEscapeChar() . "'",
-                ['%' . $term . '%']
+                "LOWER(name) LIKE ? ESCAPE '".$this->likeEscapeChar()."'",
+                ['%'.$term.'%']
             );
         }
 
@@ -96,7 +102,7 @@ class DocumentController extends Controller
             $author = $this->escapeLike(mb_strtolower($validated['author']));
             $escapeChar = $this->likeEscapeChar();
             $query->whereHas('uploader', function ($q) use ($author, $escapeChar) {
-                $q->whereRaw("LOWER(full_name) LIKE ? ESCAPE '{$escapeChar}'", ['%' . $author . '%']);
+                $q->whereRaw("LOWER(full_name) LIKE ? ESCAPE '{$escapeChar}'", ['%'.$author.'%']);
             });
         }
 
@@ -116,24 +122,25 @@ class DocumentController extends Controller
     {
         $this->authorize('view', $document);
 
-        app(\App\Services\AuditLogger::class)->log(
+        app(AuditLogger::class)->log(
             $request->user(),
             'document.viewed',
             $document,
         );
 
+        $document = app(DocumentIntelligenceService::class)->publishedView($document);
         $document->load(['kpis', 'charts', 'pageFlags', 'uploader:id,full_name', 'lastUpdater:id,full_name']);
 
         return new DocumentResource($document);
     }
 
-    public function destroy(Request $request, Document $document): \Illuminate\Http\JsonResponse
+    public function destroy(Request $request, Document $document): JsonResponse
     {
         $this->authorize('delete', $document);
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($document, $request) {
+        DB::transaction(function () use ($document, $request) {
             $document->delete();
-            app(\App\Services\AuditLogger::class)->log($request->user(), 'document.deleted', $document,
+            app(AuditLogger::class)->log($request->user(), 'document.deleted', $document,
                 ['name' => $document->name], $document->workspace_id);
         });
 

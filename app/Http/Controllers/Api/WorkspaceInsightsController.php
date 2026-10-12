@@ -24,7 +24,17 @@ class WorkspaceInsightsController extends Controller
         $isPersonal = $user->currentWorkspace?->type === WorkspaceType::Personal;
 
         $baseQuery = DocumentKpi::query()
-            ->where('document_kpis.workspace_id', $user->current_workspace_id);
+            ->where('document_kpis.workspace_id', $user->current_workspace_id)
+            ->join('documents as intelligence_documents', 'intelligence_documents.id', '=', 'document_kpis.document_id')
+            ->whereNull('intelligence_documents.deleted_at')
+            ->where(function ($query) {
+                $query->whereColumn('document_kpis.intelligence_revision_id', 'intelligence_documents.published_intelligence_revision_id')
+                    ->orWhere(function ($legacy) {
+                        $legacy->whereNull('intelligence_documents.published_intelligence_revision_id')
+                            ->whereNull('intelligence_documents.active_intelligence_revision_id')
+                            ->whereNull('document_kpis.intelligence_revision_id');
+                    });
+            });
 
         if (! $isPersonal) {
             $allowedClassifications = DocumentPolicy::allowedClassificationsFor($user);

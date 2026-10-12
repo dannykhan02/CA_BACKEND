@@ -10,7 +10,7 @@ class OcrResult extends Model
     use HasUuids;
 
     protected $fillable = [
-        'workspace_id', 'document_id', 'page_number',
+        'workspace_id', 'document_id', 'intelligence_revision_id', 'page_number',
         'engine', 'raw_text', 'confidence', 'metadata',
     ];
 

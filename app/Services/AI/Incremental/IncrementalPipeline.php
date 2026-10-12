@@ -10,12 +10,14 @@ use App\Jobs\ProcessDocumentChunkJob;
 use App\Models\Document;
 use App\Models\DocumentAiRun;
 use App\Models\DocumentChunk;
+use App\Models\DocumentIntelligenceRevision;
 use App\Services\AI\AiModels;
 use App\Services\AI\AiPricing;
 use App\Services\AiCredits\OperationSpend;
 use App\Services\AnthropicClient;
 use App\Services\Extraction\StructuredDocument;
 use App\Services\Extraction\StructuredExtractionStore;
+use App\Services\Intelligence\DocumentRevisionPublisher;
 use App\Services\Pipeline\DocumentProgress;
 use App\Support\QueueInspector;
 use App\Support\QueueTopology;
@@ -95,9 +97,20 @@ class IncrementalPipeline
             Log::info('Document intelligence route selected', ['document_id' => $document->id, ...$metadata['routing']]);
         }
 
-        $document->forceFill([
-            'ai_pipeline' => $metadata,
-        ])->save();
+        $routed = DB::transaction(function () use ($document, $metadata): bool {
+            $locked = Document::whereKey($document->id)->lockForUpdate()->first();
+            if (! $locked || $locked->active_intelligence_revision_id !== $document->active_intelligence_revision_id
+                || ! app(DocumentRevisionPublisher::class)->owns($locked, $document->active_intelligence_revision_id)) {
+                return false;
+            }
+            $locked->forceFill(['ai_pipeline' => $metadata])->save();
+            $document->setRawAttributes($locked->getAttributes(), true);
+
+            return true;
+        });
+        if (! $routed) {
+            return true; // A newer generation owns routing; suppress dispatch from this worker.
+        }
 
         if ($legacy) {
             return false;
@@ -136,6 +149,9 @@ class IncrementalPipeline
             app(AiModels::class)->forTask('extraction'),
             $mode,
         ];
+        if ($document->active_intelligence_revision_id !== null) {
+            $keyParts[] = $document->active_intelligence_revision_id;
+        }
         if ($chunkPolicy !== 'legacy') {
             $keyParts[] = $chunkPolicy;
             $keyParts[] = $structured->parserVersion;
@@ -196,6 +212,10 @@ class IncrementalPipeline
                 ->firstOrFail();
 
             if (! $locked->canGenerateIntelligence()) {
+                return;
+            }
+            if ($document->active_intelligence_revision_id !== $locked->active_intelligence_revision_id
+                || ! app(DocumentRevisionPublisher::class)->owns($locked, $locked->active_intelligence_revision_id)) {
                 return;
             }
 
@@ -262,6 +282,10 @@ class IncrementalPipeline
             $locked->forceFill([
                 'ai_pipeline' => $metadata,
             ])->save();
+            if ($locked->active_intelligence_revision_id !== null) {
+                DocumentIntelligenceRevision::whereKey($locked->active_intelligence_revision_id)
+                    ->where('state', 'candidate')->update(['pipeline_key' => $key]);
+            }
         });
 
         Log::info('Document intelligence partitions planned', ['document_id' => $document->id,
@@ -408,7 +432,8 @@ class IncrementalPipeline
             return;
         }
         if ($summaryOnly) {
-            GenerateDocumentSummaryJob::dispatch($document->id, true)->onQueue(QueueTopology::for(GenerateDocumentSummaryJob::class));
+            GenerateDocumentSummaryJob::dispatch($document->id, true, null, $document->active_intelligence_revision_id)
+                ->onQueue(QueueTopology::for(GenerateDocumentSummaryJob::class));
         } else {
             $this->pump($document->id);
         }
@@ -431,7 +456,7 @@ class IncrementalPipeline
 
             $key = $document->ai_pipeline['key'] ?? null;
 
-            if (! $key) {
+            if (! $key || ! app(DocumentRevisionPublisher::class)->ownsPipeline($document, $key)) {
                 return;
             }
 
@@ -573,7 +598,8 @@ class IncrementalPipeline
                 // Synthesis is required, even when only partial evidence survived.
                 $document->forceFill(['status' => 'Processing', 'progress' => max(95, (int) $document->progress), 'error_message' => null])->save();
                 app(DocumentProgress::class)->record($documentId, 'synthesizing', 95);
-                GenerateDocumentSummaryJob::dispatch($documentId)->onQueue(QueueTopology::for(GenerateDocumentSummaryJob::class))->afterCommit();
+                GenerateDocumentSummaryJob::dispatch($documentId, revisionId: $document->active_intelligence_revision_id)
+                    ->onQueue(QueueTopology::for(GenerateDocumentSummaryJob::class))->afterCommit();
 
                 return;
             }
@@ -959,13 +985,16 @@ class IncrementalPipeline
             ) {
                 GenerateDocumentSummaryJob::dispatch(
                     $document->id,
-                    true
+                    true,
+                    null,
+                    $document->active_intelligence_revision_id
                 )->onQueue(QueueTopology::for(GenerateDocumentSummaryJob::class));
             }
 
             if (! $units()->where('stage', 'visual_plan')->exists()) {
                 AnalyzeEmbeddedVisualsJob::dispatch(
-                    $document->id
+                    $document->id,
+                    $document->active_intelligence_revision_id
                 )->onQueue(QueueTopology::for(AnalyzeEmbeddedVisualsJob::class));
             }
 
@@ -975,7 +1004,8 @@ class IncrementalPipeline
                     ->exists()
             ) {
                 GenerateEmbeddingsJob::dispatch(
-                    $document->id
+                    $document->id,
+                    $document->active_intelligence_revision_id
                 )->onQueue(QueueTopology::for(GenerateEmbeddingsJob::class));
             }
 

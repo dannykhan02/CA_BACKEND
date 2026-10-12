@@ -3,25 +3,28 @@
 namespace App\Services\Extraction;
 
 use App\Models\Document;
+use App\Services\Intelligence\DocumentRevisionPublisher;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /** Publishes the exact text and its projection in the same document transaction. */
 class StructuredExtractionStore
 {
-    public function publish(Document $document, StructuredDocument $result): void
+    public function publish(Document $document, StructuredDocument $result, ?string $revisionId = null): void
     {
         if ($document->workspace_id === null || ! in_array($result->format, ['DOCX', 'XLSX', 'PDF'], true)) {
             throw new \InvalidArgumentException('Invalid structured extraction owner.');
         }
         $textHash = hash('sha256', $result->text);
-        DB::transaction(function () use ($document, $result, $textHash): void {
+        DB::transaction(function () use ($document, $result, $textHash, $revisionId): void {
             DB::table('documents')->where('id', $document->id)->where('workspace_id', $document->workspace_id)
                 ->lockForUpdate()->first(['id']);
-            $owner = DB::table('documents')->where('id', $document->id)
-                ->where('workspace_id', $document->workspace_id)->first(['file_hash']);
+            $owner = Document::whereKey($document->id)->where('workspace_id', $document->workspace_id)->first();
             if ($owner === null || ! is_string($owner->file_hash) || $owner->file_hash === '') {
                 throw new \LogicException('Document source revision is unavailable.');
+            }
+            if (! app(DocumentRevisionPublisher::class)->owns($owner, $revisionId)) {
+                throw new \LogicException('Stale extraction revision.');
             }
             $existing = DB::table('structured_extractions')->where('document_id', $document->id)
                 ->where('source_hash', $owner->file_hash)->where('text_hash', $textHash)

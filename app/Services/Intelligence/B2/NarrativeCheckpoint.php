@@ -39,6 +39,11 @@ class NarrativeCheckpoint
             if (! $locked || ! is_string($key)) {
                 return ['unit' => null, 'reason' => 'no_pipeline', 'reused' => false];
             }
+            if ($document->published_intelligence_revision_id !== null
+                && ($locked->published_intelligence_revision_id !== $document->published_intelligence_revision_id
+                    || $key !== ($document->ai_pipeline['key'] ?? null))) {
+                return ['unit' => null, 'reason' => 'stale_revision', 'reused' => false];
+            }
             $unit = DocumentChunk::firstOrCreate(
                 ['document_id' => $locked->id, 'pipeline_key' => $key,
                     'identity' => 'brief_synthesis:'.$inputHash],

@@ -11,12 +11,17 @@ class DocumentResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $this->resource = app(DocumentIntelligenceService::class)->publishedView($this->resource);
         // Mutation endpoints return this resource without eager loading. Keep the
         // wire contract identical to show() while preserving existing results.
         $this->resource->loadMissing(['pageFlags', 'kpis', 'charts']);
 
         return [
             'id' => $this->id,
+            'intelligenceRevisionId' => $this->published_intelligence_revision_id,
+            'intelligenceRefreshInProgress' => $this->active_intelligence_revision_id !== null,
+            'intelligenceProcessingStatus' => $this->getAttribute('intelligence_processing_status') ?? $this->status,
+            'intelligenceProcessingError' => $this->getAttribute('intelligence_processing_error'),
             'name' => $this->name,
             'type' => $this->type,
             'sizeKb' => $this->size_kb,

@@ -335,6 +335,7 @@ class EvidenceMerger
         $r = $evidence->data;
         $now = now();
         $common = ['document_id' => $document->id, 'workspace_id' => $document->workspace_id,
+            'intelligence_revision_id' => $document->active_intelligence_revision_id,
             'prompt_version' => config('document_intelligence.prompt_version'), 'provider' => 'anthropic',
             'model' => app(AiModels::class)->forTask('extraction'), 'confidence' => $r['confidence'],
             'created_at' => $now, 'updated_at' => $now];
@@ -374,6 +375,7 @@ class EvidenceMerger
             $number = rtrim(str_replace(',', '', $r['value']), '%');
             // Every metric evidence row gets its own KPI observation row.
             $inserts['document_kpis'][] = ['document_id' => $document->id, 'workspace_id' => $document->workspace_id,
+                'intelligence_revision_id' => $document->active_intelligence_revision_id,
                 'label' => mb_substr($r['label'], 0, 255), 'kpi_definition_id' => $metric['definition_id'] ?? null,
                 'identity_metadata' => json_encode(['scope' => $r['subject'], 'metric_type' => $r['metric_type'] ?? null,
                     'value_basis' => $r['value_basis'] ?? null, 'aggregation' => $r['aggregation'] ?? null,

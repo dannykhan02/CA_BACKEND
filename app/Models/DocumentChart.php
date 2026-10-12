@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class DocumentChart extends Model
 {
-    protected $fillable = ['document_id', 'workspace_id', 'type', 'title', 'description', 'data'];
+    protected $fillable = ['document_id', 'workspace_id', 'intelligence_revision_id', 'type', 'title', 'description', 'data'];
 
     protected $casts = [
         'data' => 'array',

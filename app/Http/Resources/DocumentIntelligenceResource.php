@@ -49,6 +49,7 @@ class DocumentIntelligenceResource extends JsonResource
 
         $composer = app(DocumentAnalysisComposer::class);
         $analysis = in_array($this->status, ['Ready', 'Needs Review'], true)
+            && ($this->published_intelligence_revision_id !== null || (int) $this->intelligence_generation === 0)
             ? $composer->compose($this->resource)
             : null;
         $brief = $analysis === null ? null : app(BriefReadService::class)->forDocument($this->resource);
@@ -85,6 +86,10 @@ class DocumentIntelligenceResource extends JsonResource
         }
 
         return [
+            'intelligenceRevisionId' => $this->published_intelligence_revision_id,
+            'intelligenceRefreshInProgress' => $this->active_intelligence_revision_id !== null,
+            'intelligenceProcessingStatus' => $this->getAttribute('intelligence_processing_status') ?? $this->status,
+            'intelligenceProcessingError' => $this->getAttribute('intelligence_processing_error'),
             'document' => [
                 'id' => $this->id,
                 'name' => $this->name,

@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Exceptions\MalwareScannerUnavailableException;
 use App\Models\Document;
+use App\Services\Intelligence\DocumentRevisionPublisher;
 use App\Services\Pipeline\DocumentProgress;
 use App\Services\Pipeline\DocumentStagePolicy;
 use App\Services\Pipeline\PipelineStageRecorder;
@@ -12,6 +13,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
@@ -24,7 +26,7 @@ class ScanUploadedFileJob implements ShouldQueue
 
     public int $timeout = 60;
 
-    public function __construct(public string $documentId) {}
+    public function __construct(public string $documentId, public ?string $revisionId = null) {}
 
     public function handle(PipelineStageRecorder $recorder): void
     {
@@ -34,7 +36,8 @@ class ScanUploadedFileJob implements ShouldQueue
 
             return;
         }
-        if (! app(DocumentStagePolicy::class)->permits($document, 'scan')) {
+        if (! app(DocumentStagePolicy::class)->permits($document, 'scan')
+            || ! app(DocumentRevisionPublisher::class)->owns($document, $this->revisionId)) {
             return;
         }
 
@@ -66,11 +69,7 @@ class ScanUploadedFileJob implements ShouldQueue
 
         if ($result === 'FOUND') {
             $recorder->fail($scanStage, 'MALWARE_FOUND: File failed malware scan.');
-            $document->forceFill([
-                'status' => 'Failed',
-                'error_message' => 'File failed malware scan and was not processed.',
-            ])->save();
-            Storage::disk('documents')->delete($document->file_path);
+            $this->markScanFailed('File failed malware scan and was not processed.', deleteSource: true);
             $this->fail(new \RuntimeException('Malware detected in uploaded file.'));
 
             return;
@@ -110,12 +109,26 @@ class ScanUploadedFileJob implements ShouldQueue
                 'document_id' => $this->documentId,
             ]);
         }
-        if (! $document || $document->status === 'Failed') {
-            return;
-        }
-        $document->forceFill([
-            'status' => 'Failed',
-            'error_message' => 'File scan could not be completed. Please try again.',
-        ])->save();
+        $this->markScanFailed('File scan could not be completed. Please try again.');
+    }
+
+    private function markScanFailed(string $message, bool $deleteSource = false): bool
+    {
+        return DB::transaction(function () use ($message, $deleteSource): bool {
+            $locked = Document::whereKey($this->documentId)->lockForUpdate()->first();
+            if (! $locked || in_array($locked->status, ['Failed', 'Needs Review'], true)
+                || ! app(DocumentRevisionPublisher::class)->owns($locked, $this->revisionId)) {
+                return false;
+            }
+            $locked->forceFill(['status' => 'Failed', 'error_message' => $message])->save();
+            if ($this->revisionId !== null) {
+                app(DocumentRevisionPublisher::class)->fail($locked, $this->revisionId);
+            }
+            if ($deleteSource) {
+                Storage::disk('documents')->delete($locked->file_path);
+            }
+
+            return true;
+        });
     }
 }

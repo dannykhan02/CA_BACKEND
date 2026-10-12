@@ -4,6 +4,7 @@ namespace App\Services\Intelligence;
 
 use App\Models\DocumentEntity;
 use App\Models\DocumentEvidence;
+use App\Models\DocumentIntelligenceRevision;
 use App\Services\AI\Incremental\EvidenceMerger;
 
 /** Resolves only the approved, versioned lexical reporting patterns in a cited quote. */
@@ -61,6 +62,8 @@ class AttributionMatcher
             } else {
                 $entityId = DocumentEntity::where('workspace_id', $row->workspace_id)
                     ->where('document_id', $row->document_id)
+                    ->where('intelligence_revision_id', DocumentIntelligenceRevision::where('document_id', $row->document_id)
+                        ->where('pipeline_key', $row->pipeline_key)->value('id'))
                     ->where('normalized_value', $normalized)->value('id');
                 $speaker = $entityId === null ? null : 'entity:'.$entityId;
             }

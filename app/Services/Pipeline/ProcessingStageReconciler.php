@@ -24,6 +24,8 @@ class ProcessingStageReconciler
             Document::whereKey($document->id)->lockForUpdate()->firstOrFail();
             foreach (self::OPTIONAL_STAGES as $stage) {
                 $attempts = ProcessingJob::where('document_id', $document->id)
+                    ->where('intelligence_revision_id', $document->getAttribute('read_intelligence_revision_id')
+                        ?? $document->active_intelligence_revision_id)
                     ->where('stage', $stage)->orderByDesc('created_at')->orderByDesc('id')
                     ->lockForUpdate()->get();
                 $latest = $attempts->first();

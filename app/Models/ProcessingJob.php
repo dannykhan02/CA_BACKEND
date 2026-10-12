@@ -15,7 +15,7 @@ class ProcessingJob extends Model
     use HasUuids;
 
     protected $fillable = [
-        'workspace_id', 'document_id', 'stage', 'status',
+        'workspace_id', 'document_id', 'intelligence_revision_id', 'stage', 'status',
         'input', 'output', 'error_message',
         'started_at', 'completed_at',
     ];

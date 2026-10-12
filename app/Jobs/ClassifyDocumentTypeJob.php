@@ -28,7 +28,7 @@ class ClassifyDocumentTypeJob implements ShouldQueue
 
     public bool $failOnTimeout = true;
 
-    public function __construct(public string $documentId, public bool $forceReprocess = false, public ?string $queuedStageId = null) {}
+    public function __construct(public string $documentId, public bool $forceReprocess = false, public ?string $queuedStageId = null, public ?string $revisionId = null) {}
 
     public function handle(AnthropicClient $client, PipelineStageRecorder $recorder): void
     {
@@ -74,7 +74,7 @@ class ClassifyDocumentTypeJob implements ShouldQueue
 
         $this->persistIntelligence($document, $stage, $recorder, function () use ($document, $result) {
             DocumentTypeClassification::updateOrCreate(
-                ['document_id' => $document->id],
+                ['document_id' => $document->id, 'intelligence_revision_id' => $this->revisionId],
                 [
                     'workspace_id' => $document->workspace_id,
                     'document_type' => $result['document_type'],

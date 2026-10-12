@@ -56,6 +56,8 @@ class StageASnapshot
     public function build(Document $document, \DateTimeImmutable $asOf): array
     {
         $key = implode('|', [$document->id, $asOf->format(\DateTimeInterface::ATOM),
+            (string) ($document->getAttribute('read_intelligence_revision_id')
+                ?? $document->published_intelligence_revision_id),
             (string) $document->updated_at?->getTimestampMs()]);
         if (isset($this->memo[$key])) {
             return $this->memo[$key];

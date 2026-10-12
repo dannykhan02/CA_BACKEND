@@ -32,7 +32,7 @@ class AnalyzeEmbeddedVisualsJob implements ShouldQueue
 
     public int $timeout = 120;
 
-    public function __construct(public string $documentId) {}
+    public function __construct(public string $documentId, public ?string $revisionId = null) {}
 
     public function handle(
         AnthropicClient $client,
@@ -42,7 +42,10 @@ class AnalyzeEmbeddedVisualsJob implements ShouldQueue
         PdfRasterizer $rasterizer,
     ): void {
         $document = Document::find($this->documentId);
-        if (! $document || $document->status !== 'Ready') {
+        if (! $document || $document->status !== 'Ready'
+            || ($this->revisionId !== null && $this->revisionId !== $document->active_intelligence_revision_id
+                && $this->revisionId !== $document->published_intelligence_revision_id)
+            || ($document->published_intelligence_revision_id !== null && $this->revisionId === null)) {
             return;
         }
 
@@ -187,8 +190,15 @@ class AnalyzeEmbeddedVisualsJob implements ShouldQueue
         }
 
         DB::transaction(function () use ($document, $charts) {
+            $current = Document::whereKey($document->id)->lockForUpdate()->firstOrFail();
+            if ($this->revisionId !== null
+                && $this->revisionId !== $current->active_intelligence_revision_id
+                && $this->revisionId !== $current->published_intelligence_revision_id) {
+                return;
+            }
             foreach ($charts as $chart) {
                 $documentChart = DocumentChart::create([
+                    'intelligence_revision_id' => $this->revisionId,
                     'workspace_id' => $document->workspace_id,
                     'document_id' => $document->id,
                     'type' => $chart['type'] ?? 'bar',

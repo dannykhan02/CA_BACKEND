@@ -27,7 +27,8 @@ class BackfillKpiIdentities extends Command
 
             return self::FAILURE;
         }
-        $rows = DocumentKpi::where('workspace_id', $workspaceId)->whereNull('kpi_definition_id')
+        $rows = DocumentKpi::where('workspace_id', $workspaceId)->whereNull('intelligence_revision_id')
+            ->whereNull('kpi_definition_id')
             ->where('id', '>', $afterId)
             ->whereHas('document', fn ($q) => $q->where('workspace_id', $workspaceId)->where('status', 'Ready'))
             ->orderBy('id')->limit($limit)->get();
