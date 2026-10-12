@@ -70,7 +70,7 @@ class SourceReferenceResolver
                 ->orderBy('b.role')->orderBy('a.id')->limit(self::MAX_ROLES + 1)
                 ->get(['b.role', 'a.id', 'a.kind', 'a.modality', 'a.page', 'a.sheet',
                     'a.structural_path', 'a.start_offset', 'a.end_offset', 'a.source_hash',
-                    'a.navigation_metadata', DB::raw('left(a.source_text, '.self::MAX_TEXT.') as preview'),
+                    'a.navigation_metadata', 'a.geometry', DB::raw('left(a.source_text, '.self::MAX_TEXT.') as preview'),
                     DB::raw('char_length(a.source_text) as source_length')]);
             if ($bound->count() > self::MAX_ROLES) {
                 return ['state' => 'SOURCE_TOO_COMPLEX'];
@@ -88,12 +88,12 @@ class SourceReferenceResolver
                     ->where('r.workspace_id', $document->workspace_id)->where('r.document_id', $document->id)
                     ->where('r.set_id', $set->id)->whereIn('r.from_anchor_id', $ids)
                     ->whereIn('r.type', ['contained_by', 'row_header', 'column_header', 'table_parent',
-                        'section_parent', 'caption', 'footnote'])
+                        'section_parent', 'caption', 'footnote', 'continuation'])
                     ->orderBy('r.from_anchor_id')->orderBy('r.path_order')->orderBy('r.to_anchor_id')
                     ->limit(self::MAX_RELATIONS + 1)
                     ->get(['r.from_anchor_id', 'r.type', 'a.id', 'a.kind', 'a.modality', 'a.page', 'a.sheet',
                         'a.structural_path', 'a.start_offset', 'a.end_offset', 'a.source_hash',
-                        'a.navigation_metadata', DB::raw('left(a.source_text, '.self::MAX_TEXT.') as preview'),
+                        'a.navigation_metadata', 'a.geometry', DB::raw('left(a.source_text, '.self::MAX_TEXT.') as preview'),
                         DB::raw('char_length(a.source_text) as source_length')]);
                 foreach ($edges->take(self::MAX_RELATIONS) as $edge) {
                     if (! $this->matchesDocument($document, $edge)) {
@@ -135,7 +135,7 @@ class SourceReferenceResolver
                 ->whereIn('kind', ['cell', 'worksheet_cell'])
                 ->where('start_offset', $start)->where('end_offset', $end)
                 ->limit(2)->get(['id', 'kind', 'modality', 'page', 'sheet', 'structural_path',
-                    'start_offset', 'end_offset', 'source_hash', 'navigation_metadata',
+                    'start_offset', 'end_offset', 'source_hash', 'navigation_metadata', 'geometry',
                     DB::raw('left(source_text, '.self::MAX_TEXT.') as preview'),
                     DB::raw('char_length(source_text) as source_length')]);
             if ($matches->count() === 1 && hash('sha256', $quote) === $matches[0]->source_hash) {
@@ -189,6 +189,7 @@ class SourceReferenceResolver
                 : ['start' => (int) $row->start_offset, 'end' => (int) $row->end_offset],
             'text' => $row->preview, 'textLength' => $row->source_length === null ? null : (int) $row->source_length,
             'textTruncated' => $row->source_length > self::MAX_TEXT,
+            'geometry' => $row->geometry === null ? null : json_decode($row->geometry, true),
             'metadata' => $row->navigation_metadata === null ? null : json_decode($row->navigation_metadata, true)];
     }
 

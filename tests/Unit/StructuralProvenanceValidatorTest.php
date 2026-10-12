@@ -53,6 +53,9 @@ class StructuralProvenanceValidatorTest extends TestCase
         self::assertTrue((new StructuralClaimGuard)->compatible('FY2025 revenue was 12.4', $record));
         self::assertFalse((new StructuralClaimGuard)->compatible('FY2025 employees were 12.4', $record));
         self::assertTrue((new StructuralClaimGuard)->compatible('FY2024 revenue was 12.4', []));
+        $record['source_provenance']['roles']['unit'] = [['text' => 'USD']];
+        self::assertFalse((new StructuralClaimGuard)->compatible('FY2025 revenue was KES 12.4', $record));
+        self::assertTrue((new StructuralClaimGuard)->compatible('FY2025 revenue was USD 12.4', $record));
     }
 
     public function test_wrong_row_and_cross_table_roles_are_rejected(): void
@@ -94,5 +97,40 @@ class StructuralProvenanceValidatorTest extends TestCase
         $edges[] = ['from' => 'a', 'to' => 'v', 'type' => 'contained_by'];
         $this->expectException(\InvalidArgumentException::class);
         (new StructuralProvenanceValidator)->validate($nodes, $edges, []);
+    }
+
+    public function test_cross_page_header_requires_adjacent_explicit_continuation(): void
+    {
+        [$nodes, $edges] = $this->graph();
+        foreach ($nodes as &$node) {
+            if ($node['key'] === 'v') {
+                $node['page'] = 2;
+            }
+            if ($node['key'] === 'fy25') {
+                $node['page'] = 1;
+            }
+        }
+        unset($node);
+        $bindings = [
+            ['evidence_id' => 'one', 'anchor' => 'v', 'role' => 'value'],
+            ['evidence_id' => 'one', 'anchor' => 'fy25', 'role' => 'period'],
+        ];
+        try {
+            (new StructuralProvenanceValidator)->validate($nodes, $edges, $bindings);
+            self::fail('Uncontinued header crossed a page.');
+        } catch (\InvalidArgumentException) {
+            self::assertTrue(true);
+        }
+        $edges[] = ['from' => 'fy25', 'to' => 'v', 'type' => 'continuation'];
+        (new StructuralProvenanceValidator)->validate($nodes, $edges, $bindings);
+        self::assertTrue(true);
+        foreach ($nodes as &$node) {
+            if ($node['key'] === 'v') {
+                $node['page'] = 3;
+            }
+        }
+        unset($node);
+        $this->expectException(\InvalidArgumentException::class);
+        (new StructuralProvenanceValidator)->validate($nodes, $edges, $bindings);
     }
 }

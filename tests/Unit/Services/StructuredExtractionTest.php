@@ -180,4 +180,26 @@ XML);
             $book->disconnectWorksheets();
         }
     }
+
+    public function test_xlsx_structural_node_ceiling_preserves_complete_text_and_marks_partial_proof(): void
+    {
+        config(['document_processing.xlsx_max_structural_nodes' => 3]);
+        $book = new Spreadsheet;
+        $sheet = $book->getActiveSheet();
+        $sheet->fromArray([['Metric', 'FY2025'], ['Revenue', 12.4], ['Expense', 8.1]]);
+        $sheet->addTable(new Table('A1:B3', 'BoundedTable'));
+        $path = tempnam(sys_get_temp_dir(), 'bounded_xlsx_');
+        try {
+            (new Xlsx($book))->save($path);
+            $source = (new SpreadsheetTextExtractor)->extractStructured($path);
+            self::assertCount(3, $source->nodes);
+            self::assertTrue($source->capabilities['nodes_truncated']);
+            self::assertSame('partial', $source->capabilities['cells']);
+            self::assertNull($source->node('sheet:0/cell:B2'));
+            self::assertStringContainsString('Revenue | 12.4', $source->text);
+        } finally {
+            unlink($path);
+            $book->disconnectWorksheets();
+        }
+    }
 }

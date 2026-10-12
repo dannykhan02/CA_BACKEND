@@ -42,12 +42,16 @@ class DocumentTextExtractor
 
         $parts = [];
         $nodes = [];
+        $emptyPages = [];
         $offset = 0;
         foreach ($pages as $index => $page) {
             if ($index > 0) {
                 $offset++;
             }
             $pageText = $this->sanitizeUtf8($page->getText());
+            if (trim($pageText) === '') {
+                $emptyPages[] = $index + 1;
+            }
             $parts[] = $pageText;
             $node = ['id' => 'page:'.($index + 1), 'type' => 'page', 'page' => $index + 1,
                 'path' => 'page:'.($index + 1), 'meta' => ['modality' => 'embedded_pdf_text',
@@ -60,9 +64,11 @@ class DocumentTextExtractor
         }
         $text = implode("\f", $parts);
 
-        return new StructuredDocument('PDF', 'smalot-page.v1', $text, $nodes,
+        return new StructuredDocument('PDF', 'smalot-page.v2', $text, $nodes,
             ['pages' => 'complete', 'text' => 'parser_text', 'blocks' => 'unavailable',
-                'geometry' => 'unavailable', 'tables' => 'unavailable', 'visibility' => 'unverified']);
+                'geometry' => 'unavailable', 'tables' => 'unavailable', 'visibility' => 'unverified',
+                'reading_order' => 'parser_order_unverified', 'empty_text_pages' => $emptyPages,
+                'hybrid_ocr' => $emptyPages === [] ? 'not_needed_for_empty_pages' : 'not_run']);
     }
 
     /**
@@ -277,6 +283,7 @@ class DocumentTextExtractor
         }
         try {
             $xml = $zip->getFromName('word/document.xml');
+            $footnotesXml = $zip->getFromName('word/footnotes.xml');
         } finally {
             $zip->close();
         }
@@ -292,6 +299,30 @@ class DocumentTextExtractor
             throw new \RuntimeException('Invalid DOCX: missing document body.');
         }
         $nodes = [['id' => 'body', 'type' => 'document', 'path' => 'body']];
+        $footnotes = [];
+        if (is_string($footnotesXml)) {
+            $footnoteDom = new \DOMDocument;
+            if ($footnoteDom->loadXML($footnotesXml, LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING)
+                && $footnoteDom->doctype === null
+                && $footnoteDom->documentElement?->localName === 'footnotes') {
+                $footnoteXpath = new \DOMXPath($footnoteDom);
+                $footnoteXpath->registerNamespace('w', $namespace);
+                foreach ($footnoteXpath->query('/w:footnotes/w:footnote') as $footnote) {
+                    $id = $footnote instanceof \DOMElement ? $footnote->getAttributeNS($namespace, 'id') : '';
+                    if (! preg_match('/^[1-9][0-9]{0,9}$/D', $id)) {
+                        continue; // Word's separator and continuation separator are not source notes.
+                    }
+                    $noteText = trim($this->extractWordXml($footnote, $namespace));
+                    if ($noteText !== '') {
+                        $footnotes[$id] = ['id' => 'footnote:'.$id, 'type' => 'footnote',
+                            'path' => 'word/footnotes.xml#'.$id, 'text' => $noteText];
+                    }
+                    if (count($footnotes) > 10000) {
+                        throw new \RuntimeException('DOCX footnote limit exceeded.');
+                    }
+                }
+            }
+        }
         $cursor = 0;
         $walk = function (\DOMNode $container, string $parent, int $depth) use (&$walk, &$nodes, &$cursor,
             $text, $namespace, $xpath): void {
@@ -299,6 +330,7 @@ class DocumentTextExtractor
                 throw new \RuntimeException('DOCX nested structure limit exceeded.');
             }
             $ordinals = [];
+            $gridColumn = 1;
             foreach ($container->childNodes as $child) {
                 if ($child->namespaceURI !== $namespace || ! in_array($child->localName,
                     ['p', 'tbl', 'tr', 'tc'], true)) {
@@ -315,6 +347,13 @@ class DocumentTextExtractor
                     $style = $xpath->query('./w:pPr/w:pStyle', $child)->item(0);
                     $node['meta'] = ['style' => $style instanceof \DOMElement
                         ? $style->getAttributeNS($namespace, 'val') : null];
+                    $references = [];
+                    foreach ($xpath->query('.//w:footnoteReference', $child) as $reference) {
+                        if ($reference instanceof \DOMElement) {
+                            $references[] = $reference->getAttributeNS($namespace, 'id');
+                        }
+                    }
+                    $node['meta']['footnote_ids'] = array_values(array_unique($references));
                     $segment = rtrim($this->extractWordXml($child, $namespace), "\n |");
                 } elseif ($type === 'tc') {
                     $span = $xpath->query('./w:tcPr/w:gridSpan', $child)->item(0);
@@ -323,6 +362,8 @@ class DocumentTextExtractor
                         ? (int) $span->getAttributeNS($namespace, 'val') : 1,
                         'vertical_merge' => $merge instanceof \DOMElement
                             ? ($merge->getAttributeNS($namespace, 'val') ?: 'continue') : null];
+                    $node['meta']['grid_column'] = $gridColumn;
+                    $gridColumn += max(1, $node['meta']['grid_span']);
                     $serializedCell = $this->extractWordXml($child, $namespace);
                     $segment = trim(str_ends_with($serializedCell, ' | ')
                         ? substr($serializedCell, 0, -3) : $serializedCell);
@@ -355,11 +396,38 @@ class DocumentTextExtractor
             }
         };
         $walk($body, 'body', 0);
+        $headingStack = [];
+        foreach ($nodes as &$node) {
+            if (($node['parent'] ?? null) !== 'body') {
+                continue;
+            }
+            $style = $node['meta']['style'] ?? null;
+            if ($node['type'] === 'paragraph' && is_string($style)
+                && preg_match('/^Heading([1-6])$/iD', $style, $match)) {
+                $level = (int) $match[1];
+                foreach (array_keys($headingStack) as $stackLevel) {
+                    if ($stackLevel >= $level) {
+                        unset($headingStack[$stackLevel]);
+                    }
+                }
+                if ($headingStack !== []) {
+                    $node['meta']['section_heading_id'] = end($headingStack);
+                }
+                $node['type'] = 'section_heading';
+                $node['meta']['heading_level'] = $level;
+                $headingStack[$level] = $node['id'];
+            } elseif ($headingStack !== []) {
+                $node['meta']['section_heading_id'] = end($headingStack);
+            }
+        }
+        unset($node);
+        array_push($nodes, ...array_values($footnotes));
 
-        return new StructuredDocument('DOCX', 'wordprocessingml-body.v1', $text, $nodes,
+        return new StructuredDocument('DOCX', 'wordprocessingml-body.v4', $text, $nodes,
             ['text' => 'complete', 'body_order' => 'complete', 'tables' => 'native_paths',
-                'merged_cells' => 'grid_span_and_v_merge', 'headings' => 'style_id_only',
-                'footnotes' => 'unavailable', 'headers_footers' => 'unavailable',
+                'merged_cells' => 'grid_span_and_v_merge', 'headings' => 'heading_1_to_6_body_sections',
+                'footnotes' => $footnotes !== [] ? 'referenced_source_nodes' : 'none_or_unavailable',
+                'headers_footers' => 'unavailable',
                 'tracked_changes' => 'deleted_text_excluded']);
     }
 

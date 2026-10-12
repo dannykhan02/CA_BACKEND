@@ -10,20 +10,23 @@ class StructuredProvenanceProducer
 {
     public function build(StructuredDocument $source, iterable $evidence): array
     {
-        if (count($source->nodes) > 20000) {
+        $evidence = is_array($evidence) ? $evidence : iterator_to_array($evidence);
+        $nodes = $this->relevantNodes($source, $evidence);
+        if (count($nodes) > 20000) {
             throw new \RuntimeException('Provenance anchor limit exceeded.');
         }
-        $nodes = array_column($source->nodes, null, 'id');
         $anchors = [];
         $relations = [];
         $cells = [];
         $tables = [];
-        foreach ($source->nodes as $node) {
+        foreach ($nodes as $node) {
             $key = $this->key($node['id']);
             $path = $node['path'] ?? $node['id'];
             $anchors[$key] = ['key' => $key,
                 'kind' => match ($node['type']) {
-                    'paragraph' => 'paragraph', 'table' => 'table',
+                    'paragraph' => 'paragraph', 'table' => 'table', 'row' => 'table_row',
+                    'footnote' => 'footnote',
+                    'section_heading' => 'section_heading',
                     'cell' => $source->format === 'XLSX' ? 'worksheet_cell' : 'cell',
                     default => 'text_span',
                 },
@@ -48,9 +51,26 @@ class StructuredProvenanceProducer
             if (isset($node['start'], $node['end'])) {
                 $anchors[$key] += ['start_offset' => $node['start'], 'end_offset' => $node['end'],
                     'text' => $node['text']];
+            } elseif ($node['type'] === 'footnote' && isset($node['text'])) {
+                $anchors[$key]['text'] = $node['text'];
             }
             if (isset($node['parent'])) {
                 $this->edge($relations, $key, $this->key($node['parent']), 'contained_by');
+            }
+            if (isset($node['meta']['section_heading_id'])) {
+                $this->edge($relations, $key, $this->key($node['meta']['section_heading_id']), 'section_parent');
+            }
+            if (in_array($node['type'], ['paragraph', 'section_heading'], true)) {
+                foreach ($node['meta']['footnote_ids'] ?? [] as $footnoteId) {
+                    if (! isset($nodes['footnote:'.$footnoteId])) {
+                        continue;
+                    }
+                    $this->edge($relations, $key, $this->key('footnote:'.$footnoteId), 'footnote');
+                    if (($nodes[$node['parent']]['type'] ?? null) === 'cell') {
+                        $this->edge($relations, $this->key($node['parent']),
+                            $this->key('footnote:'.$footnoteId), 'footnote');
+                    }
+                }
             }
             if ($node['type'] === 'cell') {
                 $cells[$node['id']] = $node;
@@ -61,6 +81,22 @@ class StructuredProvenanceProducer
         }
         $headerEdges = [];
         $docxHeaders = [];
+        $docxRowLabels = [];
+        $xlsxMergeOwners = [];
+        if ($source->format === 'XLSX') {
+            foreach ($cells as $id => $candidate) {
+                foreach ($candidate['meta']['merges'] ?? [] as $range) {
+                    $bounds = Coordinate::rangeBoundaries($range);
+                    if ($bounds[0][1] !== $bounds[1][1] || $bounds[1][0] - $bounds[0][0] > 255) {
+                        continue;
+                    }
+                    for ($column = $bounds[0][0]; $column <= $bounds[1][0]; $column++) {
+                        $coordinate = Coordinate::stringFromColumnIndex($column).$bounds[0][1];
+                        $xlsxMergeOwners[$candidate['parent']][$coordinate] = $id;
+                    }
+                }
+            }
+        }
         if ($source->format === 'DOCX') {
             foreach ($cells as $headerId => $header) {
                 $rowId = $header['parent'] ?? '';
@@ -68,9 +104,14 @@ class StructuredProvenanceProducer
                     continue;
                 }
                 $tableId = $this->nearestTable($headerId, $nodes);
-                $column = $this->docxColumn($headerId);
+                $column = $header['meta']['grid_column'] ?? null;
                 if ($tableId !== null && $column !== null) {
-                    $docxHeaders[$tableId][$column][] = $headerId;
+                    for ($covered = $column; $covered < $column + max(1, $header['meta']['grid_span'] ?? 1); $covered++) {
+                        $docxHeaders[$tableId][$covered][] = $headerId;
+                    }
+                    if ($column === 1 && $this->isRowLabelHeading($header['text'] ?? '')) {
+                        $docxRowLabels[$tableId] = true;
+                    }
                 }
             }
         }
@@ -81,32 +122,67 @@ class StructuredProvenanceProducer
                     continue;
                 }
                 $this->edge($relations, $this->key($id), $this->key($tableId), 'table_parent');
-                $column = $this->docxColumn($id);
+                $column = $cell['meta']['grid_column'] ?? null;
+                if (is_int($column)) {
+                    for ($covered = $column; $covered < $column + max(1, $cell['meta']['grid_span'] ?? 1); $covered++) {
+                        $columnPath = $tableId.'/column['.$covered.']';
+                        $this->dimension($anchors, $relations, $id, $columnPath,
+                            $tableId, 'table_column', 'docx', null);
+                    }
+                }
                 if (! ($nodes[$cell['parent']]['meta']['explicit_header'] ?? false)) {
                     foreach ($docxHeaders[$tableId][$column] ?? [] as $headerId) {
                         if ($headerId !== $id) {
                             $this->edge($relations, $this->key($id), $this->key($headerId), 'column_header');
                             $headerEdges[$id]['column'][] = $headerId;
+                            $anchors[$this->key($headerId)]['kind'] = 'column_header';
+                        }
+                    }
+                    if ($column > 1 && isset($docxRowLabels[$tableId])) {
+                        $rowLabelId = $this->docxRowLabel($cell['parent'], $cells);
+                        if ($rowLabelId !== null) {
+                            $this->edge($relations, $this->key($id), $this->key($rowLabelId), 'row_header');
+                            $headerEdges[$id]['row'][] = $rowLabelId;
+                            $anchors[$this->key($rowLabelId)]['kind'] = 'row_header';
                         }
                     }
                 }
 
                 continue;
             }
-            foreach ($tables as $tableId => $table) {
-                if ($source->format === 'XLSX' && ($table['sheet'] ?? null) === ($cell['sheet'] ?? null)
-                    && $this->inRange($cell['meta']['coordinate'], $table['meta']['range'])) {
-                    $this->edge($relations, $this->key($id), $this->key($tableId), 'table_parent');
-                    if ($table['meta']['header_row'] ?? false) {
-                        $bounds = Coordinate::rangeBoundaries($table['meta']['range']);
-                        $column = Coordinate::coordinateFromString($cell['meta']['coordinate'])[0];
-                        $headerCoordinate = $column.$bounds[0][1];
-                        $headerId = $table['parent'].'/cell:'.$headerCoordinate;
-                        if ($headerId !== $id && isset($cells[$headerId])) {
-                            $this->edge($relations, $this->key($id), $this->key($headerId), 'column_header');
-                            $headerEdges[$id]['column'][] = $headerId;
-                        }
-                    }
+            $owners = array_filter($tables, fn (array $table): bool => $source->format === 'XLSX'
+                && ($table['sheet'] ?? null) === ($cell['sheet'] ?? null)
+                && $this->inRange($cell['meta']['coordinate'], $table['meta']['range']));
+            if (count($owners) !== 1) {
+                continue;
+            }
+            $tableId = array_key_first($owners);
+            $table = $owners[$tableId];
+            $this->edge($relations, $this->key($id), $this->key($tableId), 'table_parent');
+            [$column, $row] = Coordinate::coordinateFromString($cell['meta']['coordinate']);
+            $this->dimension($anchors, $relations, $id, $tableId.'/row['.$row.']',
+                $tableId, 'table_row', 'xlsx', $cell['sheet'] ?? null);
+            $this->dimension($anchors, $relations, $id, $tableId.'/column['.$column.']',
+                $tableId, 'table_column', 'xlsx', $cell['sheet'] ?? null);
+            if ($table['meta']['header_row'] ?? false) {
+                $bounds = Coordinate::rangeBoundaries($table['meta']['range']);
+                $headerCoordinate = $column.$bounds[0][1];
+                $headerId = $xlsxMergeOwners[$table['parent']][$headerCoordinate]
+                    ?? $table['parent'].'/cell:'.$headerCoordinate;
+                if ($row > $bounds[0][1] && isset($cells[$headerId])) {
+                    $this->edge($relations, $this->key($id), $this->key($headerId), 'column_header');
+                    $headerEdges[$id]['column'][] = $headerId;
+                    $anchors[$this->key($headerId)]['kind'] = 'column_header';
+                }
+                $firstColumn = Coordinate::stringFromColumnIndex($bounds[0][0]);
+                $topLeftId = $table['parent'].'/cell:'.$firstColumn.$bounds[0][1];
+                $rowLabelId = $table['parent'].'/cell:'.$firstColumn.$row;
+                if ($row > $bounds[0][1] && $column !== $firstColumn
+                    && $this->isRowLabelHeading($cells[$topLeftId]['text'] ?? '')
+                    && isset($cells[$rowLabelId]) && trim($cells[$rowLabelId]['text'] ?? '') !== '') {
+                    $this->edge($relations, $this->key($id), $this->key($rowLabelId), 'row_header');
+                    $headerEdges[$id]['row'][] = $rowLabelId;
+                    $anchors[$this->key($rowLabelId)]['kind'] = 'row_header';
                 }
             }
         }
@@ -130,9 +206,9 @@ class StructuredProvenanceProducer
                     continue;
                 }
                 foreach ($cells as $id => $cell) {
-                    if (! isset($cell['start'], $cell['end']) || $cell['start'] >= $to || $cell['end'] <= $from
+                    if (! isset($cell['start'], $cell['end']) || $cell['start'] < $from || $cell['end'] > $to
                         || ! $this->visible($cell)
-                        || ! str_contains($normalizer->fold($cell['text']), $foldedValue)) {
+                        || $normalizer->fold($cell['text']) !== $foldedValue) {
                         continue;
                     }
                     $candidates[$id] = $cell;
@@ -147,14 +223,16 @@ class StructuredProvenanceProducer
                 continue;
             }
             $bindings[] = ['evidence_id' => $row->id, 'anchor' => $this->key($id), 'role' => 'value'];
-            foreach (['period' => 'column'] as $role => $direction) {
-                $field = $row->data[$role] ?? null;
+            foreach (['period' => ['column', 'period'], 'metric' => ['row', 'label'],
+                'subject' => ['row', 'subject'], 'unit' => ['column', 'unit']] as $role => [$direction, $fieldKey]) {
+                $field = $row->data[$fieldKey] ?? null;
                 if (! is_string($field) || $field === '') {
                     continue;
                 }
                 $matches = array_values(array_filter($headerEdges[$id][$direction] ?? [],
                     static fn (string $candidate): bool => isset($cells[$candidate]['text'])
-                        && str_contains($normalizer->fold($cells[$candidate]['text']), $normalizer->fold($field))));
+                        && preg_match('/(?<![\p{L}\p{N}])'.preg_quote($normalizer->fold($field), '/').'(?![\p{L}\p{N}])/u',
+                            $normalizer->fold($cells[$candidate]['text'])) === 1));
                 if (count($matches) === 1) {
                     $bindings[] = ['evidence_id' => $row->id,
                         'anchor' => $this->key($matches[0]), 'role' => $role];
@@ -179,9 +257,138 @@ class StructuredProvenanceProducer
         }
     }
 
-    private function docxColumn(string $id): ?int
+    private function dimension(array &$anchors, array &$relations, string $cellId, string $path,
+        string $tableId, string $kind, string $modality, ?string $sheet): void
     {
-        return preg_match('~/tc\[(\d+)\]$~', $id, $m) ? (int) $m[1] : null;
+        $key = $this->key($path);
+        $anchors[$key] ??= ['key' => $key, 'kind' => $kind, 'modality' => $modality,
+            'path' => $path, 'sheet' => $sheet];
+        $this->edge($relations, $this->key($cellId), $key, 'contained_by');
+        $this->edge($relations, $key, $this->key($tableId), 'table_parent');
+    }
+
+    private function docxRowLabel(string $rowId, array $cells): ?string
+    {
+        $id = $rowId.'/tc[1]';
+        $cell = $cells[$id] ?? null;
+        if ($cell === null || ($cell['meta']['grid_column'] ?? null) !== 1) {
+            return null;
+        }
+        if (($cell['meta']['vertical_merge'] ?? null) !== 'continue') {
+            return trim($cell['text'] ?? '') === '' ? null : $id;
+        }
+        if (! preg_match('~^(.*?/tr\[)(\d+)(\])$~', $rowId, $match)) {
+            return null;
+        }
+        for ($row = (int) $match[2] - 1, $depth = 0; $row >= 1 && $depth < 64; $row--, $depth++) {
+            $candidateId = $match[1].$row.$match[3].'/tc[1]';
+            $candidate = $cells[$candidateId] ?? null;
+            if ($candidate === null || ($candidate['meta']['grid_column'] ?? null) !== 1) {
+                return null;
+            }
+            $merge = $candidate['meta']['vertical_merge'] ?? null;
+            if ($merge === 'continue') {
+                continue;
+            }
+
+            return $merge === 'restart' && trim($candidate['text'] ?? '') !== '' ? $candidateId : null;
+        }
+
+        return null;
+    }
+
+    private function isRowLabelHeading(string $text): bool
+    {
+        return preg_match('/^(?:metric|item|line item|account|description|indicator)$/iu', trim($text)) === 1;
+    }
+
+    /** Keep the source graph bounded to cited occurrences and their actual parser parents/headers. */
+    private function relevantNodes(StructuredDocument $source, array $evidence): array
+    {
+        $all = array_column($source->nodes, null, 'id');
+        $ranges = [];
+        foreach ($evidence as $row) {
+            foreach ($row->sources ?? [] as $citation) {
+                $start = $citation['start_offset'] ?? null;
+                $end = $citation['end_offset'] ?? null;
+                if (is_int($start) && is_int($end) && $end > $start) {
+                    $ranges[] = [$start, $end];
+                }
+            }
+        }
+        if ($ranges === [] && count($all) <= 20000) {
+            return $all;
+        }
+        $selected = [];
+        foreach ($source->nodes as $node) {
+            if (! isset($node['start'], $node['end'])) {
+                continue;
+            }
+            foreach ($ranges as [$start, $end]) {
+                if ($node['start'] >= $start && $node['end'] <= $end) {
+                    $selected[$node['id']] = true;
+                    break;
+                }
+            }
+        }
+        $tables = array_filter($all, static fn (array $node): bool => $node['type'] === 'table');
+        foreach (array_keys($selected) as $id) {
+            $cell = $all[$id];
+            if ($cell['type'] !== 'cell') {
+                continue;
+            }
+            if ($source->format === 'DOCX') {
+                $table = $this->nearestTable($id, $all);
+                $mergedLabel = $this->docxRowLabel($cell['parent'], $all);
+                if ($mergedLabel !== null) {
+                    $selected[$mergedLabel] = true;
+                }
+                foreach ($all as $candidate) {
+                    if ($candidate['type'] !== 'cell') {
+                        continue;
+                    }
+                    $sameRow = ($candidate['parent'] ?? null) === ($cell['parent'] ?? null);
+                    $headerRow = ($all[$candidate['parent'] ?? '']['meta']['explicit_header'] ?? false)
+                        && $this->nearestTable($candidate['id'], $all) === $table;
+                    if ($sameRow || $headerRow) {
+                        $selected[$candidate['id']] = true;
+                    }
+                }
+            } elseif ($source->format === 'XLSX') {
+                foreach ($tables as $table) {
+                    if (($table['sheet'] ?? null) !== ($cell['sheet'] ?? null)
+                        || ! $this->inRange($cell['meta']['coordinate'], $table['meta']['range'])) {
+                        continue;
+                    }
+                    $selected[$table['id']] = true;
+                    $bounds = Coordinate::rangeBoundaries($table['meta']['range']);
+                    $firstColumn = Coordinate::stringFromColumnIndex($bounds[0][0]);
+                    $row = Coordinate::coordinateFromString($cell['meta']['coordinate'])[1];
+                    $selected[$table['parent'].'/cell:'.$firstColumn.$row] = true;
+                    if ($table['meta']['header_row'] ?? false) {
+                        for ($column = $bounds[0][0]; $column <= $bounds[1][0]; $column++) {
+                            $selected[$table['parent'].'/cell:'
+                                .Coordinate::stringFromColumnIndex($column).$bounds[0][1]] = true;
+                        }
+                    }
+                }
+            }
+        }
+        foreach (array_keys($selected) as $id) {
+            if (isset($all[$id]['meta']['section_heading_id'])) {
+                $selected[$all[$id]['meta']['section_heading_id']] = true;
+            }
+            foreach ($all[$id]['meta']['footnote_ids'] ?? [] as $footnoteId) {
+                $selected['footnote:'.$footnoteId] = true;
+            }
+            $parent = $all[$id]['parent'] ?? null;
+            for ($depth = 0; $parent !== null && $depth < 16; $depth++) {
+                $selected[$parent] = true;
+                $parent = $all[$parent]['parent'] ?? null;
+            }
+        }
+
+        return array_filter($all, static fn (array $node): bool => isset($selected[$node['id']]));
     }
 
     private function nearestTable(string $id, array $nodes): ?string
