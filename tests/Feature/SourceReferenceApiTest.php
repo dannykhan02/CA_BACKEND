@@ -177,4 +177,66 @@ class SourceReferenceApiTest extends TestCase
             ->assertOk()->assertJsonPath('data.quality.conflictStatus', 'unresolved_conflict')
             ->assertJsonPath('data.quality.evidenceStatus', 'unresolved');
     }
+
+    /**
+     * The bounded-role ceiling is a real refusal, not a truncation: past
+     * SourceReferenceResolver::MAX_ROLES the resolver cannot say which
+     * anchors it dropped, so it returns nothing rather than a partial answer
+     * the reader would take as the whole binding.
+     */
+    public function test_source_beyond_the_bounded_role_ceiling_is_refused_as_too_complex(): void
+    {
+        [$user, $document, $sourceId] = $this->fixture();
+        $evidence = DocumentEvidence::where('document_id', $document->id)
+            ->where('source_id', $sourceId)->firstOrFail();
+        $set = DB::table('source_provenance_sets')->where('document_id', $document->id)
+            ->where('active', true)->firstOrFail();
+
+        // Offset-free anchors on purpose: they pass the document-match check,
+        // so the only thing this test can trip is the role ceiling itself.
+        $bound = DB::table('evidence_role_bindings')->where('set_id', $set->id)
+            ->where('evidence_id', $evidence->id)->count();
+        $roles = ['entity', 'subject', 'metric', 'currency', 'unit', 'scale',
+            'qualifier', 'direction', 'numerator', 'denominator', 'period', 'value'];
+        for ($i = 0; $bound + $i <= 12; $i++) {
+            $anchorId = (string) Str::uuid();
+            DB::table('source_anchors')->insert(['id' => $anchorId, 'set_id' => $set->id,
+                'workspace_id' => $document->workspace_id, 'document_id' => $document->id,
+                'source_key' => 'ceiling:'.$i, 'kind' => 'paragraph', 'modality' => 'xlsx',
+                'created_at' => now(), 'updated_at' => now()]);
+            DB::table('evidence_role_bindings')->insert(['set_id' => $set->id,
+                'workspace_id' => $document->workspace_id, 'document_id' => $document->id,
+                'evidence_id' => $evidence->id, 'anchor_id' => $anchorId,
+                'role' => $roles[$i % count($roles)]]);
+        }
+        self::assertGreaterThan(12, DB::table('evidence_role_bindings')->where('set_id', $set->id)
+            ->where('evidence_id', $evidence->id)->count());
+
+        Sanctum::actingAs($user);
+        $this->getJson('/api/documents/'.$document->id.'/sources/'.$sourceId)
+            ->assertStatus(422)
+            ->assertExactJson(['error' => ['code' => 'SOURCE_TOO_COMPLEX']]);
+    }
+
+    /**
+     * A stored anchor whose text no longer hashes to the document it points
+     * into is not re-pointed, re-searched or shown with a caveat: the source
+     * is reported unavailable, because nothing left on the record proves
+     * where in this document the passage is.
+     */
+    public function test_anchor_that_no_longer_matches_the_document_is_reported_unavailable(): void
+    {
+        [$user, $document, $sourceId] = $this->fixture();
+        $set = DB::table('source_provenance_sets')->where('document_id', $document->id)
+            ->where('active', true)->firstOrFail();
+        $anchor = DB::table('source_anchors')->where('set_id', $set->id)
+            ->whereNotNull('start_offset')->orderBy('id')->firstOrFail();
+        DB::table('source_anchors')->where('id', $anchor->id)
+            ->update(['source_hash' => hash('sha256', 'text that is not in this document')]);
+
+        Sanctum::actingAs($user);
+        $this->getJson('/api/documents/'.$document->id.'/sources/'.$sourceId)
+            ->assertStatus(409)
+            ->assertExactJson(['error' => ['code' => 'SOURCE_UNAVAILABLE']]);
+    }
 }
