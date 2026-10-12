@@ -11,10 +11,12 @@ use App\Jobs\GenerateEmbeddingsJob;
 use App\Jobs\GenerateInsightsJob;
 use App\Jobs\ScanUploadedFileJob;
 use App\Models\Document;
+use App\Models\ProcessingJob;
 use App\Models\Workspace;
 use App\Services\AuditLogger;
 use App\Services\Documents\DocumentStorageService;
 use App\Services\Documents\SupportedDocumentTypes;
+use App\Services\Documents\UploadDispatchRecovery;
 use App\Services\EntitlementService;
 use App\Services\Intelligence\DocumentRevisionPublisher;
 use App\Support\QueueTopology;
@@ -113,13 +115,19 @@ class DocumentUploadController extends Controller
                 ]);
                 app(EntitlementService::class)->reserveDocument($document);
                 app(DocumentRevisionPublisher::class)->begin($document);
+                ProcessingJob::create(['workspace_id' => $document->workspace_id,
+                    'document_id' => $document->id,
+                    'intelligence_revision_id' => $document->fresh()->active_intelligence_revision_id,
+                    'stage' => 'virus_scan', 'status' => 'pending',
+                    'input' => ['source' => 'upload_dispatch']]);
 
                 return $document;
             }, 3);
         } catch (QueryException $e) {
-            $storage->delete($path);
+            $this->cleanupUnownedUpload($storage, $path);
 
-            if (($e->errorInfo[0] ?? null) === '23505') {
+            if (($e->errorInfo[0] ?? null) === '23505'
+                && str_contains($e->getMessage(), 'documents_workspace_file_hash_unique')) {
                 Log::error('Document upload conflicted with an existing file.', SafeExceptionContext::for($e, [
                     'user_id' => $request->user()->id,
                     'workspace_id' => $request->user()->current_workspace_id,
@@ -150,7 +158,7 @@ class DocumentUploadController extends Controller
                 'workspace_id' => $request->user()->current_workspace_id,
                 'error' => $e->getMessage(),
             ]);
-            $storage->delete($path);
+            $this->cleanupUnownedUpload($storage, $path);
             throw $e;
         }
 
@@ -168,16 +176,46 @@ class DocumentUploadController extends Controller
         // 4. Analyze embedded visual content (charts, images) not captured in text extraction
         // 5. Generate embeddings for vector search
         $revisionId = $document->fresh()->active_intelligence_revision_id;
-        ScanUploadedFileJob::withChain([
-            (new ExtractDocumentTextJob($document->id, $revisionId))->onQueue(QueueTopology::for(ExtractDocumentTextJob::class)),
-            (new GenerateInsightsJob($document->id, revisionId: $revisionId))->onQueue(QueueTopology::for(GenerateInsightsJob::class)),
-            (new AnalyzeEmbeddedVisualsJob($document->id, $revisionId))->onQueue(QueueTopology::for(AnalyzeEmbeddedVisualsJob::class)),
-            (new GenerateEmbeddingsJob($document->id))->onQueue(QueueTopology::for(GenerateEmbeddingsJob::class)),
-        ])->onQueue(QueueTopology::for(ScanUploadedFileJob::class))->dispatch($document->id, $revisionId);
+        try {
+            ScanUploadedFileJob::withChain([
+                (new ExtractDocumentTextJob($document->id, $revisionId))->onQueue(QueueTopology::for(ExtractDocumentTextJob::class)),
+                (new GenerateInsightsJob($document->id, revisionId: $revisionId))->onQueue(QueueTopology::for(GenerateInsightsJob::class)),
+                (new AnalyzeEmbeddedVisualsJob($document->id, $revisionId))->onQueue(QueueTopology::for(AnalyzeEmbeddedVisualsJob::class)),
+                (new GenerateEmbeddingsJob($document->id))->onQueue(QueueTopology::for(GenerateEmbeddingsJob::class)),
+            ])->onQueue(QueueTopology::for(ScanUploadedFileJob::class))->dispatch($document->id, $revisionId);
+        } catch (\Throwable $dispatchError) {
+            Log::error('Initial upload queue dispatch failed.', ['document_id' => $document->id,
+                'error_type' => $dispatchError::class]);
+            app(UploadDispatchRecovery::class)->failIfUnclaimed($document->id, $revisionId);
+
+            return response()->json(['message' => 'Upload saved, but processing could not start. Please retry processing.',
+                'data' => new DocumentResource($document->fresh())], 503);
+        }
 
         return response()->json([
             'message' => 'Upload accepted, processing started.',
             'data' => new DocumentResource($document->fresh()),
         ], 202);
+    }
+
+    private function cleanupUnownedUpload(DocumentStorageService $storage, string $path): void
+    {
+        try {
+            // Storage keys are generated per upload. Still check historical
+            // rows before deletion so a storage adapter collision cannot
+            // remove a valid document's private object.
+            if (Document::withTrashed()->where('file_path', $path)->exists()) {
+                Log::warning('Upload cleanup retained an object referenced by a document.', ['path' => $path]);
+
+                return;
+            }
+            if (! $storage->delete($path)) {
+                Log::error('Upload cleanup could not remove an unowned object.', ['path' => $path]);
+            }
+        } catch (\Throwable $cleanupError) {
+            // Preserve the original creation failure and leave a trace for
+            // private storage reconciliation; cleanup must not mask it.
+            Log::error('Upload cleanup failed.', ['path' => $path, 'error_type' => $cleanupError::class]);
+        }
     }
 }

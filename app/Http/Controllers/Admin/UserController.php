@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Workspace;
 use App\Models\WorkspaceMember;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class UserController extends Controller
@@ -31,6 +33,8 @@ class UserController extends Controller
     public function index(Request $request): JsonResponse
     {
         $workspaceId = $request->user()->current_workspace_id;
+        abort_unless($workspaceId && WorkspaceMember::where('workspace_id', $workspaceId)
+            ->where('user_id', $request->user()->id)->exists(), 403);
 
         $userIds = WorkspaceMember::where('workspace_id', $workspaceId)
             ->pluck('user_id');
@@ -46,26 +50,39 @@ class UserController extends Controller
             'role' => ['required', 'string', Rule::in(self::VALID_ROLES)],
         ]);
 
-        // Audit F-Medium-4: nothing previously stopped the last active
-        // Administrator from demoting themselves (or another admin demoting
-        // the only other one), which locks the whole org out of the admin
-        // panel with no way back in short of a direct DB edit.
-        $isDemotingAdmin = $user->role === 'Administrator' && $validated['role'] !== 'Administrator';
+        $result = DB::transaction(function () use ($request, $user, $validated): ?JsonResponse {
+            $workspaceId = $request->user()->current_workspace_id;
+            // Serialize role changes within this workspace, including the
+            // last-administrator check. A global role affects every membership.
+            abort_unless($workspaceId && Workspace::whereKey($workspaceId)->lockForUpdate()->first(), 403);
+            abort_unless($request->user()->fresh()->role === 'Administrator'
+                && WorkspaceMember::where('workspace_id', $workspaceId)->where('user_id', $request->user()->id)->exists(), 403);
 
-        if ($isDemotingAdmin) {
-            $remainingAdmins = User::where('role', 'Administrator')
-                ->where('active', true)
-                ->where('id', '!=', $user->id)
-                ->count();
+            $target = User::whereKey($user->id)->lockForUpdate()->firstOrFail();
+            $memberships = WorkspaceMember::where('user_id', $target->id)->pluck('workspace_id');
+            // Until roles are workspace-owned, a shared target cannot be
+            // changed without granting or removing rights in another workspace.
+            abort_unless($memberships->count() === 1 && $memberships->first() === $workspaceId, 404);
 
-            if ($remainingAdmins === 0) {
-                return response()->json([
-                    'message' => 'Cannot change this role — at least one active Administrator must remain.',
-                ], 422);
+            if ($target->role === 'Administrator' && $validated['role'] !== 'Administrator') {
+                $otherAdmins = User::where('role', 'Administrator')->where('active', true)
+                    ->where('id', '!=', $target->id)
+                    ->whereHas('workspaceMemberships', fn ($query) => $query->where('workspace_id', $workspaceId))
+                    ->exists();
+                if (! $otherAdmins) {
+                    return response()->json([
+                        'message' => 'Cannot change this role — at least one active Administrator must remain.',
+                    ], 422);
+                }
             }
-        }
 
-        $user->update(['role' => $validated['role']]);
+            $target->update(['role' => $validated['role']]);
+
+            return null;
+        }, 3);
+        if ($result) {
+            return $result;
+        }
 
         return response()->json([
             'data' => $user->fresh()->only(self::SAFE_FIELDS),

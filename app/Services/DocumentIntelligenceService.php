@@ -6,6 +6,7 @@ use App\Models\Document;
 use App\Models\DocumentChunk;
 use App\Models\DocumentIntelligenceRevision;
 use App\Services\Pipeline\ProcessingStageReconciler;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Aggregates persisted intelligence without calling Anthropic or dispatching
@@ -71,6 +72,32 @@ class DocumentIntelligenceService
             'status' => 'Ready', 'progress' => 100, 'error_message' => null]);
 
         return $view;
+    }
+
+    /** Pin a multi-document typed query to each document's own published pointer. */
+    public function publishedRows(Builder $query, string $table): Builder
+    {
+        return $query->whereExists(function ($read) use ($table): void {
+            $read->selectRaw('1')->from('documents as published_document')
+                ->whereColumn('published_document.id', "{$table}.document_id")
+                ->whereColumn('published_document.workspace_id', "{$table}.workspace_id")
+                ->whereNull('published_document.deleted_at')
+                ->where(function ($revision) use ($table): void {
+                    $revision->where(function ($current) use ($table): void {
+                        $current->whereColumn('published_document.published_intelligence_revision_id', "{$table}.intelligence_revision_id")
+                            ->whereNotNull('published_document.published_intelligence_revision_id')
+                            ->whereExists(function ($verified): void {
+                                $verified->selectRaw('1')->from('document_intelligence_revisions as published_revision')
+                                    ->whereColumn('published_revision.id', 'published_document.published_intelligence_revision_id')
+                                    ->where('published_revision.state', 'published');
+                            });
+                    })->orWhere(function ($legacy) use ($table): void {
+                        $legacy->whereNull('published_document.published_intelligence_revision_id')
+                            ->where('published_document.intelligence_generation', 0)
+                            ->whereNull("{$table}.intelligence_revision_id");
+                    });
+                });
+        });
     }
 
     /**

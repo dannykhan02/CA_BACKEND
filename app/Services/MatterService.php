@@ -12,6 +12,7 @@ use App\Models\Matter;
 use App\Models\ProcessingJob;
 use App\Models\TrackedItem;
 use App\Models\User;
+use App\Services\Pipeline\ProcessingStageReconciler;
 use Illuminate\Support\Facades\DB;
 
 class MatterService
@@ -46,7 +47,12 @@ class MatterService
             default => abort(422, 'Unknown intelligence section.'),
         };
 
-        return $model::whereIn('document_id', $ids)->with('document:id,name')->orderBy('id');
+        $query = $model::whereIn('document_id', $ids)->with('document:id,name')->orderBy('id');
+        if ($kind !== 'tracked') {
+            app(DocumentIntelligenceService::class)->publishedRows($query, (new $model)->getTable());
+        }
+
+        return $query;
     }
 
     public function overview(User $user, Matter $matter): array
@@ -67,9 +73,9 @@ class MatterService
         return [
             'failed_stages' => (clone $latestStages)->where('status', 'failed')->count(),
             'pending_stages' => (clone $latestStages)->where(function ($q) {
-                $q->where(fn ($q) => $q->where('status', 'pending')->where('created_at', '>', now()->subMinutes(\App\Services\Pipeline\ProcessingStageReconciler::PENDING_GRACE_MINUTES)))
+                $q->where(fn ($q) => $q->where('status', 'pending')->where('created_at', '>', now()->subMinutes(ProcessingStageReconciler::PENDING_GRACE_MINUTES)))
                     ->orWhere(fn ($q) => $q->where('status', 'processing')->where(function ($q) {
-                        $threshold = now()->subMinutes(\App\Services\Pipeline\ProcessingStageReconciler::PROCESSING_GRACE_MINUTES);
+                        $threshold = now()->subMinutes(ProcessingStageReconciler::PROCESSING_GRACE_MINUTES);
                         $q->where('started_at', '>', $threshold)
                             ->orWhere(fn ($q) => $q->whereNull('started_at')->where('created_at', '>', $threshold));
                     }));

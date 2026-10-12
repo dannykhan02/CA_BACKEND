@@ -18,7 +18,8 @@ class DocumentComparisonController extends Controller
         $ids = $this->access->documents($r->user())->select('id');
         $q = DocumentComparison::where('workspace_id', $r->user()->current_workspace_id)
             ->whereIn('base_document_id', $ids)->whereIn('compared_document_id', clone $ids)
-            ->with(['baseDocument:id,name', 'comparedDocument:id,name']);
+            ->with(['baseDocument:id,name,published_intelligence_revision_id',
+                'comparedDocument:id,name,published_intelligence_revision_id']);
         if ($r->filled('matter_id')) {
             $matter = $this->access->matter($r->user(), $r->query('matter_id'));
             $q->where('matter_id', $matter->id);
@@ -45,6 +46,7 @@ class DocumentComparisonController extends Controller
         $this->access->document($r->user(), $item->base_document_id);
         $this->access->document($r->user(), $item->compared_document_id);
 
-        return new DocumentComparisonResource($item->load(['baseDocument:id,name', 'comparedDocument:id,name']));
+        return new DocumentComparisonResource($item->load(['baseDocument:id,name,published_intelligence_revision_id',
+            'comparedDocument:id,name,published_intelligence_revision_id']));
     }
 }

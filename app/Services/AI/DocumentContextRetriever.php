@@ -62,6 +62,7 @@ class DocumentContextRetriever
                     FROM document_embeddings de
                     JOIN documents d ON d.id = de.document_id
                     WHERE de.workspace_id = ?
+                      AND d.deleted_at IS NULL
                       AND (de.intelligence_revision_id = d.published_intelligence_revision_id
                         OR (d.intelligence_generation = 0 AND de.intelligence_revision_id IS NULL))
                       AND d.uploaded_by = ?
@@ -89,6 +90,7 @@ class DocumentContextRetriever
                         FROM document_embeddings de
                         JOIN documents d ON d.id = de.document_id
                         WHERE de.workspace_id = ?
+                          AND d.deleted_at IS NULL
                           AND (de.intelligence_revision_id = d.published_intelligence_revision_id
                             OR (d.intelligence_generation = 0 AND de.intelligence_revision_id IS NULL))
                           AND d.classification IN ({$placeholders})

@@ -2,7 +2,9 @@
 
 namespace App\Services\Documents;
 
+use App\Models\Document;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -37,11 +39,30 @@ class DocumentStorageService
         $suffix = $extension !== '' ? ".{$extension}" : '';
         $path = "{$workspaceId}/".(string) Str::uuid().$suffix;
 
-        Storage::disk(self::DISK)->putFileAs(
-            dirname($path),
-            $file,
-            basename($path)
-        );
+        try {
+            $stored = Storage::disk(self::DISK)->putFileAs(
+                dirname($path),
+                $file,
+                basename($path)
+            );
+            if ($stored !== $path) {
+                throw new \RuntimeException('Unable to store the uploaded document.');
+            }
+        } catch (\Throwable $error) {
+            // A remote write can succeed before its response is lost. The
+            // generated key is known here even if putFileAs did not return.
+            try {
+                if (! Document::withTrashed()->where('file_path', $path)->exists()) {
+                    if (! Storage::disk(self::DISK)->delete($path)) {
+                        Log::error('Failed storage operation could not remove its unowned object.', ['path' => $path]);
+                    }
+                }
+            } catch (\Throwable $cleanupError) {
+                Log::error('Failed storage operation left an object requiring reconciliation.',
+                    ['path' => $path, 'error_type' => $cleanupError::class]);
+            }
+            throw $error;
+        }
 
         return $path;
     }

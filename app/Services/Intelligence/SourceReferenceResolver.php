@@ -105,6 +105,21 @@ class SourceReferenceResolver
             }
         }
         $sources = json_decode($evidence->sources, true) ?: [];
+        // A source ID can carry several genuine citations. Returning the
+        // first one would silently choose an occurrence the user did not ask
+        // for, especially when the same phrase appears on several pages.
+        $occurrences = [];
+        foreach ($sources as $candidate) {
+            if (! is_array($candidate)) {
+                continue;
+            }
+            $occurrences[json_encode([$candidate['page'] ?? null,
+                $candidate['start_offset'] ?? null, $candidate['end_offset'] ?? null,
+                $candidate['quote'] ?? null])] = true;
+            if (count($occurrences) > 1) {
+                return ['state' => 'SOURCE_AMBIGUOUS'];
+            }
+        }
         $citation = $sources[0] ?? [];
         $quote = is_string($citation['quote'] ?? null) ? $citation['quote'] : null;
         $start = $citation['start_offset'] ?? null;
@@ -136,9 +151,19 @@ class SourceReferenceResolver
                 break;
             }
         }
+        $matchState = $structural || $location !== null ? 'STRUCTURALLY_RESOLVED'
+            : ($rangeValid ? 'EXACT' : 'UNAVAILABLE');
+        if (! $rangeValid && $quote !== null && $quote !== '') {
+            $firstOccurrence = mb_strpos((string) $document->extracted_text, $quote);
+            if ($firstOccurrence !== false) {
+                $matchState = mb_strpos((string) $document->extracted_text, $quote,
+                    $firstOccurrence + mb_strlen($quote)) === false ? 'APPROXIMATE' : 'AMBIGUOUS';
+            }
+        }
 
         return [
             'state' => 'CURRENT', 'sourceId' => $sourceId, 'documentId' => $document->id,
+            'matchState' => $matchState,
             'intelligenceRevisionId' => $published?->id,
             'sourceFormat' => in_array($document->type, ['DOCX', 'XLSX', 'PDF'], true) ? $document->type : 'OTHER',
             'revision' => $revision, 'provenancePolicy' => $set === null ? null : SourceProvenance::POLICY,
@@ -210,6 +235,7 @@ class SourceReferenceResolver
                 ->value('provenance_policy') : null;
 
         return ['state' => 'CURRENT', 'sourceId' => $sourceId, 'documentId' => $document->id,
+            'matchState' => 'UNAVAILABLE',
             'intelligenceRevisionId' => $document->published_intelligence_revision_id,
             'sourceFormat' => in_array($document->type, ['DOCX', 'XLSX', 'PDF'], true) ? $document->type : 'OTHER',
             'revision' => null, 'provenancePolicy' => $policy, 'capability' => 'TEXTUAL',

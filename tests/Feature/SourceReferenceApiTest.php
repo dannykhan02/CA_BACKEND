@@ -145,4 +145,19 @@ class SourceReferenceApiTest extends TestCase
             ->assertJsonPath('data.source.range', null)
             ->assertJsonPath('data.location', null);
     }
+
+    public function test_multiple_source_occurrences_are_not_resolved_to_an_arbitrary_first_match(): void
+    {
+        [$user, $document, $sourceId] = $this->fixture();
+        $evidence = DocumentEvidence::where('document_id', $document->id)
+            ->where('source_id', $sourceId)->firstOrFail();
+        $evidence->update(['sources' => [
+            ['quote' => '12.4', 'start_offset' => 0, 'end_offset' => 4],
+            ['quote' => '12.4', 'start_offset' => 27, 'end_offset' => 31],
+        ]]);
+        Sanctum::actingAs($user);
+
+        $this->getJson('/api/documents/'.$document->id.'/sources/'.$sourceId)
+            ->assertStatus(409)->assertJsonPath('error.code', 'SOURCE_AMBIGUOUS');
+    }
 }
