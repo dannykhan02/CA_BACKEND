@@ -1,7 +1,7 @@
 # DocIntel deterministic hardening — phase 1 audit
 
 **Scope and evidence.** Static, repository-only audit of `CA_BACKEND` at `3082b4b` (`main`), 2026-10-11. No provider, database, production, or runtime calls were made. Findings describe code paths, not measured production incidence. Paths below are relative to repository root. A proposed rule is a recommendation, not an implemented control.
-/
+
 **Classification:** A adequate deterministic control; B deterministic but fragmented; C safe, high-value implementation candidate; D configuration; E upstream schema or extraction change; F document-dependent AI judgment; G not a current problem. **Priority:** P0 correctness, security, or cost exposure; P1 important reliability or coverage; P2 useful hardening; P3 optional. A row has one primary classification; related dependencies appear in the proposal. “False rejection” is the expected recall cost if the rule is implemented conservatively.
 
 ## Audit matrix

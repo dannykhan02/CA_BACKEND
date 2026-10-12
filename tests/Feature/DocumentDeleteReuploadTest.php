@@ -53,7 +53,8 @@ class DocumentDeleteReuploadTest extends TestCase
         $this->assertSame($original->file_hash, $new->file_hash);
         $this->assertSame([], $new->insights);
         $this->assertNull($new->extracted_text);
-        $this->assertSame(0, $new->processingJobs()->count());
+        $this->assertSame(1, $new->processingJobs()->where('stage', 'virus_scan')
+            ->where('status', 'pending')->count());
         $new->update(['extracted_text' => 'Second extraction.']);
         (new GenerateInsightsJob($second))->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
         $this->assertSame('Ready', $new->fresh()->status);

@@ -17,6 +17,7 @@ class DocumentComparisonService
 
     public function snapshot(Document $document): array
     {
+        $document = app(DocumentIntelligenceService::class)->publishedView($document);
         $document->loadMissing(['deadlines', 'risks', 'entities', 'kpis']);
         $result = [];
         foreach (['deadlines' => 'title', 'risks' => 'title', 'entities' => 'entity_type', 'kpis' => 'label'] as $kind => $label) {
@@ -31,6 +32,7 @@ class DocumentComparisonService
                 $key = $kind.':'.($kind === 'kpis' ? $item->identityKey($normalized) : $normalized);
                 $result[$key][] = ['category' => $kind, 'label' => $item->$label, 'value' => $value,
                     'source' => ['document_id' => $document->id, 'document_name' => $document->name,
+                        'intelligence_revision_id' => $document->published_intelligence_revision_id,
                         'insight_id' => $item->id, 'evidence' => $item->evidence ?? $item->context]];
             }
         }
@@ -47,7 +49,9 @@ class DocumentComparisonService
         $base = $this->access->document($user, $baseId, true);
         $new = $this->access->document($user, $comparedId, true);
         abort_if($base->id === $new->id, 422, 'Choose two different documents.');
-        foreach ([$base, $new] as $document) {
+        $views = [app(DocumentIntelligenceService::class)->publishedView($base),
+            app(DocumentIntelligenceService::class)->publishedView($new)];
+        foreach ($views as $document) {
             abort_unless(in_array($document->status, ['Ready', 'Needs Review'], true), 422, 'Both documents must finish processing first.');
             $stages = app(DocumentIntelligenceService::class)->getProcessingStatus($document);
             foreach (['entities', 'risks', 'deadlines'] as $stage) {
@@ -60,16 +64,20 @@ class DocumentComparisonService
                 abort_unless(in_array($stages[$stage] ?? null, ['completed', 'skipped'], true), 422, 'Structured extraction must complete successfully for both documents before comparison.');
             }
         }
-        $before = $this->snapshot($base);
-        $after = $this->snapshot($new);
+        $before = $this->snapshot($views[0]);
+        $after = $this->snapshot($views[1]);
         $metadata = ['method' => 'structured-v1', 'base' => $before, 'compared' => $after,
+            'source_revisions' => ['base' => $views[0]->published_intelligence_revision_id,
+                'compared' => $views[1]->published_intelligence_revision_id],
+            'source_provenance' => $views[0]->published_intelligence_revision_id !== null
+                && $views[1]->published_intelligence_revision_id !== null ? 'revision_pinned' : 'legacy_unversioned',
             'limitations' => 'Compares extracted intelligence, not every clause. Missing extraction is not proof a term was removed. Confirm changes in both originals; no legal authority is inferred.'];
         if ($includeTerms) {
             abort_unless(AiPrompt::where('name', 'document_comparison')->where('active', true)->exists(), 503, 'AI comparison is temporarily unavailable. Please try again later.');
             $contextService = app(ComparisonContextService::class);
             $metadata['method'] = 'structured-and-terms-v1';
             $metadata['ai_context'] = [];
-            foreach (['base' => $base, 'compared' => $new] as $side => $document) {
+            foreach (['base' => $views[0], 'compared' => $views[1]] as $side => $document) {
                 $excerpts = $contextService->excerpts($document);
                 abort_if(! $excerpts, 422, 'Document text is required for a terms comparison.');
                 $metadata['ai_context'][$side] = ['document_id' => $document->id, 'document_name' => $document->name,

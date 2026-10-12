@@ -32,8 +32,8 @@ class CaughtExceptionLoggingTest extends TestCase
         app(WorkspaceService::class)->createPersonalWorkspaceFor($user);
         $user = $user->fresh();
         $user->currentWorkspace->credits()->update(['documents_remaining' => 10]);
-        $driver = new \PDOException('SQLSTATE[23505]: Unique violation: duplicate document', 23505);
-        $driver->errorInfo = ['23505', 7, 'duplicate document'];
+        $driver = new \PDOException('SQLSTATE[23505]: Unique violation: documents_workspace_file_hash_unique', 23505);
+        $driver->errorInfo = ['23505', 7, 'duplicate key value violates unique constraint "documents_workspace_file_hash_unique"'];
         $exception = new QueryException('pgsql', 'INSERT INTO documents (...) VALUES (?)', ['private binding'], $driver);
         Document::creating(function () use ($exception) {
             throw $exception;
@@ -52,7 +52,7 @@ class CaughtExceptionLoggingTest extends TestCase
             'user_id' => $user->id,
             'workspace_id' => $user->current_workspace_id,
             'exception_class' => QueryException::class,
-            'exception_message' => 'SQLSTATE[23505]: Unique violation: duplicate document',
+            'exception_message' => 'SQLSTATE[23505]: Unique violation: documents_workspace_file_hash_unique',
         ]);
         $this->assertSame([], Storage::disk('documents')->allFiles());
         Queue::assertNothingPushed();

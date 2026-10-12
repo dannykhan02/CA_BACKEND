@@ -229,6 +229,24 @@ class DocumentQaTest extends TestCase
         $this->assertStringNotContainsString('Workspace B Secret', $body);
     }
 
+    public function test_deleted_document_with_retained_embedding_never_reaches_qa_provider(): void
+    {
+        [$user, $workspace] = $this->createOrgUser('Viewer');
+        $document = $this->createDocInWorkspace($workspace->id, 'Deleted secret.pdf', 'Public');
+        $this->insertEmbeddingRow($workspace->id, $document->id, 'Deleted confidential figures.');
+        $document->delete();
+        $this->mockEmbeddingClient();
+        $this->mock(AnthropicClient::class, function ($mock) {
+            $mock->shouldNotReceive('answerDocumentQuestion');
+        });
+
+        Sanctum::actingAs($user);
+        $response = $this->postJson('/api/documents/query', ['question' => 'What are the confidential figures?'])
+            ->assertOk()->assertJsonPath('data.confidence', 'none');
+        $this->assertStringNotContainsString('Deleted secret', $response->getContent());
+        $this->assertStringNotContainsString('Deleted confidential', $response->getContent());
+    }
+
     public function test_ai_provider_failure_returns_generic_message_no_leak(): void
     {
         [$user, $workspace] = $this->createOrgUser('Viewer');

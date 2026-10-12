@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\DocumentUploadController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\MatterController;
 use App\Http\Controllers\Api\ReferralController;
+use App\Http\Controllers\Api\ReportSnapshotController;
 use App\Http\Controllers\Api\TrackedItemController;
 use App\Http\Controllers\Api\WorkspaceCreditController;
 use App\Http\Controllers\Api\WorkspaceInsightsController;
@@ -126,6 +127,8 @@ Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(functio
 
     Route::get('/documents/{document}', [DocumentController::class, 'show'])
         ->name('documents.show');
+    Route::get('/documents/{document}/report-snapshot', [ReportSnapshotController::class, 'document'])
+        ->name('documents.report-snapshot');
 
     Route::get('/documents/{document}/intelligence', [DocumentIntelligenceController::class, 'show'])
         ->name('documents.intelligence');
@@ -190,6 +193,7 @@ Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(functio
     Route::get('/matters', [$matter, 'index']);
     Route::post('/matters', [$matter, 'store']);
     Route::get('/matters/{matter}', [$matter, 'show']);
+    Route::get('/matters/{matter}/report-snapshot', [ReportSnapshotController::class, 'matter']);
     Route::patch('/matters/{matter}', [$matter, 'update']);
     Route::delete('/matters/{matter}', [$matter, 'destroy']);
     Route::post('/matters/{matter}/report-generated', [$matter, 'reportGenerated']);

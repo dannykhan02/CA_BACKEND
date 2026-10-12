@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Exceptions\MalwareScannerUnavailableException;
 use App\Models\Document;
+use App\Services\Documents\UploadDispatchRecovery;
 use App\Services\Intelligence\DocumentRevisionPublisher;
 use App\Services\Pipeline\DocumentProgress;
 use App\Services\Pipeline\DocumentStagePolicy;
@@ -36,6 +37,13 @@ class ScanUploadedFileJob implements ShouldQueue
 
             return;
         }
+        if (! app(DocumentStagePolicy::class)->permits($document, 'scan')
+            || ! app(DocumentRevisionPublisher::class)->owns($document, $this->revisionId)) {
+            return;
+        }
+
+        app(UploadDispatchRecovery::class)->claim($document, $this->revisionId);
+        $document->refresh();
         if (! app(DocumentStagePolicy::class)->permits($document, 'scan')
             || ! app(DocumentRevisionPublisher::class)->owns($document, $this->revisionId)) {
             return;

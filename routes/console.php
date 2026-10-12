@@ -1,8 +1,10 @@
 <?php
 
 use App\Models\Document;
+use App\Models\ProcessingJob;
 use App\Models\Subscription;
 use App\Models\VerificationCode;
+use App\Services\Documents\UploadDispatchRecovery;
 use App\Services\EntitlementService;
 use App\Services\Pipeline\ProcessingStageReconciler;
 use Illuminate\Foundation\Inspiring;
@@ -78,6 +80,27 @@ if (env('APP_DEMO_MODE') === '1') {
 
 // Recover a lost queue dispatch; ambiguous provider attempts require explicit review.
 Schedule::command('docintel:resume')->everyFiveMinutes()->withoutOverlapping();
+
+// If PHP exits after the upload transaction commits but before a queue
+// delivery is confirmed, close the pending admission. Never replay the
+// chain automatically: the queue outcome may be ambiguous and AI is billable.
+Artisan::command('documents:recover-upload-dispatches', function () {
+    ProcessingJob::where('stage', 'virus_scan')->where('status', 'pending')
+        ->where('input->source', 'upload_dispatch')->where('created_at', '<=', now()->subHour())
+        ->select(['id', 'document_id', 'intelligence_revision_id'])
+        ->chunkById(100, function ($attempts) {
+            foreach ($attempts as $attempt) {
+                try {
+                    app(UploadDispatchRecovery::class)->failIfUnclaimed(
+                        $attempt->document_id, $attempt->intelligence_revision_id);
+                } catch (Throwable $error) {
+                    Log::error('Upload dispatch recovery failed.', ['document_id' => $attempt->document_id,
+                        'error_type' => $error::class]);
+                }
+            }
+        });
+})->purpose('Close uploads that never reached their first queue worker');
+Schedule::command('documents:recover-upload-dispatches')->everyFiveMinutes()->withoutOverlapping();
 
 // Horizon's per-queue throughput/runtime metrics (and wait history) need periodic snapshots.
 Schedule::command('horizon:snapshot')->everyFiveMinutes();
