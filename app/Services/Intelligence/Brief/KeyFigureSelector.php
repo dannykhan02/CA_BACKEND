@@ -12,7 +12,7 @@ class KeyFigureSelector
     public function __construct(private SignalEvaluator $signals, private EvidenceMerger $normalizer) {}
 
     /** @param list<array<string,mixed>> $records @param array<string,array<string,mixed>> $assignments
-     *  @return list<array<string,mixed>>
+     * @return list<array<string,mixed>>
      */
     public function select(array $records, \DateTimeImmutable $asOf, array $assignments = []): array
     {
@@ -20,6 +20,7 @@ class KeyFigureSelector
             $value = $record['typed']['value'] ?? null;
 
             return ($record['kind'] ?? null) === 'metric'
+                && ! isset($record['data']['source_conflict'])
                 && ($record['provenance']['origin'] ?? null) === 'document'
                 && ($value['type'] ?? null) === 'money'
                 && ($value['unit_kind'] ?? null) === 'currency'

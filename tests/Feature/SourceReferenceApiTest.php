@@ -74,7 +74,10 @@ class SourceReferenceApiTest extends TestCase
         $response->assertOk()->assertJsonPath('data.capability', 'STRUCTURAL_PARTIAL')
             ->assertJsonPath('data.roles.value.0.path', 'sheet:0!B2')
             ->assertJsonPath('data.roles.value.0.metadata.value_origin', 'literal')
-            ->assertJsonPath('data.roles.period.0.path', 'sheet:0!B1');
+            ->assertJsonPath('data.roles.period.0.path', 'sheet:0!B1')
+            ->assertJsonPath('data.quality.sourceChannel', 'xlsx')
+            ->assertJsonPath('data.quality.structuralRelationshipQuality', 'verified_partial')
+            ->assertJsonPath('data.quality.evidenceStatus', 'supported_structural_partial');
         self::assertLessThanOrEqual(24, count($response->json('data.relationships')));
         self::assertLessThanOrEqual(25, count(DB::getQueryLog()));
         DB::disableQueryLog();
@@ -143,7 +146,8 @@ class SourceReferenceApiTest extends TestCase
             ->assertOk()->assertJsonPath('data.capability', 'TEXTUAL')
             ->assertJsonPath('data.source.truncated', true)
             ->assertJsonPath('data.source.range', null)
-            ->assertJsonPath('data.location', null);
+            ->assertJsonPath('data.location', null)
+            ->assertJsonPath('data.quality.evidenceStatus', 'unresolved');
     }
 
     public function test_multiple_source_occurrences_are_not_resolved_to_an_arbitrary_first_match(): void
@@ -159,5 +163,18 @@ class SourceReferenceApiTest extends TestCase
 
         $this->getJson('/api/documents/'.$document->id.'/sources/'.$sourceId)
             ->assertStatus(409)->assertJsonPath('error.code', 'SOURCE_AMBIGUOUS');
+    }
+
+    public function test_unresolved_conflict_is_visible_without_promoting_source_quality(): void
+    {
+        [$user, $document, $sourceId] = $this->fixture();
+        $evidence = DocumentEvidence::where('document_id', $document->id)
+            ->where('source_id', $sourceId)->firstOrFail();
+        $evidence->update(['data' => [...$evidence->data,
+            'source_conflict' => ['status' => 'unresolved_conflict', 'group' => 'fixture']]]);
+        Sanctum::actingAs($user);
+        $this->getJson('/api/documents/'.$document->id.'/sources/'.$sourceId)
+            ->assertOk()->assertJsonPath('data.quality.conflictStatus', 'unresolved_conflict')
+            ->assertJsonPath('data.quality.evidenceStatus', 'unresolved');
     }
 }

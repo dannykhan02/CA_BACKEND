@@ -31,7 +31,8 @@ class StructuredProvenanceProducer
                     default => 'text_span',
                 },
                 'modality' => match ($source->format) {
-                    'XLSX' => 'xlsx', 'DOCX' => 'docx', default => 'structured_pdf',
+                    'XLSX' => 'xlsx', 'DOCX' => 'docx',
+                    default => ($node['meta']['modality'] ?? null) === 'ocr' ? 'ocr' : 'structured_pdf',
                 },
                 'path' => mb_strlen($path) <= 250 ? $path : 'sha256:'.hash('sha256', $path),
                 'sheet' => $node['sheet'] ?? null, 'page' => $node['page'] ?? null];

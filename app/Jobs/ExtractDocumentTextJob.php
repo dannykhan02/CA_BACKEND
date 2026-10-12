@@ -106,9 +106,28 @@ class ExtractDocumentTextJob implements ShouldQueue
             return;
         }
 
-        if (trim($text) === '') {
-            $recorder->complete($extractStage, ['native_text_found' => false]);
-            $text = $this->fallbackToOcr($document, $ocrResolver, $rasterizer, $recorder, $absolutePath);
+        $emptyPdfPages = $document->type === 'PDF' && $structured !== null
+            ? ($structured->capabilities['empty_text_pages'] ?? []) : [];
+        $partialPdfOcr = trim($text) !== '' && $emptyPdfPages !== []
+            && ($document->workspace?->settings?->ocr_enabled ?? false);
+        if (trim($text) === '' || $partialPdfOcr) {
+            // The native page manifest is pinned before queued OCR runs. The final batch
+            // uses it to retain native pages and to reject missing OCR checkpoints.
+            if ($structured !== null) {
+                try {
+                    app(StructuredExtractionStore::class)->publish($document, $structured, $this->revisionId);
+                } catch (\Throwable $e) {
+                    @unlink($absolutePath);
+                    $recorder->fail($extractStage, 'Document extraction revision could not be published.');
+                    $this->markExtractionFailed('Could not publish document extraction.');
+                    $this->fail($e);
+
+                    return;
+                }
+            }
+            $recorder->complete($extractStage, ['native_text_found' => trim($text) !== '']);
+            $text = $this->fallbackToOcr($document, $ocrResolver, $rasterizer, $recorder,
+                $absolutePath, $emptyPdfPages);
             if ($text === null) {
                 // fallbackToOcr either set a terminal status itself (no
                 // provider available, OCR disabled, rasterization
@@ -187,6 +206,7 @@ class ExtractDocumentTextJob implements ShouldQueue
         PdfRasterizer $rasterizer,
         PipelineStageRecorder $recorder,
         string $absolutePath,
+        array $pdfPageNumbers = [],
     ): ?string {
         $batchLimit = config('document_processing.ocr_batch_max_pages');
         if (! is_int($batchLimit) || $batchLimit < 1 || $batchLimit > 3) {
@@ -232,8 +252,18 @@ class ExtractDocumentTextJob implements ShouldQueue
             // instead it re-fetches its own fresh copy from R2 when it
             // executes. See OcrPageBatchJob's $fetchPageFromSourceDisk.
             $imagePaths = $document->type === 'PDF'
-                ? $rasterizer->toPageImages($absolutePath)
-                : [$absolutePath];
+                ? $rasterizer->toPageImages($absolutePath, $pdfPageNumbers)
+                : [1 => $absolutePath];
+            if ($document->type === 'PDF' && $pdfPageNumbers !== []) {
+                $selected = array_intersect_key($imagePaths, array_fill_keys($pdfPageNumbers, true));
+                if (count($selected) !== count($pdfPageNumbers)) {
+                    throw new \RuntimeException('Rasterized PDF page manifest is incomplete.');
+                }
+                foreach (array_diff_key($imagePaths, $selected) as $extra) {
+                    @unlink($extra);
+                }
+                $imagePaths = $selected;
+            }
             @unlink($absolutePath);
         } catch (\Throwable $e) {
             @unlink($absolutePath);
@@ -282,7 +312,7 @@ class ExtractDocumentTextJob implements ShouldQueue
                 $rasterizer->cleanup($localImages);
             }
         }
-        $batches = array_chunk($imagePaths, $batchLimit);
+        $batches = array_chunk($imagePaths, $batchLimit, true);
         // Only a real PDF rasterization produces a disposable temp
         // directory — a bare JPG/PNG upload's "image path" IS the
         // original stored file, which must never be cleaned up here.
@@ -292,22 +322,21 @@ class ExtractDocumentTextJob implements ShouldQueue
         // time rather than trusting the (already-deleted) local path
         // above. See OcrPageBatchJob's $fetchPageFromSourceDisk.
         $fetchFromSourceDisk = $document->type !== 'PDF';
-        $startingPage = 1;
         $batchJobs = [];
 
         foreach ($batches as $index => $batchPaths) {
             $isLastBatch = $index === array_key_last($batches);
             $batchJobs[] = (new OcrPageBatchJob(
                 documentId: $document->id,
-                pageImagePaths: $batchPaths,
-                startingPageNumber: $startingPage,
+                pageImagePaths: array_values($batchPaths),
+                startingPageNumber: (int) array_key_first($batchPaths),
                 isLastBatch: $isLastBatch,
                 tempDir: $isLastBatch ? $tempDir : null,
                 fetchPageFromSourceDisk: $fetchFromSourceDisk,
                 storedPageImages: $storedPageImages,
                 revisionId: $this->revisionId,
+                pageNumbers: array_keys($batchPaths),
             ))->onQueue(QueueTopology::for(OcrPageBatchJob::class));
-            $startingPage += count($batchPaths);
         }
 
         $this->prependToChain($batchJobs);

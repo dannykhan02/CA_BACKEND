@@ -40,8 +40,8 @@ class IntelligenceBriefVerifierTest extends TestCase
             ['kpi:1' => $record], ['kpi:1']);
         self::assertSame('passed', $result['status']);
         self::assertSame([], $result['failed_reasons']);
-        // 12 with durations_grounded, which this claim states none of.
-        self::assertCount(12, $result['checks']);
+        // Assertion-force verification is now an additional source check.
+        self::assertCount(13, $result['checks']);
         self::assertSame('skipped', $this->check($result, 'durations_grounded'));
         self::assertSame('passed', $this->check($result, 'numbers_grounded'));
         self::assertSame('passed', $this->check($result, 'periods_grounded'));

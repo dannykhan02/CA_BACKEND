@@ -7,7 +7,9 @@ use App\Models\DocumentEvidence;
 use App\Models\OcrResult;
 use App\Models\User;
 use App\Services\DocumentTextExtractor;
+use App\Services\Extraction\PdfHybridAssembler;
 use App\Services\Extraction\SpreadsheetTextExtractor;
+use App\Services\Extraction\StructuredDocument;
 use App\Services\Extraction\StructuredExtractionStore;
 use App\Services\Intelligence\SourceProvenanceReader;
 use App\Services\Intelligence\SourceReferenceResolver;
@@ -353,6 +355,40 @@ XML);
         $proof = app(SourceProvenanceReader::class)->forEvidence($document, [$row->id])[$row->id];
         self::assertSame('embedded_text', $proof['roles']['value'][0]['modality']);
         self::assertSame('text_span', $proof['roles']['value'][0]['kind']);
+    }
+
+    public function test_hybrid_page_roles_keep_native_and_ocr_channels_separate(): void
+    {
+        $document = $this->document('PDF', hash('sha256', 'hybrid-page-fixture'));
+        $native = new StructuredDocument('PDF', 'fixture.v1', "Native 12.4\f", [
+            ['id' => 'page:1', 'type' => 'page', 'page' => 1, 'path' => 'page:1',
+                'start' => 0, 'end' => 11, 'text' => 'Native 12.4',
+                'meta' => ['modality' => 'embedded_pdf_text']],
+            ['id' => 'page:2', 'type' => 'page', 'page' => 2, 'path' => 'page:2'],
+        ], ['empty_text_pages' => [2], 'tables' => 'unavailable']);
+        $hybrid = app(PdfHybridAssembler::class)->assemble($native, [
+            2 => ['text' => 'OCR 99.9', 'confidence' => 0.87,
+                'metadata' => ['geometry' => 'word_boxes']],
+        ]);
+        app(StructuredExtractionStore::class)->publish($document, $hybrid);
+        OcrResult::create(['workspace_id' => $document->workspace_id,
+            'document_id' => $document->id, 'page_number' => 2,
+            'engine' => 'printed', 'raw_text' => 'OCR 99.9', 'confidence' => 0.87,
+            'metadata' => ['source' => 'tesseract', 'coordinate_system' => 'image_pixels',
+                'image_width' => 100, 'image_height' => 100,
+                'regions' => [['start' => 4, 'end' => 8, 'left' => 10, 'top' => 20,
+                    'width' => 30, 'height' => 10]]]]);
+        $nativeFact = $this->evidence($document, 'Native 12.4', '12.4', '');
+        $ocrFact = $this->evidence($document, 'OCR 99.9', '99.9', '');
+        $nativeFact->update(['sources' => [[...$nativeFact->sources[0], 'page' => 1]]]);
+        $ocrFact->update(['sources' => [[...$ocrFact->sources[0], 'page' => 2]]]);
+        app(TextRoleProvenanceProducer::class)->publish($document);
+        $proofs = app(SourceProvenanceReader::class)->forEvidence($document,
+            [$nativeFact->id, $ocrFact->id]);
+        self::assertSame('embedded_text', $proofs[$nativeFact->id]['roles']['value'][0]['modality']);
+        self::assertSame('ocr', $proofs[$ocrFact->id]['roles']['value'][0]['modality']);
+        self::assertSame('ocr_region', $proofs[$ocrFact->id]['roles']['value'][0]['kind']);
+        self::assertFalse($proofs[$ocrFact->id]['capabilities']['structural']);
     }
 
     public function test_header_token_prefix_cannot_prove_a_different_period(): void
