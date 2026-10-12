@@ -21,8 +21,10 @@ class SpreadsheetTextExtractor
         $maxSheets = config('document_processing.xlsx_max_sheets');
         $maxRows = config('document_processing.xlsx_max_rows_per_sheet');
         $maxCells = config('document_processing.xlsx_max_cells');
+        $maxStructuralNodes = config('document_processing.xlsx_max_structural_nodes');
         if (! is_int($maxSheets) || $maxSheets < 1 || ! is_int($maxRows) || $maxRows < 1
-            || ! is_int($maxCells) || $maxCells < 1) {
+            || ! is_int($maxCells) || $maxCells < 1 || ! is_int($maxStructuralNodes)
+            || $maxStructuralNodes < 1 || $maxStructuralNodes > 100000) {
             throw new \RuntimeException('Invalid workbook resource policy.');
         }
         try {
@@ -52,6 +54,7 @@ class SpreadsheetTextExtractor
         $offset = 0;
         $seenCells = 0;
         $formatFailures = 0;
+        $nodesTruncated = false;
         $previousCalendar = ExcelDate::getExcelCalendar();
         ExcelDate::setExcelCalendar($spreadsheet->getExcelCalendar());
 
@@ -60,9 +63,15 @@ class SpreadsheetTextExtractor
                 $sheetId = 'sheet:'.$sheetIndex;
                 $sheetName = $sheet->getTitle();
                 $sheetState = $sheet->getSheetState();
-                $nodes[] = ['id' => $sheetId, 'type' => 'worksheet', 'path' => $sheetId,
+                $sheetNode = ['id' => $sheetId, 'type' => 'worksheet', 'path' => $sheetId,
                     'sheet' => $sheetName, 'meta' => ['order' => $sheetIndex, 'visibility' => $sheetState,
                         'date_system' => $spreadsheet->getExcelCalendar()]];
+                $sheetIncluded = count($nodes) < $maxStructuralNodes;
+                if ($sheetIncluded) {
+                    $nodes[] = $sheetNode;
+                } else {
+                    $nodesTruncated = true;
+                }
                 $line = "=== Sheet: {$sheetName} ===";
                 if ($out !== []) {
                     $offset++;
@@ -81,10 +90,15 @@ class SpreadsheetTextExtractor
                     throw new \RuntimeException('Workbook table limit exceeded.');
                 }
                 foreach ($sheet->getTableCollection() as $table) {
-                    $nodes[] = ['id' => $sheetId.'/table:'.$table->getName(), 'type' => 'table',
+                    $tableNode = ['id' => $sheetId.'/table:'.$table->getName(), 'type' => 'table',
                         'parent' => $sheetId, 'sheet' => $sheetName,
                         'path' => $sheetId.'/table:'.$table->getName(),
                         'meta' => ['range' => $table->getRange(), 'header_row' => $table->getShowHeaderRow()]];
+                    if ($sheetIncluded && count($nodes) < $maxStructuralNodes) {
+                        $nodes[] = $tableNode;
+                    } else {
+                        $nodesTruncated = true;
+                    }
                 }
                 foreach ($sheet->getRowIterator() as $row) {
                     if ($row->getRowIndex() > $maxRows) {
@@ -145,7 +159,15 @@ class SpreadsheetTextExtractor
                     $line = implode(' | ', $cells);
                     $out[] = $line;
                     $offset += 1 + mb_strlen($line);
-                    array_push($nodes, ...$rowNodes);
+                    if ($sheetIncluded) {
+                        $remaining = $maxStructuralNodes - count($nodes);
+                        if (count($rowNodes) > $remaining) {
+                            $nodesTruncated = true;
+                        }
+                        array_push($nodes, ...array_slice($rowNodes, 0, max(0, $remaining)));
+                    } elseif ($rowNodes !== []) {
+                        $nodesTruncated = true;
+                    }
                 }
             }
         } catch (\Throwable $e) {
@@ -157,8 +179,10 @@ class SpreadsheetTextExtractor
 
         $text = implode("\n", $out);
 
-        return new StructuredDocument('XLSX', 'phpspreadsheet-xlsx.v1', $text, $nodes,
-            ['text' => 'complete', 'sheets' => 'complete', 'cells' => 'complete',
+        return new StructuredDocument('XLSX', 'phpspreadsheet-xlsx.v2', $text, $nodes,
+            ['text' => 'complete', 'sheets' => $nodesTruncated ? 'partial' : 'complete',
+                'cells' => $nodesTruncated ? 'partial' : 'complete',
+                'nodes_truncated' => $nodesTruncated,
                 'merges' => 'complete', 'formulas' => 'cached_only', 'headers' => 'native_tables_only',
                 'hidden_content' => 'retained_marked',
                 'display_formatting' => $formatFailures === 0 ? 'available' : 'partial',

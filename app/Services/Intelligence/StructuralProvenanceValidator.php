@@ -14,6 +14,9 @@ class StructuralProvenanceValidator
         $out = [];
         $captionOwner = [];
         foreach ($relations as $edge) {
+            if (! isset($nodes[$edge['from']], $nodes[$edge['to']]) || $edge['from'] === $edge['to']) {
+                throw new \InvalidArgumentException('Structural relationship has no distinct source endpoints.');
+            }
             $out[$edge['from']][$edge['type']][] = $edge['to'];
             if ($edge['type'] === 'caption') {
                 if (isset($captionOwner[$edge['to']]) && $captionOwner[$edge['to']] !== $edge['from']) {
@@ -42,6 +45,19 @@ class StructuralProvenanceValidator
         foreach (array_keys($nodes) as $key) {
             $visit($key);
         }
+        foreach ($relations as $edge) {
+            if ($edge['type'] !== 'continuation') {
+                continue;
+            }
+            $fromPage = $nodes[$edge['from']]['page'] ?? null;
+            $toPage = $nodes[$edge['to']]['page'] ?? null;
+            if (! is_int($fromPage) || ! is_int($toPage) || abs($fromPage - $toPage) !== 1
+                || $this->tableOf($edge['from'], $nodes, $out) === null
+                || $this->tableOf($edge['from'], $nodes, $out)
+                    !== $this->tableOf($edge['to'], $nodes, $out)) {
+                throw new \InvalidArgumentException('Continuation needs adjacent pages in one proven table.');
+            }
+        }
         $byEvidence = [];
         foreach ($bindings as $binding) {
             $byEvidence[$binding['evidence_id']][$binding['role']][] = $binding['anchor'];
@@ -66,6 +82,13 @@ class StructuralProvenanceValidator
                     if ($key === $value) {
                         continue;
                     }
+                    $valuePage = $valueNode['page'] ?? null;
+                    $rolePage = $nodes[$key]['page'] ?? null;
+                    if (is_int($valuePage) && is_int($rolePage) && $valuePage !== $rolePage
+                        && ! in_array($key, $out[$value]['continuation'] ?? [], true)
+                        && ! in_array($value, $out[$key]['continuation'] ?? [], true)) {
+                        throw new \InvalidArgumentException('Cross-page role lacks explicit continuation.');
+                    }
                     if ($table !== null) {
                         $rowPath = $this->headerPath($value, 'row_header', $out);
                         $columnPath = $this->headerPath($value, 'column_header', $out);
@@ -84,8 +107,9 @@ class StructuralProvenanceValidator
                         if ($role === 'period' && ! in_array($key, $columnPath, true)) {
                             throw new \InvalidArgumentException('Period lacks a value-to-column relationship.');
                         }
-                        if (in_array($role, ['currency', 'unit', 'scale'], true) && ! $tableCaption) {
-                            throw new \InvalidArgumentException('Table-level unit lacks a caption relationship.');
+                        if (in_array($role, ['currency', 'unit', 'scale'], true)
+                            && ! $tableCaption && ! in_array($key, $columnPath, true)) {
+                            throw new \InvalidArgumentException('Unit lacks a table caption or column-header relationship.');
                         }
                     } elseif (! $this->sameTextContainer($value, $key, $out)) {
                         throw new \InvalidArgumentException('Prose roles have no common source container.');

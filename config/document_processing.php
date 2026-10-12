@@ -13,6 +13,7 @@ return [
     'xlsx_max_sheets' => (int) env('DOC_XLSX_MAX_SHEETS', 100),
     'xlsx_max_rows_per_sheet' => (int) env('DOC_XLSX_MAX_ROWS_PER_SHEET', 100000),
     'xlsx_max_cells' => (int) env('DOC_XLSX_MAX_CELLS', 500000),
+    'xlsx_max_structural_nodes' => (int) env('DOC_XLSX_MAX_STRUCTURAL_NODES', 100000),
     'image_max_pixels' => (int) env('DOC_IMAGE_MAX_PIXELS', 100000000),
     'ocr_batch_max_pages' => (int) env('DOC_OCR_BATCH_MAX_PAGES', 3),
 

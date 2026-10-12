@@ -3,6 +3,7 @@
 namespace Tests\Unit\Services;
 
 use App\Services\DocumentTextExtractor;
+use App\Services\Intelligence\StructuredProvenanceProducer;
 use Tests\TestCase;
 
 class DocumentTextExtractorTest extends TestCase
@@ -71,6 +72,60 @@ class DocumentTextExtractorTest extends TestCase
         self::assertSame(4, substr_count($text, "\f"));
         self::assertSame(5, $extractor->countPdfPages($path));
         self::assertStringContainsString('Synthetic benchmark page 5', explode("\f", $text)[4]);
+    }
+
+    public function test_docx_footnote_reference_keeps_body_text_and_explicit_note_edge(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'footnote_docx_');
+        $zip = new \ZipArchive;
+        $zip->open($path, \ZipArchive::OVERWRITE);
+        $zip->addFromString('[Content_Types].xml', '<Types/>');
+        $zip->addFromString('word/document.xml', <<<'XML'
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>Revenue 12.4</w:t></w:r><w:r><w:footnoteReference w:id="1"/></w:r></w:p></w:body></w:document>
+XML);
+        $zip->addFromString('word/footnotes.xml', <<<'XML'
+<w:footnotes xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:footnote w:id="1"><w:p><w:r><w:t>Restated figure.</w:t></w:r></w:p></w:footnote></w:footnotes>
+XML);
+        $zip->close();
+        try {
+            $source = (new DocumentTextExtractor)->extractDocxStructured($path);
+            self::assertSame("Revenue 12.4\n", $source->text);
+            self::assertSame('Restated figure.', $source->node('footnote:1')['text']);
+            self::assertSame(['1'], $source->node('body/p[1]')['meta']['footnote_ids']);
+            [, $edges] = app(StructuredProvenanceProducer::class)->build($source, []);
+            self::assertContains('footnote', array_column($edges, 'type'));
+        } finally {
+            unlink($path);
+        }
+    }
+
+    public function test_docx_heading_style_sets_bounded_section_ownership(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'heading_docx_');
+        $zip = new \ZipArchive;
+        $zip->open($path, \ZipArchive::OVERWRITE);
+        $zip->addFromString('[Content_Types].xml', '<Types/>');
+        $zip->addFromString('word/document.xml', <<<'XML'
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>
+<w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t>Finance</w:t></w:r></w:p>
+<w:p><w:r><w:t>Revenue 12.4</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t>Operations</w:t></w:r></w:p>
+<w:p><w:r><w:t>Employees 30</w:t></w:r></w:p>
+</w:body></w:document>
+XML);
+        $zip->close();
+        try {
+            $source = (new DocumentTextExtractor)->extractDocxStructured($path);
+            self::assertSame('section_heading', $source->node('body/p[1]')['type']);
+            self::assertSame('body/p[1]', $source->node('body/p[2]')['meta']['section_heading_id']);
+            self::assertSame('body/p[3]', $source->node('body/p[4]')['meta']['section_heading_id']);
+            [, $edges] = app(StructuredProvenanceProducer::class)->build($source, []);
+            self::assertSame(2, count(array_filter($edges,
+                static fn (array $edge): bool => $edge['type'] === 'section_parent'
+                    && $edge['from'] !== $edge['to'])));
+        } finally {
+            unlink($path);
+        }
     }
 
     public function test_pdf_page_limit_and_malformed_file_fail_before_parser(): void

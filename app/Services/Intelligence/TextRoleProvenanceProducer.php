@@ -19,15 +19,20 @@ class TextRoleProvenanceProducer
         $bindings = [];
         $text = (string) $document->extracted_text;
         $key = (string) ($document->ai_pipeline['key'] ?? 'legacy');
+        $ocrPages = $document->ocrResults()
+            ->where('intelligence_revision_id', $document->active_intelligence_revision_id)
+            ->orderBy('page_number')->get(['page_number', 'raw_text', 'metadata']);
+        $ocrTextMatches = $ocrPages->isNotEmpty() && $ocrPages->pluck('raw_text')->implode("\f") === $text;
         $modality = match ($document->type) {
-            'XLSX' => 'xlsx', 'DOCX' => 'docx', 'PDF' => $document->ocrResults()->exists() ? 'ocr' : 'embedded_text',
-            default => 'ocr',
+            'XLSX' => 'xlsx', 'DOCX' => 'docx', 'PDF' => $ocrTextMatches ? 'ocr' : 'embedded_text',
+            default => $ocrTextMatches ? 'ocr' : 'embedded_text',
         };
+        $ocrWords = $ocrTextMatches ? $this->ocrWordRegions($ocrPages) : [];
         $rows = DocumentEvidence::where('workspace_id', $document->workspace_id)
             ->where('document_id', $document->id)->where('pipeline_key', $key)->get();
         $structured = app(StructuredExtractionStore::class)->active($document);
         $structurallyBound = [];
-        $parserVersion = 'raw-text.v1';
+        $parserVersion = 'raw-text.v2';
         if ($structured !== null) {
             [$nativeAnchors, $nativeRelations, $nativeBindings, $structurallyBound] =
                 app(StructuredProvenanceProducer::class)->build($structured, $rows);
@@ -38,7 +43,7 @@ class TextRoleProvenanceProducer
                 $relations[$relation['from'].'|'.$relation['to'].'|'.$relation['type']] = $relation;
             }
             array_push($bindings, ...$nativeBindings);
-            $parserVersion = $structured->parserVersion.'@'.StructuredDocument::POLICY;
+            $parserVersion = $structured->parserVersion.'@'.StructuredDocument::POLICY.'@roles.v2';
         }
         foreach ($rows as $row) {
             if (isset($structurallyBound[$row->id])) {
@@ -102,6 +107,9 @@ class TextRoleProvenanceProducer
                         'modality' => $anchors[$quoteKey]['modality'], 'page' => $source['page'] ?? null,
                         'start_offset' => $from, 'end_offset' => $to,
                         'text' => mb_substr($text, $from, $to - $from)];
+                    if ($role === 'value' && isset($ocrWords[$roleKey])) {
+                        $anchors[$roleKey] = array_merge($anchors[$roleKey], $ocrWords[$roleKey]);
+                    }
                     if ($roleKey !== $quoteKey) {
                         $relations[$roleKey.'|'.$quoteKey] = ['from' => $roleKey,
                             'to' => $quoteKey, 'type' => 'contained_by'];
@@ -114,5 +122,45 @@ class TextRoleProvenanceProducer
 
         return $this->store->publish($document, $parserVersion, array_values($anchors),
             array_values($relations), $bindings);
+    }
+
+    /** Tesseract boxes are navigable only when the entire page sequence equals stored text. */
+    private function ocrWordRegions(iterable $pages): array
+    {
+        $words = [];
+        $pageOffset = 0;
+        foreach ($pages as $page) {
+            $metadata = $page->metadata ?? [];
+            $width = $metadata['image_width'] ?? null;
+            $height = $metadata['image_height'] ?? null;
+            if (($metadata['source'] ?? null) === 'tesseract'
+                && ($metadata['coordinate_system'] ?? null) === 'image_pixels'
+                && is_int($width) && $width > 0 && is_int($height) && $height > 0) {
+                foreach (array_slice($metadata['regions'] ?? [], 0, 5000) as $region) {
+                    $start = $region['start'] ?? null;
+                    $end = $region['end'] ?? null;
+                    $left = $region['left'] ?? null;
+                    $top = $region['top'] ?? null;
+                    $boxWidth = $region['width'] ?? null;
+                    $boxHeight = $region['height'] ?? null;
+                    if (! is_int($start) || ! is_int($end) || $end <= $start
+                        || ! is_int($left) || ! is_int($top) || ! is_int($boxWidth) || ! is_int($boxHeight)
+                        || $left < 0 || $top < 0 || $boxWidth < 1 || $boxHeight < 1
+                        || $left + $boxWidth > $width || $top + $boxHeight > $height
+                        || $end > mb_strlen($page->raw_text)
+                        || mb_substr($page->raw_text, $start, $end - $start) === '') {
+                        continue;
+                    }
+                    $key = 'raw:'.($pageOffset + $start).':'.($pageOffset + $end);
+                    $words[$key] = ['kind' => 'ocr_region', 'page' => $page->page_number,
+                        'geometry' => ['system' => 'image_pixels_top_left',
+                            'box' => [$left, $top, $boxWidth, $boxHeight],
+                            'width' => $width, 'height' => $height, 'rotation' => 0]];
+                }
+            }
+            $pageOffset += mb_strlen($page->raw_text) + 1;
+        }
+
+        return $words;
     }
 }

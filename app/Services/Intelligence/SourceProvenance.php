@@ -11,11 +11,12 @@ class SourceProvenance
 {
     public const POLICY = 'provenance.v1';
 
-    private const KINDS = ['text_span', 'paragraph', 'table', 'cell', 'row_header', 'column_header',
+    private const KINDS = ['text_span', 'paragraph', 'table', 'table_row', 'table_column', 'cell',
+        'row_header', 'column_header',
         'section_heading', 'caption', 'footnote', 'worksheet_cell', 'ocr_region'];
 
     private const RELATIONS = ['contained_by', 'row_header', 'column_header', 'table_parent',
-        'section_parent', 'caption', 'footnote'];
+        'section_parent', 'caption', 'footnote', 'continuation'];
 
     private const ROLES = ['entity', 'subject', 'metric', 'value', 'currency', 'unit', 'scale',
         'period', 'qualifier', 'direction', 'numerator', 'denominator'];
@@ -177,6 +178,7 @@ class SourceProvenance
                     'period' => $data['period'] ?? null,
                     'value' => $data['value'] ?? null,
                     'subject' => $data['subject'] ?? null,
+                    'unit' => $data['unit'] ?? null,
                     default => null,
                 };
                 $anchor = $anchorByKey[$binding['anchor']];
@@ -186,8 +188,10 @@ class SourceProvenance
                     throw new \InvalidArgumentException('Multi-value cell requires a value subspan.');
                 }
                 if (is_string($field) && trim($field) !== ''
-                    && ! str_contains(app(MatchingTextNormalizer::class)->fold((string) ($anchor['text'] ?? '')),
-                        app(MatchingTextNormalizer::class)->fold($field))) {
+                    && preg_match('/(?<![\p{L}\p{N}])'
+                        .preg_quote(app(MatchingTextNormalizer::class)->fold($field), '/')
+                        .'(?![\p{L}\p{N}])/u',
+                        app(MatchingTextNormalizer::class)->fold((string) ($anchor['text'] ?? ''))) !== 1) {
                     throw new \InvalidArgumentException('Field role contradicts the canonical record.');
                 }
                 $signature = implode('|', [$binding['evidence_id'], $anchorId, $binding['role']]);
