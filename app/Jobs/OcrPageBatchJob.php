@@ -11,6 +11,8 @@ use App\Models\Document;
 use App\Models\OcrResult;
 use App\Services\Documents\DocumentStorageService;
 use App\Services\EntitlementService;
+use App\Services\Extraction\PdfHybridAssembler;
+use App\Services\Extraction\StructuredExtractionStore;
 use App\Services\Intelligence\DocumentRevisionPublisher;
 use App\Services\Ocr\OcrEngineResolver;
 use App\Services\Pipeline\DocumentStagePolicy;
@@ -75,6 +77,7 @@ class OcrPageBatchJob implements ShouldQueue
         public bool $fetchPageFromSourceDisk = false,
         public bool $storedPageImages = false,
         public ?string $revisionId = null,
+        public ?array $pageNumbers = null,
     ) {}
 
     public function handle(OcrEngineResolver $resolver, PipelineStageRecorder $recorder): void
@@ -87,8 +90,13 @@ class OcrPageBatchJob implements ShouldQueue
             return;
         }
         $batchLimit = config('document_processing.ocr_batch_max_pages');
+        $pageMappingValid = $this->pageNumbers === null || (array_is_list($this->pageNumbers)
+            && count($this->pageNumbers) === count($this->pageImagePaths)
+            && count(array_unique($this->pageNumbers)) === count($this->pageNumbers)
+            && count(array_filter($this->pageNumbers,
+                static fn ($page) => is_int($page) && $page > 0)) === count($this->pageNumbers));
         if (! is_int($batchLimit) || $batchLimit < 1 || $batchLimit > 3
-            || count($this->pageImagePaths) > $batchLimit) {
+            || count($this->pageImagePaths) > $batchLimit || ! $pageMappingValid) {
             $document->forceFill(['status' => 'Failed', 'progress' => 100,
                 'error_message' => 'OCR batch exceeds the configured page limit.'])->save();
             app(EntitlementService::class)->releaseStaleReservations($document->workspace_id);
@@ -119,7 +127,7 @@ class OcrPageBatchJob implements ShouldQueue
             foreach ($this->pageImagePaths as $offset => $imagePath) {
                 if (OcrResult::where('document_id', $document->id)->where('workspace_id', $document->workspace_id)
                     ->where('intelligence_revision_id', $this->revisionId)
-                    ->where('page_number', $this->startingPageNumber + $offset)->exists()) {
+                    ->where('page_number', $this->pageNumbers[$offset] ?? $this->startingPageNumber + $offset)->exists()) {
                     if ($this->storedPageImages) {
                         Storage::disk('documents')->delete($imagePath);
                     }
@@ -140,7 +148,7 @@ class OcrPageBatchJob implements ShouldQueue
                     'workspace_id' => $document->workspace_id,
                     'document_id' => $document->id,
                     'intelligence_revision_id' => $this->revisionId,
-                    'page_number' => $this->startingPageNumber + $offset,
+                    'page_number' => $this->pageNumbers[$offset] ?? $this->startingPageNumber + $offset,
                 ], [
                     'engine' => $provider->engine(),
                     'raw_text' => $result->text,
@@ -197,11 +205,32 @@ class OcrPageBatchJob implements ShouldQueue
 
     private function finalizeDocument(Document $document): void
     {
-        $text = $document->ocrResults()->where('intelligence_revision_id', $this->revisionId)
-            ->orderBy('page_number')
-            ->pluck('raw_text')
-            ->map(fn ($t) => $t ?? '')
-            ->implode("\f");
+        $results = $document->ocrResults()->where('intelligence_revision_id', $this->revisionId)
+            ->orderBy('page_number')->get(['page_number', 'raw_text', 'confidence', 'metadata']);
+        $native = $document->type === 'PDF'
+            ? app(StructuredExtractionStore::class)->active($document) : null;
+        $assembled = null;
+        if ($native !== null && $native->parserVersion === 'smalot-page-ocr.v1') {
+            $text = $native->text; // A retry after publication must not change the page revision.
+        } elseif ($native !== null) {
+            $required = $native->capabilities['empty_text_pages'] ?? [];
+            $byPage = [];
+            foreach ($results as $result) {
+                if (in_array($result->page_number, $required, true)) {
+                    $byPage[$result->page_number] = ['text' => (string) $result->raw_text,
+                        'confidence' => $result->confidence, 'metadata' => $result->metadata ?? []];
+                }
+            }
+            if (count($byPage) !== count($required)) {
+                $this->markOcrFailure($document, 'OCR page checkpoints are incomplete.');
+
+                return;
+            }
+            $assembled = app(PdfHybridAssembler::class)->assemble($native, $byPage);
+            $text = $assembled->text;
+        } else {
+            $text = $results->pluck('raw_text')->map(fn ($t) => $t ?? '')->implode("\f");
+        }
 
         $this->cleanupTempDir();
 
@@ -216,6 +245,9 @@ class OcrPageBatchJob implements ShouldQueue
         // Persistent source of truth — same reasoning as
         // ExtractDocumentTextJob's native-text path: nothing downstream
         // should treat the 2hr cache entry as authoritative.
+        if ($assembled !== null) {
+            app(StructuredExtractionStore::class)->publish($document, $assembled, $this->revisionId);
+        }
         $written = DB::transaction(function () use ($document, $text): bool {
             $locked = Document::whereKey($document->id)->lockForUpdate()->first();
             if (! $locked || ! app(DocumentRevisionPublisher::class)->owns($locked, $this->revisionId)) {

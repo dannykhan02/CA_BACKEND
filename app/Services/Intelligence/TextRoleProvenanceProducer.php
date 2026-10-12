@@ -22,15 +22,37 @@ class TextRoleProvenanceProducer
         $ocrPages = $document->ocrResults()
             ->where('intelligence_revision_id', $document->active_intelligence_revision_id)
             ->orderBy('page_number')->get(['page_number', 'raw_text', 'metadata']);
+        $structured = app(StructuredExtractionStore::class)->active($document);
+        $pageOffsets = [];
+        $ocrPageNumbers = [];
+        if ($structured?->format === 'PDF') {
+            foreach ($structured->nodes as $node) {
+                if (($node['type'] ?? null) === 'page' && isset($node['page'], $node['start'])) {
+                    $pageOffsets[$node['page']] = $node['start'];
+                    if (($node['meta']['modality'] ?? null) === 'ocr') {
+                        $ocrPageNumbers[$node['page']] = $node['text'] ?? '';
+                    }
+                }
+            }
+        }
         $ocrTextMatches = $ocrPages->isNotEmpty() && $ocrPages->pluck('raw_text')->implode("\f") === $text;
+        if ($ocrTextMatches && $pageOffsets === []) {
+            $cursor = 0;
+            foreach ($ocrPages as $page) {
+                $pageOffsets[$page->page_number] = $cursor;
+                $ocrPageNumbers[$page->page_number] = (string) $page->raw_text;
+                $cursor += mb_strlen((string) $page->raw_text) + 1;
+            }
+        }
         $modality = match ($document->type) {
             'XLSX' => 'xlsx', 'DOCX' => 'docx', 'PDF' => $ocrTextMatches ? 'ocr' : 'embedded_text',
             default => $ocrTextMatches ? 'ocr' : 'embedded_text',
         };
-        $ocrWords = $ocrTextMatches ? $this->ocrWordRegions($ocrPages) : [];
+        $currentOcrPages = $ocrPages->filter(static fn ($page) => isset($ocrPageNumbers[$page->page_number])
+            && $ocrPageNumbers[$page->page_number] === (string) $page->raw_text);
+        $ocrWords = $this->ocrWordRegions($currentOcrPages, $pageOffsets);
         $rows = DocumentEvidence::where('workspace_id', $document->workspace_id)
             ->where('document_id', $document->id)->where('pipeline_key', $key)->get();
-        $structured = app(StructuredExtractionStore::class)->active($document);
         $structurallyBound = [];
         $parserVersion = 'raw-text.v2';
         if ($structured !== null) {
@@ -64,8 +86,14 @@ class TextRoleProvenanceProducer
                     continue;
                 }
                 $quoteKey = 'raw:'.$start.':'.$end;
+                $page = $source['page'] ?? null;
+                $sourceModality = isset($ocrPageNumbers[$page])
+                    && isset($pageOffsets[$page])
+                    && $start >= $pageOffsets[$page]
+                    && $end <= $pageOffsets[$page] + mb_strlen($ocrPageNumbers[$page])
+                    ? 'ocr' : $modality;
                 $anchors[$quoteKey] = ['key' => $quoteKey, 'kind' => 'text_span',
-                    'modality' => $modality,
+                    'modality' => $sourceModality,
                     'page' => $source['page'] ?? null, 'start_offset' => $start,
                     'end_offset' => $end, 'text' => $quote];
                 // A flattened table row has no defensible row/column ownership. Keep its quote,
@@ -125,11 +153,14 @@ class TextRoleProvenanceProducer
     }
 
     /** Tesseract boxes are navigable only when the entire page sequence equals stored text. */
-    private function ocrWordRegions(iterable $pages): array
+    private function ocrWordRegions(iterable $pages, array $pageOffsets): array
     {
         $words = [];
-        $pageOffset = 0;
         foreach ($pages as $page) {
+            $pageOffset = $pageOffsets[$page->page_number] ?? null;
+            if (! is_int($pageOffset)) {
+                continue;
+            }
             $metadata = $page->metadata ?? [];
             $width = $metadata['image_width'] ?? null;
             $height = $metadata['image_height'] ?? null;
@@ -158,7 +189,6 @@ class TextRoleProvenanceProducer
                             'width' => $width, 'height' => $height, 'rotation' => 0]];
                 }
             }
-            $pageOffset += mb_strlen($page->raw_text) + 1;
         }
 
         return $words;

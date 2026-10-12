@@ -7,6 +7,10 @@ class StructuralClaimGuard
 {
     public function compatible(string $claim, array $record): bool
     {
+        if (in_array($record['data']['source_conflict']['status'] ?? null,
+            ['unresolved_conflict', 'restated_or_amended_unresolved'], true)) {
+            return false;
+        }
         $roles = $record['source_provenance']['roles'] ?? [];
         if (! isset($roles['value'])) {
             return true; // Legacy textual verification remains the owner.

@@ -24,6 +24,8 @@ use App\Services\AI\ResponseValidator;
 use App\Services\AnthropicClient;
 use App\Services\DocumentIntelligenceService;
 use App\Services\Documents\DocumentReprocessor;
+use App\Services\Extraction\StructuredDocument;
+use App\Services\Extraction\StructuredExtractionStore;
 use App\Services\Ocr\OcrEngineResolver;
 use App\Services\Ocr\OcrPageResult;
 use App\Services\Ocr\OcrProviderInterface;
@@ -569,6 +571,55 @@ class IncrementalDocumentPipelineTest extends TestCase
         self::assertFileDoesNotExist($temporaryPath);
         Storage::disk('documents')->assertMissing('ai-ocr/first.png');
         Storage::disk('documents')->assertMissing('ai-ocr/second.png');
+    }
+
+    public function test_equal_context_conflicts_keep_both_sources_and_do_not_merge_different_years(): void
+    {
+        $document = $this->document("Revenue was USD 10 in 2024.\nRevenue was USD 12 in 2024.\nRevenue was USD 9 in 2023.");
+        $chunk = $this->plan($document);
+        $chunk->update(['status' => 'completed', 'result' => ['records' => [
+            $this->record(['value' => '10', 'quote' => 'Revenue was USD 10 in 2024.']),
+            $this->record(['value' => '12', 'quote' => 'Revenue was USD 12 in 2024.']),
+            $this->record(['value' => '9', 'period' => '2023', 'quote' => 'Revenue was USD 9 in 2023.']),
+        ]]]);
+        $stats = app(EvidenceMerger::class)->merge($document);
+        self::assertSame(2, $stats['conflicting_records']);
+        $byValue = DocumentEvidence::where('document_id', $document->id)->get()->keyBy('data.value');
+        self::assertCount(3, $byValue);
+        self::assertSame('unresolved_conflict', $byValue['10']->data['source_conflict']['status']);
+        self::assertSame('unresolved_conflict', $byValue['12']->data['source_conflict']['status']);
+        self::assertArrayNotHasKey('source_conflict', $byValue['9']->data);
+        self::assertNotSame($byValue['10']->sources[0]['start_offset'], $byValue['12']->sources[0]['start_offset']);
+    }
+
+    public function test_hybrid_ocr_finalizer_retains_native_pages_and_revision_scoped_ocr_page(): void
+    {
+        $document = $this->document("Native first\f\fNative last");
+        app(StructuredExtractionStore::class)->publish($document, new StructuredDocument(
+            'PDF', 'fixture.v1', "Native first\f\fNative last", [
+                ['id' => 'page:1', 'type' => 'page', 'page' => 1, 'path' => 'page:1',
+                    'start' => 0, 'end' => 12, 'text' => 'Native first',
+                    'meta' => ['modality' => 'embedded_pdf_text']],
+                ['id' => 'page:2', 'type' => 'page', 'page' => 2, 'path' => 'page:2'],
+                ['id' => 'page:3', 'type' => 'page', 'page' => 3, 'path' => 'page:3',
+                    'start' => 14, 'end' => 25, 'text' => 'Native last',
+                    'meta' => ['modality' => 'embedded_pdf_text']],
+            ], ['empty_text_pages' => [2], 'tables' => 'unavailable']));
+        $document->ocrResults()->create(['workspace_id' => $document->workspace_id,
+            'page_number' => 2, 'engine' => 'printed', 'raw_text' => 'Scanned middle',
+            'confidence' => 0.85]);
+        $provider = \Mockery::mock(OcrProviderInterface::class);
+        $resolver = $this->mock(OcrEngineResolver::class);
+        $resolver->shouldReceive('resolve')->twice()->andReturn($provider);
+        $job = new OcrPageBatchJob($document->id, [], 2, true, pageNumbers: []);
+        $job->handle($resolver, app(PipelineStageRecorder::class));
+        self::assertSame("Native first\fScanned middle\fNative last", $document->fresh()->extracted_text);
+        $result = app(StructuredExtractionStore::class)->active($document->fresh());
+        self::assertSame('ocr', $result->node('page:2')['meta']['modality']);
+        self::assertSame('embedded_pdf_text', $result->node('page:3')['meta']['modality']);
+        self::assertSame([2], $result->capabilities['ocr_pages']);
+        $job->handle($resolver, app(PipelineStageRecorder::class));
+        self::assertSame($result->text, $document->fresh()->extracted_text);
     }
 
     public function test_503_does_not_trigger_unbounded_transport_retries(): void

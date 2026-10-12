@@ -16,6 +16,7 @@ return [
     'xlsx_max_structural_nodes' => (int) env('DOC_XLSX_MAX_STRUCTURAL_NODES', 100000),
     'image_max_pixels' => (int) env('DOC_IMAGE_MAX_PIXELS', 100000000),
     'ocr_batch_max_pages' => (int) env('DOC_OCR_BATCH_MAX_PAGES', 3),
+    'conflict_max_records' => (int) env('DOC_CONFLICT_MAX_RECORDS', 20000),
 
     // Classification gate: which classifications are allowed to have their
     // full text sent to the Anthropic API automatically. Restricted is

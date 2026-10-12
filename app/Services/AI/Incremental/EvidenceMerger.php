@@ -161,6 +161,7 @@ class EvidenceMerger
             }
         }
 
+        $stats['conflicting_records'] = $this->annotateMetricConflicts($state);
         $clock = hrtime(true);
         $this->writeEvidence($document, $key, $state, $stats);
         $stats['persist_ms'] = (hrtime(true) - $clock) / 1e6;
@@ -175,6 +176,89 @@ class EvidenceMerger
         $stats['total_ms'] = round((hrtime(true) - $started) / 1e6, 1);
 
         return $stats;
+    }
+
+    /** Keep both observations; mark only equal, fully named contexts with distinct values. */
+    private function annotateMetricConflicts(array &$state): int
+    {
+        $limit = (int) config('document_processing.conflict_max_records', 20000);
+        if ($limit < 1 || count($state) > $limit) {
+            return 0;
+        }
+        $groups = [];
+        foreach ($state as $identity => $entry) {
+            if ($entry['kind'] !== 'metric') {
+                continue;
+            }
+            $data = $entry['data'];
+            $fields = [$data['label'] ?? null,
+                $data['subject'] ?? null, $data['period'] ?? null, $data['unit'] ?? null,
+                $data['metric_type'] ?? null, $data['value_basis'] ?? null,
+                $data['aggregation'] ?? null, $data['quantity_kind'] ?? null];
+            if (! is_string($fields[0]) || trim($fields[0]) === ''
+                || ! is_string($fields[1]) || trim($fields[1]) === ''
+                || ! is_string($fields[2]) || trim($fields[2]) === '') {
+                continue;
+            }
+            $quote = (string) ($data['quote'] ?? '');
+            $value = (string) ($data['value'] ?? '');
+            if ($quote === '' || $value === '') {
+                continue;
+            }
+            $pattern = '/(?<!\d)'.preg_quote($value, '/').'(?!\d)/u';
+            if (preg_match_all($pattern, $quote) !== 1) {
+                continue; // Repeated or unlocated values have no unique context fingerprint.
+            }
+            $skeleton = preg_replace($pattern, '{value}', $quote, 1);
+            $skeleton = preg_replace('/\b(?:restated|amended|revised|original)\b/iu', '', $skeleton);
+            $fields[] = $skeleton;
+            $group = hash('sha256', json_encode(array_map(static fn ($field) => trim(preg_replace('/\s+/u', ' ', mb_strtolower((string) $field))), $fields)));
+            $groups[$group][$identity] = $this->comparableValue((string) ($data['value'] ?? ''));
+        }
+        $count = 0;
+        $conflicting = [];
+        foreach ($groups as $group => $members) {
+            if (count(array_unique($members)) < 2) {
+                continue;
+            }
+            $restated = false;
+            foreach (array_keys($members) as $identity) {
+                $conflicting[$identity] = true;
+                $restated = $restated || preg_match('/\b(?:restated|amended|revised)\b/iu',
+                    (string) ($state[$identity]['data']['quote'] ?? '')) === 1;
+            }
+            foreach (array_keys($members) as $identity) {
+                $status = $restated ? 'restated_or_amended_unresolved' : 'unresolved_conflict';
+                $quality = ['status' => $status, 'group' => $group];
+                if (($state[$identity]['data']['source_conflict'] ?? null) !== $quality) {
+                    $state[$identity]['data']['source_conflict'] = $quality;
+                    $state[$identity]['dirty'] = true;
+                }
+                $count++;
+            }
+        }
+        foreach ($state as $identity => &$entry) {
+            if ($entry['kind'] === 'metric' && ! isset($conflicting[$identity])
+                && isset($entry['data']['source_conflict'])) {
+                unset($entry['data']['source_conflict']);
+                $entry['dirty'] = true;
+            }
+        }
+        unset($entry);
+
+        return $count;
+    }
+
+    private function comparableValue(string $value): string
+    {
+        $value = trim($value);
+        if (preg_match('/^[+-]?(?:\d{1,3}(?:,\d{3})*|\d+)(?:\.\d+)?$/D', $value)) {
+            $value = str_replace(',', '', $value);
+
+            return str_contains($value, '.') ? (rtrim(rtrim($value, '0'), '.') ?: '0') : $value;
+        }
+
+        return trim(preg_replace('/\s+/u', ' ', mb_strtolower($value)));
     }
 
     /**

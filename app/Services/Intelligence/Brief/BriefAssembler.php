@@ -34,7 +34,7 @@ class BriefAssembler
     }
 
     /** @param list<array<string,mixed>> $records @param array<string,array<string,mixed>> $assignments
-     *  @param array<string,mixed> $coverage @return array<string,mixed>
+     * @param  array<string,mixed>  $coverage  @return array<string,mixed>
      */
     public function assemble(string $documentName, string $documentType, array $records, array $assignments,
         array $coverage, \DateTimeImmutable $asOf, int $forcedOverflow = 0): array
@@ -137,7 +137,8 @@ class BriefAssembler
             $checks = $this->verifier->verify($block, $bySource, array_keys($bySource))['checks'];
             foreach ($checks as $check) {
                 if (in_array($check['check'], ['cites_available', 'numbers_grounded', 'dates_grounded',
-                    'periods_grounded', 'units_consistent'], true) && $check['status'] === 'failed') {
+                    'periods_grounded', 'units_consistent', 'assertion_force_consistent'], true)
+                    && $check['status'] === 'failed') {
                     return false;
                 }
             }

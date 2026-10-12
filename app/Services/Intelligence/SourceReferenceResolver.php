@@ -151,7 +151,7 @@ class SourceReferenceResolver
                 break;
             }
         }
-        $matchState = $structural || $location !== null ? 'STRUCTURALLY_RESOLVED'
+        $matchState = $structural ? 'STRUCTURALLY_RESOLVED'
             : ($rangeValid ? 'EXACT' : 'UNAVAILABLE');
         if (! $rangeValid && $quote !== null && $quote !== '') {
             $firstOccurrence = mb_strpos((string) $document->extracted_text, $quote);
@@ -160,6 +160,12 @@ class SourceReferenceResolver
                     $firstOccurrence + mb_strlen($quote)) === false ? 'APPROXIMATE' : 'AMBIGUOUS';
             }
         }
+
+        $data = json_decode($evidence->data, true) ?: [];
+        $conflict = $data['source_conflict']['status'] ?? null;
+        $channel = $roles['value'][0]['modality'] ?? $location['modality'] ?? null;
+        $evidenceStatus = $conflict !== null || in_array($matchState, ['AMBIGUOUS', 'UNAVAILABLE'], true)
+            ? 'unresolved' : ($structural ? 'supported_structural_partial' : 'supported_textual');
 
         return [
             'state' => 'CURRENT', 'sourceId' => $sourceId, 'documentId' => $document->id,
@@ -175,6 +181,13 @@ class SourceReferenceResolver
                 'range' => $rangeValid ? ['start' => $start, 'end' => $end] : null],
             'location' => $location,
             'roles' => $roles, 'relationships' => $relationships,
+            'quality' => ['sourceChannel' => $channel,
+                'locationQuality' => $rangeValid ? 'exact_text_offset' : strtolower($matchState),
+                'structuralRelationshipQuality' => $structural ? 'verified_partial' : 'unavailable',
+                'ambiguity' => $matchState === 'AMBIGUOUS' ? 'repeated_occurrence' : null,
+                'ocrUncertainty' => $channel === 'ocr' ? 'unverified_reading_order_and_glyphs' : null,
+                'language' => null, 'locale' => null, 'conflictStatus' => $conflict,
+                'evidenceStatus' => $evidenceStatus],
             'limits' => ['sourceTextChars' => self::MAX_TEXT, 'roleAnchors' => self::MAX_ROLES,
                 'relationships' => self::MAX_RELATIONS, 'relationshipsTruncated' => isset($edges)
                     && $edges->count() > self::MAX_RELATIONS],
@@ -245,6 +258,10 @@ class SourceReferenceResolver
                 'truncated' => $text !== null && mb_strlen($text) > self::MAX_TEXT,
                 'page' => null, 'range' => null],
             'location' => null, 'roles' => [], 'relationships' => [],
+            'quality' => ['sourceChannel' => null, 'locationQuality' => 'unavailable',
+                'structuralRelationshipQuality' => 'unavailable', 'ambiguity' => null,
+                'ocrUncertainty' => null, 'language' => null, 'locale' => null,
+                'conflictStatus' => null, 'evidenceStatus' => 'unresolved'],
             'limits' => ['sourceTextChars' => self::MAX_TEXT, 'roleAnchors' => self::MAX_ROLES,
                 'relationships' => self::MAX_RELATIONS, 'relationshipsTruncated' => false]];
     }

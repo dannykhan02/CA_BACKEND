@@ -4,6 +4,7 @@ namespace App\Services\Intelligence\Brief;
 
 use App\Services\AI\Incremental\EvidenceDateRecognizer;
 use App\Services\AI\Incremental\EvidenceMerger;
+use App\Services\Intelligence\AssertionForceGuard;
 use App\Services\Intelligence\Brief\Templates\DeterministicTemplates;
 use App\Services\Intelligence\MeasurementParser;
 use App\Services\Intelligence\NegativeClaimGuard;
@@ -49,7 +50,8 @@ class BriefVerifier
     public function __construct(private NegativeClaimGuard $negativeClaims,
         private MeasurementParser $measurements, private EvidenceMerger $normalizer,
         private DeterministicTemplates $templates, private RecordOwnedMentionProjector $ownedMentions,
-        private SemanticCompatibility $semantics, private StructuralClaimGuard $structuralClaims) {}
+        private SemanticCompatibility $semantics, private StructuralClaimGuard $structuralClaims,
+        private AssertionForceGuard $assertionForce) {}
 
     /** @param array<string,mixed> $block @param array<string,array<string,mixed>> $recordsBySource
      * @param  list<string>  $availableSourceIds  @return array<string,mixed>
@@ -119,6 +121,8 @@ class BriefVerifier
                 && in_array($record['provenance']['assertion'] ?? null, $legal[$recordOrigin] ?? [], true);
         }
         $add('origin_assertion_consistent', $originConsistent);
+        $add('assertion_force_consistent', count(array_filter($records,
+            fn ($record) => ! $this->assertionForce->compatible($text, $record))) === 0);
         $add('no_source_text_leak', ! $this->leaksQuote($text, $records));
         $failed = array_values(array_map(fn ($check) => $check['check'],
             array_filter($checks, fn ($check) => $check['status'] === 'failed')));
