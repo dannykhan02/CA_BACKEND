@@ -302,7 +302,8 @@ class IncrementalPipeline
      * the primary synthesis, one degraded synthesis retry and one repair affordable; a synthesis
      * admission passes $protect (the next fallback's reserve) so it cannot consume that headroom.
      */
-    public function canReserve(Document $document, ?float $cost, bool $synthesis = false, float $protect = 0): bool
+    public function canReserve(Document $document, ?float $cost, bool $synthesis = false, float $protect = 0,
+        bool $continuation = false): bool
     {
         if ($cost === null) {
             return false;
@@ -320,12 +321,25 @@ class IncrementalPipeline
             if (in_array(null, $reserves, true)) {
                 return false;
             }
-            $protected = array_sum($reserves);
+            $protected = $continuation ? $this->continuationProtection($document) : array_sum($reserves);
         }
         $committed = DocumentChunk::where('document_id', $document->id)
             ->where('pipeline_key', $document->ai_pipeline['key'])->sum('reserved_cost');
 
         return round($committed + $cost + $protected, 6) <= ($document->ai_pipeline['budget_usd'] ?? 0);
+    }
+
+    /** After a paid truncated response, keep an evidence-only synthesis and one batch affordable. */
+    private function continuationProtection(Document $document): float
+    {
+        $last = count(config('document_intelligence.synthesis_levels')) - 1;
+        $final = $this->client->synthesisReservation($document, null, $last);
+        $model = app(AiModels::class)->forTask('document_summary');
+        $batch = app(AiPricing::class)->maximum($model,
+            (int) config('document_intelligence.synthesis_token_budget') + 4096,
+            (int) config('document_intelligence.synthesis_batch_max_tokens', 1024));
+
+        return (float) $final['synthesis_reserved_usd'] + (float) $final['repair_reserved_usd'] + (float) $batch;
     }
 
     /**
@@ -717,18 +731,20 @@ class IncrementalPipeline
      * without touching the synthesis/repair hold. Running siblings will settle below their
      * reservations, so their presence defers the decision to admission instead.
      */
-    public function canAffordMoreExtraction(Document $document, DocumentChunk $current): bool
+    public function canAffordMoreExtraction(Document $document, DocumentChunk $current, bool $continuation = false): bool
     {
-        return DB::transaction(function () use ($document, $current) {
+        return DB::transaction(function () use ($document, $current, $continuation) {
             $locked = Document::whereKey($document->id)->lockForUpdate()->firstOrFail();
             if (DocumentChunk::where('document_id', $locked->id)->where('pipeline_key', $current->pipeline_key)
                 ->where('stage', 'extraction')->where('status', 'running')->whereKeyNot($current->id)->exists()) {
                 return true;
             }
             $capacity = app(ExtractionCapacity::class);
-            $cost = app(AiPricing::class)->reserve($capacity->model(), $capacity->promptOverheadTokens(), $capacity->outputTokens(), cacheWrite: true);
+            $source = $continuation ? max(0, (int) $current->token_count) + 2048 : 0;
+            $cost = app(AiPricing::class)->reserve($capacity->model(),
+                $capacity->promptOverheadTokens() + $source, $capacity->outputTokens(), cacheWrite: true);
 
-            return $this->canReserve($locked, $cost);
+            return $this->canReserve($locked, $cost, continuation: $continuation);
         });
     }
 

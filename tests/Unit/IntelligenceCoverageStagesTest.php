@@ -61,4 +61,23 @@ class IntelligenceCoverageStagesTest extends TestCase
         unset($pipeline['coverage']['synthesis_level']);
         self::assertSame('unknown', $builder->build($pipeline, true)['stages']['synthesis']['status']);
     }
+
+    public function test_hierarchical_presentation_selectivity_does_not_mark_evidence_coverage_partial(): void
+    {
+        $coverage = ['evidence_total' => 799, 'evidence_omitted' => 0,
+            'synthesis_considered' => 799, 'synthesis_uncovered' => 0,
+            'presentation_selected' => 42, 'presentation_omitted' => 757,
+            'source_text' => 'omitted', 'synthesis_level' => 3];
+        $result = (new CoverageStateBuilder)->build($this->pipeline($coverage), true);
+        self::assertSame('complete', $result['state']);
+        self::assertSame('complete', $result['stages']['synthesis']['status']);
+        self::assertSame(757, $result['presentation_omitted']);
+
+        $partial = (new CoverageStateBuilder)->build($this->pipeline([
+            ...$coverage, 'evidence_omitted' => 8, 'synthesis_uncovered' => 8,
+            'synthesis_considered' => 791, 'comprehensive' => false,
+        ]), true);
+        self::assertSame('partial', $partial['state']);
+        self::assertSame('partial', $partial['stages']['synthesis']['status']);
+    }
 }
