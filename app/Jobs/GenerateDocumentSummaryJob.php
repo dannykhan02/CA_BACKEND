@@ -15,6 +15,7 @@ use App\Models\DocumentIntelligenceSummary;
 use App\Services\AI\AiModels;
 use App\Services\AI\Incremental\EvidenceBudget;
 use App\Services\AI\Incremental\IncrementalPipeline;
+use App\Services\AI\Incremental\SynthesisBatches;
 use App\Services\AI\Incremental\SynthesisCheckpoint;
 use App\Services\AI\ProviderGate;
 use App\Services\AiCredits\QuoteService;
@@ -96,9 +97,35 @@ class GenerateDocumentSummaryJob implements ShouldQueue
             && $this->skipIfUnchanged($document, 'document_summary', 'document_summary', $recorder)) {
             return;
         }
+        if (($document->ai_pipeline['route'] ?? null) === 'incremental'
+            && ($document->ai_pipeline['synthesis'] ?? null) === 'completed'
+            && ! ($document->ai_pipeline['summary_stale'] ?? false)
+            && $document->intelligenceSummary()->exists()) {
+            return;
+        }
 
         $checkpoint = null;
         if (($document->ai_pipeline['route'] ?? null) === 'incremental') {
+            $batches = app(SynthesisBatches::class);
+            $batchState = $batches->processNext($document, $this->revisionId, $client);
+            if ($batchState === 'processed') {
+                self::dispatch($document->id, true, null, $this->revisionId)
+                    ->onQueue(QueueTopology::for(GenerateDocumentSummaryJob::class));
+
+                return;
+            }
+            if ($batchState !== 'ready') {
+                return;
+            }
+            if ($batches->required($document)) {
+                // Intermediate calls covered the document. The executive merge uses bounded
+                // original evidence and does not need to resend the source document.
+                $last = count(config('document_intelligence.synthesis_levels')) - 1;
+                if (EvidenceBudget::level($document) < $last) {
+                    $document->forceFill(['ai_pipeline' => [...$document->ai_pipeline,
+                        'synthesis_reductions' => $last]])->save();
+                }
+            }
             $checkpoint = app(SynthesisCheckpoint::class)->claim($document);
             if (! $checkpoint) {
                 return;

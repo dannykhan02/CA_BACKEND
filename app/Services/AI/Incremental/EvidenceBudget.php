@@ -110,10 +110,111 @@ class EvidenceBudget
     /** Evidence (authoritative) plus original source text for cross-section context. */
     public function forSynthesis(Document $document): array
     {
-        $data = $this->forDocument($document);
+        $data = config('document_intelligence.hierarchical_synthesis', true)
+            ? $this->compactSynthesis($document) : $this->forDocument($document);
         $data['source_context'] = $this->sourceContext($document, $data);
         $data['coverage']['source_text'] = $data['source_context']['coverage'];
         $data['coverage']['synthesis_level'] = self::level($document);
+
+        return $data;
+    }
+
+    /** Coverage is about records seen by a model, while presentation is deliberately selective. */
+    private function compactSynthesis(Document $document): array
+    {
+        $plan = app(SynthesisCoverage::class)->plan($document);
+        $batches = $plan['batches'];
+        $all = collect($batches)->flatMap(fn ($batch) => $batch['items'])->values();
+        $uncovered = $plan['uncovered'];
+        $selected = [];
+        $considered = 0;
+        if (count($batches) <= 1) {
+            $selected = $all->all();
+            $considered = count($selected);
+        } else {
+            $recommended = [];
+            $consideredIds = [];
+            $representatives = [];
+            foreach ($batches as $batch) {
+                $unit = DocumentChunk::where('document_id', $document->id)
+                    ->where('pipeline_key', $document->ai_pipeline['key'])
+                    ->where('identity', app(SynthesisBatches::class)->identity($batch))->first();
+                if ($unit?->status !== 'completed') {
+                    foreach ($batch['items'] as $item) {
+                        $uncovered[] = ['group' => $batch['group'], 'source_id' => $item['id'],
+                            'reason' => $unit?->failure_class ?? 'not_processed'];
+                    }
+
+                    continue;
+                }
+                $considered += count($batch['items']);
+                foreach ($batch['items'] as $item) {
+                    $consideredIds[$item['id']] = true;
+                }
+                $ids = array_column($unit->result['findings'] ?? [], 'id');
+                // A silent or overly selective intermediate response still gives this group
+                // one deterministic opportunity in the final brief.
+                $ids[] = $batch['items'][0]['id'];
+                $representatives[] = $batch['items'][0];
+                foreach ($batch['items'] as $item) {
+                    if (in_array($item['id'], $ids, true)) {
+                        $recommended[$item['id']] = $item;
+                    }
+                }
+            }
+            $timeline = $all->filter(fn ($item) => isset($consideredIds[$item['id']]))
+                ->sortBy(fn ($item) => (int) ($item['citation'][0]['start_offset'] ?? 0))->values();
+            $anchors = $timeline->isEmpty() ? [] : [$timeline->first(), $timeline->get(intdiv($timeline->count(), 2)), $timeline->last()];
+            $priority = $all->filter(fn ($item) => isset($consideredIds[$item['id']])
+                && in_array($item['type'], ['risk', 'obligation', 'deadline'], true))
+                ->concat($anchors)->concat($representatives)->concat(array_values($recommended))->unique('id')->values();
+            $limit = (int) config('document_intelligence.synthesis_token_budget');
+            $used = 0;
+            foreach ($priority as $item) {
+                $bytes = strlen(json_encode($item, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)) + 1;
+                if ($used + $bytes <= $limit) {
+                    $selected[] = $item;
+                    $used += $bytes;
+                }
+            }
+            if (! $selected && $all->isNotEmpty()) {
+                // A document whose intermediate calls were all unaffordable still gets a
+                // grounded partial executive result from one original record when final funds remain.
+                $selected[] = $all->first();
+                $considered++;
+                $uncovered = array_values(array_filter($uncovered,
+                    fn ($item) => $item['source_id'] !== $selected[0]['id']));
+            }
+        }
+        $data = ['entities' => [], 'risks' => [], 'deadlines' => [], 'kpis' => [], 'facts' => []];
+        foreach ($selected as $item) {
+            $group = match ($item['type']) {
+                'entity' => 'entities', 'risk' => 'risks', 'deadline', 'obligation' => 'deadlines',
+                'metric' => 'kpis', default => 'facts',
+            };
+            $data[$group][] = $item;
+        }
+        $previous = $this->forDocument($document)['coverage'];
+        $byGroup = [];
+        foreach ($uncovered as $item) {
+            $key = $item['group'].':'.$item['reason'];
+            $byGroup[$key] ??= ['group' => $item['group'], 'reason' => $item['reason'], 'count' => 0];
+            $byGroup[$key]['count']++;
+        }
+        $extractionIncomplete = ($previous['failed_chunks'] ?? 0) > 0 || ($previous['dropped_records'] ?? 0) > 0
+            || ($previous['saturated_chunks'] ?? 0) > 0 || ($previous['unresolved_references'] ?? 0) > 0;
+        $data['coverage'] = [...$previous,
+            'evidence_total' => $plan['eligible'], 'evidence_omitted' => count($uncovered),
+            'synthesis_considered' => $considered, 'synthesis_uncovered' => count($uncovered),
+            'hierarchical' => count($batches) > 1,
+            'uncovered_groups' => array_values($byGroup), 'presentation_selected' => count($selected),
+            'presentation_omitted' => max(0, $plan['eligible'] - count($selected)),
+            'extraction_incomplete' => $extractionIncomplete,
+            'validation_rejected' => (int) ($previous['dropped_records'] ?? 0),
+            'synthesis_incomplete' => count($uncovered) > 0,
+            'comprehensive' => ! $extractionIncomplete && count($uncovered) === 0,
+            'warning' => $extractionIncomplete || $uncovered
+                ? 'This intelligence has incomplete '.($extractionIncomplete ? 'extraction' : 'synthesis').' coverage; see coverage details.' : null];
 
         return $data;
     }
@@ -184,7 +285,10 @@ class EvidenceBudget
         $used = 0;
         foreach (['deadlines', 'kpis', 'risks', 'facts', 'entities'] as $group) {
             foreach ($data[$group] ?? [] as $item) {
-                foreach ($item['sources'] ?? [] as $source) {
+                foreach ($item['sources'] ?? $item['citation'] ?? [] as $source) {
+                    if (! isset($source['start_offset'], $source['end_offset'])) {
+                        continue;
+                    }
                     $start = max(0, $source['start_offset'] - $radius);
                     $end = min($length, $source['end_offset'] + $radius);
                     $covered = false;

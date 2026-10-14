@@ -110,6 +110,10 @@ return [
     ],
     'attempts' => 3,
     'synthesis_token_budget' => 16000,
+    'hierarchical_synthesis' => (bool) env('DOCINTEL_HIERARCHICAL_SYNTHESIS', true),
+    // Whole compact records per request; excess groups are reported as uncovered.
+    'synthesis_max_batches' => 48,
+    'synthesis_batch_max_tokens' => 1024,
     // Original source text offered to synthesis when it fits; otherwise evidence-anchored excerpts.
     'synthesis_source_max_tokens' => 80000,
     'synthesis_excerpt_radius_chars' => 600,

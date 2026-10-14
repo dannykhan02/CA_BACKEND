@@ -30,6 +30,7 @@ class CoverageStateBuilder
         $failed = ($coverage['failed_chunks'] ?? 0) > 0 || ($coverage['dropped_records'] ?? 0) > 0
             || ($coverage['saturated_chunks'] ?? 0) > 0 || ($coverage['unresolved_references'] ?? 0) > 0;
         $omitted = ($coverage['evidence_omitted'] ?? 0) > 0;
+        $grouped = is_int($coverage['synthesis_considered'] ?? null);
         $sourceText = $coverage['source_text'] ?? 'omitted';
         if ($failed) {
             $reasons[] = 'processing_partial';
@@ -44,7 +45,8 @@ class CoverageStateBuilder
             ($pipeline['synthesis'] ?? null) !== 'completed' && ! $summaryAvailable => 'unavailable',
             $route === 'normal' => 'bounded',
             $failed => 'partial',
-            $omitted || $sourceText !== 'full' || $telemetryUnknown || ! ($coverage['comprehensive'] ?? false) => 'bounded',
+            $grouped && $omitted => 'partial',
+            $omitted || (! $grouped && $sourceText !== 'full') || $telemetryUnknown || ! ($coverage['comprehensive'] ?? false) => 'bounded',
             default => 'complete',
         };
         $stages = $this->stages($pipeline, $coverage, $summaryAvailable);
@@ -53,6 +55,11 @@ class CoverageStateBuilder
             'state' => $state,
             'evidence_total' => (int) ($coverage['evidence_total'] ?? 0),
             'evidence_omitted' => (int) ($coverage['evidence_omitted'] ?? 0),
+            'synthesis_considered' => $coverage['synthesis_considered'] ?? null,
+            'synthesis_uncovered' => $coverage['synthesis_uncovered'] ?? null,
+            'uncovered_groups' => $coverage['uncovered_groups'] ?? [],
+            'presentation_selected' => $coverage['presentation_selected'] ?? null,
+            'presentation_omitted' => $coverage['presentation_omitted'] ?? null,
             'unresolved_references' => (int) ($coverage['unresolved_references'] ?? 0),
             'failed_chunks' => (int) ($coverage['failed_chunks'] ?? 0),
             'total_chunks' => (int) ($coverage['total_chunks'] ?? 0),
@@ -109,9 +116,10 @@ class CoverageStateBuilder
         }
         $synthesis['status'] = match (true) {
             ! $summaryAvailable => 'unavailable',
+            isset($coverage['synthesis_considered']) && ($synthesis['evidence_omitted'] ?? 0) > 0 => 'partial',
             ($synthesis['evidence_omitted'] ?? 0) > 0
-                || in_array($coverage['source_text'] ?? null, ['excerpts', 'omitted'], true)
-                || ($synthesis['synthesis_level'] ?? 0) > 0 => 'bounded',
+                || (! isset($coverage['synthesis_considered']) && (in_array($coverage['source_text'] ?? null, ['excerpts', 'omitted'], true)
+                    || ($synthesis['synthesis_level'] ?? 0) > 0)) => 'bounded',
             $synthesis['unknown_facts'] !== [] => 'unknown',
             default => 'complete',
         };

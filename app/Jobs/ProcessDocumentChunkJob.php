@@ -204,7 +204,7 @@ class ProcessDocumentChunkJob implements ShouldQueue
                 app(ExtractionCapacity::class)->outputTokens(),
                 cacheWrite: true
             );
-            if (! $pipeline->canReserve($locked, $cost)) {
+            if (! $pipeline->canReserve($locked, $cost, continuation: str_ends_with($unit->identity, '.r'))) {
                 // Running siblings will settle below their reservations. Wait for one of them
                 // (its completion pumps this unit again) instead of failing a fundable unit.
                 if (DocumentChunk::where('document_id', $unit->document_id)->where('pipeline_key', $unit->pipeline_key)
@@ -256,7 +256,8 @@ class ProcessDocumentChunkJob implements ShouldQueue
             $retry = $e->classification === 'transient' && $chunk->attempts < config('document_intelligence.attempts');
             // Settle this attempt first, so the ceiling check sees real spend, not its upper bound.
             $pipeline->settleCost($chunk, $providerCalled);
-            $affordable = ($capacity || $retry) && $pipeline->canAffordMoreExtraction($document, $chunk);
+            $affordable = ($capacity || $retry) && $pipeline->canAffordMoreExtraction($document, $chunk,
+                $e->classification === 'max_tokens' && $e->partial !== null);
             if ($e->classification === 'max_tokens' && $e->partial) {
                 $pipeline->keepSalvaged($chunk, $document, $e->partial, $affordable);
             } elseif (($capacity || $retry) && ! $affordable) {
