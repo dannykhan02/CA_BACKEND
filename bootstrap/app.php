@@ -5,18 +5,21 @@
 // Existing report($e) calls also retain the exception. Explain intentional silence inline.
 // See commit 4d55ff1 for the pattern and the logging/redaction regression tests.
 
+use App\Exceptions\EmbeddingProviderException;
+use App\Http\Middleware\EnsureUserHasRole;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
-use App\Exceptions\EmbeddingProviderException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Sentry\Laravel\Integration;
-use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -26,12 +29,21 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // ProseMirror text-node whitespace is part of the document. Laravel's
+        // global normalizers would otherwise trim inline text and turn an
+        // intentional empty text field into null before Notes validation.
+        $richNoteRequest = fn (Request $request): bool => $request->isJson()
+            && $request->is('api/documents/*/notes', 'api/documents/*/notes/*')
+            && $request->json()->has('content');
+        $middleware->trimStrings([$richNoteRequest]);
+        $middleware->convertEmptyStringsToNull([$richNoteRequest]);
+
         $middleware->alias([
-            'role' => \App\Http\Middleware\EnsureUserHasRole::class,
+            'role' => EnsureUserHasRole::class,
         ]);
 
         // ✅ Appended globally – this adds security headers to every response
-        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+        $middleware->append(SecurityHeaders::class);
 
         // Fix: API-only app has no 'login' route at all (confirmed via
         // `php artisan route:list | grep login` -> zero matches), so
@@ -105,7 +117,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // authorization failure. Registering against the converted class
         // fixes it; the AuthorizationException handler above is kept as
         // defense in depth in case that conversion behavior ever changes.
-        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException $e, Request $request) {
+        $exceptions->render(function (AccessDeniedHttpException $e, Request $request) {
             if ($request->is('api/*')) {
                 return response()->json([
                     'success' => false,
@@ -179,7 +191,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // above still must not leak internals on api/*, regardless of
         // APP_DEBUG. Registered last among render() calls so it never
         // shadows the specific handlers above it.
-        $exceptions->render(function (\Throwable $e, Request $request) {
+        $exceptions->render(function (Throwable $e, Request $request) {
             if ($request->is('api/*')) {
                 report($e);
 
@@ -197,7 +209,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // and get a non-JSON 500 on auth failures. This runs after all
         // render() callbacks and guarantees every api/* AuthenticationException
         // gets a clean JSON 401, regardless of what the client sent.
-        $exceptions->respond(function ($response, \Throwable $exception, $request) {
+        $exceptions->respond(function ($response, Throwable $exception, $request) {
             if ($request->is('api/*') && $exception instanceof AuthenticationException) {
                 return response()->json([
                     'success' => false,

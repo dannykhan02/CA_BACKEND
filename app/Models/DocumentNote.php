@@ -13,7 +13,9 @@ class DocumentNote extends Model
 
     protected $fillable = ['document_id', 'workspace_id', 'user_id', 'body', 'version'];
 
-    protected $casts = ['version' => 'integer'];
+    protected $attributes = ['content_format' => 'plain_text'];
+
+    protected $casts = ['version' => 'integer', 'content' => 'array'];
 
     public function citations()
     {

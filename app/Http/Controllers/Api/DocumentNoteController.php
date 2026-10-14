@@ -10,17 +10,19 @@ use App\Models\Document;
 use App\Models\DocumentNote;
 use App\Services\AuditLogger;
 use App\Services\DocumentNoteAccess;
+use App\Services\RichNoteContent;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
 
 class DocumentNoteController extends Controller
 {
-    public function __construct(private DocumentNoteAccess $access, private AuditLogger $audit) {}
+    public function __construct(private DocumentNoteAccess $access, private AuditLogger $audit, private RichNoteContent $richContent) {}
 
     public function index(Request $request, string $document): JsonResponse
     {
@@ -42,12 +44,22 @@ class DocumentNoteController extends Controller
         $data = $request->validated();
         $note = $this->safeTransaction(function () use ($request, $document, $data): DocumentNote {
             $doc = $this->access->document($request->user(), $document, true);
+            $this->assertRichAvailable($data);
+            if (array_key_exists('contentSchemaVersion', $data) && ! array_key_exists('content', $data)) {
+                $this->fail(422, 'NOTE_INVALID_CONTENT', 'A schema version requires rich content.');
+            }
+            $rich = array_key_exists('content', $data) ? $this->validateRich($data) : null;
             $this->validateCitations($doc, $data['citations'] ?? []);
             $note = DocumentNote::create([
                 'document_id' => $doc->id, 'workspace_id' => $doc->workspace_id,
-                'user_id' => $request->user()->id, 'body' => $data['body'], 'version' => 1,
+                'user_id' => $request->user()->id, 'body' => $rich['body'] ?? $data['body'], 'version' => 1,
             ]);
-            $this->replaceCitations($note, $data['citations'] ?? []);
+            $references = $this->replaceCitations($note, $data['citations'] ?? []);
+            if ($rich !== null) {
+                $note->content = $this->resolveReferences($data['content'], $rich['references'], $references);
+                $note->content_format = 'tiptap_v1';
+                $note->save();
+            }
             $this->audit->log($request->user(), 'document_note.created', $note,
                 ['document_id' => $doc->id, 'version' => 1]);
 
@@ -64,11 +76,43 @@ class DocumentNoteController extends Controller
             $doc = $this->access->document($request->user(), $document, true);
             $current = $this->access->note($request->user(), $doc, $note, true);
             $this->assertVersion($request, $current, (int) $data['version']);
-            $this->validateCitations($doc, $data['citations']);
-            $current->body = $data['body'];
+            $this->assertRichAvailable($data);
+            $rich = isset($data['content']) ? $this->validateRich($data) : null;
+            if (array_key_exists('content', $data) && $data['content'] === null && ! isset($data['body'])) {
+                $this->fail(422, 'NOTE_INVALID_BODY', 'A body is required to replace rich content with plain text.');
+            }
+            if ($current->content_format === 'tiptap_v1' && isset($data['body']) && ! array_key_exists('content', $data)) {
+                $this->fail(422, 'NOTE_FORMAT_CHANGE_REQUIRED', 'Explicitly clear content to replace rich text with plain text.');
+            }
+            if (array_key_exists('contentSchemaVersion', $data) && ! isset($data['content'])) {
+                $this->fail(422, 'NOTE_INVALID_CONTENT', 'A schema version requires rich content.');
+            }
+            if (array_key_exists('citations', $data)) {
+                $this->validateCitations($doc, $data['citations']);
+                $references = $this->replaceCitations($current, $data['citations']);
+            } else {
+                $references = $current->citations()->pluck('id', 'id')->all();
+            }
+            if ($rich !== null) {
+                $current->content = $this->resolveReferences($data['content'], $rich['references'], $references);
+                $current->content_format = 'tiptap_v1';
+                $current->body = $rich['body'];
+            } elseif (array_key_exists('content', $data)) {
+                $current->content = null;
+                $current->content_format = 'plain_text';
+                $current->body = $data['body'];
+            } elseif (isset($data['body'])) {
+                $current->body = $data['body'];
+            } elseif ($current->content_format === 'tiptap_v1') {
+                // Citation replacement must not leave references to deleted rows.
+                $existing = $this->validateRich(['content' => $current->content, 'contentSchemaVersion' => 1]);
+                if (array_key_exists('citations', $data) && $existing['references'] !== []) {
+                    $this->fail(422, 'NOTE_CITATION_REFERENCE_INVALID', 'Replacing referenced citations requires an explicit content replacement.');
+                }
+                $current->content = $this->resolveReferences($current->content, $existing['references'], $references);
+            }
             $current->version++;
             $current->save();
-            $this->replaceCitations($current, $data['citations']);
             $this->audit->log($request->user(), 'document_note.updated', $current,
                 ['document_id' => $doc->id, 'version' => $current->version]);
 
@@ -133,11 +177,13 @@ class DocumentNoteController extends Controller
         }
     }
 
-    private function replaceCitations(DocumentNote $note, array $citations): void
+    /** @return array<string, string> Draft reference to stored citation UUID. */
+    private function replaceCitations(DocumentNote $note, array $citations): array
     {
+        $references = [];
         $note->citations()->delete();
         foreach ($citations as $citation) {
-            $note->citations()->create([
+            $created = $note->citations()->create([
                 'document_id' => $note->document_id,
                 'intelligence_revision_id' => $citation['intelligence_revision_id'] ?? null,
                 'source_id' => $citation['source_id'] ?? null,
@@ -146,8 +192,57 @@ class DocumentNoteController extends Controller
                 'page' => $citation['page'] ?? null,
                 'created_at' => now(),
             ]);
+            if (isset($citation['client_ref'])) {
+                $references[$citation['client_ref']] = $created->id;
+            }
         }
         $note->unsetRelation('citations');
+
+        return $references;
+    }
+
+    private function assertRichAvailable(array $data): void
+    {
+        if (array_key_exists('content', $data) && ! config('document_intelligence.notes_rich_text_enabled')) {
+            $this->fail(404, 'NOTE_RICH_TEXT_DISABLED', 'Rich text notes are unavailable.');
+        }
+    }
+
+    /** @return array{body:string,references:array<string,bool>} */
+    private function validateRich(array $data): array
+    {
+        if (($data['contentSchemaVersion'] ?? null) !== 1 || ! is_array($data['content'] ?? null)) {
+            $this->fail(422, 'NOTE_INVALID_CONTENT', 'Invalid rich note content.');
+        }
+        try {
+            return $this->richContent->validate($data['content']);
+        } catch (InvalidArgumentException) {
+            $this->fail(422, 'NOTE_INVALID_CONTENT', 'Invalid rich note content.');
+        }
+    }
+
+    /** Replace only citation IDs. Citation snapshots remain solely in their immutable rows. */
+    private function resolveReferences(array $content, array $references, array $available): array
+    {
+        foreach (array_keys($references) as $id) {
+            if (! isset($available[$id])) {
+                $this->fail(422, 'NOTE_CITATION_REFERENCE_INVALID', 'Citation reference is unavailable for this note.');
+            }
+        }
+        $rewrite = function (array &$node) use (&$rewrite, $available): void {
+            if (($node['type'] ?? null) === 'citationRef') {
+                $node['attrs']['citationId'] = $available[$node['attrs']['citationId']];
+            }
+            if (isset($node['content'])) {
+                foreach ($node['content'] as &$child) {
+                    $rewrite($child);
+                }
+                unset($child);
+            }
+        };
+        $rewrite($content);
+
+        return $content;
     }
 
     private function fail(int $status, string $code, string $message, array $extra = []): never

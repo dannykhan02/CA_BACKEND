@@ -13,6 +13,9 @@ class DocumentNoteResource extends JsonResource
             'id' => $this->id,
             'documentId' => $this->document_id,
             'body' => $this->body,
+            'content' => $this->content,
+            'contentFormat' => $this->content_format,
+            'contentSchemaVersion' => $this->content_format === 'tiptap_v1' ? 1 : null,
             'version' => $this->version,
             'citations' => $this->citations->map(fn ($citation) => [
                 'id' => $citation->id,

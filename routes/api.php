@@ -101,7 +101,11 @@ Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(functio
 
     // Documents
     Route::get('/capabilities', fn () => response()->json([
-        'data' => ['documentNotes' => ['enabled' => (bool) config('document_intelligence.notes_enabled')]],
+        'data' => ['documentNotes' => [
+            'enabled' => (bool) config('document_intelligence.notes_enabled'),
+            'richTextEnabled' => (bool) config('document_intelligence.notes_enabled')
+                && (bool) config('document_intelligence.notes_rich_text_enabled'),
+        ]],
     ]))->name('capabilities');
     Route::get('/referrals/my-code', [ReferralController::class, 'myCode'])->name('referrals.my-code');
     Route::get('/workspace/billing', [BillingController::class, 'show']);

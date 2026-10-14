@@ -19,10 +19,13 @@ class UpdateDocumentNoteRequest extends StoreDocumentNoteRequest
 
     public function rules(): array
     {
-        return array_merge(parent::rules(), [
-            'citations' => ['present', 'array', 'max:50'],
-            'version' => ['required', 'integer', 'min:1'],
-        ]);
+        $rules = parent::rules();
+        $rules['body'] = ['sometimes', 'required', 'string', 'min:1', 'max:20000', 'not_regex:/^\s*$/u'];
+        $rules['content'] = ['sometimes', 'nullable', 'array'];
+        $rules['contentSchemaVersion'] = ['sometimes', 'nullable', 'integer', 'in:1'];
+        $rules['version'] = ['required', 'integer', 'min:1'];
+
+        return $rules;
     }
 
     protected function failedValidation(Validator $validator): void
