@@ -3,9 +3,11 @@
 namespace App\Providers;
 
 use App\Models\Document;
+use App\Models\DocumentNote;
 use App\Models\Workspace;
 use App\Observers\DocumentObserver;
 use App\Observers\WorkspaceObserver;
+use App\Policies\DocumentNotePolicy;
 use App\Services\AI\Incremental\EvidenceGrounding;
 use App\Services\AI\ProviderGate;
 use App\Services\Intelligence\B2\StageASnapshot;
@@ -77,6 +79,7 @@ class AppServiceProvider extends ServiceProvider
 
         Document::observe(DocumentObserver::class);
         Workspace::observe(WorkspaceObserver::class);
+        Gate::policy(DocumentNote::class, DocumentNotePolicy::class);
 
         // Day 5 — protects against a single account (or compromised token)
         // hammering the upload endpoint and running up Anthropic API costs.
