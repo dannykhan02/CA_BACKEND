@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'notes_enabled' => (bool) env('DOCINTEL_NOTES_ENABLED', false),
+    'notes_rich_text_enabled' => (bool) env('DOCINTEL_NOTES_RICH_TEXT_ENABLED', false),
     // Migrate schema, drain old workers, deploy revision-aware readers/writers, then enable.
     'revision_v1' => (bool) env('DOCINTEL_REVISION_V1', false),
     // Explicit rollout switch; legacy ENV names retain their meaning.

@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\DocumentCreditConfirmationController;
 use App\Http\Controllers\Api\DocumentDownloadController;
 use App\Http\Controllers\Api\DocumentIntelligenceController;
+use App\Http\Controllers\Api\DocumentNoteController;
 use App\Http\Controllers\Api\DocumentQaController;
 use App\Http\Controllers\Api\DocumentRejectController;
 use App\Http\Controllers\Api\DocumentRelationshipController;
@@ -29,6 +30,7 @@ use App\Http\Controllers\Api\TrackedItemController;
 use App\Http\Controllers\Api\WorkspaceCreditController;
 use App\Http\Controllers\Api\WorkspaceInsightsController;
 use App\Http\Middleware\EnsureEmailIsVerified;
+use App\Http\Middleware\ProtectDocumentNotes;
 use Illuminate\Support\Facades\Route;
 
 // Unauthenticated — must be reachable by load balancers/uptime monitors/
@@ -98,6 +100,13 @@ Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(functio
 Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(function () {
 
     // Documents
+    Route::get('/capabilities', fn () => response()->json([
+        'data' => ['documentNotes' => [
+            'enabled' => (bool) config('document_intelligence.notes_enabled'),
+            'richTextEnabled' => (bool) config('document_intelligence.notes_enabled')
+                && (bool) config('document_intelligence.notes_rich_text_enabled'),
+        ]],
+    ]))->name('capabilities');
     Route::get('/referrals/my-code', [ReferralController::class, 'myCode'])->name('referrals.my-code');
     Route::get('/workspace/billing', [BillingController::class, 'show']);
     Route::post('/workspace/billing/cancel', [BillingController::class, 'cancel'])->middleware('throttle:10,1');
@@ -135,6 +144,17 @@ Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(functio
 
     Route::get('/documents/{document}/sources/{sourceId}', [DocumentSourceReferenceController::class, 'show'])
         ->middleware('throttle:60,1')->name('documents.sources.show');
+
+    Route::middleware(ProtectDocumentNotes::class)->group(function () {
+        Route::get('/documents/{document}/notes', [DocumentNoteController::class, 'index'])
+            ->name('documents.notes.index');
+        Route::post('/documents/{document}/notes', [DocumentNoteController::class, 'store'])
+            ->name('documents.notes.store');
+        Route::patch('/documents/{document}/notes/{note}', [DocumentNoteController::class, 'update'])
+            ->name('documents.notes.update');
+        Route::delete('/documents/{document}/notes/{note}', [DocumentNoteController::class, 'destroy'])
+            ->name('documents.notes.destroy');
+    });
 
     Route::get('/documents/{document}/entities', [DocumentIntelligenceController::class, 'entities'])
         ->name('documents.entities');
