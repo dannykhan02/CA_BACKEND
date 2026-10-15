@@ -533,6 +533,24 @@ Per source link: `{chunk_id, span_id?, start_offset, end_offset, quote, page|nul
 
 - **No in-document viewer and no highlighting of any kind.** Evidence is shown as a detached quote. The "View document" link navigates to the document page; it does not scroll to, or mark, the cited text.
 - **No bounding boxes anywhere.** `ocr_results.metadata` is `json nullable` with a migration comment mentioning "bounding boxes, language detected, etc.", but the only writers are `ClaudeVisionOcrProvider` (`['source' => 'claude_vision']`) and `TesseractOcrProvider` (`['source' => 'tesseract', 'word_count' => n]`). `TesseractOcrProvider::parseTsv()` reads Tesseract's TSV and uses only columns 10 (`conf`) and 11 (`text`) — the `left/top/width/height` columns **are present in the input and discarded**. Recovering them would require re-running OCR, and would cover only OCR'd pages, never text-layer PDFs.
+
+  > **SUPERSEDED (verified 2026-10-15).** The code has moved on and this
+  > paragraph is no longer true of it. `TesseractOcrProvider::parseTsv()` now
+  > reads the box columns into per-word metadata
+  > (`app/Services/Ocr/TesseractOcrProvider.php:75-78`: `left`, `top`,
+  > `width`, `height`, plus `line` and `confidence`), and
+  > `TextRoleProvenanceProducer` writes them through as anchor geometry with
+  > an explicit coordinate system
+  > (`app/Services/Intelligence/TextRoleProvenanceProducer.php:187`:
+  > `'geometry' => ['system' => 'image_pixels_top_left', …]`).
+  >
+  > What remains true is the *deployment* half, and it is the reason no
+  > geometry reaches production: `config/ocr.php:8` defaults to
+  > `claude_vision`, which emits no boxes, and this project's Dockerfile
+  > installs no tesseract binary (zero references), so the provider that
+  > could produce them is not reachable in the deployed image. A box being
+  > representable end to end is not the same as a box existing — see the
+  > source-formats audit's finding S-1.
 - **No character-offset → page-pixel mapping.** Offsets address `extracted_text`, which is a flat string with `\f` separators; nothing relates an offset to a position on a rendered page.
 
 So for V2: offsets are reliable and already stored; pages are reliable but conservative; **bounding boxes are unavailable and cannot be obtained without re-OCR.** Text-match highlighting against `extracted_text`, anchored by the stored offsets, is the only viable mechanism.
@@ -708,7 +726,7 @@ Extraction already costs one call per chunk plus splits and continuations; synth
 §3.4, §9.2. `keyFindings` and friends are plain strings in the same response as grounded structured items. They cannot be removed (backward compatibility) and cannot be retroactively grounded. V2 must label them rather than fix them.
 
 ### R7 — Bounding boxes are unavailable and unobtainable without re-OCR
-§7.4. Tesseract's geometry is read and discarded; Claude Vision OCR never produced any; text-layer PDFs have no OCR pass at all. Highlighting must be text-match over `extracted_text`, anchored by stored offsets.
+§7.4. Tesseract's geometry is read and discarded; Claude Vision OCR never produced any; text-layer PDFs have no OCR pass at all. Highlighting must be text-match over `extracted_text`, anchored by stored offsets. **SUPERSEDED in part (verified 2026-10-15): Tesseract's geometry is no longer discarded — it is parsed (`TesseractOcrProvider.php:75-78`) and written as anchor geometry (`TextRoleProvenanceProducer.php:187`). The conclusion still holds in the deployed image for the reason given above: the default provider is `claude_vision` and the Dockerfile has no tesseract, so no box is produced there. The two remaining clauses are unchanged.**
 
 ### R8 — Page attribution is deliberately conservative and often null
 `EvidencePageLocator` and the evidence-row path both return null on any ambiguity, and `pagesKnown()` requires `type === 'PDF'` with an exact `\f` count. A large share of real documents will have `page: null`. V2's highlighting and chart/attention states must degrade cleanly rather than depend on a page.
