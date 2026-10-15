@@ -7,6 +7,7 @@ use App\Models\DocumentChart;
 use App\Models\DocumentChartPoint;
 use App\Models\DocumentChunk;
 use App\Services\AI\Incremental\VisualPlanner;
+use App\Services\Intelligence\SourceChartContract;
 use App\Services\AnthropicClient;
 use App\Services\Documents\DocumentStorageService;
 use App\Services\EntitlementService;
@@ -173,30 +174,38 @@ class AnalyzeEmbeddedVisualsJob implements ShouldQueue
         return [null, null];
     }
 
-    public function mergeCharts(Document $document, array $charts): void
+    public function mergeCharts(Document $document, array $charts, array $source = []): int
     {
         $existingTitles = $document->charts()->pluck('title')
             ->map(fn ($t) => strtolower(trim($t)))
             ->all();
 
         $charts = array_values(array_filter($charts, function ($chart) use ($existingTitles) {
+            if (! is_array($chart)) {
+                return false;
+            }
             $title = strtolower(trim($chart['title'] ?? ''));
 
             return $title === '' || ! in_array($title, $existingTitles, true);
         }));
 
         if (empty($charts)) {
-            return;
+            return 0;
         }
 
-        DB::transaction(function () use ($document, $charts) {
+        return DB::transaction(function () use ($document, $charts, $source) {
             $current = Document::whereKey($document->id)->lockForUpdate()->firstOrFail();
             if ($this->revisionId !== null
                 && $this->revisionId !== $current->active_intelligence_revision_id
                 && $this->revisionId !== $current->published_intelligence_revision_id) {
-                return;
+                return 0;
             }
+            $inserted = 0;
             foreach ($charts as $chart) {
+                if (! is_array($chart)) {
+                    continue;
+                }
+                $metadata = $source ? app(SourceChartContract::class)->metadata($chart, $source) : null;
                 $documentChart = DocumentChart::create([
                     'intelligence_revision_id' => $this->revisionId,
                     'workspace_id' => $document->workspace_id,
@@ -205,7 +214,9 @@ class AnalyzeEmbeddedVisualsJob implements ShouldQueue
                     'title' => $chart['title'] ?? '',
                     'description' => $chart['description'] ?? '',
                     'data' => $chart['data'] ?? [],
+                    'source_metadata' => $metadata,
                 ]);
+                $inserted++;
 
                 foreach ($chart['data'] ?? [] as $sortOrder => $point) {
                     $value = $point['value'] ?? null;
@@ -223,6 +234,8 @@ class AnalyzeEmbeddedVisualsJob implements ShouldQueue
             }
 
             $document->forceFill(['has_structured_data' => true])->save();
+
+            return $inserted;
         });
     }
 }

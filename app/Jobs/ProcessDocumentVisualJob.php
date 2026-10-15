@@ -7,6 +7,7 @@ use App\Exceptions\ProviderBusyException;
 use App\Jobs\Concerns\DefersWhenProviderBusy;
 use App\Models\Document;
 use App\Models\DocumentChunk;
+use App\Models\DocumentIntelligenceRevision;
 use App\Services\AI\AiModels;
 use App\Services\AI\AiPricing;
 use App\Services\AI\Incremental\IncrementalPipeline;
@@ -40,6 +41,8 @@ class ProcessDocumentVisualJob implements ShouldQueue
             || ($this->dispatchToken !== null && $unit->dispatch_token !== null && ! hash_equals($unit->dispatch_token, $this->dispatchToken))) {
             return; // Finished, claimed elsewhere, or superseded by a newer dispatch.
         }
+        $retainedPath = null;
+        $retainedExisted = false;
         try {
             app(ProviderGate::class)->hold($unit->document_id, fn () => $this->process($client, $planner));
         } catch (ProviderBusyException $e) {
@@ -88,12 +91,51 @@ class ProcessDocumentVisualJob implements ShouldQueue
                 throw new AiProcessingException('input_changed');
             }
             $result = $client->extractChartDataFromImage(base64_encode($bytes), $asset['media_type'], $document);
-            DB::transaction(function () use ($document, $result, $unit, $asset) {
-                Document::whereKey($document->id)->lockForUpdate()->firstOrFail();
-                app(AnalyzeEmbeddedVisualsJob::class, ['documentId' => $document->id])->mergeCharts($document, $result['charts'] ?? []);
+            $revisionId = $document->published_intelligence_revision_id;
+            $revision = $revisionId === null ? null : DocumentIntelligenceRevision::whereKey($revisionId)
+                ->where('document_id', $document->id)->where('workspace_id', $document->workspace_id)
+                ->where('file_hash', $document->file_hash)->where('state', 'published')->first();
+            if ($revisionId !== null && (! $revision || ($revision->pipeline_key !== null
+                && $revision->pipeline_key !== $unit->pipeline_key))) {
+                throw new AiProcessingException('input_changed');
+            }
+            if ($revisionId === null && (int) $document->intelligence_generation > 0) {
+                throw new AiProcessingException('input_changed');
+            }
+            if (! empty($result['charts'])) {
+                $retainedPath = 'chart-visuals/'.$document->workspace_id.'/'.$document->id.'/'
+                    .($revisionId ?? 'legacy').'/'.$unit->input_hash;
+                $retainedExisted = Storage::disk('documents')->exists($retainedPath);
+                if (! $retainedExisted && ! Storage::disk('documents')->copy($asset['path'], $retainedPath)) {
+                    throw new AiProcessingException('visual_partial');
+                }
+            }
+            $stored = DB::transaction(function () use ($document, $result, $unit, $asset, $retainedPath, $revisionId) {
+                $locked = Document::whereKey($document->id)->lockForUpdate()->firstOrFail();
+                if ($locked->workspace_id !== $unit->workspace_id || $locked->status !== 'Ready'
+                    || $locked->file_hash !== $document->file_hash
+                    || ($locked->ai_pipeline['key'] ?? hash('sha256', $locked->workspace_id.'|'.$locked->id.'|'.$locked->file_hash.'|visual-v1')) !== $unit->pipeline_key
+                    || $locked->published_intelligence_revision_id !== $revisionId) {
+                    throw new AiProcessingException('input_changed');
+                }
+                $count = app(AnalyzeEmbeddedVisualsJob::class, ['documentId' => $document->id, 'revisionId' => $revisionId])->mergeCharts(
+                    $locked, $result['charts'] ?? [], $retainedPath ? [
+                        'path' => $retainedPath, 'sha256' => $unit->input_hash,
+                        'page' => $asset['page'] ?? null, 'media_type' => $asset['media_type'],
+                        'document_hash' => $document->file_hash, 'pipeline_key' => $unit->pipeline_key,
+                    ] : []);
                 $unit->update(['status' => 'completed', 'result' => ['page' => $asset['page'] ?? null, 'charts' => $result['charts'] ?? []], 'completed_at' => now()]);
+
+                return $count;
             });
+            if ($stored === 0 && $retainedPath !== null && ! $retainedExisted) {
+                Storage::disk('documents')->delete($retainedPath);
+                $retainedPath = null;
+            }
         } catch (\Throwable $e) {
+            if ($retainedPath !== null && ! $retainedExisted) {
+                Storage::disk('documents')->delete($retainedPath);
+            }
             $unit->update(['status' => 'failed', 'failure_class' => $e instanceof AiProcessingException ? $e->classification : 'visual_partial', 'completed_at' => now()]);
         } finally {
             app(IncrementalPipeline::class)->settleCost($unit);

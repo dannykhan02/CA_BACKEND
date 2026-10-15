@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Enums\WorkspaceType;
 use App\Models\Document;
 use App\Models\User;
+use App\Models\WorkspaceMember;
 
 class DocumentPolicy
 {
@@ -17,21 +18,18 @@ class DocumentPolicy
 
     public function view(User $user, Document $document): bool
     {
+        if (! $user->active || $document->workspace_id !== $user->current_workspace_id
+            || ! WorkspaceMember::where('workspace_id', $document->workspace_id)
+                ->where('user_id', $user->id)->exists()) {
+            return false;
+        }
+
         if ($document->workspace?->type === WorkspaceType::Personal) {
             return $document->uploaded_by === $user->id;
         }
 
-        // Outer tenant boundary — was missing entirely. A document
-        // belongs to exactly one workspace; a user operates within
-        // their current workspace. Without this check, any
-        // Organization-workspace user with a sufficient role could view
-        // ANY Organization document in ANY workspace, not just their
-        // own. The classification/role check below is the INNER
-        // boundary and must never substitute for this outer one.
-        if ($document->workspace_id !== $user->current_workspace_id) {
-            return false;
-        }
-
+        // Membership and current-workspace ownership above are the tenant
+        // boundary. Classification remains a separate role check.
         $allowedRoles = self::MIN_ROLE_FOR_CLASSIFICATION[$document->classification] ?? [];
         return in_array($user->role, $allowedRoles, true);
     }
@@ -39,7 +37,7 @@ class DocumentPolicy
     public function approve(User $user, Document $document): bool
     {
         if ($document->workspace?->type === WorkspaceType::Personal) {
-            return $document->uploaded_by === $user->id;
+            return $this->view($user, $document);
         }
 
         return $this->view($user, $document)
@@ -54,7 +52,7 @@ class DocumentPolicy
     public function reprocess(User $user, Document $document): bool
     {
         if ($document->workspace?->type === WorkspaceType::Personal) {
-            return $document->uploaded_by === $user->id;
+            return $this->view($user, $document);
         }
 
         return $this->approve($user, $document);
@@ -74,10 +72,10 @@ class DocumentPolicy
         ));
     }
 
-public function delete(User $user, Document $document): bool
+    public function delete(User $user, Document $document): bool
     {
         if ($document->workspace?->type === WorkspaceType::Personal) {
-            return $document->uploaded_by === $user->id;
+            return $this->view($user, $document);
         }
 
         return $this->approve($user, $document);

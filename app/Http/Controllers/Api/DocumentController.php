@@ -39,6 +39,8 @@ class DocumentController extends Controller
     {
         $validated = $request->validated();
         $user = $request->user();
+        abort_unless($user->active, 403);
+        app(IntelligenceAccess::class)->workspace($user);
 
         // workspace_id is the outer filter, applied before any classification
         // logic — the one line that stops a Personal-workspace user from
@@ -129,7 +131,7 @@ class DocumentController extends Controller
         );
 
         $document = app(DocumentIntelligenceService::class)->publishedView($document);
-        $document->load(['kpis', 'charts', 'pageFlags', 'uploader:id,full_name', 'lastUpdater:id,full_name']);
+        $document->load(['kpis', 'pageFlags', 'uploader:id,full_name', 'lastUpdater:id,full_name']);
 
         return new DocumentResource($document);
     }

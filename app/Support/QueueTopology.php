@@ -16,6 +16,7 @@ use App\Jobs\MergeDocumentEvidenceJob;
 use App\Jobs\OcrPageBatchJob;
 use App\Jobs\ProcessDocumentChunkJob;
 use App\Jobs\ProcessDocumentVisualJob;
+use App\Jobs\PurgeDocumentChartImagesJob;
 use App\Jobs\ResumeAfterCreditConfirmationJob;
 use App\Jobs\RetryDeferredBillingEvent;
 use App\Jobs\ScanUploadedFileJob;
@@ -57,6 +58,7 @@ final class QueueTopology
         ScanUploadedFileJob::class => self::DEFAULT,
         ExtractDocumentTextJob::class => self::DEFAULT, // Parsing only; its token count is non-blocking.
         AnalyzeEmbeddedVisualsJob::class => self::DEFAULT, // Planning/rasterization; no provider call.
+        PurgeDocumentChartImagesJob::class => self::DEFAULT,
         GenerateEmbeddingsJob::class => self::DEFAULT, // Voyage, not Anthropic.
         RetryDeferredBillingEvent::class => self::DEFAULT,
         SendTrackedDeadlineReminder::class => self::DEFAULT,

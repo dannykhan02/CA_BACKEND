@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\BillingController;
 use App\Http\Controllers\Api\CreditPurchaseController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DocumentApproveController;
+use App\Http\Controllers\Api\DocumentChartImageController;
 use App\Http\Controllers\Api\DocumentComparisonController;
 use App\Http\Controllers\Api\DocumentContextController;
 use App\Http\Controllers\Api\DocumentController;
@@ -180,6 +181,8 @@ Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(functio
 
     Route::get('/documents/{document}/download', [DocumentDownloadController::class, 'show'])
         ->name('documents.download');
+    Route::get('/documents/{document}/charts/{chart}/image', [DocumentChartImageController::class, 'show'])
+        ->name('documents.charts.image');
 
     Route::post('/documents/{document}/reprocess', [DocumentReprocessController::class, 'store'])
         ->middleware('throttle:20,1')->name('documents.reprocess');
