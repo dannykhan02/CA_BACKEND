@@ -953,12 +953,14 @@ This image is one page or figure from a document. It may contain a chart (bar, l
 
 If it contains no chart, or the chart's underlying values are not legibly readable, respond with {"charts": []}.
 
-If it contains one or more genuinely readable charts, extract each as accurately as possible. Never fabricate a value you cannot actually read off the image — if a value is ambiguous or illegible, omit that data point rather than guessing. Do NOT include a target, threshold, or goal line as a data point — only actual measured/plotted values belong in "data".
+If it contains one or more genuinely readable charts, extract each as accurately as possible. Never fabricate a value you cannot actually read off the image — if a value is ambiguous or illegible, omit that data point rather than guessing. Do NOT include a target, threshold, or goal line as a data point.
+
+For each chart, report optional source semantics only when explicitly readable in the image. "basis" is "time_series" only when the horizontal dimension is a continuous sequence of comparable periods, "categorical" for comparisons across named categories or periods, and "composition" for parts of one whole. Give the x and y axis meanings and one common unit only when printed or unambiguous in the chart itself. For multiple separately named series, return "series" with one data array per series and leave "data" empty. Align category labels across series only if every label and value is present; never fill a missing value or period. Use "valueStatus":"exact" only when each number is printed explicitly and legible, never when estimated from bar height, a line position, or an axis. Otherwise use "estimated" or "unavailable". If units differ between series, omit the common unit. Do not mark dimensions as explicit when the series relationship is ambiguous.
 
 Respond with ONLY valid JSON, no other text, no markdown code fences:
 
 {
-  "charts": [{"type": "bar"|"line"|"pie", "title": string, "description": string, "data": [{"label": string, "value": number}]}]
+  "charts": [{"type": "bar"|"line"|"pie", "title": string, "description": string, "data": [{"label": string, "value": number}], "series": [{"name": string, "data": [{"label": string, "value": number}]}], "basis": "time_series"|"categorical"|"composition"|null, "axis": {"x": string, "y": string}|null, "unit": string|null, "valueStatus": "exact"|"estimated"|"unavailable"}]
 }
 PROMPT;
     }

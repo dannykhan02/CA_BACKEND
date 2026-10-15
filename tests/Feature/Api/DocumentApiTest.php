@@ -5,6 +5,7 @@ namespace Tests\Feature\Api;
 use App\Models\Document;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Models\WorkspaceMember;
 use Database\Seeders\DocumentSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -26,6 +27,8 @@ class DocumentApiTest extends TestCase
         $user = User::factory()->administrator()->create([
             'current_workspace_id' => $workspace->id,
         ]);
+        WorkspaceMember::create(['workspace_id' => $workspace->id, 'user_id' => $user->id,
+            'role' => 'Administrator', 'joined_at' => now()]);
         Sanctum::actingAs($user);
         return $user;
     }

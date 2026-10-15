@@ -14,7 +14,11 @@ class DocumentResource extends JsonResource
         $this->resource = app(DocumentIntelligenceService::class)->publishedView($this->resource);
         // Mutation endpoints return this resource without eager loading. Keep the
         // wire contract identical to show() while preserving existing results.
-        $this->resource->loadMissing(['pageFlags', 'kpis', 'charts']);
+        $this->resource->loadMissing(['pageFlags', 'kpis']);
+        // Eloquent builds eager-load relations on a blank model, which has no
+        // revision pointer. Query charts from the pinned document instance.
+        $this->resource->setRelation('charts', $this->resource->charts()->get());
+        $request->attributes->set('chart_published_document', $this->resource);
 
         return [
             'id' => $this->id,

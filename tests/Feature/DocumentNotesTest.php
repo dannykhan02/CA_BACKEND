@@ -19,6 +19,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Sentry\Event;
@@ -240,6 +241,7 @@ class DocumentNotesTest extends TestCase
 
     public function test_limits_flag_off_deleted_document_and_hard_delete(): void
     {
+        Storage::fake('documents');
         $user = $this->actor();
         $document = $this->document($user);
         $id = $this->createNote($user, $document);

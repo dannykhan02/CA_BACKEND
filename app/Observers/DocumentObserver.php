@@ -3,7 +3,10 @@
 namespace App\Observers;
 
 use App\Models\Document;
+use App\Jobs\PurgeDocumentChartImagesJob;
 use App\Services\AuditLogger;
+use App\Support\QueueTopology;
+use Illuminate\Support\Facades\DB;
 
 class DocumentObserver
 {
@@ -15,6 +18,16 @@ class DocumentObserver
         \App\Models\DocumentComparison::where('base_document_id', $document->id)->orWhere('compared_document_id', $document->id)->delete();
         \App\Models\TrackedItem::where('document_id', $document->id)->delete();
         \Illuminate\Support\Facades\DB::table('document_suggestion_dismissals')->where('document_id', $document->id)->orWhere('related_document_id', $document->id)->delete();
+    }
+
+    public function forceDeleted(Document $document): void
+    {
+        $workspaceId = $document->workspace_id;
+        $documentId = $document->id;
+        DB::afterCommit(static function () use ($workspaceId, $documentId): void {
+            PurgeDocumentChartImagesJob::dispatch($workspaceId, $documentId)
+                ->onQueue(QueueTopology::DEFAULT);
+        });
     }
 
     public function updated(Document $document): void
