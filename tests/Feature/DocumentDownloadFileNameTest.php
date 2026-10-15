@@ -30,6 +30,12 @@ class DocumentDownloadFileNameTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Storage::fake('documents');
+    }
+
     /** @return array{0: User, 1: Workspace} */
     private function orgUser(string $role = 'Administrator'): array
     {
