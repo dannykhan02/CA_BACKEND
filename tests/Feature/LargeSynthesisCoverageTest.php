@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Exceptions\AiProcessingException;
+use App\Exceptions\AnthropicStructuredOutputException;
 use App\Models\Document;
+use App\Models\DocumentAiRun;
 use App\Models\DocumentChunk;
 use App\Services\AI\AiPricing;
 use App\Services\AI\Incremental\EvidenceBudget;
@@ -13,6 +15,7 @@ use App\Services\AI\Incremental\SynthesisCoverage;
 use App\Services\AnthropicClient;
 use Database\Seeders\DocumentSummaryPromptSeederV3;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -205,6 +208,93 @@ class LargeSynthesisCoverageTest extends TestCase
         $estimate = app(AnthropicClient::class)->evidenceBatchReservation($batch);
         self::assertGreaterThan(0, $estimate);
         self::assertLessThan(2, $estimate);
+    }
+
+    public function test_batch_parser_rejects_missing_findings_without_marking_the_call_successful(): void
+    {
+        config(['services.anthropic.synthesis_model' => 'claude-sonnet-5-5']);
+        $document = $this->intelligenceDocument('Malformed batch.pdf', 'Processing');
+        $document->forceFill(['ai_pipeline' => [...$document->ai_pipeline, 'budget_usd' => 2.0]])->save();
+        Http::fake(['*/messages' => Http::response(['model' => 'claude-sonnet-5-5', 'stop_reason' => 'end_turn',
+            'usage' => ['input_tokens' => 200, 'output_tokens' => 20],
+            'content' => [['type' => 'text', 'text' => '{}']]])]);
+        try {
+            app(AnthropicClient::class)->summarizeEvidenceBatch($document,
+                ['group' => 'page:0:metric', 'items' => [['id' => 'kpi:valid', 'claim' => 'Revenue: 10']]]);
+            self::fail('A missing findings array must fail validation.');
+        } catch (AnthropicStructuredOutputException $e) {
+            self::assertSame('invalid_schema', $e->outputStatus);
+        }
+        self::assertSame('invalid_schema', DocumentAiRun::where('document_id', $document->id)->sole()->failure_class);
+    }
+
+    public function test_received_format_failure_gets_one_reserved_repair_and_then_is_considered(): void
+    {
+        $document = $this->cbkStyleDocument();
+        $processor = app(SynthesisBatches::class);
+        $batch = app(SynthesisCoverage::class)->plan($document)['batches'][0];
+        $client = Mockery::mock(AnthropicClient::class);
+        $client->shouldReceive('evidenceBatchReservation')->twice()->andReturn(0.025);
+        $client->shouldReceive('synthesisReservation')->twice()->andReturn(['synthesis_reserved_usd' => 0.2,
+            'repair_reserved_usd' => 0.05]);
+        $client->shouldReceive('setRunContext')->zeroOrMoreTimes();
+        $client->shouldReceive('summarizeEvidenceBatch')->once()->with($document, $batch, false)
+            ->andThrow(new AnthropicStructuredOutputException('malformed_output', 'Malformed JSON.'));
+        $client->shouldReceive('summarizeEvidenceBatch')->once()->with($document, $batch, true)
+            ->andReturn(['findings' => [], 'invalid_claims' => 0]);
+
+        self::assertSame('processed', $processor->processNext($document, null, $client));
+        $unit = DocumentChunk::where('identity', $processor->identity($batch))->sole();
+        self::assertSame('pending', $unit->status);
+        self::assertSame('malformed_output', $unit->failure_class);
+        self::assertSame(count($batch['items']), $unit->result['_failure']['input_count']);
+        self::assertSame('processed', $processor->processNext($document, null, $client));
+        $unit->refresh();
+        self::assertSame('completed', $unit->status);
+        self::assertSame(2, $unit->attempts);
+        self::assertSame(0.05, (float) $unit->reserved_cost);
+        self::assertSame(count($batch['items']), app(EvidenceBudget::class)->forSynthesis($document)['coverage']['synthesis_considered']);
+    }
+
+    public function test_internal_validation_is_terminal_and_budget_can_stop_a_format_retry(): void
+    {
+        $document = $this->cbkStyleDocument();
+        $processor = app(SynthesisBatches::class);
+        $batch = app(SynthesisCoverage::class)->plan($document)['batches'][0];
+        $client = Mockery::mock(AnthropicClient::class);
+        $client->shouldReceive('evidenceBatchReservation')->andReturn(0.04);
+        $client->shouldReceive('synthesisReservation')->andReturn(['synthesis_reserved_usd' => 0.2,
+            'repair_reserved_usd' => 0.05]);
+        $client->shouldReceive('setRunContext')->zeroOrMoreTimes();
+        $client->shouldReceive('summarizeEvidenceBatch')->once()->andThrow(new \LogicException('Internal parser defect.'));
+        self::assertSame('processed', $processor->processNext($document, null, $client));
+        $unit = DocumentChunk::where('identity', $processor->identity($batch))->sole();
+        self::assertSame('failed', $unit->status);
+        self::assertSame('internal_validation', $unit->failure_class);
+        self::assertFalse($unit->result['_failure']['recoverable']);
+        self::assertSame(count($batch['items']), $unit->result['_failure']['input_count']);
+        self::assertSame(0, Artisan::call('docintel:pipeline-report', ['document' => $document->id, '--json' => true]));
+        $reported = collect(json_decode(Artisan::output(), true)['synthesis_batches'])->sole();
+        self::assertSame($batch['group'], $reported['group']);
+        self::assertSame(count($batch['items']), $reported['input_count']);
+        self::assertSame('internal_validation', $reported['failure']['code']);
+
+        $second = $this->cbkStyleDocument();
+        $second->forceFill(['ai_pipeline' => [...$second->ai_pipeline, 'budget_usd' => 0.3]])->save();
+        $next = app(SynthesisCoverage::class)->plan($second)['batches'][0];
+        $retryClient = Mockery::mock(AnthropicClient::class);
+        $retryClient->shouldReceive('evidenceBatchReservation')->andReturn(0.04);
+        $retryClient->shouldReceive('synthesisReservation')->andReturn(['synthesis_reserved_usd' => 0.2,
+            'repair_reserved_usd' => 0.05]);
+        $retryClient->shouldReceive('setRunContext')->zeroOrMoreTimes();
+        $retryClient->shouldReceive('summarizeEvidenceBatch')->once()
+            ->andThrow(new AnthropicStructuredOutputException('invalid_schema', 'Missing findings.'));
+        self::assertSame('processed', $processor->processNext($second, null, $retryClient));
+        self::assertSame('ready', $processor->processNext($second, null, $retryClient));
+        $budget = DocumentChunk::where('document_id', $second->id)->where('identity', $processor->identity($next))->sole();
+        self::assertSame('budget', $budget->status);
+        self::assertSame(1, $budget->attempts);
+        self::assertSame('budget_exceeded', $budget->result['_failure']['code']);
     }
 
     public function test_final_hierarchical_summary_discards_unsupported_prose_and_uses_original_claims(): void
