@@ -95,6 +95,10 @@ class DocumentDownloadFileNameTest extends TestCase
             return rawurldecode($matches[1]);
         }
 
+        if (preg_match('/filename=([^;"]+)/', $disposition, $matches) === 1) {
+            return trim($matches[1]);
+        }
+
         $this->fail("could not read a filename from: {$disposition}");
     }
 
