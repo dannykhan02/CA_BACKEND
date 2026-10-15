@@ -75,9 +75,15 @@ class UploadDocumentRequest extends FormRequest
      */
     public function messages(): array
     {
+        // Named from the same source as the rules above, so the list a user is
+        // told cannot drift from the list actually accepted. It said "a genuine
+        // PDF or DOCX" while XLSX, JPG and PNG were equally accepted, so a user
+        // rejected for a renamed spreadsheet was sent after the wrong problem.
+        $accepted = implode(', ', app(SupportedDocumentTypes::class)->enabledTypes());
+
         return [
             'file.max' => 'File exceeds the maximum allowed size of ' . round(config('document_processing.max_upload_size_kb') / 1024) . 'MB.',
-            'file.mimetypes' => 'File type not recognized as a genuine PDF or DOCX — the file may be corrupted, mislabeled, or a disguised file type.',
+            'file.mimetypes' => "File type not recognized as a genuine {$accepted} file — the file may be corrupted, mislabeled, or a disguised file type.",
         ];
     }
 }

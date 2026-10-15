@@ -88,7 +88,15 @@ FILESYSTEM_DISK=local
 CLAMAV_ENABLED=true
 CLAMAV_SOCKET=/var/run/clamav/clamd.ctl
 
-OCR_DEFAULT_PROVIDER=tesseract
+# Leave unset (the config default is claude_vision) unless the image you are
+# deploying actually contains the tesseract binary. This file used to say
+# `tesseract` unconditionally, which is a value this project's Dockerfile
+# cannot honour: it installs no tesseract, so a worker started with it set
+# resolves TesseractOcrProvider and then fails per page when it tries to run
+# the binary — TesseractOcrProvider::supports() returns true without checking
+# that it exists. Verified 2026-10-15: zero tesseract references in the
+# Dockerfile, and config/ocr.php:8 defaults to claude_vision.
+# OCR_DEFAULT_PROVIDER=claude_vision
 
 VOYAGE_API_KEY=
 VOYAGE_MODEL=voyage-4
