@@ -34,7 +34,29 @@ class SynthesisBatches
         if (count($plan['batches']) <= 1) {
             return 'ready';
         }
+        $identities = array_map($this->identity(...), $plan['batches']);
+        // A delivery revisits every earlier batch. Read only this revision's planned units
+        // once; pending units still take the document lock and recheck their state below.
+        $finished = DB::transaction(function () use ($document, $revisionId, $identities) {
+            $locked = Document::whereKey($document->id)->lockForUpdate()->firstOrFail();
+            if (! app(DocumentRevisionPublisher::class)->owns($locked, $revisionId)
+                || $locked->ai_pipeline['key'] !== $document->ai_pipeline['key']) {
+                return null;
+            }
+
+            return DocumentChunk::where('workspace_id', $locked->workspace_id)
+                ->where('document_id', $locked->id)->where('pipeline_key', $locked->ai_pipeline['key'])
+                ->where('stage', 'synthesis_batch')->whereIn('identity', $identities)
+                ->whereIn('status', ['completed', 'budget', 'failed', 'uncertain'])
+                ->pluck('identity')->flip();
+        });
+        if ($finished === null) {
+            return 'stale';
+        }
         foreach ($plan['batches'] as $batch) {
+            if ($finished->has($this->identity($batch))) {
+                continue;
+            }
             $claim = DB::transaction(function () use ($document, $revisionId, $batch, $client) {
                 $locked = Document::whereKey($document->id)->lockForUpdate()->firstOrFail();
                 if (! app(DocumentRevisionPublisher::class)->owns($locked, $revisionId)

@@ -132,13 +132,16 @@ class EvidenceBudget
             $selected = $all->all();
             $considered = count($selected);
         } else {
+            $identities = array_map(app(SynthesisBatches::class)->identity(...), $batches);
+            $units = DocumentChunk::where('workspace_id', $document->workspace_id)
+                ->where('document_id', $document->id)->where('pipeline_key', $document->ai_pipeline['key'])
+                ->where('stage', 'synthesis_batch')->whereIn('identity', $identities)
+                ->get()->keyBy('identity');
             $recommended = [];
             $consideredIds = [];
             $representatives = [];
             foreach ($batches as $batch) {
-                $unit = DocumentChunk::where('document_id', $document->id)
-                    ->where('pipeline_key', $document->ai_pipeline['key'])
-                    ->where('identity', app(SynthesisBatches::class)->identity($batch))->first();
+                $unit = $units->get(app(SynthesisBatches::class)->identity($batch));
                 if ($unit?->status !== 'completed') {
                     foreach ($batch['items'] as $item) {
                         $uncovered[] = ['group' => $batch['group'], 'source_id' => $item['id'],
