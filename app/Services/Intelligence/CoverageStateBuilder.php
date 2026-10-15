@@ -114,8 +114,11 @@ class CoverageStateBuilder
         if (! in_array($coverage['source_text'] ?? null, ['full', 'excerpts', 'omitted'], true)) {
             $synthesis['unknown_facts'][] = 'source_text';
         }
+        if (! $summaryAvailable && ($pipeline['synthesis'] ?? null) === 'completed') {
+            $synthesis['unknown_facts'][] = 'summary_artifact';
+        }
         $synthesis['status'] = match (true) {
-            ! $summaryAvailable => 'unavailable',
+            ! $summaryAvailable && ($pipeline['synthesis'] ?? null) !== 'completed' => 'unavailable',
             isset($coverage['synthesis_considered']) && ($synthesis['evidence_omitted'] ?? 0) > 0 => 'partial',
             ($synthesis['evidence_omitted'] ?? 0) > 0
                 || (! isset($coverage['synthesis_considered']) && (in_array($coverage['source_text'] ?? null, ['excerpts', 'omitted'], true)

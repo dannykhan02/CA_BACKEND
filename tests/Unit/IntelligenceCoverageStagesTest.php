@@ -80,4 +80,21 @@ class IntelligenceCoverageStagesTest extends TestCase
         self::assertSame('partial', $partial['state']);
         self::assertSame('partial', $partial['stages']['synthesis']['status']);
     }
+
+    public function test_completed_synthesis_with_missing_summary_uses_persisted_coverage(): void
+    {
+        $builder = new CoverageStateBuilder;
+        $partial = $builder->build($this->pipeline(['evidence_omitted' => 36,
+            'synthesis_considered' => 667, 'synthesis_uncovered' => 36,
+            'comprehensive' => false]), false);
+        self::assertSame('partial', $partial['stages']['synthesis']['status']);
+        self::assertContains('summary_artifact', $partial['stages']['synthesis']['unknown_facts']);
+
+        $complete = $builder->build($this->pipeline(['synthesis_considered' => 703,
+            'synthesis_uncovered' => 0]), false);
+        self::assertSame('unknown', $complete['stages']['synthesis']['status']);
+        $unfinished = $this->pipeline();
+        $unfinished['synthesis'] = 'failed';
+        self::assertSame('unavailable', $builder->build($unfinished, false)['stages']['synthesis']['status']);
+    }
 }

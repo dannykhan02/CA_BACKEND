@@ -3,6 +3,7 @@
 namespace App\Services\AI\Incremental;
 
 use App\Exceptions\AiProcessingException;
+use App\Exceptions\AnthropicStructuredOutputException;
 use App\Models\Document;
 use App\Models\DocumentChunk;
 use App\Services\AnthropicClient;
@@ -49,14 +50,18 @@ class SynthesisBatches
                 if ($unit->status !== 'pending') {
                     return ['unit' => $unit, 'claimed' => false];
                 }
-                $cost = $client->evidenceBatchReservation($batch);
+                $repairFormat = in_array($unit->failure_class, ['malformed_output', 'invalid_schema'], true);
+                $cost = $client->evidenceBatchReservation($batch, $repairFormat);
                 // Preserve a final evidence-only request and its possible repair. This bound is
                 // recalculated from the configured model and full final evidence allowance.
                 $final = $client->synthesisReservation($locked, null, count(config('document_intelligence.synthesis_levels')) - 1);
                 $protect = (float) $final['synthesis_reserved_usd'] + (float) $final['repair_reserved_usd'];
                 $pipeline = app(IncrementalPipeline::class);
                 if (! $pipeline->canReserve($locked, $cost, synthesis: true, protect: $protect)) {
-                    $unit->update(['status' => 'budget', 'failure_class' => 'budget_exceeded', 'completed_at' => now()]);
+                    $unit->update(['status' => 'budget', 'failure_class' => 'budget_exceeded',
+                        'result' => ['_failure' => ['group' => $batch['group'], 'input_count' => count($batch['items']),
+                            'code' => 'budget_exceeded', 'attempt' => $unit->attempts, 'recoverable' => false]],
+                        'completed_at' => now()]);
 
                     return ['unit' => $unit, 'claimed' => false];
                 }
@@ -79,12 +84,29 @@ class SynthesisBatches
                 $client->setRunContext(['chunk_id' => $unit->id, 'pipeline_version' => $unit->pipeline_version,
                     'request_attempt' => $unit->attempts]);
                 $called = true;
-                $result = $client->summarizeEvidenceBatch($document, $batch);
-                $unit->update(['status' => 'completed', 'result' => $result, 'completed_at' => now()]);
+                $result = $client->summarizeEvidenceBatch($document, $batch,
+                    in_array($unit->failure_class, ['malformed_output', 'invalid_schema'], true));
+                // Keep the claim running until its spend is settled. A second worker must not
+                // reserve a retry against the same checkpoint while this attempt is closing.
+                app(IncrementalPipeline::class)->settleCost($unit, true);
+                $unit->update(['status' => 'completed', 'result' => $result, 'failure_class' => null, 'completed_at' => now()]);
             } catch (\Throwable $e) {
-                $failure = $e instanceof AiProcessingException ? $e->classification : 'validation';
-                $retry = $failure === 'transient' && $unit->attempts < (int) config('document_intelligence.attempts');
+                app(IncrementalPipeline::class)->settleCost($unit, $called);
+                $failure = match (true) {
+                    $e instanceof AiProcessingException => $e->classification,
+                    $e instanceof AnthropicStructuredOutputException => $e->outputStatus,
+                    default => 'internal_validation',
+                };
+                // Only a received, malformed response can safely get one format repair attempt.
+                // A timeout or unknown failure may already have consumed its provider allowance.
+                $formatRetry = in_array($failure, ['malformed_output', 'invalid_schema'], true)
+                    && $unit->attempts < min(2, (int) config('document_intelligence.attempts'));
+                $retry = $formatRetry || ($failure === 'transient'
+                    && $unit->attempts < (int) config('document_intelligence.attempts'));
                 $unit->update(['status' => $retry ? 'pending' : 'failed', 'failure_class' => $failure,
+                    'result' => ['_failure' => ['group' => $batch['group'], 'input_count' => count($batch['items']),
+                        'code' => $failure, 'exception' => class_basename($e), 'attempt' => $unit->attempts,
+                        'recoverable' => $retry]],
                     'completed_at' => $retry ? null : now()]);
             } finally {
                 app(IncrementalPipeline::class)->settleCost($unit, $called);
