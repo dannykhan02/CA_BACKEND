@@ -117,6 +117,26 @@ class DocumentIntelligenceRevisionTest extends TestCase
         }
     }
 
+    public function test_superseded_summary_attempt_cannot_replace_the_new_pipeline_metadata(): void
+    {
+        $document = $this->document();
+        $publisher = app(DocumentRevisionPublisher::class);
+        $old = $publisher->begin($document);
+        $document->forceFill(['ai_pipeline' => ['route' => 'incremental', 'key' => 'old-key']])->save();
+        $staleSnapshot = $document->fresh();
+        $publisher->begin($staleSnapshot);
+        $document->fresh()->forceFill(['ai_pipeline' => ['route' => 'incremental',
+            'key' => 'new-key', 'synthesis_reductions' => 0]])->save();
+
+        // Invoke the write at the race boundary: the job passed its initial owner check,
+        // then a newer revision became active before it saved synthesis metadata.
+        $write = (new \ReflectionClass(GenerateDocumentSummaryJob::class))->getMethod('updateOwnedPipeline');
+        self::assertFalse($write->invoke(new GenerateDocumentSummaryJob($document->id, revisionId: $old->id),
+            $staleSnapshot, ['synthesis_reductions' => 3]));
+        self::assertEqualsCanonicalizing(['route' => 'incremental', 'key' => 'new-key', 'synthesis_reductions' => 0],
+            $document->fresh()->ai_pipeline);
+    }
+
     public function test_publication_retry_is_idempotent_and_ready_status_alone_is_insufficient(): void
     {
         $document = $this->document();

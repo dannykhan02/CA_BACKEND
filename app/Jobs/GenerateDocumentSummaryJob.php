@@ -122,8 +122,10 @@ class GenerateDocumentSummaryJob implements ShouldQueue
                 // original evidence and does not need to resend the source document.
                 $last = count(config('document_intelligence.synthesis_levels')) - 1;
                 if (EvidenceBudget::level($document) < $last) {
-                    $document->forceFill(['ai_pipeline' => [...$document->ai_pipeline,
-                        'synthesis_reductions' => $last]])->save();
+                    if (! $this->updateOwnedPipeline($document, ['synthesis_reductions' => $last])) {
+                        return;
+                    }
+                    $document->refresh();
                 }
             }
             $checkpoint = app(SynthesisCheckpoint::class)->claim($document);
@@ -176,8 +178,16 @@ class GenerateDocumentSummaryJob implements ShouldQueue
         } else {
             $extractedData = app(EvidenceBudget::class)->trimNormal($extractedData);
         }
-        $document->forceFill(['ai_pipeline' => [...($document->ai_pipeline ?? []),
-            'evidence_trimmed' => $extractedData['coverage']['evidence_omitted'] > 0]])->save();
+        if (! $this->updateOwnedPipeline($document,
+            ['evidence_trimmed' => $extractedData['coverage']['evidence_omitted'] > 0])) {
+            if ($checkpoint) {
+                app(IncrementalPipeline::class)->settleCost($checkpoint, false);
+                $checkpoint->update(['status' => 'pending']);
+            }
+            $this->abandonIntelligence($document, $stage);
+
+            return;
+        }
 
         if ($checkpoint) {
             $client->setRunContext(['chunk_id' => $checkpoint->id, 'pipeline_version' => $checkpoint->pipeline_version,
@@ -326,17 +336,29 @@ class GenerateDocumentSummaryJob implements ShouldQueue
      */
     private function scheduleRecovery(Document $document, DocumentChunk $checkpoint, string $failure, \Throwable $e): bool
     {
-        $document->refresh();
-        if (! app(DocumentRevisionPublisher::class)->owns($document, $this->revisionId)) {
-            return false;
-        }
-        $level = EvidenceBudget::level($document);
         $last = count(config('document_intelligence.synthesis_levels')) - 1;
-        if (in_array($failure, config('document_intelligence.synthesis_degradable_failures'), true) && $level < $last) {
-            $document->forceFill(['status' => 'Processing', 'error_message' => null, 'ai_pipeline' => [...$document->ai_pipeline,
-                'synthesis_reductions' => $level + 1, 'synthesis' => 'pending',
-                'synthesis_degradations' => [...($document->ai_pipeline['synthesis_degradations'] ?? []),
-                    ['from' => $level, 'to' => $level + 1, 'reason' => $failure === 'truncated' ? 'max_tokens' : $failure]]]])->save();
+        $level = null;
+        if (in_array($failure, config('document_intelligence.synthesis_degradable_failures'), true)) {
+            $level = DB::transaction(function () use ($document, $checkpoint, $failure, $last): ?int {
+                $locked = Document::whereKey($document->id)->lockForUpdate()->first();
+                if (! $locked || ! app(DocumentRevisionPublisher::class)->owns($locked, $this->revisionId)
+                    || ($locked->ai_pipeline['key'] ?? null) !== $checkpoint->pipeline_key) {
+                    return null;
+                }
+                $currentLevel = EvidenceBudget::level($locked);
+                if ($currentLevel >= $last) {
+                    return null;
+                }
+                $locked->forceFill(['status' => 'Processing', 'error_message' => null, 'ai_pipeline' => [...$locked->ai_pipeline,
+                    'synthesis_reductions' => $currentLevel + 1, 'synthesis' => 'pending',
+                    'synthesis_degradations' => [...($locked->ai_pipeline['synthesis_degradations'] ?? []),
+                        ['from' => $currentLevel, 'to' => $currentLevel + 1,
+                            'reason' => $failure === 'truncated' ? 'max_tokens' : $failure]]]])->save();
+
+                return $currentLevel;
+            });
+        }
+        if ($level !== null) {
             app(DocumentProgress::class)->record($document->id, 'synthesis_retry', 96 + min(2, $level), ['level' => $level + 1]);
             self::dispatch($document->id, true, null, $this->revisionId)->onQueue(QueueTopology::for(GenerateDocumentSummaryJob::class));
 
@@ -344,14 +366,41 @@ class GenerateDocumentSummaryJob implements ShouldQueue
         }
         if ($e instanceof AiProcessingException && $failure === 'transient'
             && $checkpoint->attempts < config('document_intelligence.attempts')) {
+            $owned = DB::transaction(function () use ($document, $checkpoint): bool {
+                $locked = Document::whereKey($document->id)->lockForUpdate()->first();
+                if (! $locked || ! app(DocumentRevisionPublisher::class)->owns($locked, $this->revisionId)
+                    || ($locked->ai_pipeline['key'] ?? null) !== $checkpoint->pipeline_key) {
+                    return false;
+                }
+                $locked->forceFill(['status' => 'Processing'])->save();
+
+                return true;
+            });
+            if (! $owned) {
+                return false;
+            }
             $checkpoint->update(['status' => 'pending']);
-            $document->forceFill(['status' => 'Processing'])->save();
             self::dispatch($document->id, true, null, $this->revisionId)->onQueue(QueueTopology::for(GenerateDocumentSummaryJob::class))->delay(max(2 ** $checkpoint->attempts * 5, $e->retryAfter) + random_int(0, 5));
 
             return true;
         }
 
         return false;
+    }
+
+    /** A queued revision must never save its stale pipeline snapshot over a new owner. */
+    private function updateOwnedPipeline(Document $document, array $changes): bool
+    {
+        return DB::transaction(function () use ($document, $changes): bool {
+            $locked = Document::whereKey($document->id)->lockForUpdate()->first();
+            if (! $locked || ! app(DocumentRevisionPublisher::class)->owns($locked, $this->revisionId)
+                || ($locked->ai_pipeline['key'] ?? null) !== ($document->ai_pipeline['key'] ?? null)) {
+                return false;
+            }
+            $locked->forceFill(['ai_pipeline' => [...($locked->ai_pipeline ?? []), ...$changes]])->save();
+
+            return true;
+        });
     }
 
     /** Short, non-technical terminal reason; the failure class stays in admin diagnostics only. */
@@ -416,20 +465,25 @@ class GenerateDocumentSummaryJob implements ShouldQueue
             return;
         }
         $this->finalizeIntelligenceFailure('document_summary', $e);
-        $document = Document::find($this->documentId);
-        if (($document?->ai_pipeline['route'] ?? null) === 'incremental') {
-            DocumentChunk::where('document_id', $document->id)->where('pipeline_key', $document->ai_pipeline['key'])
-                ->where('stage', 'synthesis')->where('status', 'running')
-                ->update(['status' => 'uncertain', 'failure_class' => 'worker_timeout']);
-            if ($document->status === 'Processing') {
-                $document->forceFill(['status' => 'Needs Review', 'progress' => 100,
-                    'error_message' => 'Available evidence is preserved, but document synthesis could not be completed.',
-                    'ai_pipeline' => [...$document->ai_pipeline, 'partial' => true]])->save();
+        DB::transaction(function (): void {
+            $document = Document::whereKey($this->documentId)->lockForUpdate()->first();
+            if (! $document || ! app(DocumentRevisionPublisher::class)->owns($document, $this->revisionId)) {
+                return;
             }
-        }
-        if ($document && $this->revisionId !== null) {
-            app(DocumentRevisionPublisher::class)->fail($document, $this->revisionId);
-        }
+            if (($document->ai_pipeline['route'] ?? null) === 'incremental') {
+                DocumentChunk::where('document_id', $document->id)->where('pipeline_key', $document->ai_pipeline['key'])
+                    ->where('stage', 'synthesis')->where('status', 'running')
+                    ->update(['status' => 'uncertain', 'failure_class' => 'worker_timeout']);
+                if ($document->status === 'Processing') {
+                    $document->forceFill(['status' => 'Needs Review', 'progress' => 100,
+                        'error_message' => 'Available evidence is preserved, but document synthesis could not be completed.',
+                        'ai_pipeline' => [...$document->ai_pipeline, 'partial' => true]])->save();
+                }
+            }
+            if ($this->revisionId !== null) {
+                app(DocumentRevisionPublisher::class)->fail($document, $this->revisionId);
+            }
+        });
         Log::error('GenerateDocumentSummaryJob failed after retries', [
             'document_id' => $this->documentId,
             'failure_class' => $e instanceof AiProcessingException ? $e->classification : 'synthesis_failure',

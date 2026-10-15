@@ -9,6 +9,8 @@ use App\Models\DocumentEvidence;
 use App\Models\ProcessingJob;
 use App\Services\AI\Incremental\EvidenceGrounding;
 use App\Services\AI\Incremental\ProactiveChunkRisk;
+use App\Services\AI\Incremental\SynthesisBatches;
+use App\Services\AI\Incremental\SynthesisCoverage;
 use Illuminate\Console\Command;
 
 /**
@@ -96,6 +98,14 @@ class PipelineReport extends Command
         $reactiveParents = $splitParents->filter(fn ($chunk) => ($chunk->cost_accounting['split_kind'] ?? null) !== 'proactive');
         $reactiveRuns = $runs->whereIn('chunk_id', $reactiveParents->pluck('id')->all());
         $coverage = $document->ai_pipeline['coverage'] ?? [];
+        $batchInputs = [];
+        if ($key && ($document->ai_pipeline['route'] ?? null) === 'incremental') {
+            foreach (app(SynthesisCoverage::class)->plan($document)['batches'] as $batch) {
+                $batchInputs[app(SynthesisBatches::class)->identity($batch)] = [
+                    'group' => $batch['group'], 'input_count' => count($batch['items'])];
+            }
+        }
+        $synthesisBatches = $chunks->where('stage', 'synthesis_batch');
         $partialReasons = [];
         foreach (['failed_chunks', 'dropped_records', 'saturated_chunks', 'unresolved_references', 'evidence_omitted'] as $field) {
             if (($coverage[$field] ?? 0) > 0) {
@@ -151,6 +161,9 @@ class PipelineReport extends Command
         return [
             'document' => ['id' => $document->id, 'name' => $document->name, 'type' => $document->type,
                 'pages' => $document->pages, 'status' => $document->status,
+                'published_revision_id' => $document->published_intelligence_revision_id,
+                'active_revision_id' => $document->active_intelligence_revision_id,
+                'pipeline_key' => $key,
                 'route' => $document->ai_pipeline['route'] ?? 'normal',
                 'mode' => $document->ai_pipeline['mode'] ?? null,
                 'grounding' => $document->ai_pipeline['grounding'] ?? 'legacy_quote',
@@ -241,6 +254,22 @@ class PipelineReport extends Command
                 'split_details' => $splitDetails,
                 'queue_timing_observed_chunks' => $queueTimings->count(),
             ],
+            'synthesis_batches' => $synthesisBatches->map(function ($unit) use ($batchInputs, $runs) {
+                $input = $batchInputs[$unit->identity] ?? [];
+                $attempts = $runs->where('chunk_id', $unit->id);
+
+                return ['checkpoint' => substr($unit->identity, strlen('synthesis-batch:'), 12),
+                    'group' => $input['group'] ?? $unit->result['_failure']['group'] ?? $unit->cost_accounting['group'] ?? null,
+                    'input_count' => $input['input_count'] ?? $unit->result['_failure']['input_count']
+                        ?? $unit->cost_accounting['evidence_count'] ?? null,
+                    'status' => $unit->status, 'failure_class' => $unit->failure_class,
+                    'failure' => $unit->result['_failure'] ?? null, 'attempts' => $unit->attempts,
+                    'provider_runs' => $attempts->map(fn ($run) => ['status' => $run->status,
+                        'failure_class' => $run->failure_class, 'stop_reason' => $run->stop_reason,
+                        'response_received' => $run->provider_response_received,
+                        'input_tokens' => $run->input_tokens, 'output_tokens' => $run->output_tokens])
+                        ->values()->all()];
+            })->values()->all(),
             'records' => [
                 'returned' => $returned,
                 'accepted' => $accepted,
