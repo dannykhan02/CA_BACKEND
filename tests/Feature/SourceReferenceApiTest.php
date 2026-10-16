@@ -239,4 +239,49 @@ class SourceReferenceApiTest extends TestCase
             ->assertStatus(409)
             ->assertExactJson(['error' => ['code' => 'SOURCE_UNAVAILABLE']]);
     }
+
+    public function test_unbound_header_hash_mismatch_invalidates_the_pinned_source_graph(): void
+    {
+        [$user, $document, $sourceId] = $this->fixture();
+        $set = DB::table('source_provenance_sets')->where('document_id', $document->id)
+            ->where('active', true)->firstOrFail();
+        $header = DB::table('source_anchors')->where('set_id', $set->id)
+            ->where('structural_path', 'sheet:0!A1')->firstOrFail();
+        self::assertFalse(DB::table('evidence_role_bindings')->where('anchor_id', $header->id)->exists());
+        DB::table('source_anchors')->where('id', $header->id)
+            ->update(['source_hash' => hash('sha256', 'text that is not in this document')]);
+
+        Sanctum::actingAs($user);
+        $this->getJson('/api/documents/'.$document->id.'/sources/'.$sourceId)
+            ->assertStatus(409)
+            ->assertExactJson(['error' => ['code' => 'SOURCE_UNAVAILABLE']]);
+    }
+
+    public function test_valid_source_hashes_remain_resolvable_across_supported_file_types(): void
+    {
+        $user = User::factory()->create();
+        app(WorkspaceService::class)->createPersonalWorkspaceFor($user);
+        $user->refresh();
+        Sanctum::actingAs($user);
+
+        foreach (['PDF', 'DOCX', 'XLSX', 'JPG', 'PNG'] as $type) {
+            $document = Document::create(['workspace_id' => $user->current_workspace_id,
+                'uploaded_by' => $user->id, 'name' => 'Source.'.$type, 'type' => $type,
+                'status' => 'Ready', 'classification' => 'Internal', 'size_kb' => 1,
+                'year' => 2025, 'file_hash' => hash('sha256', $type)]);
+            $document->forceFill(['extracted_text' => 'Value 12.4'])->save();
+            $sourceId = 'kpi:'.Str::uuid();
+            DocumentEvidence::create(['workspace_id' => $document->workspace_id,
+                'document_id' => $document->id, 'pipeline_key' => 'legacy',
+                'identity' => hash('sha256', $type.' value'), 'kind' => 'metric', 'source_id' => $sourceId,
+                'data' => ['value' => '12.4'],
+                'sources' => [['quote' => '12.4', 'start_offset' => 6, 'end_offset' => 10,
+                    'span_id' => 'fixture']]]);
+            app(TextRoleProvenanceProducer::class)->publish($document);
+
+            $this->getJson('/api/documents/'.$document->id.'/sources/'.$sourceId)
+                ->assertOk()->assertJsonPath('data.matchState', 'EXACT')
+                ->assertJsonPath('data.sourceFormat', in_array($type, ['JPG', 'PNG'], true) ? 'OTHER' : $type);
+        }
+    }
 }
