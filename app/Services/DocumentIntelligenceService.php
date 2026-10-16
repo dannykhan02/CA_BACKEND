@@ -20,9 +20,14 @@ class DocumentIntelligenceService
     public function loadIntelligence(Document $document): Document
     {
         $document = $this->publishedView($document);
-        $document->loadMissing([
-            'documentTypeClassification', 'entities', 'risks', 'deadlines', 'intelligenceSummary',
-        ]);
+        // Eloquent eager loading constructs relation queries on a fresh model instance.
+        // That instance lacks the published view's transient read revision pin, so it
+        // queries the active (or null) revision and silently returns empty relations.
+        foreach (['documentTypeClassification', 'entities', 'risks', 'deadlines', 'intelligenceSummary'] as $relation) {
+            $query = $document->$relation()->where('workspace_id', $document->workspace_id);
+            $document->setRelation($relation, in_array($relation, ['documentTypeClassification', 'intelligenceSummary'], true)
+                ? $query->first() : $query->get());
+        }
         if ($document->ai_pipeline['summary_stale'] ?? false) {
             $document->setRelation('intelligenceSummary', null);
         }
