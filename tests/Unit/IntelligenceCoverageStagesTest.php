@@ -42,7 +42,7 @@ class IntelligenceCoverageStagesTest extends TestCase
 
         self::assertSame('bounded', $result['state']);
         self::assertContains('failed_chunks_unknown', $result['reasons']);
-        self::assertSame(0, $result['failed_chunks']); // V1 field retains its existing integer fallback.
+        self::assertNull($result['failed_chunks']);
         self::assertNull($result['stages']['extraction']['failed_chunks']);
         self::assertContains('failed_chunks', $result['stages']['extraction']['unknown_facts']);
         self::assertSame('unknown', $result['stages']['extraction']['status']);

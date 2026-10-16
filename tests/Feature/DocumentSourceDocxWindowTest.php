@@ -86,7 +86,7 @@ class DocumentSourceDocxWindowTest extends TestCase
             'workspace_id' => $document->workspace_id, 'document_id' => $document->id,
             'generation' => 1, 'state' => 'published', 'file_hash' => $fileHash,
             'extracted_text' => $structure->text, 'extracted_text_hash' => hash('sha256', $structure->text),
-            'pipeline_key' => 'legacy', 'ai_pipeline' => ['key' => 'legacy'],
+            'pipeline_key' => 'legacy', 'ai_pipeline' => ['route' => 'normal', 'key' => 'legacy'],
             'parser_version' => $structure->parserVersion, 'structure_policy' => StructuredDocument::POLICY,
             'structured_extraction_id' => DB::table('structured_extractions')->where('document_id', $document->id)->value('id'),
             'provenance_set_id' => $setId, 'provenance_policy' => SourceProvenance::POLICY,
