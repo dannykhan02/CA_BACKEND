@@ -36,8 +36,17 @@ class IntelligenceCoverageAndAbsenceTest extends TestCase
         self::assertContains('failed_chunks_unknown', $unknown['reasons']);
         self::assertContains('source_text_unknown', $unknown['reasons']);
         $legacy = $builder->build(['route' => 'normal', 'synthesis' => 'completed'], true);
-        self::assertSame('bounded', $legacy['state']);
+        self::assertSame('unavailable', $legacy['state']);
         self::assertContains('legacy_route', $legacy['reasons']);
+        self::assertContains('coverage_not_measured', $legacy['reasons']);
+        self::assertNull($legacy['evidence_total']);
+        self::assertNull($legacy['evidence_omitted']);
+        self::assertNull($legacy['total_chunks']);
+        self::assertNull($legacy['source_text']);
+        $trimmedLegacy = $builder->build(['route' => 'normal', 'evidence_trimmed' => true], true);
+        self::assertSame('bounded', $trimmedLegacy['state']);
+        self::assertContains('evidence_trimmed', $trimmedLegacy['reasons']);
+        self::assertNull($trimmedLegacy['evidence_omitted']);
     }
 
     public function test_tier1_truncation_is_disclosed_without_falsifying_complete_coverage(): void

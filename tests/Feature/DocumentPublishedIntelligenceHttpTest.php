@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Document;
 use App\Models\DocumentDeadline;
 use App\Models\DocumentEntity;
+use App\Models\DocumentEvidence;
 use App\Models\DocumentIntelligenceRevision;
 use App\Models\DocumentIntelligenceSummary;
 use App\Models\DocumentRisk;
@@ -86,7 +87,9 @@ class DocumentPublishedIntelligenceHttpTest extends TestCase
         $this->assertCount(19, $response->json('data.entities'));
         $response->assertJsonPath('data.processingDetails.route', 'normal')
             ->assertJsonPath('data.processingDetails.evidenceTrimmed', false)
-            ->assertJsonPath('data.analysis.attention.coverage.state', 'bounded')
+            ->assertJsonPath('data.analysis.attention.coverage.state', 'unavailable')
+            ->assertJsonPath('data.analysis.attention.coverage.evidence_total', null)
+            ->assertJsonPath('data.analysis.attention.coverage.total_chunks', null)
             ->assertJsonPath('data.intelligenceSummary.materialFindings', []);
         $this->assertNotEmpty($response->json('data.intelligenceSummary.keyFindings'));
         $this->assertNull($response->json('data.intelligenceSummary.executiveAssessment'));
@@ -133,5 +136,57 @@ class DocumentPublishedIntelligenceHttpTest extends TestCase
         $this->assertPublishedResponse($user, $document, $revision);
         $response = $this->getJson("/api/documents/{$document->id}/intelligence")->assertOk();
         $this->assertStringNotContainsString('Excluded', $response->getContent());
+    }
+
+    public function test_normal_route_quotes_have_revision_ownership_but_no_exact_location(): void
+    {
+        [$user, $document, $revision] = $this->publishedDocument();
+        $this->actingAs($user, 'sanctum');
+        $risk = $document->risks()->firstOrFail();
+        $deadline = $document->deadlines()->firstOrFail();
+        foreach (["risk:{$risk->id}" => 'Recorded risk 1',
+            "deadline:{$deadline->id}" => 'Recorded deadline'] as $reference => $quote) {
+            $this->getJson("/api/documents/{$document->id}/sources/{$reference}")->assertOk()
+                ->assertJsonPath('data.intelligenceRevisionId', $revision->id)
+                ->assertJsonPath('data.source.text', $quote)
+                ->assertJsonPath('data.source.range', null)
+                ->assertJsonPath('data.matchState', 'UNAVAILABLE');
+            $this->getJson("/api/documents/{$document->id}/sources/{$reference}/docx-window?expected_revision_id={$revision->id}")
+                ->assertStatus(409)->assertJsonPath('error.code', 'SOURCE_UNAVAILABLE');
+        }
+        $this->getJson("/api/documents/{$document->id}/intelligence")->assertOk()
+            ->assertJsonPath('data.intelligenceSummary.keyFindings.0', 'A documented finding');
+    }
+
+    public function test_normal_route_pdf_quote_does_not_claim_an_exact_page(): void
+    {
+        [$user, $document, $revision] = $this->publishedDocument('PDF');
+        $risk = $document->risks()->firstOrFail();
+        $this->actingAs($user, 'sanctum')
+            ->getJson("/api/documents/{$document->id}/sources/risk:{$risk->id}")->assertOk()
+            ->assertJsonPath('data.intelligenceRevisionId', $revision->id)
+            ->assertJsonPath('data.source.page', null)
+            ->assertJsonPath('data.source.range', null)
+            ->assertJsonPath('data.matchState', 'UNAVAILABLE');
+    }
+
+    public function test_normal_route_pdf_with_stored_offsets_exposes_only_its_verified_page(): void
+    {
+        [$user, $document, $revision] = $this->publishedDocument('PDF');
+        $risk = $document->risks()->firstOrFail();
+        $quote = 'The document records five risks';
+        DocumentEvidence::create(['document_id' => $document->id, 'workspace_id' => $document->workspace_id,
+            'pipeline_key' => 'legacy', 'identity' => hash('sha256', 'risk-quote'), 'kind' => 'risk',
+            'source_id' => 'risk:'.$risk->id, 'data' => ['value' => $quote],
+            'sources' => [['quote' => $quote, 'start_offset' => 0,
+                'end_offset' => mb_strlen($quote), 'page' => 1]]]);
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson("/api/documents/{$document->id}/sources/risk:{$risk->id}")->assertOk()
+            ->assertJsonPath('data.intelligenceRevisionId', $revision->id)
+            ->assertJsonPath('data.matchState', 'EXACT')
+            ->assertJsonPath('data.source.page', 1)
+            ->assertJsonPath('data.source.range.start', 0)
+            ->assertJsonPath('data.source.text', $quote);
     }
 }
