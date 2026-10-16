@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\DocumentReprocessController;
 use App\Http\Controllers\Api\DocumentRiskReviewController;
 use App\Http\Controllers\Api\DocumentSearchController;
 use App\Http\Controllers\Api\DocumentSourceCellWindowController;
+use App\Http\Controllers\Api\DocumentSourceDocxWindowController;
 use App\Http\Controllers\Api\DocumentSourceReferenceController;
 use App\Http\Controllers\Api\DocumentUploadController;
 use App\Http\Controllers\Api\HealthController;
@@ -148,6 +149,8 @@ Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(functio
         ->middleware('throttle:60,1')->name('documents.sources.show');
     Route::get('/documents/{document}/sources/{sourceId}/cell-window', [DocumentSourceCellWindowController::class, 'show'])
         ->middleware('throttle:60,1')->name('documents.sources.cell-window');
+    Route::get('/documents/{document}/sources/{sourceId}/docx-window', [DocumentSourceDocxWindowController::class, 'show'])
+        ->middleware('throttle:60,1')->name('documents.sources.docx-window');
 
     Route::middleware(ProtectDocumentNotes::class)->group(function () {
         Route::get('/documents/{document}/notes', [DocumentNoteController::class, 'index'])

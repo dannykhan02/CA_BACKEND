@@ -347,6 +347,16 @@ class DocumentTextExtractor
                     $style = $xpath->query('./w:pPr/w:pStyle', $child)->item(0);
                     $node['meta'] = ['style' => $style instanceof \DOMElement
                         ? $style->getAttributeNS($namespace, 'val') : null];
+                    // Explicit numbering ownership only. Style names alone do
+                    // not prove a list, and we do not simulate Word numbering.
+                    $numId = $xpath->query('./w:pPr/w:numPr/w:numId', $child)->item(0);
+                    $level = $xpath->query('./w:pPr/w:numPr/w:ilvl', $child)->item(0);
+                    $number = $numId instanceof \DOMElement ? $numId->getAttributeNS($namespace, 'val') : '';
+                    $indent = $level instanceof \DOMElement ? $level->getAttributeNS($namespace, 'val') : '0';
+                    if (preg_match('/^[1-9][0-9]{0,9}$/D', $number) && preg_match('/^[0-8]$/D', $indent)) {
+                        $node['meta']['list_id'] = $number;
+                        $node['meta']['list_level'] = (int) $indent;
+                    }
                     $references = [];
                     foreach ($xpath->query('.//w:footnoteReference', $child) as $reference) {
                         if ($reference instanceof \DOMElement) {
@@ -423,11 +433,12 @@ class DocumentTextExtractor
         unset($node);
         array_push($nodes, ...array_values($footnotes));
 
-        return new StructuredDocument('DOCX', 'wordprocessingml-body.v4', $text, $nodes,
+        return new StructuredDocument('DOCX', 'wordprocessingml-body.v5', $text, $nodes,
             ['text' => 'complete', 'body_order' => 'complete', 'tables' => 'native_paths',
                 'merged_cells' => 'grid_span_and_v_merge', 'headings' => 'heading_1_to_6_body_sections',
                 'footnotes' => $footnotes !== [] ? 'referenced_source_nodes' : 'none_or_unavailable',
                 'headers_footers' => 'unavailable',
+                'lists' => 'explicit_num_id_and_level_without_markers',
                 'tracked_changes' => 'deleted_text_excluded']);
     }
 
