@@ -60,6 +60,16 @@ class SourceReferenceResolver
         $set = $published
             ? ($published->provenance_set_id ? $setQuery->where('id', $published->provenance_set_id)->first(['id']) : null)
             : $setQuery->where('active', true)->first(['id']);
+        // Structural context can be present in the pinned graph without a role
+        // binding or a one-hop relationship in this response. A changed hash
+        // anywhere in that graph invalidates its provenance as a whole.
+        if ($set !== null && DB::table('source_anchors')
+            ->where('workspace_id', $document->workspace_id)->where('document_id', $document->id)
+            ->where('set_id', $set->id)
+            ->whereRaw("source_hash IS DISTINCT FROM encode(sha256(convert_to(source_text, 'UTF8')), 'hex')")
+            ->exists()) {
+            return ['state' => 'SOURCE_UNAVAILABLE'];
+        }
         $roles = [];
         $relationships = [];
         if ($set !== null) {
