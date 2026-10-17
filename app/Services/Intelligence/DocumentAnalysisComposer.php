@@ -202,6 +202,7 @@ class DocumentAnalysisComposer
 
         return DocumentEvidence::where('workspace_id', $document->workspace_id)
             ->where('document_id', $document->id)->where('pipeline_key', $key)
+            ->where('kind', '!=', 'normal_source')
             ->orderBy('identity')->get();
     }
 }

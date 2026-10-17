@@ -339,7 +339,11 @@ PROMPT;
         $this->currentOperation = 'entities';
         $this->activeDocument = $document;
         $this->throttle();
-        $prompt = $this->buildEntitiesPrompt($documentText, $documentName);
+        $sourceText = $document ? app(\App\Services\Intelligence\NormalRouteProvenance::class)->promptText($document, $documentText) : $documentText;
+        $prompt = $this->buildEntitiesPrompt($sourceText, $documentName);
+        if ($sourceText !== $documentText) {
+            $prompt .= app(\App\Services\Intelligence\NormalRouteProvenance::class)->instruction();
+        }
 
         // One bounded transport attempt per structured response. The existing
         // single corrected retry for malformed/truncated JSON is retained;
@@ -357,7 +361,11 @@ PROMPT;
         $this->currentOperation = 'risks';
         $this->activeDocument = $document;
         $this->throttle();
-        $prompt = $this->buildRisksPrompt($documentText, $documentName);
+        $sourceText = $document ? app(\App\Services\Intelligence\NormalRouteProvenance::class)->promptText($document, $documentText) : $documentText;
+        $prompt = $this->buildRisksPrompt($sourceText, $documentName);
+        if ($sourceText !== $documentText) {
+            $prompt .= app(\App\Services\Intelligence\NormalRouteProvenance::class)->instruction();
+        }
 
         return $this->structuredCall($prompt, $document, 'risks', $this->parseRisksResponse(...));
     }
@@ -367,7 +375,11 @@ PROMPT;
         $this->currentOperation = 'deadlines';
         $this->activeDocument = $document;
         $this->throttle();
-        $prompt = $this->buildDeadlinesPrompt($documentText, $documentName);
+        $sourceText = $document ? app(\App\Services\Intelligence\NormalRouteProvenance::class)->promptText($document, $documentText) : $documentText;
+        $prompt = $this->buildDeadlinesPrompt($sourceText, $documentName);
+        if ($sourceText !== $documentText) {
+            $prompt .= app(\App\Services\Intelligence\NormalRouteProvenance::class)->instruction();
+        }
 
         return $this->structuredCall($prompt, $document, 'deadlines', $this->parseDeadlinesResponse(...));
     }
