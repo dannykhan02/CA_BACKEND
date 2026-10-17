@@ -123,7 +123,7 @@ class IntelligenceNormalizationTest extends TestCase
             ['FY2024/25', 'year', 'fiscal', 'FY2024/25'],
             ['2024/25', 'year', 'fiscal', 'FY2024/25'],
             ['Q3 2024', 'quarter', 'calendar', 'Q3 2024'],
-            ['Q3 FY25', 'quarter', 'fiscal', 'Q3 2025'],
+            ['Q3 FY25', 'quarter', 'fiscal', 'Q3 FY2025'],
             ['2024 Q1', 'quarter', 'calendar', 'Q1 2024'],
             ['second quarter of 2025', 'quarter', 'calendar', 'Q2 2025'],
             ['H1 2024', 'half', 'calendar', 'H1 2024'],

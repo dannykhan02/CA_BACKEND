@@ -2,22 +2,24 @@
 
 namespace Tests\Feature;
 
+use App\Enums\WorkspaceType;
+use App\Jobs\AnalyzeEmbeddedVisualsJob;
+use App\Jobs\PurgeDocumentChartImagesJob;
 use App\Models\Document;
 use App\Models\DocumentChart;
 use App\Models\DocumentIntelligenceRevision;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
-use App\Enums\WorkspaceType;
-use App\Jobs\AnalyzeEmbeddedVisualsJob;
-use App\Jobs\PurgeDocumentChartImagesJob;
-use App\Services\Intelligence\SourceChartContract;
+use App\Services\DocumentIntelligenceService;
 use App\Services\Intelligence\SourceChartAccess;
+use App\Services\Intelligence\SourceChartContract;
 use App\Services\WorkspaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -68,6 +70,8 @@ class SourceChartContractTest extends TestCase
         self::assertFalse($contract->metadata($this->chart(), ['page' => 8])['values_verified']);
 
         self::assertFalse($contract->metadata($this->chart(['unit' => null]), $source)['dimensions_verified']);
+        self::assertFalse($contract->metadata($this->chart(['unit' => 'unavailable']), $source)['dimensions_verified']);
+        self::assertFalse($contract->metadata($this->chart(['unit' => 'USD/KES']), $source)['dimensions_verified']);
         self::assertFalse($contract->metadata($this->chart(['valueStatus' => 'estimated']), $source)['values_verified']);
         $mixed = $contract->metadata($this->chart(['series' => [
             ['name' => 'Domestic', 'unit' => 'USD million', 'data' => [['label' => 'FY2023', 'value' => 10], ['label' => 'FY2024', 'value' => 12]]],
@@ -80,6 +84,23 @@ class SourceChartContractTest extends TestCase
             ['name' => 'Domestic', 'data' => [['label' => 'FY2023', 'value' => 10], ['label' => 'FY2024', 'value' => 12]]],
             ['name' => 'External', 'data' => [['label' => 'FY2022', 'value' => 6], ['label' => 'FY2024', 'value' => 8]]],
         ]]), $source)['dimensions_verified']);
+        $quarterly = $this->chart(['type' => 'line', 'basis' => 'time_series', 'series' => [
+            ['name' => 'Internal', 'data' => [['label' => 'Q1', 'value' => 92.3], ['label' => 'Q2', 'value' => 92.3]]],
+            ['name' => 'External', 'data' => [['label' => 'Q1', 'value' => 95], ['label' => 'Q2', 'value' => 92.8]]],
+        ]]);
+        self::assertFalse($contract->metadata($quarterly, $source)['dimensions_verified']);
+        $quarterly['series'][0]['data'][0]['label'] = 'Q1 FY2025';
+        $quarterly['series'][0]['data'][1]['label'] = 'Q2 FY2025';
+        $quarterly['series'][1]['data'][0]['label'] = 'Q1 FY2025';
+        $quarterly['series'][1]['data'][1]['label'] = 'Q2 FY2025';
+        self::assertTrue($contract->metadata($quarterly, $source)['dimensions_verified']);
+        $pie = ['type' => 'pie', 'basis' => 'composition', 'axis' => ['x' => 'Category', 'y' => 'Share'],
+            'unit' => '%', 'valueStatus' => 'exact', 'data' => [
+                ['label' => 'North', 'value' => 31], ['label' => 'South', 'value' => 30], ['label' => 'East', 'value' => 36],
+            ]];
+        self::assertFalse($contract->metadata($pie, $source)['dimensions_verified']);
+        $pie['data'][2]['value'] = 39;
+        self::assertTrue($contract->metadata($pie, $source)['dimensions_verified']);
     }
 
     public function test_chart_image_requires_document_permission_and_published_revision(): void
@@ -118,6 +139,9 @@ class SourceChartContractTest extends TestCase
         $response = $this->getJson("/api/documents/{$document->id}")->assertOk();
         $rows = collect($response->json('data.charts'))->keyBy('id');
         self::assertTrue($rows[$chart->id]['dimensionsVerified']);
+        self::assertTrue($rows[$chart->id]['renderEligible']);
+        self::assertTrue($rows[$chart->id]['exportSupport']['png']);
+        self::assertSame($revision->id, $rows[$chart->id]['sourceRevision']);
         self::assertSame('USD million', $rows[$chart->id]['valueFormat']['unit']);
         self::assertSame('External', $rows[$chart->id]['series'][1]['name']);
         self::assertSame(8, $rows[$chart->id]['sourcePage']);
@@ -127,6 +151,7 @@ class SourceChartContractTest extends TestCase
         self::assertSame($rows[$chart->id]['sourceImageUrl'], $snapshotRows[$chart->id]['sourceImageUrl']);
         self::assertNull($rows[$legacy->id]['sourceImageUrl']);
         self::assertFalse($rows[$legacy->id]['valuesVerified']);
+        self::assertFalse($rows[$legacy->id]['renderEligible']);
         self::assertSame([['label' => 'A', 'value' => 1]], $rows[$legacy->id]['data']);
         $imageUrl = "/api/documents/{$document->id}/charts/{$chart->id}/image";
         $this->get($imageUrl)->assertOk()->assertHeader('Content-Type', 'image/png');
@@ -150,6 +175,7 @@ class SourceChartContractTest extends TestCase
         Storage::disk('documents')->delete($path);
         $this->get($imageUrl)->assertNotFound();
         $this->getJson("/api/documents/{$document->id}")->assertJsonPath('data.charts.0.sourceImageUrl', null);
+        $this->getJson("/api/documents/{$document->id}")->assertJsonPath('data.charts.0.renderEligible', false);
         Storage::disk('documents')->put($path, $bytes);
         $document->forceFill(['file_hash' => hash('sha256', 'changed')])->save();
         $this->get($imageUrl)->assertNotFound();
@@ -201,7 +227,7 @@ class SourceChartContractTest extends TestCase
                 'pipeline_key' => $key, 'media_type' => 'image/png',
             ]),
         ]);
-        $view = app(\App\Services\DocumentIntelligenceService::class)->publishedView($document->fresh());
+        $view = app(DocumentIntelligenceService::class)->publishedView($document->fresh());
         self::assertSame($path, app(SourceChartAccess::class)->path($view, $chart));
     }
 
@@ -262,7 +288,7 @@ class SourceChartContractTest extends TestCase
         [, $document] = $this->document();
         $owned = "chart-visuals/{$document->workspace_id}/{$document->id}/legacy/image";
         $other = "chart-visuals/{$document->workspace_id}/{$document->id}-other/legacy/image";
-        $otherWorkspace = 'chart-visuals/'.\Illuminate\Support\Str::uuid()."/{$document->id}/legacy/image";
+        $otherWorkspace = 'chart-visuals/'.Str::uuid()."/{$document->id}/legacy/image";
         Storage::disk('documents')->put($owned, 'owned');
         Storage::disk('documents')->put($other, 'other');
         Storage::disk('documents')->put($otherWorkspace, 'other workspace');

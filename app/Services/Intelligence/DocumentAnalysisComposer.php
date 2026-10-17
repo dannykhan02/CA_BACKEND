@@ -29,6 +29,7 @@ class DocumentAnalysisComposer
     public function __construct(
         private MetricCollector $metrics,
         private ChartCandidateBuilder $charts,
+        private SourceChartContract $sourceCharts,
         private TakeawayBuilder $takeaways,
         private AnalysisGrouper $groups,
         private ImportantFindingsBuilder $findings,
@@ -49,7 +50,28 @@ class DocumentAnalysisComposer
 
         $collected = $this->metrics->collect($document);
         $derived = $this->charts->build($collected['observations'], $cited);
-        $charts = array_slice($derived['candidates'], 0, self::MAX_CHARTS);
+        $charts = array_map(function (array $chart) use ($document): array {
+            $labels = array_column($chart['series'][0]['data'] ?? $chart['points'], 'label');
+            $renderEligible = $chart['numericVerification'] === 'accepted_evidence'
+                && ($chart['basis'] !== 'time_series' || $this->sourceCharts->continuousPeriods($labels));
+            $chart['origin'] = 'generated';
+            $chart['verification'] = $chart['numericVerification'];
+            $chart['recommendedType'] = $chart['type'];
+            $chart['renderEligible'] = $renderEligible;
+            $chart['eligibilityReason'] = ! $renderEligible ? null : match ($chart['basis']) {
+                'time_series' => 'Comparable observations with ordered reporting periods',
+                'composition' => 'Verified parts of one whole',
+                default => 'Comparable categories measured in one period',
+            };
+            $chart['unavailabilityReason'] = $renderEligible ? null
+                : ($chart['verification'] === 'stored_numeric_legacy'
+                    ? 'Source text could not be parsed; values came from an older stored numeric field.'
+                    : 'Reporting periods do not form one consecutive comparable sequence.');
+            $chart['sourceRevision'] = $document->intelligenceRevisionForRelations();
+            $chart['exportSupport'] = ['csv' => true, 'png' => $renderEligible, 'word' => true];
+
+            return $chart;
+        }, array_slice($derived['candidates'], 0, self::MAX_CHARTS));
         $v2 = (bool) config('intelligence_v2.enabled');
         $materiality = null;
         $records = [];

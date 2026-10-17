@@ -8,6 +8,8 @@ namespace App\Services\Intelligence;
  */
 class SourceChartContract
 {
+    public function __construct(private MeasurementParser $measurements) {}
+
     public function metadata(array $chart, array $source): array
     {
         $basis = in_array($chart['basis'] ?? null, ['time_series', 'categorical', 'composition'], true)
@@ -15,7 +17,7 @@ class SourceChartContract
         $axis = $chart['axis'] ?? null;
         $axis = is_array($axis) && $this->label($axis['x'] ?? null) && $this->label($axis['y'] ?? null)
             ? ['x' => trim($axis['x']), 'y' => trim($axis['y'])] : null;
-        $unit = $this->label($chart['unit'] ?? null) ? trim($chart['unit']) : null;
+        $unit = $this->unitLabel($chart['unit'] ?? null);
         $status = in_array($chart['valueStatus'] ?? null, ['exact', 'estimated', 'unavailable'], true)
             ? $chart['valueStatus'] : 'unavailable';
         $series = $this->series($chart['series'] ?? null);
@@ -25,17 +27,24 @@ class SourceChartContract
             || ($type === 'bar' && $basis === 'categorical')
             || ($type === 'pie' && $basis === 'composition' && $series === null);
         $sameDimensions = $series === null || $this->aligned($series);
+        $labels = array_column($series === null ? ($points ?? []) : $series[0]['data'], 'label');
+        $timeVerified = $type !== 'line' || $this->continuousPeriods($labels);
+        $compositionVerified = $type !== 'pie' || ($unit === '%' && $points !== null
+            && count($points) >= 3 && collect($points)->every(fn ($point) => $point['value'] >= 0 && $point['value'] <= 100)
+            && abs(array_sum(array_column($points, 'value')) - 100) <= 0.5);
         $sourceRetained = is_string($source['path'] ?? null) && is_string($source['sha256'] ?? null)
             && preg_match('/^[a-f0-9]{64}$/', $source['sha256'])
             && is_string($source['document_hash'] ?? null) && is_string($source['pipeline_key'] ?? null);
-        $unitsCompatible = $series === null || collect($series)->every(fn ($item) => $item['unit'] === null
-            || $item['unit'] === $unit);
+        $declaredInvalidUnit = collect($chart['series'] ?? [])->contains(fn ($item) => is_array($item)
+            && array_key_exists('unit', $item) && $item['unit'] !== null && $this->unitLabel($item['unit']) === null);
+        $unitsCompatible = ! $declaredInvalidUnit && ($series === null || collect($series)->every(fn ($item) => $item['unit'] === null
+            || $item['unit'] === $unit));
         if (! $unitsCompatible) {
             $unit = null;
         }
         $valuesVerified = $sourceRetained && $status === 'exact' && ($points !== null || $series !== null);
         $dimensionsVerified = $sourceRetained && $basis !== null && $axis !== null && $unit !== null
-            && $compatible && $sameDimensions && $unitsCompatible;
+            && $compatible && $sameDimensions && $unitsCompatible && $timeVerified && $compositionVerified;
 
         return [
             'origin' => 'document_visual',
@@ -58,6 +67,17 @@ class SourceChartContract
     private function label(mixed $value): bool
     {
         return is_string($value) && trim($value) !== '';
+    }
+
+    private function unitLabel(mixed $value): ?string
+    {
+        if (! $this->label($value)) {
+            return null;
+        }
+        $unit = trim($value);
+
+        return preg_match('/^(?:unavailable|unknown|n\/?a|none|not stated)$/iuD', $unit)
+            || $this->measurements->parse('1', $unit) === null ? null : $unit;
     }
 
     private function points(mixed $points): ?array
@@ -90,7 +110,7 @@ class SourceChartContract
             }
             $name = trim($item['name']);
             $names[] = $name;
-            $valid[] = ['name' => $name, 'unit' => $this->label($item['unit'] ?? null) ? trim($item['unit']) : null,
+            $valid[] = ['name' => $name, 'unit' => $this->unitLabel($item['unit'] ?? null),
                 'data' => $points];
         }
 
@@ -104,6 +124,39 @@ class SourceChartContract
             if (array_column($item['data'], 'label') !== $labels) {
                 return false;
             }
+        }
+
+        return true;
+    }
+
+    /** A line needs dated, consecutive periods. A title cannot supply missing date identity. */
+    public function continuousPeriods(array $labels): bool
+    {
+        if (count($labels) < 2) {
+            return false;
+        }
+        $previous = null;
+        foreach ($labels as $label) {
+            $text = trim((string) $label);
+            $period = null;
+            if (preg_match('/^FY\s*(20\d{2})(?:[-\/](?:20)?(\d{2}))?$/iD', $text, $match)) {
+                if (isset($match[2]) && (int) $match[2] !== ((int) $match[1] + 1) % 100) {
+                    return false;
+                }
+                $period = ['fiscal-year', (int) $match[1]];
+            } elseif (preg_match('/^(20\d{2})$/D', $text, $match)) {
+                $period = ['calendar-year', (int) $match[1]];
+            } elseif (preg_match('/^Q([1-4])\s*(FY\s*)?(20\d{2})$/iD', $text, $match)) {
+                $period = [trim($match[2]) === '' ? 'calendar-quarter' : 'fiscal-quarter', (int) $match[3] * 4 + (int) $match[1] - 1];
+            } elseif (preg_match('/^H([1-2])\s*(FY\s*)?(20\d{2})$/iD', $text, $match)) {
+                $period = [trim($match[2]) === '' ? 'calendar-half' : 'fiscal-half', (int) $match[3] * 2 + (int) $match[1] - 1];
+            } elseif (preg_match('/^(FY)?(20\d{2})[-\/](0?[1-9]|1[0-2])$/iD', $text, $match)) {
+                $period = [($match[1] ?? '') === '' ? 'calendar-month' : 'fiscal-month', (int) $match[2] * 12 + (int) $match[3] - 1];
+            }
+            if ($period === null || $previous !== null && ($period[0] !== $previous[0] || $period[1] !== $previous[1] + 1)) {
+                return false;
+            }
+            $previous = $period;
         }
 
         return true;

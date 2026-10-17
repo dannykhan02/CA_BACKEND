@@ -54,6 +54,14 @@ class MeasurementParser
     {
         $valueText = trim((string) $value);
         $unitText = trim((string) $unit);
+        if (preg_match('/^(?:unavailable|unknown|n\/?a|none|not stated)$/iuD', $unitText)) {
+            $unitText = '';
+        }
+        // A bare m/k and metre-derived notation are physical units as often as scale
+        // abbreviations. There is no safe conversion without a stated measure context.
+        if (preg_match('/^(?:m|k|m\s*\/\s*[a-z]+|m[²³]|m\^[23])$/iuD', $unitText)) {
+            return null;
+        }
         if ($valueText === '') {
             return null;
         }
@@ -79,6 +87,9 @@ class MeasurementParser
         }
         $scale = $valueScale ?? $unitScale ?? 1.0;
 
+        if (count($this->currencyCodes($valueText.' '.$unitText)) > 1) {
+            return null;
+        }
         $currency = $this->currency($valueText) ?? $this->currency($unitText);
         $percent = $hadPercentSign || $this->isPercent($valueText, $unitTokens);
         if (($hadPercentSign || str_contains($valueText, '%'))
@@ -105,7 +116,18 @@ class MeasurementParser
             family: $family,
             scale: $percent ? 1.0 : $scale,
             unitText: $unitText !== '' ? $unitText : ($percent ? '%' : ''),
+            canonicalUnit: $percent ? '%' : $this->canonicalUnit($unitText),
         );
+    }
+
+    private function canonicalUnit(string $unit): string
+    {
+        // Scale has already been applied to magnitude. Keep the source spelling elsewhere, but
+        // remove its scale word before a presentation scale is added to the display label.
+        $withoutScale = preg_replace('/(?<![\p{L}\p{N}])(?:trillions?|billions?|millions?|thousands?|tn|tr|bn|bln|mn|mln|mm|m|k)(?![\p{L}\p{N}])/iu', ' ', $unit);
+        $withoutScale = preg_replace('/\s+/u', ' ', (string) $withoutScale);
+
+        return trim((string) preg_replace('/^of\s+/iu', '', trim((string) $withoutScale)));
     }
 
     /**
@@ -127,6 +149,13 @@ class MeasurementParser
         }
         // Thousands separators only; a comma used as a decimal mark is not assumed either way.
         if (preg_match('/,\d{1,2}$|,\d{4,}|\.\d+\./u', $raw)) {
+            return null;
+        }
+        $grouped = str_replace("\u{00a0}", ' ', $raw);
+        if (str_contains($grouped, ',') && ! preg_match('/^-?\d{1,3}(?:,\d{3})+(?:\.\d+)?$/D', $grouped)) {
+            return null;
+        }
+        if (str_contains($grouped, ' ') && ! preg_match('/^-?\d{1,3}(?: \d{3})+(?:\.\d+)?$/D', $grouped)) {
             return null;
         }
         $clean = str_replace([',', ' ', "\u{00a0}"], '', $raw);
@@ -197,18 +226,25 @@ class MeasurementParser
 
     private function currency(string $text): ?string
     {
+        $codes = $this->currencyCodes($text);
+
+        return $codes[0] ?? (str_contains($text, '$') ? '$' : null);
+    }
+
+    /** @return list<string> */
+    private function currencyCodes(string $text): array
+    {
+        $codes = [];
         foreach (self::CURRENCIES as $needle => $code) {
             $pattern = preg_match('/^\p{L}+$/u', $needle)
                 ? '/(?<!\p{L})'.preg_quote($needle, '/').'(?!\p{L})/iu'
                 : '/'.preg_quote($needle, '/').'/u';
             if (preg_match($pattern, $text)) {
-                return $code;
+                $codes[$code] = true;
             }
         }
 
-        // A bare dollar sign is a currency, but not a knowable one. Kept as its own family so
-        // "$ 10m" never joins "USD 10m" and never joins "CAD 10m" either.
-        return str_contains($text, '$') ? '$' : null;
+        return array_keys($codes);
     }
 
     /** @param list<string> $unitTokens */
