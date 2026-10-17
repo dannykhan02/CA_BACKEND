@@ -127,7 +127,11 @@ class DocumentRevisionPublisher
                     throw new \LogicException('Evidence or provenance stage is incomplete.');
                 }
             } else {
-                $set = null; // Normal path has typed textual source IDs, not a Phase 3A graph.
+                $set = is_string($pipelineKey) ? DB::table('source_provenance_sets')
+                    ->where('document_id', $locked->id)->where('workspace_id', $locked->workspace_id)
+                    ->where('pipeline_key', $pipelineKey)->where('source_revision', $textHash)
+                    ->where('policy_version', SourceProvenance::POLICY)
+                    ->where('published', true)->first() : null;
             }
             $required = ['ai_analysis', 'entities', 'risks', 'deadlines', 'document_summary'];
             if (($pipeline['route'] ?? null) !== 'incremental') {

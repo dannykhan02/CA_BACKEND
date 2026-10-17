@@ -35,7 +35,7 @@ class ChartCandidateBuilder
     private const MAX_SERIES = 5;
 
     /** A share of a whole, allowing for the rounding a report prints. */
-    private const COMPOSITION_TOLERANCE_PERCENT = 3.0;
+    private const COMPOSITION_TOLERANCE_PERCENT = 0.5;
 
     /** Parts may miss a stated total by this fraction of it and still be its parts. */
     private const COMPOSITION_TOLERANCE_RATIO = 0.02;
@@ -375,10 +375,16 @@ class ChartCandidateBuilder
         $unit = match ($first->kind) {
             'percent' => '%',
             'currency' => trim($first->currency.' '.($word ?? '')),
-            default => trim(($word ? $word.' ' : '').$first->unitText),
+            default => trim(($word ? $word.' ' : '').$first->canonicalUnit),
         };
 
-        return ['unit' => $unit, 'unitKind' => $first->kind, 'currency' => $first->currency, 'scale' => $scale];
+        $sourceUnits = array_values(array_unique(array_map(fn (MetricObservation $o) => $o->measurement->unitText, $observations)));
+
+        return ['unit' => $unit, 'unitKind' => $first->kind, 'currency' => $first->currency,
+            'canonicalUnit' => $first->canonicalUnit, 'sourceUnit' => count($sourceUnits) === 1 ? $sourceUnits[0] : null,
+            'unitVerification' => $first->unitText === '' ? 'unavailable' : 'accepted_evidence',
+            'numericVerification' => collect($observations)->every(fn (MetricObservation $o) => $o->measurement->numericVerified)
+                ? 'accepted_evidence' : 'stored_numeric_legacy', 'scale' => $scale];
     }
 
     /**
@@ -391,7 +397,11 @@ class ChartCandidateBuilder
         foreach ($observations as $key => $observation) {
             $points[] = [
                 'label' => $label ? $label($observation) : (string) $key,
-                'value' => round($observation->measurement->magnitude / $scale, 4),
+                'value' => $observation->measurement->magnitude / $scale,
+                'originalValue' => $observation->measurement->magnitude,
+                'sourceValue' => $observation->rawValue,
+                'sourceUnit' => $observation->measurement->unitText,
+                'sourceScale' => $observation->measurement->scale,
                 'sourceIds' => [$observation->sourceId],
                 'page' => $observation->page,
             ];

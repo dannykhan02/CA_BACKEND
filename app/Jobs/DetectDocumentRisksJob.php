@@ -72,7 +72,7 @@ class DetectDocumentRisksJob implements ShouldQueue
             DocumentRisk::where('document_id', $document->id)->where('intelligence_revision_id', $this->revisionId)->delete();
 
             foreach ($result['risks'] as $risk) {
-                DocumentRisk::create([
+                $created = DocumentRisk::create([
                     'intelligence_revision_id' => $this->revisionId,
                     'workspace_id' => $document->workspace_id,
                     'document_id' => $document->id,
@@ -87,6 +87,8 @@ class DetectDocumentRisksJob implements ShouldQueue
                     'provider' => 'anthropic',
                     'model' => app(AiModels::class)->forTask('risks'),
                 ]);
+                app(\App\Services\Intelligence\NormalRouteProvenance::class)
+                    ->record($document, 'risk', (string) $created->id, $risk);
             }
         }, ['risk_count' => count($result['risks'])]);
     }

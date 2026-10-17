@@ -88,6 +88,12 @@ class IncrementalPipeline
             && mb_strlen($text) <= config('document_processing.max_extraction_chars');
 
         $metadata['route'] = $legacy ? 'normal' : 'incremental';
+        if ($legacy && $document->active_intelligence_revision_id !== null) {
+            // Keep normal-route evidence as revision-owned as incremental evidence.
+            $metadata['key'] = 'normal:'.$document->active_intelligence_revision_id;
+            $metadata['normal_span_grounding'] = app(\App\Services\Intelligence\NormalRouteProvenance::class)
+                ->eligible($document, $text);
+        }
 
         if (! $legacy) {
             app(DocumentProgress::class)->record($document->id, 'planning');
@@ -104,6 +110,11 @@ class IncrementalPipeline
                 return false;
             }
             $locked->forceFill(['ai_pipeline' => $metadata])->save();
+            if (($metadata['route'] ?? null) === 'normal' && isset($metadata['key'])
+                && $locked->active_intelligence_revision_id !== null) {
+                DocumentIntelligenceRevision::whereKey($locked->active_intelligence_revision_id)
+                    ->where('state', 'candidate')->update(['pipeline_key' => $metadata['key']]);
+            }
             $document->setRawAttributes($locked->getAttributes(), true);
 
             return true;

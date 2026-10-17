@@ -25,6 +25,9 @@ readonly class Measurement
         public string $family,
         public float $scale,
         public string $unitText,
+        /** Unit with the written magnitude removed; never a converted unit. */
+        public string $canonicalUnit = '',
+        public bool $numericVerified = true,
     ) {}
 
     public function compatibleWith(self $other): bool

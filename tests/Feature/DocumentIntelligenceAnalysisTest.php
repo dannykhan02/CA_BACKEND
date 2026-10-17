@@ -110,6 +110,21 @@ class DocumentIntelligenceAnalysisTest extends TestCase
         $this->assertSame('USD billion', $charts[0]['unit']);
         $this->assertSame(['2022', '2023', '2024'], array_column($charts[0]['points'], 'label'));
         $this->assertSame([9.8, 10.7, 12.4], array_column($charts[0]['points'], 'value'));
+        $this->assertTrue($charts[0]['renderEligible']);
+        $this->assertSame('generated', $charts[0]['origin']);
+    }
+
+    public function test_gap_in_reporting_periods_is_visible_but_ineligible_for_line_redraw(): void
+    {
+        $document = $this->intelligenceDocument();
+        $this->metricFinding($document, 'Revenue', '9.8', 'USD billion', '2022');
+        $this->metricFinding($document, 'Revenue', '12.4', 'USD billion', '2024');
+
+        $chart = $this->analyze($document)['visualAnalysis']['charts'][0];
+        self::assertSame('line', $chart['recommendedType']);
+        self::assertFalse($chart['renderEligible']);
+        self::assertFalse($chart['exportSupport']['png']);
+        self::assertSame(['2022', '2024'], array_column($chart['points'], 'label'));
     }
 
     public function test_v2_chart_takeaway_uses_one_formatter_and_never_reaches_a_provider_client(): void
@@ -154,6 +169,44 @@ class DocumentIntelligenceAnalysisTest extends TestCase
         $this->assertSame([9.8, 12.4], array_column($charts[0]['points'], 'value'));
     }
 
+    public function test_cotton_unit_magnitude_is_applied_once_and_source_quantities_are_preserved(): void
+    {
+        $document = $this->intelligenceDocument();
+        $this->metricFinding($document, 'World Cotton Exports', '2.4', 'Million 480-Pound Bales', '2023');
+        $this->metricFinding($document, 'World Cotton Exports', '2.8', 'Million 480-Pound Bales', '2024');
+
+        $chart = $this->analyze($document)['visualAnalysis']['charts'][0];
+        self::assertSame('million 480-Pound Bales', $chart['unit']);
+        self::assertSame('480-Pound Bales', $chart['canonicalUnit']);
+        self::assertSame(1e6, $chart['scale']);
+        self::assertSame([2.4, 2.8], array_column($chart['points'], 'value'));
+        self::assertSame([2400000.0, 2800000.0], array_column($chart['points'], 'originalValue'));
+        self::assertSame(['Million 480-Pound Bales', 'Million 480-Pound Bales'], array_column($chart['points'], 'sourceUnit'));
+    }
+
+    public function test_thousands_of_people_is_reexpressed_in_people_without_changing_source_values(): void
+    {
+        $document = $this->intelligenceDocument();
+        $this->metricFinding($document, 'People served', '2.4', 'Thousands of people', '2023');
+        $this->metricFinding($document, 'People served', '2.8', 'Thousands of people', '2024');
+
+        $chart = $this->analyze($document)['visualAnalysis']['charts'][0];
+        self::assertSame('people', $chart['unit']);
+        self::assertSame(1.0, $chart['scale']);
+        self::assertSame([2400.0, 2800.0], array_column($chart['points'], 'value'));
+        self::assertSame(['2.4', '2.8'], array_column($chart['points'], 'sourceValue'));
+    }
+
+    public function test_display_keeps_material_small_decimal_precision(): void
+    {
+        $document = $this->intelligenceDocument();
+        $this->metricFinding($document, 'Rate', '0.00001234', 'USD', '2023');
+        $this->metricFinding($document, 'Rate', '0.00005678', 'USD', '2024');
+
+        $chart = $this->analyze($document)['visualAnalysis']['charts'][0];
+        self::assertSame([0.00001234, 0.00005678], array_column($chart['points'], 'value'));
+    }
+
     public function test_a_currency_mismatch_is_never_charted_as_one_series(): void
     {
         $document = $this->intelligenceDocument();
@@ -196,6 +249,15 @@ class DocumentIntelligenceAnalysisTest extends TestCase
         $this->assertSame([], $this->analyze($document)['visualAnalysis']['charts']);
     }
 
+    public function test_historical_actual_and_projection_are_not_one_trend(): void
+    {
+        $document = $this->intelligenceDocument();
+        $this->metricFinding($document, 'Revenue', '9.8', 'USD billion', '2023', ['metric_type' => 'actual']);
+        $this->metricFinding($document, 'Revenue', '12.4', 'USD billion', '2024', ['metric_type' => 'projected']);
+
+        self::assertSame([], $this->analyze($document)['visualAnalysis']['charts']);
+    }
+
     public function test_subjects_measured_in_one_period_form_a_categorical_chart(): void
     {
         $document = $this->intelligenceDocument();
@@ -235,6 +297,16 @@ class DocumentIntelligenceAnalysisTest extends TestCase
         $analysis = $this->analyze($document);
         $this->assertSame([], array_filter($analysis['visualAnalysis']['charts'], fn ($chart) => $chart['type'] === 'pie'));
         $this->assertArrayHasKey('not_a_composition', $analysis['visualAnalysis']['rejected']);
+    }
+
+    public function test_near_hundred_is_not_silently_renormalized_into_a_pie(): void
+    {
+        $document = $this->intelligenceDocument();
+        foreach ([['North', '31'], ['South', '30'], ['East', '36']] as [$region, $share]) {
+            $this->metricFinding($document, $region.' share of exports', $share, '%', '2024');
+        }
+        $charts = $this->analyze($document)['visualAnalysis']['charts'];
+        self::assertSame([], array_values(array_filter($charts, fn ($chart) => $chart['type'] === 'pie')));
     }
 
     public function test_parts_that_add_up_to_a_stated_total_form_a_composition(): void
@@ -611,6 +683,21 @@ class DocumentIntelligenceAnalysisTest extends TestCase
         $this->assertCount(1, $charts);
         $this->assertSame([64.2, 70.1], array_column($charts[0]['points'], 'value'));
         $this->assertSame('million', $charts[0]['unit']);
+        $this->assertSame('accepted_evidence', $charts[0]['verification']);
+    }
+
+    public function test_unreadable_legacy_source_text_keeps_a_distinct_numeric_verification_state(): void
+    {
+        $document = $this->intelligenceDocument('Legacy report.pdf', incremental: false);
+        foreach ([['2023', 'sixty-four million', 64200000.0], ['2024', 'seventy million', 70100000.0]] as [$period, $value, $numeric]) {
+            DocumentKpi::create(['document_id' => $document->id, 'workspace_id' => $document->workspace_id,
+                'label' => 'Subscribers', 'period' => $period, 'value' => $value, 'unit' => null, 'value_numeric' => $numeric]);
+        }
+
+        $charts = $this->analyze($document)['visualAnalysis']['charts'];
+        self::assertCount(1, $charts);
+        self::assertSame('stored_numeric_legacy', $charts[0]['verification']);
+        self::assertSame([64.2, 70.1], array_column($charts[0]['points'], 'value'));
     }
 
     // ---------------------------------------------------------------- api contract and isolation

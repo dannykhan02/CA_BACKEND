@@ -78,7 +78,8 @@ return [
             // see docs/day-10-remaining-work.md. DocumentStorageService's
             // own abstraction meant this was the only file that needed to
             // change; no caller of that service was touched.
-            'driver' => 's3',
+            'driver' => env('DOCUMENTS_DISK_DRIVER', 's3'),
+            'root' => env('DOCUMENTS_LOCAL_ROOT', storage_path('app/documents')),
             'key' => env('R2_ACCESS_KEY_ID'),
             'secret' => env('R2_SECRET_ACCESS_KEY'),
             'region' => 'auto',

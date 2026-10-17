@@ -71,7 +71,7 @@ class DetectDocumentDeadlinesJob implements ShouldQueue
             DocumentDeadline::where('document_id', $document->id)->where('intelligence_revision_id', $this->revisionId)->delete();
 
             foreach ($result['deadlines'] as $deadline) {
-                DocumentDeadline::create([
+                $created = DocumentDeadline::create([
                     'intelligence_revision_id' => $this->revisionId,
                     'workspace_id' => $document->workspace_id,
                     'document_id' => $document->id,
@@ -88,6 +88,8 @@ class DetectDocumentDeadlinesJob implements ShouldQueue
                     'provider' => 'anthropic',
                     'model' => app(AiModels::class)->forTask('deadlines'),
                 ]);
+                app(\App\Services\Intelligence\NormalRouteProvenance::class)
+                    ->record($document, 'deadline', (string) $created->id, $deadline);
             }
         }, ['deadline_count' => count($result['deadlines'])]);
     }

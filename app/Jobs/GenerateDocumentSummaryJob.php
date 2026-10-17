@@ -323,6 +323,14 @@ class GenerateDocumentSummaryJob implements ShouldQueue
             }
         }
         if (! $checkpoint && $this->revisionId !== null) {
+            try {
+                app(\App\Services\Intelligence\NormalRouteProvenance::class)->publish($document->fresh());
+            } catch (\Throwable $e) {
+                // A citation graph cannot make validated typed intelligence disappear.
+                Log::warning('Normal-route source provenance unavailable', [
+                    'document_id' => $document->id, 'exception' => $e::class,
+                ]);
+            }
             app(DocumentRevisionPublisher::class)->publish($document, $this->revisionId);
             GenerateEmbeddingsJob::dispatch($document->id, $this->revisionId)
                 ->onQueue(QueueTopology::for(GenerateEmbeddingsJob::class));

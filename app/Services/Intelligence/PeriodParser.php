@@ -69,8 +69,10 @@ class PeriodParser
             return null;
         }
 
-        return $year === null ? null : new ReportingPeriod('quarter', $this->basis($fiscal, $text),
-            $year + $quarter / 10, 'Q'.$quarter.' '.$year);
+        $basis = $this->basis($fiscal, $text);
+
+        return $year === null ? null : new ReportingPeriod('quarter', $basis,
+            $year + $quarter / 10, 'Q'.$quarter.' '.($basis === 'fiscal' ? 'FY' : '').$year);
     }
 
     private function half(string $text, bool $fiscal): ?ReportingPeriod
@@ -83,8 +85,10 @@ class PeriodParser
             return null;
         }
 
-        return $year === null ? null : new ReportingPeriod('half', $this->basis($fiscal, $text),
-            $year + $half / 10, 'H'.$half.' '.$year);
+        $basis = $this->basis($fiscal, $text);
+
+        return $year === null ? null : new ReportingPeriod('half', $basis,
+            $year + $half / 10, 'H'.$half.' '.($basis === 'fiscal' ? 'FY' : '').$year);
     }
 
     private function month(string $text, bool $fiscal): ?ReportingPeriod
@@ -100,8 +104,10 @@ class PeriodParser
             return null;
         }
 
-        return new ReportingPeriod('month', $this->basis($fiscal, $text),
-            $year + $number / 100, sprintf('%04d-%02d', $year, $number));
+        $basis = $this->basis($fiscal, $text);
+
+        return new ReportingPeriod('month', $basis,
+            $year + $number / 100, ($basis === 'fiscal' ? 'FY' : '').sprintf('%04d-%02d', $year, $number));
     }
 
     /**

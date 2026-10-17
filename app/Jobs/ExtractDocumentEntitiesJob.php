@@ -74,7 +74,7 @@ class ExtractDocumentEntitiesJob implements ShouldQueue
             DocumentEntity::where('document_id', $document->id)->where('intelligence_revision_id', $this->revisionId)->delete();
 
             foreach ($result['entities'] as $entity) {
-                DocumentEntity::create([
+                $created = DocumentEntity::create([
                     'intelligence_revision_id' => $this->revisionId,
                     'workspace_id' => $document->workspace_id,
                     'document_id' => $document->id,
@@ -87,6 +87,8 @@ class ExtractDocumentEntitiesJob implements ShouldQueue
                     'provider' => 'anthropic',
                     'model' => app(AiModels::class)->forTask('entities'),
                 ]);
+                app(\App\Services\Intelligence\NormalRouteProvenance::class)
+                    ->record($document, 'entity', (string) $created->id, $entity);
             }
         }, ['entity_count' => count($result['entities'])]);
     }

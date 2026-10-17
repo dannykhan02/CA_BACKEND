@@ -177,8 +177,11 @@ class MetricCollector
             if ($record['numeric'] === null) {
                 return null;
             }
+            $unit = (string) ($record['unit'] ?? '');
+            $unitProbe = $this->measurements->parse('1', $unit, $label);
             $measurement = new Measurement((float) $record['numeric'], 'unknown', null,
-                $this->normalizer->normalize((string) ($record['unit'] ?? '')), 1.0, (string) ($record['unit'] ?? ''));
+                $this->normalizer->normalize((string) ($record['unit'] ?? '')), 1.0,
+                $unit, $unitProbe?->canonicalUnit ?? $unit, false);
         }
 
         $period = $this->periods->parse($record['period']);
@@ -200,7 +203,8 @@ class MetricCollector
             confidence: max(0.0, min(1.0, (float) $record['confidence'])),
             definitionId: $record['definition_id'] === null ? null : (string) $record['definition_id'],
             conceptKey: $this->conceptKey($record, $profile),
-            measureKey: $this->measureKey($measurement, $profile, $record['definition_id'] !== null),
+            measureKey: $this->measureKey($measurement, $profile, $record['definition_id'] !== null,
+                is_array($record['metadata']) ? $record['metadata'] : []),
             page: $record['page'] === null ? null : (int) $record['page'],
             isTotal: in_array($this->normalizer->normalize($subject), self::TOTAL_SUBJECTS, true),
         );
@@ -233,17 +237,19 @@ class MetricCollector
      * What was measured and on what basis. Two observations may only share a chart when this is
      * identical, which is what keeps currencies, percentages, counts, actuals and targets apart.
      *
-     * The physical measurement is always part of it. The label-derived basis signals are not when
-     * the workspace already resolved both observations to one canonical KPI: that resolution
-     * considered the same signals and more, so re-applying them here would split a KPI whose
-     * aliases simply word it differently ("Total financing", "Financing approvals").
+     * The physical measurement and explicitly stored actual/projected status are always part of
+     * it. Label-derived signals can be ignored for a canonical KPI, but a canonical identity must
+     * not erase an explicit measure status supplied by the source record.
      *
      * @param  array<string,mixed>  $profile
      */
-    private function measureKey(Measurement $measurement, array $profile, bool $canonical): string
+    private function measureKey(Measurement $measurement, array $profile, bool $canonical, array $metadata): string
     {
+        $explicit = static fn ($key) => trim(mb_strtolower((string) ($metadata[$key] ?? ''))) ?: null;
+
         return hash('sha256', json_encode([
             $measurement->kind, $measurement->currency, $measurement->family,
+            $explicit('metric_type'), $explicit('value_basis'),
             $canonical ? null : ($profile['value_basis'] ?? null),
             $canonical ? null : ($profile['quantity_kind'] ?? null),
             $canonical ? null : ($profile['aggregation'] ?? null),
