@@ -204,8 +204,12 @@ class GenerateInsightsJob implements ShouldQueue
                         'trend_value' => $kpi['trendValue'] ?? null,
                     ]);
                     if ($promptVersion >= 8) {
-                        app(\App\Services\Intelligence\NormalKpiGrounder::class)
+                        $rejection = app(\App\Services\Intelligence\NormalKpiGrounder::class)
                             ->record($document, $savedKpi, $kpi);
+                        if ($rejection !== null) {
+                            $savedKpi->forceFill(['identity_metadata' =>
+                                ($savedKpi->identity_metadata ?? []) + ['grounding_rejection' => $rejection]])->save();
+                        }
                     }
                 }
 

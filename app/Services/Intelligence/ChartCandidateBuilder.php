@@ -60,11 +60,22 @@ class ChartCandidateBuilder
         }
 
         $candidates = [];
+        $rejectedGroups = [];
         foreach ($groups as $key => $group) {
+            $before = $rejected;
+            $found = false;
             foreach ([$this->timeSeries($key, $group, $rejected), $this->categorical($key, $group, $rejected)] as $candidate) {
                 if ($candidate !== null) {
                     $candidates[] = $candidate;
+                    $found = true;
                 }
+            }
+            if (! $found) {
+                $codes = array_keys(array_filter($rejected,
+                    fn ($count, $code) => $count > ($before[$code] ?? 0), ARRAY_FILTER_USE_BOTH));
+                $rejectedGroups[] = ['sourceIds' => array_values(array_unique(array_map(
+                    fn ($item) => $item->sourceId, $group))),
+                    'codes' => $codes ?: ['not_eligible_shape']];
             }
         }
         foreach ($this->labelCompositions($observations, $rejected) as $candidate) {
@@ -76,7 +87,8 @@ class ChartCandidateBuilder
         }
         usort($candidates, fn ($a, $b) => [$b['score'], $a['title']] <=> [$a['score'], $b['title']]);
 
-        return ['candidates' => array_values($candidates), 'rejected' => $rejected];
+        return ['candidates' => array_values($candidates), 'rejected' => $rejected,
+            'rejectedGroups' => $rejectedGroups];
     }
 
     /**

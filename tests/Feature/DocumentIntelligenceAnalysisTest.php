@@ -732,6 +732,23 @@ class DocumentIntelligenceAnalysisTest extends TestCase
         $this->assertNotSame([], $response->json('data.analysis.visualAnalysis.charts'));
     }
 
+    public function test_limitations_distinguish_unverified_measurements_from_insufficient_chart_points(): void
+    {
+        $document = $this->intelligenceDocument();
+        $revenue = $this->metricFinding($document, 'Revenue', '51', 'KES million', 'Q3 2026');
+        $unitless = $this->metricFinding($document, 'Performance', '87', null, 'Q3 2026');
+        $undated = $this->metricFinding($document, 'Shipments', '14900', 'shipments', null);
+        $analysis = $this->analyze($document);
+        $limits = $analysis['limitations'];
+        self::assertSame(2, $limits['measurementCount']);
+        $bySource = collect($limits['measurements'])->keyBy('sourceId');
+        self::assertContains('unit_unverified', $bySource['kpi:'.$unitless->id]['codes']);
+        self::assertContains('period_unavailable', $bySource['kpi:'.$undated->id]['codes']);
+        self::assertGreaterThanOrEqual(1, $limits['visualGroupCount']);
+        self::assertContains('insufficient_points', $limits['visualGroups'][0]['codes']);
+        self::assertSame(['kpi:'.$revenue->id], $limits['visualGroups'][0]['sourceIds']);
+    }
+
     public function test_document_kpi_response_keeps_raw_values_and_separate_verification_states(): void
     {
         $document = $this->intelligenceDocument();

@@ -54,6 +54,14 @@ class DocumentAnalysisComposer
             fn (MetricObservation $observation) => $observation->integrity['analyticalEligible']));
         $comparisons = $this->comparisons->build($eligible);
         $derived = $this->charts->build($eligible, $cited);
+        $limitedMeasurements = $collected['rejected'];
+        foreach ($collected['observations'] as $observation) {
+            if ($observation->integrity['analyticalEligible']) {
+                continue;
+            }
+            $limitedMeasurements[] = ['sourceId' => $observation->sourceId,
+                'codes' => array_values(array_unique($observation->integrity['reasons']))];
+        }
         $charts = array_map(function (array $chart) use ($document): array {
             $labels = array_column($chart['series'][0]['data'] ?? $chart['points'], 'label');
             $renderEligible = $chart['numericVerification'] === 'parsed'
@@ -134,6 +142,14 @@ class DocumentAnalysisComposer
             ],
             'analysisGroups' => $groups,
             'analyticalComparisons' => $comparisons,
+            'limitations' => [
+                'measurementCount' => count($limitedMeasurements),
+                'measurements' => array_slice($limitedMeasurements, 0, 100),
+                'visualGroupCount' => count($derived['rejectedGroups']),
+                'visualGroups' => array_slice($derived['rejectedGroups'], 0, 100),
+                'coverage' => ['state' => $coverage['state'] ?? 'unknown',
+                    'codes' => $coverage['reasons'] ?? ['coverage_not_measured']],
+            ],
             'importantFindings' => $important,
             'stats' => [
                 'acceptedFindings' => $evidence->count(),

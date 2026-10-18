@@ -48,11 +48,13 @@ class MetricCollector
     {
         $stats = ['metric_findings' => 0, 'parseable' => 0, 'chartable' => 0, 'unreadable_value' => 0, 'no_period' => 0];
         $observations = [];
+        $rejected = [];
         foreach ($this->records($document) as $record) {
             $stats['metric_findings']++;
             $observation = $this->observe($record);
             if ($observation === null) {
                 $stats['unreadable_value']++;
+                $rejected[] = ['sourceId' => $record['source_id'], 'codes' => ['invalid_numeric_value']];
 
                 continue;
             }
@@ -66,7 +68,7 @@ class MetricCollector
             $observations[] = $observation;
         }
 
-        return ['observations' => $observations, 'stats' => $stats];
+        return ['observations' => $observations, 'stats' => $stats, 'rejected' => $rejected];
     }
 
     /**
@@ -201,16 +203,30 @@ class MetricCollector
         }
 
         $period = $this->periods->parse($record['period']);
+        $identity = array_filter(array_intersect_key(is_array($record['metadata']) ? $record['metadata'] : [],
+            array_flip(['concept', 'scope', 'metric_type', 'quantity_kind', 'aggregation', 'value_basis', 'period'])),
+            fn ($value) => is_string($value) && trim($value) !== '');
         $profile = $this->profiles->make([
             'label' => $this->withoutPeriod($label, $record['period']),
             'unit' => $record['unit'],
             'value' => $record['value'],
-            'identity' => is_array($record['metadata']) ? $record['metadata'] : [],
+            'identity' => $identity,
         ]);
         $subject = trim((string) $record['subject']);
         $integrity = $this->integrity->assess($measurement, (string) $record['value'], $record['unit'],
             is_array($record['metadata']) ? $record['metadata'] : [], $record['sources'] ?? [],
             (bool) ($record['trusted_source'] ?? false));
+        if ($period === null) {
+            $integrity['reasons'][] = 'period_unavailable';
+            $integrity['analyticalEligible'] = false;
+        }
+        if (array_diff_key($identity, ['period' => true]) !== [] && ! ($profile['valid'] ?? false)) {
+            $integrity['reasons'][] = 'semantic_identity_conflict';
+            $integrity['analyticalEligible'] = false;
+        }
+        if (is_string($record['metadata']['grounding_rejection'] ?? null)) {
+            $integrity['reasons'][] = $record['metadata']['grounding_rejection'];
+        }
         if ($integrity['unitVerification'] === 'dimensionless') {
             $type = mb_strtolower((string) $record['metadata']['metric_type']);
             $measurement = new Measurement($measurement->magnitude, $type, null, $type, 1.0,

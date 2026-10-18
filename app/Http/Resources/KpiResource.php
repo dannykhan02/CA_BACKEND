@@ -5,6 +5,8 @@ namespace App\Http\Resources;
 use App\Services\Intelligence\MeasurementIntegrity;
 use App\Services\Intelligence\CanonicalMetricIdentity;
 use App\Services\Intelligence\MeasurementParser;
+use App\Services\Intelligence\PeriodParser;
+use App\Services\Kpis\KpiIdentityProfile;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -27,6 +29,23 @@ class KpiResource extends JsonResource
             $this->unit, $metadata + ['source_fields_verified' => $proof], $evidence?->sources ?? [],
             $evidence !== null && ($evidence->kind === 'metric'
                 || ($evidence->data['measurement_verification'] ?? null) === 'verified'));
+        if (is_string($metadata['grounding_rejection'] ?? null)) {
+            $integrity['reasons'][] = $metadata['grounding_rejection'];
+            $integrity['reasons'] = array_values(array_unique($integrity['reasons']));
+        }
+        if (app(PeriodParser::class)->parse($this->period) === null) {
+            $integrity['analyticalEligible'] = false;
+            $integrity['reasons'][] = 'period_unavailable';
+        }
+        $identity = array_filter(array_intersect_key($metadata,
+            array_flip(['concept', 'scope', 'metric_type', 'quantity_kind', 'aggregation', 'value_basis', 'period'])),
+            fn ($value) => is_string($value) && trim($value) !== '');
+        if (array_diff_key($identity, ['period' => true]) !== [] && ! app(KpiIdentityProfile::class)->make(['label' => $this->label, 'unit' => $this->unit,
+            'value' => $this->value, 'identity' => $identity])['valid']) {
+            $integrity['analyticalEligible'] = false;
+            $integrity['reasons'][] = 'semantic_identity_conflict';
+        }
+        $integrity['reasons'] = array_values(array_unique($integrity['reasons']));
 
         return [
             'id' => (string) $this->id,
