@@ -382,9 +382,11 @@ class ChartCandidateBuilder
 
         return ['unit' => $unit, 'unitKind' => $first->kind, 'currency' => $first->currency,
             'canonicalUnit' => $first->canonicalUnit, 'sourceUnit' => count($sourceUnits) === 1 ? $sourceUnits[0] : null,
-            'unitVerification' => $first->unitText === '' ? 'unavailable' : 'accepted_evidence',
+            'unitVerification' => $observations[0]->integrity['unitVerification'] ?? 'unit_unverified',
+            'sourceVerification' => collect($observations)->every(fn (MetricObservation $o) => ($o->integrity['sourceVerification'] ?? null) === 'verified')
+                ? 'verified' : 'unverified',
             'numericVerification' => collect($observations)->every(fn (MetricObservation $o) => $o->measurement->numericVerified)
-                ? 'accepted_evidence' : 'stored_numeric_legacy', 'scale' => $scale];
+                ? 'parsed' : 'stored_numeric_legacy', 'scale' => $scale];
     }
 
     /**

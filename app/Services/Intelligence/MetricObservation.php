@@ -22,6 +22,8 @@ readonly class MetricObservation
         public string $measureKey,
         public ?int $page,
         public bool $isTotal,
+        /** Numeric parsing never proves the source or the meaning of a unit. */
+        public array $integrity = [],
     ) {}
 
     /** Charts group on concept and measurement together; neither alone is enough. */

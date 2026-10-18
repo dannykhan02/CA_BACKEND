@@ -49,10 +49,14 @@ class DocumentAnalysisComposer
         $cited = $this->findings->citedSourceIds($summary);
 
         $collected = $this->metrics->collect($document);
-        $derived = $this->charts->build($collected['observations'], $cited);
+        $eligible = array_values(array_filter($collected['observations'],
+            fn (MetricObservation $observation) => $observation->integrity['analyticalEligible']));
+        $derived = $this->charts->build($eligible, $cited);
         $charts = array_map(function (array $chart) use ($document): array {
             $labels = array_column($chart['series'][0]['data'] ?? $chart['points'], 'label');
-            $renderEligible = $chart['numericVerification'] === 'accepted_evidence'
+            $renderEligible = $chart['numericVerification'] === 'parsed'
+                && $chart['sourceVerification'] === 'verified'
+                && in_array($chart['unitVerification'], ['verified', 'dimensionless'], true)
                 && ($chart['basis'] !== 'time_series' || $this->sourceCharts->continuousPeriods($labels));
             $chart['origin'] = 'generated';
             $chart['verification'] = $chart['numericVerification'];

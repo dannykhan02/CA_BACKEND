@@ -57,7 +57,8 @@ trait BuildsIntelligenceFixtures
     protected function metricFinding(Document $document, string $label, string $value, ?string $unit, ?string $period, array $overrides = []): DocumentKpi
     {
         $record = $overrides + [
-            'label' => $label, 'value' => $value, 'subject' => '', 'quote' => $label.': '.$value,
+            'label' => $label, 'value' => $value, 'subject' => '',
+            'quote' => $label.': '.$value.($unit ? ' '.$unit : ''),
             'reference' => '', 'kind' => 'metric', 'confidence' => 0.9, 'unit' => $unit, 'period' => $period,
             'entity_type' => null, 'date_type' => null, 'due_date' => null, 'severity' => null,
             'metric_type' => null, 'value_basis' => null, 'aggregation' => null, 'quantity_kind' => null,

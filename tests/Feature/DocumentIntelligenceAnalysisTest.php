@@ -14,6 +14,7 @@ use App\Services\Intelligence\FindingClassifier;
 use App\Services\Intelligence\ImportantFindingsBuilder;
 use App\Services\Intelligence\Materiality\MaterialityReadModel;
 use App\Services\Intelligence\Materiality\MaterialityScorer;
+use App\Services\Intelligence\MetricCollector;
 use App\Services\WorkspaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -652,7 +653,7 @@ class DocumentIntelligenceAnalysisTest extends TestCase
         $this->assertNotSame([], $analysis['analysisGroups']);
     }
 
-    public function test_an_older_document_without_evidence_rows_still_produces_charts(): void
+    public function test_an_older_document_without_evidence_rows_remains_visible_but_cannot_generate_verified_charts(): void
     {
         $document = $this->intelligenceDocument('Legacy report.pdf', incremental: false);
         foreach ([['2022', '9.8'], ['2023', '10.7'], ['2024', '12.4']] as [$period, $value]) {
@@ -663,15 +664,32 @@ class DocumentIntelligenceAnalysisTest extends TestCase
         $this->assertSame(0, DocumentEvidence::where('document_id', $document->id)->count());
 
         $analysis = $this->analyze($document);
-        $this->assertCount(1, $analysis['visualAnalysis']['charts']);
-        $this->assertSame([9.8, 10.7, 12.4], array_column($analysis['visualAnalysis']['charts'][0]['points'], 'value'));
+        $this->assertSame([], $analysis['visualAnalysis']['charts']);
+        $this->assertSame(3, $analysis['stats']['metricFindings']);
+        $this->assertSame(0, $analysis['stats']['chartableFindings']);
+        $observations = app(MetricCollector::class)->collect($document)['observations'];
+        $this->assertSame([9.8e9, 10.7e9, 12.4e9], array_map(fn ($o) => $o->measurement->magnitude, $observations));
+        $this->assertSame('unverified', $observations[0]->integrity['sourceVerification']);
         // No evidence rows exist, so the evidence-backed sections are empty rather than invented.
         $this->assertSame([], $analysis['analysisGroups']);
         $this->assertSame([], $analysis['importantFindings']);
         $this->assertSame(0, $analysis['stats']['acceptedFindings']);
     }
 
-    public function test_a_legacy_kpi_whose_raw_value_is_unreadable_uses_its_stored_numeric_form(): void
+    public function test_an_explicit_dimensionless_ratio_can_be_analyzed_without_inventing_a_unit(): void
+    {
+        $document = $this->intelligenceDocument();
+        $this->metricFinding($document, 'Current ratio', '1.2', null, '2023', ['metric_type' => 'ratio']);
+        $this->metricFinding($document, 'Current ratio', '1.4', null, '2024', ['metric_type' => 'ratio']);
+
+        $charts = $this->analyze($document)['visualAnalysis']['charts'];
+        self::assertCount(1, $charts);
+        self::assertTrue($charts[0]['renderEligible']);
+        self::assertSame('dimensionless', $charts[0]['unitVerification']);
+        self::assertSame('ratio', $charts[0]['unit']);
+    }
+
+    public function test_a_legacy_kpi_with_unverified_scale_is_not_promoted(): void
     {
         $document = $this->intelligenceDocument('Legacy report.pdf', incremental: false);
         foreach ([['2023', '64.2M', 64200000.0], ['2024', '70.1M', 70100000.0]] as [$period, $value, $numeric]) {
@@ -679,11 +697,10 @@ class DocumentIntelligenceAnalysisTest extends TestCase
                 'label' => 'Subscribers', 'period' => $period, 'value' => $value, 'unit' => null, 'value_numeric' => $numeric]);
         }
 
-        $charts = $this->analyze($document)['visualAnalysis']['charts'];
-        $this->assertCount(1, $charts);
-        $this->assertSame([64.2, 70.1], array_column($charts[0]['points'], 'value'));
-        $this->assertSame('million', $charts[0]['unit']);
-        $this->assertSame('accepted_evidence', $charts[0]['verification']);
+        $this->assertSame([], $this->analyze($document)['visualAnalysis']['charts']);
+        $observations = app(MetricCollector::class)->collect($document)['observations'];
+        $this->assertSame('unit_unverified', $observations[0]->integrity['unitVerification']);
+        $this->assertSame('unverified', $observations[0]->integrity['sourceVerification']);
     }
 
     public function test_unreadable_legacy_source_text_keeps_a_distinct_numeric_verification_state(): void
@@ -694,10 +711,10 @@ class DocumentIntelligenceAnalysisTest extends TestCase
                 'label' => 'Subscribers', 'period' => $period, 'value' => $value, 'unit' => null, 'value_numeric' => $numeric]);
         }
 
-        $charts = $this->analyze($document)['visualAnalysis']['charts'];
-        self::assertCount(1, $charts);
-        self::assertSame('stored_numeric_legacy', $charts[0]['verification']);
-        self::assertSame([64.2, 70.1], array_column($charts[0]['points'], 'value'));
+        self::assertSame([], $this->analyze($document)['visualAnalysis']['charts']);
+        $observations = app(MetricCollector::class)->collect($document)['observations'];
+        self::assertSame('stored_numeric_legacy', $observations[0]->integrity['numericVerification']);
+        self::assertFalse($observations[0]->integrity['analyticalEligible']);
     }
 
     // ---------------------------------------------------------------- api contract and isolation
@@ -713,6 +730,24 @@ class DocumentIntelligenceAnalysisTest extends TestCase
             'analysisGroups', 'importantFindings', 'stats',
         ]]]);
         $this->assertNotSame([], $response->json('data.analysis.visualAnalysis.charts'));
+    }
+
+    public function test_document_kpi_response_keeps_raw_values_and_separate_verification_states(): void
+    {
+        $document = $this->intelligenceDocument();
+        $sourced = $this->metricFinding($document, 'Revenue', '51.0', 'KES million', 'Q3 2026');
+        $legacy = DocumentKpi::create(['document_id' => $document->id, 'workspace_id' => $document->workspace_id,
+            'label' => 'Unlocated revenue', 'period' => 'Q2 2026', 'value' => '46', 'unit' => 'KES million']);
+        Sanctum::actingAs(User::find($document->uploaded_by));
+
+        $rows = collect($this->getJson("/api/documents/{$document->id}")->assertOk()->json('data.kpis'))->keyBy('id');
+        self::assertSame('51.0', $rows[(string) $sourced->id]['rawValue']);
+        self::assertSame('KES million', $rows[(string) $sourced->id]['unit']);
+        self::assertSame('verified', $rows[(string) $sourced->id]['sourceVerification']);
+        self::assertSame('verified', $rows[(string) $sourced->id]['unitVerification']);
+        self::assertTrue($rows[(string) $sourced->id]['analyticalEligible']);
+        self::assertSame('unverified', $rows[(string) $legacy->id]['sourceVerification']);
+        self::assertFalse($rows[(string) $legacy->id]['analyticalEligible']);
     }
 
     public function test_a_processing_document_is_not_analyzed_on_every_poll(): void

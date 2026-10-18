@@ -38,6 +38,7 @@ class MetricCollector
         private PeriodParser $periods,
         private KpiIdentityProfile $profiles,
         private KpiLabelNormalizer $normalizer,
+        private MeasurementIntegrity $integrity,
     ) {}
 
     /**
@@ -45,7 +46,7 @@ class MetricCollector
      */
     public function collect(Document $document): array
     {
-        $stats = ['metric_findings' => 0, 'chartable' => 0, 'unreadable_value' => 0, 'no_period' => 0];
+        $stats = ['metric_findings' => 0, 'parseable' => 0, 'chartable' => 0, 'unreadable_value' => 0, 'no_period' => 0];
         $observations = [];
         foreach ($this->records($document) as $record) {
             $stats['metric_findings']++;
@@ -55,7 +56,10 @@ class MetricCollector
 
                 continue;
             }
-            $stats['chartable']++;
+            $stats['parseable']++;
+            if ($observation->integrity['analyticalEligible']) {
+                $stats['chartable']++;
+            }
             if ($observation->period === null) {
                 $stats['no_period']++;
             }
@@ -101,6 +105,8 @@ class MetricCollector
                     ],
                     'page' => count($pages) === 1 ? (int) reset($pages) : null,
                     'numeric' => null,
+                    'sources' => $row->sources ?? [],
+                    'trusted_source' => true,
                 ];
             }
         }
@@ -126,6 +132,8 @@ class MetricCollector
                 'metadata' => $metadata + ['period' => $kpi->period],
                 'page' => null,
                 'numeric' => $kpi->value_numeric === null ? null : (float) $kpi->value_numeric,
+                'sources' => [],
+                'trusted_source' => false,
             ];
         }
 
@@ -192,6 +200,14 @@ class MetricCollector
             'identity' => is_array($record['metadata']) ? $record['metadata'] : [],
         ]);
         $subject = trim((string) $record['subject']);
+        $integrity = $this->integrity->assess($measurement, (string) $record['value'], $record['unit'],
+            is_array($record['metadata']) ? $record['metadata'] : [], $record['sources'] ?? [],
+            (bool) ($record['trusted_source'] ?? false));
+        if ($integrity['unitVerification'] === 'dimensionless') {
+            $type = mb_strtolower((string) $record['metadata']['metric_type']);
+            $measurement = new Measurement($measurement->magnitude, $type, null, $type, 1.0,
+                '', $type, $measurement->numericVerified);
+        }
 
         return new MetricObservation(
             sourceId: (string) $record['source_id'],
@@ -207,6 +223,7 @@ class MetricCollector
                 is_array($record['metadata']) ? $record['metadata'] : []),
             page: $record['page'] === null ? null : (int) $record['page'],
             isTotal: in_array($this->normalizer->normalize($subject), self::TOTAL_SUBJECTS, true),
+            integrity: $integrity,
         );
     }
 

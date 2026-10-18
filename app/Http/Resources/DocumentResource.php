@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\DocumentEvidence;
 use App\Services\DocumentIntelligenceService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -19,6 +20,14 @@ class DocumentResource extends JsonResource
         // revision pointer. Query charts from the pinned document instance.
         $this->resource->setRelation('charts', $this->resource->charts()->get());
         $request->attributes->set('chart_published_document', $this->resource);
+        $key = $this->ai_pipeline['key'] ?? null;
+        $kpiSourceIds = $this->kpis->map(fn ($kpi) => 'kpi:'.$kpi->id)->all();
+        $kpiEvidence = is_string($key) && $kpiSourceIds !== []
+            ? DocumentEvidence::where('workspace_id', $this->workspace_id)->where('document_id', $this->id)
+                ->where('pipeline_key', $key)->whereIn('source_id', $kpiSourceIds)
+                ->whereIn('kind', ['metric', 'normal_source'])->get()->keyBy('source_id')
+            : collect();
+        $request->attributes->set('kpi_evidence', $kpiEvidence);
 
         return [
             'id' => $this->id,
