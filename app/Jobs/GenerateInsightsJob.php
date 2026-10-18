@@ -160,7 +160,8 @@ class GenerateInsightsJob implements ShouldQueue
             $aiRunId = DocumentAiRun::where('document_id', $document->id)
                 ->where('purpose', 'insights')->latest('created_at')->value('id');
 
-            DB::transaction(function () use ($document, $kpis, $charts, $insights, $recorder, $insightsStage, $aiRunId) {
+            $promptVersion = (int) ($result['prompt_version'] ?? 0);
+            DB::transaction(function () use ($document, $kpis, $charts, $insights, $recorder, $insightsStage, $aiRunId, $promptVersion) {
                 $document = Document::whereKey($document->id)->lockForUpdate()->first();
                 if (! $document || $document->status !== 'Processing'
                     || ! app(DocumentRevisionPublisher::class)->owns($document, $this->revisionId)) {
@@ -180,11 +181,15 @@ class GenerateInsightsJob implements ShouldQueue
                 // stale kpis/charts from a prior version sitting alongside the
                 // current ones. Same reasoning as GenerateEmbeddingsJob's
                 // chunk replacement.
+                \App\Models\DocumentEvidence::where('document_id', $document->id)
+                    ->where('workspace_id', $document->workspace_id)
+                    ->where('pipeline_key', $document->ai_pipeline['key'] ?? '')
+                    ->where('kind', 'metric')->delete();
                 DocumentKpi::where('document_id', $document->id)->where('intelligence_revision_id', $this->revisionId)->delete();
                 DocumentChart::where('document_id', $document->id)->where('intelligence_revision_id', $this->revisionId)->delete();
 
                 foreach ($kpis as $kpi) {
-                    DocumentKpi::create([
+                    $savedKpi = DocumentKpi::create([
                         'intelligence_revision_id' => $this->revisionId,
                         'workspace_id' => $document->workspace_id,
                         'document_id' => $document->id,
@@ -198,6 +203,10 @@ class GenerateInsightsJob implements ShouldQueue
                         'trend' => $kpi['trend'] ?? null,
                         'trend_value' => $kpi['trendValue'] ?? null,
                     ]);
+                    if ($promptVersion >= 8) {
+                        app(\App\Services\Intelligence\NormalKpiGrounder::class)
+                            ->record($document, $savedKpi, $kpi);
+                    }
                 }
 
                 foreach ($charts as $chart) {

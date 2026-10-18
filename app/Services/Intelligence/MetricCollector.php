@@ -85,6 +85,9 @@ class MetricCollector
                 ->where('kind', 'metric')->orderBy('identity')->get();
             foreach ($rows as $row) {
                 $data = is_array($row->data) ? $row->data : [];
+                if (($document->ai_pipeline['route'] ?? null) === 'incremental') {
+                    $data = app(CanonicalMetricIdentity::class)->incremental($data + ['kind' => 'metric']);
+                }
                 $pages = array_values(array_unique(array_filter(array_column($row->sources ?? [], 'page'), fn ($page) => $page !== null)));
                 $records[] = [
                     'source_id' => $row->source_id ?: 'evidence:'.$row->id,
@@ -102,22 +105,26 @@ class MetricCollector
                         'aggregation' => $data['aggregation'] ?? null,
                         'quantity_kind' => $data['quantity_kind'] ?? null,
                         'period' => $data['period'] ?? null,
+                        'source_fields_verified' => $data['source_fields_verified'] ?? null,
                     ],
                     'page' => count($pages) === 1 ? (int) reset($pages) : null,
                     'numeric' => null,
                     'sources' => $row->sources ?? [],
-                    'trusted_source' => true,
+                    'trusted_source' => ($data['measurement_verification'] ?? null) !== 'limited',
                 ];
             }
         }
-        if ($records !== []) {
-            return $this->withDefinitionIds($document, $records);
+        $evidenced = [];
+        foreach ($records as $record) {
+            $evidenced[$record['source_id']] = true;
         }
-
         foreach (DocumentKpi::where('document_id', $document->id)
             ->where('intelligence_revision_id', $document->intelligenceRevisionForRelations())
             ->where(fn ($query) => $query->where('workspace_id', $document->workspace_id)->orWhereNull('workspace_id'))
             ->orderBy('id')->get() as $kpi) {
+            if (isset($evidenced['kpi:'.$kpi->id])) {
+                continue;
+            }
             $metadata = is_array($kpi->identity_metadata) ? $kpi->identity_metadata : [];
             $records[] = [
                 'source_id' => 'kpi:'.$kpi->id,
@@ -137,7 +144,7 @@ class MetricCollector
             ];
         }
 
-        return $records;
+        return $this->withDefinitionIds($document, $records);
     }
 
     /**

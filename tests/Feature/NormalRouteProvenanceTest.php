@@ -5,20 +5,128 @@ namespace Tests\Feature;
 use App\Models\Document;
 use App\Models\DocumentEvidence;
 use App\Models\DocumentIntelligenceSummary;
+use App\Models\DocumentKpi;
+use App\Models\AiPrompt;
 use App\Models\DocumentRisk;
 use App\Models\ProcessingJob;
 use App\Models\User;
 use App\Services\Intelligence\DocumentRevisionPublisher;
 use App\Services\Intelligence\NormalRouteProvenance;
+use App\Services\Intelligence\NormalKpiGrounder;
+use App\Services\Intelligence\MetricCollector;
 use App\Services\Intelligence\SourceReferenceResolver;
+use App\Services\Extraction\SpreadsheetTextExtractor;
+use App\Services\Extraction\StructuredExtractionStore;
+use App\Services\AI\Incremental\EvidenceGrounding;
 use App\Services\WorkspaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Worksheet\Table;
 
 class NormalRouteProvenanceTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_insights_v8_is_versioned_and_requires_explicit_activation(): void
+    {
+        (new \Database\Seeders\DocumentInsightsPromptSeederV8)->run();
+        $prompt = AiPrompt::where('name', 'document_insights')->where('version', 8)->sole();
+        $this->assertFalse($prompt->active);
+        $this->assertStringContainsString('source_context', $prompt->template);
+        $this->assertStringContainsString('value_span_id', $prompt->template);
+        $this->assertStringContainsString('"proposed"', $prompt->template);
+    }
+
+    public function test_normal_kpi_requires_a_field_supported_value_and_governing_unit_heading(): void
+    {
+        $user = User::factory()->create();
+        app(WorkspaceService::class)->createPersonalWorkspaceFor($user);
+        $user->refresh();
+        $text = "Metric | Q3 2026 | KES million\nRevenue | 51.0 | Actual\nCosts | 41.0 | Actual";
+        $document = Document::create(['workspace_id' => $user->current_workspace_id,
+            'uploaded_by' => $user->id, 'name' => 'Quarterly report.pdf', 'type' => 'PDF',
+            'status' => 'Processing', 'classification' => 'Internal', 'size_kb' => 1,
+            'year' => 2026, 'file_hash' => hash('sha256', $text), 'extracted_text' => $text,
+            'pages' => 1]);
+        $document->forceFill(['ai_pipeline' => ['route' => 'normal', 'key' => 'normal:fixture',
+            'normal_span_grounding' => true]])->save();
+        $verified = DocumentKpi::create(['document_id' => $document->id,
+            'workspace_id' => $document->workspace_id, 'label' => 'Revenue', 'value' => '51.0',
+            'unit' => 'KES million', 'period' => 'Q3 2026',
+            'identity_metadata' => ['concept' => 'revenue', 'metric_type' => 'amount',
+                'value_basis' => 'actual']]);
+        $limited = DocumentKpi::create(['document_id' => $document->id,
+            'workspace_id' => $document->workspace_id, 'label' => 'Costs', 'value' => '41.0',
+            'unit' => 'KES million', 'period' => 'Q3 2026']);
+        $grounder = app(NormalKpiGrounder::class);
+        $this->assertSame('unit_source_mismatch', $grounder->record($document, $verified,
+            ['source_context' => ['value_span_id' => 'E002', 'unit_span_id' => 'E003',
+                'period_span_id' => 'E001']]));
+        $this->assertSame(0, DocumentEvidence::where('document_id', $document->id)->count());
+        $this->assertNull($grounder->record($document, $verified,
+            ['source_context' => ['value_span_id' => 'E002', 'unit_span_id' => 'E001',
+                'period_span_id' => 'E001']]));
+        $evidence = DocumentEvidence::where('source_id', 'kpi:'.$verified->id)->sole();
+        $this->assertSame(['value', 'unit', 'period'], $evidence->data['source_fields_verified']);
+        $this->assertCount(2, $evidence->sources);
+        $document->forceFill(['status' => 'Ready'])->save();
+        $resolved = app(SourceReferenceResolver::class)->resolve($document->fresh(), 'kpi:'.$verified->id);
+        $this->assertSame('CURRENT', $resolved['state']);
+        $this->assertSame('EXACT', $resolved['matchState']);
+        $this->assertCount(2, $resolved['fieldSources']);
+        $observations = app(MetricCollector::class)->collect($document)['observations'];
+        $this->assertCount(2, $observations);
+        $bySource = collect($observations)->keyBy('sourceId');
+        $this->assertTrue($bySource['kpi:'.$verified->id]->integrity['analyticalEligible']);
+        $this->assertFalse($bySource['kpi:'.$limited->id]->integrity['analyticalEligible']);
+    }
+
+    public function test_native_workbook_table_uses_its_row_and_column_header_relationship(): void
+    {
+        config()->set('document_intelligence.revision_v1', false);
+        $book = new Spreadsheet;
+        $sheet = $book->getActiveSheet();
+        $sheet->setTitle('Performance');
+        $sheet->fromArray([['Metric', 'Q3 2026 KES million'], ['Revenue', 51]], null, 'A1');
+        $sheet->addTable(new Table('A1:B2', 'ResultsTable'));
+        $path = tempnam(sys_get_temp_dir(), 'kpi-workbook-').'.xlsx';
+        (new Xlsx($book))->save($path);
+        try {
+            $structured = app(SpreadsheetTextExtractor::class)->extractStructured($path);
+            $user = User::factory()->create();
+            app(WorkspaceService::class)->createPersonalWorkspaceFor($user);
+            $user->refresh();
+            $document = Document::create(['workspace_id' => $user->current_workspace_id,
+                'uploaded_by' => $user->id, 'name' => 'Performance.xlsx', 'type' => 'XLSX',
+                'status' => 'Processing', 'classification' => 'Internal', 'size_kb' => 1,
+                'year' => 2026, 'file_hash' => hash_file('sha256', $path), 'pages' => 1]);
+            app(StructuredExtractionStore::class)->publish($document, $structured);
+            $document->forceFill(['ai_pipeline' => ['route' => 'normal', 'key' => 'normal:workbook',
+                'normal_span_grounding' => true]])->save();
+            $spans = app(EvidenceGrounding::class)->spans($document)->all();
+            $header = collect($spans)->first(fn ($span) => str_contains(mb_substr($structured->text,
+                $span['start_offset'], $span['end_offset'] - $span['start_offset']), 'KES million'));
+            $value = collect($spans)->first(fn ($span) => str_contains(mb_substr($structured->text,
+                $span['start_offset'], $span['end_offset'] - $span['start_offset']), 'Revenue'));
+            $this->assertNotNull($header);
+            $this->assertNotNull($value);
+            $kpi = DocumentKpi::create(['document_id' => $document->id,
+                'workspace_id' => $document->workspace_id, 'label' => 'Revenue', 'value' => '51',
+                'unit' => 'KES million', 'period' => 'Q3 2026',
+                'identity_metadata' => ['concept' => 'revenue', 'metric_type' => 'amount',
+                    'value_basis' => 'actual']]);
+            $this->assertNull(app(NormalKpiGrounder::class)->record($document, $kpi,
+                ['source_context' => ['value_span_id' => $value['key'], 'unit_span_id' => $header['key'],
+                    'period_span_id' => $header['key']]]));
+            $this->assertSame('verified', app(MetricCollector::class)->collect($document)['observations'][0]
+                ->integrity['sourceVerification']);
+        } finally {
+            @unlink($path);
+        }
+    }
 
     public function test_explicit_span_id_pins_the_second_identical_occurrence_without_quote_search(): void
     {

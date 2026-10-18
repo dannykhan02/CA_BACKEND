@@ -24,7 +24,10 @@ class MeasurementIntegrity
         $quotes = array_values(array_filter(array_map(
             fn ($source) => is_array($source) ? (string) ($source['quote'] ?? $source['text'] ?? '') : '', $sources
         )));
-        $sourceVerified = $trustedSource && $quotes !== [];
+        $fieldProof = is_array($metadata['source_fields_verified'] ?? null)
+            ? $metadata['source_fields_verified'] : null;
+        $sourceVerified = $trustedSource && $quotes !== []
+            && ($fieldProof === null || in_array('value', $fieldProof, true));
         $context = mb_strtolower(implode("\n", $quotes));
         $unit = trim((string) $rawUnit);
         $type = mb_strtolower(trim((string) ($metadata['metric_type'] ?? '')));
@@ -33,8 +36,10 @@ class MeasurementIntegrity
         $dimensionless = $unit === '' && in_array($type, ['ratio', 'index'], true)
             && $sourceVerified && preg_match('/\b'.preg_quote($type, '/').'\b/iu', $context) === 1;
         $unitInSource = $unit !== '' && $sourceVerified
+            && ($fieldProof !== null && in_array('unit', $fieldProof, true)
+                || $fieldProof === null
             && (str_contains($context, mb_strtolower($unit))
-                || ($unit === '%' && str_contains($context, '%')));
+                || ($unit === '%' && str_contains($context, '%'))));
         $unitState = $ambiguous ? 'scale_ambiguous'
             : ($dimensionless ? 'dimensionless' : ($unitInSource ? 'verified' : 'unit_unverified'));
         $numericState = $measurement === null ? 'invalid'

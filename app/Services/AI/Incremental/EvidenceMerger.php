@@ -8,6 +8,7 @@ use App\Models\DocumentEvidence;
 use App\Models\KpiDefinition;
 use App\Services\AI\AiModels;
 use App\Services\Kpis\KpiIdentityResolver;
+use App\Services\Intelligence\CanonicalMetricIdentity;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -79,6 +80,7 @@ class EvidenceMerger
             $chunkText = mb_substr($text, $chunk->start_offset, $chunk->end_offset - $chunk->start_offset);
             foreach ($chunk->result['records'] ?? [] as $record) {
                 $stats['candidate_records']++;
+                $record = app(CanonicalMetricIdentity::class)->incremental($record);
                 /*
                  * Span-based records already carry evidence DocIntel resolved itself: exact
                  * original text with its offsets and page. There is nothing to search for, so

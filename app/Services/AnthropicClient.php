@@ -280,7 +280,7 @@ class AnthropicClient
         $this->currentOperation = 'insights';
         $this->activeDocument = $document;
         $this->throttle();
-        $prompt = $this->buildInsightsPrompt($documentText, $documentName, $document?->classification);
+        $prompt = $this->buildInsightsPrompt($documentText, $documentName, $document?->classification, $document);
 
         return $this->structuredCall($prompt, $document, 'insights', $this->parseInsightsResponse(...));
     }
@@ -876,12 +876,16 @@ PROMPT;
         };
     }
 
-    private function buildInsightsPrompt(string $documentText, string $documentName, ?string $classification = null): string
+    private function buildInsightsPrompt(string $documentText, string $documentName, ?string $classification = null,
+        ?Document $document = null): string
     {
-        $truncated = mb_substr($documentText, 0, config('document_processing.max_extraction_chars'));
         $manager = app(PromptManager::class);
         $prompt = $manager->resolve('document_insights');
         $this->lastResolvedPromptVersion = $prompt->version;
+        $sourceText = (int) $prompt->version >= 8 && $document
+            ? app(\App\Services\Intelligence\NormalRouteProvenance::class)->promptText($document, $documentText)
+            : $documentText;
+        $truncated = mb_substr($sourceText, 0, config('document_processing.max_extraction_chars'));
         $rendered = $manager->render($prompt, [
             '{{document_name}}' => $documentName,
             '{{document_text}}' => $truncated,
@@ -990,6 +994,7 @@ PROMPT;
             'kpis' => $decoded['kpis'] ?? [],
             'charts' => $decoded['charts'] ?? [],
             'insights' => $decoded['insights'] ?? [],
+            'prompt_version' => $this->lastResolvedPromptVersion,
             'input_tokens' => $response['usage']['input_tokens'] ?? null,
             'output_tokens' => $response['usage']['output_tokens'] ?? null,
         ];

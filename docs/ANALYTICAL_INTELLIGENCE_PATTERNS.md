@@ -34,3 +34,8 @@ Reviewed before extending the analytical pipeline. These are design references, 
 6. Select an automatic dashboard from analytical purpose and eligible observations, risks, actions and decisions. Domain profiles can suggest terms and ordering, but cannot bypass the common gates.
 
 This is a mapping to the existing Laravel and React path, not a proposal to install Docling, Cube, Lightdash, Data Formulator or Draco.
+# Phase 2 implementation note
+
+`document_insights` v8 is seeded inactive. The active prompt remains a database decision; deploying code or running a repository seeder does not activate v8. When v8 is active, normal processing renders stable evidence spans and accepts `source_context` IDs on KPIs. `NormalKpiGrounder` publishes a `metric` evidence row only after checking the value and concept in the cited row or sentence, exact field text, and a governing table heading relationship. For XLSX, a native workbook table plus its exact row and column header cells is required; arbitrary adjacent cells are insufficient. Legacy KPIs remain visible as limited observations. Source navigation uses the value occurrence and exposes separately cited field context.
+
+Incremental extraction still emits its established route-specific `metric_type` and `value_basis` meanings. `CanonicalMetricIdentity` maps those meanings at merge and read time; raw checkpoint output and historical evidence remain unchanged. This avoids a silent prompt contract change for in-flight chunks. The next prompt version for incremental extraction can emit canonical fields directly after fixture evaluation.
