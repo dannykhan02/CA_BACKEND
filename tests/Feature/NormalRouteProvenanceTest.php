@@ -14,6 +14,7 @@ use App\Services\Intelligence\DocumentRevisionPublisher;
 use App\Services\Intelligence\NormalRouteProvenance;
 use App\Services\Intelligence\NormalKpiGrounder;
 use App\Services\Intelligence\MetricCollector;
+use App\Services\Intelligence\AnalyticalComparisonBuilder;
 use App\Services\Intelligence\SourceReferenceResolver;
 use App\Services\Extraction\SpreadsheetTextExtractor;
 use App\Services\Extraction\StructuredExtractionStore;
@@ -126,6 +127,45 @@ class NormalRouteProvenanceTest extends TestCase
         } finally {
             @unlink($path);
         }
+    }
+
+    public function test_verified_actuals_and_targets_produce_correct_point_and_case_gaps(): void
+    {
+        $user = User::factory()->create();
+        app(WorkspaceService::class)->createPersonalWorkspaceFor($user);
+        $user->refresh();
+        $text = "Measure | Q3 2026 | %\nDelivery performance | 87 | Actual\nDelivery target | 95 | Target\n"
+            ."Measure | Q3 2026 | cases\nComplaints | 133 | Actual\nComplaints target | 90 | Target";
+        $document = Document::create(['workspace_id' => $user->current_workspace_id,
+            'uploaded_by' => $user->id, 'name' => 'Quarterly review.pdf', 'type' => 'PDF',
+            'status' => 'Processing', 'classification' => 'Internal', 'size_kb' => 1,
+            'year' => 2026, 'file_hash' => hash('sha256', $text), 'extracted_text' => $text, 'pages' => 1]);
+        $document->forceFill(['ai_pipeline' => ['route' => 'normal', 'key' => 'normal:targets',
+            'normal_span_grounding' => true]])->save();
+        foreach ([
+            ['Delivery performance', '87', '%', 'delivery', 'actual', 'E002', 'E001'],
+            ['Delivery target', '95', '%', 'delivery', 'target', 'E003', 'E001'],
+            ['Complaints', '133', 'cases', 'complaints', 'actual', 'E005', 'E004'],
+            ['Complaints target', '90', 'cases', 'complaints', 'target', 'E006', 'E004'],
+        ] as [$label, $value, $unit, $concept, $basis, $valueSpan, $headerSpan]) {
+            $kpi = DocumentKpi::create(['document_id' => $document->id,
+                'workspace_id' => $document->workspace_id, 'label' => $label,
+                'value' => $value, 'unit' => $unit, 'period' => 'Q3 2026',
+                'identity_metadata' => ['concept' => $concept, 'metric_type' => $unit === '%' ? 'percentage' : 'count',
+                    'value_basis' => $basis]]);
+            $this->assertNull(app(NormalKpiGrounder::class)->record($document, $kpi,
+                ['source_context' => ['value_span_id' => $valueSpan,
+                    'unit_span_id' => $headerSpan, 'period_span_id' => $headerSpan]]));
+        }
+        $observations = app(MetricCollector::class)->collect($document)['observations'];
+        $comparisons = app(AnalyticalComparisonBuilder::class)->build($observations);
+        $this->assertCount(2, $comparisons);
+        $byUnit = collect($comparisons)->keyBy('gapUnit');
+        $this->assertSame(-8.0, $byUnit['percentage points']['gap']);
+        $this->assertSame('below', $byUnit['percentage points']['direction']);
+        $this->assertSame(43.0, $byUnit['cases']['gap']);
+        $this->assertSame('above', $byUnit['cases']['direction']);
+        $this->assertCount(2, $byUnit['cases']['sourceIds']);
     }
 
     public function test_explicit_span_id_pins_the_second_identical_occurrence_without_quote_search(): void

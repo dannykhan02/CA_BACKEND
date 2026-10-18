@@ -28,6 +28,7 @@ class DocumentAnalysisComposer
 
     public function __construct(
         private MetricCollector $metrics,
+        private AnalyticalComparisonBuilder $comparisons,
         private ChartCandidateBuilder $charts,
         private SourceChartContract $sourceCharts,
         private TakeawayBuilder $takeaways,
@@ -51,6 +52,7 @@ class DocumentAnalysisComposer
         $collected = $this->metrics->collect($document);
         $eligible = array_values(array_filter($collected['observations'],
             fn (MetricObservation $observation) => $observation->integrity['analyticalEligible']));
+        $comparisons = $this->comparisons->build($eligible);
         $derived = $this->charts->build($eligible, $cited);
         $charts = array_map(function (array $chart) use ($document): array {
             $labels = array_column($chart['series'][0]['data'] ?? $chart['points'], 'label');
@@ -131,12 +133,14 @@ class DocumentAnalysisComposer
                 'rejected' => array_filter($derived['rejected']),
             ],
             'analysisGroups' => $groups,
+            'analyticalComparisons' => $comparisons,
             'importantFindings' => $important,
             'stats' => [
                 'acceptedFindings' => $evidence->count(),
                 'metricFindings' => $collected['stats']['metric_findings'],
                 'chartableFindings' => $collected['stats']['chartable'],
                 'chartCandidates' => count($derived['candidates']),
+                'analyticalComparisons' => count($comparisons),
                 'takeaways' => count($takeaways),
                 'summaryNotes' => count($notes),
                 'analysisGroups' => count($groups),
@@ -195,6 +199,11 @@ class DocumentAnalysisComposer
         $ids = [];
         foreach ($analysis['visualAnalysis']['charts'] as $chart) {
             foreach ($chart['sourceIds'] as $id) {
+                $ids[$id] = true;
+            }
+        }
+        foreach ($analysis['analyticalComparisons'] ?? [] as $comparison) {
+            foreach ($comparison['sourceIds'] as $id) {
                 $ids[$id] = true;
             }
         }

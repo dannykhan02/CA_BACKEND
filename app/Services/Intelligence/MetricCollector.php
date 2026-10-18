@@ -99,6 +99,7 @@ class MetricCollector
                     'confidence' => (float) ($data['confidence'] ?? 0),
                     'definition_id' => null,
                     'metadata' => [
+                        'concept' => $data['concept'] ?? null,
                         'scope' => $data['subject'] ?? null,
                         'metric_type' => $data['metric_type'] ?? null,
                         'value_basis' => $data['value_basis'] ?? null,
@@ -231,6 +232,11 @@ class MetricCollector
             page: $record['page'] === null ? null : (int) $record['page'],
             isTotal: in_array($this->normalizer->normalize($subject), self::TOTAL_SUBJECTS, true),
             integrity: $integrity,
+            semanticConcept: $this->normalizer->normalize((string) ($record['metadata']['concept'] ?? $profile['concept'] ?? '')),
+            valueBasis: (string) ($record['metadata']['value_basis'] ?? $profile['value_basis'] ?? ''),
+            quantityKind: (string) ($record['metadata']['quantity_kind'] ?? $profile['quantity_kind'] ?? ''),
+            aggregation: (string) ($record['metadata']['aggregation'] ?? $profile['aggregation'] ?? ''),
+            sourceContext: implode("\n", array_map(fn ($source) => (string) ($source['quote'] ?? ''), $record['sources'] ?? [])),
         );
     }
 

@@ -82,6 +82,7 @@ class NormalKpiGrounder
             'workspace_id' => $document->workspace_id, 'kind' => 'metric', 'source_id' => $sourceId,
             'data' => ['label' => $stored->label, 'value' => $stored->value, 'unit' => $stored->unit,
                 'period' => $stored->period, 'subject' => $identity['scope'] ?? '',
+                'concept' => $identity['concept'] ?? null,
                 'metric_type' => $identity['metric_type'] ?? null,
                 'value_basis' => $identity['value_basis'] ?? null,
                 'aggregation' => $identity['aggregation'] ?? null,
