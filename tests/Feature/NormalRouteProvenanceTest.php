@@ -160,7 +160,8 @@ class NormalRouteProvenanceTest extends TestCase
                 'value' => $record['value'], 'unit' => $record['unit'], 'period' => 'Q3 2026',
                 'identity_metadata' => ['concept' => $record['concept'], 'scope' => 'Business',
                     'metric_type' => in_array($record['unit'], ['%', 'percentage points'], true)
-                        ? 'percentage' : 'amount', 'value_basis' => $record['basis']]]);
+                        ? 'percentage' : (in_array($record['unit'], ['cases', 'shipments', 'headcount'], true)
+                            ? 'count' : 'amount'), 'value_basis' => $record['basis']]]);
             $this->assertNull(app(NormalKpiGrounder::class)->record($document, $kpi,
                 ['source_context' => ['value_span_id' => $record['valueSpan'],
                     'unit_span_id' => $record['headerSpan'], 'period_span_id' => $record['headerSpan'],
@@ -173,6 +174,18 @@ class NormalRouteProvenanceTest extends TestCase
             $this->assertSame(['value', 'unit', 'period', 'subject'], $source->data['source_fields_verified']);
         }
         $this->assertSame(12, DocumentEvidence::where('document_id', $document->id)->count());
+        $observations = app(MetricCollector::class)->collect($document)['observations'];
+        $this->assertCount(12, $observations);
+        $this->assertSame(12, count(array_filter($observations,
+            fn ($observation) => $observation->integrity['analyticalEligible'])),
+            json_encode(array_map(fn ($observation) => [$observation->label, $observation->integrity],
+                array_filter($observations, fn ($observation) => ! $observation->integrity['analyticalEligible']))));
+        $comparisons = app(AnalyticalComparisonBuilder::class)->build($observations);
+        $this->assertSame(-8.0, collect($comparisons)->firstWhere('gapUnit', 'percentage points')['gap']);
+        $this->assertSame(43.0, collect($comparisons)->firstWhere('gapUnit', 'cases')['gap']);
+        $reconciliation = collect($comparisons)->firstWhere('kind', 'financial_reconciliation');
+        $this->assertSame(10.0, $reconciliation['gap']);
+        $this->assertCount(3, $reconciliation['sourceIds']);
     }
 
     public function test_native_workbook_table_uses_its_row_and_column_header_relationship(): void
