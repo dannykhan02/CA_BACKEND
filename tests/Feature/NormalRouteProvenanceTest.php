@@ -219,6 +219,63 @@ class NormalRouteProvenanceTest extends TestCase
         }
     }
 
+    public function test_native_payroll_table_uses_metric_column_and_employee_row_without_promoting_an_account_number(): void
+    {
+        config()->set('document_intelligence.revision_v1', false);
+        $book = new Spreadsheet;
+        $sheet = $book->getActiveSheet();
+        $sheet->setTitle('Payroll');
+        $sheet->fromArray([
+            ['Employee', 'Salary KES Q3 2026', 'Deduction KES Q3 2026', 'Bank account'],
+            ['Alice', 1000, 100, '00123456789'],
+        ], null, 'A1');
+        $sheet->addTable(new Table('A1:D2', 'PayrollTable'));
+        $path = tempnam(sys_get_temp_dir(), 'payroll-workbook-').'.xlsx';
+        (new Xlsx($book))->save($path);
+        try {
+            $structured = app(SpreadsheetTextExtractor::class)->extractStructured($path);
+            $user = User::factory()->create();
+            app(WorkspaceService::class)->createPersonalWorkspaceFor($user);
+            $user->refresh();
+            $document = Document::create(['workspace_id' => $user->current_workspace_id,
+                'uploaded_by' => $user->id, 'name' => 'Pay records.xlsx', 'type' => 'XLSX',
+                'status' => 'Processing', 'classification' => 'Internal', 'size_kb' => 1,
+                'year' => 2026, 'file_hash' => hash_file('sha256', $path), 'pages' => 1]);
+            app(StructuredExtractionStore::class)->publish($document, $structured);
+            $document->forceFill(['ai_pipeline' => ['route' => 'normal', 'key' => 'normal:payroll',
+                'normal_span_grounding' => true]])->save();
+            $spans = app(EvidenceGrounding::class)->spans($document)->all();
+            $header = collect($spans)->first(fn ($span) => str_contains(mb_substr($structured->text,
+                $span['start_offset'], $span['end_offset'] - $span['start_offset']), 'Salary KES Q3 2026'));
+            $row = collect($spans)->first(fn ($span) => str_contains(mb_substr($structured->text,
+                $span['start_offset'], $span['end_offset'] - $span['start_offset']), 'Alice'));
+            $this->assertNotNull($header);
+            $this->assertNotNull($row);
+            foreach ([['Salary', '1000'], ['Deduction', '100']] as [$label, $value]) {
+                $kpi = DocumentKpi::create(['document_id' => $document->id,
+                    'workspace_id' => $document->workspace_id, 'label' => $label, 'value' => $value,
+                    'unit' => 'KES', 'period' => 'Q3 2026',
+                    'identity_metadata' => ['concept' => $label, 'scope' => 'Alice',
+                        'metric_type' => 'amount', 'value_basis' => 'actual']]);
+                $this->assertNull(app(NormalKpiGrounder::class)->record($document, $kpi,
+                    ['source_context' => ['value_span_id' => $row['key'],
+                        'unit_span_id' => $header['key'], 'period_span_id' => $header['key'],
+                        'subject_span_id' => $row['key']]]), $label);
+            }
+            $identifier = DocumentKpi::create(['document_id' => $document->id,
+                'workspace_id' => $document->workspace_id, 'label' => 'Bank account',
+                'value' => '00123456789', 'unit' => null, 'period' => 'Q3 2026',
+                'identity_metadata' => ['concept' => 'bank account', 'scope' => 'Alice',
+                    'metric_type' => 'identifier', 'value_basis' => 'actual']]);
+            $this->assertSame('non_measurement_numeric', app(NormalKpiGrounder::class)->record(
+                $document, $identifier, ['source_context' => ['value_span_id' => $row['key'],
+                    'period_span_id' => $header['key'], 'subject_span_id' => $row['key']]]));
+            $this->assertSame(2, DocumentEvidence::where('document_id', $document->id)->count());
+        } finally {
+            @unlink($path);
+        }
+    }
+
     public function test_verified_actuals_and_targets_produce_correct_point_and_case_gaps(): void
     {
         $user = User::factory()->create();

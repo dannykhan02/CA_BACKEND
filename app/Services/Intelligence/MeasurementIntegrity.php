@@ -31,6 +31,7 @@ class MeasurementIntegrity
         $context = mb_strtolower(implode("\n", $quotes));
         $unit = trim((string) $rawUnit);
         $type = mb_strtolower(trim((string) ($metadata['metric_type'] ?? '')));
+        $identifier = in_array($type, ['identifier', 'id', 'code', 'reference'], true);
         $ambiguous = preg_match('/^(?:m|k|m\s*\/\s*[a-z]+|m[²³]|m\^[23])$/iuD', $unit) === 1
             || ($measurement === null && preg_match('/\b(?:million|billion|trillion|thousand|bn|mn)\b/iu', $rawValue.' '.$unit) === 1);
         $dimensionless = $unit === '' && in_array($type, ['ratio', 'index'], true)
@@ -50,13 +51,14 @@ class MeasurementIntegrity
         if ($unitState === 'scale_ambiguous') $reasons[] = 'scale_ambiguous';
         if ($numericState === 'invalid') $reasons[] = 'invalid_numeric_value';
         if ($numericState === 'stored_numeric_legacy') $reasons[] = 'raw_value_unreadable';
+        if ($identifier) $reasons[] = 'non_measurement_numeric';
 
         return [
             'numericVerification' => $numericState,
             'sourceVerification' => $sourceVerified ? 'verified' : 'unverified',
             'unitVerification' => $unitState,
             'analyticalEligible' => $numericState === 'parsed' && $sourceVerified
-                && in_array($unitState, ['verified', 'dimensionless'], true),
+                && in_array($unitState, ['verified', 'dimensionless'], true) && ! $identifier,
             'reasons' => $reasons,
         ];
     }

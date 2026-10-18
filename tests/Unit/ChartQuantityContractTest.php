@@ -83,5 +83,10 @@ class ChartQuantityContractTest extends TestCase
         $ambiguous = $integrity->assess(null, '12', 'm', [], [['quote' => '12 m']], true);
         self::assertSame('scale_ambiguous', $ambiguous['unitVerification']);
         self::assertFalse($ambiguous['analyticalEligible']);
+
+        $identifier = $integrity->assess($parser->parse('123456789', 'KES'), '123456789', 'KES',
+            ['metric_type' => 'identifier'], [['quote' => 'Account reference 123456789 KES']], true);
+        self::assertFalse($identifier['analyticalEligible']);
+        self::assertContains('non_measurement_numeric', $identifier['reasons']);
     }
 }

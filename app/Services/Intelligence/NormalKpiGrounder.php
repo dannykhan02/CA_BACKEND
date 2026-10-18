@@ -34,6 +34,10 @@ class NormalKpiGrounder
         if ($rawValue === '' || ! $this->containsValue($value['text'], $rawValue)) {
             return 'source_mismatch';
         }
+        if (in_array(mb_strtolower(trim((string) (($stored->identity_metadata ?? [])['metric_type'] ?? ''))),
+            ['identifier', 'id', 'code', 'reference'], true)) {
+            return 'non_measurement_numeric';
+        }
         $claimed = $this->measurements->parse($rawValue, $stored->unit, $stored->label);
         $rowCurrencies = $this->measurements->explicitCurrencyCodes($value['text']);
         if ($claimed === null || count($rowCurrencies) > 1
@@ -51,7 +55,8 @@ class NormalKpiGrounder
         // A repeated number by itself has no field role. Require a concept or descriptive
         // label in the same row/sentence as the value, and a unique occurrence of the value.
         $concept = trim((string) (($stored->identity_metadata ?? [])['concept'] ?? ''));
-        if (! $this->containsConcept($value['text'], $concept !== '' ? $concept : (string) $stored->label)) {
+        if ($document->type !== 'XLSX'
+            && ! $this->containsConcept($value['text'], $concept !== '' ? $concept : (string) $stored->label)) {
             return 'concept_mismatch';
         }
         $fields = ['value' => $value];
@@ -227,7 +232,9 @@ class NormalKpiGrounder
         $rowLabel = $cells->first(fn ($cell) => ($cell['sheet'] ?? null) === $valueCell['sheet']
             && ($cell['meta']['coordinate'] ?? null) === $rowLabelCoordinate
             && $this->visibleCell($cell));
-        if ($header === null || $rowLabel === null || ! $this->containsConcept((string) $rowLabel['text'], $concept)) {
+        if ($header === null || $rowLabel === null
+            || (! $this->containsConcept((string) $rowLabel['text'], $concept)
+                && ! $this->containsConcept((string) $header['text'], $concept))) {
             return false;
         }
         foreach (['unit', 'period'] as $role) {
