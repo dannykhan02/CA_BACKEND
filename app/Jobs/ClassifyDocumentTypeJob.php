@@ -58,6 +58,7 @@ class ClassifyDocumentTypeJob implements ShouldQueue
 
         try {
             $result = $client->classifyDocumentType($document->extracted_text, $document->name, $document);
+            $result = app(\App\Services\Intelligence\DocumentTypeAdjudicator::class)->adjudicate($document, $result);
         } catch (\Throwable $e) {
             if ($this->abandonIntelligence($document, $stage)) {
                 return;
