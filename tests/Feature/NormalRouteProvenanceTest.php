@@ -85,6 +85,96 @@ class NormalRouteProvenanceTest extends TestCase
         $this->assertFalse($bySource['kpi:'.$limited->id]->integrity['analyticalEligible']);
     }
 
+    public function test_conflicting_currency_and_scale_in_value_row_reject_table_heading_claim(): void
+    {
+        $user = User::factory()->create();
+        app(WorkspaceService::class)->createPersonalWorkspaceFor($user);
+        $user->refresh();
+        foreach ([['USD 51.0', 'quantity_mismatch'], ['KES USD 51.0', 'quantity_mismatch'],
+            ['51.0 billion', 'scale_mismatch']] as [$written, $reason]) {
+            $text = "Metric | Q3 2026 | KES million\nRevenue | {$written} | Actual";
+            $document = Document::create(['workspace_id' => $user->current_workspace_id,
+                'uploaded_by' => $user->id, 'name' => 'Report.pdf', 'type' => 'PDF',
+                'status' => 'Processing', 'classification' => 'Internal', 'size_kb' => 1,
+                'year' => 2026, 'file_hash' => hash('sha256', $text), 'extracted_text' => $text, 'pages' => 1]);
+            $document->forceFill(['ai_pipeline' => ['route' => 'normal', 'key' => 'normal:conflict',
+                'normal_span_grounding' => true]])->save();
+            $kpi = DocumentKpi::create(['document_id' => $document->id, 'workspace_id' => $document->workspace_id,
+                'label' => 'Revenue', 'value' => '51.0', 'unit' => 'KES million', 'period' => 'Q3 2026',
+                'identity_metadata' => ['concept' => 'revenue', 'metric_type' => 'amount',
+                    'value_basis' => 'actual']]);
+            $this->assertSame($reason, app(NormalKpiGrounder::class)->record($document, $kpi,
+                ['source_context' => ['value_span_id' => 'E002', 'unit_span_id' => 'E001',
+                    'period_span_id' => 'E001']]));
+            $this->assertSame(0, DocumentEvidence::where('document_id', $document->id)->count());
+        }
+    }
+
+    public function test_twelve_published_style_measurements_keep_values_units_period_subject_and_field_sources(): void
+    {
+        $user = User::factory()->create();
+        app(WorkspaceService::class)->createPersonalWorkspaceFor($user);
+        $user->refresh();
+        $groups = [
+            ['KES million', [
+                ['Revenue', '51.0', 'revenue', 'actual'],
+                ['Operating Profit', '10.0', 'operating profit', 'actual'],
+                ['Operating Costs', '41.0', 'operating costs', 'actual'],
+                ['Recovery Investment', '2.4', 'recovery investment', 'proposed'],
+            ]],
+            ['%', [
+                ['Operating Margin', '19.6', 'operating margin', 'actual'],
+                ['On-Time Delivery', '87', 'on-time delivery', 'actual'],
+                ['On-Time Delivery Target', '95', 'on-time delivery', 'target'],
+            ]],
+            ['cases', [
+                ['Customer Complaints', '133', 'customer complaints', 'actual'],
+                ['Customer Complaints Target', '90', 'customer complaints', 'target'],
+            ]],
+            ['shipments', [['Shipments Completed', '14900', 'shipments completed', 'actual']]],
+            ['headcount', [['Quarter-End Employees', '123', 'quarter-end employees', 'actual']]],
+            ['percentage points', [['Delivery Gap', '8', 'delivery gap', 'actual']]],
+        ];
+        $lines = [];
+        $records = [];
+        $spanNumber = 0;
+        foreach ($groups as [$unit, $rows]) {
+            $headerSpan = sprintf('E%03d', ++$spanNumber);
+            $lines[] = "Business Metric | Q3 2026 | {$unit}";
+            foreach ($rows as [$label, $value, $concept, $basis]) {
+                $valueSpan = sprintf('E%03d', ++$spanNumber);
+                $lines[] = "{$label} | {$value} | {$basis}";
+                $records[] = compact('label', 'value', 'concept', 'basis', 'unit', 'headerSpan', 'valueSpan');
+            }
+        }
+        $text = implode("\n", $lines);
+        $document = Document::create(['workspace_id' => $user->current_workspace_id,
+            'uploaded_by' => $user->id, 'name' => 'Quarterly board performance.pdf', 'type' => 'PDF',
+            'status' => 'Processing', 'classification' => 'Internal', 'size_kb' => 1,
+            'year' => 2026, 'file_hash' => hash('sha256', $text), 'extracted_text' => $text, 'pages' => 1]);
+        $document->forceFill(['ai_pipeline' => ['route' => 'normal', 'key' => 'normal:twelve-metrics',
+            'normal_span_grounding' => true]])->save();
+        foreach ($records as $record) {
+            $kpi = DocumentKpi::create(['document_id' => $document->id,
+                'workspace_id' => $document->workspace_id, 'label' => $record['label'],
+                'value' => $record['value'], 'unit' => $record['unit'], 'period' => 'Q3 2026',
+                'identity_metadata' => ['concept' => $record['concept'], 'scope' => 'Business',
+                    'metric_type' => in_array($record['unit'], ['%', 'percentage points'], true)
+                        ? 'percentage' : 'amount', 'value_basis' => $record['basis']]]);
+            $this->assertNull(app(NormalKpiGrounder::class)->record($document, $kpi,
+                ['source_context' => ['value_span_id' => $record['valueSpan'],
+                    'unit_span_id' => $record['headerSpan'], 'period_span_id' => $record['headerSpan'],
+                    'subject_span_id' => $record['headerSpan']]]), $record['label']);
+            $source = DocumentEvidence::where('source_id', 'kpi:'.$kpi->id)->sole();
+            $this->assertSame($record['value'], $source->data['raw_value']);
+            $this->assertSame($record['unit'], $source->data['raw_unit']);
+            $this->assertSame('Q3 2026', $source->data['period']);
+            $this->assertSame('Business', $source->data['subject']);
+            $this->assertSame(['value', 'unit', 'period', 'subject'], $source->data['source_fields_verified']);
+        }
+        $this->assertSame(12, DocumentEvidence::where('document_id', $document->id)->count());
+    }
+
     public function test_native_workbook_table_uses_its_row_and_column_header_relationship(): void
     {
         config()->set('document_intelligence.revision_v1', false);

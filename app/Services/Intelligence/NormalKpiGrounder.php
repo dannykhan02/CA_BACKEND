@@ -13,6 +13,8 @@ use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 /** Verifies field roles before a normal-route KPI becomes metric evidence. */
 class NormalKpiGrounder
 {
+    public function __construct(private MeasurementParser $measurements) {}
+
     public function record(Document $document, DocumentKpi $stored, array $proposal): ?string
     {
         $pipeline = $document->ai_pipeline ?? [];
@@ -31,6 +33,20 @@ class NormalKpiGrounder
         $rawValue = trim((string) $stored->value);
         if ($rawValue === '' || ! $this->containsValue($value['text'], $rawValue)) {
             return 'source_mismatch';
+        }
+        $claimed = $this->measurements->parse($rawValue, $stored->unit, $stored->label);
+        $rowCurrencies = $this->measurements->explicitCurrencyCodes($value['text']);
+        if ($claimed === null || count($rowCurrencies) > 1
+            || ($rowCurrencies !== [] && $rowCurrencies[0] !== $claimed->currency)) {
+            return 'quantity_mismatch';
+        }
+        preg_match_all('/\b(?:thousands?|millions?|billions?|trillions?)\b/iu', $value['text'], $scales);
+        $rowScales = array_values(array_unique(array_map('mb_strtolower', $scales[0])));
+        if ($rowScales !== []) {
+            $rowScale = $this->measurements->parse($rawValue, $rowScales[0]);
+            if (count($rowScales) > 1 || $rowScale === null || $rowScale->scale !== $claimed->scale) {
+                return 'scale_mismatch';
+            }
         }
         // A repeated number by itself has no field role. Require a concept or descriptive
         // label in the same row/sentence as the value, and a unique occurrence of the value.
