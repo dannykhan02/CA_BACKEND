@@ -102,6 +102,16 @@ class DocumentDownloadFileNameTest extends TestCase
         $this->fail("could not read a filename from: {$disposition}");
     }
 
+    public function test_ready_document_with_missing_private_object_returns_404_after_authorization(): void
+    {
+        [$user, $workspace] = $this->orgUser();
+        $document = $this->readyDocument($workspace, 'missing.pdf', 'PDF');
+        Storage::disk('documents')->delete($document->file_path);
+
+        Sanctum::actingAs($user);
+        $this->get("/api/documents/{$document->id}/download")->assertNotFound();
+    }
+
     public function test_a_jpeg_named_file_is_not_double_suffixed_with_jpg(): void
     {
         [$user, $workspace] = $this->orgUser();
