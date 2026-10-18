@@ -115,6 +115,33 @@ class SourceReferenceResolver
             }
         }
         $sources = json_decode($evidence->sources, true) ?: [];
+        $fieldSources = [];
+        $valueSources = [];
+        foreach ($sources as $candidate) {
+            if (! is_array($candidate) || ! is_array($candidate['roles'] ?? null)) {
+                continue;
+            }
+            $start = $candidate['start_offset'] ?? null;
+            $end = $candidate['end_offset'] ?? null;
+            $quote = $candidate['quote'] ?? null;
+            if (! is_int($start) || ! is_int($end) || ! is_string($quote) || $end <= $start
+                || mb_substr((string) $document->extracted_text, $start, $end - $start) !== $quote) {
+                return ['state' => 'SOURCE_UNAVAILABLE'];
+            }
+            $fieldSources[] = ['roles' => $candidate['roles'], 'page' => $candidate['page'] ?? null,
+                'range' => ['start' => $start, 'end' => $end], 'text' => mb_substr($quote, 0, self::MAX_TEXT)];
+            if (in_array('value', $candidate['roles'], true)) {
+                $valueSources[] = $candidate;
+            }
+        }
+        // A field-grounded measurement can cite its value row plus governing headings.
+        // Navigation chooses the single value occurrence; all field quotes remain visible.
+        if ($fieldSources !== []) {
+            if (count($fieldSources) !== count($sources) || count($valueSources) !== 1) {
+                return ['state' => 'SOURCE_AMBIGUOUS'];
+            }
+            $sources = $valueSources;
+        }
         // A source ID can carry several genuine citations. Returning the
         // first one would silently choose an occurrence the user did not ask
         // for, especially when the same phrase appears on several pages.
@@ -190,6 +217,7 @@ class SourceReferenceResolver
                 'page' => $citation['page'] ?? null,
                 'range' => $rangeValid ? ['start' => $start, 'end' => $end] : null],
             'location' => $location,
+            'fieldSources' => $fieldSources,
             'roles' => $roles, 'relationships' => $relationships,
             'quality' => ['sourceChannel' => $channel,
                 'locationQuality' => $rangeValid ? 'exact_text_offset' : strtolower($matchState),

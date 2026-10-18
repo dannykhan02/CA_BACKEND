@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Services\Intelligence\MeasurementParser;
+use App\Services\Intelligence\MeasurementIntegrity;
 use App\Services\Intelligence\PeriodParser;
 use Tests\TestCase;
 
@@ -50,5 +51,42 @@ class ChartQuantityContractTest extends TestCase
         self::assertSame('Q1 FY2024', $periods->parse('Q1 FY2024')?->label);
         self::assertSame('H1 FY2024', $periods->parse('H1 FY2024')?->label);
         self::assertSame('FY2024-01', $periods->parse('Jan FY2024')?->label);
+    }
+
+    public function test_parsing_source_and_unit_verification_are_independent(): void
+    {
+        $parser = app(MeasurementParser::class);
+        $integrity = app(MeasurementIntegrity::class);
+        $measure = $parser->parse('51.0', 'KES million', 'Revenue');
+        self::assertSame(51000000.0, $measure->magnitude);
+        $source = [['quote' => 'Q3 revenue was KES million 51.0']];
+        $accepted = $integrity->assess($measure, '51.0', 'KES million', [], $source, true);
+        self::assertSame('parsed', $accepted['numericVerification']);
+        self::assertSame('verified', $accepted['sourceVerification']);
+        self::assertSame('verified', $accepted['unitVerification']);
+        self::assertTrue($accepted['analyticalEligible']);
+
+        $missingSource = $integrity->assess($measure, '51.0', 'KES million', [], [], false);
+        self::assertSame('unverified', $missingSource['sourceVerification']);
+        self::assertSame('unit_unverified', $missingSource['unitVerification']);
+        self::assertFalse($missingSource['analyticalEligible']);
+
+        $missingUnit = $integrity->assess($parser->parse('87', null), '87', null, [], [['quote' => 'Delivery 87']], true);
+        self::assertSame('unit_unverified', $missingUnit['unitVerification']);
+        self::assertFalse($missingUnit['analyticalEligible']);
+
+        $dimensionless = $integrity->assess($parser->parse('1.2', null), '1.2', null,
+            ['metric_type' => 'ratio'], [['quote' => 'Current ratio 1.2']], true);
+        self::assertSame('dimensionless', $dimensionless['unitVerification']);
+        self::assertTrue($dimensionless['analyticalEligible']);
+
+        $ambiguous = $integrity->assess(null, '12', 'm', [], [['quote' => '12 m']], true);
+        self::assertSame('scale_ambiguous', $ambiguous['unitVerification']);
+        self::assertFalse($ambiguous['analyticalEligible']);
+
+        $identifier = $integrity->assess($parser->parse('123456789', 'KES'), '123456789', 'KES',
+            ['metric_type' => 'identifier'], [['quote' => 'Account reference 123456789 KES']], true);
+        self::assertFalse($identifier['analyticalEligible']);
+        self::assertContains('non_measurement_numeric', $identifier['reasons']);
     }
 }

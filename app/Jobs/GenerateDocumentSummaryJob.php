@@ -248,6 +248,8 @@ class GenerateDocumentSummaryJob implements ShouldQueue
 
         $this->persistIntelligence($document, $stage, $recorder, function () use ($document, $result, $recorder) {
             if (($document->ai_pipeline['route'] ?? null) === 'incremental' && ! empty($result['document_type_assessment'])) {
+                $result['document_type_assessment'] = app(\App\Services\Intelligence\DocumentTypeAdjudicator::class)
+                    ->adjudicate($document, $result['document_type_assessment']);
                 $document->documentTypeClassification()->updateOrCreate(['document_id' => $document->id, 'intelligence_revision_id' => $this->revisionId],
                     $result['document_type_assessment'] + ['workspace_id' => $document->workspace_id,
                         'prompt_version' => (string) $result['prompt_version'], 'provider' => 'anthropic',

@@ -28,7 +28,7 @@ use Illuminate\Support\Collection;
  */
 class ImportantFindingsBuilder
 {
-    public function __construct(private FindingClassifier $classifier) {}
+    public function __construct(private FindingClassifier $classifier, private MeasurementIntegrity $integrity) {}
 
     private const MAX = 8;
 
@@ -127,6 +127,8 @@ class ImportantFindingsBuilder
                 'confidence' => $candidate['confidence'],
                 'citedBySynthesis' => $candidate['cited'],
                 'page' => count($pages) === 1 ? (int) reset($pages) : null,
+                'measurementIntegrity' => $candidate['row']->kind === 'metric'
+                    ? $this->integrity->forEvidence($candidate['row']) : null,
             ];
         }
 
@@ -195,6 +197,7 @@ class ImportantFindingsBuilder
                 'materialityTier' => $candidate['assignment']['tier'],
                 'forced' => $forced, 'forcedRule' => $candidate['assignment']['forced_rule'],
                 'tierReasons' => $candidate['assignment']['reasons'],
+                'measurementIntegrity' => $row->kind === 'metric' ? $this->integrity->forEvidence($row) : null,
             ];
         }
 

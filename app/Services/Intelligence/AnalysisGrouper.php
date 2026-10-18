@@ -37,7 +37,7 @@ class AnalysisGrouper
         'context' => 'Context & facts',
     ];
 
-    public function __construct(private MeasurementParser $measurements) {}
+    public function __construct(private MeasurementParser $measurements, private MeasurementIntegrity $integrity) {}
 
     /**
      * @param  Collection<int,DocumentEvidence>  $evidence
@@ -111,6 +111,7 @@ class AnalysisGrouper
         $data = is_array($row->data) ? $row->data : [];
         $pages = array_values(array_unique(array_filter(array_column($row->sources ?? [], 'page'), fn ($page) => $page !== null)));
 
+        $integrity = $row->kind === 'metric' ? $this->integrity->forEvidence($row) : null;
         return [
             'sourceId' => $row->source_id ?: 'evidence:'.$row->id,
             'kind' => $row->kind,
@@ -121,6 +122,7 @@ class AnalysisGrouper
             'subject' => $this->clip($data['subject'] ?? ''),
             'confidence' => round((float) ($data['confidence'] ?? 0), 2),
             'page' => count($pages) === 1 ? (int) reset($pages) : null,
+            'measurementIntegrity' => $integrity,
         ];
     }
 

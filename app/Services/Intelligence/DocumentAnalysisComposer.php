@@ -28,6 +28,7 @@ class DocumentAnalysisComposer
 
     public function __construct(
         private MetricCollector $metrics,
+        private AnalyticalComparisonBuilder $comparisons,
         private ChartCandidateBuilder $charts,
         private SourceChartContract $sourceCharts,
         private TakeawayBuilder $takeaways,
@@ -49,10 +50,23 @@ class DocumentAnalysisComposer
         $cited = $this->findings->citedSourceIds($summary);
 
         $collected = $this->metrics->collect($document);
-        $derived = $this->charts->build($collected['observations'], $cited);
+        $eligible = array_values(array_filter($collected['observations'],
+            fn (MetricObservation $observation) => $observation->integrity['analyticalEligible']));
+        $comparisons = $this->comparisons->build($eligible);
+        $derived = $this->charts->build($eligible, $cited);
+        $limitedMeasurements = $collected['rejected'];
+        foreach ($collected['observations'] as $observation) {
+            if ($observation->integrity['analyticalEligible']) {
+                continue;
+            }
+            $limitedMeasurements[] = ['sourceId' => $observation->sourceId,
+                'codes' => array_values(array_unique($observation->integrity['reasons']))];
+        }
         $charts = array_map(function (array $chart) use ($document): array {
             $labels = array_column($chart['series'][0]['data'] ?? $chart['points'], 'label');
-            $renderEligible = $chart['numericVerification'] === 'accepted_evidence'
+            $renderEligible = $chart['numericVerification'] === 'parsed'
+                && $chart['sourceVerification'] === 'verified'
+                && in_array($chart['unitVerification'], ['verified', 'dimensionless'], true)
                 && ($chart['basis'] !== 'time_series' || $this->sourceCharts->continuousPeriods($labels));
             $chart['origin'] = 'generated';
             $chart['verification'] = $chart['numericVerification'];
@@ -127,12 +141,22 @@ class DocumentAnalysisComposer
                 'rejected' => array_filter($derived['rejected']),
             ],
             'analysisGroups' => $groups,
+            'analyticalComparisons' => $comparisons,
+            'limitations' => [
+                'measurementCount' => count($limitedMeasurements),
+                'measurements' => array_slice($limitedMeasurements, 0, 100),
+                'visualGroupCount' => count($derived['rejectedGroups']),
+                'visualGroups' => array_slice($derived['rejectedGroups'], 0, 100),
+                'coverage' => ['state' => $coverage['state'] ?? 'unknown',
+                    'codes' => $coverage['reasons'] ?? ['coverage_not_measured']],
+            ],
             'importantFindings' => $important,
             'stats' => [
                 'acceptedFindings' => $evidence->count(),
                 'metricFindings' => $collected['stats']['metric_findings'],
                 'chartableFindings' => $collected['stats']['chartable'],
                 'chartCandidates' => count($derived['candidates']),
+                'analyticalComparisons' => count($comparisons),
                 'takeaways' => count($takeaways),
                 'summaryNotes' => count($notes),
                 'analysisGroups' => count($groups),
@@ -191,6 +215,11 @@ class DocumentAnalysisComposer
         $ids = [];
         foreach ($analysis['visualAnalysis']['charts'] as $chart) {
             foreach ($chart['sourceIds'] as $id) {
+                $ids[$id] = true;
+            }
+        }
+        foreach ($analysis['analyticalComparisons'] ?? [] as $comparison) {
+            foreach ($comparison['sourceIds'] as $id) {
                 $ids[$id] = true;
             }
         }

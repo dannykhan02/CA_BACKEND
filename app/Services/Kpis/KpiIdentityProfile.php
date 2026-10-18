@@ -67,7 +67,7 @@ class KpiIdentityProfile
             'value_basis' => $basis ?? $supplied('value_basis') ?? 'actual',
             'period' => $period, 'rule' => 'label', 'valid' => $valid && $normalized !== '',
         ];
-        foreach (['metric_type' => self::TYPES, 'quantity_kind' => ['absolute', 'change'], 'aggregation' => ['total', 'average'], 'value_basis' => ['actual', 'target']] as $key => $allowed) {
+        foreach (['metric_type' => self::TYPES, 'quantity_kind' => ['absolute', 'change'], 'aggregation' => ['total', 'average'], 'value_basis' => ['actual', 'target', 'budget', 'forecast', 'proposed', 'approved', 'incurred']] as $key => $allowed) {
             if ($profile[$key] !== null && ! in_array($profile[$key], $allowed, true)) {
                 $profile['valid'] = false;
             }
@@ -178,7 +178,16 @@ class KpiIdentityProfile
             'scope' => $scopes[0] ? implode(' ', array_unique($scopes[0])) : null,
             'quantity_kind' => preg_match('/\b(increase|decrease|change|growth|delta|variance|reduction)\b/u', $text) ? 'change' : (preg_match('/\babsolute\b/u', $text) ? 'absolute' : null),
             'aggregation' => preg_match('/\b(average|mean|avg)\b/u', $text) ? 'average' : (preg_match('/\b(total|sum)\b/u', $text) ? 'total' : null),
-            'value_basis' => preg_match('/\b(target|goal|threshold|budgeted|forecast|projected)\b/u', $basisText) ? 'target' : (preg_match('/\bactual\b/u', $basisText) ? 'actual' : null),
+            'value_basis' => match (true) {
+                preg_match('/\b(proposed|proposal)\b/u', $basisText) === 1 => 'proposed',
+                preg_match('/\bapproved\b/u', $basisText) === 1 => 'approved',
+                preg_match('/\b(incurred|spent|paid)\b/u', $basisText) === 1 => 'incurred',
+                preg_match('/\b(budget|budgeted)\b/u', $basisText) === 1 => 'budget',
+                preg_match('/\b(forecast|projected|projection)\b/u', $basisText) === 1 => 'forecast',
+                preg_match('/\b(target|goal|threshold)\b/u', $basisText) === 1 => 'target',
+                preg_match('/\bactual\b/u', $basisText) === 1 => 'actual',
+                default => null,
+            },
         ];
     }
 }

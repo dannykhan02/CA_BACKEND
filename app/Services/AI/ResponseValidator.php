@@ -30,6 +30,17 @@ class ResponseValidator
     public function validateKpiIdentities(array $kpis): void
     {
         foreach ($kpis as $kpi) {
+            if (isset($kpi['source_context'])) {
+                if (! is_array($kpi['source_context'])) {
+                    throw new \RuntimeException('Invalid KPI source context.');
+                }
+                foreach ($kpi['source_context'] as $field => $value) {
+                    if (! in_array($field, ['value_span_id', 'unit_span_id', 'period_span_id', 'subject_span_id'], true)
+                        || ($value !== null && (! is_string($value) || ! preg_match('/^E[0-9]{3,}$/D', $value)))) {
+                        throw new \RuntimeException('Invalid KPI source span.');
+                    }
+                }
+            }
             if (! isset($kpi['identity'])) {
                 continue;
             }

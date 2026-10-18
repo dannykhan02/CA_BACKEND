@@ -26,6 +26,8 @@ class DatabaseSeeder extends Seeder
             DocumentInsightsPromptSeederV5::class,
             DocumentInsightsPromptSeederV6::class,
             DocumentInsightsPromptSeederV7::class,
+            DocumentInsightsPromptSeederV8::class,
+            DocumentTypePromptSeederV2::class,
             DocumentDeadlinesPromptSeeder::class,
             DocumentEntitiesPromptSeeder::class,
             DocumentRisksPromptSeeder::class,

@@ -38,6 +38,7 @@ class MetricCollector
         private PeriodParser $periods,
         private KpiIdentityProfile $profiles,
         private KpiLabelNormalizer $normalizer,
+        private MeasurementIntegrity $integrity,
     ) {}
 
     /**
@@ -45,24 +46,29 @@ class MetricCollector
      */
     public function collect(Document $document): array
     {
-        $stats = ['metric_findings' => 0, 'chartable' => 0, 'unreadable_value' => 0, 'no_period' => 0];
+        $stats = ['metric_findings' => 0, 'parseable' => 0, 'chartable' => 0, 'unreadable_value' => 0, 'no_period' => 0];
         $observations = [];
+        $rejected = [];
         foreach ($this->records($document) as $record) {
             $stats['metric_findings']++;
             $observation = $this->observe($record);
             if ($observation === null) {
                 $stats['unreadable_value']++;
+                $rejected[] = ['sourceId' => $record['source_id'], 'codes' => ['invalid_numeric_value']];
 
                 continue;
             }
-            $stats['chartable']++;
+            $stats['parseable']++;
+            if ($observation->integrity['analyticalEligible']) {
+                $stats['chartable']++;
+            }
             if ($observation->period === null) {
                 $stats['no_period']++;
             }
             $observations[] = $observation;
         }
 
-        return ['observations' => $observations, 'stats' => $stats];
+        return ['observations' => $observations, 'stats' => $stats, 'rejected' => $rejected];
     }
 
     /**
@@ -81,6 +87,9 @@ class MetricCollector
                 ->where('kind', 'metric')->orderBy('identity')->get();
             foreach ($rows as $row) {
                 $data = is_array($row->data) ? $row->data : [];
+                if (($document->ai_pipeline['route'] ?? null) === 'incremental') {
+                    $data = app(CanonicalMetricIdentity::class)->incremental($data + ['kind' => 'metric']);
+                }
                 $pages = array_values(array_unique(array_filter(array_column($row->sources ?? [], 'page'), fn ($page) => $page !== null)));
                 $records[] = [
                     'source_id' => $row->source_id ?: 'evidence:'.$row->id,
@@ -92,26 +101,33 @@ class MetricCollector
                     'confidence' => (float) ($data['confidence'] ?? 0),
                     'definition_id' => null,
                     'metadata' => [
+                        'concept' => $data['concept'] ?? null,
                         'scope' => $data['subject'] ?? null,
                         'metric_type' => $data['metric_type'] ?? null,
                         'value_basis' => $data['value_basis'] ?? null,
                         'aggregation' => $data['aggregation'] ?? null,
                         'quantity_kind' => $data['quantity_kind'] ?? null,
                         'period' => $data['period'] ?? null,
+                        'source_fields_verified' => $data['source_fields_verified'] ?? null,
                     ],
                     'page' => count($pages) === 1 ? (int) reset($pages) : null,
                     'numeric' => null,
+                    'sources' => $row->sources ?? [],
+                    'trusted_source' => ($data['measurement_verification'] ?? null) !== 'limited',
                 ];
             }
         }
-        if ($records !== []) {
-            return $this->withDefinitionIds($document, $records);
+        $evidenced = [];
+        foreach ($records as $record) {
+            $evidenced[$record['source_id']] = true;
         }
-
         foreach (DocumentKpi::where('document_id', $document->id)
             ->where('intelligence_revision_id', $document->intelligenceRevisionForRelations())
             ->where(fn ($query) => $query->where('workspace_id', $document->workspace_id)->orWhereNull('workspace_id'))
             ->orderBy('id')->get() as $kpi) {
+            if (isset($evidenced['kpi:'.$kpi->id])) {
+                continue;
+            }
             $metadata = is_array($kpi->identity_metadata) ? $kpi->identity_metadata : [];
             $records[] = [
                 'source_id' => 'kpi:'.$kpi->id,
@@ -126,10 +142,12 @@ class MetricCollector
                 'metadata' => $metadata + ['period' => $kpi->period],
                 'page' => null,
                 'numeric' => $kpi->value_numeric === null ? null : (float) $kpi->value_numeric,
+                'sources' => [],
+                'trusted_source' => false,
             ];
         }
 
-        return $records;
+        return $this->withDefinitionIds($document, $records);
     }
 
     /**
@@ -185,13 +203,35 @@ class MetricCollector
         }
 
         $period = $this->periods->parse($record['period']);
+        $identity = array_filter(array_intersect_key(is_array($record['metadata']) ? $record['metadata'] : [],
+            array_flip(['concept', 'scope', 'metric_type', 'quantity_kind', 'aggregation', 'value_basis', 'period'])),
+            fn ($value) => is_string($value) && trim($value) !== '');
         $profile = $this->profiles->make([
             'label' => $this->withoutPeriod($label, $record['period']),
             'unit' => $record['unit'],
             'value' => $record['value'],
-            'identity' => is_array($record['metadata']) ? $record['metadata'] : [],
+            'identity' => $identity,
         ]);
         $subject = trim((string) $record['subject']);
+        $integrity = $this->integrity->assess($measurement, (string) $record['value'], $record['unit'],
+            is_array($record['metadata']) ? $record['metadata'] : [], $record['sources'] ?? [],
+            (bool) ($record['trusted_source'] ?? false));
+        if ($period === null) {
+            $integrity['reasons'][] = 'period_unavailable';
+            $integrity['analyticalEligible'] = false;
+        }
+        if (array_diff_key($identity, ['period' => true]) !== [] && ! ($profile['valid'] ?? false)) {
+            $integrity['reasons'][] = 'semantic_identity_conflict';
+            $integrity['analyticalEligible'] = false;
+        }
+        if (is_string($record['metadata']['grounding_rejection'] ?? null)) {
+            $integrity['reasons'][] = $record['metadata']['grounding_rejection'];
+        }
+        if ($integrity['unitVerification'] === 'dimensionless') {
+            $type = mb_strtolower((string) $record['metadata']['metric_type']);
+            $measurement = new Measurement($measurement->magnitude, $type, null, $type, 1.0,
+                '', $type, $measurement->numericVerified);
+        }
 
         return new MetricObservation(
             sourceId: (string) $record['source_id'],
@@ -207,6 +247,12 @@ class MetricCollector
                 is_array($record['metadata']) ? $record['metadata'] : []),
             page: $record['page'] === null ? null : (int) $record['page'],
             isTotal: in_array($this->normalizer->normalize($subject), self::TOTAL_SUBJECTS, true),
+            integrity: $integrity,
+            semanticConcept: $this->normalizer->normalize((string) ($record['metadata']['concept'] ?? $profile['concept'] ?? '')),
+            valueBasis: (string) ($record['metadata']['value_basis'] ?? $profile['value_basis'] ?? ''),
+            quantityKind: (string) ($record['metadata']['quantity_kind'] ?? $profile['quantity_kind'] ?? ''),
+            aggregation: (string) ($record['metadata']['aggregation'] ?? $profile['aggregation'] ?? ''),
+            sourceContext: implode("\n", array_map(fn ($source) => (string) ($source['quote'] ?? ''), $record['sources'] ?? [])),
         );
     }
 

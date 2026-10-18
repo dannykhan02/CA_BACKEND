@@ -224,6 +224,12 @@ class MeasurementParser
         return is_string($code) && preg_match('/^[A-Z]{3}$/D', $code) ? $code : null;
     }
 
+    /** @return list<string> Explicit ISO currencies stated in source text. */
+    public function explicitCurrencyCodes(?string $text): array
+    {
+        return $this->currencyCodes(trim((string) $text));
+    }
+
     private function currency(string $text): ?string
     {
         $codes = $this->currencyCodes($text);
