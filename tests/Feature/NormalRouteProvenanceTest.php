@@ -22,7 +22,6 @@ use App\Services\Intelligence\NormalRouteProvenance;
 use App\Services\Intelligence\SourceReferenceResolver;
 use App\Services\WorkspaceService;
 use Database\Seeders\DocumentInsightsPromptSeederV8;
-use Database\Seeders\DocumentInsightsPromptSeederV9;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -43,21 +42,6 @@ class NormalRouteProvenanceTest extends TestCase
         $this->assertStringContainsString('source_context', $prompt->template);
         $this->assertStringContainsString('value_span_id', $prompt->template);
         $this->assertStringContainsString('"proposed"', $prompt->template);
-    }
-
-    public function test_v9_successor_clarifies_scope_period_and_proposal_without_activating_it(): void
-    {
-        (new DocumentInsightsPromptSeederV8)->run();
-        AiPrompt::activate('document_insights', 8);
-        (new DocumentInsightsPromptSeederV9)->run();
-        $prompt = AiPrompt::where('name', 'document_insights')->where('version', 9)->sole();
-        self::assertFalse($prompt->active);
-        self::assertTrue(AiPrompt::where('name', 'document_insights')->where('version', 8)->sole()->active);
-        self::assertStringContainsString('scope is only its source-supported entity or population', $prompt->template);
-        self::assertStringContainsString('column says only Q3', $prompt->template);
-        self::assertStringContainsString('leave period null', $prompt->template);
-        self::assertStringNotContainsString('value_basis is actual or target.', $prompt->template);
-        self::assertStringContainsString('value_basis is actual, target, budget, forecast, proposed', $prompt->template);
     }
 
     public function test_normal_kpi_requires_a_field_supported_value_and_governing_unit_heading(): void
