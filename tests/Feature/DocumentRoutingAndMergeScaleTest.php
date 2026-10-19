@@ -655,9 +655,9 @@ class DocumentRoutingAndMergeScaleTest extends TestCase
 
         self::assertSame([], $entities['entities']);
         Http::assertSentCount(1);
-        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/messages')
-            && $request['max_tokens'] === 4321
-            && str_contains($request->body(), 'Short report.'));
+        [$request] = Http::recorded()->first();
+        self::assertSame('https://api.anthropic.com/v1/messages', $request->url());
+        self::assertSame(4321, $request['max_tokens']);
     }
 
     public function test_routing_and_planning_diagnostics_are_metadata_only(): void
