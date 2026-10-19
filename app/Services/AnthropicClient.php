@@ -283,7 +283,10 @@ class AnthropicClient
         $this->throttle();
         $prompt = $this->buildInsightsPrompt($documentText, $documentName, $document?->classification, $document);
 
-        return $this->structuredCall($prompt, $document, 'insights', $this->parseInsightsResponse(...));
+        return $this->structuredCall($prompt, $document, 'insights', $this->parseInsightsResponse(...), [
+            'max_tokens' => (int) config('services.anthropic.structured_output_tokens.insights',
+                config('services.anthropic.max_tokens')),
+        ]);
     }
 
     public function adjudicateKpiIdentity(array $observation, array $candidates, Document $document): array
@@ -354,6 +357,8 @@ PROMPT;
             'timeout' => config('services.anthropic.entity_timeout'),
             'connect_timeout' => config('services.anthropic.entity_connect_timeout'),
             'max_attempts' => 1,
+            'max_tokens' => (int) config('services.anthropic.structured_output_tokens.entities',
+                config('services.anthropic.max_tokens')),
         ]);
     }
 

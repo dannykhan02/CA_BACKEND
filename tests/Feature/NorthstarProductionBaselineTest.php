@@ -110,6 +110,123 @@ class NorthstarProductionBaselineTest extends TestCase
         }
     }
 
+    public function test_v8_operations_quarter_uses_the_cited_column_and_matching_page_period(): void
+    {
+        $path = dirname(__DIR__).'/Fixtures/Northstar_Q3_2026_Board_Performance_Review.pdf';
+        $text = (new DocumentTextExtractor)->extractPdfText($path);
+        $user = User::factory()->create();
+        app(WorkspaceService::class)->createPersonalWorkspaceFor($user);
+        $document = Document::create(['workspace_id' => $user->fresh()->current_workspace_id,
+            'uploaded_by' => $user->id, 'name' => basename($path), 'type' => 'PDF',
+            'status' => 'Processing', 'classification' => 'Internal', 'size_kb' => 81,
+            'year' => 2026, 'pages' => 7, 'file_hash' => hash_file('sha256', $path),
+            'extracted_text' => $text]);
+        $document->forceFill(['ai_pipeline' => ['route' => 'normal', 'key' => 'normal:ops-v8',
+            'normal_span_grounding' => true]])->save();
+        foreach (['Q3 2026' => null, 'Q3 2025' => 'period_source_mismatch'] as $period => $expected) {
+            $kpi = DocumentKpi::create(['document_id' => $document->id,
+                'workspace_id' => $document->workspace_id, 'label' => 'On-time deliveries',
+                'value' => '87', 'unit' => '%', 'period' => $period,
+                'identity_metadata' => ['concept' => 'on-time delivery rate',
+                    'scope' => 'Northstar Distribution Ltd', 'metric_type' => 'percentage',
+                    'value_basis' => 'actual']]);
+            self::assertSame($expected, app(NormalKpiGrounder::class)->record($document, $kpi,
+                ['source_context' => ['value_span_id' => 'E048', 'unit_span_id' => 'E048',
+                    'period_span_id' => 'E046', 'subject_span_id' => 'E043']]), $period);
+            if ($expected === null) {
+                $evidence = DocumentEvidence::where('source_id', 'kpi:'.$kpi->id)->sole();
+                self::assertSame(['value', 'unit', 'period', 'subject'], $evidence->data['source_fields_verified']);
+                self::assertContains('E043', array_column($evidence->sources, 'span_id'));
+                self::assertTrue(collect(app(MetricCollector::class)->collect($document)['observations'])
+                    ->firstWhere('sourceId', 'kpi:'.$kpi->id)->integrity['analyticalEligible']);
+            } else {
+                self::assertFalse(DocumentEvidence::where('source_id', 'kpi:'.$kpi->id)->exists());
+            }
+        }
+    }
+
+    public function test_v8_proposal_table_uses_wrapped_funding_header_without_inventing_a_period(): void
+    {
+        $path = dirname(__DIR__).'/Fixtures/Northstar_Q3_2026_Board_Performance_Review.pdf';
+        $user = User::factory()->create();
+        app(WorkspaceService::class)->createPersonalWorkspaceFor($user);
+        $document = Document::create(['workspace_id' => $user->fresh()->current_workspace_id,
+            'uploaded_by' => $user->id, 'name' => basename($path), 'type' => 'PDF',
+            'status' => 'Processing', 'classification' => 'Internal', 'size_kb' => 81,
+            'year' => 2026, 'pages' => 7, 'file_hash' => hash_file('sha256', $path),
+            'extracted_text' => (new DocumentTextExtractor)->extractPdfText($path)]);
+        $document->forceFill(['ai_pipeline' => ['route' => 'normal', 'key' => 'normal:proposal-v8',
+            'normal_span_grounding' => true]])->save();
+        $kpi = DocumentKpi::create(['document_id' => $document->id,
+            'workspace_id' => $document->workspace_id, 'label' => 'Proposed service-recovery budget',
+            'value' => '2.40', 'unit' => 'KES million', 'period' => null,
+            'identity_metadata' => ['concept' => 'service-recovery budget',
+                'scope' => 'Northstar Distribution Ltd', 'metric_type' => 'amount',
+                'value_basis' => 'proposed']]);
+        self::assertNull(app(NormalKpiGrounder::class)->record($document, $kpi,
+            ['source_context' => ['value_span_id' => 'E077', 'unit_span_id' => 'E072',
+                'period_span_id' => null, 'subject_span_id' => 'E058']]));
+        $evidence = DocumentEvidence::where('source_id', 'kpi:'.$kpi->id)->sole();
+        self::assertSame('proposed', $evidence->data['value_basis']);
+        self::assertSame(['value', 'unit', 'subject'], $evidence->data['source_fields_verified']);
+        self::assertContains('E073', array_column($evidence->sources, 'span_id'));
+        self::assertFalse(collect(app(MetricCollector::class)->collect($document)['observations'])
+            ->firstWhere('sourceId', 'kpi:'.$kpi->id)->integrity['analyticalEligible']);
+        foreach ([
+            ['2.45', 'KES million', 'proposed', 'value_column_mismatch'],
+            ['2.40', 'USD million', 'proposed', 'unit_source_mismatch'],
+            ['2.40', 'KES million', 'target', 'column_header_unverified'],
+        ] as [$value, $unit, $basis, $rejection]) {
+            $wrong = DocumentKpi::create(['document_id' => $document->id,
+                'workspace_id' => $document->workspace_id,
+                'label' => 'Proposed service-recovery budget', 'value' => $value,
+                'unit' => $unit, 'period' => null,
+                'identity_metadata' => ['concept' => 'service-recovery budget',
+                    'scope' => 'Northstar Distribution Ltd', 'metric_type' => 'amount',
+                    'value_basis' => $basis]]);
+            self::assertSame($rejection, app(NormalKpiGrounder::class)->record($document, $wrong,
+                ['source_context' => ['value_span_id' => 'E077', 'unit_span_id' => 'E072',
+                    'period_span_id' => null, 'subject_span_id' => 'E058']]), $value.' '.$unit.' '.$basis);
+            self::assertFalse(DocumentEvidence::where('source_id', 'kpi:'.$wrong->id)->exists());
+        }
+    }
+
+    public function test_v8_expanded_financial_scopes_remain_unverified_when_the_cited_subject_does_not_say_them(): void
+    {
+        $path = dirname(__DIR__).'/Fixtures/Northstar_Q3_2026_Board_Performance_Review.pdf';
+        $user = User::factory()->create();
+        app(WorkspaceService::class)->createPersonalWorkspaceFor($user);
+        $document = Document::create(['workspace_id' => $user->fresh()->current_workspace_id,
+            'uploaded_by' => $user->id, 'name' => basename($path), 'type' => 'PDF',
+            'status' => 'Processing', 'classification' => 'Internal', 'size_kb' => 81,
+            'year' => 2026, 'pages' => 7, 'file_hash' => hash_file('sha256', $path),
+            'extracted_text' => (new DocumentTextExtractor)->extractPdfText($path)]);
+        $document->forceFill(['ai_pipeline' => ['route' => 'normal', 'key' => 'normal:scope-v8',
+            'normal_span_grounding' => true]])->save();
+        foreach ([
+            ['Revenue', '51.0', 'KES million', 'E029', 'E027', 'quarterly revenue',
+                'Northstar Distribution Ltd, company total; management-reported quarterly invoiced revenue'],
+            ['Operating costs', '41.0', 'KES million', 'E030', 'E027', 'quarterly operating costs',
+                'Northstar Distribution Ltd, company total; excludes proposed recovery funding'],
+            ['Operating profit', '10.0', 'KES million', 'E031', 'E027', 'quarterly operating profit',
+                'Northstar Distribution Ltd, company total; revenue minus operating costs, not net profit'],
+            ['Operating margin', '19.6', '%', 'E032', 'E032', 'quarterly operating margin',
+                'Northstar Distribution Ltd, company total; operating profit divided by revenue'],
+        ] as [$label, $value, $unit, $valueSpan, $unitSpan, $concept, $scope]) {
+            $kpi = DocumentKpi::create(['document_id' => $document->id,
+                'workspace_id' => $document->workspace_id, 'label' => $label,
+                'value' => $value, 'unit' => $unit, 'period' => 'Q3 2026',
+                'identity_metadata' => ['concept' => $concept, 'scope' => $scope,
+                    'metric_type' => $unit === '%' ? 'percentage' : 'amount',
+                    'value_basis' => 'actual']]);
+            self::assertSame('subject_source_mismatch', app(NormalKpiGrounder::class)->record(
+                $document, $kpi, ['source_context' => ['value_span_id' => $valueSpan,
+                    'unit_span_id' => $unitSpan, 'period_span_id' => 'E028',
+                    'subject_span_id' => 'E025']]), $label);
+            self::assertFalse(DocumentEvidence::where('source_id', 'kpi:'.$kpi->id)->exists());
+        }
+    }
+
     public function test_the_original_pdf_financial_table_can_drive_verified_reproducible_series(): void
     {
         $path = dirname(__DIR__).'/Fixtures/Northstar_Q3_2026_Board_Performance_Review.pdf';

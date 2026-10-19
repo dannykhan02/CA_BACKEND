@@ -7,6 +7,8 @@ use App\Jobs\GenerateInsightsJob;
 use App\Models\Document;
 use App\Models\DocumentChart;
 use App\Models\DocumentChartPoint;
+use App\Models\DocumentKpi;
+use App\Models\DocumentEvidence;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Services\AnthropicClient;
@@ -156,5 +158,38 @@ class GenerateInsightsJobTest extends TestCase
         $this->assertSame(1, DocumentChartPoint::where('workspace_id', $workspace->id)->count());
         $this->assertDatabaseMissing('document_chart_points', ['label' => 'Old']);
         $this->assertDatabaseHas('document_chart_points', ['label' => 'New', 'value' => '99.0000']);
+    }
+
+    public function test_rejected_v8_candidate_retains_only_bounded_citation_ids_for_diagnosis(): void
+    {
+        config(['ai_credits.enabled' => false]);
+        $user = User::factory()->create();
+        $workspace = Workspace::create(['type' => WorkspaceType::Organization, 'name' => 'Grounding diagnostics']);
+        $workspace->credits()->update(['documents_remaining' => 5]);
+        $document = Document::create(['name' => 'Evidence.pdf', 'type' => 'PDF', 'size_kb' => 1,
+            'status' => 'Processing', 'classification' => 'Public', 'year' => 2026,
+            'workspace_id' => $workspace->id, 'uploaded_by' => $user->id,
+            'extracted_text' => "Quarterly revenue (KES million)\nRevenue\t51.0"]);
+        $document->forceFill(['ai_pipeline' => ['route' => 'normal', 'key' => 'normal:diagnostic',
+            'normal_span_grounding' => true]])->save();
+        $this->mock(AnthropicClient::class, fn ($mock) => $mock->shouldReceive('extractDocumentInsights')
+            ->once()->andReturn(['prompt_version' => 8, 'kpis' => [[
+                'label' => 'Revenue', 'value' => '51.0', 'unit' => 'KES million', 'period' => 'Q3 2026',
+                'identity' => ['concept' => 'revenue', 'scope' => 'Example Ltd',
+                    'metric_type' => 'amount', 'value_basis' => 'actual'],
+                'source_context' => ['value_span_id' => 'E999', 'unit_span_id' => 'E001',
+                    'period_span_id' => null, 'subject_span_id' => null],
+            ]], 'charts' => [], 'insights' => []]));
+
+        (new GenerateInsightsJob($document->id))->handle(
+            app(AnthropicClient::class), app(PipelineStageRecorder::class));
+
+        $kpi = DocumentKpi::where('document_id', $document->id)->sole();
+        self::assertSame('missing_source_reference', $kpi->identity_metadata['grounding_rejection']);
+        self::assertEquals(['value_span_id' => 'E999', 'unit_span_id' => 'E001',
+            'period_span_id' => null, 'subject_span_id' => null],
+            $kpi->identity_metadata['candidate_source_context']);
+        self::assertSame(0, DocumentEvidence::where('document_id', $document->id)
+            ->where('kind', 'metric')->count());
     }
 }

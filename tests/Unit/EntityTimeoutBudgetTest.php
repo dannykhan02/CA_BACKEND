@@ -66,7 +66,7 @@ class EntityTimeoutBudgetTest extends TestCase
     public function test_entity_max_tokens_correction_remains_bounded_to_one_retry(): void
     {
         $this->prompt();
-        config(['services.anthropic.max_tokens' => 4096,
+        config(['services.anthropic.structured_output_tokens.entities' => 4096,
             'services.anthropic.structured_max_tokens_ceiling' => 8192]);
         Http::fake(['api.anthropic.com/*' => Http::sequence()
             ->push($this->response('{"entities":', 'max_tokens'))
