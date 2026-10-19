@@ -630,16 +630,34 @@ class DocumentRoutingAndMergeScaleTest extends TestCase
             (new ProcessDocumentChunkJob($child->id))->handle(app(AnthropicClient::class), app(IncrementalPipeline::class));
         }
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/messages') && $request['max_tokens'] === 9000);
-        // Entities now use their own measured normal-route cap, independently of both
-        // the incremental extraction cap and the generic structured-output default.
+    }
+
+    public function test_normal_route_entities_use_their_own_output_cap(): void
+    {
+        // Exercise this on a normal-route document. Reusing a document after an
+        // incremental chunk request couples the assertion to that pipeline's
+        // status, spend reservation and revision state.
+        config(['services.anthropic.extraction_model' => 'claude-haiku-4-5-20251001',
+            'services.anthropic.max_tokens' => 1234,
+            'document_intelligence.extraction_max_tokens' => 9000,
+            'document_intelligence.budget_max_usd' => 10,
+            'document_intelligence.provider_call_max_usd' => 10,
+            'ai_credits.enabled' => false]);
         config(['services.anthropic.structured_output_tokens.entities' => 4321]);
+        $document = $this->document('Short report.');
+        self::assertFalse(app(IncrementalPipeline::class)->route($document));
         $this->seed(DocumentEntitiesPromptSeeder::class);
-        try {
-            app(AnthropicClient::class)->extractDocumentEntities('Short report.', 'Legacy.pdf', $document->fresh());
-        } catch (\Throwable) {
-            // Only the request shape matters here.
-        }
-        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/messages') && $request['max_tokens'] === 4321);
+        Http::fake(['*/messages' => Http::response(['model' => 'claude-haiku-4-5-20251001',
+            'stop_reason' => 'end_turn', 'usage' => ['input_tokens' => 100, 'output_tokens' => 20],
+            'content' => [['type' => 'text', 'text' => '{"entities":[]}']]])]);
+
+        $entities = app(AnthropicClient::class)->extractDocumentEntities('Short report.', 'Legacy.pdf', $document->fresh());
+
+        self::assertSame([], $entities['entities']);
+        Http::assertSentCount(1);
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/messages')
+            && $request['max_tokens'] === 4321
+            && str_contains($request->body(), 'Short report.'));
     }
 
     public function test_routing_and_planning_diagnostics_are_metadata_only(): void
