@@ -5,6 +5,8 @@ namespace Tests\Unit;
 use App\Exceptions\AnthropicStructuredOutputException;
 use App\Models\AiPrompt;
 use App\Models\Document;
+use App\Models\DocumentAiRun;
+use App\Models\DocumentKpi;
 use App\Models\User;
 use App\Services\AI\PromptManager;
 use App\Services\AnthropicClient;
@@ -140,10 +142,63 @@ class AnthropicStructuredOutputTest extends TestCase
         $client = $this->entitiesClient();
         (new \ReflectionMethod(AnthropicClient::class, 'structuredCall'))->invoke(
             $client, 'Return JSON', $this->document(), 'entities',
-            fn (array $response) => (new \ReflectionMethod(AnthropicClient::class, 'decodeJsonContent'))->invoke($client, $response)
+            fn (array $response) => (new \ReflectionMethod(AnthropicClient::class, 'decodeJsonContent'))->invoke($client, $response),
+            ['max_tokens' => 100]
         );
         $requests = Http::recorded()->map(fn ($entry) => $entry[0]['max_tokens'])->all();
         $this->assertSame([100, 200], $requests);
+    }
+
+    public function test_other_structured_operations_keep_the_generic_output_cap(): void
+    {
+        config(['services.anthropic.max_tokens' => 1234,
+            'document_intelligence.structured_output_tokens.insights' => 6400,
+            'document_intelligence.structured_output_tokens.entities' => 6144]);
+        Http::fake(['api.anthropic.com/*' => Http::response($this->response('{"risks":[]}'))]);
+        $client = app(AnthropicClient::class);
+        (new \ReflectionProperty($client, 'currentOperation'))->setValue($client, 'risks');
+        $result = (new \ReflectionMethod(AnthropicClient::class, 'structuredCall'))->invoke(
+            $client, 'Return JSON', $this->document(), 'risks',
+            fn (array $response) => (new \ReflectionMethod(AnthropicClient::class, 'decodeJsonContent'))->invoke($client, $response)
+        );
+
+        self::assertSame(['risks' => []], $result);
+        Http::assertSentCount(1);
+        self::assertSame(1234, Http::recorded()->first()[0]['max_tokens']);
+    }
+
+    public function test_insights_truncation_records_both_paid_responses_and_only_returns_the_complete_json(): void
+    {
+        config(['document_intelligence.structured_output_tokens.insights' => 6400,
+            'services.anthropic.structured_max_tokens_ceiling' => 8192]);
+        $prompt = new AiPrompt(['name' => 'document_insights', 'version' => 8,
+            'template' => '<document>{{document_text}}</document>']);
+        $manager = \Mockery::mock(PromptManager::class);
+        $manager->shouldReceive('resolve')->once()->with('document_insights')->andReturn($prompt);
+        $manager->shouldReceive('render')->once()->andReturnUsing(
+            fn ($model, $vars) => strtr($model->template, $vars));
+        $this->app->instance(PromptManager::class, $manager);
+        $first = $this->response('{"kpis":[', 'max_tokens');
+        $first['usage']['output_tokens'] = 6400;
+        $second = $this->response('{"kpis":[],"charts":[],"insights":[]}');
+        $second['usage']['output_tokens'] = 5000;
+        Http::fake(['api.anthropic.com/*' => Http::sequence()->push($first)->push($second)]);
+        $document = $this->document();
+
+        $result = app(AnthropicClient::class)->extractDocumentInsights(
+            $document->extracted_text, $document->name, $document);
+
+        self::assertSame([], $result['kpis']);
+        self::assertSame(8, $result['prompt_version']);
+        self::assertSame([6400, 8192], Http::recorded()
+            ->map(fn ($entry) => $entry[0]['max_tokens'])->all());
+        self::assertSame(1, DocumentAiRun::where('document_id', $document->id)
+            ->where('status', 'truncated')->where('output_tokens', 6400)->count());
+        self::assertSame(1, DocumentAiRun::where('document_id', $document->id)
+            ->where('status', 'success')->where('output_tokens', 5000)->count());
+        self::assertSame(2, DB::table('provider_call_attempts')
+            ->where('scope_key', 'document:'.$document->id)->where('status', 'settled')->count());
+        self::assertSame(0, DocumentKpi::where('document_id', $document->id)->count());
     }
 
     public function test_valid_json_with_invalid_schema_is_rejected(): void
@@ -186,7 +241,8 @@ class AnthropicStructuredOutputTest extends TestCase
         try {
             (new \ReflectionMethod(AnthropicClient::class, 'structuredCall'))->invoke(
                 $client, 'Return JSON', $this->document(), 'entities',
-                fn (array $response) => (new \ReflectionMethod(AnthropicClient::class, 'decodeJsonContent'))->invoke($client, $response)
+                fn (array $response) => (new \ReflectionMethod(AnthropicClient::class, 'decodeJsonContent'))->invoke($client, $response),
+                ['max_tokens' => 200]
             );
             $this->fail('Truncated response accepted.');
         } catch (AnthropicStructuredOutputException $e) {

@@ -75,7 +75,7 @@ class EntityTimeoutBudgetTest extends TestCase
         $result = app(AnthropicClient::class)->extractDocumentEntities('Acme Ltd', 'Report.pdf', $this->document());
 
         $this->assertSame([], $result['entities']);
-        $this->assertSame([4096, 8192], Http::recorded()
+        $this->assertSame([6144, 8192], Http::recorded()
             ->map(fn ($entry) => $entry[0]['max_tokens'])->all());
         Http::assertSentCount(2);
     }
