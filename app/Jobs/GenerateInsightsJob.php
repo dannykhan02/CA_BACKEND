@@ -208,14 +208,7 @@ class GenerateInsightsJob implements ShouldQueue
                             ->record($document, $savedKpi, $kpi);
                         if ($rejection !== null) {
                             $savedKpi->forceFill(['identity_metadata' =>
-                                ($savedKpi->identity_metadata ?? []) + [
-                                    'grounding_rejection' => $rejection,
-                                    // Span IDs only: enough to distinguish an invalid model citation
-                                    // from a valid citation rejected by a field-role check on future runs.
-                                    'candidate_source_context' => array_intersect_key(
-                                        is_array($kpi['source_context'] ?? null) ? $kpi['source_context'] : [],
-                                        array_flip(['value_span_id', 'unit_span_id', 'period_span_id', 'subject_span_id'])),
-                                ]])->save();
+                                ($savedKpi->identity_metadata ?? []) + ['grounding_rejection' => $rejection]])->save();
                         }
                     }
                 }
