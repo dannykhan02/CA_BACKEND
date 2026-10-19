@@ -10,6 +10,7 @@ use App\Services\DocumentTextExtractor;
 use App\Services\Intelligence\ChartCandidateBuilder;
 use App\Services\Intelligence\MetricCollector;
 use App\Services\Intelligence\NormalKpiGrounder;
+use App\Services\Intelligence\NormalRouteProvenance;
 use App\Services\Intelligence\SourceReferenceResolver;
 use App\Services\WorkspaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;

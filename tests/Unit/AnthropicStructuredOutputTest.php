@@ -10,6 +10,7 @@ use App\Services\AI\PromptManager;
 use App\Services\AnthropicClient;
 use App\Services\WorkspaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
@@ -72,11 +73,13 @@ class AnthropicStructuredOutputTest extends TestCase
                 $this->assertStringNotContainsString('No error', $e->getMessage());
             }
         }
-        try {
-            $this->decode($this->response('{"entities":', 'max_tokens'));
-            $this->fail('Truncation accepted.');
-        } catch (AnthropicStructuredOutputException $e) {
-            $this->assertSame('truncated', $e->outputStatus);
+        foreach (['{"entities":', '{"entities":[]}'] as $text) {
+            try {
+                $this->decode($this->response($text, 'max_tokens'));
+                $this->fail('Truncation accepted.');
+            } catch (AnthropicStructuredOutputException $e) {
+                $this->assertSame('truncated', $e->outputStatus);
+            }
         }
     }
 
