@@ -30,8 +30,10 @@ class DocumentTypeAdjudicator
             return $classification;
         }
 
-        return ['document_type' => 'financial_report',
+        return array_replace($classification, [
+            'document_type' => 'financial_report',
             'confidence' => min(0.85, max(0.6, (float) ($classification['confidence'] ?? 0))),
-            'reasoning' => 'The document presents period-based financial and operational performance rather than a meeting record.'];
+            'reasoning' => 'The document presents period-based financial and operational performance rather than a meeting record.',
+        ]);
     }
 }
