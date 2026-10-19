@@ -1081,3 +1081,30 @@ do
     http://localhost:8000/api/documents
   echo ""
 done
+Auditing document originals (read-only)
+
+    php artisan documents:audit-originals
+    php artisan documents:audit-originals --limit=100 --chunk=500
+
+Reconciles every `documents` row — including soft-deleted ones — against the
+`documents` disk and reports anything that does not resolve. It reads only:
+it never writes, deletes, copies or opens file contents, and it prints no
+secrets. Safe to run against production.
+
+It also prints the disk driver and the key prefix (`root`) in use, because an
+unintended prefix on the s3 driver is what caused the 2026-10-17 incident
+(see docs/source-viewer-incident-2026-10-18.md) and the prefix is the first
+thing to check when many rows go missing at once.
+
+Exit codes:
+    0  every Ready document with a recorded original resolves. Rows with no
+       file_path, rows with a non-Ready status, and soft-deleted rows are
+       reported but do not fail.
+    1  at least one live Ready document's recorded original is missing on the
+       disk — a reader cannot open that citation.
+
+Expected output in production as of 2026-10-20: 79 of 86 rows resolve, with 6
+null-path seeded rows and 1 Failed 0 MB upload reported and exit code 0.
+
+Not wired into the scheduler or the health check. Run it after any change to
+config/filesystems.php, to storage credentials, or to the bucket.
