@@ -69,6 +69,11 @@ for exactly this reason, and the partial-quote test marks a range after it.
 | `anchor.blockId` | the structural path of the cited block, e.g. `body/p[7]` or `body/tbl[1]/tr[2]/tc[2]` |
 | `anchor.blockType` | the block's kind, including `table_row` for a row-spanning citation |
 | `anchor.id`, `anchor.sourceHash`, `anchor.text`, `anchor.range` | the verified provenance anchor that proves this block, its SHA-256 and its own range |
+
+`anchor.sourceHash` is **the persisted proof anchor's hash, not a claim that every enclosing block
+has its own stored hash.** For a partial paragraph citation the proof can be the raw text span
+while `blockId` identifies the enclosing persisted structural node; both ranges are verified
+against the same immutable revision.
 | `anchor.quote` | the cited text, re-sliced from the revision's extracted text |
 | `anchor.quoteRange` | `{start, end}` of the citation, in code points |
 | `context.sectionHeading` | the enclosing heading block, or null |
@@ -84,9 +89,26 @@ for exactly this reason, and the partial-quote test marks a range after it.
 `headingLevel` is 1-6 for a heading and null otherwise. `listId` and `listLevel` are the stored
 numbering identity; **the marker Word displayed is not stored and is never returned.**
 
-A table row carries `{id, index, header, cited, cells[]}`, and each cell adds `column`,
-`columnSpan`, `verticalMerge` and `cited`. A nested table is refused rather than flattened into its
-parent cell.
+A table row carries `{id, index, header, cited, cells[]}` with a **zero-based** `index`, and each
+cell adds `column`, `columnSpan`, `verticalMerge` and `cited`. A nested table is refused rather than
+flattened into its parent cell.
+
+A cell with no stored projection is `text: ""` with `range: null`. It is **not** silently presented
+as verified blank content: the client labels it "Text not recorded", or "Merged cell continuation"
+when `verticalMerge` is `continue` (`DocxAdapter.tsx:30`). Horizontal grid spans are carried in
+`columnSpan`; vertical merges are **described, not laid out** as Word row spans.
+
+### How the window is chosen
+
+| | |
+|---|---|
+| body paragraph | up to 3 blocks before and after. The nearest section heading is returned separately in `sectionHeading` and is **never duplicated** among the neighbours — the backward walk stops when it reaches it. |
+| a list item | the walk stops at a different list or at a non-list block, so a list window never mixes two lists. |
+| any body window | stops at a table rather than walking into one. |
+| a table | the cited row, one row either side, and up to **two** explicit preceding header rows — **at most 5 rows** in total — and at most 16 cells per row. |
+
+A block with no `text` is skipped rather than returned empty, so an empty paragraph between two
+real ones does not consume one of the three neighbour slots.
 
 ### `excluded[]`
 
@@ -120,6 +142,24 @@ The field is **additive** — it was inserted beside the existing top-level keys
 A client that does not know it is unaffected, which
 `test_existing_response_fields_are_unchanged_by_the_additive_excluded_list` pins.
 
+## Parser versions and compatibility
+
+The current parser is **`wordprocessingml-body.v5`**
+(`DocumentTextExtractor.php:436`). v5 added explicit `numId` and `ilvl` as optional node metadata
+inside the existing JSON and left the compatibility text unchanged.
+
+**Previously published v4 extractions remain usable.** Their list-like paragraphs stay
+`paragraph` rather than becoming `list_item`, because the numbering metadata was never stored for
+them — pagination, layout, direct numbering ownership and list indentation were not preserved by
+v4. Reprocessing through the normal pipeline creates a new revision with the explicit list
+metadata; **source inspection itself never reprocesses a document.** Pinned by
+`test_older_extraction_without_list_metadata_still_supports_paragraphs`
+(`tests/Feature/DocumentSourceDocxWindowTest.php`).
+
+Footnote bodies are stored as their own `footnote:<id>` nodes, but **this viewer does not open a
+standalone footnote citation** — the window walks body children only, which is why
+`footnote_text` appears in `excluded`.
+
 ## Never returned, under any circumstances
 
 - **No page number.** Word has no pagination until something renders it, and a rendered page is not
@@ -129,6 +169,15 @@ A client that does not know it is unaffected, which
   verified against the stored projection. The client renders it as text nodes.
 - **No conversion.** No LibreOffice, no `.docx`→HTML step; the rendering is DocIntel's own and the
   client must say so.
+- **No file access and no work triggered.** The request decodes bounded persisted JSON; it never
+  opens the DOCX ZIP or parses XML, dispatches no processing job and makes no outbound HTTP call —
+  verified by grep for `dispatch`, `Http::`, `Bus::` and `Queue::` over the controller, reader and
+  builder. The browser receives only the window.
+- **No layout fidelity of any kind:** no pagination, no fonts or colours, no images, no comments,
+  no headers or footers, no floating objects, no tracked-change visualisation, and no
+  reconstruction of Word's bullet glyphs, numbering starts or inherited style numbering. Explicit
+  list items keep source order and nesting level only, and the client says the markers were not
+  recorded.
 
 ## Errors
 

@@ -56,7 +56,7 @@ exception is the window itself, which is clipped at the worksheet edges and says
 
 | Field | Meaning |
 |---|---|
-| `documentId`, `sourceId`, `intelligenceRevisionId`, `sourceRevision` | what was read, and the revision and extracted-text hash it is pinned to |
+| `documentId`, `sourceId`, `intelligenceRevisionId`, `sourceRevision` | server-verified identities; `sourceRevision` is the **extracted text's SHA-256** |
 | `sheet.id` | the structural sheet id, `sheet:<n>` |
 | `sheet.name` | the worksheet's name |
 | `sheet.visibility` | the sheet's stored visibility (e.g. `visible`, `hidden`, `veryHidden`), or null |
@@ -90,8 +90,11 @@ A cell that exists in the extraction:
 | `mergedRanges[]` | ranges this cell belongs to |
 
 A coordinate with nothing stored is returned as `{"coordinate": "C7", "present": false}` and
-**nothing else** — no empty string, no zero. "No cell was stored here" and "a cell holding an empty
-string" are different facts and the response keeps them apart.
+**nothing else** — no empty string, no zero, and **no visibility claim**. "No cell was stored here"
+and "a cell holding an empty string" are different facts and the response keeps them apart.
+
+The 1,024-byte cap applies to **each returned scalar field** of a cell, not to the cell as a whole:
+`rawValue`, `displayValue`, `formula`, `cachedResult` and `numberFormat` are each checked.
 
 ### The three values are three fields and are never merged
 
@@ -105,7 +108,14 @@ PhpSpreadsheet's `getOldCalculatedValue()` at extraction time. `getCalculatedVal
 evaluate the formula, appears nowhere in this codebase — verified by grep over
 `SpreadsheetTextExtractor` and `DocumentTextExtractor`. A workbook saved by a tool that writes no
 cached values therefore yields `formula` text with `cachePresent: false` and a null `cachedResult`,
-and the only honest thing to show is the formula and the absence of a result.
+and the only honest thing to show is the formula and the absence of a result. **No cached result may
+be presented as a fresh calculation.**
+
+The fields are independent, so combinations a client might not expect are legitimate and must be
+rendered rather than "fixed": `displayValue` can be null for a formula cell **even when
+`cachedResult` is present**, because `display` comes from the cell's formatted value and
+`cached_result` only from a formula cell's saved value
+(`SpreadsheetTextExtractor.php:140,142-143`).
 
 ## Errors
 
@@ -129,9 +139,18 @@ controller's `refuse(...)` call, not incidental.
 
 ## What this endpoint never does
 
-- It never opens the workbook, so it cannot see anything the extraction did not store.
+- It never opens the workbook, so it cannot see anything the extraction did not store. No
+  processing job is dispatched and no outbound HTTP call is made — verified by grep for
+  `dispatch`, `Http::`, `Bus::` and `Queue::` over the controller, reader and builder.
 - It never recomputes a formula.
 - It never merges the three values, and never substitutes one for another.
 - It never widens the window on request.
 - It never returns a cell from a sheet other than the cited one: a node whose `sheet` disagrees
   with the anchor's is a `SOURCE_UNAVAILABLE`, not a filtered-out row.
+- **It never falls back to a newer extraction.** The row is fetched by
+  `where('id', $revision->structured_extraction_id)` — the extraction the revision pins, by primary
+  key — so an active extraction for a newer candidate is never substituted, and every identity
+  (document, workspace, file hash, text hash, parser version, structure policy, format) must match
+  as well.
+- It never returns the original storage key or private path, never accepts an arbitrary sheet
+  query, and never returns the whole workbook's cells.
