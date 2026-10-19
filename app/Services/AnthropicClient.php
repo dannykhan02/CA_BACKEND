@@ -586,7 +586,11 @@ PROMPT;
     {
         $this->currentDocumentId = $document?->id;
         $this->currentChunkId = null;
-        $maxTokens = (int) ($requestOptions['max_tokens'] ?? config('services.anthropic.max_tokens'));
+        // Resolve an operation's initial output cap once, at the shared
+        // structured-response boundary. Explicit request options still win
+        // (for example synthesis or a controlled test override).
+        $maxTokens = (int) ($requestOptions['max_tokens']
+            ?? config("document_intelligence.structured_output_tokens.{$purpose}", config('services.anthropic.max_tokens')));
         $ceiling = max($maxTokens, (int) config('services.anthropic.structured_max_tokens_ceiling'));
         for ($attempt = 0; $attempt < (($requestOptions['single_response'] ?? false) ? 1 : 2); $attempt++) {
             $messages = [['role' => 'user', 'content' => $prompt]];

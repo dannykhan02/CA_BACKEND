@@ -133,6 +133,12 @@ return [
     // model's max output); ANTHROPIC_MAX_TOKENS keeps governing only the legacy four-job path.
     // Partition sizing derives from this value, so lowering it yields more, smaller partitions.
     'extraction_max_tokens' => (int) env('ANTHROPIC_EXTRACTION_MAX_TOKENS', 16000),
+    // Initial normal-route structured responses; incremental extraction uses
+    // extraction_max_tokens, and all other structured tasks use the generic cap.
+    'structured_output_tokens' => [
+        'insights' => (int) env('ANTHROPIC_INSIGHTS_MAX_TOKENS', 6400),
+        'entities' => (int) env('ANTHROPIC_ENTITIES_MAX_TOKENS', 6144),
+    ],
     'extraction_timeout_seconds' => 120,
     'synthesis_max_tokens' => 8192,
     'repair_max_tokens' => 2048,
