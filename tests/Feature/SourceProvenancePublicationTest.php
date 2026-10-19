@@ -2,14 +2,20 @@
 
 namespace Tests\Feature;
 
+use App\Http\Resources\KpiResource;
 use App\Models\Document;
 use App\Models\DocumentEvidence;
+use App\Models\DocumentKpi;
 use App\Models\User;
+use App\Services\Intelligence\IncrementalMetricFieldVerifier;
+use App\Services\Intelligence\MeasurementIntegrity;
+use App\Services\Intelligence\MetricCollector;
 use App\Services\Intelligence\SourceProvenance;
 use App\Services\Intelligence\SourceProvenanceReader;
 use App\Services\Intelligence\TextRoleProvenanceProducer;
 use App\Services\WorkspaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -32,7 +38,7 @@ class SourceProvenancePublicationTest extends TestCase
     private function evidence(Document $document, array $data, array $sources): DocumentEvidence
     {
         return DocumentEvidence::create(['workspace_id' => $document->workspace_id,
-            'document_id' => $document->id, 'pipeline_key' => 'legacy',
+            'document_id' => $document->id, 'pipeline_key' => $document->ai_pipeline['key'] ?? 'legacy',
             'identity' => hash('sha256', json_encode($data)), 'kind' => 'metric',
             'data' => $data, 'sources' => $sources]);
     }
@@ -64,6 +70,123 @@ class SourceProvenancePublicationTest extends TestCase
                 'span_id' => 'E001']]);
         app(TextRoleProvenanceProducer::class)->publish($document);
         self::assertSame([], app(SourceProvenanceReader::class)->forEvidence($document, [$row->id]));
+    }
+
+    public function test_incremental_metric_eligibility_requires_field_roles_from_the_current_source_graph(): void
+    {
+        $text = 'Revenue 12.4 KES million in FY2025.';
+        $document = $this->document($text);
+        $source = [['quote' => $text, 'start_offset' => 0, 'end_offset' => mb_strlen($text),
+            'page' => 1, 'span_id' => 'E001']];
+        $correct = $this->evidence($document, ['label' => 'Revenue', 'value' => '12.4',
+            'unit' => 'KES million', 'period' => 'FY2025'], $source);
+        $wrongPeriod = $this->evidence($document, ['label' => 'Revenue', 'value' => '12.4',
+            'unit' => 'KES million', 'period' => 'FY2024'], $source);
+        $wrongUnit = $this->evidence($document, ['label' => 'Revenue', 'value' => '12.4',
+            'unit' => 'USD million', 'period' => 'FY2025'], $source);
+        $integrity = app(MeasurementIntegrity::class);
+        self::assertFalse($integrity->forEvidence($correct)['analyticalEligible']);
+
+        $setId = app(TextRoleProvenanceProducer::class)->publish($document);
+        self::assertSame(['verified' => 1, 'rejected' => 2],
+            app(IncrementalMetricFieldVerifier::class)->verify($document, $setId));
+        self::assertTrue($integrity->forEvidence($correct->refresh())['analyticalEligible']);
+        self::assertSame('period_source_mismatch', $wrongPeriod->refresh()->data['grounding_rejection']);
+        self::assertFalse($integrity->forEvidence($wrongPeriod)['analyticalEligible']);
+        self::assertSame('unit_source_mismatch', $wrongUnit->refresh()->data['grounding_rejection']);
+        self::assertFalse($integrity->forEvidence($wrongUnit)['analyticalEligible']);
+        self::assertSame(['verified' => 1, 'rejected' => 2],
+            app(IncrementalMetricFieldVerifier::class)->verify($document, $setId));
+        self::assertSame(['verified' => 0, 'rejected' => 3],
+            app(IncrementalMetricFieldVerifier::class)->verify($document, null));
+        self::assertFalse($integrity->forEvidence($correct->refresh())['analyticalEligible']);
+    }
+
+    public function test_a_proposed_investment_cannot_be_verified_as_a_performance_target(): void
+    {
+        $text = 'Proposed service recovery investment 2.4 KES million in FY2025.';
+        $document = $this->document($text);
+        $source = [['quote' => $text, 'start_offset' => 0, 'end_offset' => mb_strlen($text),
+            'page' => 1, 'span_id' => 'E001']];
+        $target = $this->evidence($document, ['label' => 'service recovery investment',
+            'value' => '2.4', 'unit' => 'KES million', 'period' => 'FY2025',
+            'value_basis' => 'target'], $source);
+        $proposed = $this->evidence($document, ['label' => 'service recovery investment',
+            'value' => '2.4', 'unit' => 'KES million', 'period' => 'FY2025',
+            'value_basis' => 'proposed'], $source);
+        $setId = app(TextRoleProvenanceProducer::class)->publish($document);
+        self::assertSame(['verified' => 1, 'rejected' => 1],
+            app(IncrementalMetricFieldVerifier::class)->verify($document, $setId));
+        self::assertSame('value_basis_source_mismatch', $target->refresh()->data['grounding_rejection']);
+        self::assertFalse(app(MeasurementIntegrity::class)->forEvidence($target)['analyticalEligible']);
+        self::assertTrue(app(MeasurementIntegrity::class)->forEvidence($proposed->refresh())['analyticalEligible']);
+    }
+
+    public function test_a_period_in_another_sentence_does_not_verify_the_value(): void
+    {
+        $text = 'Revenue was 12.4 KES million. The FY2025 plan follows.';
+        $document = $this->document($text);
+        $row = $this->evidence($document, ['label' => 'Revenue', 'value' => '12.4',
+            'unit' => 'KES million', 'period' => 'FY2025'],
+            [['quote' => $text, 'start_offset' => 0, 'end_offset' => mb_strlen($text),
+                'page' => 1, 'span_id' => 'E001']]);
+        $setId = app(TextRoleProvenanceProducer::class)->publish($document);
+        self::assertSame(['verified' => 0, 'rejected' => 1],
+            app(IncrementalMetricFieldVerifier::class)->verify($document, $setId));
+        self::assertSame('period_relationship_unverified', $row->refresh()->data['grounding_rejection']);
+        self::assertFalse(app(MeasurementIntegrity::class)->forEvidence($row)['analyticalEligible']);
+    }
+
+    public function test_incremental_graph_verdict_is_shared_by_collector_and_kpi_api(): void
+    {
+        $text = 'Revenue 12.4 KES million in FY2025.';
+        $document = $this->document($text);
+        $document->forceFill(['ai_pipeline' => ['route' => 'incremental', 'key' => 'pk-proof']])->save();
+        $kpi = DocumentKpi::create(['document_id' => $document->id,
+            'workspace_id' => $document->workspace_id, 'label' => 'Revenue',
+            'value' => '12.4', 'unit' => 'KES million', 'period' => 'FY2025']);
+        $row = $this->evidence($document, ['label' => 'Revenue', 'value' => '12.4',
+            'unit' => 'KES million', 'period' => 'FY2025'],
+            [['quote' => $text, 'start_offset' => 0, 'end_offset' => mb_strlen($text),
+                'page' => 1, 'span_id' => 'E001']]);
+        $row->forceFill(['source_id' => 'kpi:'.$kpi->id])->save();
+        $request = Request::create('/api/documents/'.$document->id);
+        $request->attributes->set('kpi_evidence', collect(['kpi:'.$kpi->id => $row]));
+        self::assertFalse(app(MetricCollector::class)->collect($document)['observations'][0]
+            ->integrity['analyticalEligible']);
+        self::assertFalse((new KpiResource($kpi))->toArray($request)['analyticalEligible']);
+
+        $setId = app(TextRoleProvenanceProducer::class)->publish($document);
+        app(IncrementalMetricFieldVerifier::class)->verify($document, $setId);
+        $request->attributes->set('kpi_evidence', collect(['kpi:'.$kpi->id => $row->refresh()]));
+        self::assertTrue(app(MetricCollector::class)->collect($document)['observations'][0]
+            ->integrity['analyticalEligible']);
+        self::assertTrue((new KpiResource($kpi))->toArray($request)['analyticalEligible']);
+
+        $document->forceFill(['extracted_text' => 'Revenue 12.4 KES million in FY2024.'])->save();
+        $stale = app(MeasurementIntegrity::class)->forEvidence($row->refresh());
+        self::assertFalse($stale['analyticalEligible']);
+        self::assertContains('source_revision_mismatch', $stale['reasons']);
+        $collector = app(MetricCollector::class)->collect($document)['observations'][0]->integrity;
+        self::assertFalse($collector['analyticalEligible']);
+        self::assertContains('source_revision_mismatch', $collector['reasons']);
+        $api = (new KpiResource($kpi->fresh()))->toArray($request);
+        self::assertFalse($api['analyticalEligible']);
+        self::assertContains('source_revision_mismatch', $api['limitationReasons']);
+    }
+
+    public function test_a_target_word_in_another_sentence_cannot_verify_the_values_basis(): void
+    {
+        $text = 'Revenue was 12.4 KES million in FY2025. The target for FY2026 was 15.';
+        $document = $this->document($text);
+        $row = $this->evidence($document, ['label' => 'Revenue', 'value' => '12.4',
+            'unit' => 'KES million', 'period' => 'FY2025', 'value_basis' => 'target'],
+            [['quote' => $text, 'start_offset' => 0, 'end_offset' => mb_strlen($text),
+                'page' => 1, 'span_id' => 'E001']]);
+        $setId = app(TextRoleProvenanceProducer::class)->publish($document);
+        self::assertSame(['verified' => 0, 'rejected' => 1],
+            app(IncrementalMetricFieldVerifier::class)->verify($document, $setId));
+        self::assertSame('value_basis_unverified', $row->refresh()->data['grounding_rejection']);
     }
 
     public function test_failed_candidate_is_not_published_and_other_workspace_cannot_bind(): void
@@ -127,6 +250,43 @@ class SourceProvenancePublicationTest extends TestCase
         self::assertSame('Revenue', $proof['roles']['metric'][0]['text']);
         self::assertSame('FY2025', $proof['roles']['period'][0]['text']);
         self::assertSame('USD millions', $proof['roles']['scale'][0]['text']);
+    }
+
+    public function test_structural_publisher_rejects_a_period_bound_to_the_wrong_column(): void
+    {
+        $text = 'Operating profit | Q2 2026 | Q3 2026 | 10.0';
+        $document = $this->document($text);
+        $row = $this->evidence($document, ['value' => '10.0', 'label' => 'Operating profit',
+            'period' => 'Q2 2026'], [['quote' => $text, 'start_offset' => 0,
+                'end_offset' => mb_strlen($text), 'page' => 1]]);
+        $anchors = [['key' => 'table', 'kind' => 'table', 'modality' => 'docx', 'path' => 'tbl[1]']];
+        foreach (['value' => ['10.0', 'cell'], 'metric' => ['Operating profit', 'row_header'],
+            'wrong_period' => ['Q2 2026', 'column_header'],
+            'right_period' => ['Q3 2026', 'column_header']] as $key => [$value, $kind]) {
+            $start = mb_strpos($text, $value);
+            $anchors[] = ['key' => $key, 'kind' => $kind, 'modality' => 'docx',
+                'path' => 'tbl[1]/'.$key, 'start_offset' => $start,
+                'end_offset' => $start + mb_strlen($value), 'text' => $value];
+        }
+        try {
+            app(SourceProvenance::class)->publish($document, 'wrong-column.fixture.v1', $anchors, [
+                ['from' => 'value', 'to' => 'table', 'type' => 'table_parent'],
+                ['from' => 'metric', 'to' => 'table', 'type' => 'table_parent'],
+                ['from' => 'wrong_period', 'to' => 'table', 'type' => 'table_parent'],
+                ['from' => 'right_period', 'to' => 'table', 'type' => 'table_parent'],
+                ['from' => 'value', 'to' => 'metric', 'type' => 'row_header'],
+                ['from' => 'value', 'to' => 'right_period', 'type' => 'column_header'],
+            ], [
+                ['evidence_id' => $row->id, 'anchor' => 'value', 'role' => 'value'],
+                ['evidence_id' => $row->id, 'anchor' => 'metric', 'role' => 'metric'],
+                ['evidence_id' => $row->id, 'anchor' => 'wrong_period', 'role' => 'period'],
+            ]);
+            self::fail('The wrong period column was published.');
+        } catch (\InvalidArgumentException $exception) {
+            self::assertSame('Field role is outside the value table.', $exception->getMessage());
+        }
+        self::assertSame(0, DB::table('source_provenance_sets')->count());
+        self::assertFalse(app(MeasurementIntegrity::class)->forEvidence($row)['analyticalEligible']);
     }
 
     public function test_parser_version_change_does_not_mix_old_and_new_graphs(): void

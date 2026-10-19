@@ -13,11 +13,9 @@ use App\Services\WorkspaceService;
 use Illuminate\Support\Str;
 
 /**
- * Stored-evidence fixtures in exactly the shape the incremental pipeline persists: the same
- * `document_evidence.data` record the extraction schema validates, the same `sources` links the
- * merge writes, and the same `document_kpis` observation per metric finding with its `kpi:<id>`
- * reference. Nothing here invents a field the real pipeline does not write, so the analysis layer
- * is exercised against realistic data rather than against its own assumptions.
+ * Stored-evidence fixtures for downstream analytical tests. Metric rows model the
+ * post-verification state written by IncrementalMetricFieldVerifier; its actual
+ * source graph checks are exercised separately in provenance integration tests.
  */
 trait BuildsIntelligenceFixtures
 {
@@ -86,6 +84,15 @@ trait BuildsIntelligenceFixtures
             'unit' => null, 'period' => null, 'entity_type' => null, 'date_type' => null, 'due_date' => null,
             'severity' => null, 'metric_type' => null, 'value_basis' => null, 'aggregation' => null,
             'quantity_kind' => null, 'aliases' => [], 'reference' => '', 'kind' => $kind];
+        if ($kind === 'metric') {
+            $record += ['source_fields_verified' => array_values(array_merge(['value', 'metric'],
+                trim((string) $record['unit']) === '' ? [] : ['unit'],
+                trim((string) $record['period']) === '' ? [] : ['period'],
+                trim((string) $record['subject']) === '' ? [] : ['subject'])),
+                'field_verification_policy' => 'incremental.v1',
+                'measurement_verification' => 'verified',
+                'source_revision' => hash('sha256', (string) $document->extracted_text)];
+        }
 
         return DocumentEvidence::create([
             'workspace_id' => $document->workspace_id,

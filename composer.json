@@ -13,6 +13,7 @@
         "ext-gd": "*",
         "ext-pcntl": "*",
         "ext-zip": "*",
+        "brick/math": "^0.14",
         "firebase/php-jwt": "^7.1",
         "laravel/framework": "^13.8",
         "laravel/horizon": "^5.48",

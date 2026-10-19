@@ -312,13 +312,18 @@ class ResponseValidator
         }
 
         $dropped = [];
+        $dropReasons = [];
+        $recordDrop = static function (string $field, string $reason) use (&$dropped, &$dropReasons): void {
+            $dropped[$field] = ($dropped[$field] ?? 0) + 1;
+            $dropReasons[$field][$reason] = ($dropReasons[$field][$reason] ?? 0) + 1;
+        };
         foreach (['key_findings', 'critical_risks', 'upcoming_deadlines', 'important_entities', 'recommended_attention'] as $field) {
             if (! isset($decoded[$field]) || ! is_array($decoded[$field]) || ! array_is_list($decoded[$field])) {
                 if ($field === 'key_findings') {
                     throw new \RuntimeException("AI response missing required array field: {$field}");
                 }
                 if (isset($decoded[$field])) {
-                    $dropped[$field] = 1;
+                    $recordDrop($field, 'invalid_list_shape');
                 }
                 $decoded[$field] = [];
             }
@@ -327,7 +332,7 @@ class ResponseValidator
                 if (is_string($item) && trim($item) !== '') {
                     $valid[] = $item;
                 } else {
-                    $dropped[$field] = ($dropped[$field] ?? 0) + 1;
+                    $recordDrop($field, 'invalid_list_item');
                 }
             }
             $decoded[$field] = $valid;
@@ -387,9 +392,9 @@ class ResponseValidator
                     throw new \RuntimeException('Invalid executive assessment.');
                 }
                 $validateText($decoded['executive_assessment'], 'executive_assessment', ['text']);
-            } catch (\RuntimeException) {
+            } catch (\RuntimeException $e) {
                 $decoded['executive_assessment'] = null;
-                $dropped['executive_assessment'] = 1;
+                $recordDrop('executive_assessment', $this->summaryDropReason($e));
             }
         }
         foreach (['material_findings' => [4, ['title', 'category', 'explanation', 'why_it_matters', 'severity']],
@@ -402,7 +407,7 @@ class ResponseValidator
             $items = $decoded[$field];
             $decoded[$field] = [];
             if (! is_array($items) || ! array_is_list($items)) {
-                $dropped[$field] = 1;
+                $recordDrop($field, 'invalid_list_shape');
 
                 continue;
             }
@@ -416,17 +421,34 @@ class ResponseValidator
                         throw new \RuntimeException('Invalid severity.');
                     }
                     $decoded[$field][] = $item;
-                } catch (\RuntimeException) {
-                    $dropped[$field] = ($dropped[$field] ?? 0) + 1;
+                } catch (\RuntimeException $e) {
+                    $recordDrop($field, $this->summaryDropReason($e));
                 }
             }
         }
         // Metadata only, never log evidence or raw responses.
         if ($dropped) {
             $decoded['_optional_items_dropped'] = $dropped;
+            $decoded['_optional_drop_reasons'] = $dropReasons;
         }
 
         return $decoded;
+    }
+
+    private function summaryDropReason(\RuntimeException $error): string
+    {
+        $message = $error->getMessage();
+
+        return match (true) {
+            str_contains($message, 'source_ids') => 'invalid_source_reference',
+            str_contains($message, 'exceeds') => 'text_over_limit',
+            str_contains($message, 'expected string') => 'wrong_field_type',
+            str_contains($message, 'must not be empty') => 'empty_field',
+            str_contains($message, '.basis') => 'invalid_basis',
+            str_contains($message, 'Invalid severity') => 'invalid_severity',
+            str_contains($message, 'Invalid optional item') => 'invalid_item_or_limit',
+            default => 'invalid_optional_item',
+        };
     }
 
     private function truncateSummaryProse(string $text, int $limit, string $fieldPath): string

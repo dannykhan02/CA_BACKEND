@@ -109,6 +109,11 @@ class MetricCollector
                         'quantity_kind' => $data['quantity_kind'] ?? null,
                         'period' => $data['period'] ?? null,
                         'source_fields_verified' => $data['source_fields_verified'] ?? null,
+                        'field_verification_policy' => $data['field_verification_policy'] ?? null,
+                        'grounding_rejection' => $data['grounding_rejection'] ?? null,
+                        'source_revision' => $data['source_revision'] ?? null,
+                        'current_source_revision' => hash('sha256', (string) $document->extracted_text),
+                        'label' => $data['label'] ?? null,
                     ],
                     'page' => count($pages) === 1 ? (int) reset($pages) : null,
                     'numeric' => null,
@@ -169,12 +174,17 @@ class MetricCollector
         if ($ids === []) {
             return $records;
         }
-        $definitions = DocumentKpi::where('document_id', $document->id)->whereIn('id', $ids)
+        $kpis = DocumentKpi::where('document_id', $document->id)->whereIn('id', $ids)
             ->where('intelligence_revision_id', $document->intelligenceRevisionForRelations())
-            ->pluck('kpi_definition_id', 'id');
+            ->get(['id', 'kpi_definition_id', 'identity_metadata'])->keyBy('id');
         foreach ($records as $index => $record) {
             if (str_starts_with($record['source_id'], 'kpi:')) {
-                $records[$index]['definition_id'] = $definitions[(int) substr($record['source_id'], 4)] ?? null;
+                $kpi = $kpis->get((int) substr($record['source_id'], 4));
+                $records[$index]['definition_id'] = $kpi?->kpi_definition_id;
+                $rejection = $kpi?->identity_metadata['grounding_rejection'] ?? null;
+                if (is_string($rejection) && trim($rejection) !== '') {
+                    $records[$index]['metadata']['grounding_rejection'] = $rejection;
+                }
             }
         }
 
@@ -223,9 +233,6 @@ class MetricCollector
         if (array_diff_key($identity, ['period' => true]) !== [] && ! ($profile['valid'] ?? false)) {
             $integrity['reasons'][] = 'semantic_identity_conflict';
             $integrity['analyticalEligible'] = false;
-        }
-        if (is_string($record['metadata']['grounding_rejection'] ?? null)) {
-            $integrity['reasons'][] = $record['metadata']['grounding_rejection'];
         }
         if ($integrity['unitVerification'] === 'dimensionless') {
             $type = mb_strtolower((string) $record['metadata']['metric_type']);

@@ -1,0 +1,21 @@
+{
+  "provenance": "Faithful compact transcription of the 12-row read-only production export supplied by the user on 2026-10-19. The export was supplied inline, not as a local file. Definition IDs and repeated identity fields are omitted here; production was not queried.",
+  "document_id": "01a15341-11a5-73ab-904a-80b4ad08729a",
+  "published_revision_id": "01a15341-11c8-72be-9e20-62bcd1ac0cab",
+  "processing_route": "normal",
+  "prompt_version": 7,
+  "kpis": [
+    {"id":4571,"label":"Q3 Revenue","value":"51.0","unit":"KES million","period":"Q3 2026","concept":"quarterly revenue","scope":"Northstar Distribution Ltd","metric_type":"amount","value_basis":"actual","source_gold_id":"revenue-q3","evidence":[]},
+    {"id":4572,"label":"Q3 Operating Profit","value":"10.0","unit":"KES million","period":"Q3 2026","concept":"quarterly operating profit","scope":"Northstar Distribution Ltd","metric_type":"amount","value_basis":"actual","source_gold_id":"profit-q3","evidence":[]},
+    {"id":4573,"label":"Q3 Operating Margin","value":"19.6","unit":"%","period":"Q3 2026","concept":"quarterly operating margin","scope":"Northstar Distribution Ltd","metric_type":"percentage","value_basis":"actual","source_gold_id":"margin-q3","evidence":[]},
+    {"id":4574,"label":"Q3 Operating Costs","value":"41.0","unit":"KES million","period":"Q3 2026","concept":"quarterly operating costs","scope":"Northstar Distribution Ltd","metric_type":"amount","value_basis":"actual","source_gold_id":"costs-q3","evidence":[]},
+    {"id":4575,"label":"On-time Delivery Rate Q3","value":"87","unit":"%","period":"Q3","identity_period":"Q3 2026","concept":"on-time delivery rate","scope":"Northstar Distribution Ltd","metric_type":"percentage","value_basis":"actual","source_gold_id":"delivery-q3","evidence":[]},
+    {"id":4576,"label":"Customer Complaints Q3","value":"133","unit":"cases","period":"Q3","identity_period":"Q3 2026","concept":"customer complaint cases received","scope":"Northstar Distribution Ltd","metric_type":"count","value_basis":"actual","source_gold_id":"complaints-q3","evidence":[]},
+    {"id":4577,"label":"On-time Delivery Target Q3","value":"95","unit":"%","period":"Q3","identity_period":"Q3 2026","concept":"on-time delivery rate","scope":"Northstar Distribution Ltd","metric_type":"percentage","value_basis":"target","source_gold_id":"delivery-target-q3","evidence":[]},
+    {"id":4578,"label":"Customer Complaints Target Q3","value":"90","unit":"cases","period":"Q3","identity_period":"Q3 2026","concept":"customer complaint cases received","scope":"Northstar Distribution Ltd","metric_type":"count","value_basis":"target","comparison_operator":null,"source_gold_id":"complaints-ceiling-q3","evidence":[]},
+    {"id":4579,"label":"Shipments Completed Q3","value":"14900","unit":"count","period":"Q3","identity_period":"Q3 2026","concept":"shipments completed","scope":"Northstar Distribution Ltd","metric_type":"count","value_basis":"actual","source_gold_id":"shipments-q3","evidence":[]},
+    {"id":4580,"label":"Proposed Service-Recovery Investment","value":"2.4","unit":"KES million","period":"Q3 2026","concept":"proposed service-recovery funding","scope":"Northstar Distribution Ltd","metric_type":"amount","value_basis":"target","source_gold_id":"service-recovery-proposed","evidence":[]},
+    {"id":4581,"label":"Q3 North Region Revenue","value":"21.0","unit":"KES million","period":"Q3 2026","concept":"quarterly revenue by region","scope":"North region, Northstar Distribution Ltd","metric_type":"amount","value_basis":"actual","source_gold_id":"north-revenue-q3","evidence":[]},
+    {"id":4582,"label":"Employee Headcount Q3","value":"123","unit":"count","period":"Q3","identity_period":"Q3 2026","concept":"employee headcount quarter-end","scope":"Northstar Distribution Ltd","metric_type":"count","value_basis":"actual","source_gold_id":"employees-q3","evidence":[]}
+  ]
+}

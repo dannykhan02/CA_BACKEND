@@ -2,8 +2,8 @@
 
 namespace App\Http\Resources;
 
-use App\Services\Intelligence\MeasurementIntegrity;
 use App\Services\Intelligence\CanonicalMetricIdentity;
+use App\Services\Intelligence\MeasurementIntegrity;
 use App\Services\Intelligence\MeasurementParser;
 use App\Services\Intelligence\PeriodParser;
 use App\Services\Kpis\KpiIdentityProfile;
@@ -24,15 +24,20 @@ class KpiResource extends JsonResource
             }
         }
         $measurement = app(MeasurementParser::class)->parse((string) $this->value, $this->unit, $this->label);
-        $proof = is_array($evidence?->data) ? ($evidence->data['source_fields_verified'] ?? null) : null;
+        $evidenceData = is_array($evidence?->data) ? $evidence->data : [];
+        $proof = $evidenceData['source_fields_verified'] ?? null;
+        $rejection = $evidenceData['grounding_rejection'] ?? $metadata['grounding_rejection'] ?? null;
         $integrity = app(MeasurementIntegrity::class)->assess($measurement, (string) $this->value,
-            $this->unit, $metadata + ['source_fields_verified' => $proof], $evidence?->sources ?? [],
+            $this->unit, array_merge($metadata, ['source_fields_verified' => $proof,
+                'field_verification_policy' => $evidenceData['field_verification_policy'] ?? null,
+                'grounding_rejection' => $rejection,
+                'source_revision' => $evidenceData['source_revision'] ?? null,
+                'current_source_revision' => $request->attributes->get('document_source_revision')
+                    ?? hash('sha256', (string) $this->document?->extracted_text),
+                'label' => $this->label, 'period' => $this->period,
+                'subject' => $metadata['scope'] ?? null]), $evidence?->sources ?? [],
             $evidence !== null && ($evidence->kind === 'metric'
                 || ($evidence->data['measurement_verification'] ?? null) === 'verified'));
-        if (is_string($metadata['grounding_rejection'] ?? null)) {
-            $integrity['reasons'][] = $metadata['grounding_rejection'];
-            $integrity['reasons'] = array_values(array_unique($integrity['reasons']));
-        }
         if (app(PeriodParser::class)->parse($this->period) === null) {
             $integrity['analyticalEligible'] = false;
             $integrity['reasons'][] = 'period_unavailable';

@@ -2,30 +2,33 @@
 
 namespace Tests\Feature;
 
+use App\Http\Resources\KpiResource;
+use App\Models\AiPrompt;
 use App\Models\Document;
 use App\Models\DocumentEvidence;
 use App\Models\DocumentIntelligenceSummary;
 use App\Models\DocumentKpi;
-use App\Models\AiPrompt;
 use App\Models\DocumentRisk;
 use App\Models\ProcessingJob;
 use App\Models\User;
-use App\Services\Intelligence\DocumentRevisionPublisher;
-use App\Services\Intelligence\NormalRouteProvenance;
-use App\Services\Intelligence\NormalKpiGrounder;
-use App\Services\Intelligence\MetricCollector;
-use App\Services\Intelligence\AnalyticalComparisonBuilder;
-use App\Services\Intelligence\SourceReferenceResolver;
+use App\Services\AI\Incremental\EvidenceGrounding;
 use App\Services\Extraction\SpreadsheetTextExtractor;
 use App\Services\Extraction\StructuredExtractionStore;
-use App\Services\AI\Incremental\EvidenceGrounding;
+use App\Services\Intelligence\AnalyticalComparisonBuilder;
+use App\Services\Intelligence\DocumentRevisionPublisher;
+use App\Services\Intelligence\MetricCollector;
+use App\Services\Intelligence\NormalKpiGrounder;
+use App\Services\Intelligence\NormalRouteProvenance;
+use App\Services\Intelligence\SourceReferenceResolver;
 use App\Services\WorkspaceService;
+use Database\Seeders\DocumentInsightsPromptSeederV8;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Tests\TestCase;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Worksheet\Table;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Tests\TestCase;
 
 class NormalRouteProvenanceTest extends TestCase
 {
@@ -33,7 +36,7 @@ class NormalRouteProvenanceTest extends TestCase
 
     public function test_insights_v8_is_versioned_and_requires_explicit_activation(): void
     {
-        (new \Database\Seeders\DocumentInsightsPromptSeederV8)->run();
+        (new DocumentInsightsPromptSeederV8)->run();
         $prompt = AiPrompt::where('name', 'document_insights')->where('version', 8)->sole();
         $this->assertFalse($prompt->active);
         $this->assertStringContainsString('source_context', $prompt->template);
@@ -83,6 +86,18 @@ class NormalRouteProvenanceTest extends TestCase
         $bySource = collect($observations)->keyBy('sourceId');
         $this->assertTrue($bySource['kpi:'.$verified->id]->integrity['analyticalEligible']);
         $this->assertFalse($bySource['kpi:'.$limited->id]->integrity['analyticalEligible']);
+
+        // An explicit rejection always wins, even if a stale evidence row remains linked.
+        $verified->forceFill(['identity_metadata' => [...$verified->identity_metadata, 'grounding_rejection' => 'period_source_mismatch']])->save();
+        $afterRejection = collect(app(MetricCollector::class)->collect($document)['observations'])
+            ->keyBy('sourceId')['kpi:'.$verified->id];
+        $this->assertFalse($afterRejection->integrity['analyticalEligible']);
+        $this->assertContains('period_source_mismatch', $afterRejection->integrity['reasons']);
+        $request = Request::create('/api/documents/'.$document->id);
+        $request->attributes->set('kpi_evidence', collect(['kpi:'.$verified->id => $evidence]));
+        $api = (new KpiResource($verified->refresh()))->toArray($request);
+        $this->assertFalse($api['analyticalEligible']);
+        $this->assertContains('period_source_mismatch', $api['limitationReasons']);
     }
 
     public function test_conflicting_currency_and_scale_in_value_row_reject_table_heading_claim(): void
@@ -107,6 +122,41 @@ class NormalRouteProvenanceTest extends TestCase
                 ['source_context' => ['value_span_id' => 'E002', 'unit_span_id' => 'E001',
                     'period_span_id' => 'E001']]));
             $this->assertSame(0, DocumentEvidence::where('document_id', $document->id)->count());
+        }
+    }
+
+    public function test_normal_grounding_resolves_a_partial_quarter_only_from_its_verified_heading(): void
+    {
+        $user = User::factory()->create();
+        app(WorkspaceService::class)->createPersonalWorkspaceFor($user);
+        $user->refresh();
+        foreach ([['Metric | Q3 2026 | KES million', null, 'Q3 2026'],
+            ['Metric | Q3 2025 and Q3 2026 | KES million', 'period_ambiguous', 'Q3']] as [$heading, $rejection, $expectedPeriod]) {
+            $text = $heading."\nRevenue | 51.0 | Actual";
+            $document = Document::create(['workspace_id' => $user->current_workspace_id,
+                'uploaded_by' => $user->id, 'name' => 'Quarterly report.pdf', 'type' => 'PDF',
+                'status' => 'Processing', 'classification' => 'Internal', 'size_kb' => 1,
+                'year' => 2026, 'file_hash' => hash('sha256', $text), 'extracted_text' => $text,
+                'pages' => 1]);
+            $document->forceFill(['ai_pipeline' => ['route' => 'normal', 'key' => 'normal:partial-quarter',
+                'normal_span_grounding' => true]])->save();
+            $kpi = DocumentKpi::create(['document_id' => $document->id,
+                'workspace_id' => $document->workspace_id, 'label' => 'Revenue', 'value' => '51.0',
+                'unit' => 'KES million', 'period' => 'Q3',
+                'identity_metadata' => ['concept' => 'revenue', 'metric_type' => 'amount',
+                    'value_basis' => 'actual']]);
+            $this->assertSame($rejection, app(NormalKpiGrounder::class)->record($document, $kpi,
+                ['source_context' => ['value_span_id' => 'E002', 'unit_span_id' => 'E001',
+                    'period_span_id' => 'E001']]));
+            $this->assertSame($expectedPeriod, $kpi->fresh()->period);
+            if ($rejection === null) {
+                $this->assertSame('Q3', DocumentEvidence::where('source_id', 'kpi:'.$kpi->id)->sole()
+                    ->data['raw_period']);
+                $this->assertTrue(app(MetricCollector::class)->collect($document)['observations'][0]
+                    ->integrity['analyticalEligible']);
+            } else {
+                $this->assertSame(0, DocumentEvidence::where('document_id', $document->id)->count());
+            }
         }
     }
 

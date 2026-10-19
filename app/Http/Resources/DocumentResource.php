@@ -28,6 +28,7 @@ class DocumentResource extends JsonResource
                 ->whereIn('kind', ['metric', 'normal_source'])->get()->keyBy('source_id')
             : collect();
         $request->attributes->set('kpi_evidence', $kpiEvidence);
+        $request->attributes->set('document_source_revision', hash('sha256', (string) $this->extracted_text));
 
         return [
             'id' => $this->id,

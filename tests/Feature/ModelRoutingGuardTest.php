@@ -76,7 +76,7 @@ class ModelRoutingGuardTest extends TestCase
         $purposes = $this->purposes();
         self::assertContains('extraction', $purposes);
         self::assertContains('document_summary', $purposes);
-        self::assertSame([self::FAST, self::SMART], config('document_intelligence.approved_models'));
+        self::assertSame([self::FAST, 'claude-haiku-5-5', self::SMART], config('document_intelligence.approved_models'));
 
         $resolved = $this->withDefaultModelEnv(fn () => array_combine($purposes,
             array_map(fn ($purpose) => app(AiModels::class)->forTask($purpose), $purposes)));
@@ -133,5 +133,15 @@ class ModelRoutingGuardTest extends TestCase
         $warning = collect($handler->getRecords())->first(fn ($r) => $r['message'] === 'Anthropic request uses an unapproved model');
         self::assertSame(['purpose' => 'document_summary', 'model' => 'claude-sonnet-4-6', 'document_id' => null], $warning['context']);
         self::assertStringNotContainsString('fake-private-key', json_encode($handler->getRecords()));
+    }
+
+    public function test_haiku_five_five_candidate_can_be_selected_without_changing_synthesis(): void
+    {
+        config(['services.anthropic.extraction_model' => 'claude-haiku-5-5']);
+        self::assertSame('claude-haiku-5-5', app(AiModels::class)->forTask('insights'));
+        self::assertSame(self::SMART, app(AiModels::class)->forTask('document_summary'));
+        $this->artisan('docintel:verify-models')->assertExitCode(0);
+        config(['services.anthropic.extraction_model' => self::FAST]);
+        self::assertSame(self::FAST, app(AiModels::class)->forTask('insights'));
     }
 }

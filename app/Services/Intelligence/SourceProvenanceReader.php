@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 class SourceProvenanceReader
 {
     /** @param list<string> $evidenceIds @return array<string,array<string,mixed>> */
-    public function forEvidence(Document $document, array $evidenceIds): array
+    public function forEvidence(Document $document, array $evidenceIds, ?string $setId = null): array
     {
         if ($evidenceIds === []) {
             return [];
@@ -24,9 +24,11 @@ class SourceProvenanceReader
                 ->where('s.workspace_id', $document->workspace_id)->where('s.document_id', $document->id)
                 ->where('s.source_revision', $revision)->where('s.pipeline_key', $pipeline)
                 ->where('s.policy_version', SourceProvenance::POLICY)->where('s.published', true)
-                ->when($document->published_intelligence_revision_id,
-                    fn ($query) => $query->where('s.id', $document->publishedIntelligenceRevision?->provenance_set_id),
-                    fn ($query) => $query->where('s.active', true))
+                ->when($setId !== null,
+                    fn ($query) => $query->where('s.id', $setId),
+                    fn ($query) => $query->when($document->published_intelligence_revision_id,
+                        fn ($query) => $query->where('s.id', $document->publishedIntelligenceRevision?->provenance_set_id),
+                        fn ($query) => $query->where('s.active', true)))
                 ->whereIn('b.evidence_id', $ids)
                 ->get(['b.evidence_id', 'b.role', 'a.id as anchor_id', 'a.kind', 'a.modality',
                     'a.page', 'a.sheet', 'a.structural_path', 'a.start_offset', 'a.end_offset',

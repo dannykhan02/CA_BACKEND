@@ -42,6 +42,7 @@ Thumbs.db
 
 # Local test fixtures - not for version control
 *.pdf
+!tests/Fixtures/Northstar_Q3_2026_Board_Performance_Review.pdf
 *.docx
 !tests/Fixtures/embedded-emf.docx
 *.xlsx

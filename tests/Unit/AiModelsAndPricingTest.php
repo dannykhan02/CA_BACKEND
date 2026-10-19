@@ -38,4 +38,21 @@ class AiModelsAndPricingTest extends TestCase
         config(['services.anthropic.synthesis_model' => null, 'services.anthropic.model' => 'claude-haiku-4-5-20251001']);
         self::assertSame('claude-sonnet-5-5', app(AiModels::class)->forTask('document_summary'));
     }
+
+    public function test_haiku_five_five_is_an_explicit_candidate_with_tiered_request_pricing(): void
+    {
+        config(['services.anthropic.extraction_model' => 'claude-haiku-5-5']);
+        self::assertSame('claude-haiku-5-5', app(AiModels::class)->forTask('insights'));
+        self::assertSame('claude-sonnet-5-5', app(AiModels::class)->forTask('document_summary'));
+        $pricing = app(AiPricing::class);
+        self::assertSame(0.06, $pricing->estimate('claude-haiku-5-5',
+            ['input_tokens' => 100000, 'output_tokens' => 100000]));
+        self::assertSame(0.300001, $pricing->estimate('claude-haiku-5-5',
+            ['input_tokens' => 100001, 'output_tokens' => 100000]));
+        self::assertSame(0.006, $pricing->estimate('claude-haiku-5-5',
+            ['cache_creation_input_tokens' => 20000, 'cache_read_input_tokens' => 50000,
+                'input_tokens' => 30000, 'output_tokens' => 0]));
+        self::assertSame(0.01, $pricing->maximum('claude-haiku-5-5', 100000, 0));
+        self::assertSame(0.050001, $pricing->maximum('claude-haiku-5-5', 100001, 0));
+    }
 }

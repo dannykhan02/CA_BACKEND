@@ -9,6 +9,7 @@ use App\Services\AI\Incremental\EvidenceBudget;
 use App\Services\AI\Incremental\EvidenceMerger;
 use App\Services\AI\Incremental\IncrementalPipeline;
 use App\Services\Intelligence\DocumentRevisionPublisher;
+use App\Services\Intelligence\IncrementalMetricFieldVerifier;
 use App\Services\Intelligence\TextRoleProvenanceProducer;
 use App\Services\Pipeline\DocumentProgress;
 use App\Services\Pipeline\PipelineStageRecorder;
@@ -146,10 +147,11 @@ class MergeDocumentEvidenceJob implements ShouldQueue
 
             $diagnostics = $merger->merge($document);
 
-            // Optional additive provenance. A failed or not-yet-migrated graph leaves the
-            // already verified textual evidence available at its truthful weaker level.
+            // Nonmetric textual evidence remains available when the graph fails. Metric
+            // candidates then remain limited: no field-role proof means no trusted analytics.
+            $provenanceSetId = null;
             try {
-                app(TextRoleProvenanceProducer::class)->publish($document);
+                $provenanceSetId = app(TextRoleProvenanceProducer::class)->publish($document);
                 $diagnostics['provenance'] = 'published';
             } catch (\Throwable $e) {
                 $diagnostics['provenance'] = 'textual_only';
@@ -157,6 +159,8 @@ class MergeDocumentEvidenceJob implements ShouldQueue
                     'document_id' => $document->id, 'exception' => $e::class,
                 ]);
             }
+            $diagnostics['metric_field_verification'] = app(IncrementalMetricFieldVerifier::class)
+                ->verify($document, $provenanceSetId);
 
             $clock = hrtime(true);
             app(ContextResolver::class)->resolve($document);

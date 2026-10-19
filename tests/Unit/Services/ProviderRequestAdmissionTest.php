@@ -110,4 +110,19 @@ class ProviderRequestAdmissionTest extends TestCase
             $this->assertSame('invalid_provider_config', $e->classification);
         }
     }
+
+    public function test_haiku_five_five_candidate_is_admitted_only_when_selected_for_extraction(): void
+    {
+        try {
+            $this->admit('claude-haiku-5-5');
+            $this->fail('A candidate model cannot bypass task routing.');
+        } catch (AiProcessingException $e) {
+            $this->assertSame('unsupported_model', $e->classification);
+        }
+        config(['services.anthropic.extraction_model' => 'claude-haiku-5-5']);
+        $this->admit('claude-haiku-5-5');
+        $this->assertGreaterThan(0, app(ProviderRequestAdmission::class)->assertAllowed(null,
+            'entities', 'claude-haiku-5-5', [['role' => 'user', 'content' => 'fixture']],
+            ['max_tokens' => 128000]));
+    }
 }

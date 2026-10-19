@@ -28,7 +28,7 @@ class SourceReferenceResolver
         $owner = DB::table('document_evidence')->where('workspace_id', $document->workspace_id)
             ->where('document_id', $document->id)->where('source_id', $sourceId);
         $matches = (clone $owner)->where('pipeline_key', $pipeline)
-            ->limit(2)->get(['id', 'source_id', 'sources', 'data']);
+            ->limit(2)->get(['id', 'kind', 'source_id', 'sources', 'data']);
         if ($matches->count() > 1) {
             return ['state' => 'SOURCE_AMBIGUOUS'];
         }
@@ -163,6 +163,30 @@ class SourceReferenceResolver
         $end = $citation['end_offset'] ?? null;
         $rangeValid = is_int($start) && is_int($end) && $end > $start && $quote !== null
             && mb_substr((string) $document->extracted_text, $start, $end - $start) === $quote;
+        $data = json_decode($evidence->data, true) ?: [];
+        if (is_string($data['source_revision'] ?? null)
+            && ! hash_equals($revision, $data['source_revision'])) {
+            return ['state' => 'SOURCE_UNAVAILABLE'];
+        }
+        $navigationQuote = $quote;
+        $navigationStart = $start;
+        $navigationEnd = $end;
+        if ($evidence->kind === 'metric' && isset($data['source_cell_start_offset'],
+            $data['source_cell_end_offset'], $data['source_cell_value'])) {
+            $cellStart = $data['source_cell_start_offset'];
+            $cellEnd = $data['source_cell_end_offset'];
+            $cellValue = $data['source_cell_value'];
+            if (! $rangeValid || ! is_int($cellStart) || ! is_int($cellEnd)
+                || ! is_string($cellValue) || $cellStart < $start || $cellEnd > $end
+                || $cellEnd <= $cellStart
+                || mb_substr((string) $document->extracted_text, $cellStart,
+                    $cellEnd - $cellStart) !== $cellValue) {
+                return ['state' => 'SOURCE_UNAVAILABLE'];
+            }
+            $navigationQuote = $cellValue;
+            $navigationStart = $cellStart;
+            $navigationEnd = $cellEnd;
+        }
         $location = null;
         if ($set !== null && $rangeValid) {
             // Exact projection ownership is safe even where a hidden or formula cell could not
@@ -198,7 +222,18 @@ class SourceReferenceResolver
             }
         }
 
-        $data = json_decode($evidence->data, true) ?: [];
+        // The persisted offset can identify an exact PDF table cell while a browser's
+        // text search cannot distinguish identical glyphs elsewhere on that page.
+        // Keep the exact source range for audit, but prevent a misleading visual mark.
+        $visualSearchAmbiguous = false;
+        $citedPage = $citation['page'] ?? null;
+        if ($document->type === 'PDF' && $rangeValid && is_string($navigationQuote)
+            && $navigationQuote !== '' && is_int($citedPage) && $citedPage > 0) {
+            $pageText = explode("\f", (string) $document->extracted_text)[$citedPage - 1] ?? null;
+            $visualSearchAmbiguous = is_string($pageText)
+                && mb_substr_count($pageText, $navigationQuote) > 1;
+        }
+
         $conflict = $data['source_conflict']['status'] ?? null;
         $channel = $roles['value'][0]['modality'] ?? $location['modality'] ?? null;
         $evidenceStatus = $conflict !== null || in_array($matchState, ['AMBIGUOUS', 'UNAVAILABLE'], true)
@@ -211,18 +246,19 @@ class SourceReferenceResolver
             'sourceFormat' => in_array($document->type, ['DOCX', 'XLSX', 'PDF'], true) ? $document->type : 'OTHER',
             'revision' => $revision, 'provenancePolicy' => $set === null ? null : SourceProvenance::POLICY,
             'capability' => $structural ? 'STRUCTURAL_PARTIAL' : 'TEXTUAL',
-            'source' => ['text' => $quote === null ? null : mb_substr($quote, 0, self::MAX_TEXT),
-                'length' => $quote === null ? null : mb_strlen($quote),
-                'truncated' => $quote !== null && mb_strlen($quote) > self::MAX_TEXT,
+            'source' => ['text' => $navigationQuote === null ? null : mb_substr($navigationQuote, 0, self::MAX_TEXT),
+                'length' => $navigationQuote === null ? null : mb_strlen($navigationQuote),
+                'truncated' => $navigationQuote !== null && mb_strlen($navigationQuote) > self::MAX_TEXT,
                 'page' => $citation['page'] ?? null,
-                'range' => $rangeValid ? ['start' => $start, 'end' => $end] : null],
+                'range' => $rangeValid ? ['start' => $navigationStart, 'end' => $navigationEnd] : null],
             'location' => $location,
             'fieldSources' => $fieldSources,
             'roles' => $roles, 'relationships' => $relationships,
             'quality' => ['sourceChannel' => $channel,
                 'locationQuality' => $rangeValid ? 'exact_text_offset' : strtolower($matchState),
                 'structuralRelationshipQuality' => $structural ? 'verified_partial' : 'unavailable',
-                'ambiguity' => $matchState === 'AMBIGUOUS' ? 'repeated_occurrence' : null,
+                'ambiguity' => $matchState === 'AMBIGUOUS' || $visualSearchAmbiguous
+                    ? 'repeated_occurrence' : null,
                 'ocrUncertainty' => $channel === 'ocr' ? 'unverified_reading_order_and_glyphs' : null,
                 'language' => null, 'locale' => null, 'conflictStatus' => $conflict,
                 'evidenceStatus' => $evidenceStatus],

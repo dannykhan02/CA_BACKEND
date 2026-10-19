@@ -3,6 +3,7 @@
 namespace App\Services\Intelligence;
 
 use App\Services\Kpis\KpiLabelNormalizer;
+use Brick\Math\BigDecimal;
 
 /**
  * Turns the two strings DocIntel already stores for a metric finding - the observed `value` and
@@ -70,7 +71,7 @@ class MeasurementParser
         if ($number === null) {
             return null;
         }
-        [$magnitude, $numberEnd, $hadPercentSign] = $number;
+        [$magnitude, $numberEnd, $hadPercentSign, $decimal] = $number;
 
         $unitTokens = $this->tokens($unitText);
         if (array_intersect($unitTokens, self::LOCATORS) !== []) {
@@ -117,6 +118,7 @@ class MeasurementParser
             scale: $percent ? 1.0 : $scale,
             unitText: $unitText !== '' ? $unitText : ($percent ? '%' : ''),
             canonicalUnit: $percent ? '%' : $this->canonicalUnit($unitText),
+            exactMagnitude: (string) BigDecimal::of($decimal)->multipliedBy((string) (int) ($percent ? 1 : $scale)),
         );
     }
 
@@ -166,9 +168,10 @@ class MeasurementParser
         // Accounting negatives: "(1,234)" is minus 1,234.
         if ($magnitude > 0 && preg_match('/\(\s*$/u', substr($text, 0, $start)) && str_contains($rest, ')')) {
             $magnitude = -$magnitude;
+            $clean = '-'.$clean;
         }
 
-        return [$magnitude, $end, (bool) preg_match('/^\s*%/u', $rest)];
+        return [$magnitude, $end, (bool) preg_match('/^\s*%/u', $rest), $clean];
     }
 
     /** @return list<string> */

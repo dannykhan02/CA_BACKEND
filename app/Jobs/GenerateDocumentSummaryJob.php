@@ -21,6 +21,8 @@ use App\Services\AI\ProviderGate;
 use App\Services\AiCredits\QuoteService;
 use App\Services\AnthropicClient;
 use App\Services\Intelligence\DocumentRevisionPublisher;
+use App\Services\Intelligence\DocumentTypeAdjudicator;
+use App\Services\Intelligence\NormalRouteProvenance;
 use App\Services\Pipeline\DocumentProgress;
 use App\Services\Pipeline\PipelineStageRecorder;
 use App\Services\WorkspaceCreditService;
@@ -248,7 +250,7 @@ class GenerateDocumentSummaryJob implements ShouldQueue
 
         $this->persistIntelligence($document, $stage, $recorder, function () use ($document, $result, $recorder) {
             if (($document->ai_pipeline['route'] ?? null) === 'incremental' && ! empty($result['document_type_assessment'])) {
-                $result['document_type_assessment'] = app(\App\Services\Intelligence\DocumentTypeAdjudicator::class)
+                $result['document_type_assessment'] = app(DocumentTypeAdjudicator::class)
                     ->adjudicate($document, $result['document_type_assessment']);
                 $document->documentTypeClassification()->updateOrCreate(['document_id' => $document->id, 'intelligence_revision_id' => $this->revisionId],
                     $result['document_type_assessment'] + ['workspace_id' => $document->workspace_id,
@@ -276,7 +278,8 @@ class GenerateDocumentSummaryJob implements ShouldQueue
                     'model' => app(AiModels::class)->forTask('document_summary'),
                 ]
             );
-        }, ['generated' => true, 'optional_items_dropped' => array_sum($result['_optional_items_dropped'] ?? [])]);
+        }, ['generated' => true, 'optional_items_dropped' => array_sum($result['_optional_items_dropped'] ?? []),
+            'optional_drop_reasons' => $result['_optional_drop_reasons'] ?? []]);
         if ($this->revisionId !== null
             && ! app(DocumentRevisionPublisher::class)->owns($document->fresh(), $this->revisionId)) {
             return;
@@ -302,6 +305,7 @@ class GenerateDocumentSummaryJob implements ShouldQueue
                     'partial' => $otherFailures || ! empty($result['_optional_items_dropped'])
                         || ! ($extractedData['coverage']['comprehensive'] ?? false),
                     'synthesis' => 'completed', 'summary_stale' => false,
+                    'synthesis_optional_drop_reasons' => $result['_optional_drop_reasons'] ?? [],
                     'coverage' => $extractedData['coverage'],
                     'synthesis_coverage_warning' => $extractedData['coverage']['warning'] ?? null],
                     'status' => 'Ready', 'progress' => 100, 'error_message' => null])->save();
@@ -326,7 +330,7 @@ class GenerateDocumentSummaryJob implements ShouldQueue
         }
         if (! $checkpoint && $this->revisionId !== null) {
             try {
-                app(\App\Services\Intelligence\NormalRouteProvenance::class)->publish($document->fresh());
+                app(NormalRouteProvenance::class)->publish($document->fresh());
             } catch (\Throwable $e) {
                 // A citation graph cannot make validated typed intelligence disappear.
                 Log::warning('Normal-route source provenance unavailable', [

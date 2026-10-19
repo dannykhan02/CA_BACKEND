@@ -28,6 +28,8 @@ readonly class Measurement
         /** Unit with the written magnitude removed; never a converted unit. */
         public string $canonicalUnit = '',
         public bool $numericVerified = true,
+        /** Decimal in the family's base unit; retained before float chart presentation. */
+        public ?string $exactMagnitude = null,
     ) {}
 
     public function compatibleWith(self $other): bool

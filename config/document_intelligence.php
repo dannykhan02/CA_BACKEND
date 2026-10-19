@@ -38,6 +38,7 @@ return [
     'model_capabilities' => [
         'claude-haiku-4-5-20251001' => ['context_window' => 200000, 'max_output_tokens' => 64000, 'max_image_tokens' => 1568],
         'claude-haiku-4-5' => ['context_window' => 200000, 'max_output_tokens' => 64000, 'max_image_tokens' => 1568],
+        'claude-haiku-5-5' => ['context_window' => 1000000, 'max_output_tokens' => 128000, 'max_image_tokens' => 4784],
         'claude-sonnet-4-5-20250929' => ['context_window' => 200000, 'max_output_tokens' => 64000, 'max_image_tokens' => 1568],
         'claude-sonnet-4-6' => ['context_window' => 1000000, 'max_output_tokens' => 128000, 'max_image_tokens' => 1568],
         'claude-sonnet-5-5' => ['context_window' => 1000000, 'max_output_tokens' => 128000, 'max_image_tokens' => 4784],
@@ -153,14 +154,20 @@ return [
     'pricing' => [ // USD / million tokens; 5 minute cache writes only.
         'claude-haiku-4-5-20251001' => [1, 5, 1.25, 0.10],
         'claude-haiku-4-5' => [1, 5, 1.25, 0.10],
+        // https://platform.claude.com/docs/en/models/haiku-5-5/overview
+        'claude-haiku-5-5' => [0.10, 0.50, 0.125, 0.01],
         'claude-sonnet-4-6' => [3, 15, 3.75, 0.30],
         'claude-sonnet-4-5-20250929' => [3, 15, 3.75, 0.30],
         // https://platform.claude.com/docs/en/models/sonnet-5-5/overview
         'claude-sonnet-5-5' => [2, 10, 2.50, 0.20],
     ],
+    // Haiku 5.5 prices the entire request at this tier when total prompt input exceeds 100k.
+    'pricing_long_context' => [
+        'claude-haiku-5-5' => ['threshold' => 100000, 'rates' => [0.50, 2.50, 0.625, 0.05]],
+    ],
     // The only models DocIntel is meant to call: FAST (extraction) and SMART (synthesis).
     // ProviderRequestAdmission refuses requests for models outside this set.
-    'approved_models' => ['claude-haiku-4-5-20251001', 'claude-sonnet-5-5'],
-    'structured_models' => ['claude-haiku-4-5-20251001', 'claude-haiku-4-5', 'claude-sonnet-4-6', 'claude-sonnet-4-5-20250929', 'claude-sonnet-5-5'],
-    'effort_models' => ['claude-sonnet-4-6', 'claude-sonnet-5-5'],
+    'approved_models' => ['claude-haiku-4-5-20251001', 'claude-haiku-5-5', 'claude-sonnet-5-5'],
+    'structured_models' => ['claude-haiku-4-5-20251001', 'claude-haiku-4-5', 'claude-haiku-5-5', 'claude-sonnet-4-6', 'claude-sonnet-4-5-20250929', 'claude-sonnet-5-5'],
+    'effort_models' => ['claude-haiku-5-5', 'claude-sonnet-4-6', 'claude-sonnet-5-5'],
 ];

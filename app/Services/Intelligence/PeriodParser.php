@@ -37,6 +37,36 @@ class PeriodParser
             ?? $this->year($text, $fiscal);
     }
 
+    /** Complete a bare quarter only when one verified, governing source states its year and basis. */
+    public function resolveQuarter(?string $period, string $governingText, string $valueText = ''): ?ReportingPeriod
+    {
+        $parsed = $this->parse($period);
+        if ($parsed !== null) {
+            return $parsed;
+        }
+        $partial = trim((string) $period);
+        if (! preg_match('/^Q([1-4])$/iuD', $partial, $wanted)) {
+            return null;
+        }
+        $candidates = [];
+        foreach ([$governingText, $valueText] as $text) {
+            preg_match_all('/\b(?:Q[1-4]\s*(?:FY\s*)?\d{4}|FY\s*\d{4}\s*Q[1-4]|\d{4}\s*Q[1-4])\b/iu',
+                $text, $matches);
+            foreach ($matches[0] as $match) {
+                $candidate = $this->parse($match);
+                if ($candidate === null || $candidate->granularity !== 'quarter') {
+                    continue;
+                }
+                if (! str_starts_with($candidate->label, 'Q'.$wanted[1].' ')) {
+                    return null;
+                }
+                $candidates[$candidate->label] = $candidate;
+            }
+        }
+
+        return count($candidates) === 1 ? reset($candidates) : null;
+    }
+
     private function day(string $text, bool $fiscal): ?ReportingPeriod
     {
         if (preg_match('/^(\d{4})-(\d{1,2})-(\d{1,2})$/u', $text, $iso)) {

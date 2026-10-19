@@ -51,6 +51,10 @@ class ChartCandidateBuilder
      */
     public function build(array $observations, array $citedSourceIds = []): array
     {
+        // The builder is also callable outside the composer. Enforce the trust boundary here
+        // so a caller cannot turn a merely parseable legacy observation into a verified chart.
+        $observations = array_values(array_filter($observations,
+            static fn (MetricObservation $item): bool => ($item->integrity['analyticalEligible'] ?? false) === true));
         $cited = array_fill_keys($citedSourceIds, true);
         $rejected = ['insufficient_points' => 0, 'incomparable_periods' => 0, 'conflicting_values' => 0,
             'not_a_composition' => 0, 'single_category' => 0];

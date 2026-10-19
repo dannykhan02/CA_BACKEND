@@ -3,6 +3,7 @@
 namespace App\Services\Intelligence;
 
 use App\Services\Kpis\KpiLabelNormalizer;
+use Brick\Math\BigDecimal;
 
 /** Deterministic answers from compatible, source-verified observations. */
 class AnalyticalComparisonBuilder
@@ -13,8 +14,7 @@ class AnalyticalComparisonBuilder
     /** @param list<MetricObservation> $observations */
     public function build(array $observations): array
     {
-        $eligible = array_values(array_filter($observations, fn ($observation) =>
-            ($observation->integrity['analyticalEligible'] ?? false) && $observation->period !== null
+        $eligible = array_values(array_filter($observations, fn ($observation) => ($observation->integrity['analyticalEligible'] ?? false) && $observation->period !== null
             && $observation->semanticConcept !== '' && $observation->quantityKind !== 'change'));
         $groups = [];
         foreach ($eligible as $observation) {
@@ -107,15 +107,19 @@ class AnalyticalComparisonBuilder
                 || ! $revenue->measurement->compatibleWith($profit->measurement)) {
                 continue;
             }
-            $calculated = $revenue->measurement->magnitude - $costs->measurement->magnitude;
-            $tolerance = min($revenue->measurement->scale, $costs->measurement->scale,
-                $profit->measurement->scale) * 1e-9;
-            if (abs($calculated - $profit->measurement->magnitude) > $tolerance) {
+            if ($revenue->measurement->exactMagnitude === null
+                || $costs->measurement->exactMagnitude === null
+                || $profit->measurement->exactMagnitude === null) {
+                continue;
+            }
+            $calculated = BigDecimal::of($revenue->measurement->exactMagnitude)
+                ->minus($costs->measurement->exactMagnitude);
+            if (! $calculated->isEqualTo($profit->measurement->exactMagnitude)) {
                 continue;
             }
             $scale = $profit->measurement->scale;
             $results[] = ['id' => substr(hash('sha256', implode('|', [$revenue->sourceId,
-                    $costs->sourceId, $profit->sourceId])), 0, 20),
+                $costs->sourceId, $profit->sourceId])), 0, 20),
                 'kind' => 'financial_reconciliation', 'title' => 'Operating profit check',
                 'period' => $profit->period->label,
                 'left' => ['label' => $revenue->label, 'rawValue' => $revenue->rawValue,
@@ -124,7 +128,7 @@ class AnalyticalComparisonBuilder
                     'rawUnit' => $costs->measurement->unitText, 'sourceId' => $costs->sourceId],
                 'reported' => ['label' => $profit->label, 'rawValue' => $profit->rawValue,
                     'rawUnit' => $profit->measurement->unitText, 'sourceId' => $profit->sourceId],
-                'gap' => round($calculated / $scale, 6), 'gapUnit' => $profit->measurement->unitText,
+                'gap' => round((float) (string) $calculated / $scale, 6), 'gapUnit' => $profit->measurement->unitText,
                 'direction' => 'at', 'sourceIds' => [$revenue->sourceId, $costs->sourceId, $profit->sourceId],
                 'verification' => 'source_verified', 'calculation' => 'revenue_minus_operating_costs_equals_operating_profit'];
         }
@@ -140,7 +144,13 @@ class AnalyticalComparisonBuilder
 
     private function difference(MetricObservation $left, MetricObservation $right, string $kind): array
     {
-        $gap = $left->measurement->magnitude - $right->measurement->magnitude;
+        $gapDecimal = $left->measurement->exactMagnitude !== null
+            && $right->measurement->exactMagnitude !== null
+            ? BigDecimal::of($left->measurement->exactMagnitude)
+                ->minus($right->measurement->exactMagnitude) : null;
+        $gap = $gapDecimal === null
+            ? $left->measurement->magnitude - $right->measurement->magnitude
+            : (float) (string) $gapDecimal;
         $percent = $left->measurement->kind === 'percent';
         $sameScale = $left->measurement->scale === $right->measurement->scale;
         $scale = $sameScale ? $left->measurement->scale : 1.0;
@@ -157,7 +167,8 @@ class AnalyticalComparisonBuilder
             'right' => ['label' => $right->label, 'rawValue' => $right->rawValue,
                 'rawUnit' => $right->measurement->unitText, 'sourceId' => $right->sourceId],
             'gap' => round($gap / $scale, 6), 'gapUnit' => $unit,
-            'direction' => $gap > 0 ? 'above' : ($gap < 0 ? 'below' : 'at'),
+            'direction' => ($gapDecimal?->compareTo('0') ?? ($gap <=> 0)) > 0
+                ? 'above' : (($gapDecimal?->compareTo('0') ?? ($gap <=> 0)) < 0 ? 'below' : 'at'),
             'sourceIds' => [$left->sourceId, $right->sourceId],
             'verification' => 'source_verified', 'calculation' => 'left_minus_right'];
     }

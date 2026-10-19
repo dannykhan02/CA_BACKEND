@@ -355,6 +355,8 @@ class IncrementalDocumentPipelineTest extends TestCase
         self::assertSame([$valid], $result['trends']);
         self::assertSame([$valid], $result['tensions']);
         self::assertSame(['trends' => 1, 'tensions' => 1], $result['_optional_items_dropped']);
+        self::assertSame(['trends' => ['invalid_source_reference' => 1],
+            'tensions' => ['invalid_source_reference' => 1]], $result['_optional_drop_reasons']);
         self::assertSame('Revenue increased.', $result['executive_summary']);
     }
 

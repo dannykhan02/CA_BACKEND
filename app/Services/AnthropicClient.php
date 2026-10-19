@@ -26,6 +26,7 @@ use App\Services\AiCredits\OperationSpend;
 use App\Services\AiCredits\QuoteService;
 use App\Services\Intelligence\B2\NarrativePrompt;
 use App\Services\Intelligence\B2\NarrativeSchema;
+use App\Services\Intelligence\NormalRouteProvenance;
 use App\Services\Pipeline\DocumentStagePolicy;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
@@ -339,10 +340,10 @@ PROMPT;
         $this->currentOperation = 'entities';
         $this->activeDocument = $document;
         $this->throttle();
-        $sourceText = $document ? app(\App\Services\Intelligence\NormalRouteProvenance::class)->promptText($document, $documentText) : $documentText;
+        $sourceText = $document ? app(NormalRouteProvenance::class)->promptText($document, $documentText) : $documentText;
         $prompt = $this->buildEntitiesPrompt($sourceText, $documentName);
         if ($sourceText !== $documentText) {
-            $prompt .= app(\App\Services\Intelligence\NormalRouteProvenance::class)->instruction();
+            $prompt .= app(NormalRouteProvenance::class)->instruction();
         }
 
         // One bounded transport attempt per structured response. The existing
@@ -361,10 +362,10 @@ PROMPT;
         $this->currentOperation = 'risks';
         $this->activeDocument = $document;
         $this->throttle();
-        $sourceText = $document ? app(\App\Services\Intelligence\NormalRouteProvenance::class)->promptText($document, $documentText) : $documentText;
+        $sourceText = $document ? app(NormalRouteProvenance::class)->promptText($document, $documentText) : $documentText;
         $prompt = $this->buildRisksPrompt($sourceText, $documentName);
         if ($sourceText !== $documentText) {
-            $prompt .= app(\App\Services\Intelligence\NormalRouteProvenance::class)->instruction();
+            $prompt .= app(NormalRouteProvenance::class)->instruction();
         }
 
         return $this->structuredCall($prompt, $document, 'risks', $this->parseRisksResponse(...));
@@ -375,10 +376,10 @@ PROMPT;
         $this->currentOperation = 'deadlines';
         $this->activeDocument = $document;
         $this->throttle();
-        $sourceText = $document ? app(\App\Services\Intelligence\NormalRouteProvenance::class)->promptText($document, $documentText) : $documentText;
+        $sourceText = $document ? app(NormalRouteProvenance::class)->promptText($document, $documentText) : $documentText;
         $prompt = $this->buildDeadlinesPrompt($sourceText, $documentName);
         if ($sourceText !== $documentText) {
-            $prompt .= app(\App\Services\Intelligence\NormalRouteProvenance::class)->instruction();
+            $prompt .= app(NormalRouteProvenance::class)->instruction();
         }
 
         return $this->structuredCall($prompt, $document, 'deadlines', $this->parseDeadlinesResponse(...));
@@ -610,6 +611,7 @@ PROMPT;
                 $parsed = $parser($response);
                 $response['_telemetry']['optional_items_dropped'] = array_sum($parsed['_optional_items_dropped'] ?? []);
                 $response['_telemetry']['partial'] = ! empty($parsed['_optional_items_dropped']);
+                $response['_telemetry']['optional_drop_reasons'] = $parsed['_optional_drop_reasons'] ?? [];
                 $this->recordAiRun($document, $purpose, $response);
 
                 return $parsed;
@@ -883,7 +885,7 @@ PROMPT;
         $prompt = $manager->resolve('document_insights');
         $this->lastResolvedPromptVersion = $prompt->version;
         $sourceText = (int) $prompt->version >= 8 && $document
-            ? app(\App\Services\Intelligence\NormalRouteProvenance::class)->promptText($document, $documentText)
+            ? app(NormalRouteProvenance::class)->promptText($document, $documentText)
             : $documentText;
         $truncated = mb_substr($sourceText, 0, config('document_processing.max_extraction_chars'));
         $rendered = $manager->render($prompt, [
@@ -1477,12 +1479,14 @@ PROMPT;
                 $documentType = app(ResponseValidator::class)->validateDocumentType($decoded['document_type_assessment']);
             } catch (\RuntimeException) {
                 $decoded['_optional_items_dropped']['document_type_assessment'] = 1;
+                $decoded['_optional_drop_reasons']['document_type_assessment']['invalid_assessment'] = 1;
             }
         }
 
         return [
             'document_type_assessment' => $documentType,
             '_optional_items_dropped' => $decoded['_optional_items_dropped'] ?? [],
+            '_optional_drop_reasons' => $decoded['_optional_drop_reasons'] ?? [],
             'executive_summary' => $decoded['executive_summary'],
             'key_findings' => $decoded['key_findings'],
             'critical_risks' => $decoded['critical_risks'],

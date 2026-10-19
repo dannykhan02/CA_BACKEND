@@ -13,7 +13,7 @@ use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 /** Verifies field roles before a normal-route KPI becomes metric evidence. */
 class NormalKpiGrounder
 {
-    public function __construct(private MeasurementParser $measurements) {}
+    public function __construct(private MeasurementParser $measurements, private PeriodParser $periods) {}
 
     public function record(Document $document, DocumentKpi $stored, array $proposal): ?string
     {
@@ -31,7 +31,13 @@ class NormalKpiGrounder
             return 'missing_source_reference';
         }
         $rawValue = trim((string) $stored->value);
-        if ($rawValue === '' || ! $this->containsValue($value['text'], $rawValue)) {
+        $tableProof = $document->type === 'PDF'
+            ? app(PdfTabularCellVerifier::class)->verify($stored, $set, $value,
+                $this->span($set, $context['period_span_id'] ?? null, $document)) : null;
+        if (($tableProof['rejection'] ?? null) !== null) {
+            return $tableProof['rejection'];
+        }
+        if ($rawValue === '' || ($tableProof === null && ! $this->containsValue($value['text'], $rawValue))) {
             return 'source_mismatch';
         }
         if (in_array(mb_strtolower(trim((string) (($stored->identity_metadata ?? [])['metric_type'] ?? ''))),
@@ -55,7 +61,7 @@ class NormalKpiGrounder
         // A repeated number by itself has no field role. Require a concept or descriptive
         // label in the same row/sentence as the value, and a unique occurrence of the value.
         $concept = trim((string) (($stored->identity_metadata ?? [])['concept'] ?? ''));
-        if ($document->type !== 'XLSX'
+        if ($document->type !== 'XLSX' && $tableProof === null
             && ! $this->containsConcept($value['text'], $concept !== '' ? $concept : (string) $stored->label)) {
             return 'concept_mismatch';
         }
@@ -71,6 +77,7 @@ class NormalKpiGrounder
                 return $role.'_source_mismatch';
             }
             if ($document->type !== 'XLSX' && $candidate['span_id'] !== $value['span_id']
+                && ! ($role === 'subject' && $this->pageHeaderSubject($set, $candidate, $value))
                 && ! $this->governs($set, $candidate, $value)) {
                 return $role.'_relationship_unverified';
             }
@@ -79,6 +86,26 @@ class NormalKpiGrounder
         if ($document->type === 'XLSX' && ! $this->xlsxRelationship($document, $value, $fields, $rawValue,
             $concept !== '' ? $concept : (string) $stored->label)) {
             return 'structured_relationship_unverified';
+        }
+        $basisRejection = app(ValueBasisEvidence::class)->rejection(
+            $stored->identity_metadata['value_basis'] ?? null,
+            $tableProof === null ? implode("\n", array_unique(array_column($fields, 'text')))
+                : $value['text']."\n".$tableProof['basis_text']);
+        if ($basisRejection !== null) {
+            return $basisRejection;
+        }
+        $rawPeriod = (string) $stored->period;
+        if (trim($rawPeriod) !== '' && $this->periods->parse($rawPeriod) === null) {
+            $resolved = $this->periods->resolveQuarter($rawPeriod,
+                ($fields['period']['text'] ?? '')."\n".($tableProof === null ? '' : ($fields['subject']['text'] ?? '')),
+                $value['text']);
+            if ($resolved === null) {
+                return 'period_ambiguous';
+            }
+            $identity = is_array($stored->identity_metadata) ? $stored->identity_metadata : [];
+            $stored->forceFill(['period' => $resolved->label,
+                'identity_metadata' => [...$identity, 'period' => $resolved->label,
+                    'raw_period' => $rawPeriod]])->save();
         }
         $identity = $stored->identity_metadata ?? [];
         $kind = $identity['metric_type'] ?? null;
@@ -102,13 +129,18 @@ class NormalKpiGrounder
         ], [
             'workspace_id' => $document->workspace_id, 'kind' => 'metric', 'source_id' => $sourceId,
             'data' => ['label' => $stored->label, 'value' => $stored->value, 'unit' => $stored->unit,
-                'period' => $stored->period, 'subject' => $identity['scope'] ?? '',
+                'period' => $stored->period, 'raw_period' => $rawPeriod,
+                'subject' => $identity['scope'] ?? '',
                 'concept' => $identity['concept'] ?? null,
                 'metric_type' => $identity['metric_type'] ?? null,
                 'value_basis' => $identity['value_basis'] ?? null,
                 'aggregation' => $identity['aggregation'] ?? null,
                 'quantity_kind' => $identity['quantity_kind'] ?? null,
                 'measurement_verification' => 'verified', 'source_fields_verified' => array_keys($fields),
+                'source_revision' => hash('sha256', (string) $document->extracted_text),
+                'source_cell_start_offset' => $tableProof['cell_start_offset'] ?? null,
+                'source_cell_end_offset' => $tableProof['cell_end_offset'] ?? null,
+                'source_cell_value' => $tableProof['source_value'] ?? null,
                 'raw_value' => $stored->value, 'raw_unit' => $stored->unit,
                 'confidence' => 1.0], 'sources' => array_values($sources),
         ]);
@@ -152,6 +184,7 @@ class NormalKpiGrounder
             return false;
         }
         $source = mb_strtolower($text);
+
         // A concept may be reworded in the source, but the cited value still needs a
         // descriptive lexical anchor. Other semantic claims remain proposals.
         return count(array_filter($words, fn ($word) => preg_match('/(?<!\p{L})'.preg_quote($word, '/').'(?!\p{L})/u', $source) === 1))
@@ -177,7 +210,7 @@ class NormalKpiGrounder
     {
         if ($heading['page'] === null || $heading['page'] !== $value['page']
             || $heading['start_offset'] >= $value['start_offset']
-            || ! in_array($heading['type'], ['heading', 'section', 'table_row'], true)
+            || ! in_array($heading['type'], ['heading', 'section', 'table_row', 'list_item'], true)
             || $value['type'] !== 'table_row') {
             return false;
         }
@@ -192,6 +225,21 @@ class NormalKpiGrounder
         }
 
         return true;
+    }
+
+    private function pageHeaderSubject(EvidenceSpanSet $set, array $heading, array $value): bool
+    {
+        if ($heading['page'] === null || $heading['page'] !== $value['page']) {
+            return false;
+        }
+        foreach ($set->all() as $span) {
+            if ($span['page'] === $value['page']) {
+                return $span['key'] === $heading['span_id']
+                    && $heading['start_offset'] < $value['start_offset'];
+            }
+        }
+
+        return false;
     }
 
     private function xlsxRelationship(Document $document, array $valueSpan, array $fields,

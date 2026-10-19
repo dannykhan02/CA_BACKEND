@@ -240,6 +240,7 @@ class StructuredAssessmentValidatorTest extends TestCase
         ]);
         self::assertCount(3, $result['questions']);
         self::assertSame(1, $result['_optional_items_dropped']['questions']);
+        self::assertSame(1, $result['_optional_drop_reasons']['questions']['invalid_item_or_limit']);
     }
 
     public function test_legacy_summary_remains_readable(): void

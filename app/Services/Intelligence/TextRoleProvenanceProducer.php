@@ -102,7 +102,8 @@ class TextRoleProvenanceProducer
                     continue;
                 }
                 $fields = ['value' => $data['value'] ?? null, 'metric' => $data['label'] ?? null,
-                    'subject' => $data['subject'] ?? null, 'period' => $data['period'] ?? null];
+                    'subject' => $data['subject'] ?? null, 'period' => $data['period'] ?? null,
+                    'unit' => $data['unit'] ?? null];
                 $found = [];
                 foreach ($fields as $role => $needle) {
                     if (! is_string($needle) || trim($needle) === '') {
