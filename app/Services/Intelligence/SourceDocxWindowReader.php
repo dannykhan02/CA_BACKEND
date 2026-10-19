@@ -12,6 +12,34 @@ use JsonException;
 /** Reads the immutable DOCX extraction pinned to the published intelligence revision. */
 class SourceDocxWindowReader
 {
+    /**
+     * What this rendering leaves out, keyed so the client supplies the wording.
+     *
+     * Every entry was verified against `DocumentTextExtractor` rather than
+     * assumed, because a list that over-claims is its own dishonesty: it tells
+     * a reader something is missing from their document when it is there.
+     *
+     * Only two parts of the archive are ever read, `word/document.xml` and
+     * `word/footnotes.xml` (the only two `getFromName` calls), which is what
+     * settles most of these.
+     *
+     * **`text_box_text` is deliberately absent.** A text box lives inside a
+     * body run, and `extractWordXml` returns the text of *every* descendant
+     * `w:t`, so its words are extracted and folded into the containing
+     * paragraph. They are shown, not dropped. Listing them would be a false
+     * warning.
+     */
+    private const ALWAYS_EXCLUDED = [
+        // word/comments.xml and word/endnotes.xml are never opened.
+        'comments',
+        'endnotes',
+        // Only `w:t` text is kept, so a drawing contributes nothing — not even
+        // its alt text, which lives in a different namespace.
+        'images',
+        // `w:instrText` is dropped by name in extractWordXml.
+        'field_codes',
+    ];
+
     private const MAX_STORED_NODES_BYTES = 8 * 1024 * 1024;
 
     private const MAX_RESPONSE_BYTES = 65536;
@@ -131,7 +159,8 @@ class SourceDocxWindowReader
 
         $result = ['type' => 'docx', 'documentId' => $document->id,
             'sourceId' => $source['sourceId'], 'intelligenceRevisionId' => $revision->id,
-            'sourceRevision' => $textHash, 'anchor' => ['blockId' => $target['id'],
+            'sourceRevision' => $textHash, 'excluded' => $this->excluded($capabilities),
+            'anchor' => ['blockId' => $target['id'],
                 'blockType' => $target['type'], 'sourceHash' => $proof->source_hash,
                 'id' => $proof->id, 'text' => $proof->source_text,
                 'range' => ['start' => $proof->start_offset, 'end' => $proof->end_offset],
@@ -145,5 +174,42 @@ class SourceDocxWindowReader
         }
 
         return $result;
+    }
+
+    /**
+     * The ordered, de-duplicated list of what this rendering does not show.
+     *
+     * The three conditional entries are read from the extraction's own
+     * capabilities map rather than hardcoded, so a later parser that starts
+     * reading headers, or stops discarding deletions, stops claiming to
+     * exclude them without anyone having to remember to edit this list. The
+     * map is pinned to the revision the caller already verified.
+     *
+     * @param  array<string, mixed>  $capabilities
+     * @return list<string>
+     */
+    private function excluded(array $capabilities): array
+    {
+        $excluded = self::ALWAYS_EXCLUDED;
+        if (($capabilities['headers_footers'] ?? null) !== 'available') {
+            $excluded[] = 'headers_and_footers';
+        }
+        if (($capabilities['tracked_changes'] ?? null) === 'deleted_text_excluded') {
+            $excluded[] = 'tracked_change_deletions';
+        }
+        if (str_contains((string) ($capabilities['lists'] ?? ''), 'without_markers')) {
+            $excluded[] = 'list_markers';
+        }
+        // Footnote bodies are extracted as their own `footnote:<id>` nodes, but
+        // the window walks body children only, so their text is never in this
+        // response. Claimed only when the document actually has footnotes —
+        // unlike the parts above, that is knowable here, and warning about
+        // absent footnotes would be noise.
+        if (($capabilities['footnotes'] ?? null) === 'referenced_source_nodes') {
+            $excluded[] = 'footnote_text';
+        }
+        sort($excluded);
+
+        return array_values(array_unique($excluded));
     }
 }
