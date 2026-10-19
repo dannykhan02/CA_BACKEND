@@ -31,12 +31,9 @@ class NormalKpiGrounder
             return 'missing_source_reference';
         }
         $rawValue = trim((string) $stored->value);
-        $tableHeaderId = trim((string) $stored->period) === ''
-            && ($stored->identity_metadata['value_basis'] ?? null) === 'proposed'
-            ? ($context['unit_span_id'] ?? null) : ($context['period_span_id'] ?? null);
         $tableProof = $document->type === 'PDF'
             ? app(PdfTabularCellVerifier::class)->verify($stored, $set, $value,
-                $this->span($set, $tableHeaderId, $document)) : null;
+                $this->span($set, $context['period_span_id'] ?? null, $document)) : null;
         if (($tableProof['rejection'] ?? null) !== null) {
             return $tableProof['rejection'];
         }
@@ -69,7 +66,6 @@ class NormalKpiGrounder
             return 'concept_mismatch';
         }
         $fields = ['value' => $value];
-        $periodContext = null;
         foreach (['unit' => (string) $stored->unit, 'period' => (string) $stored->period,
             'subject' => (string) (($stored->identity_metadata ?? [])['scope'] ?? '')] as $role => $expected) {
             $expected = trim($expected);
@@ -77,22 +73,10 @@ class NormalKpiGrounder
                 continue;
             }
             $candidate = $this->span($set, $context[$role.'_span_id'] ?? $context['value_span_id'] ?? null, $document);
-            if ($candidate === null) {
-                return $role.'_source_mismatch';
-            }
-            $columnUnit = $role === 'unit' && $tableProof !== null
-                && $candidate['span_id'] === ($tableProof['header_span_id'] ?? null)
-                && $this->containsWords($tableProof['basis_text'], $expected);
-            if ($role === 'period' && ! $this->containsWords($candidate['text'], $expected)) {
-                $periodContext = $tableProof === null ? null
-                    : $this->quarterPageContext($set, $candidate, $value, $expected, $tableProof);
-            }
-            if (! $this->containsWords($candidate['text'], $expected)
-                && ! ($role === 'period' && $periodContext !== null) && ! $columnUnit) {
+            if ($candidate === null || ! $this->containsWords($candidate['text'], $expected)) {
                 return $role.'_source_mismatch';
             }
             if ($document->type !== 'XLSX' && $candidate['span_id'] !== $value['span_id']
-                && ! $columnUnit
                 && ! ($role === 'subject' && $this->pageHeaderSubject($set, $candidate, $value))
                 && ! $this->governs($set, $candidate, $value)) {
                 return $role.'_relationship_unverified';
@@ -137,22 +121,6 @@ class NormalKpiGrounder
                     'start_offset' => $span['start_offset'], 'end_offset' => $span['end_offset'], 'roles' => []];
             }
             $sources[$key]['roles'][] = $role;
-        }
-        if ($periodContext !== null) {
-            $key = $periodContext['span_id'];
-            if (! isset($sources[$key])) {
-                $sources[$key] = ['span_id' => $key, 'quote' => $periodContext['text'],
-                    'page' => $periodContext['page'], 'start_offset' => $periodContext['start_offset'],
-                    'end_offset' => $periodContext['end_offset'], 'roles' => []];
-            }
-            $sources[$key]['roles'][] = 'period';
-        }
-        if (($tableProof['header_continuation'] ?? null) !== null) {
-            $continuation = $tableProof['header_continuation'];
-            $sources[$continuation['span_id']] = ['span_id' => $continuation['span_id'],
-                'quote' => $continuation['text'], 'page' => $continuation['page'],
-                'start_offset' => $continuation['start_offset'],
-                'end_offset' => $continuation['end_offset'], 'roles' => ['unit']];
         }
         $sourceId = 'kpi:'.$stored->id;
         DocumentEvidence::updateOrCreate([
@@ -272,49 +240,6 @@ class NormalKpiGrounder
         }
 
         return false;
-    }
-
-    /** A Q3 column under a Q3 2026 page heading proves the full period only for Q3. */
-    private function quarterPageContext(EvidenceSpanSet $set, array $column, array $value,
-        string $expected, array $tableProof): ?array
-    {
-        $period = $this->periods->parse($expected);
-        if ($period?->granularity !== 'quarter'
-            || ! preg_match('/^(Q[1-4])\s+(?:FY)?\d{4}$/iuD', $period->label, $match)
-            || ! preg_match('/^'.preg_quote($match[1], '/').'(?:\s|$)/iu', trim($tableProof['basis_text'] ?? ''))
-            || $column['page'] === null || $column['page'] !== $value['page']) {
-            return null;
-        }
-        $pageHeader = null;
-        foreach ($set->all() as $span) {
-            if ($span['page'] !== $value['page']) {
-                continue;
-            }
-            $pageHeader = $span;
-            break;
-        }
-        $pageHeader = $pageHeader === null ? null : $set->resolve($pageHeader['key']);
-        if ($pageHeader === null || ! $this->pageHeaderSubject($set, $pageHeader, $value)
-            || ! $this->containsWords($pageHeader['text'], $period->label)) {
-            return null;
-        }
-        // A conflicting explicit year on the way to the cited row makes the context ambiguous.
-        foreach ($set->all() as $span) {
-            if ($span['page'] !== $value['page'] || $span['start_offset'] >= $value['start_offset']) {
-                continue;
-            }
-            $span = $set->resolve($span['key']);
-            if (preg_match_all('/\b'.preg_quote($match[1], '/').'\s+(?:FY)?\d{4}\b/iu',
-                $span['text'], $periods)) {
-                foreach ($periods[0] as $written) {
-                    if ($this->periods->parse($written)?->label !== $period->label) {
-                        return null;
-                    }
-                }
-            }
-        }
-
-        return $pageHeader;
     }
 
     private function xlsxRelationship(Document $document, array $valueSpan, array $fields,

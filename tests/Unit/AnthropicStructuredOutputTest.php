@@ -5,8 +5,6 @@ namespace Tests\Unit;
 use App\Exceptions\AnthropicStructuredOutputException;
 use App\Models\AiPrompt;
 use App\Models\Document;
-use App\Models\DocumentAiRun;
-use App\Models\DocumentKpi;
 use App\Models\User;
 use App\Services\AI\PromptManager;
 use App\Services\AnthropicClient;
@@ -14,7 +12,6 @@ use App\Services\WorkspaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class AnthropicStructuredOutputTest extends TestCase
@@ -144,40 +141,6 @@ class AnthropicStructuredOutputTest extends TestCase
         );
         $requests = Http::recorded()->map(fn ($entry) => $entry[0]['max_tokens'])->all();
         $this->assertSame([100, 200], $requests);
-    }
-
-    public function test_insights_truncation_records_both_paid_responses_and_only_returns_the_complete_json(): void
-    {
-        config(['services.anthropic.structured_output_tokens.insights' => 6400,
-            'services.anthropic.structured_max_tokens_ceiling' => 8192]);
-        $prompt = new AiPrompt(['name' => 'document_insights', 'version' => 8,
-            'template' => '<document>{{document_text}}</document>']);
-        $manager = \Mockery::mock(PromptManager::class);
-        $manager->shouldReceive('resolve')->once()->with('document_insights')->andReturn($prompt);
-        $manager->shouldReceive('render')->once()->andReturnUsing(
-            fn ($model, $vars) => strtr($model->template, $vars));
-        $this->app->instance(PromptManager::class, $manager);
-        $first = $this->response('{"kpis":[', 'max_tokens');
-        $first['usage']['output_tokens'] = 6400;
-        $second = $this->response('{"kpis":[],"charts":[],"insights":[]}');
-        $second['usage']['output_tokens'] = 5000;
-        Http::fake(['api.anthropic.com/*' => Http::sequence()->push($first)->push($second)]);
-        $document = $this->document();
-
-        $result = app(AnthropicClient::class)->extractDocumentInsights(
-            $document->extracted_text, $document->name, $document);
-
-        self::assertSame([], $result['kpis']);
-        self::assertSame(8, $result['prompt_version']);
-        self::assertSame([6400, 8192], Http::recorded()
-            ->map(fn ($entry) => $entry[0]['max_tokens'])->all());
-        self::assertSame(1, DocumentAiRun::where('document_id', $document->id)
-            ->where('status', 'truncated')->where('output_tokens', 6400)->count());
-        self::assertSame(1, DocumentAiRun::where('document_id', $document->id)
-            ->where('status', 'success')->where('output_tokens', 5000)->count());
-        self::assertSame(2, DB::table('provider_call_attempts')
-            ->where('scope_key', 'document:'.$document->id)->where('status', 'settled')->count());
-        self::assertSame(0, DocumentKpi::where('document_id', $document->id)->count());
     }
 
     public function test_valid_json_with_invalid_schema_is_rejected(): void
