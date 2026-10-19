@@ -79,7 +79,12 @@ return [
             // own abstraction meant this was the only file that needed to
             // change; no caller of that service was touched.
             'driver' => env('DOCUMENTS_DISK_DRIVER', 's3'),
-            'root' => env('DOCUMENTS_LOCAL_ROOT', storage_path('app/documents')),
+            // 'root' is an object-key PREFIX on the s3 driver. Only set it for the local
+            // driver, otherwise every R2 key gets /app/storage/app/documents/ prepended
+            // and existing objects (stored without a prefix) stop resolving.
+            'root' => env('DOCUMENTS_DISK_DRIVER', 's3') === 'local'
+                ? env('DOCUMENTS_LOCAL_ROOT', storage_path('app/documents'))
+                : null,
             'key' => env('R2_ACCESS_KEY_ID'),
             'secret' => env('R2_SECRET_ACCESS_KEY'),
             'region' => 'auto',
