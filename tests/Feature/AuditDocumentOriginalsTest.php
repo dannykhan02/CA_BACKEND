@@ -6,6 +6,7 @@ use App\Models\Document;
 use App\Models\User;
 use App\Services\WorkspaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -77,15 +78,21 @@ class AuditDocumentOriginalsTest extends TestCase
         $this->stored();
         $missing = $this->document(); // never written to the fake disk
 
-        $this->artisan('documents:audit-originals')
-            ->expectsOutputToContain('Missing, Ready:           1')
-            ->expectsOutputToContain('MISSING on disk — Ready documents')
-            ->expectsOutputToContain($missing->id)
-            ->expectsOutputToContain($missing->file_path)
-            ->expectsOutputToContain('FAIL: a Ready document has a recorded original that does not resolve.')
-            // The hint that would have shortened the incident.
-            ->expectsOutputToContain('suspect addressing before data loss')
-            ->assertExitCode(1);
+        // Capture once: the id and the full path are printed on the SAME line,
+        // and artisan()'s expectsOutputToContain lets one written line satisfy
+        // only one expectation, so asserting both that way can never pass.
+        $exit = Artisan::call('documents:audit-originals');
+        $output = Artisan::output();
+
+        self::assertSame(1, $exit);
+        self::assertStringContainsString('Missing, Ready:           1', $output);
+        self::assertStringContainsString('MISSING on disk — Ready documents', $output);
+        self::assertStringContainsString($missing->id, $output);
+        // An operator must be able to copy the full key of a missing original.
+        self::assertStringContainsString($missing->file_path, $output);
+        self::assertStringContainsString('FAIL: a Ready document has a recorded original that does not resolve.', $output);
+        // The hint that would have shortened the incident.
+        self::assertStringContainsString('suspect addressing before data loss', $output);
     }
 
     public function test_a_null_file_path_is_reported_but_does_not_fail(): void
