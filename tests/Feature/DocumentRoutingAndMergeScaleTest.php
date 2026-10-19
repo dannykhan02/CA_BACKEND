@@ -600,7 +600,7 @@ class DocumentRoutingAndMergeScaleTest extends TestCase
         }
     }
 
-    public function test_incremental_extraction_output_cap_has_its_own_env_and_legacy_cap_is_unchanged(): void
+    public function test_incremental_extraction_output_cap_is_independent_of_normal_route_operation_caps(): void
     {
         $extraction = fn () => (require config_path('document_intelligence.php'))['extraction_max_tokens'];
         $legacy = fn () => (require config_path('services.php'))['anthropic']['max_tokens'];
@@ -630,14 +630,16 @@ class DocumentRoutingAndMergeScaleTest extends TestCase
             (new ProcessDocumentChunkJob($child->id))->handle(app(AnthropicClient::class), app(IncrementalPipeline::class));
         }
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/messages') && $request['max_tokens'] === 9000);
-        // The legacy four-job path still sends ANTHROPIC_MAX_TOKENS.
+        // Entities now use their own measured normal-route cap, independently of both
+        // the incremental extraction cap and the generic structured-output default.
+        config(['services.anthropic.structured_output_tokens.entities' => 4321]);
         $this->seed(DocumentEntitiesPromptSeeder::class);
         try {
             app(AnthropicClient::class)->extractDocumentEntities('Short report.', 'Legacy.pdf', $document->fresh());
         } catch (\Throwable) {
             // Only the request shape matters here.
         }
-        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/messages') && $request['max_tokens'] === 1234);
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/messages') && $request['max_tokens'] === 4321);
     }
 
     public function test_routing_and_planning_diagnostics_are_metadata_only(): void

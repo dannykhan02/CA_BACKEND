@@ -10,6 +10,7 @@ use App\Services\DocumentTextExtractor;
 use App\Services\Intelligence\ChartCandidateBuilder;
 use App\Services\Intelligence\MetricCollector;
 use App\Services\Intelligence\NormalKpiGrounder;
+use App\Services\Intelligence\NormalRouteProvenance;
 use App\Services\Intelligence\SourceReferenceResolver;
 use App\Services\WorkspaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -123,6 +124,10 @@ class NorthstarProductionBaselineTest extends TestCase
             'extracted_text' => $text]);
         $document->forceFill(['ai_pipeline' => ['route' => 'normal', 'key' => 'normal:ops-v8',
             'normal_span_grounding' => true]])->save();
+        $rendered = app(NormalRouteProvenance::class)->promptText($document, $text);
+        self::assertStringContainsString('[E043]', $rendered);
+        self::assertStringContainsString('[E046]', $rendered);
+        self::assertStringContainsString('[E048]', $rendered);
         foreach (['Q3 2026' => null, 'Q3 2025' => 'period_source_mismatch'] as $period => $expected) {
             $kpi = DocumentKpi::create(['document_id' => $document->id,
                 'workspace_id' => $document->workspace_id, 'label' => 'On-time deliveries',
@@ -157,6 +162,10 @@ class NorthstarProductionBaselineTest extends TestCase
             'extracted_text' => (new DocumentTextExtractor)->extractPdfText($path)]);
         $document->forceFill(['ai_pipeline' => ['route' => 'normal', 'key' => 'normal:proposal-v8',
             'normal_span_grounding' => true]])->save();
+        $rendered = app(NormalRouteProvenance::class)->promptText($document, $document->extracted_text);
+        self::assertStringContainsString('[E072]', $rendered);
+        self::assertStringContainsString('[E073]', $rendered);
+        self::assertStringContainsString('[E077]', $rendered);
         $kpi = DocumentKpi::create(['document_id' => $document->id,
             'workspace_id' => $document->workspace_id, 'label' => 'Proposed service-recovery budget',
             'value' => '2.40', 'unit' => 'KES million', 'period' => null,

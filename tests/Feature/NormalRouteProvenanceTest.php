@@ -47,9 +47,12 @@ class NormalRouteProvenanceTest extends TestCase
 
     public function test_v9_successor_clarifies_scope_period_and_proposal_without_activating_it(): void
     {
+        (new DocumentInsightsPromptSeederV8)->run();
+        AiPrompt::activate('document_insights', 8);
         (new DocumentInsightsPromptSeederV9)->run();
         $prompt = AiPrompt::where('name', 'document_insights')->where('version', 9)->sole();
         self::assertFalse($prompt->active);
+        self::assertTrue(AiPrompt::where('name', 'document_insights')->where('version', 8)->sole()->active);
         self::assertStringContainsString('scope is only its source-supported entity or population', $prompt->template);
         self::assertStringContainsString('column says only Q3', $prompt->template);
         self::assertStringContainsString('leave period null', $prompt->template);
