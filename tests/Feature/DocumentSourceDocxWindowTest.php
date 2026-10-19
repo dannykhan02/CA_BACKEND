@@ -249,4 +249,56 @@ class DocumentSourceDocxWindowTest extends TestCase
         $this->getJson($this->url($doc, $sources['list'], $rev->id))->assertOk()
             ->assertJsonPath('data.context.target.type', 'paragraph');
     }
+
+    public function test_response_names_what_this_rendering_leaves_out(): void
+    {
+        // The fixture has lists, no footnotes, and the parser never reads
+        // headers, comments or endnotes. `text_box_text` must be absent: a
+        // text box's words are extracted into its body paragraph, so calling
+        // them excluded would tell the reader something false. See
+        // tests/Unit/Services/DocxExcludedContentTest.php for the proof of
+        // each entry.
+        [, $doc, $rev, $sources] = $this->fixture();
+        $excluded = $this->getJson($this->url($doc, $sources['paragraph'], $rev->id))->assertOk()
+            ->json('data.excluded');
+
+        self::assertSame([
+            'comments',
+            'endnotes',
+            'field_codes',
+            'headers_and_footers',
+            'images',
+            'list_markers',
+            'tracked_change_deletions',
+        ], $excluded);
+        self::assertNotContains('text_box_text', $excluded);
+        self::assertNotContains('footnote_text', $excluded, 'this fixture carries no footnotes');
+    }
+
+    public function test_footnote_text_is_named_only_when_the_document_has_footnotes(): void
+    {
+        [, $doc, $rev, $sources] = $this->fixture();
+        $capabilities = json_decode(DB::table('structured_extractions')
+            ->where('id', $rev->structured_extraction_id)->value('capabilities'), true);
+        $capabilities['footnotes'] = 'referenced_source_nodes';
+        DB::table('structured_extractions')->where('id', $rev->structured_extraction_id)
+            ->update(['capabilities' => json_encode($capabilities)]);
+
+        self::assertContains('footnote_text', $this->getJson($this->url($doc, $sources['paragraph'], $rev->id))
+            ->assertOk()->json('data.excluded'));
+    }
+
+    public function test_existing_response_fields_are_unchanged_by_the_additive_excluded_list(): void
+    {
+        // `excluded` is additive. Nothing that was in the response before may
+        // have moved, so a frontend that does not know the field is unaffected.
+        [, $doc, $rev, $sources] = $this->fixture();
+        $this->getJson($this->url($doc, $sources['paragraph'], $rev->id))->assertOk()
+            ->assertJsonStructure(['data' => ['type', 'documentId', 'sourceId',
+                'intelligenceRevisionId', 'sourceRevision', 'excluded',
+                'anchor' => ['blockId', 'blockType', 'sourceHash', 'id', 'text', 'range', 'quote', 'quoteRange'],
+                'context' => ['sectionHeading', 'before', 'target', 'after']]])
+            ->assertJsonPath('data.type', 'docx')
+            ->assertJsonPath('data.context.target.type', 'paragraph');
+    }
 }

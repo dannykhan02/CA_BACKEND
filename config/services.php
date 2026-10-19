@@ -43,12 +43,6 @@ return [
         'synthesis_model' => env('ANTHROPIC_SYNTHESIS_MODEL', 'claude-sonnet-5-5'),
         'synthesis_effort' => env('ANTHROPIC_SYNTHESIS_EFFORT', 'medium'),
         'max_tokens' => (int) env('ANTHROPIC_MAX_TOKENS', 4096),
-        // Measured normal-route responses on 2026-10-19 needed 4,815–5,198
-        // insights tokens and up to 4,677 entity tokens. Keep other tasks at 4,096.
-        'structured_output_tokens' => [
-            'insights' => (int) env('ANTHROPIC_INSIGHTS_MAX_TOKENS', 6400),
-            'entities' => (int) env('ANTHROPIC_ENTITIES_MAX_TOKENS', 6144),
-        ],
         'structured_max_tokens_ceiling' => (int) env('ANTHROPIC_STRUCTURED_MAX_TOKENS_CEILING', 8192),
         'timeout' => (int) env('ANTHROPIC_TIMEOUT', 60),
         'entity_timeout' => min(120, max(1, (int) env('ANTHROPIC_ENTITY_TIMEOUT', 120))),
