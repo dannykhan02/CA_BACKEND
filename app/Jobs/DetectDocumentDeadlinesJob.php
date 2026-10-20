@@ -91,7 +91,20 @@ class DetectDocumentDeadlinesJob implements ShouldQueue
                 app(\App\Services\Intelligence\NormalRouteProvenance::class)
                     ->record($document, 'deadline', (string) $created->id, $deadline);
             }
-        }, ['deadline_count' => count($result['deadlines'])]);
+        }, ['deadline_count' => count($result['deadlines']),
+            'deadlines_dropped' => array_sum($result['_optional_items_dropped'] ?? []),
+            'deadline_drop_reasons' => $result['_optional_drop_reasons']['deadlines'] ?? [],
+            'deadline_repairs' => $result['_deadline_repairs'] ?? []]);
+
+        // Reasons and counts only; the deadline text itself is never logged.
+        if (! empty($result['_optional_items_dropped']) || ! empty($result['_deadline_repairs'])) {
+            Log::warning('Deadline validation dropped or repaired items', [
+                'document_id' => $document->id,
+                'kept' => count($result['deadlines']),
+                'dropped' => $result['_optional_drop_reasons']['deadlines'] ?? [],
+                'repaired' => $result['_deadline_repairs'] ?? [],
+            ]);
+        }
     }
 
     public function failed(\Throwable $e): void

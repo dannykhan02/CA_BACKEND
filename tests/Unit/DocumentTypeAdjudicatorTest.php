@@ -27,6 +27,28 @@ class DocumentTypeAdjudicatorTest extends TestCase
         $this->assertSame($result, (new DocumentTypeAdjudicator)->adjudicate($document, $result));
     }
 
+    /**
+     * failed_jobs 108 (2026-10-19 07:48): "Undefined array key prompt_version"
+     * at ClassifyDocumentTypeJob.php:84, because reclassification rebuilt the
+     * result from three keys and dropped the rest of the client's response.
+     * The job needs prompt_version to persist the classification at all.
+     */
+    public function test_reclassification_keeps_the_metadata_the_job_persists(): void
+    {
+        $document = new Document;
+        $document->extracted_text = "Q3 2026 performance report\nRevenue KES 51 million against operating costs KES 41 million and profit KES 10 million.\nDelivery and complaints are reported against service levels.";
+        $classification = ['document_type' => 'meeting_minutes', 'confidence' => 0.92,
+            'reasoning' => 'Board review.', 'prompt_version' => 7,
+            'input_tokens' => 1200, 'output_tokens' => 80];
+
+        $result = (new DocumentTypeAdjudicator)->adjudicate($document, $classification);
+
+        $this->assertSame('financial_report', $result['document_type']);
+        $this->assertSame(7, $result['prompt_version']);
+        $this->assertSame(1200, $result['input_tokens']);
+        $this->assertSame(80, $result['output_tokens']);
+    }
+
     public function test_a_document_with_money_alone_is_not_reclassified(): void
     {
         $document = new Document;
