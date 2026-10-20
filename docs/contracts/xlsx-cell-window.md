@@ -69,6 +69,49 @@ exception is the window itself, which is clipped at the worksheet edges and says
 | `hiddenRows[]`, `hiddenColumns[]` | indices inside the window that are hidden or filtered out |
 | `citation.matchState` | `EXACT` or `STRUCTURALLY_RESOLVED` |
 | `citation.conflictStatus` | the stored conflict status, or null |
+| `citation.resolution` | `EXACT_CELL_ANCHOR` or `OVERLAPPED_CELLS` — how the cell was reached (below) |
+| `citation.coversMultipleCells` | true when the citation covers more than one cell |
+| `citation.coveredCells[]` | every cell the citation covers, in document order, the focus first |
+
+`coveredCells` is always populated, and on the anchor route it is the one focus cell. It is what a
+reader may highlight. The **window** is centred on the first covered cell and is still radius 3, so
+a citation wider than the window can name cells outside its bounds; a client compares each
+coordinate with `window.startColumn`/`endColumn` and `startRow`/`endRow` rather than assuming
+every covered cell is present in `window.rows`.
+
+## How a citation is matched to a cell
+
+Two routes, in this order. Both answer only from the extraction the revision pins.
+
+**1. `EXACT_CELL_ANCHOR`.** A `cell`/`worksheet_cell` anchor of modality `xlsx`, reached as the
+citation's own `location` or as one of its `value` role anchors, whose offsets are exactly the
+cited range. `location` is only set when a cell anchor's `start_offset` and `end_offset` equal the
+citation's (`SourceReferenceResolver.php:194-204`), so this route needs the quote and the cell to
+be the same characters. The anchor's path, coordinate, range and sheet visibility are all checked
+against the extraction node before anything is returned.
+
+**2. `OVERLAPPED_CELLS`.** When no cell anchor owns the citation, the cited span is resolved to the
+cells of one sheet that it covers **whole**, provided everything it covers outside them is
+separator or whitespace characters (`StructuralSpanOverlap`, shared with the DOCX window).
+
+This route exists because the model quotes what it was shown, and what it was shown is the
+flattened projection: a row's cells joined with `" | "`, its rows with `"\n"`
+(`SpreadsheetTextExtractor.php:159,180`). A quote of one cell in a four-column row therefore ends
+`" |  |  |"`, eight characters past the cell, and a quote of one row carries the separators between
+its cells. Those characters belong to the rendering, not to the document.
+
+The window centre is the first covered cell; the rest are listed in `coveredCells`.
+
+**Still `SOURCE_UNAVAILABLE`, deliberately:**
+
+- no cell overlaps the cited span;
+- one real character of document text — a letter, digit or punctuation, including the extraction's
+  own `=== Sheet: x ===` line — sits inside the span but outside every covered cell;
+- the span cuts a cell in half, so the citation is not a citation of that cell;
+- the covered cells are not all on the same sheet (and not all children of the same worksheet node);
+- the citation belongs to another revision, or any of the pinning checks below fail.
+
+A citation covering more than 64 cells is `SOURCE_TOO_COMPLEX`, never a clipped list.
 
 ### A cell
 
@@ -129,9 +172,9 @@ Body is always `{"error": {"code": "<CODE>"}}`, except `404`, which is a bare ab
 | 409 | `SOURCE_NOT_READY` | the document has no published intelligence revision |
 | 409 | `STALE_SOURCE_REFERENCE` | `expected_revision_id` is not the published revision, or the resolved source belongs to another revision |
 | 409 | `SOURCE_UNAVAILABLE` | the document is not XLSX; no published view; the revision row is missing or not `published`; or any of the reader's pinning checks fail (text hash, file hash, provenance policy, structured-extraction id, projection mismatch) |
-| 409 | `SOURCE_AMBIGUOUS` | the citation names more than one cell, or a coordinate appears twice in the extraction |
+| 409 | `SOURCE_AMBIGUOUS` | the citation names more than one cell *anchor*, or a coordinate appears twice in the extraction |
 | 422 | `INVALID_SOURCE_REVISION` | `expected_revision_id` missing or not a UUID |
-| 422 | `SOURCE_TOO_COMPLEX` | any cap above exceeded, or the stored extraction is itself truncated (`nodes_truncated`, `cells` not `complete`) |
+| 422 | `SOURCE_TOO_COMPLEX` | any cap above exceeded, a citation covering more than 64 cells, or the stored extraction is itself truncated (`nodes_truncated`, `cells` not `complete`) |
 | 429 | — | `throttle:60,1` |
 
 `SOURCE_TOO_COMPLEX` is 422 and the other domain refusals are 409 — that split is in the
@@ -146,7 +189,11 @@ controller's `refuse(...)` call, not incidental.
 - It never merges the three values, and never substitutes one for another.
 - It never widens the window on request.
 - It never returns a cell from a sheet other than the cited one: a node whose `sheet` disagrees
-  with the anchor's is a `SOURCE_UNAVAILABLE`, not a filtered-out row.
+  with the anchor's is a `SOURCE_UNAVAILABLE`, not a filtered-out row. On the overlap route the
+  covered cells must themselves all be on one sheet.
+- It never widens a citation to a cell it only partly covers, and never reads a cell's neighbour
+  into the citation because the quote came close to it: the separators are the only thing it
+  forgives, and `coveredCells` says exactly which cells it claims.
 - **It never falls back to a newer extraction.** The row is fetched by
   `where('id', $revision->structured_extraction_id)` — the extraction the revision pins, by primary
   key — so an active extraction for a newer candidate is never substituted, and every identity
