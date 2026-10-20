@@ -4,6 +4,7 @@ namespace App\Services\Intelligence;
 
 use App\Models\Document;
 use App\Models\DocumentIntelligenceRevision;
+use App\Services\WorkspaceCreditService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -88,7 +89,14 @@ class DocumentRevisionPublisher
         return count(array_filter($required, fn ($stage) => ($states[$stage] ?? null) === 'completed')) === count($required);
     }
 
-    /** All required candidate artifacts must already be committed before this call. */
+    /**
+     * All required candidate artifacts must already be committed before this call.
+     *
+     * Retried: taking the credit here means this transaction holds the document lock and then the
+     * workspace lock, so two documents of one workspace publishing at the same instant can deadlock
+     * on the workspace row. A deadlock aborts one side, and re-running it succeeds — the work is
+     * idempotent, because an already-published revision returns early and the charge is claimed once.
+     */
     public function publish(Document $document, string $revisionId): DocumentIntelligenceRevision
     {
         return DB::transaction(function () use ($document, $revisionId): DocumentIntelligenceRevision {
@@ -173,12 +181,17 @@ class DocumentRevisionPublisher
             ])->save();
             $locked->forceFill(['published_intelligence_revision_id' => $revisionId,
                 'active_intelligence_revision_id' => null, 'status' => 'Ready', 'progress' => 100])->save();
+            // The charge point (docs/billing-credits.md): a published revision is the delivered
+            // product, so the credit is taken here and nowhere earlier. The debit shares this
+            // transaction and this document lock, so a publication is never charged without
+            // publishing and never published without being charged.
+            app(WorkspaceCreditService::class)->accountForReadyDocument($locked);
             Log::info('Document intelligence revision published', ['document_id' => $locked->id,
                 'old_revision_id' => $previous, 'new_revision_id' => $revisionId,
                 'generation' => $revision->generation]);
 
             return $revision;
-        });
+        }, 3);
     }
 
     public function fail(Document $document, string $revisionId): void

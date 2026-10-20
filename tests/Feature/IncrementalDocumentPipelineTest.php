@@ -1162,7 +1162,7 @@ class IncrementalDocumentPipelineTest extends TestCase
         Http::assertNothingSent();
     }
 
-    public function test_completed_merge_recovers_billing_failure_without_double_charging(): void
+    public function test_completed_merge_recovers_from_an_outage_without_charging(): void
     {
         $document = $this->document('Revenue increased to USD 10 in 2024.');
         $chunk = $this->plan($document);
@@ -1187,9 +1187,11 @@ class IncrementalDocumentPipelineTest extends TestCase
         $job->handle(app(EvidenceMerger::class), app(PipelineStageRecorder::class));
         $job->handle(app(EvidenceMerger::class), app(PipelineStageRecorder::class));
         self::assertSame('Processing', $document->fresh()->status);
-        self::assertNotNull($document->fresh()->credit_accounted_at);
         self::assertSame(1, $document->kpis()->count());
-        self::assertSame(1, DB::table('credit_ledger')->where('related_id', $document->id)->where('direction', 'debit')->count());
+        // Merge recovery is free: the document is still Processing, so nothing is charged here and
+        // the charge waits for Ready (docs/billing-credits.md). Evidence is still merged exactly once.
+        self::assertNull($document->fresh()->credit_accounted_at);
+        self::assertSame(0, DB::table('credit_ledger')->where('related_id', $document->id)->where('direction', 'debit')->count());
     }
 
     public function test_failed_document_rescan_invalidates_downstream_even_when_text_is_unchanged(): void

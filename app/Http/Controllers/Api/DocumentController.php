@@ -11,6 +11,7 @@ use App\Models\Document;
 use App\Policies\DocumentPolicy;
 use App\Services\AuditLogger;
 use App\Services\DocumentIntelligenceService;
+use App\Services\EntitlementService;
 use App\Services\IntelligenceAccess;
 use App\Support\EscapesLikeWildcards;
 use Illuminate\Http\JsonResponse;
@@ -142,6 +143,9 @@ class DocumentController extends Controller
 
         DB::transaction(function () use ($document, $request) {
             $document->delete();
+            // A deleted document will never publish a revision, so give its reservation back
+            // now rather than leaving it for the hourly sweep. A settled one keeps its charge.
+            app(EntitlementService::class)->releaseDocumentReservation($document, 'document_removed');
             app(AuditLogger::class)->log($request->user(), 'document.deleted', $document,
                 ['name' => $document->name], $document->workspace_id);
         });

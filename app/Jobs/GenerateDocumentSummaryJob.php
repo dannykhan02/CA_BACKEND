@@ -18,8 +18,8 @@ use App\Services\AI\Incremental\IncrementalPipeline;
 use App\Services\AI\Incremental\SynthesisBatches;
 use App\Services\AI\Incremental\SynthesisCheckpoint;
 use App\Services\AI\ProviderGate;
-use App\Services\AiCredits\QuoteService;
 use App\Services\AnthropicClient;
+use App\Services\EntitlementService;
 use App\Services\Intelligence\DocumentRevisionPublisher;
 use App\Services\Intelligence\DocumentTypeAdjudicator;
 use App\Services\Intelligence\NormalRouteProvenance;
@@ -57,7 +57,10 @@ class GenerateDocumentSummaryJob implements ShouldQueue
 {
     use Batchable, DefersWhenProviderBusy, Dispatchable, GuardsDocumentIntelligence, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments;
 
-    public int $tries = 2;
+    public int $tries = 3;
+
+    /** Transient synthesis failures get two more chances; the degradable ladder handles the rest. */
+    public array $backoff = [60, 300];
 
     // Largest per-level provider timeout (110s) + one bounded repair (40s) + bookkeeping.
     // Stays below the 360s extraction worker timeout and the 390s Redis retry_after.
@@ -291,15 +294,15 @@ class GenerateDocumentSummaryJob implements ShouldQueue
             $otherFailures = DocumentChunk::where('document_id', $document->id)->where('pipeline_key', $checkpoint->pipeline_key)
                 ->whereIn('status', ['failed', 'budget', 'uncertain'])->exists();
             $document->refresh();
-            if (QuoteService::enabled() || app(WorkspaceCreditService::class)->hasAiOperation($document->id)) {
-                // The contracted result is delivered: settle the quoted credits (once; a re-analysis settles its own quote).
-                // A reservation that outlived a flag flip to off still settles here.
-                app(WorkspaceCreditService::class)->accountForReadyDocument($document);
-            }
             $updated = DB::transaction(function () use ($document, $otherFailures, $result, $extractedData): bool {
                 $locked = Document::whereKey($document->id)->lockForUpdate()->first();
                 if (! $locked || ! app(DocumentRevisionPublisher::class)->owns($locked, $this->revisionId)) {
                     return false;
+                }
+                if (! app(DocumentRevisionPublisher::class)->enabled()) {
+                    // Revisions off: no publication will follow, so this Ready transition is the
+                    // charge point. With revisions on, publish() below takes the credit instead.
+                    app(WorkspaceCreditService::class)->accountForReadyDocument($locked);
                 }
                 $locked->forceFill(['ai_pipeline' => [...$locked->ai_pipeline,
                     'partial' => $otherFailures || ! empty($result['_optional_items_dropped'])
@@ -497,6 +500,7 @@ class GenerateDocumentSummaryJob implements ShouldQueue
             if ($this->revisionId !== null) {
                 app(DocumentRevisionPublisher::class)->fail($document, $this->revisionId);
             }
+            app(EntitlementService::class)->releaseDocumentReservation($document, 'synthesis_failed');
         });
         Log::error('GenerateDocumentSummaryJob failed after retries', [
             'document_id' => $this->documentId,

@@ -457,7 +457,7 @@ class DocumentRoutingAndMergeScaleTest extends TestCase
         self::assertSame('Revenue increased to USD 10 in 2024.', DocumentEvidence::sole()->data['quote']);
     }
 
-    public function test_merge_failure_and_retry_finalize_partial_evidence_with_one_debit(): void
+    public function test_merge_failure_and_retry_finalize_partial_evidence_without_charging(): void
     {
         [$document] = $this->evidenceDocument(60);
         $this->completedChunk($document, 'chunk:failed', 0, 10, [], 'failed')->update(['failure_class' => 'invalid_evidence', 'result' => null]);
@@ -481,7 +481,10 @@ class DocumentRoutingAndMergeScaleTest extends TestCase
         $job->handle(app(EvidenceMerger::class), app(PipelineStageRecorder::class));
         self::assertSame('completed', $merge->fresh()->status);
         self::assertSame($kpis, $document->kpis()->count());
-        self::assertSame(1, DB::table('credit_ledger')->where('related_id', $document->id)->where('direction', 'debit')->count());
+        // Merged evidence is not the delivered product and no longer debits: the document is still
+        // Processing here, and the charge waits for Ready (docs/billing-credits.md).
+        self::assertSame(0, DB::table('credit_ledger')->where('related_id', $document->id)->where('direction', 'debit')->count());
+        self::assertNull($document->fresh()->credit_accounted_at);
         $diagnostics = $merge->fresh()->result['diagnostics'];
         self::assertGreaterThan(0, $diagnostics['existing_hits']);
         self::assertSame(0, $diagnostics['inserted']);
@@ -781,7 +784,7 @@ class DocumentRoutingAndMergeScaleTest extends TestCase
             DocumentEvidence::all()->sum(fn ($e) => count($e->sources)),
             DB::table('credit_ledger')->where('related_id', $document->id)->where('direction', 'debit')->count()];
         $before = $snapshot();
-        self::assertSame(1, $before[4]);
+        self::assertSame(0, $before[4], 'merge delivers evidence, not a charge');
         // Late duplicate deliveries finalize only; nothing is merged, created or billed again.
         (new MergeDocumentEvidenceJob($merge->id))->handle(app(EvidenceMerger::class), app(PipelineStageRecorder::class));
         (new MergeDocumentEvidenceJob($merge->id))->handle(app(EvidenceMerger::class), app(PipelineStageRecorder::class));
