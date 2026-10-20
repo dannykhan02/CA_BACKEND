@@ -2,6 +2,7 @@
 
 namespace App\Services\Intelligence;
 
+use App\Exceptions\RevisionPublicationRefused;
 use App\Models\Document;
 use App\Models\DocumentIntelligenceRevision;
 use App\Services\WorkspaceCreditService;
@@ -99,6 +100,22 @@ class DocumentRevisionPublisher
      */
     public function publish(Document $document, string $revisionId): DocumentIntelligenceRevision
     {
+        try {
+            return $this->commit($document, $revisionId);
+        } catch (RevisionPublicationRefused $refusal) {
+            // The transaction that refused has rolled back, so the condition is recorded here.
+            Log::warning('Document revision publication refused', ['document_id' => $refusal->documentId,
+                'revision_id' => $refusal->revisionId, 'generation' => $refusal->generation,
+                'condition' => $refusal->condition]);
+            DocumentIntelligenceRevision::whereKey($refusal->revisionId)->where('state', 'candidate')
+                ->update(['publication_reason' => $refusal->condition]);
+
+            throw $refusal;
+        }
+    }
+
+    private function commit(Document $document, string $revisionId): DocumentIntelligenceRevision
+    {
         return DB::transaction(function () use ($document, $revisionId): DocumentIntelligenceRevision {
             $locked = Document::whereKey($document->id)->lockForUpdate()->firstOrFail();
             $revision = DocumentIntelligenceRevision::whereKey($revisionId)->lockForUpdate()->firstOrFail();
@@ -107,23 +124,21 @@ class DocumentRevisionPublisher
             }
             if (! $this->owns($locked, $revisionId) || $locked->trashed()
                 || ! in_array($locked->status, ['Processing', 'Ready'], true)) {
-                Log::warning('Document revision publication owner rejected', ['document_id' => $document->id,
-                    'revision_id' => $revisionId, 'generation' => $revision->generation]);
-                throw new \LogicException('Revision no longer owns document processing.');
+                $this->refuse($revision, 'owner_rejected', 'Revision no longer owns document processing.');
             }
             if (! is_string($revision->file_hash) || $revision->file_hash === ''
                 || $revision->file_hash !== $locked->file_hash
                 || trim((string) $locked->extracted_text) === '') {
-                throw new \LogicException('Revision source or text is unavailable.');
+                $this->refuse($revision, 'source_unavailable', 'Revision source or text is unavailable.');
             }
             $textHash = hash('sha256', $locked->extracted_text);
             $pipeline = $locked->ai_pipeline ?? [];
             if (! in_array($pipeline['route'] ?? null, ['normal', 'incremental'], true)) {
-                throw new \LogicException('Revision has no validated pipeline route.');
+                $this->refuse($revision, 'no_pipeline_route', 'Revision has no validated pipeline route.');
             }
             $pipelineKey = $pipeline['key'] ?? null;
             if (($pipeline['route'] ?? null) === 'incremental' && ! is_string($pipelineKey)) {
-                throw new \LogicException('Incremental revision has no pipeline identity.');
+                $this->refuse($revision, 'no_pipeline_identity', 'Incremental revision has no pipeline identity.');
             }
             if (($pipeline['route'] ?? null) === 'incremental') {
                 $evidenceReady = DB::table('document_chunks')->where('document_id', $locked->id)
@@ -132,7 +147,7 @@ class DocumentRevisionPublisher
                     ->where('workspace_id', $locked->workspace_id)->where('pipeline_key', $pipelineKey)
                     ->where('source_revision', $textHash)->where('published', true)->first();
                 if (! $evidenceReady || ! $set) {
-                    throw new \LogicException('Evidence or provenance stage is incomplete.');
+                    $this->refuse($revision, 'evidence_incomplete', 'Evidence or provenance stage is incomplete.');
                 }
             } else {
                 $set = is_string($pipelineKey) ? DB::table('source_provenance_sets')
@@ -154,12 +169,12 @@ class DocumentRevisionPublisher
             }
             foreach ($required as $stage) {
                 if (($stageStates[$stage] ?? null) !== 'completed') {
-                    throw new \LogicException('Required intelligence stage is incomplete: '.$stage);
+                    $this->refuse($revision, 'stage:'.$stage, 'Required intelligence stage is incomplete: '.$stage);
                 }
             }
             if (! DB::table('document_intelligence_summaries')->where('document_id', $locked->id)
                 ->where('intelligence_revision_id', $revisionId)->exists()) {
-                throw new \LogicException('Typed intelligence summary is incomplete.');
+                $this->refuse($revision, 'summary_missing', 'Typed intelligence summary is incomplete.');
             }
             $structure = DB::table('structured_extractions')->where('document_id', $locked->id)
                 ->where('source_hash', $locked->file_hash)->where('text_hash', $textHash)
@@ -194,16 +209,33 @@ class DocumentRevisionPublisher
         }, 3);
     }
 
-    public function fail(Document $document, string $revisionId): void
+    /** Refusing to publish is never silent: $condition says which one, on the revision and in the log. */
+    public function fail(Document $document, string $revisionId, string $condition): void
     {
-        DB::transaction(function () use ($document, $revisionId): void {
+        // publication_reason is varchar(32): a long provider failure class must not turn a
+        // recorded failure into a write error on the path that is reporting one.
+        $condition = substr($condition, 0, 32);
+        DB::transaction(function () use ($document, $revisionId, $condition): void {
             $locked = Document::whereKey($document->id)->lockForUpdate()->first();
             if (! $locked || $locked->active_intelligence_revision_id !== $revisionId) {
                 return;
             }
+            $candidate = DocumentIntelligenceRevision::whereKey($revisionId)->where('state', 'candidate')->first();
             DocumentIntelligenceRevision::whereKey($revisionId)->where('state', 'candidate')
-                ->update(['state' => 'failed', 'failed_at' => now()]);
+                ->update(['state' => 'failed', 'failed_at' => now(), 'publication_reason' => $condition]);
             $locked->forceFill(['active_intelligence_revision_id' => null])->save();
+            if ($candidate) {
+                Log::warning('Document intelligence revision failed', ['document_id' => $locked->id,
+                    'revision_id' => $revisionId, 'generation' => $candidate->generation,
+                    'condition' => $condition]);
+            }
         });
+    }
+
+    /** @throws RevisionPublicationRefused */
+    private function refuse(DocumentIntelligenceRevision $revision, string $condition, string $message): never
+    {
+        throw new RevisionPublicationRefused($message, $condition, $revision->document_id,
+            $revision->id, (int) $revision->generation);
     }
 }

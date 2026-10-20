@@ -110,7 +110,7 @@ class DocumentIntelligenceRevisionTest extends TestCase
         try {
             $publisher->publish($document, $stale->id);
         } finally {
-            $publisher->fail($document, $current->id);
+            $publisher->fail($document, $current->id, 'superseded_by_newer_run');
             self::assertSame($old, $document->fresh()->published_intelligence_revision_id);
             self::assertSame('First text', app(DocumentIntelligenceService::class)
                 ->publishedView($document->fresh())->extracted_text);
@@ -179,7 +179,7 @@ class DocumentIntelligenceRevisionTest extends TestCase
         $candidate = $publisher->begin($document);
         $document->forceFill(['extracted_text' => 'Unpublished text', 'insights' => ['unpublished'],
             'status' => 'Failed'])->save();
-        $publisher->fail($document, $candidate->id);
+        $publisher->fail($document, $candidate->id, 'extraction_failed');
         $view = app(DocumentIntelligenceService::class)->publishedView($document->fresh());
         self::assertSame('Failed', $view->status);
         self::assertNull($view->extracted_text);

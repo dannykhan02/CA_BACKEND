@@ -354,7 +354,7 @@ class ExtractDocumentTextJob implements ShouldQueue
             }
             $locked->forceFill(['status' => $status, 'progress' => 100, 'error_message' => $message])->save();
             if ($this->revisionId !== null) {
-                app(DocumentRevisionPublisher::class)->fail($locked, $this->revisionId);
+                app(DocumentRevisionPublisher::class)->fail($locked, $this->revisionId, 'extraction_failed');
             }
         });
     }
