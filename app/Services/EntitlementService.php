@@ -96,6 +96,49 @@ class EntitlementService
         $this->releaseFailures($workspace);
     }
 
+    /**
+     * Give a reservation back without charging, for a run that ended without publishing a revision.
+     * Idempotent, and deliberately blind to how the run ended: a no-op when the document is already
+     * settled, already released, or never reserved. Returns true only when this call released one.
+     * The hourly sweep (releaseFailures) remains the backstop for whatever never reaches here.
+     */
+    public function releaseDocumentReservation(Document $document, string $reason = 'document_not_completed'): bool
+    {
+        return DB::transaction(function () use ($document, $reason) {
+            Workspace::whereKey($document->workspace_id)->lockForUpdate()->firstOrFail();
+            // A settled document delivered its product; that charge is final and is never refunded here.
+            if (Document::withTrashed()->whereKey($document->id)->value('credit_accounted_at') !== null) {
+                return false;
+            }
+            $released = false;
+            foreach (['document', 'ocr', 'reanalysis'] as $kind) {
+                $operation = DB::table('billing_operations')->where('kind', $kind)
+                    ->where('resource_id', $document->id)->lockForUpdate()->first();
+                if (! $operation || $operation->status !== 'reserved') {
+                    continue;
+                }
+                if ($operation->amount_reserved !== null) {
+                    $released = app(CreditAccountant::class)->release($kind, $document->id, $reason, $document->uploaded_by) || $released;
+
+                    continue;
+                }
+                // Legacy one-unit reservation: no balance moved at reserve time, so releasing is
+                // only a status change. Availability stops subtracting it immediately.
+                $changed = DB::table('billing_operations')->where('id', $operation->id)->where('status', 'reserved')
+                    ->update(['status' => 'released', 'release_reason' => $reason, 'updated_at' => now()]);
+                if ($changed) {
+                    app(CreditLedger::class)->record($document->workspace_id,
+                        'document_release:'.$document->id.':'.$operation->attempt_number,
+                        $operation->usage_period_id ? 'subscription_document' : 'saved_document', 'release', 1,
+                        $reason, 'document', $document->id, $document->uploaded_by);
+                    $released = true;
+                }
+            }
+
+            return $released;
+        }, 3);
+    }
+
     private function releaseFailures(string $workspace): void
     {
         DB::transaction(function () use ($workspace) {

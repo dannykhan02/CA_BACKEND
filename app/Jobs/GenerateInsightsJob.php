@@ -12,6 +12,7 @@ use App\Models\DocumentChartPoint;
 use App\Models\DocumentKpi;
 use App\Services\AI\Incremental\IncrementalPipeline;
 use App\Services\AnthropicClient;
+use App\Services\EntitlementService;
 use App\Services\Intelligence\DocumentRevisionPublisher;
 use App\Services\Kpis\KpiIdentityResolver;
 use App\Services\Pipeline\PipelineStageRecorder;
@@ -29,7 +30,10 @@ class GenerateInsightsJob implements ShouldQueue
 {
     use Dispatchable, DispatchesIntelligenceChain, GuardsDocumentIntelligence, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments;
 
-    public int $tries = 2;
+    public int $tries = 3;
+
+    /** Transient provider/worker failures get two more chances; deterministic ones call fail() and never reach here. */
+    public array $backoff = [60, 300];
 
     public int $timeout = 120;
 
@@ -84,6 +88,8 @@ class GenerateInsightsJob implements ShouldQueue
 
                     return;
                 }
+                // Reached only with revisions off ($this->revisionId === null), where an unchanged
+                // re-upload goes Ready here with no further stage and no publication to charge for.
                 app(WorkspaceCreditService::class)->accountForReadyDocument($document);
                 $document->forceFill(['status' => 'Ready', 'progress' => 100])->save();
             });
@@ -104,6 +110,7 @@ class GenerateInsightsJob implements ShouldQueue
             if ($this->revisionId !== null) {
                 app(DocumentRevisionPublisher::class)->fail($document, $this->revisionId);
             }
+            app(EntitlementService::class)->releaseDocumentReservation($document, 'no_extracted_text');
             $this->fail(new \RuntimeException('Empty extracted_text at insights stage.'));
 
             return;
@@ -133,6 +140,7 @@ class GenerateInsightsJob implements ShouldQueue
                 if ($this->revisionId !== null) {
                     app(DocumentRevisionPublisher::class)->fail($current, $this->revisionId);
                 }
+                app(EntitlementService::class)->releaseDocumentReservation($current, 'analysis_failed');
 
                 return true;
             });
@@ -262,7 +270,9 @@ class GenerateInsightsJob implements ShouldQueue
                     }
                 }
 
-                app(WorkspaceCreditService::class)->accountForReadyDocument($document);
+                // No charge here. This stage delivers analysis, not a published revision:
+                // document_type, entities, risks, deadlines and document_summary still follow,
+                // and any of them can end the run. See docs/billing-credits.md.
                 $document->forceFill([
                     'insights' => $insights,
                     'has_structured_data' => ! empty($kpis) || ! empty($charts),
@@ -363,6 +373,7 @@ class GenerateInsightsJob implements ShouldQueue
         if ($this->revisionId !== null) {
             app(DocumentRevisionPublisher::class)->fail($document, $this->revisionId);
         }
+        app(EntitlementService::class)->releaseDocumentReservation($document, 'analysis_failed');
 
         Log::error('GenerateInsightsJob failed after retries', [
             'document_id' => $this->documentId,
