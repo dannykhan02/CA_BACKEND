@@ -1,5 +1,9 @@
 # Subscription implementation audit and plan
 
+> **Superseded in part (2026-10-20).** Credits are now charged when a revision
+> publishes, not at Ready. This document stays as the record of what shipped at
+> the time; see [billing-credits.md](billing-credits.md) for the current policy.
+
 ## Existing system (audit before changes)
 - `PaystackClient` initializes and verifies transactions using the backend secret, bounded timeouts, and the existing `/#/billing/return` callback.
 - `CreditPurchaseController` owns initialization, server verification and `/api/paystack/webhook`. It authenticates exact webhook bytes with SHA-512 HMAC and locks pending purchases before completion.

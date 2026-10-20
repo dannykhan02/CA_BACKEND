@@ -1,5 +1,9 @@
 # Document credits implementation status
 
+> **Superseded in part (2026-10-20).** The "both paths to Ready in
+> `GenerateInsightsJob`" accounting below has moved to revision publication;
+> see [billing-credits.md](billing-credits.md) for the current policy.
+
 Referral rewards and Personal upload/review behavior are documented in
 [Referrals and Personal document processing](REFERRALS.md).
 
