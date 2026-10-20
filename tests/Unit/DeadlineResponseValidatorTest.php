@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Services\AI\ResponseValidator;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -67,7 +68,7 @@ class DeadlineResponseValidatorTest extends TestCase
         yield 'impossible calendar date' => [['due_date' => '2026-11-31']];
     }
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('unusableDates')]
+    #[DataProvider('unusableDates')]
     public function test_an_explicit_deadline_with_no_usable_date_and_no_relative_text_is_dropped_alone(array $overrides): void
     {
         $good = $this->deadline();
@@ -81,7 +82,7 @@ class DeadlineResponseValidatorTest extends TestCase
             $result['_optional_drop_reasons']);
     }
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('unusableDates')]
+    #[DataProvider('unusableDates')]
     public function test_an_unusable_date_with_relative_text_becomes_relative_and_is_kept(array $overrides): void
     {
         $result = (new ResponseValidator)->validateDeadlines(['deadlines' => [
@@ -120,7 +121,7 @@ class DeadlineResponseValidatorTest extends TestCase
         yield 'not an object' => [[], 'not_an_object'];
     }
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('unusableDeadlines')]
+    #[DataProvider('unusableDeadlines')]
     public function test_any_other_unusable_deadline_is_dropped_alone_with_its_reason(array $overrides, string $reason): void
     {
         $good = $this->deadline();

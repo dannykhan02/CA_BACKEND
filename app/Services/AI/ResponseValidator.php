@@ -245,56 +245,110 @@ class ResponseValidator
 
     /**
      * Enforces the explicit/relative/inferred distinction: due_date must be
-     * null for anything other than "explicit", and must be a valid
-     * YYYY-MM-DD date when present — this is the concrete backend
-     * enforcement of the "never let Claude silently convert a relative
-     * deadline into a confirmed date" rule.
+     * null for anything other than "explicit", and must be a real YYYY-MM-DD
+     * calendar date when present — this is the concrete backend enforcement
+     * of the "never let Claude silently convert a relative deadline into a
+     * confirmed date" rule.
+     *
+     * One unusable deadline is dropped on its own, never the response around
+     * it: the envelope is still a clean failure, but a single bad item used
+     * to discard the whole extraction (insights, risks, entities, every
+     * anchor) after the credit had already been consumed. An "explicit"
+     * deadline whose due_date is missing or is not a real date is repaired
+     * to "relative" when the model supplied the document's own relative or
+     * recurring wording in relative_text, because that wording is what the
+     * document actually states; with nothing to fall back on it is dropped.
+     * No date is ever invented, completed or shifted.
      */
     public function validateDeadlines(array $decoded): array
     {
-        $allowedDateTypes = ['explicit', 'relative', 'inferred'];
-
         if (! array_key_exists('deadlines', $decoded) || ! is_array($decoded['deadlines'])) {
             throw new \RuntimeException('AI response missing required array field: deadlines');
         }
 
+        $kept = [];
+        $dropped = 0;
+        $dropReasons = [];
+        $repairs = [];
         foreach ($decoded['deadlines'] as $i => $deadline) {
-            if (! is_array($deadline)) {
-                throw new \RuntimeException("AI response deadlines[{$i}] is not an object.");
+            try {
+                $kept[] = $this->validateDeadline($deadline, (string) $i, $repairs);
+            } catch (DeadlineRejection $rejection) {
+                $dropped++;
+                $dropReasons[$rejection->reason] = ($dropReasons[$rejection->reason] ?? 0) + 1;
             }
-            if (! isset($deadline['title']) || ! is_string($deadline['title']) || trim($deadline['title']) === '') {
-                throw new \RuntimeException("AI response deadlines[{$i}] missing required non-empty string field: title");
-            }
-            if (! isset($deadline['description']) || ! is_string($deadline['description']) || trim($deadline['description']) === '') {
-                throw new \RuntimeException("AI response deadlines[{$i}] missing required non-empty string field: description");
-            }
-            if (! isset($deadline['date_type']) || ! in_array($deadline['date_type'], $allowedDateTypes, true)) {
-                throw new \RuntimeException("AI response deadlines[{$i}].date_type '".($deadline['date_type'] ?? 'null')."' is not in the controlled vocabulary.");
-            }
-
-            $dueDate = $deadline['due_date'] ?? null;
-            if ($deadline['date_type'] !== 'explicit' && $dueDate !== null) {
-                throw new \RuntimeException("AI response deadlines[{$i}] has a due_date but date_type is '{$deadline['date_type']}' — only 'explicit' deadlines may have a due_date.");
-            }
-            if ($deadline['date_type'] === 'explicit') {
-                if (! $dueDate || ! is_string($dueDate) || ! \DateTime::createFromFormat('Y-m-d', $dueDate)) {
-                    throw new \RuntimeException("AI response deadlines[{$i}] has date_type 'explicit' but due_date is missing or not a valid YYYY-MM-DD date.");
-                }
-            }
-
-            if (! isset($deadline['confidence']) || ! is_numeric($deadline['confidence'])) {
-                throw new \RuntimeException("AI response deadlines[{$i}] missing required numeric field: confidence");
-            }
-            $confidence = (float) $deadline['confidence'];
-            if ($confidence < 0.0 || $confidence > 1.0) {
-                throw new \RuntimeException("AI response deadlines[{$i}].confidence {$confidence} is outside the valid range 0.0-1.0.");
-            }
-            if (! isset($deadline['evidence']) || ! is_string($deadline['evidence']) || trim($deadline['evidence']) === '') {
-                throw new \RuntimeException("AI response deadlines[{$i}] missing required non-empty string field: evidence");
-            }
+        }
+        $decoded['deadlines'] = $kept;
+        // Metadata only, never evidence or raw responses.
+        if ($dropped > 0) {
+            $decoded['_optional_items_dropped']['deadlines'] = $dropped;
+            $decoded['_optional_drop_reasons']['deadlines'] = $dropReasons;
+        }
+        if ($repairs !== []) {
+            $decoded['_deadline_repairs'] = $repairs;
         }
 
         return $decoded;
+    }
+
+    /**
+     * @param  array<string, int>  $repairs  reason => count, by reference across the list
+     *
+     * @throws DeadlineRejection when this one deadline cannot be used as it stands
+     */
+    private function validateDeadline(mixed $deadline, string $path, array &$repairs): array
+    {
+        if (! is_array($deadline)) {
+            throw new DeadlineRejection('not_an_object', "AI response deadlines[{$path}] is not an object.");
+        }
+        foreach (['title', 'description', 'evidence'] as $field) {
+            if (! isset($deadline[$field]) || ! is_string($deadline[$field]) || trim($deadline[$field]) === '') {
+                throw new DeadlineRejection("missing_{$field}",
+                    "AI response deadlines[{$path}] missing required non-empty string field: {$field}");
+            }
+        }
+        if (! isset($deadline['date_type']) || ! in_array($deadline['date_type'], ['explicit', 'relative', 'inferred'], true)) {
+            throw new DeadlineRejection('invalid_date_type', "AI response deadlines[{$path}].date_type '"
+                .(is_string($deadline['date_type'] ?? null) ? $deadline['date_type'] : 'null')."' is not in the controlled vocabulary.");
+        }
+
+        $dueDate = $deadline['due_date'] ?? null;
+        if ($deadline['date_type'] !== 'explicit' && $dueDate !== null) {
+            throw new DeadlineRejection('due_date_for_non_explicit_type', "AI response deadlines[{$path}] has a due_date but date_type is '{$deadline['date_type']}' — only 'explicit' deadlines may have a due_date.");
+        }
+        if ($deadline['date_type'] === 'explicit' && ! $this->isCalendarDate($dueDate)) {
+            $relative = $deadline['relative_text'] ?? null;
+            if (! is_string($relative) || trim($relative) === '') {
+                throw new DeadlineRejection('explicit_without_due_date', "AI response deadlines[{$path}] has date_type 'explicit' but due_date is missing or not a valid YYYY-MM-DD date.");
+            }
+            // The document states a period, not a date. Keep its own words and
+            // say so in the type; do not guess the day, month or year.
+            $deadline['date_type'] = 'relative';
+            $deadline['due_date'] = null;
+            $reason = 'explicit_without_due_date_converted_to_relative';
+            $repairs[$reason] = ($repairs[$reason] ?? 0) + 1;
+        }
+
+        if (! isset($deadline['confidence']) || ! is_numeric($deadline['confidence'])) {
+            throw new DeadlineRejection('invalid_confidence', "AI response deadlines[{$path}] missing required numeric field: confidence");
+        }
+        $confidence = (float) $deadline['confidence'];
+        if ($confidence < 0.0 || $confidence > 1.0) {
+            throw new DeadlineRejection('invalid_confidence', "AI response deadlines[{$path}].confidence {$confidence} is outside the valid range 0.0-1.0.");
+        }
+
+        return $deadline;
+    }
+
+    /** A real calendar date in YYYY-MM-DD, so 2026-11-31 is not silently rolled into December. */
+    private function isCalendarDate(mixed $value): bool
+    {
+        if (! is_string($value) || $value === '') {
+            return false;
+        }
+        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+
+        return $date !== false && $date->format('Y-m-d') === $value;
     }
 
     /**

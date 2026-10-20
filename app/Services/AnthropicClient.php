@@ -1054,6 +1054,11 @@ PROMPT;
 
         return [
             'deadlines' => $decoded['deadlines'],
+            // Metadata about items the validator dropped or repaired, in the
+            // same shape structuredCall() records as response telemetry.
+            '_optional_items_dropped' => $decoded['_optional_items_dropped'] ?? [],
+            '_optional_drop_reasons' => $decoded['_optional_drop_reasons'] ?? [],
+            '_deadline_repairs' => $decoded['_deadline_repairs'] ?? [],
             'prompt_version' => $this->lastResolvedPromptVersion,
             'input_tokens' => $response['usage']['input_tokens'] ?? null,
             'output_tokens' => $response['usage']['output_tokens'] ?? null,
