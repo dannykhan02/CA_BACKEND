@@ -141,7 +141,11 @@ class WorkspaceCreditService
         $credits->save();
     }
 
-    /** Caller must hold the document row lock inside its Ready transaction. */
+    /**
+     * The charge point. One credit per document, when its revision publishes — or, where revisions
+     * are disabled and no publication exists, when it reaches Ready. Caller must hold the document
+     * row lock inside that transaction, so the debit and the claim commit together.
+     */
     public function accountForReadyDocument(Document $document, bool $ready = true): void
     {
         // Not gated on the flag: a reservation made while credits were on must settle the same way after the flag is turned off.
@@ -151,19 +155,23 @@ class WorkspaceCreditService
                 app(CreditAccountant::class)->settleDocument($document->id, $document->uploaded_by);
                 if ($document->credit_accounted_at === null && DB::table('billing_operations')->where('kind', 'document')
                     ->where('resource_id', $document->id)->where('status', 'completed')->exists()) {
-                    $document->forceFill(['credit_accounted_at' => now()]);
+                    $this->claimCharge($document);
                 }
             }
 
             return;
         }
-        if ($document->credit_accounted_at !== null) {
+        // Merged evidence alone never debits in legacy accounting either: the $ready = false
+        // caller (MergeDocumentEvidenceJob) runs long before anything is published.
+        if (! $ready || $document->credit_accounted_at !== null) {
+            return;
+        }
+        if (! $this->claimCharge($document)) {
+            // A concurrent publication already claimed this document's single charge.
             return;
         }
 
         if (app(EntitlementService::class)->settleDocument($document)) {
-            $document->forceFill(['credit_accounted_at' => now()]);
-
             return;
         }
 
@@ -178,9 +186,25 @@ class WorkspaceCreditService
         $credits->save();
         app(CreditLedger::class)->record($document->workspace_id, 'document_debit:'.$document->id, 'saved_document', 'debit',
             1, 'document_completed', 'document', $document->id, $document->uploaded_by, $credits->documents_remaining);
-        // Persisted with Ready, including zero-balance completions, so retries
-        // or later reprocessing cannot charge this document a second time.
-        $document->forceFill(['credit_accounted_at' => now()]);
+    }
+
+    /**
+     * Claim the one charge a document may ever incur, as a single conditional update. Two concurrent
+     * or repeated publications race here and exactly one wins; the loser charges nothing. Persisted
+     * immediately — including zero-balance completions — so retries and later reprocessing are free.
+     */
+    private function claimCharge(Document $document): bool
+    {
+        $at = now();
+        $claimed = (bool) Document::whereKey($document->id)->whereNull('credit_accounted_at')
+            ->update(['credit_accounted_at' => $at]);
+        if ($claimed) {
+            // Keep the caller's instance truthful without making the attribute dirty: callers
+            // save the same model afterwards and must not write the column a second time.
+            $document->setAttribute('credit_accounted_at', $at)->syncOriginalAttribute('credit_accounted_at');
+        }
+
+        return $claimed;
     }
 
     public function hasAiOperation(string $documentId): bool
