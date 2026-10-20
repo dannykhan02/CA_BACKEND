@@ -8,9 +8,11 @@ use App\Models\User;
 use App\Models\Workspace;
 use App\Services\AnthropicClient;
 use App\Services\Pipeline\PipelineStageRecorder;
+use App\Services\WorkspaceCreditService;
 use App\Services\WorkspaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -48,6 +50,16 @@ class WorkspaceCreditsTest extends TestCase
         (new GenerateInsightsJob($document->id))->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
     }
 
+    /**
+     * With revisions off the charge point is the last required stage, which GenerateDocumentSummaryJob
+     * owns; these tests drive the insights stage only, so they reach the charge point directly.
+     */
+    private function settle(Document $document): void
+    {
+        DB::transaction(fn () => app(WorkspaceCreditService::class)->accountForReadyDocument(
+            Document::whereKey($document->id)->lockForUpdate()->firstOrFail()));
+    }
+
     public function test_empty_workspace_rejects_upload_without_storing_or_dispatching(): void
     {
         $workspace = $this->workspace(0);
@@ -79,10 +91,13 @@ class WorkspaceCreditsTest extends TestCase
         $document = $this->document($workspace);
         $this->mock(AnthropicClient::class, fn ($mock) => $mock->shouldReceive('extractDocumentInsights')->twice()->andReturn([]));
         $this->runJob($document);
+        $this->settle($document);
         $this->runJob($document);
+        $this->settle($document);
         $this->assertSame('Ready', $document->fresh()->status);
         $document->refresh()->update(['status' => 'Processing']);
         $this->runJob($document);
+        $this->settle($document);
         $this->assertSame(2, $workspace->credits->documents_remaining);
         $this->assertSame(0, $workspace->credits->documents_purchased_total);
     }
@@ -105,6 +120,7 @@ class WorkspaceCreditsTest extends TestCase
         $second = $this->document($workspace);
         $this->mock(AnthropicClient::class, fn ($mock) => $mock->shouldReceive('extractDocumentInsights')->once()->andReturn([]));
         $this->runJob($first);
+        $this->settle($first);
         $this->assertSame('Ready', $first->fresh()->status);
         $this->assertSame(0, $workspace->credits->documents_remaining);
         $this->expectException(HttpException::class);
