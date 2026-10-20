@@ -14,24 +14,29 @@ use Illuminate\Support\Facades\DB;
  */
 class ReleaseStaleReservations extends Command
 {
-    protected $signature = 'billing:release-stale-reservations';
+    protected $signature = 'billing:release-stale-reservations {--dry-run : Report the affected workspaces without releasing anything}';
 
     protected $description = 'Release expired, failed and orphaned credit reservations for every workspace that holds one';
 
     public function handle(EntitlementService $entitlements): int
     {
         $cutoff = now()->subHours((int) config('billing.pipeline_hours'));
+        $dryRun = (bool) $this->option('dry-run');
         $released = 0;
         DB::table('billing_operations')->where('status', 'reserved')->whereIn('kind', ['document', 'ocr', 'reanalysis'])
             ->where(function ($q) use ($cutoff) {
                 $q->where('updated_at', '<=', $cutoff)
                     ->orWhereNotIn('resource_id', Document::select('id'))
                     ->orWhereIn('resource_id', Document::whereIn('status', ['Failed', 'Needs Review'])->select('id'));
-            })->distinct()->orderBy('workspace_id')->pluck('workspace_id')->each(function ($workspaceId) use ($entitlements, &$released) {
-                $entitlements->releaseStaleReservations($workspaceId);
+            })->distinct()->orderBy('workspace_id')->pluck('workspace_id')->each(function ($workspaceId) use ($entitlements, $dryRun, &$released) {
+                if (! $dryRun) {
+                    $entitlements->releaseStaleReservations($workspaceId);
+                }
                 $released++;
             });
-        $this->info("Swept {$released} workspace(s) with stale reservations.");
+        $this->info($dryRun
+            ? "Would sweep {$released} workspace(s) with stale reservations."
+            : "Swept {$released} workspace(s) with stale reservations.");
 
         return self::SUCCESS;
     }
