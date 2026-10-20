@@ -270,9 +270,14 @@ class GenerateInsightsJob implements ShouldQueue
                     }
                 }
 
-                // No charge here. This stage delivers analysis, not a published revision:
-                // document_type, entities, risks, deadlines and document_summary still follow,
-                // and any of them can end the run. See docs/billing-credits.md.
+                if (! app(DocumentRevisionPublisher::class)->enabled()) {
+                    // Revisions off: this Ready transition is the delivered product. The document
+                    // becomes readable here, and the intelligence batch that follows (document_type,
+                    // entities, risks, deadlines, document_summary) is additive rather than a gate.
+                    // With revisions on, Ready happens only at publication, which charges instead -
+                    // so a required stage failing after this point costs the customer nothing.
+                    app(WorkspaceCreditService::class)->accountForReadyDocument($document);
+                }
                 $document->forceFill([
                     'insights' => $insights,
                     'has_structured_data' => ! empty($kpis) || ! empty($charts),

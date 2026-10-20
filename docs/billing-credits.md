@@ -40,20 +40,35 @@ documents of one workspace contend when they publish at the same instant.
 
 `publish()` runs only when `DOCINTEL_REVISION_V1` is on. It is on in
 production. With it off there is no publication to charge for, so the charge
-falls to the last required stage instead:
+falls to the transition that actually delivers the product — the one that makes
+the document readable:
 
-- **Incremental route** — the Ready transition in `GenerateDocumentSummaryJob`.
-- **Normal route** — the end of `GenerateDocumentSummaryJob`, after
-  `document_type`, `entities`, `risks` and `deadlines` have all completed.
+- **Normal route** — the Ready transition in `GenerateInsightsJob`. The
+  document becomes readable there; the intelligence batch that follows
+  (`document_type`, `entities`, `risks`, `deadlines`, `document_summary`) is
+  additive enrichment dispatched separately, not a gate on Ready.
+- **Incremental route** — the Ready transition in
+  `GenerateDocumentSummaryJob`, which is where that route reaches Ready.
 - **Unchanged re-upload** — the skip path in `GenerateInsightsJob`, which is
   terminal and runs no further stage.
 
-Both configurations charge only once every required stage has delivered. What
-changed on 2026-10-20 is that the normal route used to charge in
-`GenerateInsightsJob` at the `ai_analysis` stage — before `deadlines` ran — so
-one malformed deadline could consume a credit and publish nothing. Merged
-evidence (`accountForReadyDocument($document, false)` from
-`MergeDocumentEvidenceJob`) never debits in either accounting regime.
+**This difference matters.** With revisions on, `deadlines` is a required stage
+that `publish()` gates on, so a malformed deadline costs the customer nothing —
+the production failure of 2026-10-20, where a document ended with
+`intelligence_generation 1`, no published revision and a consumed credit, is
+fixed. With revisions off, Ready legitimately precedes the deadline stage, so
+that window remains open in that configuration. Turning revisions off is
+therefore a billing-behaviour change, not only a reader change.
+
+What changed on 2026-10-20 is narrower than "the charge moved to the end":
+
+- The normal route used to charge at the `ai_analysis` stage *and* publish
+  later; now, with revisions on, only publication charges.
+- `MergeDocumentEvidenceJob` used to debit in legacy accounting. It passes
+  `$ready = false` to mean "merged evidence alone never debits", but the flag
+  was honoured only in the AI-credit branch. Merge runs while the document is
+  still `Processing`, so under this policy it cannot be a charge point; the
+  flag is now honoured in both regimes.
 
 ## Releasing a reservation
 

@@ -344,16 +344,6 @@ class GenerateDocumentSummaryJob implements ShouldQueue
             GenerateEmbeddingsJob::dispatch($document->id, $this->revisionId)
                 ->onQueue(QueueTopology::for(GenerateEmbeddingsJob::class));
         }
-        if (! $checkpoint && $this->revisionId === null) {
-            // Revisions off on the normal route: GenerateInsightsJob already set Ready, but this
-            // is the last required stage, so the charge belongs here rather than before it.
-            DB::transaction(function (): void {
-                $locked = Document::whereKey($this->documentId)->lockForUpdate()->first();
-                if ($locked && $locked->status === 'Ready') {
-                    app(WorkspaceCreditService::class)->accountForReadyDocument($locked);
-                }
-            }, 3);
-        }
     }
 
     /**
