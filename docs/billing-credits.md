@@ -123,3 +123,5 @@ php artisan billing:release-stale-reservations [--dry-run]
 
 Scheduled hourly. `--dry-run` reports the workspaces it would sweep and
 changes nothing.
+
+Operator note: run `php artisan credits:audit-settlements` after each deploy of this policy.
