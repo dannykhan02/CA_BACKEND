@@ -20,11 +20,15 @@ class XlsxCellWindowBuilder
     public function build(array $nodes, array $source, string $text): array
     {
         $anchor = $this->citedCell($source);
-        [$sheetId, $coordinate, $column, $row] = $this->path($anchor['path']);
+        // No cell anchor owns this citation exactly. Resolve the cited span to
+        // the cells it covers instead, when the only thing it covers outside
+        // them is the extractor's separators.
+        $covered = $anchor === null ? $this->coveredCells($nodes, $source, $text) : null;
+        [$sheetId, $coordinate, $column, $row] = $this->path($anchor['path'] ?? $covered[0]['path'] ?? null);
         $sheet = null;
         $focus = null;
         $cells = [];
-        $sheetName = $anchor['sheet'] ?? null;
+        $sheetName = $anchor['sheet'] ?? $covered[0]['sheet'] ?? null;
         if (! is_string($sheetName) || $sheetName === '') {
             throw new DomainException('SOURCE_UNAVAILABLE');
         }
@@ -110,12 +114,18 @@ class XlsxCellWindowBuilder
             throw new DomainException('SOURCE_UNAVAILABLE');
         }
         $this->verifyProjection($focus, $text);
-        $range = $anchor['range'] ?? null;
-        if (! is_array($range) || ($focus['start'] ?? null) !== ($range['start'] ?? null)
-            || ($focus['end'] ?? null) !== ($range['end'] ?? null)
-            || ($focus['meta']['coordinate'] ?? null) !== ($anchor['metadata']['coordinate'] ?? null)
-            || ($focus['meta']['sheet_visibility'] ?? null) !== ($sheet['meta']['visibility'] ?? null)
-            || ($anchor['metadata']['sheet_visibility'] ?? null) !== ($sheet['meta']['visibility'] ?? null)) {
+        if ($anchor !== null) {
+            $range = $anchor['range'] ?? null;
+            if (! is_array($range) || ($focus['start'] ?? null) !== ($range['start'] ?? null)
+                || ($focus['end'] ?? null) !== ($range['end'] ?? null)
+                || ($focus['meta']['coordinate'] ?? null) !== ($anchor['metadata']['coordinate'] ?? null)
+                || ($focus['meta']['sheet_visibility'] ?? null) !== ($sheet['meta']['visibility'] ?? null)
+                || ($anchor['metadata']['sheet_visibility'] ?? null) !== ($sheet['meta']['visibility'] ?? null)) {
+                throw new DomainException('SOURCE_UNAVAILABLE');
+            }
+        } elseif (($focus['meta']['sheet_visibility'] ?? null) !== ($sheet['meta']['visibility'] ?? null)) {
+            // The window centre came from the pinned extraction rather than
+            // from an anchor, so the cell and its worksheet must still agree.
             throw new DomainException('SOURCE_UNAVAILABLE');
         }
 
@@ -147,7 +157,14 @@ class XlsxCellWindowBuilder
             'mergedRanges' => array_keys($merges),
             'hiddenRows' => $hiddenRows, 'hiddenColumns' => $hiddenColumns,
             'citation' => ['matchState' => $source['matchState'],
-                'conflictStatus' => $source['quality']['conflictStatus'] ?? null],
+                'conflictStatus' => $source['quality']['conflictStatus'] ?? null,
+                'resolution' => $covered === null ? 'EXACT_CELL_ANCHOR' : 'OVERLAPPED_CELLS',
+                'coversMultipleCells' => $covered !== null && count($covered) > 1,
+                // Every cell the citation covers, in document order, the focus
+                // first. A reader may highlight all of them; the window is
+                // centred on the first, so a wide citation can reach past it.
+                'coveredCells' => $covered === null ? [$coordinate]
+                    : array_map(static fn (array $cell): string => $cell['meta']['coordinate'], $covered)],
         ];
         try {
             if (strlen(json_encode($result, JSON_THROW_ON_ERROR)) > self::MAX_RESPONSE_BYTES) {
@@ -160,7 +177,8 @@ class XlsxCellWindowBuilder
         return $result;
     }
 
-    private function citedCell(array $source): array
+    /** @return array<string, mixed>|null the one cell anchor that owns this citation, or null if no anchor does */
+    private function citedCell(array $source): ?array
     {
         $range = $source['source']['range'] ?? null;
         $values = $source['roles']['value'] ?? [];
@@ -194,11 +212,47 @@ class XlsxCellWindowBuilder
         if (count($candidates) > 1) {
             throw new DomainException('SOURCE_AMBIGUOUS');
         }
-        if ($candidates === []) {
+
+        return $candidates === [] ? null : array_values($candidates)[0];
+    }
+
+    /**
+     * The cells of one sheet that the cited span covers whole, in document
+     * order. Separator and whitespace characters may sit between and around
+     * them; one real character of text outside a cell, one cell cut in half,
+     * or two sheets in the same span, and there is no verified window.
+     *
+     * The cells come from the structured extraction the revision pins by
+     * primary key — the same rows the published `worksheet_cell` anchors were
+     * produced from, and complete, because the reader has already refused a
+     * truncated or partial extraction.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function coveredCells(array $nodes, array $source, string $text): array
+    {
+        $range = $source['source']['range'] ?? null;
+        if (! is_array($range) || ! is_int($range['start'] ?? null) || ! is_int($range['end'] ?? null)) {
+            throw new DomainException('SOURCE_UNAVAILABLE');
+        }
+        $candidates = [];
+        foreach ($nodes as $node) {
+            if (! is_array($node)) {
+                throw new DomainException('SOURCE_UNAVAILABLE');
+            }
+            if (($node['type'] ?? null) === 'cell' && isset($node['start'], $node['end'])
+                && is_string($node['sheet'] ?? null) && is_string($node['meta']['coordinate'] ?? null)) {
+                $candidates[] = $node;
+            }
+        }
+        $covered = app(StructuralSpanOverlap::class)->cover($candidates, $range['start'], $range['end'], $text);
+        if ($covered === null
+            || count(array_unique(array_column($covered, 'sheet'))) !== 1
+            || count(array_unique(array_column($covered, 'parent'))) !== 1) {
             throw new DomainException('SOURCE_UNAVAILABLE');
         }
 
-        return array_values($candidates)[0];
+        return $covered;
     }
 
     private function path(mixed $path): array

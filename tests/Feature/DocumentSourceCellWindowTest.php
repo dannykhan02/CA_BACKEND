@@ -128,7 +128,10 @@ class DocumentSourceCellWindowTest extends TestCase
             ->assertJsonPath('data.window.truncated.left', true)
             ->assertJsonPath('data.hiddenRows.0', 3)
             ->assertJsonPath('data.hiddenColumns.0', 3)
-            ->assertJsonPath('data.mergedRanges.0', 'A4:B4');
+            ->assertJsonPath('data.mergedRanges.0', 'A4:B4')
+            ->assertJsonPath('data.citation.resolution', 'EXACT_CELL_ANCHOR')
+            ->assertJsonPath('data.citation.coversMultipleCells', false)
+            ->assertJsonPath('data.citation.coveredCells', ['B2']);
         $cells = collect($response->json('data.window.rows'))->flatMap(fn ($row) => $row['cells'])->keyBy('coordinate');
         self::assertSame(12.4, $cells['B2']['rawValue']);
         self::assertSame('12.4', $cells['B2']['displayValue']);
@@ -167,7 +170,9 @@ class DocumentSourceCellWindowTest extends TestCase
         self::assertNotEmpty($resolved['roles']['value'] ?? null);
         $this->getJson($this->url($document, $sources['row'], $revision->id))
             ->assertOk()->assertJsonPath('data.focus.coordinate', 'B2')
-            ->assertJsonPath('data.citation.matchState', 'STRUCTURALLY_RESOLVED');
+            ->assertJsonPath('data.citation.matchState', 'STRUCTURALLY_RESOLVED')
+            ->assertJsonPath('data.citation.resolution', 'EXACT_CELL_ANCHOR')
+            ->assertJsonPath('data.citation.coveredCells', ['B2']);
     }
 
     public function test_read_stays_on_the_published_extraction_even_if_another_becomes_active(): void
