@@ -80,6 +80,43 @@ against the same immutable revision.
 | `context.before[]`, `context.after[]` | up to 3 blocks each side, in document order |
 | `context.target` | the cited block |
 | `table` | for a citation inside a table: `{id, focusRowId, rows[]}`; otherwise null |
+| `citation.resolution` | `EXACT_BLOCK` or `OVERLAPPED_BLOCKS` — how the block was reached (below) |
+| `citation.coversMultipleBlocks` | true when the citation covers more than one block |
+| `citation.coveredBlockIds[]` | every block the citation covers, in document order, the target first |
+
+`coveredBlockIds` is always populated, and on the exact route it is the target alone. The window is
+built around the **first** covered block, so a wide citation can cover blocks that are not in
+`context.before`/`after` or in the five table rows; a client compares the ids rather than assuming
+every covered block is on screen.
+
+### How a citation is matched to a block
+
+Two routes, in this order, both answering only from the pinned extraction.
+
+**1. `EXACT_BLOCK`.** One paragraph, heading or cell **contains** the cited range. A cell wins over
+the paragraph it holds, and otherwise the smallest enclosing block wins; two identical candidates
+are `SOURCE_AMBIGUOUS`.
+
+**2. `OVERLAPPED_BLOCKS`.** When no single block contains the citation, the cited span is resolved
+to the blocks it covers **whole**, provided everything it covers outside them is separator or
+whitespace characters (`StructuralSpanOverlap`, shared with the XLSX cell window). Cells are tried
+first — a cell is the unit for a table citation — then body paragraphs and headings. A paragraph
+inside a cell is never a candidate: a table citation is owned by its cells.
+
+This route is what a normal-route citation needs, because `SourceSpanBuilder` cuts a span per prose
+*block*, not per paragraph: a heading with the short paragraphs under it is one span, and two short
+paragraphs are one span. The separators it then carries — the `"\n"` after each paragraph and row,
+the `" | "` after each cell — belong to the rendering, not to the document.
+
+- several cells of one row → the target is the row (`blockType: "table_row"`), unless a single
+  bound `value` cell names one of them, which stays the target as before;
+- one cell → that cell;
+- several body blocks → the first, with the rest in `coveredBlockIds`.
+
+**Still `SOURCE_UNAVAILABLE`, deliberately:** no block overlaps the span; the span cuts a block in
+half; one real character of document text sits inside the span but outside every covered block;
+the covered cells belong to more than one row; or any pinning or hash check fails. A citation
+covering more than 64 blocks is `SOURCE_TOO_COMPLEX`, never a clipped list.
 
 ### A block
 
@@ -140,7 +177,14 @@ reader for this parser version. Proof for each entry:
 
 The field is **additive** — it was inserted beside the existing top-level keys and nothing moved.
 A client that does not know it is unaffected, which
-`test_existing_response_fields_are_unchanged_by_the_additive_excluded_list` pins.
+`test_existing_response_fields_are_unchanged_by_the_additive_excluded_list` pins. `citation` was
+added the same way.
+
+Nothing in `excluded[]` changed with the overlap route. In particular an inline image still
+contributes no text at all, so a paragraph that holds one resolves on its text alone and the
+response still declares `images` — pinned by
+`DocumentSourceDocxWindowSpanOverlapTest::test_a_paragraph_holding_an_inline_image_resolves_and_still_declares_the_image_missing`,
+which also asserts the image's file name and alt text appear nowhere in the response.
 
 ## Parser versions and compatibility
 
@@ -190,10 +234,10 @@ Body is `{"error": {"code": "<CODE>"}}`, except `404`.
 | 404 | — | the `sourceId` does not resolve in the published view |
 | 409 | `SOURCE_NOT_READY` | no published intelligence revision |
 | 409 | `STALE_SOURCE_REFERENCE` | `expected_revision_id` is not the published revision, or the resolved source belongs to another revision |
-| 409 | `SOURCE_UNAVAILABLE` | not DOCX; no published view; revision row missing or not `published`; the citation's range or preview does not re-slice to the stored text; no provenance anchor proves the block; or any pinning check fails |
+| 409 | `SOURCE_UNAVAILABLE` | not DOCX; no published view; revision row missing or not `published`; the citation's range or preview does not re-slice to the stored text; no provenance anchor proves the block; the cited span neither sits inside one block nor covers whole blocks separator-cleanly; or any pinning check fails |
 | 409 | `SOURCE_AMBIGUOUS` | two equally exact enclosing blocks, or an ambiguous match state |
 | 422 | `INVALID_SOURCE_REVISION` | `expected_revision_id` missing or not a UUID |
-| 422 | `SOURCE_TOO_COMPLEX` | any cap above exceeded, or the stored extraction is truncated (`body_order` not `complete`, `nodes_truncated`) |
+| 422 | `SOURCE_TOO_COMPLEX` | any cap above exceeded, a citation covering more than 64 blocks, or the stored extraction is truncated (`body_order` not `complete`, `nodes_truncated`) |
 | 429 | — | `throttle:60,1` |
 
 ## Verification status

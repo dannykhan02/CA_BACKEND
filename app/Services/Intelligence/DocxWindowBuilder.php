@@ -62,39 +62,13 @@ class DocxWindowBuilder
             throw new DomainException('SOURCE_AMBIGUOUS');
         }
         $rowQuote = false;
+        $covered = null;
         if ($target === null) {
-            $rows = [];
-            $cellStarts = [];
-            $cellEnds = [];
-            foreach ($byId as $node) {
-                if ($node['type'] !== 'cell' || ! isset($node['start'], $node['end'])
-                    || $node['end'] <= $start || $node['start'] >= $end) {
-                    continue;
-                }
-                $this->verify($node, $text);
-                if ($node['start'] < $start || $node['end'] > $end) {
-                    throw new DomainException('SOURCE_UNAVAILABLE');
-                }
-                $rows[$node['parent'] ?? ''] = true;
-                $cellStarts[] = $node['start'];
-                $cellEnds[] = $node['end'];
-            }
-            if (count($rows) !== 1 || min($cellStarts) !== $start || max($cellEnds) !== $end) {
-                throw new DomainException('SOURCE_UNAVAILABLE');
-            }
-            $target = $byId[array_key_first($rows)] ?? null;
-            if (($target['type'] ?? null) !== 'row') {
-                throw new DomainException('SOURCE_UNAVAILABLE');
-            }
-            $rowQuote = true;
-            $values = $source['roles']['value'] ?? [];
-            if (count($values) === 1 && ($values[0]['type'] ?? null) === 'cell') {
-                $cell = $byId[$values[0]['path'] ?? ''] ?? null;
-                if ($cell !== null && ($cell['parent'] ?? null) === $target['id']) {
-                    $target = $cell;
-                    $rowQuote = false;
-                }
-            }
+            // No single block contains the citation exactly. Resolve the cited
+            // span to the blocks it covers whole instead, when the only thing
+            // it covers outside them is the extractor's separators: " | "
+            // after each cell, "\n" after each row and paragraph.
+            [$target, $rowQuote, $covered] = $this->overlapped($byId, $source, $text, $start, $end);
         }
         $targetBlock = $rowQuote
             ? ['id' => $target['id'], 'type' => 'table_row', 'text' => $source['source']['text'],
@@ -111,7 +85,8 @@ class DocxWindowBuilder
             $heading = $this->heading($byId[$tableId], $body, $bodyIndex, $byId, $text);
 
             return ['context' => ['sectionHeading' => $heading, 'before' => [],
-                'target' => $targetBlock, 'after' => []], 'table' => $table];
+                'target' => $targetBlock, 'after' => []], 'table' => $table,
+                'citation' => $this->citation($covered, $target['id'])];
         }
         $index = array_search($target['id'], $body, true);
         if ($index === false) {
@@ -152,7 +127,77 @@ class DocxWindowBuilder
         }
 
         return ['context' => ['sectionHeading' => $heading, 'before' => $before,
-            'target' => $targetBlock, 'after' => $after], 'table' => null];
+            'target' => $targetBlock, 'after' => $after], 'table' => null,
+            'citation' => $this->citation($covered, $target['id'])];
+    }
+
+    /**
+     * The blocks the cited span covers, when no single block contains it.
+     *
+     * Table cells are tried first, because a cell is the meaningful unit for a
+     * table citation and a row quote is cells plus their separators. Body
+     * blocks are tried next, which is how a span that ends on the "\n" after
+     * its paragraph, or that covers a heading and the short paragraphs under
+     * it, reaches the structure it was cut from (SourceSpanBuilder groups a
+     * whole prose block, so one normal-route span routinely spans several).
+     *
+     * A paragraph inside a cell is never a candidate here: a table citation is
+     * owned by its cells, not by the paragraph the cell happens to hold.
+     *
+     * @return array{array<string, mixed>, bool, list<array<string, mixed>>}
+     */
+    private function overlapped(array $byId, array $source, string $text, int $start, int $end): array
+    {
+        $overlap = app(StructuralSpanOverlap::class);
+        $cells = $overlap->cover(array_values(array_filter($byId,
+            static fn (array $node): bool => $node['type'] === 'cell' && isset($node['start'], $node['end']))),
+            $start, $end, $text);
+        if ($cells !== null) {
+            if (count(array_unique(array_column($cells, 'parent'))) !== 1) {
+                throw new DomainException('SOURCE_UNAVAILABLE'); // Cells of more than one row.
+            }
+            if (count($cells) === 1) {
+                return [$cells[0], false, $cells];
+            }
+            $row = $byId[$cells[0]['parent']] ?? null;
+            if (($row['type'] ?? null) !== 'row') {
+                throw new DomainException('SOURCE_UNAVAILABLE');
+            }
+            $values = $source['roles']['value'] ?? [];
+            if (count($values) === 1 && ($values[0]['type'] ?? null) === 'cell') {
+                $cell = $byId[$values[0]['path'] ?? ''] ?? null;
+                if ($cell !== null && ($cell['parent'] ?? null) === $row['id']) {
+                    return [$cell, false, $cells];
+                }
+            }
+
+            return [$row, true, $cells];
+        }
+        $blocks = $overlap->cover(array_values(array_filter($byId,
+            static fn (array $node): bool => in_array($node['type'], ['paragraph', 'section_heading'], true)
+                && ($node['parent'] ?? null) === 'body' && isset($node['start'], $node['end']))),
+            $start, $end, $text);
+        if ($blocks === null) {
+            throw new DomainException('SOURCE_UNAVAILABLE');
+        }
+
+        return [$blocks[0], false, $blocks];
+    }
+
+    /**
+     * How the citation reached its target, and every block it covers. The
+     * window is centred on the first, so a wide citation can cover blocks
+     * outside `before`/`after`; the ids say which ones it claims.
+     *
+     * @param  list<array<string, mixed>>|null  $covered
+     * @return array<string, mixed>
+     */
+    private function citation(?array $covered, string $targetId): array
+    {
+        return ['resolution' => $covered === null ? 'EXACT_BLOCK' : 'OVERLAPPED_BLOCKS',
+            'coversMultipleBlocks' => $covered !== null && count($covered) > 1,
+            'coveredBlockIds' => $covered === null ? [$targetId]
+                : array_map(static fn (array $node): string => $node['id'], $covered)];
     }
 
     private function verify(array $node, string $text): void
