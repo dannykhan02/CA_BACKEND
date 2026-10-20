@@ -93,7 +93,7 @@ class GenerateDocumentSummaryJob implements ShouldQueue
         }
         if ($this->revisionId !== null && ($document->ai_pipeline['route'] ?? null) !== 'incremental'
             && ! app(DocumentRevisionPublisher::class)->normalStagesComplete($document, $this->revisionId)) {
-            app(DocumentRevisionPublisher::class)->fail($document, $this->revisionId);
+            app(DocumentRevisionPublisher::class)->fail($document, $this->revisionId, 'stages_incomplete');
 
             return;
         }
@@ -438,7 +438,7 @@ class GenerateDocumentSummaryJob implements ShouldQueue
                 'ai_pipeline' => [...$locked->ai_pipeline, 'partial' => true, 'synthesis' => $failure,
                     'synthesis_failure_reason' => $reason]])->save();
             if ($this->revisionId !== null) {
-                app(DocumentRevisionPublisher::class)->fail($locked, $this->revisionId);
+                app(DocumentRevisionPublisher::class)->fail($locked, $this->revisionId, $reason);
             }
         });
     }
@@ -498,7 +498,7 @@ class GenerateDocumentSummaryJob implements ShouldQueue
                 }
             }
             if ($this->revisionId !== null) {
-                app(DocumentRevisionPublisher::class)->fail($document, $this->revisionId);
+                app(DocumentRevisionPublisher::class)->fail($document, $this->revisionId, 'synthesis_job_failed');
             }
             app(EntitlementService::class)->releaseDocumentReservation($document, 'synthesis_failed');
         });

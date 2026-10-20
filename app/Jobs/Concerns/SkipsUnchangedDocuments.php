@@ -19,6 +19,14 @@ use Illuminate\Support\Facades\Log;
  * property (set via constructor) — DocumentReprocessController is the
  * only current caller that sets it true, since manual reprocessing must
  * always bypass this guard.
+ *
+ * The guard never applies to a stage running for an intelligence revision.
+ * Its premise is that an unchanged file needs no second run, but a candidate
+ * revision publishes only once every required stage has recorded its own
+ * result against that revision — a stage skipped on the strength of an older
+ * generation's run leaves the new one permanently unpublishable. Re-running a
+ * revision-scoped stage is instead made idempotent by startIntelligence(),
+ * which refuses a stage that already has an attempt for the same revision.
  */
 trait SkipsUnchangedDocuments
 {
@@ -37,7 +45,7 @@ trait SkipsUnchangedDocuments
         array $onSkipDocumentUpdate = [],
         ?\Closure $verifyCompleted = null,
     ): bool {
-        if ($this->forceReprocess) {
+        if ($this->forceReprocess || ($this->revisionId ?? null) !== null) {
             return false;
         }
 

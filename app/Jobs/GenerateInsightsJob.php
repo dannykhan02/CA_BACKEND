@@ -108,7 +108,7 @@ class GenerateInsightsJob implements ShouldQueue
                 'error_message' => 'No extracted text available for AI analysis.',
             ])->save();
             if ($this->revisionId !== null) {
-                app(DocumentRevisionPublisher::class)->fail($document, $this->revisionId);
+                app(DocumentRevisionPublisher::class)->fail($document, $this->revisionId, 'no_extracted_text');
             }
             app(EntitlementService::class)->releaseDocumentReservation($document, 'no_extracted_text');
             $this->fail(new \RuntimeException('Empty extracted_text at insights stage.'));
@@ -138,7 +138,7 @@ class GenerateInsightsJob implements ShouldQueue
                     'error_message' => 'Analysis could not be completed. Please try again.',
                 ])->save();
                 if ($this->revisionId !== null) {
-                    app(DocumentRevisionPublisher::class)->fail($current, $this->revisionId);
+                    app(DocumentRevisionPublisher::class)->fail($current, $this->revisionId, 'analysis_failed');
                 }
                 app(EntitlementService::class)->releaseDocumentReservation($current, 'analysis_failed');
 
@@ -376,7 +376,7 @@ class GenerateInsightsJob implements ShouldQueue
             ])->save();
         }
         if ($this->revisionId !== null) {
-            app(DocumentRevisionPublisher::class)->fail($document, $this->revisionId);
+            app(DocumentRevisionPublisher::class)->fail($document, $this->revisionId, 'analysis_job_failed');
         }
         app(EntitlementService::class)->releaseDocumentReservation($document, 'analysis_failed');
 

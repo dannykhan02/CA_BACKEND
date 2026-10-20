@@ -42,7 +42,7 @@ class UploadDispatchRecovery
                 'error_message' => 'Initial queue delivery was not confirmed.'])->save();
             $document->forceFill(['status' => 'Failed', 'error_message' => 'Document processing could not start. Please retry processing.'])->save();
             if ($revisionId !== null) {
-                app(DocumentRevisionPublisher::class)->fail($document, $revisionId);
+                app(DocumentRevisionPublisher::class)->fail($document, $revisionId, 'dispatch_unconfirmed');
             }
             app(CreditAccountant::class)->releaseDocument($documentId, 'upload_dispatch_failed');
 

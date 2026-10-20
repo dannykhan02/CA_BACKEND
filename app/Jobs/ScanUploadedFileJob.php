@@ -130,7 +130,7 @@ class ScanUploadedFileJob implements ShouldQueue
             }
             $locked->forceFill(['status' => 'Failed', 'error_message' => $message])->save();
             if ($this->revisionId !== null) {
-                app(DocumentRevisionPublisher::class)->fail($locked, $this->revisionId);
+                app(DocumentRevisionPublisher::class)->fail($locked, $this->revisionId, 'scan_failed');
             }
             if ($deleteSource) {
                 Storage::disk('documents')->delete($locked->file_path);

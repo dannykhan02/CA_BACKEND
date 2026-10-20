@@ -276,7 +276,7 @@ class OcrPageBatchJob implements ShouldQueue
             $locked->forceFill(['status' => $locked->workspace?->type === WorkspaceType::Personal ? 'Failed' : 'Needs Review',
                 'error_message' => $message])->save();
             if ($this->revisionId !== null) {
-                app(DocumentRevisionPublisher::class)->fail($locked, $this->revisionId);
+                app(DocumentRevisionPublisher::class)->fail($locked, $this->revisionId, 'ocr_failed');
             }
         });
     }
@@ -315,7 +315,7 @@ class OcrPageBatchJob implements ShouldQueue
             ])->save();
         }
         if ($this->revisionId !== null) {
-            app(DocumentRevisionPublisher::class)->fail($document, $this->revisionId);
+            app(DocumentRevisionPublisher::class)->fail($document, $this->revisionId, 'ocr_job_failed');
         }
 
         $this->cleanupTempDir();
