@@ -109,6 +109,39 @@ Pinned by `tests/Unit/DocumentsDiskConfigTest.php`, which fails if the unconditi
 Neither group needs recovery, and both are reported — without failing — by
 `php artisan documents:audit-originals`.
 
+### The 6 null-`file_path` rows used to 500 on download (fixed 2026-10-20)
+
+Three of those six are `Ready`, so they pass the download endpoint's status gate.
+`DocumentDownloadController` then passed the null straight into
+`Storage::disk('documents')->exists()`, which reaches Flysystem's `has(string $location)` and threw
+an uncaught `TypeError` — **HTTP 500, indistinguishable from a real outage** in exactly the window
+where someone is already asking whether storage is broken. An empty or whitespace-only key was worse
+rather than better: on a directory-backed driver `exists('')` answers *true* (the disk root is a
+directory), so the request walked past the missing-object check and died in `download()` on a
+mime-type lookup of the root.
+
+Fixed by guarding above any disk call, from the row:
+`GET /api/documents/{document}/download` now answers **404 with
+`error.code = NO_ORIGINAL_STORED`**, and the resources expose `hasOriginal` so the frontend can say
+"no original file is stored" instead of offering a download that errors. Both the guard, the field
+and this command's `nullPath` bucket go through one predicate, `Document::hasRecordedOriginal()`.
+
+Full contract: [`docs/contracts/document-download.md`](contracts/document-download.md).
+
+**The frontend still has to use the code.** `pdfRuntime.ts` and `imageSource.ts` both word a plain
+404 from this endpoint as *"could not be found … contact your workspace administrator"*, which is
+right for the anomaly and wrong for a seeded row. Until they branch on
+`error.code === 'NO_ORIGINAL_STORED'` (or hide the download on `hasOriginal: false`), the fix stops
+the 500 but still shows a reader an escalation they should not make.
+
+**When triaging this endpoint, read the two 404s differently:**
+
+- 404 **with** `error.code: NO_ORIGINAL_STORED` — expected and permanent. Nothing to investigate.
+- 404 **without** an `error.code` — a key is recorded and the object did not resolve, *or* the id is
+  unknown (the `NotFoundHttpException` handler flattens both to `Resource not found.`). This is the
+  shape this incident had. Run `php artisan documents:audit-originals`, and check the key prefix it
+  prints before suspecting data loss.
+
 ## Lesson
 
 **Never set `root` on an S3-driver disk.** It is a key prefix, not a directory, and the damage is
@@ -124,3 +157,9 @@ Two follow-ups this exposed, neither of which existed at the time:
   after the bad deploy would have shown 79 documents missing within a minute.
 - It is **not** wired into scheduling or the health check yet. `HealthCheck` still covers only the
   database, Redis, local free space and Horizon, and does not touch the `documents` disk.
+
+One more, from the download-guard fix: **a 500 is a worse answer than a refusal even for a state
+nobody intends to fix.** The null `file_path` rows were known, documented and harmless — and they
+still produced the single most alarming status code this API can return, on the one endpoint a
+reader reaches for during a storage incident. A nullable column that a request path dereferences
+without a guard is an outage signal waiting for someone to click it.
