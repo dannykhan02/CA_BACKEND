@@ -18,6 +18,15 @@ class DocumentListResource extends JsonResource
             'name' => $this->name,
             'type' => $this->type,
             'sizeKb' => $this->size_kb,
+            // "A storage key is recorded on the row" — **not** "the bytes are
+            // there". Deliberately answered from the model and never from the
+            // disk: a list page renders many of these, and one `exists()` per
+            // row would be an N+1 of round trips against R2 on every render.
+            // A client that needs to know the object really resolves has to
+            // ask for it; this field only lets the UI stop offering a download
+            // for a document that never had a file, instead of sending the
+            // reader into an error.
+            'hasOriginal' => $this->hasRecordedOriginal(),
             'status' => $this->status,
             'classification' => $this->classification,
             'year' => $this->year,

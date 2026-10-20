@@ -62,7 +62,11 @@ class AuditDocumentOriginals extends Command
                     $trashed = $document->deleted_at !== null;
                     $path = $document->file_path;
 
-                    if (! is_string($path) || trim($path) === '') {
+                    // Same predicate as the download guard and the API
+                    // resources, via the one model method, so the audit can
+                    // never classify a row as "no original" that the endpoint
+                    // would still try to stream (or the reverse).
+                    if (! $document->hasRecordedOriginal()) {
                         $counts['nullPath']++;
                         $this->remember($offenders['nullPath'], $document, '(none)', $limit);
 

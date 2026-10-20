@@ -30,6 +30,29 @@ class Document extends Model
         'extraction_completed_at' => 'datetime',
     ];
 
+    /**
+     * Is a storage key recorded for this document's original file?
+     *
+     * This answers *only* whether a path is written on the row. It never
+     * touches the disk, so it must not be read as "the bytes are there" —
+     * a recorded key whose object is missing still answers true, and that
+     * case is a storage anomaly worth alerting on (see
+     * `documents:audit-originals` and the 2026-10-17 source-viewer incident),
+     * not the same thing as a row that never had a file at all.
+     *
+     * `file_path` is nullable (`create_documents_table`), and production
+     * carries rows with no key: seeded documents for which nothing was ever
+     * uploaded. Every caller that has to tell those apart from real documents
+     * goes through this one method so the download guard, the API resources
+     * and the audit command cannot drift into disagreeing about what "has an
+     * original" means. Whitespace counts as absent: a key of " " addresses
+     * nothing, and treating it as present only moves the failure to the disk.
+     */
+    public function hasRecordedOriginal(): bool
+    {
+        return is_string($this->file_path) && trim($this->file_path) !== '';
+    }
+
     /** Structured KPI matching can use existing observations without the source text. */
     public function canGenerateIntelligence(bool $requiresExtractedText = true): bool
     {
