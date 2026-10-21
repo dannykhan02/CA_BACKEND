@@ -69,4 +69,31 @@ class NorthstarGoldScorerTest extends TestCase
         self::assertSame($a['unmatched_candidate_indexes_for_review'],
             $b['unmatched_candidate_indexes_for_review']);
     }
+
+    public function test_v10_observation_identity_contract_scores_independent_financial_periods(): void
+    {
+        [$gold] = $this->fixtures();
+        $response = require base_path('tests/Fixtures/intelligence-v2/northstar-v10-observations.php');
+        $rows = [
+            'E029' => "Revenue\t42.0\t46.0\t51.0",
+            'E030' => "Operating costs\t33.0\t36.0\t41.0",
+            'E031' => "Operating profit\t9.0\t10.0\t10.0",
+            'E032' => "Operating margin\t21.4%\t21.7%\t19.6%",
+            'E048' => "On-time deliveries\t92%\t90%\t87%\t95%",
+        ];
+        $candidates = array_map(fn ($candidate) => [
+            'candidate' => $candidate,
+            'source_context' => ['value_span_id' => [
+                'text' => $rows[$candidate['source_context']['value_span_id']],
+                'page' => $candidate['source_context']['value_span_id'] === 'E048' ? 4 : 3,
+            ]],
+            'rejection' => null,
+            'evidence' => ['kind' => 'metric'],
+        ], $response['kpis']);
+        $score = (new NorthstarGoldScorer)->score($gold, $candidates);
+        self::assertSame(12, $score['exact_gold_matches']);
+        self::assertSame(12, array_sum(array_map(fn ($row) => count($row['accepted_indexes']),
+            $score['gold_coverage'])));
+        self::assertSame([12, 13], $score['unmatched_candidate_indexes_for_review']);
+    }
 }
