@@ -15,6 +15,11 @@ class SourceReferenceResolver
 
     private const MAX_RELATIONS = 24;
 
+    public function __construct(
+        private ImageWordBoxStore $wordBoxes,
+        private ImageRegionLocator $regions,
+    ) {}
+
     public function resolve(Document $document, string $sourceId): ?array
     {
         if (strlen($sourceId) > 200 || $sourceId === '') {
@@ -239,9 +244,16 @@ class SourceReferenceResolver
         $evidenceStatus = $conflict !== null || in_array($matchState, ['AMBIGUOUS', 'UNAVAILABLE'], true)
             ? 'unresolved' : ($structural ? 'supported_structural_partial' : 'supported_textual');
 
+        // Additive image contract: real word boxes or nothing. textLocated is
+        // never inferred from matchState — a perfectly exact text offset still
+        // yields false when no stored box backs it.
+        $imageRegions = $this->imageRegions($document, $navigationQuote);
+
         return [
             'state' => 'CURRENT', 'sourceId' => $sourceId, 'documentId' => $document->id,
             'matchState' => $matchState,
+            'textLocated' => $imageRegions !== [],
+            'regions' => $imageRegions,
             'intelligenceRevisionId' => $published?->id,
             'sourceFormat' => in_array($document->type, ['DOCX', 'XLSX', 'PDF'], true) ? $document->type : 'OTHER',
             'revision' => $revision, 'provenancePolicy' => $set === null ? null : SourceProvenance::POLICY,
@@ -266,6 +278,41 @@ class SourceReferenceResolver
                 'relationships' => self::MAX_RELATIONS, 'relationshipsTruncated' => isset($edges)
                     && $edges->count() > self::MAX_RELATIONS],
         ];
+    }
+
+    /**
+     * Normalised highlight rectangles for a JPG/PNG citation, or [].
+     *
+     * The quote comes from the claude_vision text; the boxes come from the
+     * separate 'image_text_location' provenance set written by
+     * LocateImageTextJob. Both are tied to the same source_revision (the hash
+     * of extracted_text), so re-extraction retires the old boxes rather than
+     * letting them point at text that no longer exists.
+     *
+     * Everything here is best-effort and read-only: no stored box, no set, a
+     * changed text revision or an unmatchable quote all produce [], which the
+     * caller reports as textLocated=false. The existing quality flags are left
+     * exactly as they were — this adds a highlight, it does not upgrade a
+     * claim about the citation.
+     *
+     * @return list<array{x:float,y:float,width:float,height:float}>
+     */
+    private function imageRegions(Document $document, ?string $quote): array
+    {
+        if (! in_array($document->type, ['JPG', 'PNG'], true)
+            || ! is_string($quote) || trim($quote) === '') {
+            return [];
+        }
+        $setId = $this->wordBoxes->activeSetId($document);
+        if ($setId === null) {
+            return [];
+        }
+
+        return $this->regions->locate(
+            $quote,
+            $this->wordBoxes->words($document, $setId, max(1, (int) config('ocr.image_location.max_words'))),
+            max(1, (int) config('ocr.image_location.min_matched_words')),
+        );
     }
 
     private function anchor(object $row): array
@@ -324,6 +371,8 @@ class SourceReferenceResolver
 
         return ['state' => 'CURRENT', 'sourceId' => $sourceId, 'documentId' => $document->id,
             'matchState' => 'UNAVAILABLE',
+            // Historical evidence has no provenance set, so it has no boxes either.
+            'textLocated' => false, 'regions' => [],
             'intelligenceRevisionId' => $document->published_intelligence_revision_id,
             'sourceFormat' => in_array($document->type, ['DOCX', 'XLSX', 'PDF'], true) ? $document->type : 'OTHER',
             'revision' => null, 'provenancePolicy' => $policy, 'capability' => 'TEXTUAL',
