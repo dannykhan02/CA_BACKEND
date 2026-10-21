@@ -475,6 +475,15 @@ class EvidenceSpanPipelineTest extends TestCase
         self::assertStringContainsString($entry['quote'], $document->extracted_text);
         self::assertArrayHasKey('span_id', $entry['sources'][0]);
         self::assertArrayHasKey('page', $entry['sources'][0]);
+
+        $stored = DocumentEvidence::where('source_id', array_key_first($evidence))->firstOrFail();
+        $stale = $stored->data;
+        $stale['source_revision'] = str_repeat('0', 64);
+        $stored->update(['data' => $stale]);
+        $stalePayload = (new DocumentIntelligenceResource($document->fresh()))->toArray(request());
+        $staleEntry = ((array) $stalePayload['evidence'])[array_key_first($evidence)];
+        self::assertSame('', $staleEntry['quote']);
+        self::assertSame([], $staleEntry['sources']);
     }
 
     // --- provider-call behaviour -----------------------------------------------------------
