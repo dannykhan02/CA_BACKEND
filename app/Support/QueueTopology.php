@@ -12,6 +12,7 @@ use App\Jobs\ExtractDocumentTextJob;
 use App\Jobs\GenerateDocumentSummaryJob;
 use App\Jobs\GenerateEmbeddingsJob;
 use App\Jobs\GenerateInsightsJob;
+use App\Jobs\LocateImageTextJob;
 use App\Jobs\MergeDocumentEvidenceJob;
 use App\Jobs\OcrPageBatchJob;
 use App\Jobs\ProcessDocumentChunkJob;
@@ -60,6 +61,7 @@ final class QueueTopology
         AnalyzeEmbeddedVisualsJob::class => self::DEFAULT, // Planning/rasterization; no provider call.
         PurgeDocumentChartImagesJob::class => self::DEFAULT,
         GenerateEmbeddingsJob::class => self::DEFAULT, // Voyage, not Anthropic.
+        LocateImageTextJob::class => self::DEFAULT, // Local tesseract geometry; no provider call.
         RetryDeferredBillingEvent::class => self::DEFAULT,
         SendTrackedDeadlineReminder::class => self::DEFAULT,
         ResumeAfterCreditConfirmationJob::class => self::DEFAULT, // Resumes after a large-credit confirmation; reserves credits first.

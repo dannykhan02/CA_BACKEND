@@ -17,6 +17,7 @@ use App\Services\Intelligence\DocumentRevisionPublisher;
 use App\Services\Ocr\OcrEngineResolver;
 use App\Services\Pipeline\DocumentStagePolicy;
 use App\Services\Pipeline\PipelineStageRecorder;
+use App\Support\QueueTopology;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -263,7 +264,35 @@ class OcrPageBatchJob implements ShouldQueue
         Cache::put("document:{$document->id}:extracted_text", $text, now()->addHours(2));
         $document->refresh();
 
+        $this->dispatchImageTextLocation($document);
         $this->dispatchIntelligenceChain($document, $this->revisionId === null);
+    }
+
+    /**
+     * Queues the optional word-box stage for a JPG/PNG source.
+     *
+     * Dispatched here because extracted_text has just been committed, so the
+     * text whose quotes the boxes must locate is final for this revision.
+     * Deliberately outside the intelligence batch and outside this job's own
+     * try/catch semantics: it is additive geometry, so it must not be able to
+     * delay, cancel or fail the analysis that follows. A failed dispatch is
+     * logged and dropped for the same reason.
+     */
+    private function dispatchImageTextLocation(Document $document): void
+    {
+        if (! in_array($document->type, ['JPG', 'PNG'], true)
+            || ! config('ocr.image_location.enabled')) {
+            return;
+        }
+        try {
+            LocateImageTextJob::dispatch($document->id, $this->revisionId)
+                ->onQueue(QueueTopology::for(LocateImageTextJob::class));
+        } catch (\Throwable $e) {
+            Log::warning('Image word-box stage could not be queued', [
+                'document_id' => $document->id,
+                'reason' => substr($e->getMessage(), 0, 300),
+            ]);
+        }
     }
 
     private function markOcrFailure(Document $document, string $message): void
