@@ -46,6 +46,9 @@ class NorthstarGoldScorerTest extends TestCase
         $mutated = $original;
         $mutated['source_context']['value_span_id']['text'] = 'Another row 42.0 46.0 51.0';
         self::assertSame(0, (new NorthstarGoldScorer)->score($gold, [$mutated])['exact_gold_matches']);
+        $mutated = $original;
+        $mutated['source_context']['value_span_id']['page'] = 4;
+        self::assertSame(0, (new NorthstarGoldScorer)->score($gold, [$mutated])['exact_gold_matches']);
     }
 
     public function test_sanitized_recording_and_retained_live_diagnostics_score_equivalently_when_available(): void

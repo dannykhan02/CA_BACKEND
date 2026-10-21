@@ -17,7 +17,8 @@
       },
       "source_context": {
         "value_span_id": {
-          "text": "Revenue\t42.0\t46.0\t51.0"
+          "text": "Revenue\t42.0\t46.0\t51.0",
+          "page": 3
         }
       },
       "rejection": "subject_source_mismatch",
@@ -40,7 +41,8 @@
       },
       "source_context": {
         "value_span_id": {
-          "text": "Operating costs\t33.0\t36.0\t41.0"
+          "text": "Operating costs\t33.0\t36.0\t41.0",
+          "page": 3
         }
       },
       "rejection": "subject_source_mismatch",
@@ -63,7 +65,8 @@
       },
       "source_context": {
         "value_span_id": {
-          "text": "Operating profit\t9.0\t10.0\t10.0"
+          "text": "Operating profit\t9.0\t10.0\t10.0",
+          "page": 3
         }
       },
       "rejection": "subject_source_mismatch",
@@ -86,7 +89,8 @@
       },
       "source_context": {
         "value_span_id": {
-          "text": "Operating margin\t21.4%\t21.7%\t19.6%"
+          "text": "Operating margin\t21.4%\t21.7%\t19.6%",
+          "page": 3
         }
       },
       "rejection": "subject_source_mismatch",
@@ -109,7 +113,8 @@
       },
       "source_context": {
         "value_span_id": {
-          "text": "On-time deliveries\t92%\t90%\t87%\t95%"
+          "text": "On-time deliveries\t92%\t90%\t87%\t95%",
+          "page": 4
         }
       },
       "rejection": null,
@@ -134,7 +139,8 @@
       },
       "source_context": {
         "value_span_id": {
-          "text": "Customer complaints\t84\t96\t133\t≤ 90"
+          "text": "Customer complaints\t84\t96\t133\t≤ 90",
+          "page": 4
         }
       },
       "rejection": "unit_relationship_unverified",
@@ -157,7 +163,8 @@
       },
       "source_context": {
         "value_span_id": {
-          "text": "Total proposed\t2.40\tChief Operating Officer"
+          "text": "Total proposed\t2.40\tChief Operating Officer",
+          "page": 5
         }
       },
       "rejection": "concept_row_mismatch",

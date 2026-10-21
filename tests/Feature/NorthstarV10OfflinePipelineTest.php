@@ -121,6 +121,13 @@ class NorthstarV10OfflinePipelineTest extends TestCase
         self::assertSame(4, $kinds['period_change'] ?? 0);
         self::assertSame(3, $kinds['financial_reconciliation'] ?? 0);
         self::assertSame(1, $kinds['actual_vs_target'] ?? 0);
+        $changes = collect($analysis['analyticalComparisons'])
+            ->where('kind', 'period_change')->keyBy('left.label');
+        self::assertSame(5.0, $changes['Revenue']['gap']);
+        self::assertSame(5.0, $changes['Operating costs']['gap']);
+        self::assertSame(0.0, $changes['Operating profit']['gap']);
+        self::assertSame(-2.1, $changes['Operating margin']['gap']);
+        self::assertSame('percentage points', $changes['Operating margin']['gapUnit']);
         $target = collect($analysis['analyticalComparisons'])->firstWhere('kind', 'actual_vs_target');
         self::assertSame(-8.0, $target['gap']);
         self::assertSame('percentage points', $target['gapUnit']);

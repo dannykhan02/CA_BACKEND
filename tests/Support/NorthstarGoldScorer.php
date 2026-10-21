@@ -42,6 +42,10 @@ final class NorthstarGoldScorer
             !== $this->normalize($diagnostic['source_context']['value_span_id']['text'] ?? null)) {
             return false;
         }
+        if (isset($fact['page']) && $fact['page']
+            !== ($diagnostic['source_context']['value_span_id']['page'] ?? null)) {
+            return false;
+        }
         $identity = $candidate['identity'] ?? [];
         foreach (['metric' => 'label', 'unit' => 'unit'] as $goldKey => $candidateKey) {
             if ($this->normalize($fact[$goldKey] ?? null) !== $this->normalize($candidate[$candidateKey] ?? null)) {
