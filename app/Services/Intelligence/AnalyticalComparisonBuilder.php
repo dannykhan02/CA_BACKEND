@@ -16,6 +16,26 @@ class AnalyticalComparisonBuilder
     {
         $eligible = array_values(array_filter($observations, fn ($observation) => ($observation->integrity['analyticalEligible'] ?? false) && $observation->period !== null
             && $observation->semanticConcept !== '' && $observation->quantityKind !== 'change'));
+        $slots = [];
+        foreach ($eligible as $observation) {
+            $slot = json_encode([$this->concept($observation), $this->normalizer->normalize($observation->subject),
+                $observation->period->label, $observation->period->basis, $observation->valueBasis,
+                $observation->measurement->family, $observation->measurement->currency,
+                $observation->measurement->kind, $observation->aggregation]);
+            $slots[$slot][] = $observation;
+        }
+        $eligible = [];
+        foreach ($slots as $candidates) {
+            usort($candidates, fn ($a, $b) => $a->sourceId <=> $b->sourceId);
+            $first = $candidates[0];
+            if (count($candidates) > 1 && array_filter($candidates, fn ($item) => $item->measurement->exactMagnitude === null
+                || $first->measurement->exactMagnitude === null
+                || ! BigDecimal::of($item->measurement->exactMagnitude)
+                    ->isEqualTo($first->measurement->exactMagnitude))) {
+                continue; // Leave contradictory source values visible, but out of calculations.
+            }
+            $eligible[] = $first;
+        }
         $groups = [];
         foreach ($eligible as $observation) {
             $key = json_encode([$this->concept($observation), $this->normalizer->normalize($observation->subject),
@@ -27,11 +47,11 @@ class AnalyticalComparisonBuilder
         $answers = [];
         foreach ($groups as $group) {
             $actual = array_values(array_filter($group, fn ($o) => $o->valueBasis === 'actual'
-                && ! preg_match('/\b(?:proposed|proposal|forecast|projected|budgeted|target|goal|threshold)\b/iu', $o->sourceContext)));
+                && ! preg_match('/\b(?:proposed|proposal|forecast|projected|budgeted|target|goal|threshold)\b/iu', $this->basisContext($o))));
             foreach (['target' => '/\b(?:target|goal|threshold)\b/iu',
                 'budget' => '/\b(?:budget|budgeted)\b/iu'] as $basis => $pattern) {
                 $reference = array_values(array_filter($group, fn ($o) => $o->valueBasis === $basis
-                    && preg_match($pattern, $o->sourceContext)));
+                    && preg_match($pattern, $this->basisContext($o))));
                 if (count($actual) !== 1 || count($reference) !== 1
                     || ! $actual[0]->measurement->compatibleWith($reference[0]->measurement)) {
                     continue;
@@ -45,7 +65,7 @@ class AnalyticalComparisonBuilder
         // quarter, mixed fiscal/calendar periods, or a gap in the sequence are never a trend.
         $series = [];
         foreach ($eligible as $observation) {
-            if ($observation->valueBasis !== 'actual' || preg_match('/\b(?:proposed|forecast|target|budget)\b/iu', $observation->sourceContext)) {
+            if ($observation->valueBasis !== 'actual' || preg_match('/\b(?:proposed|forecast|target|budget)\b/iu', $this->basisContext($observation))) {
                 continue;
             }
             $key = $observation->groupKey().'|'.$this->normalizer->normalize($observation->subject);
@@ -79,7 +99,7 @@ class AnalyticalComparisonBuilder
         $groups = [];
         foreach ($observations as $item) {
             if ($item->valueBasis !== 'actual' || $item->measurement->kind !== 'currency'
-                || preg_match('/\b(?:proposed|proposal|forecast|budget|target)\b/iu', $item->sourceContext)) {
+                || preg_match('/\b(?:proposed|proposal|forecast|budget|target)\b/iu', $this->basisContext($item))) {
                 continue;
             }
             $concept = $this->concept($item);
@@ -140,6 +160,11 @@ class AnalyticalComparisonBuilder
     {
         return trim((string) preg_replace('/\b(?:actual|target|goal|threshold|budgeted|budget|forecast|projected)\b/u',
             ' ', $observation->semanticConcept));
+    }
+
+    private function basisContext(MetricObservation $observation): string
+    {
+        return $observation->basisContext !== '' ? $observation->basisContext : $observation->sourceContext;
     }
 
     private function difference(MetricObservation $left, MetricObservation $right, string $kind): array

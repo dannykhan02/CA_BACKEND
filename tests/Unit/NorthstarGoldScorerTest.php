@@ -47,4 +47,23 @@ class NorthstarGoldScorerTest extends TestCase
         $mutated['source_context']['value_span_id']['text'] = 'Another row 42.0 46.0 51.0';
         self::assertSame(0, (new NorthstarGoldScorer)->score($gold, [$mutated])['exact_gold_matches']);
     }
+
+    public function test_sanitized_recording_and_retained_live_diagnostics_score_equivalently_when_available(): void
+    {
+        $path = base_path('storage/framework/testing/docintel-v9-evaluation/'
+            .'live-20261021-135636-3d989a1dc905.json');
+        if (! is_file($path)) {
+            self::markTestSkipped('Restricted live diagnostics are not present in this checkout.');
+        }
+        [$gold, $recorded] = $this->fixtures();
+        $live = json_decode(file_get_contents($path), true, flags: JSON_THROW_ON_ERROR);
+        $scorer = new NorthstarGoldScorer;
+        $a = $scorer->score($gold, $recorded);
+        $b = $scorer->score($gold, $live['candidates']);
+        self::assertSame($a['exact_gold_matches'], $b['exact_gold_matches']);
+        self::assertSame(array_column($a['gold_coverage'], 'candidate_indexes'),
+            array_column($b['gold_coverage'], 'candidate_indexes'));
+        self::assertSame($a['unmatched_candidate_indexes_for_review'],
+            $b['unmatched_candidate_indexes_for_review']);
+    }
 }

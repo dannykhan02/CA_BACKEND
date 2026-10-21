@@ -178,9 +178,8 @@ class ChartCandidateBuilder
     }
 
     /**
-     * One observation per period. Where a period was observed more than once the most confident
-     * reading wins; where equally confident readings disagree the period is dropped, because
-     * DocIntel cannot know which one the chart should claim.
+     * Identical repeats can share a period. Any conflicting verified values drop that period;
+     * confidence cannot adjudicate contradictory source observations.
      *
      * @param  array<string,list<MetricObservation>>  $byPeriod
      * @return array<string,MetricObservation>
@@ -189,11 +188,13 @@ class ChartCandidateBuilder
     {
         $points = [];
         foreach ($byPeriod as $label => $candidates) {
-            usort($candidates, fn ($a, $b) => $b->confidence <=> $a->confidence);
+            usort($candidates, fn ($a, $b) => $a->sourceId <=> $b->sourceId);
             $best = $candidates[0];
-            $rivals = array_filter($candidates, fn ($o) => $o->confidence === $best->confidence
-                && abs($o->measurement->magnitude - $best->measurement->magnitude) > 1e-9);
-            if ($rivals !== []) {
+            $rivals = count($candidates) > 1 && array_filter($candidates, fn ($o) => $o->measurement->exactMagnitude === null
+                || $best->measurement->exactMagnitude === null
+                || ! \Brick\Math\BigDecimal::of($o->measurement->exactMagnitude)
+                    ->isEqualTo($best->measurement->exactMagnitude));
+            if ($rivals) {
                 $rejected['conflicting_values']++;
 
                 continue;
@@ -227,13 +228,22 @@ class ChartCandidateBuilder
         $parts = [];
         $total = null;
         foreach ($bySubject as $subject => $candidates) {
-            usort($candidates, fn ($a, $b) => $b->confidence <=> $a->confidence);
-            if ($candidates[0]->isTotal) {
-                $total ??= $candidates[0];
+            usort($candidates, fn ($a, $b) => $a->sourceId <=> $b->sourceId);
+            $best = $candidates[0];
+            if (count($candidates) > 1 && array_filter($candidates, fn ($o) => $o->measurement->exactMagnitude === null
+                || $best->measurement->exactMagnitude === null
+                || ! \Brick\Math\BigDecimal::of($o->measurement->exactMagnitude)
+                    ->isEqualTo($best->measurement->exactMagnitude))) {
+                $rejected['conflicting_values']++;
+
+                return null;
+            }
+            if ($best->isTotal) {
+                $total ??= $best;
 
                 continue;
             }
-            $parts[$subject] = $candidates[0];
+            $parts[$subject] = $best;
         }
         if (count($parts) < 2) {
             $rejected['single_category']++;

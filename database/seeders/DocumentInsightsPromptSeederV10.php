@@ -36,6 +36,12 @@ class DocumentInsightsPromptSeederV10 extends Seeder
             }
             $template = str_replace($from, $to, $template);
         }
+        $template = preg_replace('/^7\. Trends:.*$/mu',
+            '7. Comparisons: emit the independently cited operands when the document supports a meaningful comparison. Set trend and trendValue to null; the application calculates direction from verified values.',
+            $template, -1, $trendRules);
+        if ($trendRules !== 1) {
+            throw new RuntimeException('V10 prompt base changed: trend clause missing.');
+        }
         $rule = <<<'PROMPT'
 18. Independent observations: kpis is a list of source-facing quantitative observations, not one KPI per metric. For a meaningful multi-period trend, emit one observation per relevant period with its own value and four source_context span IDs. For actual-versus-target or budget comparisons, emit each operand separately. Do not emit every incidental number: prioritize meaningful measurements and comparisons. Keep the original unit and scale; never convert a written value. Keep a printed comparison operator such as ≤ or ≥ in value. Set trend and trendValue to null; the application computes comparisons.
 
@@ -48,6 +54,14 @@ PROMPT;
         }
         $template = str_replace($needle, $rule.$needle, $template);
         $template = str_replace('Empty kpis/charts arrays', 'An empty kpis array', $template);
+        $template = str_replace('KPIs or chart data', 'KPI observations', $template);
+        $template = str_replace('KPI or chart data', 'KPI observations', $template);
+        $template = str_replace('"trend" always reflects the numeric value\'s own direction (see rule 7) — never whether that direction is a good or bad outcome for the metric.',
+            'trend and trendValue must be null; verified comparisons are calculated by the application.', $template);
+        $template = str_replace('every trend reflects the numeric value\'s own direction, not the favorability of the outcome',
+            'each comparison operand is independently cited', $template);
+        $template = str_replace('no target/threshold value was included as a chart data point',
+            'targets and actuals were emitted as separate observations', $template);
         $template = str_replace('KPI, chart data, or narrative finding', 'KPI or narrative finding', $template);
         $template = str_replace('KPIs/charts', 'KPIs', $template);
         AiPrompt::create(['name' => 'document_insights', 'version' => 10,

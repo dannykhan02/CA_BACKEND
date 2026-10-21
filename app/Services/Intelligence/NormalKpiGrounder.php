@@ -173,6 +173,7 @@ class NormalKpiGrounder
                 'source_cell_start_offset' => $tableProof['cell_start_offset'] ?? null,
                 'source_cell_end_offset' => $tableProof['cell_end_offset'] ?? null,
                 'source_cell_value' => $tableProof['source_value'] ?? null,
+                'source_column_basis' => $tableProof['basis_text'] ?? null,
                 'raw_value' => $stored->value, 'raw_unit' => $stored->unit,
                 'confidence' => 1.0], 'sources' => array_values($sources),
         ]);
