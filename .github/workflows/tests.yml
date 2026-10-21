@@ -101,6 +101,24 @@ jobs:
       - name: Build image
         run: docker build -t ca-backend-clamav-test .
 
+      - name: Verify the word-box OCR engine works inside the built image
+        run: |
+          docker run --rm ca-backend-clamav-test sh -c "
+            set -e;
+            tesseract --version;
+            tesseract --list-langs;
+            tesseract --list-langs 2>&1 | grep -qx eng || { echo 'FATAL: eng traineddata missing'; exit 1; };
+            tesseract --list-langs 2>&1 | grep -qx swa || { echo 'FATAL: swa traineddata missing'; exit 1; };
+            php -r 'exit(extension_loaded(\"exif\") ? 0 : 1);' || { echo 'FATAL: exif extension missing'; exit 1; };
+            php -r 'exit(extension_loaded(\"gd\") ? 0 : 1);' || { echo 'FATAL: gd extension missing'; exit 1; };
+            echo 'OCR CHECKS PASSED: tesseract present with eng + swa, exif and gd loaded.'
+          "
+
+      - name: Report image size
+        run: |
+          docker image inspect ca-backend-clamav-test --format '{{.Size}}' \
+            | awk '{ printf "built image size: %.1f MB\n", $1 / 1048576 }'
+
       - name: Verify clamscan works inside the built image
         run: |
           docker run --rm ca-backend-clamav-test sh -c "
