@@ -10,9 +10,9 @@ class ResponseValidator
 
     private const SUMMARY_PROSE_FIELDS = ['text', 'title', 'explanation', 'why_it_matters', 'observation', 'significance', 'question', 'reason'];
 
-    public function validateInsights(array $decoded): array
+    public function validateInsights(array $decoded, bool $observationContract = false): array
     {
-        foreach (['kpis', 'charts', 'insights'] as $field) {
+        foreach ($observationContract ? ['kpis', 'insights'] : ['kpis', 'charts', 'insights'] as $field) {
             if (! isset($decoded[$field]) || ! is_array($decoded[$field]) || ! array_is_list($decoded[$field])) {
                 throw new \RuntimeException("AI response missing required array field: {$field}");
             }
@@ -22,8 +22,46 @@ class ResponseValidator
                 throw new \RuntimeException('AI response insight must be a non-empty string.');
             }
         }
+        if ($observationContract) {
+            if (array_key_exists('charts', $decoded) && $decoded['charts'] !== []) {
+                throw new \RuntimeException('V10 response must not contain model-authored charts.');
+            }
+            $decoded['charts'] = [];
+        }
 
         return $decoded;
+    }
+
+    /** A missing role or identity field in V10 is a malformed observation, not a partial success. */
+    public function validateV10Observations(array $kpis): void
+    {
+        $identityFields = ['concept', 'scope', 'metric_type', 'quantity_kind', 'aggregation',
+            'value_basis', 'period'];
+        $citationFields = ['value_span_id', 'unit_span_id', 'period_span_id', 'subject_span_id'];
+        foreach ($kpis as $index => $kpi) {
+            if (! is_array($kpi) || array_is_list($kpi)
+                || ! is_string($kpi['label'] ?? null) || trim($kpi['label']) === ''
+                || ! is_string($kpi['value'] ?? null) || trim($kpi['value']) === ''
+                || ! array_key_exists('unit', $kpi)
+                || ($kpi['unit'] !== null && ! is_string($kpi['unit']))
+                || ! array_key_exists('trend', $kpi) || ! array_key_exists('trendValue', $kpi)
+                || ($kpi['trend'] ?? null) !== null || ($kpi['trendValue'] ?? null) !== null
+                || ! is_array($kpi['identity'] ?? null)
+                || ! is_array($kpi['source_context'] ?? null)) {
+                throw new \RuntimeException("Invalid V10 observation at index {$index}.");
+            }
+            foreach ($identityFields as $field) {
+                if (! array_key_exists($field, $kpi['identity'])) {
+                    throw new \RuntimeException("Missing V10 identity role {$field} at index {$index}.");
+                }
+            }
+            foreach ($citationFields as $field) {
+                if (! array_key_exists($field, $kpi['source_context'])) {
+                    throw new \RuntimeException("Missing V10 source role {$field} at index {$index}.");
+                }
+            }
+        }
+        $this->validateKpiIdentities($kpis);
     }
 
     /** Optional metadata: old prompt versions and existing responses remain valid. */

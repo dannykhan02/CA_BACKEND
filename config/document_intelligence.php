@@ -137,6 +137,8 @@ return [
     // extraction_max_tokens, and all other structured tasks use the generic cap.
     'structured_output_tokens' => [
         'insights' => (int) env('ANTHROPIC_INSIGHTS_MAX_TOKENS', 6400),
+        'insights_v10' => (int) env('ANTHROPIC_INSIGHTS_V10_MAX_TOKENS', 16000),
+        'insights_v10_ceiling' => (int) env('ANTHROPIC_INSIGHTS_V10_MAX_TOKENS_CEILING', 24000),
         'entities' => (int) env('ANTHROPIC_ENTITIES_MAX_TOKENS', 6144),
     ],
     'extraction_timeout_seconds' => 120,
