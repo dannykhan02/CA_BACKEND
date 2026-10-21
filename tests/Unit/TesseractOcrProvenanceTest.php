@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Services\Ocr\TesseractBinary;
 use App\Services\Ocr\TesseractOcrProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -13,7 +14,7 @@ class TesseractOcrProvenanceTest extends TestCase
             ."5\t1\t1\t1\t1\t1\t10\t20\t40\t12\t95\tTotal\n"
             ."5\t1\t1\t1\t1\t2\t60\t20\t30\t12\t90\t12.4\n";
         $result = (new \ReflectionMethod(TesseractOcrProvider::class, 'parseTsv'))
-            ->invoke(new TesseractOcrProvider, $tsv, 100, 100);
+            ->invoke(new TesseractOcrProvider(new TesseractBinary), $tsv, 100, 100);
 
         self::assertSame('Total 12.4', $result->text);
         self::assertSame('word_boxes', $result->metadata['geometry']);
@@ -30,7 +31,7 @@ class TesseractOcrProvenanceTest extends TestCase
         $tsv = "level\tpage_num\tblock_num\tpar_num\tline_num\tword_num\tleft\ttop\twidth\theight\tconf\ttext\n"
             ."5\t1\t1\t1\t1\t1\t99\t20\t40\t12\t95\tValue\n";
         $result = (new \ReflectionMethod(TesseractOcrProvider::class, 'parseTsv'))
-            ->invoke(new TesseractOcrProvider, $tsv, 100, 100);
+            ->invoke(new TesseractOcrProvider(new TesseractBinary), $tsv, 100, 100);
         self::assertSame('Value', $result->text);
         self::assertSame('unavailable', $result->metadata['geometry']);
         self::assertSame([], $result->metadata['regions']);

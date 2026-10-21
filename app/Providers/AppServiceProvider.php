@@ -12,6 +12,9 @@ use App\Services\AI\Incremental\EvidenceGrounding;
 use App\Services\AI\ProviderGate;
 use App\Services\Intelligence\B2\StageASnapshot;
 use App\Services\Ocr\OcrEngineResolver;
+use App\Services\Ocr\TesseractBinary;
+use App\Services\Ocr\TesseractWordBoxRunner;
+use App\Services\Ocr\WordBoxRunner;
 use App\Support\QueueTopology;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\Gate;
@@ -46,6 +49,14 @@ class AppServiceProvider extends ServiceProvider
                 config('ocr.default_provider'),
             );
         });
+
+        // One probe of the tesseract binary per process, not per document.
+        $this->app->singleton(TesseractBinary::class);
+
+        // Word-box location is geometry only and never the text-extraction
+        // provider; it is an interface so the suite can bind a fake runner and
+        // stay independent of a tesseract binary being installed.
+        $this->app->bind(WordBoxRunner::class, TesseractWordBoxRunner::class);
     }
 
     /**

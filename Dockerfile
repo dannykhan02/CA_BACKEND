@@ -2,8 +2,17 @@ FROM dunglas/frankenphp:php8.3.33-trixie
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+# tesseract is geometry only: it locates words on JPG/PNG sources so a
+# citation can be highlighted. Text extraction stays on claude_vision (see
+# docs/IMAGE_TEXT_LOCATION.md). eng + swa cover Kenyan documents. This image
+# serves both CA_BACKEND and ca-horizon-worker, which differ only by the role
+# argument to bin/start-production.sh, so installing it here covers the worker
+# that actually runs the stage.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     poppler-utils \
+    tesseract-ocr \
+    tesseract-ocr-eng \
+    tesseract-ocr-swa \
     clamav \
     clamav-freshclam \
     && rm -rf /var/lib/apt/lists/* \
@@ -18,7 +27,9 @@ COPY . .
 # false success by printing NUL bytes from a zero-filled PHP entrypoint.
 RUN php -r '$files = ["artisan"]; foreach (["app", "bootstrap", "config", "routes", "database", "public"] as $dir) { foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS)) as $file) { if ($file->getExtension() === "php" && !str_contains($file->getPathname(), "_backup_")) $files[] = $file->getPathname(); } } foreach ($files as $file) { $bytes = file_get_contents($file); if ((!str_starts_with($bytes, "<?php") && !str_starts_with($bytes, "#!/usr/bin/env php\n<?php")) || str_contains($bytes, chr(0))) { fwrite(STDERR, "FATAL: invalid PHP source: ".$file.PHP_EOL); exit(1); } }'
 
-RUN install-php-extensions gd zip pcntl ctype curl dom fileinfo filter hash mbstring openssl pcre pdo session tokenizer xml pdo_pgsql redis
+# exif: ImageOrienter reads the Orientation tag so word boxes are measured
+# against the image as a browser renders it, not as the sensor stored it.
+RUN install-php-extensions gd exif zip pcntl ctype curl dom fileinfo filter hash mbstring openssl pcre pdo session tokenizer xml pdo_pgsql redis
 
 # Match PHP's upload and memory limits with DocIntel's processing needs.
 RUN printf "upload_max_filesize=20M\npost_max_size=25M\nmemory_limit=512M\n" \

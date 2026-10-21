@@ -3,18 +3,36 @@
 namespace App\Services\Ocr;
 
 use App\Models\Document;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\Process\Process;
 
 class TesseractOcrProvider implements OcrProviderInterface
 {
+    public function __construct(private TesseractBinary $binary) {}
+
     public function engine(): string
     {
         return 'printed';
     }
 
+    /**
+     * Previously an unconditional `true`, which claimed a capability nothing
+     * verified — the binary was not in the container image at all, so a
+     * workspace that selected this provider got a failed document rather than
+     * the fallback the resolver is there to provide. OcrEngineResolver moves on
+     * to the next provider when this is false.
+     */
     public function supports(Document $document): bool
     {
-        return true;
+        if ($this->binary->available()) {
+            return true;
+        }
+        Log::warning('Tesseract OCR provider is unavailable', [
+            'document_id' => $document->id,
+            'binary' => $this->binary->path(),
+        ]);
+
+        return false;
     }
 
     public function extractPage(string $imagePath, Document $document): OcrPageResult
