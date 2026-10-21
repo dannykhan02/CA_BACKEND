@@ -1,0 +1,167 @@
+{
+  "candidates": [
+    {
+      "candidate": {
+        "label": "Revenue",
+        "value": "51.0",
+        "unit": "KES million",
+        "identity": {
+          "concept": "revenue",
+          "scope": "Northstar Distribution Ltd",
+          "metric_type": "amount",
+          "quantity_kind": "absolute",
+          "aggregation": "total",
+          "value_basis": "actual",
+          "period": "Q3 2026"
+        }
+      },
+      "source_context": {
+        "value_span_id": {
+          "text": "Revenue\t42.0\t46.0\t51.0"
+        }
+      },
+      "rejection": "subject_source_mismatch",
+      "evidence": null
+    },
+    {
+      "candidate": {
+        "label": "Operating costs",
+        "value": "41.0",
+        "unit": "KES million",
+        "identity": {
+          "concept": "operating costs",
+          "scope": "Northstar Distribution Ltd",
+          "metric_type": "amount",
+          "quantity_kind": "absolute",
+          "aggregation": "total",
+          "value_basis": "actual",
+          "period": "Q3 2026"
+        }
+      },
+      "source_context": {
+        "value_span_id": {
+          "text": "Operating costs\t33.0\t36.0\t41.0"
+        }
+      },
+      "rejection": "subject_source_mismatch",
+      "evidence": null
+    },
+    {
+      "candidate": {
+        "label": "Operating profit",
+        "value": "10.0",
+        "unit": "KES million",
+        "identity": {
+          "concept": "operating profit",
+          "scope": "Northstar Distribution Ltd",
+          "metric_type": "amount",
+          "quantity_kind": "absolute",
+          "aggregation": "total",
+          "value_basis": "actual",
+          "period": "Q3 2026"
+        }
+      },
+      "source_context": {
+        "value_span_id": {
+          "text": "Operating profit\t9.0\t10.0\t10.0"
+        }
+      },
+      "rejection": "subject_source_mismatch",
+      "evidence": null
+    },
+    {
+      "candidate": {
+        "label": "Operating margin",
+        "value": "19.6%",
+        "unit": "%",
+        "identity": {
+          "concept": "operating margin",
+          "scope": "Northstar Distribution Ltd",
+          "metric_type": "percentage",
+          "quantity_kind": "absolute",
+          "aggregation": null,
+          "value_basis": "actual",
+          "period": "Q3 2026"
+        }
+      },
+      "source_context": {
+        "value_span_id": {
+          "text": "Operating margin\t21.4%\t21.7%\t19.6%"
+        }
+      },
+      "rejection": "subject_source_mismatch",
+      "evidence": null
+    },
+    {
+      "candidate": {
+        "label": "On-time delivery",
+        "value": "87%",
+        "unit": "%",
+        "identity": {
+          "concept": "on-time delivery rate",
+          "scope": "deliveries",
+          "metric_type": "percentage",
+          "quantity_kind": "absolute",
+          "aggregation": null,
+          "value_basis": "actual",
+          "period": "Q3 2026"
+        }
+      },
+      "source_context": {
+        "value_span_id": {
+          "text": "On-time deliveries\t92%\t90%\t87%\t95%"
+        }
+      },
+      "rejection": null,
+      "evidence": {
+        "verified": true
+      }
+    },
+    {
+      "candidate": {
+        "label": "Customer complaints",
+        "value": "133",
+        "unit": "cases",
+        "identity": {
+          "concept": "customer complaints",
+          "scope": "cases received",
+          "metric_type": "count",
+          "quantity_kind": "absolute",
+          "aggregation": "total",
+          "value_basis": "actual",
+          "period": "Q3 2026"
+        }
+      },
+      "source_context": {
+        "value_span_id": {
+          "text": "Customer complaints\t84\t96\t133\t≤ 90"
+        }
+      },
+      "rejection": "unit_relationship_unverified",
+      "evidence": null
+    },
+    {
+      "candidate": {
+        "label": "Total proposed",
+        "value": "2.40",
+        "unit": "KES million",
+        "identity": {
+          "concept": "proposed service-recovery funding",
+          "scope": "service-recovery plan",
+          "metric_type": "amount",
+          "quantity_kind": "absolute",
+          "aggregation": "total",
+          "value_basis": "proposed",
+          "period": null
+        }
+      },
+      "source_context": {
+        "value_span_id": {
+          "text": "Total proposed\t2.40\tChief Operating Officer"
+        }
+      },
+      "rejection": "concept_row_mismatch",
+      "evidence": null
+    }
+  ]
+}

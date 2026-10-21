@@ -144,7 +144,8 @@ class MetricCollector
                 // Legacy KPI rows carry no per-observation confidence.
                 'confidence' => 0.8,
                 'definition_id' => $kpi->kpi_definition_id,
-                'metadata' => $metadata + ['period' => $kpi->period],
+                'metadata' => $metadata + ['period' => $kpi->period,
+                    'current_source_revision' => hash('sha256', (string) $document->extracted_text)],
                 'page' => null,
                 'numeric' => $kpi->value_numeric === null ? null : (float) $kpi->value_numeric,
                 'sources' => [],
@@ -226,14 +227,8 @@ class MetricCollector
         $integrity = $this->integrity->assess($measurement, (string) $record['value'], $record['unit'],
             is_array($record['metadata']) ? $record['metadata'] : [], $record['sources'] ?? [],
             (bool) ($record['trusted_source'] ?? false));
-        if ($period === null) {
-            $integrity['reasons'][] = 'period_unavailable';
-            $integrity['analyticalEligible'] = false;
-        }
-        if (array_diff_key($identity, ['period' => true]) !== [] && ! ($profile['valid'] ?? false)) {
-            $integrity['reasons'][] = 'semantic_identity_conflict';
-            $integrity['analyticalEligible'] = false;
-        }
+        $integrity = $this->integrity->forKpiIdentity($integrity, $period, $identity,
+            $this->withoutPeriod($label, $record['period']), $record['unit'], (string) $record['value']);
         if ($integrity['unitVerification'] === 'dimensionless') {
             $type = mb_strtolower((string) $record['metadata']['metric_type']);
             $measurement = new Measurement($measurement->magnitude, $type, null, $type, 1.0,

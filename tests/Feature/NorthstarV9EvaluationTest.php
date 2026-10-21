@@ -416,7 +416,7 @@ class NorthstarV9EvaluationTest extends TestCase
     private function candidate(string $label, string $value, string $unit, string $period,
         string $concept, string $valueId, string $unitId, string $periodId, string $subjectId): array
     {
-        return ['label' => $label, 'value' => $value, 'unit' => $unit, 'period' => $period,
+        return ['label' => $label, 'value' => $value, 'unit' => $unit,
             'trend' => null, 'trendValue' => null,
             'identity' => ['concept' => $concept, 'scope' => 'Northstar Distribution Ltd',
                 'metric_type' => 'amount', 'quantity_kind' => 'absolute',

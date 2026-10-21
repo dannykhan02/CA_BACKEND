@@ -4,6 +4,7 @@ namespace App\Services\Intelligence;
 
 use App\Models\Document;
 use App\Models\DocumentEvidence;
+use App\Services\Kpis\KpiIdentityProfile;
 
 /** Field-level integrity for a stored observation. Parsing, source and unit proof stay separate. */
 class MeasurementIntegrity
@@ -39,10 +40,13 @@ class MeasurementIntegrity
         $fieldProof = is_array($metadata['source_fields_verified'] ?? null)
             ? $metadata['source_fields_verified'] : null;
         $currentRevision = $metadata['current_source_revision'] ?? null;
-        $revisionMatches = $currentRevision === null || (is_string($metadata['source_revision'] ?? null)
-            && hash_equals($currentRevision, $metadata['source_revision']));
+        $sourceRevision = $metadata['source_revision'] ?? null;
+        $revisionProofMissing = $currentRevision !== null && (! is_string($sourceRevision) || $sourceRevision === '');
+        $revisionMatches = $currentRevision === null || (! $revisionProofMissing
+            && is_string($sourceRevision) && hash_equals($currentRevision, $sourceRevision));
         $sourceVerified = $trustedSource && $quotes !== []
-            && $fieldProof !== null && in_array('value', $fieldProof, true) && $revisionMatches;
+            && $fieldProof !== null && in_array('value', $fieldProof, true)
+            && ! $revisionProofMissing && $revisionMatches;
         $context = mb_strtolower(implode("\n", $quotes));
         $unit = trim((string) $rawUnit);
         $type = mb_strtolower(trim((string) ($metadata['metric_type'] ?? '')));
@@ -60,7 +64,9 @@ class MeasurementIntegrity
         if (! $sourceVerified) {
             $reasons[] = 'missing_source_reference';
         }
-        if (! $revisionMatches) {
+        if ($revisionProofMissing) {
+            $reasons[] = 'revision_proof_missing';
+        } elseif (! $revisionMatches) {
             $reasons[] = 'source_revision_mismatch';
         }
         if ($unitState === 'unit_unverified') {
@@ -105,5 +111,25 @@ class MeasurementIntegrity
                     'subject_source_mismatch']),
             'reasons' => $reasons,
         ];
+    }
+
+    /** Apply the same KPI identity and period gates to API cards and collected observations. */
+    public function forKpiIdentity(array $integrity, ?ReportingPeriod $period, array $identity,
+        string $label, ?string $unit, string $value): array
+    {
+        if ($period === null) {
+            $integrity['analyticalEligible'] = false;
+            $integrity['reasons'][] = 'period_unavailable';
+        }
+        if (array_diff_key($identity, ['period' => true]) !== []
+            && ! app(KpiIdentityProfile::class)->make([
+                'label' => $label, 'unit' => $unit, 'value' => $value, 'identity' => $identity,
+            ])['valid']) {
+            $integrity['analyticalEligible'] = false;
+            $integrity['reasons'][] = 'semantic_identity_conflict';
+        }
+        $integrity['reasons'] = array_values(array_unique($integrity['reasons']));
+
+        return $integrity;
     }
 }

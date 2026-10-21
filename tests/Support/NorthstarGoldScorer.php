@@ -13,7 +13,7 @@ final class NorthstarGoldScorer
         foreach ($gold as $fact) {
             $matches = [];
             foreach ($candidates as $index => $candidate) {
-                if ($this->matches($fact, $candidate['candidate'])) {
+                if ($this->matches($fact, $candidate)) {
                     $matches[] = $index;
                 }
             }
@@ -34,15 +34,22 @@ final class NorthstarGoldScorer
             'note' => 'Unmatched candidates may be supported elsewhere in the PDF. Missing gold facts are coverage observations, not automatic prompt failures.'];
     }
 
-    private function matches(array $fact, array $candidate): bool
+    private function matches(array $fact, array $diagnostic): bool
     {
+        $candidate = $diagnostic['candidate'] ?? [];
+        // A repeated figure in another source table is a different gold case.
+        if (isset($fact['row']) && $this->normalize($fact['row'])
+            !== $this->normalize($diagnostic['source_context']['value_span_id']['text'] ?? null)) {
+            return false;
+        }
         $identity = $candidate['identity'] ?? [];
-        foreach (['metric' => 'label', 'unit' => 'unit', 'period' => 'period'] as $goldKey => $candidateKey) {
+        foreach (['metric' => 'label', 'unit' => 'unit'] as $goldKey => $candidateKey) {
             if ($this->normalize($fact[$goldKey] ?? null) !== $this->normalize($candidate[$candidateKey] ?? null)) {
                 return false;
             }
         }
-        if ($this->normalize($fact['subject'] ?? null) !== $this->normalize($identity['scope'] ?? null)
+        if ($this->normalize($fact['period'] ?? null) !== $this->normalize($identity['period'] ?? null)
+            || $this->normalize($fact['subject'] ?? null) !== $this->normalize($identity['scope'] ?? null)
             || $this->normalize($fact['value_basis'] ?? null) !== $this->normalize($identity['value_basis'] ?? null)) {
             return false;
         }
