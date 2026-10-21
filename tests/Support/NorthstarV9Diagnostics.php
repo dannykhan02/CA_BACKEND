@@ -14,8 +14,8 @@ use Psr\Http\Message\ResponseInterface;
 use RuntimeException;
 use Throwable;
 
-/** Test-only diagnostics. Never retain request headers, raw responses or exception messages. */
-final class NorthstarV9Diagnostics
+/** Test-only diagnostics. Request headers and exception messages are never retained. */
+class NorthstarV9Diagnostics
 {
     private array $attempts = [];
 
@@ -23,21 +23,32 @@ final class NorthstarV9Diagnostics
 
     private string $path;
 
-    public function __construct(private readonly NorthstarV9RequestGuard $guard, array $metadata)
+    private ?string $rawPath = null;
+
+    public function __construct(private readonly NorthstarV9RequestGuard|NorthstarV10RequestGuard $guard, array $metadata)
     {
         $this->report = $metadata + ['outcome' => 'running', 'error_category' => null];
-        $dir = dirname(__DIR__, 2).'/storage/framework/testing/docintel-v9-evaluation';
+        $v10 = ($metadata['prompt_version'] ?? null) === 10;
+        $dir = dirname(__DIR__, 2).'/storage/framework/testing/docintel-'.($v10 ? 'v10' : 'v9').'-evaluation';
         if ((! is_dir($dir) && ! mkdir($dir, 0700, true)) || ! chmod($dir, 0700)) {
             throw new RuntimeException('northstar_eval_diagnostic_directory_unavailable');
         }
         $mode = ($metadata['mode'] ?? null) === 'live' ? 'live' : 'recorded';
         $this->path = $dir.'/'.$mode.'-'.date('Ymd-His').'-'.bin2hex(random_bytes(6)).'.json';
+        if ($v10) {
+            $this->rawPath = $this->path.'.provider-response.json';
+        }
         $this->persist(); // Fail before any dispatch if a restricted report cannot be written.
     }
 
     public function path(): string
     {
         return $this->path;
+    }
+
+    public function rawPath(): ?string
+    {
+        return $this->rawPath;
     }
 
     public function capture(callable $evaluation): mixed
@@ -49,7 +60,10 @@ final class NorthstarV9Diagnostics
             return $result;
         } catch (Throwable $error) {
             $this->report['outcome'] = 'failed';
-            $this->report['error_category'] = self::errorCategory($error);
+            $category = self::errorCategory($error);
+            $last = $this->attempts[array_key_last($this->attempts)] ?? null;
+            $this->report['error_category'] = $category === 'evaluation_exception'
+                ? ($last['error_category'] ?? $category) : $category;
             throw $error;
         } finally {
             $this->persist();
@@ -111,8 +125,18 @@ final class NorthstarV9Diagnostics
                         $response = $response->withBody($body);
                     }
                     $position = $body->tell();
-                    $decoded = json_decode((string) $body, true);
+                    $body->rewind();
+                    $raw = (string) $body;
                     $body->seek($position);
+                    $decoded = json_decode($raw, true);
+                    if ($this->rawPath !== null) {
+                        // Preserve the exact provider body before parsing or validation can fail.
+                        // No request headers or credentials are written to this restricted file.
+                        $this->writeRestricted($this->rawPath, $raw);
+                        $this->report['provider_response_file'] = basename($this->rawPath);
+                        $this->report['provider_response_sha256'] = hash('sha256', $raw);
+                        $this->report['provider_response_bytes'] = strlen($raw);
+                    }
                     $stop = $decoded['stop_reason'] ?? null;
                     $stop = in_array($stop, ['end_turn', 'stop_sequence', 'max_tokens', 'refusal',
                         'tool_use', 'pause_turn', 'model_context_window_exceeded'], true)
@@ -142,9 +166,8 @@ final class NorthstarV9Diagnostics
                         'state' => 'response_received', 'http_status' => $status, 'stop_reason' => $stop,
                         'usage' => $usage, 'latency_ms' => $elapsed, 'estimated_cost_usd' => $cost,
                         'error_category' => $category]);
-                    // The authorized live evaluation retains only model text, never the
-                    // response envelope, headers or provider error messages. Redact any
-                    // accidental echo of a credential before the private file is written.
+                    // The summary retains only redacted model text. V10's exact
+                    // provider body is stored separately in its restricted raw file.
                     if (($this->report['mode'] ?? null) === 'live' && $status >= 200 && $status < 300) {
                         $this->attempts[$index]['model_output_text'] = array_values(array_map(
                             fn ($block) => str_replace($credentials, '[REDACTED]', $block['text']),
@@ -229,16 +252,20 @@ final class NorthstarV9Diagnostics
             'provider_attempts' => $this->attempts,
             'known_estimated_cost_usd' => round(array_sum($costs), 6),
             'cost_complete' => ! in_array(null, $costs, true)]);
+        $this->writeRestricted($this->path, json_encode($report, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
+    }
+
+    private function writeRestricted(string $path, string $contents): void
+    {
         // Atomic replacement keeps the last complete snapshot if writing is interrupted.
         // tempnam creates the file as 0600, inside the already private directory.
-        $temporary = tempnam(dirname($this->path), '.northstar-');
-        if ($temporary === false || dirname($temporary) !== dirname($this->path)) {
+        $temporary = tempnam(dirname($path), '.northstar-');
+        if ($temporary === false || dirname($temporary) !== dirname($path)) {
             throw new RuntimeException('northstar_eval_diagnostic_write_failed');
         }
         try {
-            $json = json_encode($report, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
-            if (! chmod($temporary, 0600) || file_put_contents($temporary, $json) !== strlen($json)
-                || ! rename($temporary, $this->path)) {
+            if (! chmod($temporary, 0600) || file_put_contents($temporary, $contents) !== strlen($contents)
+                || ! rename($temporary, $path)) {
                 throw new RuntimeException('northstar_eval_diagnostic_write_failed');
             }
         } finally {

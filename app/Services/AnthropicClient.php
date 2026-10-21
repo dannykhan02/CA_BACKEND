@@ -276,7 +276,8 @@ class AnthropicClient
         });
     }
 
-    public function extractDocumentInsights(string $documentText, string $documentName, ?Document $document = null): array
+    public function extractDocumentInsights(string $documentText, string $documentName, ?Document $document = null,
+        bool $singleResponse = false): array
     {
         $this->currentOperation = 'insights';
         $this->activeDocument = $document;
@@ -288,6 +289,10 @@ class AnthropicClient
             'max_tokens' => (int) config('document_intelligence.structured_output_tokens.insights_v10'),
             'max_tokens_ceiling' => (int) config('document_intelligence.structured_output_tokens.insights_v10_ceiling'),
         ] : [];
+        if ($singleResponse) {
+            $options['single_response'] = true;
+            $options['max_attempts'] = 1;
+        }
 
         return $this->structuredCall($prompt, $document, 'insights', $this->parseInsightsResponse(...), $options);
     }
