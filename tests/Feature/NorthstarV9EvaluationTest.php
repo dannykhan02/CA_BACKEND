@@ -43,6 +43,9 @@ class NorthstarV9EvaluationTest extends TestCase
 
     protected function setUp(): void
     {
+        if (getenv('DOCINTEL_V9_EVAL_RUN') !== '1') {
+            self::markTestSkipped('V9 evaluation requires DOCINTEL_V9_EVAL_RUN=1 and its isolated local database.');
+        }
         // Check before the test opens a transaction on the isolated local database.
         if (getenv('DB_HOST') !== '127.0.0.1'
             || getenv('DB_PORT') !== '55449'

@@ -48,12 +48,17 @@ class NorthstarV10LiveEvaluationTest extends TestCase
 
     protected function setUp(): void
     {
+        if (getenv('DOCINTEL_V10_EVAL_RUN') !== '1') {
+            self::markTestSkipped('V10 evaluation requires DOCINTEL_V10_EVAL_RUN=1 and its isolated local database.');
+        }
+        $database = getenv('DOCINTEL_V10_FROZEN_REPLAY') === '1'
+            ? 'docintel_v9_eval' : 'docintel_v10_eval';
         if (getenv('DB_CONNECTION') !== 'pgsql' || getenv('DB_HOST') !== '127.0.0.1'
-            || getenv('DB_PORT') !== '55449' || getenv('DB_DATABASE') !== 'docintel_v10_eval'
+            || getenv('DB_PORT') !== '55449' || getenv('DB_DATABASE') !== $database
             || getenv('DB_URL') !== '' || getenv('APP_DEMO_MODE') !== '0') {
             throw new RuntimeException('northstar_v10_eval_requires_disposable_local_database');
         }
-        $preflight = new PDO('pgsql:host=127.0.0.1;port=55449;dbname=docintel_v10_eval',
+        $preflight = new PDO('pgsql:host=127.0.0.1;port=55449;dbname='.$database,
             (string) getenv('DB_USERNAME'), (string) getenv('DB_PASSWORD'));
         if ($preflight->query("select current_setting('data_directory')")->fetchColumn()
             !== dirname(__DIR__, 2).'/storage/framework/testing/docintel-v9-pg') {
@@ -62,7 +67,7 @@ class NorthstarV10LiveEvaluationTest extends TestCase
         parent::setUp();
         $db = config('database.connections.pgsql');
         if (config('database.default') !== 'pgsql' || $db['host'] !== '127.0.0.1'
-            || $db['database'] !== 'docintel_v10_eval' || ! empty($db['url'])
+            || $db['database'] !== $database || ! empty($db['url'])
             || User::count() !== 0 || Document::count() !== 0) {
             throw new RuntimeException('northstar_v10_eval_database_not_empty_or_not_isolated');
         }
@@ -86,6 +91,51 @@ class NorthstarV10LiveEvaluationTest extends TestCase
         self::assertSame(0600, fileperms($this->diagnostics->path()) & 0777);
         self::assertSame(0600, fileperms($this->diagnostics->rawPath()) & 0777);
         self::assertSame(0700, fileperms(dirname($this->diagnostics->rawPath())) & 0777);
+    }
+
+    public function test_frozen_live_response_replays_without_provider_access(): void
+    {
+        if (! is_file($this->frozenResponsePath())) {
+            self::markTestSkipped('The restricted frozen V10 provider response is unavailable locally.');
+        }
+        $this->evaluate('frozen');
+        $report = $this->report();
+        self::assertSame('success', $report['outcome']);
+        self::assertSame(1, $report['requests']);
+        self::assertSame(20, $report['model_observation_count']);
+        self::assertSame(0, $report['server_expanded_observation_count']);
+        self::assertSame(0, $report['source_linked_observation_count']);
+        self::assertSame(0, $report['structurally_proven_observation_count']);
+        self::assertSame(0, $report['independently_eligible_count']);
+        self::assertSame(0, $report['strict_complete_financial_series_count']);
+        self::assertSame(0, $report['trusted_chart_count']);
+        self::assertSame(0, $report['deterministic_comparison_count']);
+    }
+
+    public function test_frozen_live_response_replays_with_server_evidence_resolution(): void
+    {
+        if (! is_file($this->frozenResponsePath())) {
+            self::markTestSkipped('The restricted frozen V10 provider response is unavailable locally.');
+        }
+        $this->evaluate('frozen_resolved');
+        $report = $this->report();
+        self::assertSame('success', $report['outcome']);
+        self::assertSame(20, $report['model_observation_count']);
+        self::assertSame(4, $report['server_expanded_observation_count']);
+        self::assertSame(22, $report['source_linked_observation_count']);
+        self::assertSame(22, $report['structurally_proven_observation_count']);
+        // The API includes evidence referenced by the composed analysis. Its
+        // exact selection can vary with summary ordering, but every mapping
+        // it publishes must retain a usable source quote and span.
+        self::assertGreaterThanOrEqual(20, $report['api_evidence_mapping_count']);
+        self::assertLessThanOrEqual(22, $report['api_evidence_mapping_count']);
+        foreach ($report['api_evidence'] as $mapping) {
+            self::assertNotEmpty($mapping['quote']);
+            self::assertNotEmpty($mapping['sources']);
+        }
+        self::assertSame(4, $report['strict_complete_financial_series_count']);
+        self::assertSame(4, $report['trusted_chart_count']);
+        self::assertSame(8, $report['deterministic_comparison_count']);
     }
 
     public function test_truncated_response_is_preserved_without_a_correction_request(): void
@@ -178,6 +228,7 @@ class NorthstarV10LiveEvaluationTest extends TestCase
             'document_intelligence.structured_output_tokens.insights_v10' => 14000,
             'document_intelligence.structured_output_tokens.insights_v10_ceiling' => 14000,
             'document_intelligence.revision_v1' => false,
+            'document_intelligence.server_evidence_resolution' => $scenario === 'frozen_resolved',
             'kpi_identity.semantic_matching' => false,
             'intelligence_v2.enabled' => false]);
         $budget = $live ? (float) getenv('DOCINTEL_V10_EVAL_BUDGET_USD') : 0.01;
@@ -288,13 +339,20 @@ class NorthstarV10LiveEvaluationTest extends TestCase
                     $rejections[$reason] = ($rejections[$reason] ?? 0) + 1;
                 }
                 $resolved = [];
-                foreach ($result['kpis'][$index]['source_context'] ?? [] as $role => $id) {
+                $candidate = $result['kpis'][$index] ?? [
+                    'label' => $kpi->label, 'value' => $kpi->value, 'unit' => $kpi->unit,
+                    'identity' => $kpi->identity_metadata,
+                    'source_context' => $evidence?->data['evidence_resolution']['model_source_context']
+                        ?? $evidence?->data['evidence_resolution']['inherited_model_anchor']
+                        ?? $kpi->identity_metadata['candidate_source_context'] ?? [],
+                ];
+                foreach ($candidate['source_context'] ?? [] as $role => $id) {
                     $span = is_string($id) ? $spans->resolve($id) : null;
                     $resolved[$role] = $span ? ['id' => $id, 'page' => $span['page'],
                         'start_offset' => $span['start_offset'], 'end_offset' => $span['end_offset'],
                         'text' => $span['text']] : ['id' => $id, 'resolved' => false];
                 }
-                $candidates[] = ['candidate' => $result['kpis'][$index], 'source_id' => $sourceId,
+                $candidates[] = ['candidate' => $candidate, 'source_id' => $sourceId,
                     'source_context' => $resolved, 'rejection' => $rejection,
                     'ineligibility_reasons' => $reasons,
                     'evidence' => $evidence ? ['kind' => $evidence->kind,
@@ -308,6 +366,13 @@ class NorthstarV10LiveEvaluationTest extends TestCase
             $goldScore = (new NorthstarGoldScorer)->score($gold['cases'][0]['gold'], $candidates);
             $this->diagnostics->recordResult([
                 'model_observation_count' => count($result['kpis']),
+                'server_expanded_observation_count' => max(0, $saved->count() - count($result['kpis'])),
+                'source_linked_observation_count' => DocumentEvidence::where('document_id', $document->id)
+                    ->where('kind', 'metric')->count(),
+                'structurally_proven_observation_count' => DocumentEvidence::where('document_id', $document->id)
+                    ->where('kind', 'metric')->get()->filter(fn ($row) => is_int($row->data['source_cell_start_offset'] ?? null)
+                        && is_int($row->data['source_cell_end_offset'] ?? null))->count(),
+                'api_evidence_mapping_count' => count((array) $api['evidence']),
                 'independently_eligible_count' => $eligible,
                 'rejected_observation_count' => count($result['kpis']) - $eligible,
                 'rejection_reasons' => $rejections,
@@ -320,6 +385,7 @@ class NorthstarV10LiveEvaluationTest extends TestCase
                 'deterministic_comparison_count' => $analysis['stats']['analyticalComparisons'],
                 'derived_analysis' => $analysis, 'api_analysis' => $api['analysis'],
                 'api_evidence' => $api['evidence'], 'latency_ms' => $latencyMs,
+                'pipeline_latency_ms' => (int) ((hrtime(true) - $started) / 1000000),
                 'usage' => DocumentAiRun::where('document_id', $document->id)
                     ->where('purpose', 'insights')->get(['status', 'model', 'input_tokens',
                         'output_tokens', 'estimated_cost_usd', 'duration_ms', 'stop_reason'])->toArray(),
@@ -327,10 +393,10 @@ class NorthstarV10LiveEvaluationTest extends TestCase
                 'historical_v9_live' => ['model_observations' => 7, 'manual_source_correct' => 7,
                     'independently_eligible' => 1, 'trusted_charts' => 0, 'comparisons' => 0],
             ]);
-            self::assertCount(count($result['kpis']), $candidates);
+            self::assertCount($saved->count(), $candidates);
             self::assertSame(29, count($gold['cases'][0]['gold']));
             self::assertSame(1, $guard->requests);
-            if (! $live) {
+            if (! $live && ! str_starts_with($scenario, 'frozen')) {
                 self::assertSame(1, $eligible);
             }
         });
@@ -354,6 +420,12 @@ class NorthstarV10LiveEvaluationTest extends TestCase
 
     private function recordedEnvelope(string $scenario): array
     {
+        if (str_starts_with($scenario, 'frozen')) {
+            $path = $this->frozenResponsePath();
+            self::assertSame('622cca54e2ea149e36ada8fb3d177d93ea00613cc853f204d42d83bf023de6aa',
+                hash_file('sha256', $path));
+            return json_decode(file_get_contents($path), true, flags: JSON_THROW_ON_ERROR);
+        }
         $fixture = require base_path('tests/Fixtures/intelligence-v2/northstar-v10-observations.php');
         $valid = $fixture['kpis'][2];
         $invalid = $valid;
@@ -369,6 +441,12 @@ class NorthstarV10LiveEvaluationTest extends TestCase
                 'output_tokens' => $scenario === 'truncated' ? 14000 : 350],
             'content' => [['type' => 'text', 'text' => $scenario === 'truncated'
                 ? '{"kpis":' : json_encode($response, JSON_THROW_ON_ERROR)]]];
+    }
+
+    private function frozenResponsePath(): string
+    {
+        return base_path('storage/framework/testing/docintel-v10-evaluation/'
+            .'live-20261021-204955-e0085f8755c8.json.provider-response.json');
     }
 
     private function strictFinancialSeriesCount(array $score, array $candidates, array $series): int

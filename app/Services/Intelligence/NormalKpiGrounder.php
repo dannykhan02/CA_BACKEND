@@ -25,7 +25,24 @@ class NormalKpiGrounder
             || ! is_array($context)) {
             return 'missing_source_reference';
         }
+        if (isset($pipeline['text_hash']) && $pipeline['text_hash']
+            !== hash('sha256', (string) $document->extracted_text)) {
+            return 'missing_source_reference';
+        }
         $set = app(EvidenceGrounding::class)->spans($document);
+        $modelContext = $context;
+        $modelPeriod = (string) $stored->period;
+        $resolution = null;
+        if (config('document_intelligence.server_evidence_resolution', false)) {
+            $resolution = app(EvidenceResolver::class)->resolve($document, $stored, $set, $context);
+            $context = $resolution['context'];
+            if (is_string($resolution['period']) && $resolution['period'] !== $modelPeriod) {
+                $identity = is_array($stored->identity_metadata) ? $stored->identity_metadata : [];
+                $stored->forceFill(['period' => $resolution['period'],
+                    'identity_metadata' => [...$identity, 'period' => $resolution['period'],
+                        'model_period' => $modelPeriod]])->save();
+            }
+        }
         $value = $this->span($set, $context['value_span_id'] ?? null, $document);
         if ($value === null) {
             return 'missing_source_reference';
@@ -34,9 +51,12 @@ class NormalKpiGrounder
         $tableHeaderId = trim((string) $stored->period) === ''
             && ($stored->identity_metadata['value_basis'] ?? null) === 'proposed'
             ? ($context['unit_span_id'] ?? null) : ($context['period_span_id'] ?? null);
-        $tableProof = $document->type === 'PDF'
-            ? app(PdfTabularCellVerifier::class)->verify($stored, $set, $value,
-                $this->span($set, $tableHeaderId, $document)) : null;
+        $headerSpan = $this->span($set, $tableHeaderId, $document);
+        $tableProof = match ($document->type) {
+            'PDF' => app(PdfTabularCellVerifier::class)->verify($stored, $set, $value, $headerSpan),
+            'DOCX' => app(DocxTableCellVerifier::class)->verify($document, $stored, $set, $value, $headerSpan),
+            default => null,
+        };
         if (($tableProof['rejection'] ?? null) !== null) {
             return $tableProof['rejection'];
         }
@@ -83,17 +103,41 @@ class NormalKpiGrounder
             $columnUnit = $role === 'unit' && $tableProof !== null
                 && $candidate['span_id'] === ($tableProof['header_span_id'] ?? null)
                 && $this->containsWords($tableProof['basis_text'], $expected);
+            $compactProseUnit = $role === 'unit' && $tableProof === null
+                && $candidate['span_id'] === $value['span_id']
+                && $this->containsValue($candidate['text'], $rawValue)
+                && ($printed = $this->measurements->parse($rawValue, null, $stored->label)) !== null
+                && $printed->currency === $claimed->currency
+                && $printed->scale === $claimed->scale
+                && ($printed->currency !== null || $printed->scale !== 1.0
+                    || $printed->canonicalUnit !== '');
             if ($role === 'period' && ! $this->containsWords($candidate['text'], $expected)) {
                 $periodContext = $tableProof === null ? null
                     : $this->quarterPageContext($set, $candidate, $value, $expected, $tableProof);
             }
             if (! $this->containsWords($candidate['text'], $expected)
-                && ! ($role === 'period' && $periodContext !== null) && ! $columnUnit) {
+                && ! ($role === 'period' && $periodContext !== null) && ! $columnUnit
+                && ! $compactProseUnit) {
                 return $role.'_source_mismatch';
             }
+            if ($role === 'subject' && preg_match_all(
+                '/\b(?:Ltd|Limited|PLC|LLC|Inc|Corporation)\b/iu', $candidate['text']) > 1) {
+                return 'subject_relationship_unverified';
+            }
+            if ($role === 'subject' && $tableProof !== null
+                && $this->conflictingTableOwner($set, $tableProof, $value, $expected)) {
+                return 'subject_relationship_unverified';
+            }
+            $nativeHeader = $role === 'period' && $document->type === 'DOCX'
+                && $tableProof !== null && isset($tableProof['period_header_start_offset'])
+                && $candidate['start_offset'] <= $tableProof['period_header_start_offset']
+                && $candidate['end_offset'] >= $tableProof['period_header_end_offset'];
             if ($document->type !== 'XLSX' && $candidate['span_id'] !== $value['span_id']
                 && ! $columnUnit
+                && ! $nativeHeader
                 && ! ($role === 'subject' && $this->pageHeaderSubject($set, $candidate, $value))
+                && ! ($role === 'subject' && $this->tableCaptionSubject($set, $candidate,
+                    $value, $tableProof))
                 && ! $this->governs($set, $candidate, $value)) {
                 return $role.'_relationship_unverified';
             }
@@ -110,9 +154,10 @@ class NormalKpiGrounder
         if ($basisRejection !== null) {
             return $basisRejection;
         }
-        $rawPeriod = (string) $stored->period;
-        if (trim($rawPeriod) !== '' && $this->periods->parse($rawPeriod) === null) {
-            $resolved = $this->periods->resolveQuarter($rawPeriod,
+        $rawPeriod = $resolution === null ? (string) $stored->period : $modelPeriod;
+        $periodForValidation = (string) $stored->period;
+        if (trim($periodForValidation) !== '' && $this->periods->parse($periodForValidation) === null) {
+            $resolved = $this->periods->resolveQuarter($periodForValidation,
                 ($fields['period']['text'] ?? '')."\n".($tableProof === null ? '' : ($fields['subject']['text'] ?? '')),
                 $value['text']);
             if ($resolved === null) {
@@ -154,6 +199,15 @@ class NormalKpiGrounder
                 'start_offset' => $continuation['start_offset'],
                 'end_offset' => $continuation['end_offset'], 'roles' => ['unit']];
         }
+        foreach ($tableProof['basis_sources'] ?? [] as $basisSource) {
+            $key = $basisSource['span_id'];
+            if (! isset($sources[$key])) {
+                $sources[$key] = ['span_id' => $key, 'quote' => $basisSource['text'],
+                    'page' => $basisSource['page'], 'start_offset' => $basisSource['start_offset'],
+                    'end_offset' => $basisSource['end_offset'], 'roles' => []];
+            }
+            $sources[$key]['roles'][] = 'basis';
+        }
         $sourceId = 'kpi:'.$stored->id;
         DocumentEvidence::updateOrCreate([
             'document_id' => $document->id, 'pipeline_key' => $pipeline['key'],
@@ -175,6 +229,15 @@ class NormalKpiGrounder
                 'source_cell_value' => $tableProof['source_value'] ?? null,
                 'source_column_basis' => $tableProof['basis_text'] ?? null,
                 'raw_value' => $stored->value, 'raw_unit' => $stored->unit,
+                'evidence_resolution' => $resolution === null ? null : [
+                    'anchor_origin' => ($identity['origin'] ?? null) === 'server_row_expansion'
+                        ? 'server_row_expansion' : 'model',
+                    'model_source_context' => ($identity['origin'] ?? null) === 'server_row_expansion'
+                        ? null : $modelContext,
+                    'inherited_model_anchor' => ($identity['origin'] ?? null) === 'server_row_expansion'
+                        ? $modelContext : null,
+                    'resolved_source_context' => $context,
+                    'changes' => $resolution['changes']],
                 'confidence' => 1.0], 'sources' => array_values($sources),
         ]);
 
@@ -198,15 +261,14 @@ class NormalKpiGrounder
 
     private function containsValue(string $text, string $value): bool
     {
-        $number = preg_replace('/[,%\s]/u', '', $value);
-        if (! is_numeric($number)) {
-            return false;
-        }
         // Source-facing representation is retained; silently rounding an AI value would
         // destroy the link between a KPI and the exact number on the page.
-        $pattern = '/(?<![\d.])'.preg_quote($value, '/').'(?![\d.])/u';
-
-        return preg_match_all($pattern, $text) === 1;
+        $pattern = '/(?<![\p{L}\p{N}.])'.preg_quote($value, '/').'(?![\p{L}\p{N}.])/u';
+        if (preg_match_all($pattern, $text, $matches, PREG_OFFSET_CAPTURE) !== 1) {
+            return false;
+        }
+        $before = rtrim(substr($text, 0, $matches[0][0][1]));
+        return $before === '' || ! preg_match('/[-+≤≥<>]$/u', $before);
     }
 
     private function containsConcept(string $text, string $concept): bool
@@ -272,6 +334,53 @@ class NormalKpiGrounder
             }
         }
 
+        return false;
+    }
+
+    /** A directly governing table caption outranks a running document banner. */
+    private function conflictingTableOwner(EvidenceSpanSet $set, array $tableProof,
+        array $value, string $subject): bool
+    {
+        if (isset($tableProof['header_span_id'])) {
+            $previous = null;
+            foreach ($set->all() as $span) {
+                if ($span['key'] === $tableProof['header_span_id']) {
+                    if ($previous !== null && $previous['page'] === $value['page']) {
+                        $caption = $set->resolve($previous['key']);
+                        $captionText = (string) ($caption['text'] ?? '');
+                        $captionTitle = preg_replace('/^\s*\d+(?:\.\d+)*[.)]?\s*/u', '', $captionText);
+                        $specificOwner = preg_match('/\b(?:Ltd|Limited|PLC|LLC|Inc|Corporation)\b/iu',
+                            $captionText) === 1
+                            || preg_match('/^(?:subsidiary|division|department|business unit|reporting entity)\b/iu',
+                                $captionTitle) === 1;
+                        if ($caption !== null && $subject !== '' && $specificOwner
+                            && ! $this->containsWords($captionText, $subject)) {
+                            return true;
+                        }
+                    }
+                    break;
+                }
+                $previous = $span;
+            }
+        }
+        return false;
+    }
+
+    private function tableCaptionSubject(EvidenceSpanSet $set, array $candidate,
+        array $value, ?array $tableProof): bool
+    {
+        if (! isset($tableProof['header_span_id']) || $candidate['page'] === null
+            || $candidate['page'] !== $value['page']) {
+            return false;
+        }
+        $previous = null;
+        foreach ($set->all() as $span) {
+            if ($span['key'] === $tableProof['header_span_id']) {
+                return $previous !== null && $previous['key'] === $candidate['span_id']
+                    && $previous['page'] === $value['page'];
+            }
+            $previous = $span;
+        }
         return false;
     }
 

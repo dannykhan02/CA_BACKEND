@@ -15,6 +15,7 @@ return [
     // IDs, and DocIntel retrieves the exact original text itself. Off by default; a document's mode
     // is fixed for the life of its pipeline (the mode is part of the pipeline key).
     'evidence_spans' => (bool) env('DOCINTEL_EVIDENCE_SPANS_ENABLED', false),
+    'server_evidence_resolution' => (bool) env('DOCINTEL_SERVER_EVIDENCE_RESOLUTION', false),
     // Bumping this invalidates every persisted span set: segmentation output would otherwise change
     // meaning under IDs that findings already reference.
     'span_segmenter_version' => '1',
