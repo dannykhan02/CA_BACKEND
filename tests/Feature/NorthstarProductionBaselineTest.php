@@ -140,7 +140,8 @@ class NorthstarProductionBaselineTest extends TestCase
                     'period_span_id' => 'E046', 'subject_span_id' => 'E043']]), $period);
             if ($expected === null) {
                 $evidence = DocumentEvidence::where('source_id', 'kpi:'.$kpi->id)->sole();
-                self::assertSame(['value', 'unit', 'period', 'subject'], $evidence->data['source_fields_verified']);
+                self::assertSame(['value', 'unit', 'period', 'subject', 'governing_owner'],
+                    $evidence->data['source_fields_verified']);
                 self::assertContains('E043', array_column($evidence->sources, 'span_id'));
                 self::assertTrue(collect(app(MetricCollector::class)->collect($document)['observations'])
                     ->firstWhere('sourceId', 'kpi:'.$kpi->id)->integrity['analyticalEligible']);
@@ -172,13 +173,10 @@ class NorthstarProductionBaselineTest extends TestCase
             'identity_metadata' => ['concept' => 'service-recovery budget',
                 'scope' => 'Northstar Distribution Ltd', 'metric_type' => 'amount',
                 'value_basis' => 'proposed']]);
-        self::assertNull(app(NormalKpiGrounder::class)->record($document, $kpi,
+        self::assertSame('governing_owner_unverified', app(NormalKpiGrounder::class)->record($document, $kpi,
             ['source_context' => ['value_span_id' => 'E077', 'unit_span_id' => 'E072',
                 'period_span_id' => null, 'subject_span_id' => 'E058']]));
-        $evidence = DocumentEvidence::where('source_id', 'kpi:'.$kpi->id)->sole();
-        self::assertSame('proposed', $evidence->data['value_basis']);
-        self::assertSame(['value', 'unit', 'subject'], $evidence->data['source_fields_verified']);
-        self::assertContains('E073', array_column($evidence->sources, 'span_id'));
+        self::assertFalse(DocumentEvidence::where('source_id', 'kpi:'.$kpi->id)->exists());
         self::assertFalse(collect(app(MetricCollector::class)->collect($document)['observations'])
             ->firstWhere('sourceId', 'kpi:'.$kpi->id)->integrity['analyticalEligible']);
         foreach ([

@@ -147,6 +147,19 @@ class NormalKpiGrounder
             $concept !== '' ? $concept : (string) $stored->label)) {
             return 'structured_relationship_unverified';
         }
+        $identity = $stored->identity_metadata ?? [];
+        $scope = trim((string) ($identity['scope'] ?? ''));
+        $ownerVerifier = app(GoverningOwnerProof::class);
+        $companyClaim = $ownerVerifier->companyClaim($identity, $stored->unit);
+        $ownerProof = $companyClaim
+            ? $ownerVerifier->resolve($document, $set, $value, $tableProof, $context, $scope)
+            : null;
+        if ($companyClaim && $ownerProof === null) {
+            return 'governing_owner_unverified';
+        }
+        if (! $companyClaim && $scope === '') {
+            return 'population_unverified';
+        }
         $basisRejection = app(ValueBasisEvidence::class)->rejection(
             $stored->identity_metadata['value_basis'] ?? null,
             $tableProof === null ? implode("\n", array_unique(array_column($fields, 'text')))
@@ -208,6 +221,18 @@ class NormalKpiGrounder
             }
             $sources[$key]['roles'][] = 'basis';
         }
+        foreach ($ownerProof['source_spans'] ?? [] as $ownerSource) {
+            $key = $ownerSource['span_id'];
+            $span = $this->span($set, $key, $document);
+            if ($span === null) {
+                return 'governing_owner_unverified';
+            }
+            if (! isset($sources[$key])) {
+                $sources[$key] = ['span_id' => $key, 'quote' => $span['text'], 'page' => $span['page'],
+                    'start_offset' => $span['start_offset'], 'end_offset' => $span['end_offset'], 'roles' => []];
+            }
+            $sources[$key]['roles'][] = 'governing_owner';
+        }
         $sourceId = 'kpi:'.$stored->id;
         DocumentEvidence::updateOrCreate([
             'document_id' => $document->id, 'pipeline_key' => $pipeline['key'],
@@ -222,8 +247,13 @@ class NormalKpiGrounder
                 'value_basis' => $identity['value_basis'] ?? null,
                 'aggregation' => $identity['aggregation'] ?? null,
                 'quantity_kind' => $identity['quantity_kind'] ?? null,
-                'measurement_verification' => 'verified', 'source_fields_verified' => array_keys($fields),
+                'measurement_verification' => 'verified',
+                'source_fields_verified' => [...array_keys($fields), ...($ownerProof === null ? [] : ['governing_owner'])],
+                'governing_owner' => $ownerProof,
+                'ownership_requirement' => $companyClaim ? 'company' : 'population',
+                'ownership_enforced' => true,
                 'source_revision' => hash('sha256', (string) $document->extracted_text),
+                'source_extraction_version' => $set->version,
                 'source_cell_start_offset' => $tableProof['cell_start_offset'] ?? null,
                 'source_cell_end_offset' => $tableProof['cell_end_offset'] ?? null,
                 'source_cell_value' => $tableProof['source_value'] ?? null,

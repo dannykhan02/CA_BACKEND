@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "classification": "synthetic_adversarial_claims",
+  "cases": [
+    {
+      "id": "valid_shared_header_actual",
+      "expected": "accept",
+      "text": "ACME HOLDINGS PLC | REPORT | Q3 2026\nFinancial results (KES million) | Actual | Q3 2026\nMeasure | Q1 2026 | Q3 2026\nRevenue | 42.0 | 51.0",
+      "claim": {"label": "Revenue", "value": "51.0", "unit": "KES million", "period": "Q3 2026", "concept": "revenue", "scope": "ACME HOLDINGS PLC", "basis": "actual"},
+      "source_context": {"value_span_id": "E004", "unit_span_id": "E002", "period_span_id": "E003", "subject_span_id": "E001"}
+    },
+    {
+      "id": "wrong_period_same_row",
+      "expected": "reject",
+      "text": "ACME HOLDINGS PLC | REPORT | Q3 2026\nFinancial results (KES million) | Actual | Q3 2026\nMeasure | Q1 2026 | Q3 2026\nRevenue | 42.0 | 51.0",
+      "claim": {"label": "Revenue", "value": "51.0", "unit": "KES million", "period": "Q1 2026", "concept": "revenue", "scope": "ACME HOLDINGS PLC", "basis": "actual"},
+      "source_context": {"value_span_id": "E004", "unit_span_id": "E002", "period_span_id": "E003", "subject_span_id": "E001"}
+    },
+    {
+      "id": "actual_uses_target_cell",
+      "expected": "reject",
+      "text": "ACME HOLDINGS PLC | REPORT | Q3 2026\nFinancial results (KES million) | Actual and target | Q3 2026\nMeasure | Q3 2026 | Q3 2026 target\nRevenue | 51.0 | 55.0",
+      "claim": {"label": "Revenue", "value": "55.0", "unit": "KES million", "period": "Q3 2026", "concept": "revenue", "scope": "ACME HOLDINGS PLC", "basis": "actual"},
+      "source_context": {"value_span_id": "E004", "unit_span_id": "E002", "period_span_id": "E003", "subject_span_id": "E001"}
+    },
+    {
+      "id": "valid_target_cell",
+      "expected": "accept",
+      "text": "ACME HOLDINGS PLC | REPORT | Q3 2026\nFinancial results (KES million) | Actual and target | Q3 2026\nMeasure | Q3 2026 | Q3 2026 target\nRevenue | 51.0 | 55.0",
+      "claim": {"label": "Revenue", "value": "55.0", "unit": "KES million", "period": "Q3 2026", "concept": "revenue", "scope": "ACME HOLDINGS PLC", "basis": "target"},
+      "source_context": {"value_span_id": "E004", "unit_span_id": "E002", "period_span_id": "E003", "subject_span_id": "E001"}
+    },
+    {
+      "id": "currency_conflict",
+      "expected": "reject",
+      "text": "ACME HOLDINGS PLC | REPORT | Q3 2026\nFinancial results (KES million) | Actual | Q3 2026\nMeasure | Q3 2026\nRevenue | USD 51.0",
+      "claim": {"label": "Revenue", "value": "51.0", "unit": "KES million", "period": "Q3 2026", "concept": "revenue", "scope": "ACME HOLDINGS PLC", "basis": "actual"},
+      "source_context": {"value_span_id": "E004", "unit_span_id": "E002", "period_span_id": "E003", "subject_span_id": "E001"}
+    },
+    {
+      "id": "scale_conflict",
+      "expected": "reject",
+      "text": "ACME HOLDINGS PLC | REPORT | Q3 2026\nFinancial results (KES million) | Actual | Q3 2026\nMeasure | Q3 2026\nRevenue | 51.0 billion",
+      "claim": {"label": "Revenue", "value": "51.0", "unit": "KES million", "period": "Q3 2026", "concept": "revenue", "scope": "ACME HOLDINGS PLC", "basis": "actual"},
+      "source_context": {"value_span_id": "E004", "unit_span_id": "E002", "period_span_id": "E003", "subject_span_id": "E001"}
+    },
+    {
+      "id": "duplicate_period_columns",
+      "expected": "reject",
+      "text": "ACME HOLDINGS PLC | REPORT | Q3 2026\nFinancial results (KES million) | Actual | Q3 2026\nMeasure | Q3 2026 | Q3 2026\nRevenue | 51.0 | 52.0",
+      "claim": {"label": "Revenue", "value": "51.0", "unit": "KES million", "period": "Q3 2026", "concept": "revenue", "scope": "ACME HOLDINGS PLC", "basis": "actual"},
+      "source_context": {"value_span_id": "E004", "unit_span_id": "E002", "period_span_id": "E003", "subject_span_id": "E001"}
+    },
+    {
+      "id": "wrong_population_count",
+      "expected": "reject",
+      "text": "ACME HOLDINGS PLC | REPORT | Q3 2026\nOperational counts (cases) | Actual | Q3 2026\nMeasure | Q3 2026\nCustomer complaints | 133",
+      "claim": {"label": "Shipments completed", "value": "133", "unit": "cases", "period": "Q3 2026", "concept": "shipments completed", "scope": "ACME HOLDINGS PLC", "basis": "actual"},
+      "source_context": {"value_span_id": "E004", "unit_span_id": "E002", "period_span_id": "E003", "subject_span_id": "E001"}
+    },
+    {
+      "id": "contradictory_subsidiary_caption",
+      "expected": "reject",
+      "text": "ACME HOLDINGS PLC | GROUP REPORT | Q3 2026\nEast Logistics Ltd revenue (KES million) | Q3 2026\nMeasure | Q3 2026\nRevenue | 51.0",
+      "claim": {"label": "Revenue", "value": "51.0", "unit": "KES million", "period": "Q3 2026", "concept": "revenue", "scope": "ACME HOLDINGS PLC", "basis": "actual"},
+      "source_context": {"value_span_id": "E004", "unit_span_id": "E002", "period_span_id": "E003", "subject_span_id": "E001"}
+    },
+    {
+      "id": "multi_company_banner",
+      "expected": "reject",
+      "text": "ACME HOLDINGS PLC and EAST LOGISTICS LTD | GROUP REPORT | Q3 2026\nFinancial results (KES million) | Actual | Q3 2026\nMeasure | Q3 2026\nRevenue | 51.0",
+      "claim": {"label": "Revenue", "value": "51.0", "unit": "KES million", "period": "Q3 2026", "concept": "revenue", "scope": "ACME HOLDINGS PLC", "basis": "actual"},
+      "source_context": {"value_span_id": "E004", "unit_span_id": "E002", "period_span_id": "E003", "subject_span_id": "E001"}
+    },
+    {
+      "id": "wrong_table_same_value",
+      "expected": "reject",
+      "text": "ACME HOLDINGS PLC | REPORT | Q3 2026\nFinancial results (KES million) | Actual | Q1 2026\nMeasure | Q1 2026\nRevenue | 51.0\n\nFinancial results (KES million) | Actual | Q3 2026\nMeasure | Q3 2026\nRevenue | 51.0",
+      "claim": {"label": "Revenue", "value": "51.0", "unit": "KES million", "period": "Q1 2026", "concept": "revenue", "scope": "ACME HOLDINGS PLC", "basis": "actual"},
+      "source_context": {"value_span_id": "E007", "unit_span_id": "E002", "period_span_id": "E003", "subject_span_id": "E001"}
+    }
+  ]
+}

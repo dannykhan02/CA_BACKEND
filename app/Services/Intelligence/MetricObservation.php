@@ -36,6 +36,7 @@ readonly class MetricObservation
     /** Charts group on concept and measurement together; neither alone is enough. */
     public function groupKey(): string
     {
-        return $this->conceptKey.'|'.$this->measureKey;
+        return $this->conceptKey.'|'.$this->measureKey.'|'
+            .mb_strtolower((string) ($this->integrity['governingOwner'] ?? ''));
     }
 }

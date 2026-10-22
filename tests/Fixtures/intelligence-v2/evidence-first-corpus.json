@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "real_authorized_documents": [],
+  "replay_cases": [
+    {
+      "id": "northstar-v10-frozen",
+      "classification": "fictional_synthetic_report",
+      "document_type": "PDF",
+      "source_path": "tests/Fixtures/Northstar_Q3_2026_Board_Performance_Review.pdf",
+      "source_sha256": "4507eb76cb2dfce4be55c23e6572a70e473a1bab520071734065f64755384f2f",
+      "extraction_sha256": "a4722cfdb3795de38553953d1c12521053a5368232bf3a0cbcd4a952712fa8da",
+      "source_span_revision": "ca559990913cca8714b1b640eb974cfa",
+      "source_span_count": 126,
+      "frozen_response_path": "storage/framework/testing/docintel-v10-evaluation/live-20261021-204955-e0085f8755c8.json.provider-response.json",
+      "frozen_response_sha256": "622cca54e2ea149e36ada8fb3d177d93ea00613cc853f204d42d83bf023de6aa",
+      "ground_truth_path": "tests/Fixtures/intelligence-v2/northstar-source-gold.json",
+      "ground_truth_sha256": "82e7204118b729ea7a7ee89668f8c72cd4abce10b942a298de60a488325477c3",
+      "ground_truth_origin": "independent_human_transcription_of_fictional_pdf",
+      "adapter": "northstar_v10_frozen_backend_pipeline"
+    }
+  ],
+  "tracked_nonreplay_fixtures": [
+    {"path": "tests/Fixtures/test_5page.pdf", "classification": "synthetic_prose_pdf", "ground_truth": "missing", "frozen_response": "missing"},
+    {"path": "tests/Fixtures/embedded-emf.docx", "classification": "synthetic_docx_image_fixture", "ground_truth": "missing", "frozen_response": "missing"}
+  ],
+  "coverage_matrix": [
+    {"id": "standard_financial_pdf", "evidence": "synthetic_replay_only", "fixture": "northstar-v10-frozen"},
+    {"id": "irregular_financial_pdf", "evidence": "synthetic_regression_only"},
+    {"id": "multi_page_table", "evidence": "missing"},
+    {"id": "pdf_merged_or_wrapped_headers", "evidence": "missing"},
+    {"id": "parent_and_subsidiary", "evidence": "synthetic_regression_only"},
+    {"id": "multiple_organizations", "evidence": "synthetic_regression_only"},
+    {"id": "native_docx_tables", "evidence": "synthetic_regression_only"},
+    {"id": "docx_merged_period_basis_headers", "evidence": "synthetic_regression_only"},
+    {"id": "xlsx_multiple_sheets", "evidence": "synthetic_regression_only"},
+    {"id": "xlsx_merged_cells_and_formulas", "evidence": "synthetic_regression_only"},
+    {"id": "contracts_obligations_deadlines", "evidence": "missing"},
+    {"id": "prose_business_reports", "evidence": "synthetic_fixture_without_replay"},
+    {"id": "scanned_or_hybrid_pdf", "evidence": "missing"},
+    {"id": "identified_population_counts", "evidence": "synthetic_replay_only", "fixture": "northstar-v10-frozen"},
+    {"id": "conflicts_missing_period_or_ownership", "evidence": "synthetic_regression_only"}
+  ]
+}

@@ -66,7 +66,7 @@ class NormalRouteProvenanceTest extends TestCase
         $user = User::factory()->create();
         app(WorkspaceService::class)->createPersonalWorkspaceFor($user);
         $user->refresh();
-        $text = "Metric | Q3 2026 | KES million\nRevenue | 51.0 | Actual\nCosts | 41.0 | Actual";
+        $text = "ACME HOLDINGS PLC Metric | Q3 2026 | KES million\nRevenue | 51.0 | Actual\nCosts | 41.0 | Actual";
         $document = Document::create(['workspace_id' => $user->current_workspace_id,
             'uploaded_by' => $user->id, 'name' => 'Quarterly report.pdf', 'type' => 'PDF',
             'status' => 'Processing', 'classification' => 'Internal', 'size_kb' => 1,
@@ -77,7 +77,7 @@ class NormalRouteProvenanceTest extends TestCase
         $verified = DocumentKpi::create(['document_id' => $document->id,
             'workspace_id' => $document->workspace_id, 'label' => 'Revenue', 'value' => '51.0',
             'unit' => 'KES million', 'period' => 'Q3 2026',
-            'identity_metadata' => ['concept' => 'revenue', 'metric_type' => 'amount',
+            'identity_metadata' => ['concept' => 'revenue', 'scope' => 'ACME HOLDINGS PLC', 'metric_type' => 'amount',
                 'value_basis' => 'actual']]);
         $limited = DocumentKpi::create(['document_id' => $document->id,
             'workspace_id' => $document->workspace_id, 'label' => 'Costs', 'value' => '41.0',
@@ -89,9 +89,10 @@ class NormalRouteProvenanceTest extends TestCase
         $this->assertSame(0, DocumentEvidence::where('document_id', $document->id)->count());
         $this->assertNull($grounder->record($document, $verified,
             ['source_context' => ['value_span_id' => 'E002', 'unit_span_id' => 'E001',
-                'period_span_id' => 'E001']]));
+                'period_span_id' => 'E001', 'subject_span_id' => 'E001']]));
         $evidence = DocumentEvidence::where('source_id', 'kpi:'.$verified->id)->sole();
-        $this->assertSame(['value', 'unit', 'period'], $evidence->data['source_fields_verified']);
+        $this->assertSame(['value', 'unit', 'period', 'subject', 'governing_owner'],
+            $evidence->data['source_fields_verified']);
         $this->assertCount(2, $evidence->sources);
         $document->forceFill(['status' => 'Ready'])->save();
         $resolved = app(SourceReferenceResolver::class)->resolve($document->fresh(), 'kpi:'.$verified->id);
@@ -147,8 +148,8 @@ class NormalRouteProvenanceTest extends TestCase
         $user = User::factory()->create();
         app(WorkspaceService::class)->createPersonalWorkspaceFor($user);
         $user->refresh();
-        foreach ([['Metric | Q3 2026 | KES million', null, 'Q3 2026'],
-            ['Metric | Q3 2025 and Q3 2026 | KES million', 'period_ambiguous', 'Q3']] as [$heading, $rejection, $expectedPeriod]) {
+        foreach ([['ACME HOLDINGS PLC Metric | Q3 2026 | KES million', null, 'Q3 2026'],
+            ['ACME HOLDINGS PLC Metric | Q3 2025 and Q3 2026 | KES million', 'period_ambiguous', 'Q3']] as [$heading, $rejection, $expectedPeriod]) {
             $text = $heading."\nRevenue | 51.0 | Actual";
             $document = Document::create(['workspace_id' => $user->current_workspace_id,
                 'uploaded_by' => $user->id, 'name' => 'Quarterly report.pdf', 'type' => 'PDF',
@@ -160,11 +161,11 @@ class NormalRouteProvenanceTest extends TestCase
             $kpi = DocumentKpi::create(['document_id' => $document->id,
                 'workspace_id' => $document->workspace_id, 'label' => 'Revenue', 'value' => '51.0',
                 'unit' => 'KES million', 'period' => 'Q3',
-                'identity_metadata' => ['concept' => 'revenue', 'metric_type' => 'amount',
+                'identity_metadata' => ['concept' => 'revenue', 'scope' => 'ACME HOLDINGS PLC', 'metric_type' => 'amount',
                     'value_basis' => 'actual']]);
             $this->assertSame($rejection, app(NormalKpiGrounder::class)->record($document, $kpi,
                 ['source_context' => ['value_span_id' => 'E002', 'unit_span_id' => 'E001',
-                    'period_span_id' => 'E001']]));
+                    'period_span_id' => 'E001', 'subject_span_id' => 'E001']]));
             $this->assertSame($expectedPeriod, $kpi->fresh()->period);
             if ($rejection === null) {
                 $this->assertSame('Q3', DocumentEvidence::where('source_id', 'kpi:'.$kpi->id)->sole()
@@ -207,7 +208,7 @@ class NormalRouteProvenanceTest extends TestCase
         $spanNumber = 0;
         foreach ($groups as [$unit, $rows]) {
             $headerSpan = sprintf('E%03d', ++$spanNumber);
-            $lines[] = "Business Metric | Q3 2026 | {$unit}";
+            $lines[] = "ACME HOLDINGS PLC Business Metric | Q3 2026 | {$unit}";
             foreach ($rows as [$label, $value, $concept, $basis]) {
                 $valueSpan = sprintf('E%03d', ++$spanNumber);
                 $lines[] = "{$label} | {$value} | {$basis}";
@@ -225,7 +226,7 @@ class NormalRouteProvenanceTest extends TestCase
             $kpi = DocumentKpi::create(['document_id' => $document->id,
                 'workspace_id' => $document->workspace_id, 'label' => $record['label'],
                 'value' => $record['value'], 'unit' => $record['unit'], 'period' => 'Q3 2026',
-                'identity_metadata' => ['concept' => $record['concept'], 'scope' => 'Business',
+                'identity_metadata' => ['concept' => $record['concept'], 'scope' => 'ACME HOLDINGS PLC',
                     'metric_type' => in_array($record['unit'], ['%', 'percentage points'], true)
                         ? 'percentage' : (in_array($record['unit'], ['cases', 'shipments', 'headcount'], true)
                             ? 'count' : 'amount'), 'value_basis' => $record['basis']]]);
@@ -237,8 +238,9 @@ class NormalRouteProvenanceTest extends TestCase
             $this->assertSame($record['value'], $source->data['raw_value']);
             $this->assertSame($record['unit'], $source->data['raw_unit']);
             $this->assertSame('Q3 2026', $source->data['period']);
-            $this->assertSame('Business', $source->data['subject']);
-            $this->assertSame(['value', 'unit', 'period', 'subject'], $source->data['source_fields_verified']);
+            $this->assertSame('ACME HOLDINGS PLC', $source->data['subject']);
+            $this->assertSame(['value', 'unit', 'period', 'subject', 'governing_owner'],
+                $source->data['source_fields_verified']);
         }
         $this->assertSame(12, DocumentEvidence::where('document_id', $document->id)->count());
         $observations = app(MetricCollector::class)->collect($document)['observations'];
@@ -294,11 +296,10 @@ class NormalRouteProvenanceTest extends TestCase
                 'unit' => 'KES million', 'period' => 'Q3 2026',
                 'identity_metadata' => ['concept' => 'revenue', 'metric_type' => 'amount',
                     'value_basis' => 'actual']]);
-            $this->assertNull(app(NormalKpiGrounder::class)->record($document, $kpi,
+            $this->assertSame('governing_owner_unverified', app(NormalKpiGrounder::class)->record($document, $kpi,
                 ['source_context' => ['value_span_id' => $value['key'], 'unit_span_id' => $header['key'],
                     'period_span_id' => $header['key']]]));
-            $this->assertSame('verified', app(MetricCollector::class)->collect($document)['observations'][0]
-                ->integrity['sourceVerification']);
+            $this->assertFalse(DocumentEvidence::where('source_id', 'kpi:'.$kpi->id)->exists());
         } finally {
             @unlink($path);
         }
@@ -383,11 +384,14 @@ class NormalRouteProvenanceTest extends TestCase
             $kpi = DocumentKpi::create(['document_id' => $document->id,
                 'workspace_id' => $document->workspace_id, 'label' => $label,
                 'value' => $value, 'unit' => $unit, 'period' => 'Q3 2026',
-                'identity_metadata' => ['concept' => $concept, 'metric_type' => $unit === '%' ? 'percentage' : 'count',
+                'identity_metadata' => ['concept' => $concept,
+                    'scope' => $concept === 'delivery' ? 'Delivery' : 'Complaints',
+                    'metric_type' => $unit === '%' ? 'percentage' : 'count',
                     'value_basis' => $basis]]);
             $this->assertNull(app(NormalKpiGrounder::class)->record($document, $kpi,
                 ['source_context' => ['value_span_id' => $valueSpan,
-                    'unit_span_id' => $headerSpan, 'period_span_id' => $headerSpan]]));
+                    'unit_span_id' => $headerSpan, 'period_span_id' => $headerSpan,
+                    'subject_span_id' => $valueSpan]]));
         }
         $observations = app(MetricCollector::class)->collect($document)['observations'];
         $comparisons = app(AnalyticalComparisonBuilder::class)->build($observations);

@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Services\Intelligence\CanonicalMetricIdentity;
+use App\Services\AI\Incremental\EvidenceGrounding;
 use App\Services\Intelligence\MeasurementIntegrity;
 use App\Services\Intelligence\MeasurementParser;
 use App\Services\Intelligence\PeriodParser;
@@ -31,8 +32,14 @@ class KpiResource extends JsonResource
                 'field_verification_policy' => $evidenceData['field_verification_policy'] ?? null,
                 'grounding_rejection' => $rejection,
                 'source_revision' => $evidenceData['source_revision'] ?? null,
+                'source_extraction_version' => $evidenceData['source_extraction_version'] ?? null,
+                'governing_owner' => $evidenceData['governing_owner'] ?? null,
+                'ownership_requirement' => $evidenceData['ownership_requirement'] ?? null,
+                'ownership_enforced' => ($this->document?->ai_pipeline['route'] ?? null) === 'normal',
                 'current_source_revision' => $request->attributes->get('document_source_revision')
                     ?? hash('sha256', (string) $this->document?->extracted_text),
+                'current_extraction_version' => $this->document === null ? null
+                    : app(EvidenceGrounding::class)->version($this->document),
                 'label' => $this->label, 'period' => $this->period,
                 'subject' => $metadata['scope'] ?? null]), $evidence?->sources ?? [],
             $evidence !== null && ($evidence->kind === 'metric'
@@ -61,6 +68,8 @@ class KpiResource extends JsonResource
             'numericVerification' => $integrity['numericVerification'],
             'sourceVerification' => $integrity['sourceVerification'],
             'unitVerification' => $integrity['unitVerification'],
+            'ownerVerification' => $integrity['ownerVerification'],
+            'governingOwner' => $integrity['governingOwner'],
             'analyticalEligible' => $integrity['analyticalEligible'],
             'limitationReasons' => $integrity['reasons'],
         ];

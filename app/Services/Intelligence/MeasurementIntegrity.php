@@ -4,12 +4,14 @@ namespace App\Services\Intelligence;
 
 use App\Models\Document;
 use App\Models\DocumentEvidence;
+use App\Services\AI\Incremental\EvidenceGrounding;
 use App\Services\Kpis\KpiIdentityProfile;
 
 /** Field-level integrity for a stored observation. Parsing, source and unit proof stay separate. */
 class MeasurementIntegrity
 {
     private array $sourceRevisions = [];
+    private array $extractionVersions = [];
 
     public function __construct(private MeasurementParser $measurements) {}
 
@@ -18,12 +20,16 @@ class MeasurementIntegrity
         $data = is_array($row->data) ? $row->data : [];
         $owner = $row->workspace_id.':'.$row->document_id;
         if (! array_key_exists($owner, $this->sourceRevisions)) {
-            $source = Document::where('workspace_id', $row->workspace_id)
-                ->whereKey($row->document_id)->value('extracted_text');
-            $this->sourceRevisions[$owner] = is_string($source)
-                ? hash('sha256', $source) : 'missing_source_document';
+            $document = Document::where('workspace_id', $row->workspace_id)
+                ->whereKey($row->document_id)->first();
+            $this->sourceRevisions[$owner] = $document !== null
+                ? hash('sha256', (string) $document->extracted_text) : 'missing_source_document';
+            $this->extractionVersions[$owner] = $document === null ? null
+                : app(EvidenceGrounding::class)->version($document);
         }
         $data['current_source_revision'] = $this->sourceRevisions[$owner];
+        $data['current_extraction_version'] = $this->extractionVersions[$owner];
+        $data['ownership_enforced'] = str_starts_with((string) $row->pipeline_key, 'normal:');
 
         return $this->assess($this->measurements->parse($data['value'] ?? null, $data['unit'] ?? null,
             $data['label'] ?? null), (string) ($data['value'] ?? ''), $data['unit'] ?? null,
@@ -47,6 +53,20 @@ class MeasurementIntegrity
         $sourceVerified = $trustedSource && $quotes !== []
             && $fieldProof !== null && in_array('value', $fieldProof, true)
             && ! $revisionProofMissing && $revisionMatches;
+        $ownershipEnforced = ($metadata['ownership_enforced'] ?? false) === true;
+        $ownershipRequirement = ($metadata['ownership_requirement'] ?? null) === 'company'
+            || app(GoverningOwnerProof::class)->companyClaim($metadata, $rawUnit)
+            ? 'company' : 'population';
+        $ownerProof = is_array($metadata['governing_owner'] ?? null)
+            ? $metadata['governing_owner'] : null;
+        $ownerVerified = $sourceVerified && $ownershipRequirement === 'company'
+            && in_array('governing_owner', $fieldProof ?? [], true)
+            && $this->validOwnerProof($ownerProof, $sources, $sourceRevision,
+                $metadata['source_extraction_version'] ?? null,
+                $metadata['current_extraction_version'] ?? null);
+        $populationVerified = $sourceVerified && $ownershipRequirement === 'population'
+            && trim((string) ($metadata['subject'] ?? $metadata['scope'] ?? '')) !== ''
+            && in_array('subject', $fieldProof ?? [], true);
         $context = mb_strtolower(implode("\n", $quotes));
         $unit = trim((string) $rawUnit);
         $type = mb_strtolower(trim((string) ($metadata['metric_type'] ?? '')));
@@ -84,6 +104,11 @@ class MeasurementIntegrity
         if ($identifier) {
             $reasons[] = 'non_measurement_numeric';
         }
+        if ($ownershipEnforced && $ownershipRequirement === 'company' && ! $ownerVerified) {
+            $reasons[] = 'governing_owner_unverified';
+        } elseif ($ownershipEnforced && $ownershipRequirement === 'population' && ! $populationVerified) {
+            $reasons[] = 'population_unverified';
+        }
         if (($metadata['field_verification_policy'] ?? null) === 'incremental.v1') {
             foreach (['metric' => 'concept_source_mismatch', 'period' => 'period_source_mismatch',
                 'subject' => 'subject_source_mismatch'] as $role => $reason) {
@@ -104,13 +129,58 @@ class MeasurementIntegrity
             'numericVerification' => $numericState,
             'sourceVerification' => $sourceVerified ? 'verified' : 'unverified',
             'unitVerification' => $unitState,
+            'ownerVerification' => $ownerVerified ? 'verified' : 'unverified',
+            'governingOwner' => $ownerVerified ? $ownerProof['entity'] : null,
+            'ownershipRequirement' => $ownershipRequirement,
             'analyticalEligible' => $numericState === 'parsed' && $sourceVerified
                 && in_array($unitState, ['verified', 'dimensionless'], true)
+                && (! $ownershipEnforced || $ownerVerified || $populationVerified)
                 && ! $identifier && $groundingRejection === ''
                 && ! array_intersect($reasons, ['concept_source_mismatch', 'period_source_mismatch',
                     'subject_source_mismatch']),
             'reasons' => $reasons,
         ];
+    }
+
+    private function validOwnerProof(?array $proof, array $sources, mixed $revision,
+        mixed $extractionVersion, mixed $currentExtractionVersion): bool
+    {
+        if ($proof === null || ! is_string($revision) || $revision === ''
+            || ($proof['source_revision'] ?? null) !== $revision
+            || ! is_string($extractionVersion) || $extractionVersion === ''
+            || ($proof['extraction_version'] ?? null) !== $extractionVersion
+            || ($currentExtractionVersion !== null && $extractionVersion !== $currentExtractionVersion)
+            || ($proof['kind'] ?? null) !== 'organization'
+            || ! is_string($proof['entity'] ?? null) || trim($proof['entity']) === ''
+            || ! in_array($proof['relationship'] ?? null,
+                ['table_caption', 'value_row', 'cited_section_to_table'], true)
+            || ! is_array($proof['source_spans'] ?? null) || $proof['source_spans'] === []) {
+            return false;
+        }
+        $byId = [];
+        foreach ($sources as $source) {
+            if (is_array($source) && is_string($source['span_id'] ?? null)) {
+                $byId[$source['span_id']] = $source;
+            }
+        }
+        $entitySeen = false;
+        foreach ($proof['source_spans'] as $reference) {
+            if (! is_array($reference) || ! is_string($reference['span_id'] ?? null)) {
+                return false;
+            }
+            $source = $byId[$reference['span_id']] ?? null;
+            if ($source === null || ! in_array('governing_owner', $source['roles'] ?? [], true)
+                || ($source['page'] ?? null) !== ($reference['page'] ?? null)
+                || ($source['start_offset'] ?? null) !== ($reference['start_offset'] ?? null)
+                || ($source['end_offset'] ?? null) !== ($reference['end_offset'] ?? null)) {
+                return false;
+            }
+            $entitySeen = $entitySeen || preg_match('/(?<![\p{L}\p{N}])'
+                .preg_quote($proof['entity'], '/').'(?![\p{L}\p{N}])/iu',
+                (string) ($source['quote'] ?? '')) === 1;
+        }
+
+        return $entitySeen;
     }
 
     /** Apply the same KPI identity and period gates to API cards and collected observations. */
