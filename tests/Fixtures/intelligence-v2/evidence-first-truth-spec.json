@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "case_id": "northstar-v10-frozen",
+  "review_status": "independent_human_transcription_of_fictional_pdf",
+  "source_gold_path": "tests/Fixtures/intelligence-v2/northstar-source-gold.json",
+  "source_gold_sha256": "82e7204118b729ea7a7ee89668f8c72cd4abce10b942a298de60a488325477c3",
+  "source_gold_fact_count": 29,
+  "extraction_sha256": "a4722cfdb3795de38553953d1c12521053a5368232bf3a0cbcd4a952712fa8da",
+  "source_span_revision": "ca559990913cca8714b1b640eb974cfa",
+  "expected_financial_series": {
+    "revenue": ["revenue-q1", "revenue-q2", "revenue-q3"],
+    "costs": ["costs-q1", "costs-q2", "costs-q3"],
+    "profit": ["profit-q1", "profit-q2", "profit-q3"],
+    "margin": ["margin-q1", "margin-q2", "margin-q3"]
+  },
+  "analytical_eligibility_expectations": {
+    "eligible_gold_ids": ["revenue-q1", "revenue-q2", "revenue-q3", "costs-q1", "costs-q2", "costs-q3", "profit-q1", "profit-q2", "profit-q3", "margin-q1", "margin-q2", "margin-q3"],
+    "unreviewed_gold_ids": "all_other_gold_facts"
+  },
+  "quantity_population_expectations": [
+    {"gold_id": "shipments-q3", "quantity_kind": "count", "population": "Shipments completed"},
+    {"gold_id": "complaints-q3", "quantity_kind": "count", "population": "Customer complaints"},
+    {"gold_id": "complaints-ceiling-q3", "quantity_kind": "count", "population": "Customer complaints"},
+    {"gold_id": "employees-q3", "quantity_kind": "count", "population": "Employees (quarter-end)"}
+  ],
+  "expected_comparison_membership": {"review_status": "not_reviewed", "items": []},
+  "printed_comparison_operators": {"complaints-ceiling-q3": "≤"},
+  "negative_claims": [],
+  "notes": "The source gold is independent transcription of a fictional PDF. It supplies exact values, governing entity, period, basis, page, table, row and column. It does not independently adjudicate every model observation or every analytical use. Unmatched candidates and unlisted eligibility decisions are unknown."
+}

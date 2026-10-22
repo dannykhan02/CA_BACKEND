@@ -279,6 +279,7 @@ class NorthstarV10LiveEvaluationTest extends TestCase
         $this->diagnostics = new NorthstarV10Diagnostics($guard, [
             'mode' => $live ? 'live' : 'recorded', 'model' => 'claude-haiku-5-5',
             'prompt_version' => 10, 'prompt_sha256' => hash('sha256', $prompt->template),
+            'server_evidence_resolution_enabled' => $scenario === 'frozen_resolved',
             'rendered_prompt_sha256' => hash('sha256', $expectedPrompt),
             'source_sha256' => $sourceHash, 'gold_sha256' => hash_file('sha256', $goldPath),
             'extracted_text_sha256' => hash('sha256', $text),
@@ -327,6 +328,18 @@ class NorthstarV10LiveEvaluationTest extends TestCase
                 $sourceId = 'kpi:'.$kpi->id;
                 $evidence = DocumentEvidence::where('document_id', $document->id)
                     ->where('source_id', $sourceId)->first();
+                if ($evidence !== null) {
+                    self::assertSame(hash('sha256', $text), $evidence->data['source_revision']);
+                    foreach ($evidence->sources ?? [] as $source) {
+                        self::assertSame($source['quote'], mb_substr($text,
+                            $source['start_offset'], $source['end_offset'] - $source['start_offset']));
+                    }
+                    if (is_int($evidence->data['source_cell_start_offset'] ?? null)) {
+                        self::assertSame($evidence->data['source_cell_value'], mb_substr($text,
+                            $evidence->data['source_cell_start_offset'],
+                            $evidence->data['source_cell_end_offset'] - $evidence->data['source_cell_start_offset']));
+                    }
+                }
                 $request->attributes->set('kpi_evidence', collect([$sourceId => $evidence]));
                 $request->attributes->set('document_source_revision', hash('sha256', $text));
                 $card = (new KpiResource($kpi))->resolve($request);
