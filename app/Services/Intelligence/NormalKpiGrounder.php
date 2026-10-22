@@ -34,9 +34,12 @@ class NormalKpiGrounder
         $tableHeaderId = trim((string) $stored->period) === ''
             && ($stored->identity_metadata['value_basis'] ?? null) === 'proposed'
             ? ($context['unit_span_id'] ?? null) : ($context['period_span_id'] ?? null);
-        $tableProof = $document->type === 'PDF'
-            ? app(PdfTabularCellVerifier::class)->verify($stored, $set, $value,
-                $this->span($set, $tableHeaderId, $document)) : null;
+        $headerSpan = $this->span($set, $tableHeaderId, $document);
+        $tableProof = match ($document->type) {
+            'PDF' => app(PdfTabularCellVerifier::class)->verify($stored, $set, $value, $headerSpan),
+            'DOCX' => app(DocxTableCellVerifier::class)->verify($document, $stored, $set, $value, $headerSpan),
+            default => null,
+        };
         if (($tableProof['rejection'] ?? null) !== null) {
             return $tableProof['rejection'];
         }
@@ -91,8 +94,17 @@ class NormalKpiGrounder
                 && ! ($role === 'period' && $periodContext !== null) && ! $columnUnit) {
                 return $role.'_source_mismatch';
             }
+            if ($role === 'subject' && $tableProof !== null
+                && $this->conflictingTableOwner($set, $tableProof, $value, $expected)) {
+                return 'subject_relationship_unverified';
+            }
+            $nativeHeader = $role === 'period' && $document->type === 'DOCX'
+                && $tableProof !== null && isset($tableProof['period_header_start_offset'])
+                && $candidate['start_offset'] <= $tableProof['period_header_start_offset']
+                && $candidate['end_offset'] >= $tableProof['period_header_end_offset'];
             if ($document->type !== 'XLSX' && $candidate['span_id'] !== $value['span_id']
                 && ! $columnUnit
+                && ! $nativeHeader
                 && ! ($role === 'subject' && $this->pageHeaderSubject($set, $candidate, $value))
                 && ! $this->governs($set, $candidate, $value)) {
                 return $role.'_relationship_unverified';
@@ -272,6 +284,31 @@ class NormalKpiGrounder
             }
         }
 
+        return false;
+    }
+
+    /** A directly governing table caption outranks a running document banner. */
+    private function conflictingTableOwner(EvidenceSpanSet $set, array $tableProof,
+        array $value, string $subject): bool
+    {
+        if (isset($tableProof['header_span_id'])) {
+            $previous = null;
+            foreach ($set->all() as $span) {
+                if ($span['key'] === $tableProof['header_span_id']) {
+                    if ($previous !== null && $previous['page'] === $value['page']) {
+                        $caption = $set->resolve($previous['key']);
+                        if ($caption !== null && $subject !== ''
+                            && preg_match('/\b(?:Ltd|Limited|PLC|LLC|Inc|Corporation)\b/iu',
+                            $caption['text']) === 1
+                            && ! $this->containsWords($caption['text'], $subject)) {
+                            return true;
+                        }
+                    }
+                    break;
+                }
+                $previous = $span;
+            }
+        }
         return false;
     }
 
