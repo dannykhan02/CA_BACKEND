@@ -162,6 +162,10 @@ class GenerateInsightsJob implements ShouldQueue
         try {
             $kpis = $result['kpis'] ?? [];
             $kpis = app(KpiIdentityResolver::class)->forDocument($document, $kpis);
+            if (config('document_intelligence.server_evidence_resolution', false)) {
+                $kpis = [...$kpis, ...app(\App\Services\Intelligence\RowExpander::class)
+                    ->expand($document, $kpis)];
+            }
             $promptVersion = (int) ($result['prompt_version'] ?? 0);
             $charts = $promptVersion >= 10 ? [] : ($result['charts'] ?? []);
             $insights = $result['insights'] ?? [];

@@ -10,6 +10,7 @@ use App\Services\AI\Incremental\EvidenceGrounding;
 use App\Services\DocumentTextExtractor;
 use App\Services\Intelligence\MetricCollector;
 use App\Services\Intelligence\NormalKpiGrounder;
+use App\Services\Intelligence\RowExpander;
 use App\Services\WorkspaceService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
@@ -82,6 +83,93 @@ class NormalKpiTableSafetyTest extends TestCase
         self::assertContains('source_revision_mismatch', $observation->integrity['reasons']);
     }
 
+    public function test_model_citations_cannot_be_replayed_against_a_different_text_revision(): void
+    {
+        $document = $this->document("Measure\tFY2023\tFY2024\nRevenue\t42.0\t46.0");
+        $document->forceFill(['ai_pipeline' => [...$document->ai_pipeline,
+            'text_hash' => hash('sha256', 'different source document')]])->save();
+        $kpi = DocumentKpi::create(['document_id' => $document->id,
+            'workspace_id' => $document->workspace_id, 'label' => 'Revenue',
+            'value' => '46.0', 'unit' => null, 'period' => 'FY2024',
+            'identity_metadata' => ['concept' => 'revenue', 'metric_type' => 'amount',
+                'value_basis' => 'actual', 'period' => 'FY2024']]);
+        foreach ([false, true] as $enabled) {
+            config()->set('document_intelligence.server_evidence_resolution', $enabled);
+            self::assertSame('missing_source_reference', app(NormalKpiGrounder::class)->record(
+                $document, $kpi, ['source_context' => ['value_span_id' => 'E002',
+                    'period_span_id' => 'E001']]));
+            self::assertFalse(DocumentEvidence::where('source_id', 'kpi:'.$kpi->id)->exists());
+        }
+    }
+
+    public function test_shared_period_and_unit_header_proves_row_basis_without_confusing_columns(): void
+    {
+        $cases = [
+            ['Q3 2026', 'Revenue | 51.0 | Actual', '51.0', 'actual', null],
+            ['Q3 2026', 'Revenue | 55.0 | Target', '55.0', 'target', null],
+            ['Q3 2026', 'Revenue | 55.0 | Target', '55.0', 'actual', 'period_column_ambiguous'],
+            ['Q3 2025 and Q3 2026', 'Revenue | 51.0 | Actual', '51.0', 'actual', 'period_ambiguous'],
+            ['Q3 2026', 'Revenue | USD 51.0 | Actual', '51.0', 'actual', 'quantity_mismatch'],
+        ];
+        foreach ($cases as [$headerPeriod, $row, $value, $basis, $expected]) {
+            $document = $this->document("Measure | {$headerPeriod} | KES million\n".$row);
+            $kpi = DocumentKpi::create(['document_id' => $document->id,
+                'workspace_id' => $document->workspace_id, 'label' => 'Revenue',
+                'value' => $value, 'unit' => 'KES million', 'period' => 'Q3 2026',
+                'identity_metadata' => ['concept' => 'revenue', 'metric_type' => 'amount',
+                    'value_basis' => $basis, 'period' => 'Q3 2026']]);
+            self::assertSame($expected, app(NormalKpiGrounder::class)->record($document, $kpi,
+                ['source_context' => ['value_span_id' => 'E002', 'unit_span_id' => 'E001',
+                    'period_span_id' => 'E001']]));
+            self::assertSame($expected === null,
+                DocumentEvidence::where('source_id', 'kpi:'.$kpi->id)->exists());
+        }
+        $document = $this->document("Measure | Q1 2026 | Q3 2026 | KES million\n"
+            ."Revenue | 42.0 | 51.0 | Actual");
+        $kpi = DocumentKpi::create(['document_id' => $document->id,
+            'workspace_id' => $document->workspace_id, 'label' => 'Revenue',
+            'value' => '51.0', 'unit' => 'KES million', 'period' => 'Q1 2026',
+            'identity_metadata' => ['concept' => 'revenue', 'metric_type' => 'amount',
+                'value_basis' => 'actual', 'period' => 'Q1 2026']]);
+        self::assertSame('value_column_mismatch', app(NormalKpiGrounder::class)->record($document, $kpi,
+            ['source_context' => ['value_span_id' => 'E002', 'unit_span_id' => 'E001',
+                'period_span_id' => 'E001']]));
+        self::assertFalse(DocumentEvidence::where('source_id', 'kpi:'.$kpi->id)->exists());
+    }
+
+    public function test_row_expansion_requires_a_proven_anchor_and_unique_explicit_period_columns(): void
+    {
+        config()->set('document_intelligence.server_evidence_resolution', true);
+        $candidate = ['label' => 'Revenue', 'value' => '46.0', 'unit' => 'KES million',
+            'period' => 'Q2 2026', 'identity' => ['concept' => 'revenue',
+                'scope' => 'ACME HOLDINGS PLC', 'metric_type' => 'amount',
+                'value_basis' => 'actual', 'period' => 'Q2 2026'],
+            'source_context' => ['value_span_id' => 'E003', 'period_span_id' => 'E002',
+                'unit_span_id' => 'E001', 'subject_span_id' => 'E001']];
+        foreach ([
+            ["Measure\tQ1 2026\tQ2 2026\nRevenue\t42.0\t46.0", 1],
+            ["Measure\tEast\tWest\nRevenue\t42.0\t46.0", 0],
+            ["Measure\tQ1 2026\tQ1 2026\nRevenue\t42.0\t46.0", 0],
+            ["Measure\tQ1\tQ2\nRevenue\t42.0\t46.0", 0],
+            ["Measure\tQ1 2026\tQ2 2026\n\nRevenue\t42.0\t46.0", 0],
+        ] as [$table, $count]) {
+            $document = $this->document("ACME HOLDINGS PLC | REPORT | Q2 2026\n".$table);
+            $expanded = app(RowExpander::class)->expand($document, [$candidate]);
+            self::assertCount($count, $expanded);
+            if ($count === 1) {
+                self::assertSame('Q1 2026', $expanded[0]['identity']['period']);
+                self::assertSame('42.0', $expanded[0]['value']);
+            }
+        }
+        $document = $this->document("ACME HOLDINGS PLC | REPORT | Q2 2026\n"
+            ."Measure\tQ1 2026\tQ2 2026\nRevenue\t42.0\t46.0");
+        self::assertSame([], app(RowExpander::class)->expand($document,
+            [[...$candidate, 'value' => '999.0']]));
+        $conflict = [...$candidate, 'value' => '999.0', 'period' => 'Q1 2026',
+            'identity' => [...$candidate['identity'], 'period' => 'Q1 2026']];
+        self::assertSame([], app(RowExpander::class)->expand($document, [$candidate, $conflict]));
+    }
+
     public function test_genuine_prose_still_uses_the_non_table_proof_path(): void
     {
         $document = $this->document('ACME HOLDINGS PLC reported revenue of USD million 51.0 in FY2025.');
@@ -95,6 +183,30 @@ class NormalKpiTableSafetyTest extends TestCase
             ['source_context' => ['value_span_id' => 'E001', 'unit_span_id' => 'E001',
                 'period_span_id' => 'E001', 'subject_span_id' => 'E001']]));
         self::assertNotNull(DocumentEvidence::where('source_id', 'kpi:'.$kpi->id)->first());
+    }
+
+    public function test_compact_monetary_prose_requires_the_exact_printed_value_currency_and_scale(): void
+    {
+        foreach ([
+            ['ACME reported revenue of KES 51.0m in FY2025.', 'KES 51.0m', 'KES million', null],
+            ['ACME reported revenue of KES 51.0m in FY2025.', 'KES 51.0', 'KES million', 'source_mismatch'],
+            ['ACME reported revenue of KES 51.0m in FY2025.', 'KES 51.0m', 'USD million', 'quantity_mismatch'],
+            ['ACME reported revenue of -KES 51.0m in FY2025.', 'KES 51.0m', 'KES million', 'source_mismatch'],
+            ['ACME reported revenue of KES 51.0m and again KES 51.0m in FY2025.',
+                'KES 51.0m', 'KES million', 'source_mismatch'],
+        ] as [$text, $value, $unit, $expected]) {
+            $document = $this->document($text);
+            $kpi = DocumentKpi::create(['document_id' => $document->id,
+                'workspace_id' => $document->workspace_id, 'label' => 'Revenue',
+                'value' => $value, 'unit' => $unit, 'period' => 'FY2025',
+                'identity_metadata' => ['concept' => 'revenue', 'scope' => 'ACME',
+                    'metric_type' => 'amount', 'value_basis' => 'actual', 'period' => 'FY2025']]);
+            self::assertSame($expected, app(NormalKpiGrounder::class)->record($document, $kpi,
+                ['source_context' => ['value_span_id' => 'E001', 'unit_span_id' => 'E001',
+                    'period_span_id' => 'E001', 'subject_span_id' => 'E001']]));
+            self::assertSame($expected === null,
+                DocumentEvidence::where('source_id', 'kpi:'.$kpi->id)->exists());
+        }
     }
 
     public function test_northstar_financial_cells_keep_exact_offsets_and_all_twelve_are_eligible(): void

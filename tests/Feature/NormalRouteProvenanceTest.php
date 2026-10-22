@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Services\AI\Incremental\EvidenceGrounding;
 use App\Services\Extraction\SpreadsheetTextExtractor;
 use App\Services\Extraction\StructuredExtractionStore;
+use App\Services\Extraction\NativeCellProjector;
 use App\Services\Intelligence\AnalyticalComparisonBuilder;
 use App\Services\Intelligence\DocumentRevisionPublisher;
 use App\Services\Intelligence\MetricCollector;
@@ -274,6 +275,11 @@ class NormalRouteProvenanceTest extends TestCase
                 'status' => 'Processing', 'classification' => 'Internal', 'size_kb' => 1,
                 'year' => 2026, 'file_hash' => hash_file('sha256', $path), 'pages' => 1]);
             app(StructuredExtractionStore::class)->publish($document, $structured);
+            $projected = app(NativeCellProjector::class)->project($document);
+            self::assertCount(4, $projected);
+            self::assertSame('Revenue', collect($projected)->firstWhere('row_header', true)['text']);
+            self::assertSame('Q3 2026 KES million', $projected[1]['text']);
+            self::assertTrue($projected[1]['column_header']);
             $document->forceFill(['ai_pipeline' => ['route' => 'normal', 'key' => 'normal:workbook',
                 'normal_span_grounding' => true]])->save();
             $spans = app(EvidenceGrounding::class)->spans($document)->all();

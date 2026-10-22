@@ -39,6 +39,13 @@ class PdfTabularCellVerifier
         if (count($columns) !== count($cells)) {
             return ['rejection' => 'table_column_mismatch'];
         }
+        // Some reports print one value column and a per-row basis column. The final
+        // header cell then gives the shared unit, not another measurement period.
+        $rowBasis = count($cells) === 3
+            && in_array(mb_strtolower(trim($cells[2]['text'])),
+                ['actual', 'target', 'proposed', 'forecast', 'budget'], true)
+            && trim((string) $kpi->unit) !== ''
+            && mb_strtolower(trim($columns[2])) === mb_strtolower(trim((string) $kpi->unit));
         $between = 0;
         foreach ($set->all() as $span) {
             if ($span['start_offset'] <= $header['start_offset']
@@ -52,6 +59,9 @@ class PdfTabularCellVerifier
         }
         $period = trim((string) $kpi->period);
         $basis = mb_strtolower(trim((string) (($kpi->identity_metadata ?? [])['value_basis'] ?? '')));
+        if ($rowBasis && preg_match_all('/\bQ[1-4]\s+(?:FY)?\d{4}\b/iu', $columns[1]) > 1) {
+            return ['rejection' => 'period_ambiguous'];
+        }
         if ($period !== '' && $this->periods->parse($period) === null
             && ! preg_match('/^Q[1-4]$/iuD', $period)) {
             return ['rejection' => 'period_ambiguous'];
@@ -75,6 +85,12 @@ class PdfTabularCellVerifier
             if (! $this->periodColumnMatches($column, $period, $quarter)) {
                 continue;
             }
+            if ($rowBasis) {
+                if ($index === 1 && mb_strtolower(trim($cells[2]['text'])) === $basis) {
+                    $indexes[] = $index;
+                }
+                continue;
+            }
             $targetColumn = preg_match('/\b(?:target|ceiling|goal|threshold)\b/iu', $column) === 1;
             if (($basis === 'target') === $targetColumn) {
                 $indexes[] = $index;
@@ -84,6 +100,21 @@ class PdfTabularCellVerifier
             return ['rejection' => 'period_column_ambiguous'];
         }
         $index = $indexes[0];
+        $explicitCurrencies = $this->measurements->explicitCurrencyCodes($cells[$index]['text']);
+        $claimCurrency = $this->measurements->isoCurrency((string) $kpi->unit);
+        if (count($explicitCurrencies) > 1 || ($explicitCurrencies !== []
+            && $explicitCurrencies[0] !== $claimCurrency)) {
+            return ['rejection' => 'quantity_mismatch'];
+        }
+        if (preg_match('/\b(?:thousands?|millions?|billions?|trillions?)\b/iu',
+            $cells[$index]['text'], $writtenScale)) {
+            $claimedScale = $this->measurements->parse((string) $kpi->value, $kpi->unit, $kpi->label);
+            $sourceScale = $this->measurements->parse((string) $kpi->value, $writtenScale[0], $kpi->label);
+            if ($claimedScale === null || $sourceScale === null
+                || $claimedScale->scale !== $sourceScale->scale) {
+                return ['rejection' => 'scale_mismatch'];
+            }
+        }
         $claimed = $this->measurements->parse((string) $kpi->value, $kpi->unit, $kpi->label);
         $written = $this->measurements->parse($cells[$index]['text'], $kpi->unit, $kpi->label);
         if ($claimed === null || $written === null
@@ -102,12 +133,25 @@ class PdfTabularCellVerifier
         $singular = static fn (string $word): string => str_ends_with($word, 'ies')
             ? substr($word, 0, -3).'y' : (str_ends_with($word, 's') ? substr($word, 0, -1) : $word);
         $labels = array_map($singular, $labelWords);
-        $caption = $this->precedingCaption($set, $header);
-        $captionWords = preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower($caption), -1,
+        $headerWords = preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower($columns[$index]), -1,
             PREG_SPLIT_NO_EMPTY) ?: [];
-        if ($conceptWords === [] || (array_diff(array_map($singular, $conceptWords), $labels) !== []
-            && ($period !== '' || ! preg_match('/\btotal\s+proposed\b/iu', $cells[0]['text'])
-                || array_diff(array_map($singular, $conceptWords), array_map($singular, $captionWords)) !== []))) {
+        $rowConcept = array_diff(array_map($singular, $conceptWords), $labels) === [];
+        $headerConcept = array_diff(array_map($singular, $conceptWords),
+            array_map($singular, $headerWords)) === [];
+        $rowIdentity = mb_strtolower(trim($cells[0]['text']))
+            === mb_strtolower(trim((string) $kpi->label))
+            || mb_strtolower(trim($cells[0]['text']))
+                === mb_strtolower(trim((string) ($kpi->identity_metadata['scope'] ?? '')));
+        $legacyCaption = $this->precedingCaption($set, $header);
+        $legacyCaptionWords = preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower($legacyCaption), -1,
+            PREG_SPLIT_NO_EMPTY) ?: [];
+        $legacyConcept = $rowConcept || ($period === ''
+            && preg_match('/\btotal\s+proposed\b/iu', $cells[0]['text'])
+            && array_diff(array_map($singular, $conceptWords),
+                array_map($singular, $legacyCaptionWords)) === []);
+        $conceptProven = config('document_intelligence.server_evidence_resolution', false)
+            ? ($rowConcept || ($headerConcept && $rowIdentity)) : $legacyConcept;
+        if ($conceptWords === [] || ! $conceptProven) {
             return ['rejection' => 'concept_row_mismatch'];
         }
         $cellStart = $value['start_offset'] + $cells[$index]['start'];
@@ -193,7 +237,9 @@ class PdfTabularCellVerifier
                 return false;
             }
             if (preg_match('/^Q[1-4]\s+(?:FY)?\d{4}\b/iu', $column, $match)) {
-                return $this->periods->parse($match[0])?->label === $this->periods->parse($period)?->label;
+                $claimed = $this->periods->parse($period);
+                return $claimed === null && strtoupper($period) === $quarter
+                    ? true : $this->periods->parse($match[0])?->label === $claimed?->label;
             }
 
             return true; // A bare quarter still needs the governing period-role proof.
