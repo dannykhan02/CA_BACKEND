@@ -125,3 +125,7 @@ Scheduled hourly. `--dry-run` reports the workspaces it would sweep and
 changes nothing.
 
 Operator note: run `php artisan credits:audit-settlements` after each deploy of this policy.
+
+## Image text location
+
+Tesseract runs in the worker image. Kill switch: OCR_IMAGE_LOCATION_ENABLED. Backfill: php artisan documents:ocr-locate-images (dry run by default, --force to write).
