@@ -5,6 +5,7 @@ namespace App\Services\Intelligence;
 use App\Models\Document;
 use App\Models\DocumentEvidence;
 use App\Models\DocumentKpi;
+use App\Services\AI\Incremental\EvidenceGrounding;
 use App\Services\Kpis\KpiIdentityProfile;
 use App\Services\Kpis\KpiLabelNormalizer;
 
@@ -112,7 +113,13 @@ class MetricCollector
                         'field_verification_policy' => $data['field_verification_policy'] ?? null,
                         'grounding_rejection' => $data['grounding_rejection'] ?? null,
                         'source_revision' => $data['source_revision'] ?? null,
+                        'source_extraction_version' => $data['source_extraction_version'] ?? null,
+                        'governing_owner' => $data['governing_owner'] ?? null,
+                        'ownership_requirement' => $data['ownership_requirement'] ?? null,
+                        'ownership_enforced' => ($document->ai_pipeline['route'] ?? null) === 'normal',
+                        'subject' => $data['subject'] ?? null,
                         'current_source_revision' => hash('sha256', (string) $document->extracted_text),
+                        'current_extraction_version' => app(EvidenceGrounding::class)->version($document),
                         'label' => $data['label'] ?? null,
                         'basis_context' => is_string($data['source_column_basis'] ?? null)
                             ? ($data['source_column_basis']."\n".implode("\n", array_map(

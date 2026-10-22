@@ -31,7 +31,7 @@ class EvidenceFirstSafetyTest extends TestCase
             $xml .= '<w:tc><w:p><w:r><w:t>'.$cell.'</w:t></w:r></w:p></w:tc>';
         }
         $xml .= '</w:tr><w:tr>';
-        foreach (['ACME revenue % Q1 2026', '42.0', '46.0', '51.0'] as $cell) {
+        foreach (['ACME LTD revenue % Q1 2026', '42.0', '46.0', '51.0'] as $cell) {
             $xml .= '<w:tc><w:p><w:r><w:t>'.$cell.'</w:t></w:r></w:p></w:tc>';
         }
         $xml .= '</w:tr></w:tbl></w:body></w:document>';
@@ -54,7 +54,7 @@ class EvidenceFirstSafetyTest extends TestCase
             $row = $set->all()[1]['key'];
             foreach ([['Q1 2026', '51.0', 'value_column_mismatch'],
                 ['Q3 2026', '51.0', null]] as [$period, $value, $expected]) {
-                $kpi = $this->kpi($document, 'Revenue', $value, '%', $period, 'ACME', 'revenue');
+                $kpi = $this->kpi($document, 'Revenue', $value, '%', $period, 'ACME LTD', 'revenue');
                 $result = app(NormalKpiGrounder::class)->record($document, $kpi,
                     ['source_context' => ['value_span_id' => $row, 'unit_span_id' => $row,
                         'period_span_id' => $period === 'Q1 2026' ? $row : $header,
@@ -117,7 +117,7 @@ class EvidenceFirstSafetyTest extends TestCase
             $xml .= '<w:tc><w:p><w:r><w:t>'.$cell.'</w:t></w:r></w:p></w:tc>';
         }
         $xml .= '</w:tr><w:tr>';
-        foreach (['ACME revenue %', '51.0', '55.0'] as $cell) {
+        foreach (['ACME LTD revenue %', '51.0', '55.0'] as $cell) {
             $xml .= '<w:tc><w:p><w:r><w:t>'.$cell.'</w:t></w:r></w:p></w:tc>';
         }
         $xml .= '</w:tr></w:tbl></w:body></w:document>';
@@ -135,7 +135,7 @@ class EvidenceFirstSafetyTest extends TestCase
             $row = end($spans)['key'];
             foreach ([['55.0', 'target', null], ['55.0', 'actual', 'value_column_mismatch']] as
                 [$value, $basis, $expected]) {
-                $kpi = $this->kpi($document, 'Revenue', $value, '%', 'Q3 2026', 'ACME', 'revenue');
+                $kpi = $this->kpi($document, 'Revenue', $value, '%', 'Q3 2026', 'ACME LTD', 'revenue');
                 $kpi->forceFill(['identity_metadata' => [...$kpi->identity_metadata,
                     'value_basis' => $basis]])->save();
                 self::assertSame($expected, app(NormalKpiGrounder::class)->record($document, $kpi,

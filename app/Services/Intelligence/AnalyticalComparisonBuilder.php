@@ -19,6 +19,7 @@ class AnalyticalComparisonBuilder
         $slots = [];
         foreach ($eligible as $observation) {
             $slot = json_encode([$this->concept($observation), $this->normalizer->normalize($observation->subject),
+                $observation->integrity['governingOwner'] ?? null,
                 $observation->period->label, $observation->period->basis, $observation->valueBasis,
                 $observation->measurement->family, $observation->measurement->currency,
                 $observation->measurement->kind, $observation->aggregation]);
@@ -39,6 +40,7 @@ class AnalyticalComparisonBuilder
         $groups = [];
         foreach ($eligible as $observation) {
             $key = json_encode([$this->concept($observation), $this->normalizer->normalize($observation->subject),
+                $observation->integrity['governingOwner'] ?? null,
                 $observation->period->label, $observation->period->basis,
                 $observation->measurement->family, $observation->measurement->currency,
                 $observation->measurement->kind, $observation->aggregation]);
@@ -113,7 +115,8 @@ class AnalyticalComparisonBuilder
                 continue;
             }
             $key = json_encode([$item->period->label, $item->period->basis,
-                $this->normalizer->normalize($item->subject), $item->measurement->currency]);
+                $this->normalizer->normalize($item->subject),
+                $item->integrity['governingOwner'] ?? null, $item->measurement->currency]);
             $groups[$key][$role][] = $item;
         }
         $results = [];

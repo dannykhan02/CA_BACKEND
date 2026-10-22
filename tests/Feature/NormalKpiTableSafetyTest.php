@@ -105,8 +105,8 @@ class NormalKpiTableSafetyTest extends TestCase
     public function test_shared_period_and_unit_header_proves_row_basis_without_confusing_columns(): void
     {
         $cases = [
-            ['Q3 2026', 'Revenue | 51.0 | Actual', '51.0', 'actual', null],
-            ['Q3 2026', 'Revenue | 55.0 | Target', '55.0', 'target', null],
+            ['Q3 2026', 'Revenue | 51.0 | Actual', '51.0', 'actual', 'governing_owner_unverified'],
+            ['Q3 2026', 'Revenue | 55.0 | Target', '55.0', 'target', 'governing_owner_unverified'],
             ['Q3 2026', 'Revenue | 55.0 | Target', '55.0', 'actual', 'period_column_ambiguous'],
             ['Q3 2025 and Q3 2026', 'Revenue | 51.0 | Actual', '51.0', 'actual', 'period_ambiguous'],
             ['Q3 2026', 'Revenue | USD 51.0 | Actual', '51.0', 'actual', 'quantity_mismatch'],
@@ -188,18 +188,18 @@ class NormalKpiTableSafetyTest extends TestCase
     public function test_compact_monetary_prose_requires_the_exact_printed_value_currency_and_scale(): void
     {
         foreach ([
-            ['ACME reported revenue of KES 51.0m in FY2025.', 'KES 51.0m', 'KES million', null],
-            ['ACME reported revenue of KES 51.0m in FY2025.', 'KES 51.0', 'KES million', 'source_mismatch'],
-            ['ACME reported revenue of KES 51.0m in FY2025.', 'KES 51.0m', 'USD million', 'quantity_mismatch'],
-            ['ACME reported revenue of -KES 51.0m in FY2025.', 'KES 51.0m', 'KES million', 'source_mismatch'],
-            ['ACME reported revenue of KES 51.0m and again KES 51.0m in FY2025.',
+            ['ACME LTD reported revenue of KES 51.0m in FY2025.', 'KES 51.0m', 'KES million', null],
+            ['ACME LTD reported revenue of KES 51.0m in FY2025.', 'KES 51.0', 'KES million', 'source_mismatch'],
+            ['ACME LTD reported revenue of KES 51.0m in FY2025.', 'KES 51.0m', 'USD million', 'quantity_mismatch'],
+            ['ACME LTD reported revenue of -KES 51.0m in FY2025.', 'KES 51.0m', 'KES million', 'source_mismatch'],
+            ['ACME LTD reported revenue of KES 51.0m and again KES 51.0m in FY2025.',
                 'KES 51.0m', 'KES million', 'source_mismatch'],
         ] as [$text, $value, $unit, $expected]) {
             $document = $this->document($text);
             $kpi = DocumentKpi::create(['document_id' => $document->id,
                 'workspace_id' => $document->workspace_id, 'label' => 'Revenue',
                 'value' => $value, 'unit' => $unit, 'period' => 'FY2025',
-                'identity_metadata' => ['concept' => 'revenue', 'scope' => 'ACME',
+                'identity_metadata' => ['concept' => 'revenue', 'scope' => 'ACME LTD',
                     'metric_type' => 'amount', 'value_basis' => 'actual', 'period' => 'FY2025']]);
             self::assertSame($expected, app(NormalKpiGrounder::class)->record($document, $kpi,
                 ['source_context' => ['value_span_id' => 'E001', 'unit_span_id' => 'E001',
@@ -248,7 +248,8 @@ class NormalKpiTableSafetyTest extends TestCase
                 $start = $evidence->data['source_cell_start_offset'];
                 $end = $evidence->data['source_cell_end_offset'];
                 self::assertSame($evidence->data['source_cell_value'], mb_substr($text, $start, $end - $start));
-                self::assertSame(['value', 'unit', 'period', 'subject'], $evidence->data['source_fields_verified']);
+                self::assertSame(['value', 'unit', 'period', 'subject', 'governing_owner'],
+                    $evidence->data['source_fields_verified']);
             }
         }
         self::assertSame(12, app(MetricCollector::class)->collect($document)['stats']['chartable']);
