@@ -39,9 +39,11 @@ class GoverningOwnerProof
 
         // A specific table caption outranks a page banner. A conflicting or multi-entity
         // caption is not repaired by a model citation to some other part of the page.
-        if ($local !== null && $this->ownerCaption($local['text'])) {
+        if ($local !== null && ! preg_match('/\bPage\s+\d+\s*$/iu', $local['text'])
+            && $this->ownerCaption($local['text'])) {
             $names = $this->companyNames($local['text']);
-            if (count($names) !== 1 || ($claim !== '' && ! $this->containsName($local['text'], $claim))) {
+            if (count($names) !== 1 || ! $this->namedTableCaption($local['text'], $names[0])
+                || ($claim !== '' && ! $this->containsName($local['text'], $claim))) {
                 return null;
             }
             if ($cited !== null && $cited['span_id'] !== $local['span_id']
@@ -69,6 +71,18 @@ class GoverningOwnerProof
             && ($cited === null || $cited['span_id'] === $value['span_id'])) {
             return $this->proof($claim !== '' ? $claim : $rowNames[0], 'value_row',
                 [$value], $sourceRevision, $set->version);
+        }
+
+        // A report-wide financial table can inherit its reporting entity only through
+        // the cover's named report identity, the exact repeated report header on this
+        // page, and the immediately adjacent financial section/table caption. The
+        // page header by itself says which document this is, not who owns every table.
+        if ($claim === '' && $anchor !== null && $local !== null) {
+            $reporting = $this->reportingEntityTable($set, $anchor, $local, $value, $cited);
+            if ($reporting !== null) {
+                return $this->proof($reporting['entity'], 'reporting_entity_section_table',
+                    $reporting['spans'], $sourceRevision, $set->version);
+            }
         }
 
         // An explicit company claim can use a cited page/section heading only when the
@@ -126,10 +140,108 @@ class GoverningOwnerProof
         return null;
     }
 
+    /** @return array{entity:string,spans:list<array>}|null */
+    private function reportingEntityTable(EvidenceSpanSet $set, array $anchor,
+        array $caption, array $value, ?array $cited): ?array
+    {
+        if ($anchor['page'] === null || $caption['page'] !== $anchor['page']
+            || $value['page'] !== $anchor['page']
+            || ! in_array($caption['type'], ['section', 'list_item', 'sentence'], true)
+            || ! preg_match('/\b(?:financial|income statement|profit and loss|balance sheet|cash flow)\b/iu',
+                $caption['text'])) {
+            return null;
+        }
+
+        $first = null;
+        $cover = null;
+        $pageBanner = null;
+        foreach ($set->all() as $span) {
+            $source = $set->resolve($span['key']);
+            if ($source === null) {
+                return null;
+            }
+            if ($source['page'] === 1) {
+                $first ??= $source;
+                if ($cover === null && in_array($source['type'], ['heading', 'section'], true)
+                    && count($this->companyNames($source['text'])) === 1
+                    && preg_match('/\b(?:annual|quarterly|board|financial|management)\b.{0,80}\b(?:report|review|pack|statements?)\b/isu',
+                        $source['text'])) {
+                    $cover = $source;
+                }
+            }
+            if ($source['page'] === $anchor['page'] && $pageBanner === null) {
+                $pageBanner = $source;
+            }
+        }
+        if ($first === null || $cover === null || $pageBanner === null
+            || $first['start_offset'] >= $cover['start_offset']
+            || $pageBanner['start_offset'] >= $caption['start_offset']
+            || $this->bannerIdentity($first['text']) !== $this->bannerIdentity($pageBanner['text'])) {
+            return null;
+        }
+        $names = $this->companyNames($cover['text']);
+        $entity = $names[0];
+        if (count($this->companyNames($first['text'])) !== 1
+            || ! $this->sameName($this->companyNames($first['text'])[0], $entity)
+            || ($cited !== null && $cited['span_id'] !== $value['span_id']
+                && $cited['span_id'] !== $caption['span_id']
+                && $cited['span_id'] !== $pageBanner['span_id']
+                && $cited['span_id'] !== $cover['span_id'])) {
+            return null;
+        }
+
+        // Any distinct named organization in the cover or on the path from this
+        // page's banner to the value makes report-wide ownership ambiguous.
+        foreach ($set->all() as $span) {
+            if (! (($span['page'] === 1 && $span['start_offset'] <= $cover['end_offset'])
+                || ($span['page'] === $value['page']
+                    && $span['start_offset'] >= $pageBanner['start_offset'])
+                || (preg_match('/\bcontinued\b/iu', $caption['text'])
+                    && $span['page'] === $value['page'] - 1))) {
+                continue;
+            }
+            foreach ($this->companyNames($set->resolve($span['key'])['text']) as $name) {
+                if (! $this->sameName($name, $entity)) {
+                    return null;
+                }
+            }
+        }
+
+        return ['entity' => $entity,
+            'spans' => [$first, $cover, $pageBanner, $caption, $anchor, $value]];
+    }
+
+    private function bannerIdentity(string $text): string
+    {
+        return mb_strtolower(trim(preg_replace('/\s+Page\s+\d+\s*$/iu', '', $text)));
+    }
+
     private function ownerCaption(string $text): bool
     {
-        return $this->hasCompanyName($text)
-            || preg_match('/\b(?:subsidiary|business unit|division|reporting entity)\b/iu', $text) === 1;
+        if (preg_match('/\b(?:subsidiary|business unit|division|reporting entity)\b/iu', $text)) {
+            return true;
+        }
+        foreach (preg_split('/\R/u', $text) ?: [] as $line) {
+            if ($this->hasCompanyName($line)
+                && preg_match('/\b(?:financial|revenue|costs?|profit|income|cash flow|assets|liabilities)\b/iu',
+                    $line)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function namedTableCaption(string $text, string $name): bool
+    {
+        foreach (preg_split('/\R/u', $text) ?: [] as $line) {
+            if (preg_match('/^\s*'.preg_quote($name, '/').'.{0,80}\b(?:results|performance|statement|table|summary|by\s+(?:quarter|year|region|segment|function))\b/iu',
+                $line)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function hasCompanyName(string $text): bool
@@ -140,7 +252,7 @@ class GoverningOwnerProof
     /** @return list<string> */
     private function companyNames(string $text): array
     {
-        preg_match_all('/\b\p{Lu}[\p{L}\p{N}&.-]*(?:\s+\p{Lu}[\p{L}\p{N}&.-]*){0,5}\s+(?i:Ltd|Limited|PLC|LLC|Inc|Corporation)\b/u',
+        preg_match_all('/\b\p{Lu}[\p{L}\p{N}&.-]*(?:[ \t]+\p{Lu}[\p{L}\p{N}&.-]*){0,5}[ \t]+(?i:Ltd|Limited|PLC|LLC|Inc|Corporation)\b/u',
             $text, $matches);
 
         return array_values(array_unique(array_map('trim', $matches[0])));

@@ -7,6 +7,7 @@ use App\Models\Document;
 use App\Models\DocumentEvidence;
 use App\Models\DocumentKpi;
 use App\Models\User;
+use App\Services\AI\Incremental\EvidenceGrounding;
 use App\Services\Intelligence\MetricCollector;
 use App\Services\Intelligence\NormalKpiGrounder;
 use App\Services\Intelligence\RowExpander;
@@ -28,6 +29,122 @@ class GoverningOwnerProofTest extends TestCase
         self::assertSame('governing_owner_unverified', $this->record($document, $kpi,
             'E004', 'E003', 'E004'));
         self::assertFalse(DocumentEvidence::where('source_id', 'kpi:'.$kpi->id)->exists());
+    }
+
+    public function test_blank_scope_inherits_a_single_reporting_entity_through_a_bounded_financial_section(): void
+    {
+        $document = $this->document("ACME HOLDINGS PLC | ANNUAL REPORT | FY2025\tPage 1\n"
+            ."ACME HOLDINGS PLC\nFY2025 Annual Financial Report\f"
+            ."ACME HOLDINGS PLC | ANNUAL REPORT | FY2025\tPage 2\n"
+            ."FY2025 / ANNUAL REPORT\n2. Financial performance\n"
+            ."Financial results by year (USD million)\n"
+            ."Measure (USD million)\tFY2023\tFY2024\tFY2025\nRevenue\t42.0\t46.0\t51.0");
+        $kpi = $this->kpi($document, null);
+        self::assertNull($this->record($document, $kpi,
+            $this->spanId($document, 'Revenue' . "\t" . '42.0'),
+            $this->spanId($document, 'Measure (USD million)' . "\t" . 'FY2023'),
+            $this->spanId($document, 'Revenue' . "\t" . '42.0'),
+            $this->spanId($document, 'Measure (USD million)' . "\t" . 'FY2023')));
+        $proof = DocumentEvidence::where('source_id', 'kpi:'.$kpi->id)->sole()->data['governing_owner'];
+        self::assertSame('ACME HOLDINGS PLC', $proof['entity']);
+        self::assertSame('reporting_entity_section_table', $proof['relationship']);
+        self::assertCount(6, $proof['source_spans']);
+        self::assertNull($kpi->fresh()->identity_metadata['scope']);
+        self::assertTrue($this->observation($document, $kpi)->integrity['analyticalEligible']);
+    }
+
+    public function test_report_identity_does_not_override_a_subsidiary_financial_caption(): void
+    {
+        $document = $this->document("ACME HOLDINGS PLC | ANNUAL REPORT | FY2025\tPage 1\n"
+            ."ACME HOLDINGS PLC\nFY2025 Annual Financial Report\f"
+            ."ACME HOLDINGS PLC | ANNUAL REPORT | FY2025\tPage 2\n"
+            ."BETA DISTRIBUTION LTD financial results (USD million)\n"
+            ."Measure (USD million)\tFY2023\tFY2024\tFY2025\nRevenue\t42.0\t46.0\t51.0");
+        $row = $this->spanId($document, 'Revenue' . "\t" . '42.0');
+        $header = $this->spanId($document, 'Measure (USD million)' . "\t" . 'FY2023');
+        $parent = $this->kpi($document, 'ACME HOLDINGS PLC');
+        self::assertNotNull($this->record($document, $parent, $row, $header,
+            $this->spanId($document, 'ACME HOLDINGS PLC | ANNUAL', 2), $header));
+        $blank = $this->kpi($document, null);
+        self::assertNull($this->record($document, $blank, $row, $header, $row, $header));
+        self::assertSame('BETA DISTRIBUTION LTD', DocumentEvidence::where('source_id',
+            'kpi:'.$blank->id)->sole()->data['governing_owner']['entity']);
+    }
+
+    public function test_reporting_entity_inference_refuses_mixed_page_and_conflicting_citation(): void
+    {
+        $document = $this->document("ACME HOLDINGS PLC | ANNUAL REPORT | FY2025\tPage 1\n"
+            ."ACME HOLDINGS PLC\nFY2025 Annual Financial Report\f"
+            ."ACME HOLDINGS PLC | ANNUAL REPORT | FY2025\tPage 2\n"
+            ."BETA DISTRIBUTION LTD performance is also discussed.\n"
+            ."Financial results by year (USD million)\n"
+            ."Measure (USD million)\tFY2023\tFY2024\tFY2025\nRevenue\t42.0\t46.0\t51.0");
+        $row = $this->spanId($document, 'Revenue' . "\t" . '42.0');
+        $header = $this->spanId($document, 'Measure (USD million)' . "\t" . 'FY2023');
+        $blank = $this->kpi($document, null);
+        self::assertSame('governing_owner_unverified', $this->record($document, $blank,
+            $row, $header, $row, $header));
+        $document = $this->document("ACME HOLDINGS PLC | ANNUAL REPORT | FY2025\tPage 1\n"
+            ."ACME HOLDINGS PLC\nFY2025 Annual Financial Report\f"
+            ."ACME HOLDINGS PLC | ANNUAL REPORT | FY2025\tPage 2\n"
+            ."BETA DISTRIBUTION LTD revenue grew last year.\n"
+            ."Financial results by year (USD million)\n"
+            ."Measure (USD million)\tFY2023\tFY2024\tFY2025\nRevenue\t42.0\t46.0\t51.0");
+        $blank = $this->kpi($document, null);
+        self::assertSame('governing_owner_unverified', $this->record($document, $blank,
+            $this->spanId($document, 'Revenue' . "\t" . '42.0'),
+            $this->spanId($document, 'Measure (USD million)' . "\t" . 'FY2023'),
+            $this->spanId($document, 'Revenue' . "\t" . '42.0'),
+            $this->spanId($document, 'Measure (USD million)' . "\t" . 'FY2023')));
+        $document = $this->document("ACME HOLDINGS PLC | ANNUAL REPORT | FY2025\tPage 1\n"
+            ."ACME HOLDINGS PLC\nFY2025 Annual Financial Report\f"
+            ."ACME HOLDINGS PLC | ANNUAL REPORT | FY2025\tPage 2\n"
+            ."Financial results by year (USD million)\n"
+            ."Measure (USD million)\tFY2023\tFY2024\tFY2025\nRevenue\t42.0\t46.0\t51.0\n"
+            ."BETA DISTRIBUTION LTD disputes this attribution.");
+        $blank = $this->kpi($document, null);
+        self::assertSame('governing_owner_unverified', $this->record($document, $blank,
+            $this->spanId($document, 'Revenue' . "\t" . '42.0'),
+            $this->spanId($document, 'Measure (USD million)' . "\t" . 'FY2023'),
+            $this->spanId($document, 'BETA DISTRIBUTION LTD disputes'),
+            $this->spanId($document, 'Measure (USD million)' . "\t" . 'FY2023')));
+        $uncitedConflict = $this->kpi($document, null);
+        self::assertSame('governing_owner_unverified', $this->record($document, $uncitedConflict,
+            $this->spanId($document, 'Revenue' . "\t" . '42.0'),
+            $this->spanId($document, 'Measure (USD million)' . "\t" . 'FY2023'),
+            $this->spanId($document, 'Revenue' . "\t" . '42.0'),
+            $this->spanId($document, 'Measure (USD million)' . "\t" . 'FY2023')));
+    }
+
+    public function test_continued_table_requires_a_repeated_local_financial_section(): void
+    {
+        $base = "ACME HOLDINGS PLC | ANNUAL REPORT | FY2025\tPage 1\n"
+            ."ACME HOLDINGS PLC\nFY2025 Annual Financial Report\f"
+            ."ACME HOLDINGS PLC | ANNUAL REPORT | FY2025\tPage 2\n"
+            ."Financial results by year (USD million)\n"
+            ."Measure (USD million)\tFY2023\tFY2024\tFY2025\nCosts\t33.0\t36.0\t41.0\f"
+            ."ACME HOLDINGS PLC | ANNUAL REPORT | FY2025\tPage 3\n";
+        foreach ([true, false] as $hasCaption) {
+            $document = $this->document($base.($hasCaption ? "Financial results (continued)\n" : '')
+                ."Measure (USD million)\tFY2023\tFY2024\tFY2025\nRevenue\t42.0\t46.0\t51.0");
+            $kpi = $this->kpi($document, null);
+            $result = $this->record($document, $kpi,
+                $this->spanId($document, 'Revenue' . "\t" . '42.0', 3),
+                $this->spanId($document, 'Measure (USD million)' . "\t" . 'FY2023', 3),
+                $this->spanId($document, 'Revenue' . "\t" . '42.0', 3),
+                $this->spanId($document, 'Measure (USD million)' . "\t" . 'FY2023', 3));
+            self::assertSame($hasCaption ? null : 'governing_owner_unverified', $result);
+        }
+        $subsidiary = str_replace('Financial results by year (USD million)',
+            'BETA DISTRIBUTION LTD financial results (USD million)', $base);
+        $document = $this->document($subsidiary."Financial results (continued)\n"
+            ."Measure (USD million)\tFY2023\tFY2024\tFY2025\nRevenue\t42.0\t46.0\t51.0");
+        $kpi = $this->kpi($document, null);
+        self::assertSame('governing_owner_unverified', $this->record($document, $kpi,
+            $this->spanId($document, 'Revenue' . "\t" . '42.0', 3),
+            $this->spanId($document, 'Measure (USD million)' . "\t" . 'FY2023', 3),
+            $this->spanId($document, 'Revenue' . "\t" . '42.0', 3),
+            $this->spanId($document, 'Measure (USD million)' . "\t" . 'FY2023', 3)));
     }
 
     public function test_explicit_company_claim_has_persisted_structural_owner_proof(): void
@@ -180,12 +297,26 @@ class GoverningOwnerProofTest extends TestCase
         $document = Document::create(['workspace_id' => $user->fresh()->current_workspace_id,
             'uploaded_by' => $user->id, 'name' => 'owner-fixture.pdf', 'type' => 'PDF',
             'status' => 'Processing', 'classification' => 'Internal', 'size_kb' => 1,
-            'year' => 2025, 'pages' => 1, 'file_hash' => hash('sha256', $text),
+            'year' => 2025, 'pages' => substr_count($text, "\f") + 1,
+            'file_hash' => hash('sha256', $text),
             'extracted_text' => $text]);
         $document->forceFill(['ai_pipeline' => ['route' => 'normal', 'key' => 'normal:owner',
             'normal_span_grounding' => true, 'text_hash' => hash('sha256', $text)]])->save();
 
         return $document;
+    }
+
+    private function spanId(Document $document, string $needle, ?int $page = null): string
+    {
+        $set = app(EvidenceGrounding::class)->spans($document);
+        foreach ($set->all() as $span) {
+            $source = $set->resolve($span['key']);
+            if (($page === null || $source['page'] === $page)
+                && str_contains($source['text'], $needle)) {
+                return $source['span_id'];
+            }
+        }
+        self::fail('Missing source span: '.$needle);
     }
 
     private function kpi(Document $document, ?string $scope, string $label = 'Revenue',
