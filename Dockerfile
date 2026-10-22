@@ -1,4 +1,4 @@
-FROM dunglas/frankenphp:php8.3.33-trixie
+FROM dunglas/frankenphp:php8.3.36-trixie
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
