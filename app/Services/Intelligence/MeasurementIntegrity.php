@@ -153,7 +153,8 @@ class MeasurementIntegrity
             || ($proof['kind'] ?? null) !== 'organization'
             || ! is_string($proof['entity'] ?? null) || trim($proof['entity']) === ''
             || ! in_array($proof['relationship'] ?? null,
-                ['table_caption', 'value_row', 'cited_section_to_table'], true)
+                ['table_caption', 'value_row', 'cited_section_to_table',
+                    'reporting_entity_section_table'], true)
             || ! is_array($proof['source_spans'] ?? null) || $proof['source_spans'] === []) {
             return false;
         }
