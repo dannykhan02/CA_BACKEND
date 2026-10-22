@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Offline, guarded evidence-first replay and ground-truth scoring.
 
-The only executable replay adapter is the existing frozen Northstar V10 backend
-test. Add a new guarded backend adapter before marking another document runnable.
-This script never sends a provider request or reads unregistered private files.
+The default replay is the frozen synthetic Northstar case. --real-case delegates
+to the private, independently reviewed corpus adapter; neither path makes paid calls.
 """
 
 from __future__ import annotations
@@ -443,9 +442,14 @@ def render_markdown(result: dict) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repeat", type=int, default=3, help="Independent flag-off/on replay pairs (2–10)")
+    parser.add_argument("--real-case", help="Reviewed local real-document case ID")
     args = parser.parse_args()
     if not 2 <= args.repeat <= 10:
         parser.error("--repeat must be between 2 and 10")
+    if args.real_case:
+        from tools.evidence_corpus import run_case
+        print(json.dumps(run_case(args.real_case, args.repeat), sort_keys=True))
+        return 0
     manifest = read_json(MANIFEST)
     truth = read_json(TRUTH)
     case, adversarial = validate_spec(manifest, truth)
