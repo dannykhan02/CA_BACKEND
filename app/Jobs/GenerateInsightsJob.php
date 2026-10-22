@@ -162,13 +162,13 @@ class GenerateInsightsJob implements ShouldQueue
         try {
             $kpis = $result['kpis'] ?? [];
             $kpis = app(KpiIdentityResolver::class)->forDocument($document, $kpis);
-            $charts = $result['charts'] ?? [];
+            $promptVersion = (int) ($result['prompt_version'] ?? 0);
+            $charts = $promptVersion >= 10 ? [] : ($result['charts'] ?? []);
             $insights = $result['insights'] ?? [];
 
             $aiRunId = DocumentAiRun::where('document_id', $document->id)
                 ->where('purpose', 'insights')->latest('created_at')->value('id');
 
-            $promptVersion = (int) ($result['prompt_version'] ?? 0);
             DB::transaction(function () use ($document, $kpis, $charts, $insights, $recorder, $insightsStage, $aiRunId, $promptVersion) {
                 $document = Document::whereKey($document->id)->lockForUpdate()->first();
                 if (! $document || $document->status !== 'Processing'
@@ -237,6 +237,7 @@ class GenerateInsightsJob implements ShouldQueue
                         'title' => $chart['title'] ?? '',
                         'description' => $chart['description'] ?? '',
                         'data' => $chart['data'] ?? [],
+                        'source_metadata' => ['origin' => 'model_unverified'],
                     ]);
 
                     $sortOrder = 0;

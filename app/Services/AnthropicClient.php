@@ -276,14 +276,25 @@ class AnthropicClient
         });
     }
 
-    public function extractDocumentInsights(string $documentText, string $documentName, ?Document $document = null): array
+    public function extractDocumentInsights(string $documentText, string $documentName, ?Document $document = null,
+        bool $singleResponse = false): array
     {
         $this->currentOperation = 'insights';
         $this->activeDocument = $document;
         $this->throttle();
         $prompt = $this->buildInsightsPrompt($documentText, $documentName, $document?->classification, $document);
 
-        return $this->structuredCall($prompt, $document, 'insights', $this->parseInsightsResponse(...));
+        $v10 = $this->lastResolvedPromptVersion >= 10;
+        $options = $v10 ? [
+            'max_tokens' => (int) config('document_intelligence.structured_output_tokens.insights_v10'),
+            'max_tokens_ceiling' => (int) config('document_intelligence.structured_output_tokens.insights_v10_ceiling'),
+        ] : [];
+        if ($singleResponse) {
+            $options['single_response'] = true;
+            $options['max_attempts'] = 1;
+        }
+
+        return $this->structuredCall($prompt, $document, 'insights', $this->parseInsightsResponse(...), $options);
     }
 
     public function adjudicateKpiIdentity(array $observation, array $candidates, Document $document): array
@@ -591,7 +602,8 @@ PROMPT;
         // (for example synthesis or a controlled test override).
         $maxTokens = (int) ($requestOptions['max_tokens']
             ?? config("document_intelligence.structured_output_tokens.{$purpose}", config('services.anthropic.max_tokens')));
-        $ceiling = max($maxTokens, (int) config('services.anthropic.structured_max_tokens_ceiling'));
+        $ceiling = max($maxTokens, (int) ($requestOptions['max_tokens_ceiling']
+            ?? config('services.anthropic.structured_max_tokens_ceiling')));
         for ($attempt = 0; $attempt < (($requestOptions['single_response'] ?? false) ? 1 : 2); $attempt++) {
             $messages = [['role' => 'user', 'content' => $prompt]];
             if ($attempt === 1) {
@@ -898,6 +910,14 @@ PROMPT;
             '{{document_classification}}' => $classification ?? 'Unknown',
         ]);
 
+        if ((int) $prompt->version >= 10) {
+            return $rendered."\n\nFor this response, select at most "
+                .(int) config('document_processing.insights_max_v10_observations')
+                .' independently cited high-value observations and '
+                .(int) config('document_processing.insights_max_observations')
+                .' insights. Prioritize comparable measurements and required operands; keep the V10 JSON schema complete.';
+        }
+
         return $rendered."\n\nFor this response, select at most "
             .(int) config('document_processing.insights_max_kpis').' high-value KPIs, '
             .(int) config('document_processing.insights_max_charts').' charts with at most '
@@ -990,11 +1010,17 @@ PROMPT;
     private function parseInsightsResponse(array $response): array
     {
         $decoded = $this->decodeJsonContent($response);
-        $decoded = app(ResponseValidator::class)->validate($decoded, [
-            'kpis' => 'array', 'charts' => 'array', 'insights' => 'array',
-        ]);
-        $decoded = app(ResponseValidator::class)->validateInsights($decoded);
-        app(ResponseValidator::class)->validateKpiIdentities($decoded['kpis'] ?? []);
+        $v10 = $this->lastResolvedPromptVersion >= 10;
+        $validator = app(ResponseValidator::class);
+        $decoded = $validator->validate($decoded, $v10
+            ? ['kpis' => 'array', 'insights' => 'array']
+            : ['kpis' => 'array', 'charts' => 'array', 'insights' => 'array']);
+        $decoded = $validator->validateInsights($decoded, $v10);
+        if ($v10) {
+            $validator->validateV10Observations($decoded['kpis']);
+        } else {
+            $validator->validateKpiIdentities($decoded['kpis']);
+        }
 
         return [
             'kpis' => $decoded['kpis'] ?? [],

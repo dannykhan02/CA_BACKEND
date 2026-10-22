@@ -29,6 +29,8 @@ readonly class MetricObservation
         public string $quantityKind = '',
         public string $aggregation = '',
         public string $sourceContext = '',
+        /** For verified PDF cells, the selected column and value row, without adjacent headers. */
+        public string $basisContext = '',
     ) {}
 
     /** Charts group on concept and measurement together; neither alone is enough. */

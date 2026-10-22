@@ -22,7 +22,7 @@ use App\Services\Pipeline\PipelineStageRecorder;
 use App\Services\WorkspaceService;
 use Database\Seeders\DocumentInsightsPromptSeederV9;
 use Dotenv\Dotenv;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
@@ -37,13 +37,13 @@ use Tests\TestCase;
 /** One PDF, one insights job, at most two provider HTTP requests. */
 class NorthstarV9EvaluationTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     private NorthstarV9Diagnostics $diagnostics;
 
     protected function setUp(): void
     {
-        // Check before RefreshDatabase has a chance to migrate anything.
+        // Check before the test opens a transaction on the isolated local database.
         if (getenv('DB_HOST') !== '127.0.0.1'
             || getenv('DB_PORT') !== '55449'
             || getenv('DB_DATABASE') !== 'docintel_v9_eval'
@@ -416,7 +416,7 @@ class NorthstarV9EvaluationTest extends TestCase
     private function candidate(string $label, string $value, string $unit, string $period,
         string $concept, string $valueId, string $unitId, string $periodId, string $subjectId): array
     {
-        return ['label' => $label, 'value' => $value, 'unit' => $unit, 'period' => $period,
+        return ['label' => $label, 'value' => $value, 'unit' => $unit,
             'trend' => null, 'trendValue' => null,
             'identity' => ['concept' => $concept, 'scope' => 'Northstar Distribution Ltd',
                 'metric_type' => 'amount', 'quantity_kind' => 'absolute',

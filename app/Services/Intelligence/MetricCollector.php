@@ -114,6 +114,10 @@ class MetricCollector
                         'source_revision' => $data['source_revision'] ?? null,
                         'current_source_revision' => hash('sha256', (string) $document->extracted_text),
                         'label' => $data['label'] ?? null,
+                        'basis_context' => is_string($data['source_column_basis'] ?? null)
+                            ? ($data['source_column_basis']."\n".implode("\n", array_map(
+                                fn ($source) => in_array('value', $source['roles'] ?? [], true)
+                                    ? (string) ($source['quote'] ?? '') : '', $row->sources ?? []))) : null,
                     ],
                     'page' => count($pages) === 1 ? (int) reset($pages) : null,
                     'numeric' => null,
@@ -144,7 +148,8 @@ class MetricCollector
                 // Legacy KPI rows carry no per-observation confidence.
                 'confidence' => 0.8,
                 'definition_id' => $kpi->kpi_definition_id,
-                'metadata' => $metadata + ['period' => $kpi->period],
+                'metadata' => array_replace($metadata + ['period' => $kpi->period],
+                    ['current_source_revision' => hash('sha256', (string) $document->extracted_text)]),
                 'page' => null,
                 'numeric' => $kpi->value_numeric === null ? null : (float) $kpi->value_numeric,
                 'sources' => [],
@@ -226,14 +231,8 @@ class MetricCollector
         $integrity = $this->integrity->assess($measurement, (string) $record['value'], $record['unit'],
             is_array($record['metadata']) ? $record['metadata'] : [], $record['sources'] ?? [],
             (bool) ($record['trusted_source'] ?? false));
-        if ($period === null) {
-            $integrity['reasons'][] = 'period_unavailable';
-            $integrity['analyticalEligible'] = false;
-        }
-        if (array_diff_key($identity, ['period' => true]) !== [] && ! ($profile['valid'] ?? false)) {
-            $integrity['reasons'][] = 'semantic_identity_conflict';
-            $integrity['analyticalEligible'] = false;
-        }
+        $integrity = $this->integrity->forKpiIdentity($integrity, $period, $identity,
+            $this->withoutPeriod($label, $record['period']), $record['unit'], (string) $record['value']);
         if ($integrity['unitVerification'] === 'dimensionless') {
             $type = mb_strtolower((string) $record['metadata']['metric_type']);
             $measurement = new Measurement($measurement->magnitude, $type, null, $type, 1.0,
@@ -260,6 +259,7 @@ class MetricCollector
             quantityKind: (string) ($record['metadata']['quantity_kind'] ?? $profile['quantity_kind'] ?? ''),
             aggregation: (string) ($record['metadata']['aggregation'] ?? $profile['aggregation'] ?? ''),
             sourceContext: implode("\n", array_map(fn ($source) => (string) ($source['quote'] ?? ''), $record['sources'] ?? [])),
+            basisContext: (string) ($record['metadata']['basis_context'] ?? ''),
         );
     }
 

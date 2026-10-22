@@ -25,6 +25,7 @@ return [
 
     'max_extraction_chars' => (int) env('DOC_MAX_EXTRACTION_CHARS', 60000), // ~15k tokens, keeps cost bounded
     'insights_max_kpis' => (int) env('DOC_INSIGHTS_MAX_KPIS', 12),
+    'insights_max_v10_observations' => (int) env('DOC_INSIGHTS_MAX_V10_OBSERVATIONS', 30),
     'insights_max_charts' => (int) env('DOC_INSIGHTS_MAX_CHARTS', 3),
     'insights_max_chart_points' => (int) env('DOC_INSIGHTS_MAX_CHART_POINTS', 8),
     'insights_max_observations' => (int) env('DOC_INSIGHTS_MAX_OBSERVATIONS', 5),

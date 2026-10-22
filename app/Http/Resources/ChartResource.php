@@ -12,8 +12,10 @@ class ChartResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        $source = $this->source_metadata;
-        $source = is_array($source) && ($source['origin'] ?? null) === 'document_visual' ? $source : null;
+        $metadata = $this->source_metadata;
+        $origin = is_array($metadata) && in_array($metadata['origin'] ?? null,
+            ['document_visual', 'model_unverified'], true) ? $metadata['origin'] : null;
+        $source = $origin === 'document_visual' ? $metadata : null;
         if ($source !== null) {
             // Recheck old persisted metadata under the current deterministic policy. No chart is
             // promoted just because a previous version stored dimensions_verified=true.
@@ -31,7 +33,9 @@ class ChartResource extends JsonResource
         $renderEligible = $source !== null && $image !== null && $source['dimensions_verified']
             && $source['values_verified'] && $source['value_status'] === 'exact';
         $unavailabilityReason = $renderEligible ? null : ($source === null
-            ? 'The origin of this historical chart is unavailable.'
+            ? ($origin === 'model_unverified'
+                ? 'These chart values came from an unverified model response; inspect the original document.'
+                : 'The origin of this historical chart is unavailable.')
             : ($image === null ? 'The original chart image is unavailable for this document revision.'
                 : (! $source['values_verified'] ? 'The numeric values were not verified as exact printed labels.'
                     : ($source['unit'] === null ? 'The measurement unit is unavailable.'
@@ -46,7 +50,7 @@ class ChartResource extends JsonResource
             'sourcePage' => $source['page'] ?? null,
             'sourceImageUrl' => $image,
             'sourceImageMediaType' => $image ? $source['media_type'] : null,
-            'sourceOrigin' => $source['origin'] ?? null,
+            'sourceOrigin' => $origin,
             'valueStatus' => $source['value_status'] ?? 'unavailable',
             'dimensionsVerified' => $source['dimensions_verified'] ?? false,
             'valuesVerified' => $source['values_verified'] ?? false,
@@ -61,7 +65,7 @@ class ChartResource extends JsonResource
             'unavailabilityReason' => $unavailabilityReason,
             'exportSupport' => ['csv' => ($source['values_verified'] ?? false) && ($source['value_status'] ?? null) === 'exact',
                 'png' => $renderEligible,
-                'word' => true, 'originalImage' => $image !== null],
+                'word' => $source !== null, 'originalImage' => $image !== null],
         ];
     }
 }

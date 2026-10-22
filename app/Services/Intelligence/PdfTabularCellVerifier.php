@@ -6,30 +6,37 @@ use App\Models\DocumentKpi;
 use App\Services\AI\Incremental\EvidenceSpanSet;
 use Brick\Math\BigDecimal;
 
-/** Verifies a cited tab-delimited PDF row against its cited column header. */
+/** Verifies a cited PDF table cell against its cited column header. */
 class PdfTabularCellVerifier
 {
-    public function __construct(private MeasurementParser $measurements) {}
+    public function __construct(private MeasurementParser $measurements,
+        private PeriodParser $periods) {}
 
     /**
-     * Returns null for non-table prose. A table claim returns either a precise rejection or
-     * the one cell that matches the claimed period/basis. Tabs come from stored PDF text;
-     * no value is accepted from an adjacent column, even if the same number recurs.
+     * Returns null only for non-table prose. A table claim returns either a precise rejection or
+     * the one cell that matches its claimed period/basis. No adjacent-column fallback exists.
      */
     public function verify(DocumentKpi $kpi, EvidenceSpanSet $set, array $value,
         ?array $header): ?array
     {
-        if (($value['type'] ?? null) !== 'table_row' || ! str_contains($value['text'], "\t")) {
+        if (($value['type'] ?? null) !== 'table_row') {
             return null;
         }
+        [$cells, $delimiter] = $this->splitCells($value['text']);
+        if ($delimiter === null || count($cells) < 3) {
+            return ['rejection' => 'table_column_mismatch'];
+        }
         if ($header === null || ($header['type'] ?? null) !== 'table_row'
-            || ! str_contains($header['text'], "\t") || $header['page'] !== $value['page']
+            || $header['page'] !== $value['page']
             || $header['start_offset'] >= $value['start_offset']) {
             return ['rejection' => 'column_header_unverified'];
         }
-        $cells = explode("\t", $value['text']);
-        [$columns, $continuation] = $this->columns($set, $header, count($cells));
-        if (count($columns) !== count($cells) || count($cells) < 3) {
+        [$headerCells, $headerDelimiter] = $this->splitCells($header['text']);
+        if ($headerDelimiter !== $delimiter) {
+            return ['rejection' => 'table_column_mismatch'];
+        }
+        [$columns, $continuation] = $this->columns($set, $header, array_column($headerCells, 'text'), count($cells));
+        if (count($columns) !== count($cells)) {
             return ['rejection' => 'table_column_mismatch'];
         }
         $between = 0;
@@ -45,25 +52,27 @@ class PdfTabularCellVerifier
         }
         $period = trim((string) $kpi->period);
         $basis = mb_strtolower(trim((string) (($kpi->identity_metadata ?? [])['value_basis'] ?? '')));
-        if ($period !== '' && ! preg_match('/^(Q[1-4])(?:\s+(?:FY)?\d{4})?$/iuD', $period, $match)) {
+        if ($period !== '' && $this->periods->parse($period) === null
+            && ! preg_match('/^Q[1-4]$/iuD', $period)) {
             return ['rejection' => 'period_ambiguous'];
         }
         if ($period === '' && $basis !== 'proposed') {
             return ['rejection' => 'period_ambiguous'];
         }
-        $quarter = $period === '' ? null : strtoupper($match[1]);
+        $quarter = preg_match('/^(Q[1-4])(?:\s|$)/iu', $period, $match)
+            ? strtoupper($match[1]) : null;
         $indexes = [];
         foreach ($columns as $index => $column) {
             if ($index === 0) {
                 continue;
             }
-            if ($quarter === null) {
+            if ($period === '') {
                 if (preg_match('/\bproposed\b/iu', $column)) {
                     $indexes[] = $index;
                 }
                 continue;
             }
-            if (! preg_match('/^'.preg_quote($quarter, '/').'(?:\s|$)/iu', trim($column))) {
+            if (! $this->periodColumnMatches($column, $period, $quarter)) {
                 continue;
             }
             $targetColumn = preg_match('/\b(?:target|ceiling|goal|threshold)\b/iu', $column) === 1;
@@ -76,8 +85,9 @@ class PdfTabularCellVerifier
         }
         $index = $indexes[0];
         $claimed = $this->measurements->parse((string) $kpi->value, $kpi->unit, $kpi->label);
-        $written = $this->measurements->parse(trim($cells[$index]), $kpi->unit, $kpi->label);
+        $written = $this->measurements->parse($cells[$index]['text'], $kpi->unit, $kpi->label);
         if ($claimed === null || $written === null
+            || $this->operator((string) $kpi->value) !== $this->operator($cells[$index]['text'])
             || ! BigDecimal::of($claimed->exactMagnitude)->isEqualTo($written->exactMagnitude)) {
             return ['rejection' => 'value_column_mismatch'];
         }
@@ -87,7 +97,7 @@ class PdfTabularCellVerifier
         $conceptWords = array_values(array_filter($conceptWords,
             static fn (string $word): bool => mb_strlen($word) >= 4
                 && ! in_array($word, ['quarterly', 'rate', 'received', 'cases'], true)));
-        $labelWords = preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower($cells[0]), -1,
+        $labelWords = preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower($cells[0]['text']), -1,
             PREG_SPLIT_NO_EMPTY) ?: [];
         $singular = static fn (string $word): string => str_ends_with($word, 'ies')
             ? substr($word, 0, -3).'y' : (str_ends_with($word, 's') ? substr($word, 0, -1) : $word);
@@ -96,23 +106,22 @@ class PdfTabularCellVerifier
         $captionWords = preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower($caption), -1,
             PREG_SPLIT_NO_EMPTY) ?: [];
         if ($conceptWords === [] || (array_diff(array_map($singular, $conceptWords), $labels) !== []
-            && ($quarter !== null || ! preg_match('/\btotal\s+proposed\b/iu', $cells[0])
+            && ($period !== '' || ! preg_match('/\btotal\s+proposed\b/iu', $cells[0]['text'])
                 || array_diff(array_map($singular, $conceptWords), array_map($singular, $captionWords)) !== []))) {
             return ['rejection' => 'concept_row_mismatch'];
         }
-        $cellStart = $value['start_offset'] + mb_strlen(implode("\t", array_slice($cells, 0, $index))) + 1;
+        $cellStart = $value['start_offset'] + $cells[$index]['start'];
 
-        return ['rejection' => null, 'source_value' => trim($cells[$index]),
+        return ['rejection' => null, 'source_value' => $cells[$index]['text'],
             'cell_start_offset' => $cellStart,
-            'cell_end_offset' => $cellStart + mb_strlen($cells[$index]),
+            'cell_end_offset' => $cellStart + mb_strlen($cells[$index]['text']),
             'basis_text' => trim($columns[$index]), 'header_span_id' => $header['span_id'],
             'header_continuation' => $continuation];
     }
 
     /** Accept one adjacent wrapped heading only when its lines complete the table's column count. */
-    private function columns(EvidenceSpanSet $set, array $header, int $cellCount): array
+    private function columns(EvidenceSpanSet $set, array $header, array $columns, int $cellCount): array
     {
-        $columns = explode("\t", $header['text']);
         if (count($columns) === $cellCount) {
             return [$columns, null];
         }
@@ -138,6 +147,73 @@ class PdfTabularCellVerifier
         }
 
         return [$columns, null];
+    }
+
+    /** @return array{0:list<array{text:string,start:int}>,1:?string} */
+    private function splitCells(string $text): array
+    {
+        $delimiter = str_contains($text, "\t") ? 'tab'
+            : (substr_count($text, '|') >= 2 ? 'pipe'
+                : (preg_match('/ {2,}/u', $text) ? 'space' : null));
+        if ($delimiter === null) {
+            return [[], null];
+        }
+        $pattern = match ($delimiter) {
+            'tab' => '/(\t)/u', 'pipe' => '/(\|)/u', 'space' => '/( {2,})/u',
+        };
+        $parts = preg_split($pattern, $text, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_OFFSET_CAPTURE);
+        if (! is_array($parts)) {
+            return [[], null];
+        }
+        $cells = [];
+        foreach ($parts as $index => [$part, $byteStart]) {
+            if ($index % 2 === 1) {
+                continue;
+            }
+            if ($delimiter === 'pipe' && ($index === 0 || $index === count($parts) - 1)
+                && trim($part) === '') {
+                continue;
+            }
+            if (trim($part) === '') {
+                return [[], $delimiter];
+            }
+            $leading = mb_strlen($part) - mb_strlen(ltrim($part));
+            $cells[] = ['text' => trim($part),
+                'start' => mb_strlen(substr($text, 0, $byteStart)) + $leading];
+        }
+
+        return [$cells, $delimiter];
+    }
+
+    private function periodColumnMatches(string $column, string $period, ?string $quarter): bool
+    {
+        $column = trim($column);
+        if ($quarter !== null) {
+            if (! preg_match('/^'.preg_quote($quarter, '/').'(?:\s|$)/iu', $column)) {
+                return false;
+            }
+            if (preg_match('/^Q[1-4]\s+(?:FY)?\d{4}\b/iu', $column, $match)) {
+                return $this->periods->parse($match[0])?->label === $this->periods->parse($period)?->label;
+            }
+
+            return true; // A bare quarter still needs the governing period-role proof.
+        }
+        if (! preg_match('/^(?:FY\s*\d{4}|\d{4})\b/iu', $column, $match)) {
+            return false;
+        }
+
+        return $this->periods->parse($match[0])?->label === $this->periods->parse($period)?->label;
+    }
+
+    private function operator(string $value): ?string
+    {
+        if (! preg_match('/^\s*(≤|>=|≥|<=|<|>)/u', $value, $match)) {
+            return null;
+        }
+
+        return match ($match[1]) {
+            '<=' => '≤', '>=' => '≥', default => $match[1],
+        };
     }
 
     private function precedingCaption(EvidenceSpanSet $set, array $header): string
