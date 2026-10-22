@@ -8,6 +8,7 @@ use App\Services\Documents\EvidencePageLocator;
 use App\Services\Intelligence\B2\BriefReadService;
 use App\Services\Intelligence\DocumentAnalysisComposer;
 use App\Services\Intelligence\ImportantFindingsBuilder;
+use App\Services\Intelligence\SourceReferenceResolver;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -72,13 +73,40 @@ class DocumentIntelligenceResource extends JsonResource
 
         $evidence = [];
         if (isset($this->ai_pipeline['key'])) {
+            $resolver = app(SourceReferenceResolver::class);
             foreach (DocumentEvidence::where('document_id', $this->id)->where('workspace_id', $this->workspace_id)
                 ->where('pipeline_key', $this->ai_pipeline['key'])->cursor() as $item) {
                 if ($item->source_id === null || ! isset($referenced[$item->source_id])) {
                     continue;
                 }
-                $evidence[$item->source_id] = ['quote' => $item->data['quote'], 'sources' => $item->sources];
-                $pages = array_unique(array_filter(array_column($item->sources, 'page')));
+                $resolved = $resolver->resolve($this->resource, $item->source_id);
+                $storedSources = $item->sources ?? [];
+                $verifiedSources = array_values(array_filter($storedSources, fn ($source) => is_array($source) && is_int($source['start_offset'] ?? null)
+                    && is_int($source['end_offset'] ?? null) && is_string($source['quote'] ?? null)
+                    && $source['end_offset'] > $source['start_offset']
+                    && mb_substr((string) $this->extracted_text, $source['start_offset'],
+                        $source['end_offset'] - $source['start_offset']) === $source['quote']));
+                $revision = $item->data['source_revision'] ?? null;
+                $processingExact = ($resolved['state'] ?? null) === 'NOT_READY'
+                    && $storedSources !== [] && count($verifiedSources) === count($storedSources)
+                    && ($revision === null || (is_string($revision)
+                        && hash_equals(hash('sha256', (string) $this->extracted_text), $revision)));
+                $exact = (($resolved['state'] ?? null) === 'CURRENT'
+                    && in_array($resolved['matchState'] ?? null, ['EXACT', 'STRUCTURALLY_RESOLVED'], true)
+                    && is_array($resolved['source']['range'] ?? null)
+                    && $storedSources !== [] && count($verifiedSources) === count($storedSources))
+                    || $processingExact;
+                $sources = $exact ? $verifiedSources : [];
+                $valueSource = $item->kind === 'metric'
+                    ? collect($resolved['fieldSources'] ?? [])->first(fn ($source) => in_array('value', $source['roles'], true))
+                    : null;
+                if ($processingExact && $item->kind === 'metric') {
+                    $valueSource = collect($sources)->first(fn ($source) => in_array('value', $source['roles'] ?? [], true));
+                }
+                $quote = $exact ? ($valueSource['text'] ?? $valueSource['quote'] ?? $resolved['source']['text']
+                    ?? (count($sources) === 1 ? $sources[0]['quote'] : '')) : '';
+                $evidence[$item->source_id] = ['quote' => $quote, 'sources' => $sources];
+                $pages = array_unique(array_filter(array_column($sources, 'page')));
                 if (count($pages) === 1) {
                     $sourcePages[$item->source_id] = reset($pages);
                 }
