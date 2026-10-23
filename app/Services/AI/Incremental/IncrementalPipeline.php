@@ -14,6 +14,7 @@ use App\Models\DocumentIntelligenceRevision;
 use App\Services\AI\AiModels;
 use App\Services\AI\AiPricing;
 use App\Services\AiCredits\OperationSpend;
+use App\Services\AiCredits\QuoteService;
 use App\Services\AiCredits\SynthesisReservation;
 use App\Services\AnthropicClient;
 use App\Services\Extraction\StructuredDocument;
@@ -283,8 +284,10 @@ class IncrementalPipeline
             );
 
             // AI credits: the quoted provider ceiling can only lower the document budget, never raise it.
-            if ($cap = app(OperationSpend::class)->activeQuote($locked, null)?->provider_cost_cap_usd) {
-                $metadata['budget_usd'] = min($metadata['budget_usd'], $cap);
+            if ($quote = app(OperationSpend::class)->activeQuote($locked, null)) {
+                // A quote made from a low local estimate keeps its credits but gets the cap of the band the provider count implies.
+                $quote = app(QuoteService::class)->raiseCapForProviderCount($quote, $locked);
+                $metadata['budget_usd'] = min($metadata['budget_usd'], $quote->provider_cost_cap_usd);
             }
 
             // A new pipeline starts at the top of the synthesis fallback ladder.

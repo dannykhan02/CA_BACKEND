@@ -4,6 +4,7 @@ namespace App\Services\AI;
 
 use App\Exceptions\AiProcessingException;
 use App\Models\Document;
+use App\Services\AiCredits\RealisticOutput;
 use Illuminate\Support\Facades\Log;
 
 /** Local admission for every paid Anthropic message, including each retry. */
@@ -18,9 +19,9 @@ class ProviderRequestAdmission
 
     /**
      * The same checks, returning both bounds: the worst case (every output token the request may produce) and the realistic
-     * cost (the same input, the purpose's `ai_credits.stage_realistic_output_tokens` at most as output). Never above the worst case.
+     * cost (the same input, the purpose's `ai_credits.stage_realistic_output` at most as output). Never above the worst case.
      *
-     * @return array{maximum:float,realistic:float}
+     * @return array{maximum:float,realistic:float,realistic_output_tokens:int}
      */
     public function assess(?Document $document, ?string $task, string $model, array $messages, array $options): array
     {
@@ -125,11 +126,10 @@ class ProviderRequestAdmission
             throw new AiProcessingException('budget_exceeded');
         }
 
-        $typical = is_string($task) ? config('ai_credits.stage_realistic_output_tokens', [])[$task] ?? null : null;
-        $realistic = is_numeric($typical) && (int) $typical >= 1
-            ? $this->pricing->maximum($model, $input, min((int) $output, (int) $typical), $mayUseCache) : $cost;
+        $realisticOutput = app(RealisticOutput::class)->tokens($task, app(RealisticOutput::class)->inputTokens($input), (int) $output);
+        $realistic = $realisticOutput === null ? $cost : $this->pricing->maximum($model, $input, $realisticOutput, $mayUseCache);
 
-        return ['maximum' => $cost, 'realistic' => min($cost, $realistic ?? $cost)];
+        return ['maximum' => $cost, 'realistic' => min($cost, $realistic ?? $cost), 'realistic_output_tokens' => $realisticOutput ?? (int) $output];
     }
 
     private function mayUseCache(array $blocks): bool

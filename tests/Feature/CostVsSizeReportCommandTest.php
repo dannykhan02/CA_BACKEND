@@ -334,6 +334,11 @@ class CostVsSizeReportCommandTest extends TestCase
         DocumentAiRun::create(['workspace_id' => $document->workspace_id, 'document_id' => $document->id, 'purpose' => 'document_summary',
             'provider' => 'anthropic', 'model' => 'claude-sonnet-5-5', 'status' => 'failed', 'failure_class' => 'truncated', 'input_tokens' => 3000,
             'output_tokens' => 8192, 'estimated_cost_usd' => 0.088, 'request_attempt' => 1, 'created_at' => now()]);
+        // A second, larger document (60,000 bytes: 20,000 tokens x1.15 = 23,000, the 18-35k bucket) with one insights run.
+        $large = $this->document('PDF', 60000);
+        DocumentAiRun::create(['workspace_id' => $large->workspace_id, 'document_id' => $large->id, 'purpose' => 'insights',
+            'provider' => 'anthropic', 'model' => 'claude-haiku-5-5', 'status' => 'success', 'input_tokens' => 20000, 'output_tokens' => 4000,
+            'estimated_cost_usd' => 0.012, 'request_attempt' => 1, 'created_at' => now()]);
         $runs = DocumentAiRun::count();
 
         Artisan::call('docintel:cost-vs-size-report', ['--stage-limits' => true]);
@@ -343,13 +348,25 @@ class CostVsSizeReportCommandTest extends TestCase
         $this->assertSame(['claude-sonnet-5-5', 10, 9000, round(1 / 11, 4)], [$row['model'], $row['successful_runs'], $row['output_max'], $row['truncated_share']]);
         $this->assertSame(1900, $row['output_p50']);
         $this->assertGreaterThanOrEqual($row['output_p95'], $row['output_p99']);
-        $this->assertSame([8192, 2500], [$row['max_tokens'], $row['realistic_output_tokens']]);
-        // Input (3,000 median + 512 envelope) at $2/M, plus 8,192 or 2,500 output tokens at $10/M.
+        $this->assertSame([8192, 2200], [$row['max_tokens'], $row['realistic_output_tokens']]);
+        // Input (3,000 median + 512 envelope) at $2/M, plus 8,192 or 2,200 output tokens at $10/M.
         $this->assertEqualsWithDelta(round(3512 * 2 / 1000000 + 8192 * 10 / 1000000, 6), $row['worst_case_usd'], 1e-6);
-        $this->assertEqualsWithDelta(round(3512 * 2 / 1000000 + 2500 * 10 / 1000000, 6), $row['realistic_usd'], 1e-6);
+        $this->assertEqualsWithDelta(round(3512 * 2 / 1000000 + 2200 * 10 / 1000000, 6), $row['realistic_usd'], 1e-6);
         $this->assertStringContainsString('document_summary', $output);
         $this->assertStringContainsString('output_p99', $output);
         $this->assertStringNotContainsString('document_id,', $output, '--stage-limits prints only the stage table');
         $this->assertSame($runs, DocumentAiRun::count());
+
+        $byBucket = collect(app(CostVsSizeReport::class)->stageLimits())->groupBy('quote_tokens');
+        $this->assertSame(['all', '<=4k', '18-35k'], $byBucket->keys()->all());
+        $this->assertSame(['document_summary', 'insights'], $byBucket['all']->pluck('purpose')->all());
+        $this->assertSame(['document_summary'], $byBucket['<=4k']->pluck('purpose')->all());
+        $this->assertSame(['insights'], $byBucket['18-35k']->pluck('purpose')->all());
+        $this->assertSame([1, 4000, 14000, 'not recorded'], [$byBucket['18-35k'][0]['successful_runs'], $byBucket['18-35k'][0]['output_max'],
+            $byBucket['18-35k'][0]['max_tokens'], $byBucket['18-35k'][0]['max_tokens_sent']]);
+        $this->assertSame(10, $byBucket['<=4k'][0]['successful_runs']);
+        $this->assertEqualsWithDelta(1 / 11, $byBucket['<=4k'][0]['truncated_share'], 1e-4);
+        $this->assertStringContainsString('18-35k', $output);
+        $this->assertStringContainsString('not recorded', $output);
     }
 }
