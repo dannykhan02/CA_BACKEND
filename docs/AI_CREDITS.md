@@ -155,6 +155,26 @@ the worst case fits the cap (the earlier rule). A purpose with no realistic figu
 counts each byte as a token. A small-band Sonnet 5.5 summary with 4,096 `max_tokens` and about 10 kB of input: realistic about 0.045,
 worst case about 0.061, small cap 0.054.
 
+## Per-document credits payload
+
+With the flag on, `DocumentResource` (detail and upload/duplicate-upload responses) and `DocumentListResource` carry `credits`; with it off
+the key is absent and the payload is exactly as before. `credits` is derived from the document's latest `document` quote (the highest attempt
+in `operation_key`) and is `null` while the document has no quote. The quote is made when processing starts (`AiCreditAdmission::admitDocument`,
+in the queued intelligence chain), after text extraction, so the response to the upload itself carries `credits: null`; a later `GET` or the
+duplicate-upload response carries it. A list preloads the quotes of its page with one query (`DocumentCredits`, scoped to the request).
+
+```json
+{ "quoted": 2, "state": "quoted", "charged": null, "requiresConfirmation": false }
+```
+
+| `state` | When | Show |
+|---|---|---|
+| `awaiting_confirmation` | quote not reserved, `requiresConfirmation` (30+ credits or 100+ pages) and not yet confirmed | "This document will use N credits" + confirm |
+| `quoted` | quote not reserved, nothing to confirm (or confirmed, reservation pending) | "This document will use N credits" |
+| `reserved` | credits held, work in progress | "N credits reserved" |
+| `charged` | quote settled; `charged` = credits settled | "Used N credits" |
+| `not_charged` | quote released, or the document is `Failed` / `Needs Review` | "Not charged" |
+
 ## Operating
 
 * `php artisan docintel:ai-credits-status [--workspace=<id>] [--limit=20]` is read-only: flag (config and this process's env), admission mode,
