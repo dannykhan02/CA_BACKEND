@@ -307,7 +307,7 @@ class QuoteService
         if ($actual === false || $actual <= $quoted || $c['cap'] <= (float) $quote->provider_cost_cap_usd) {
             return $quote;
         }
-        $quote->update(['provider_cost_cap_usd' => $c['cap']]);
+        $quote->raiseProviderCap((float) $c['cap']);
         Log::info('Quote band raised by provider count', ['document_id' => $document->id, 'quoted_band' => $quote->band, 'quoted_credits' => $quote->credits,
             'provider_count_band' => $c['band'], 'tokens' => $preview['signals']['tokens'], 'cap_usd' => $c['cap']]);
 
