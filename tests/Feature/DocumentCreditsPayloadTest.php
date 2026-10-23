@@ -166,10 +166,12 @@ class DocumentCreditsPayloadTest extends TestCase
         $this->assertNull($created->json('data.credits'));
 
         $this->quote(Document::findOrFail($created->json('data.id')));
+        app()->forgetScopedInstances();
         $again = $this->postJson('/api/documents', ['file' => $file()])->assertStatus(409);
         $this->assertSame('quoted', $again->json('data.credits.state'));
 
         config(['ai_credits.enabled' => false]);
+        app()->forgetScopedInstances();
         $this->assertArrayNotHasKey('credits', $this->postJson('/api/documents', ['file' => $file()])->assertStatus(409)->json('data'));
     }
 }
