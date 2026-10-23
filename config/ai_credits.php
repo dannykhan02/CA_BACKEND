@@ -8,19 +8,34 @@
 return [
     'enabled' => (bool) env('DOCINTEL_AI_CREDITS_ENABLED', false),
     // Stored on every quote so a historical charge never depends on today's config.
-    'quote_version' => env('DOCINTEL_AI_CREDITS_QUOTE_VERSION', 'v1'),
+    // v2: five bands (tiny..very_large), OCR no longer a separate charge, per-type token estimates.
+    'quote_version' => env('DOCINTEL_AI_CREDITS_QUOTE_VERSION', 'v2'),
 
     // Ordered smallest to largest; the first band whose max_tokens covers the document wins.
-    // A dense (tabular/spreadsheet) document moves up `dense_band_shift` bands.
+    // A dense (tabular/spreadsheet) document moves up `dense_band_shift` bands, and a band whose provider
+    // cap cannot pay for the minimum useful completion (see `min_completion_cost_usd`) moves up again.
     'bands' => [
-        'simple' => ['max_tokens' => (int) env('AI_CREDITS_SIMPLE_MAX_TOKENS', 6000), 'credits' => (int) env('AI_CREDITS_SIMPLE', 4)],
-        'standard' => ['max_tokens' => (int) env('AI_CREDITS_STANDARD_MAX_TOKENS', 30000), 'credits' => (int) env('AI_CREDITS_STANDARD', 10)],
+        'tiny' => ['max_tokens' => (int) env('AI_CREDITS_TINY_MAX_TOKENS', 2000), 'credits' => (int) env('AI_CREDITS_TINY', 1)],
+        'small' => ['max_tokens' => (int) env('AI_CREDITS_SMALL_MAX_TOKENS', 6000), 'credits' => (int) env('AI_CREDITS_SMALL', 2)],
+        'medium' => ['max_tokens' => (int) env('AI_CREDITS_MEDIUM_MAX_TOKENS', 30000), 'credits' => (int) env('AI_CREDITS_MEDIUM', 10)],
         'large' => ['max_tokens' => (int) env('AI_CREDITS_LARGE_MAX_TOKENS', 90000), 'credits' => (int) env('AI_CREDITS_LARGE', 30)],
         'very_large' => ['max_tokens' => (int) env('AI_CREDITS_VERY_LARGE_MAX_TOKENS', 250000), 'credits' => (int) env('AI_CREDITS_VERY_LARGE', 80)],
     ],
     'dense_band_shift' => (int) env('AI_CREDITS_DENSE_BAND_SHIFT', 1),
-    // Bands at or above this need the customer's explicit confirmation before credits are reserved.
-    'confirm_from_band' => env('AI_CREDITS_CONFIRM_FROM_BAND', 'large'),
+    // A quote needs the customer's explicit confirmation before credits are reserved when it costs at least this
+    // many credits, or when the document has more than this many pages.
+    'confirm_from_credits' => (int) env('AI_CREDITS_CONFIRM_FROM_CREDITS', 30),
+    'confirm_over_pages' => (int) env('AI_CREDITS_CONFIRM_OVER_PAGES', 100),
+
+    // Characters (bytes, as ChunkPlanner counts them) per model token, by document type, used to estimate a
+    // document's tokens at quote time. Measured: PDF ~3.0, XLSX ~1.7 (denser than 3), DOCX ~5.65 (sparser).
+    // The provider's own count is used instead whenever it is already known.
+    'chars_per_token' => [
+        'PDF' => (float) env('AI_CREDITS_CPT_PDF', 3.0),
+        'XLSX' => (float) env('AI_CREDITS_CPT_XLSX', 1.7),
+        'DOCX' => (float) env('AI_CREDITS_CPT_DOCX', 5.6),
+        'default' => (float) env('AI_CREDITS_CPT_DEFAULT', 3.0),
+    ],
 
     // Internal provider-cost ceiling per quoted credit, in USD (3.50 KES / 129.79 = 0.02697).
     // Deterministic: it never looks at a live FX rate. fx_kes_per_usd is for reporting only.
@@ -39,16 +54,21 @@ return [
     // Cost assumed for a paid call whose usage is unknown (e.g. a timeout). Never zero.
     'unknown_usage_cost_usd' => (float) env('AI_CREDITS_UNKNOWN_USAGE_USD', 0.05),
 
+    // Scans are priced by the same bands as any document; OCR is not a separate customer charge. These settings only
+    // bound OCR's provider spend and estimate a scan's size before any page has been read.
     'ocr' => [
-        'surcharge_credits' => (int) env('AI_CREDITS_OCR_SURCHARGE', 20),
-        // Extra credits for each page beyond the first `included_pages` (0 = flat surcharge only).
-        'included_pages' => (int) env('AI_CREDITS_OCR_INCLUDED_PAGES', 20),
-        'extra_credits_per_page' => (int) env('AI_CREDITS_OCR_EXTRA_PER_PAGE', 1),
+        // Estimated tokens per page when only the page count is known. A scan never prices below `min_band`.
+        'tokens_per_page' => (int) env('AI_CREDITS_OCR_TOKENS_PER_PAGE', 600),
+        'min_band' => env('AI_CREDITS_OCR_MIN_BAND', 'small'),
         // Hard stop: more pages than this are declined, never silently OCR'd.
         'max_pages' => (int) env('AI_CREDITS_OCR_MAX_PAGES', 60),
-        'provider_cost_usd_per_page' => (float) env('AI_CREDITS_OCR_USD_PER_PAGE', 0.02),
-        // Floor for the quote's provider cap. One vision request reserves a hard ceiling of about USD 0.028 on the
-        // default extraction model, so pages x per-page alone would refuse a one-page scan. Never changes the credits charged.
+        // Provider cost bound per page. It bounds OCR spend, and the document's band is raised until its cap
+        // can also pay for this much OCR, so a scan's price never falls below its real OCR cost.
+        // PROVISIONAL: the highest per-call OCR cost observed in production was about USD 0.003, so 0.006 is 2x that.
+        // Confirm or move it with `php artisan docintel:cost-vs-size-report` (and the purpose = 'ocr' rows of document_ai_runs).
+        'provider_cost_usd_per_page' => (float) env('AI_CREDITS_OCR_USD_PER_PAGE', 0.006),
+        // Floor for the OCR operation's provider cap. One vision request reserves a hard ceiling of about USD 0.028 on the
+        // default extraction model, so pages x per-page alone would refuse a one-page scan.
         'min_cap_usd' => (float) env('AI_CREDITS_OCR_MIN_CAP_USD', 0.05),
     ],
 

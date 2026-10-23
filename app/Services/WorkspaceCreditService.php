@@ -141,6 +141,12 @@ class WorkspaceCreditService
         $credits->save();
     }
 
+    /** A result that is missing extraction chunks: the pipeline recorded failed chunks in its coverage. */
+    public function resultIsPartial(Document $document): bool
+    {
+        return (int) ($document->ai_pipeline['coverage']['failed_chunks'] ?? 0) > 0;
+    }
+
     /**
      * The charge point. One credit per document, when its revision publishes — or, where revisions
      * are disabled and no publication exists, when it reaches Ready. Caller must hold the document
@@ -151,7 +157,12 @@ class WorkspaceCreditService
         // Not gated on the flag: a reservation made while credits were on must settle the same way after the flag is turned off.
         if ($this->hasAiOperation($document->id)) {
             // AI credits are charged only for a delivered result: merged evidence alone ($ready = false) never debits.
-            if ($ready) {
+            if ($ready && $this->resultIsPartial($document)) {
+                // Work that did not finish is not billed. The hold goes back whole; the customer keeps what was
+                // delivered and a later run (re-analysis) is admitted and priced as a first one, so a retry is not
+                // a second charge.
+                app(CreditAccountant::class)->releaseDocument($document->id, 'partial_result');
+            } elseif ($ready) {
                 app(CreditAccountant::class)->settleDocument($document->id, $document->uploaded_by);
                 if ($document->credit_accounted_at === null && DB::table('billing_operations')->where('kind', 'document')
                     ->where('resource_id', $document->id)->where('status', 'completed')->exists()) {

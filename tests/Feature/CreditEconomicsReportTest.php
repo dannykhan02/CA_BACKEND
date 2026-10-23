@@ -79,13 +79,13 @@ class CreditEconomicsReportTest extends TestCase
     {
         $before = config('ai_credits');
         $this->artisan('docintel:credit-economics-report', ['--what-if' => true, '--json' => true])->assertSuccessful();
-        Artisan::call('docintel:credit-economics-report', ['--what-if' => true, '--json' => true, '--floor-share' => '0.5', '--bands' => '4:6000,15:30000,30:90000,60:250000']);
+        Artisan::call('docintel:credit-economics-report', ['--what-if' => true, '--json' => true, '--floor-share' => '0.5', '--bands' => '1:2000,4:6000,15:30000,30:90000,60:250000']);
         $rows = json_decode(Artisan::output(), true);
         $this->assertSame([4, 15, 30, 60], array_column($rows, 'credits'));
         $this->assertSame([25, 6, 3, 1], array_column($rows, 'starter_docs_per_month'));
         Artisan::call('docintel:credit-economics-report', ['--what-if' => true, '--json' => true]);
         $today = json_decode(Artisan::output(), true);
-        $this->assertSame([4, 30, 80, 80], array_column($today, 'credits')); // the memo's baseline
+        $this->assertSame([10, 30, 80, 80], array_column($today, 'credits')); // today's bands: 5,000 tokens is small by size but 2 credits (USD 0.054) cannot pay the 0.08 completion gate, so medium; the others are lifted by their synthesis floors
         $this->assertSame($before, config('ai_credits'));
         $this->assertSame(0, OperationQuote::count());
     }
