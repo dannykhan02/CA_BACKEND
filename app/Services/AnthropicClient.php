@@ -701,14 +701,14 @@ PROMPT;
 
         $maxAttempts = max(1, min(4, (int) ($options['max_attempts'] ?? 4)));
         $this->requestModel = $options['model'] ?? $this->modelFor($this->currentOperation ?? 'extraction');
-        $maximum = app(ProviderRequestAdmission::class)->assertAllowed(
+        ['maximum' => $maximum, 'realistic' => $realistic] = app(ProviderRequestAdmission::class)->assess(
             $document, $this->currentOperation, $this->requestModel, $messages, $options);
 
         $spend = app(OperationSpend::class);
         $quoteId = $this->resolvedQuoteId;
         $attemptId = (string) Str::uuid();
         if ($quoteId) {
-            $spend->reserveAttempt($quoteId, $attemptId, $this->currentOperation, $maximum);
+            $spend->reserveForRequest($quoteId, $attemptId, $this->currentOperation, ['maximum' => $maximum, 'realistic' => $realistic]);
         } else {
             $scope = $spend->internalScope($document, $this->currentOperation, $this->operationWorkspaceId,
                 $this->operationComparisonId);

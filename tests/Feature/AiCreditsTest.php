@@ -48,7 +48,7 @@ class AiCreditsTest extends TestCase
         parent::setUp();
         // These tests are about reservation, settlement and caps, so they size documents in exact tokens: the local-estimate
         // margin is off here and exercised in WorkloadCreditsV1Test.
-        config(['ai_credits.enabled' => true, 'ai_credits.local_estimate_multiplier' => 1.0]);
+        config(['ai_credits.enabled' => true, 'ai_credits.local_estimate_multiplier' => 1.0, 'ai_credits.dense_shift.enabled' => true]);
     }
 
     private function workspace(int $savedAi = 0, int $legacyDocs = 0): Workspace

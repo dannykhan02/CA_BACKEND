@@ -28,6 +28,7 @@ class CostVsSizeReportCommandTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        config(['ai_credits.dense_shift.enabled' => true]); // these tests describe the dense rule's effect on the would-quote
         $this->user = User::factory()->create();
         $this->workspace = app(WorkspaceService::class)->createPersonalWorkspaceFor($this->user);
     }
@@ -319,5 +320,36 @@ class CostVsSizeReportCommandTest extends TestCase
         $this->assertSame([1, 2.0, 1.0], [$bucket['documents'], $bucket['median_would_credits'], $bucket['would_minus_needed_x1.25']]);
         $this->assertEqualsWithDelta(2.7, $bucket['median_would_cap_over_cost'], 1e-9);
         $this->assertSame(0, OperationQuote::count());
+    }
+
+    public function test_stage_limits_report_output_sizes_truncation_and_the_two_admission_figures_without_writing(): void
+    {
+        $document = $this->document('PDF', 6000);
+        // Ten successful summary runs of 1,000..2,800 output tokens, one of them 9,000 (the outlier), and one truncated run.
+        foreach ([1000, 1200, 1400, 1600, 1800, 2000, 2200, 2400, 2800, 9000] as $out) {
+            DocumentAiRun::create(['workspace_id' => $document->workspace_id, 'document_id' => $document->id, 'purpose' => 'document_summary',
+                'provider' => 'anthropic', 'model' => 'claude-sonnet-5-5', 'status' => 'success', 'input_tokens' => 3000, 'output_tokens' => $out,
+                'estimated_cost_usd' => round((3000 * 2 + $out * 10) / 1000000, 6), 'request_attempt' => 1, 'created_at' => now()]);
+        }
+        DocumentAiRun::create(['workspace_id' => $document->workspace_id, 'document_id' => $document->id, 'purpose' => 'document_summary',
+            'provider' => 'anthropic', 'model' => 'claude-sonnet-5-5', 'status' => 'failed', 'failure_class' => 'truncated', 'input_tokens' => 3000,
+            'output_tokens' => 8192, 'estimated_cost_usd' => 0.088, 'request_attempt' => 1, 'created_at' => now()]);
+        $runs = DocumentAiRun::count();
+
+        Artisan::call('docintel:cost-vs-size-report', ['--stage-limits' => true]);
+        $output = Artisan::output();
+
+        $row = collect(app(CostVsSizeReport::class)->stageLimits())->firstWhere('purpose', 'document_summary');
+        $this->assertSame(['claude-sonnet-5-5', 10, 9000, round(1 / 11, 4)], [$row['model'], $row['successful_runs'], $row['output_max'], $row['truncated_share']]);
+        $this->assertSame(1900, $row['output_p50']);
+        $this->assertGreaterThanOrEqual($row['output_p95'], $row['output_p99']);
+        $this->assertSame([8192, 2500], [$row['max_tokens'], $row['realistic_output_tokens']]);
+        // Input (3,000 median + 512 envelope) at $2/M, plus 8,192 or 2,500 output tokens at $10/M.
+        $this->assertEqualsWithDelta(round(3512 * 2 / 1000000 + 8192 * 10 / 1000000, 6), $row['worst_case_usd'], 1e-6);
+        $this->assertEqualsWithDelta(round(3512 * 2 / 1000000 + 2500 * 10 / 1000000, 6), $row['realistic_usd'], 1e-6);
+        $this->assertStringContainsString('document_summary', $output);
+        $this->assertStringContainsString('output_p99', $output);
+        $this->assertStringNotContainsString('document_id,', $output, '--stage-limits prints only the stage table');
+        $this->assertSame($runs, DocumentAiRun::count());
     }
 }
