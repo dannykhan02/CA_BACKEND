@@ -24,12 +24,25 @@ class UpdateDocumentNoteRequest extends StoreDocumentNoteRequest
         $rules['content'] = ['sometimes', 'nullable', 'array'];
         $rules['contentSchemaVersion'] = ['sometimes', 'nullable', 'integer', 'in:1'];
         $rules['version'] = ['required', 'integer', 'min:1'];
+        $rules['appendCitations'] = ['sometimes', 'array', 'max:50'];
+        foreach ($rules as $field => $rule) {
+            if (str_starts_with($field, 'citations.*')) {
+                $rules['appendCitations'.substr($field, strlen('citations'))] = $rule;
+            }
+        }
 
         return $rules;
     }
 
     protected function failedValidation(Validator $validator): void
     {
+        if (isset($validator->failed()['appendCitations']['Max'])) {
+            throw new HttpResponseException(response()->json([
+                'success' => false, 'message' => 'The given data was invalid.',
+                'errors' => $validator->errors()->toArray(),
+                'error' => ['code' => 'TOO_MANY_CITATIONS'],
+            ], 422));
+        }
         if (isset($validator->failed()['version'])) {
             throw new HttpResponseException(response()->json([
                 'success' => false, 'message' => 'The given data was invalid.',

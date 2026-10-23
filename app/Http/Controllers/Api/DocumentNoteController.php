@@ -87,11 +87,27 @@ class DocumentNoteController extends Controller
             if (array_key_exists('contentSchemaVersion', $data) && ! isset($data['content'])) {
                 $this->fail(422, 'NOTE_INVALID_CONTENT', 'A schema version requires rich content.');
             }
+            if (array_key_exists('citations', $data) && array_key_exists('appendCitations', $data)) {
+                $this->fail(422, 'INVALID_CITATION', 'Citation replacement and append cannot be combined.');
+            }
             if (array_key_exists('citations', $data)) {
                 $this->validateCitations($doc, $data['citations']);
                 $references = $this->replaceCitations($current, $data['citations']);
             } else {
                 $references = $current->citations()->pluck('id', 'id')->all();
+                if (array_key_exists('appendCitations', $data)) {
+                    $new = $data['appendCitations'];
+                    if (count($references) + count($new) > 50) {
+                        $this->fail(422, 'TOO_MANY_CITATIONS', 'A note may have at most 50 citations.');
+                    }
+                    foreach ($new as $citation) {
+                        if (! isset($citation['intelligence_revision_id'], $citation['source_id'])) {
+                            $this->fail(422, 'INVALID_CITATION', 'Appended citations require a current source and revision.');
+                        }
+                    }
+                    $this->validateCitations($doc, $new);
+                    $references = array_merge($references, $this->createCitations($current, $new));
+                }
             }
             if ($rich !== null) {
                 $current->content = $this->resolveReferences($data['content'], $rich['references'], $references);
@@ -180,8 +196,15 @@ class DocumentNoteController extends Controller
     /** @return array<string, string> Draft reference to stored citation UUID. */
     private function replaceCitations(DocumentNote $note, array $citations): array
     {
-        $references = [];
         $note->citations()->delete();
+
+        return $this->createCitations($note, $citations);
+    }
+
+    /** @return array<string, string> New draft reference to stored citation UUID. */
+    private function createCitations(DocumentNote $note, array $citations): array
+    {
+        $references = [];
         foreach ($citations as $citation) {
             $created = $note->citations()->create([
                 'document_id' => $note->document_id,
