@@ -41,7 +41,8 @@ class CostVsSizeReportTest extends TestCase
     public function test_bands_for_a_credit_amount_are_the_cheapest_band_with_at_least_that_many_credits(): void
     {
         $report = app(CostVsSizeReport::class);
-        foreach ([[1, 'tiny'], [2, 'small'], [3, 'medium'], [10, 'medium'], [11, 'large'], [30, 'large'], [31, 'very_large'], [80, 'very_large'], [81, 'above_top_band']] as [$credits, $band]) {
+        foreach ([[1, 'small'], [2, 'small'], [3, 'medium'], [6, 'medium'], [7, 'regular'], [10, 'regular'], [11, 'large'], [20, 'large'], [21, 'xlarge'],
+            [30, 'xlarge'], [31, 'very_large'], [80, 'very_large'], [81, 'above_top_band']] as [$credits, $band]) {
             $this->assertSame($band, $report->bandFor($credits), (string) $credits);
         }
     }
@@ -61,19 +62,21 @@ class CostVsSizeReportTest extends TestCase
         $this->assertEqualsWithDelta(0.03, $mid['median_usd'], 1e-9);
         $this->assertEqualsWithDelta(0.076, $mid['p90_usd'], 1e-9);
         $this->assertEqualsWithDelta(0.10, $mid['max_usd'], 1e-9);
-        // 0.076 / 0.027 = 2.8 -> 3 credits -> medium; x1.25 = 0.095 -> 3.5 -> 4 credits -> medium.
+        // 0.076 / 0.027 = 2.8 -> 3 credits -> medium (6); x1.25 = 0.095 -> 3.5 -> 4 credits -> medium.
         $this->assertSame([3, 'medium', 4, 'medium'], [$mid['credits_for_p90'], $mid['band_for_p90'], $mid['credits_for_p90_x1.25'], $mid['band_for_p90_x1.25']]);
-        // The current gate at the bucket's median size (3,000 tokens): 0.05 + 3 x 0.006 = 0.068, which small (0.054) cannot pay.
-        $this->assertSame([3000, 0.068, 'medium'], [$mid['median_tokens'], $mid['gate_usd'], $mid['gate_band']]);
+        // What the quote gives a 3,000-token document today: small, cap 0.054, which pays neither the worst (0.10) nor p90 x 1.25 (0.095).
+        $this->assertSame([3000, 'small', 0.054, false, false], [$mid['median_tokens'], $mid['edge_band'], $mid['edge_cap_usd'], $mid['edge_covers_max'], $mid['edge_covers_p90_x1.25']]);
 
         $tiny = $this->bucket($summary, '0-1k');
         $this->assertEqualsWithDelta(0.014, $tiny['p90_usd'], 1e-9); // 0.005 + 0.9 x 0.01 = 0.014
-        $this->assertSame([1, 'tiny', 1, 'tiny'], [$tiny['credits_for_p90'], $tiny['band_for_p90'], $tiny['credits_for_p90_x1.25'], $tiny['band_for_p90_x1.25']]);
-        $this->assertSame('small', $tiny['gate_band'], 'the gate lifts a tiny document that the measured cost says fits one credit');
+        $this->assertSame([1, 'small', 1, 'small'], [$tiny['credits_for_p90'], $tiny['band_for_p90'], $tiny['credits_for_p90_x1.25'], $tiny['band_for_p90_x1.25']]);
+        $this->assertSame(['small', 0.054, true, true], [$tiny['edge_band'], $tiny['edge_cap_usd'], $tiny['edge_covers_max'], $tiny['edge_covers_p90_x1.25']]);
 
         $large = $this->bucket($summary, '60k+');
         // p90 = 1.9 -> 71 credits -> very_large; x1.25 = 2.375 -> 88 credits -> above every band.
         $this->assertSame([71, 'very_large', 88, 'above_top_band'], [$large['credits_for_p90'], $large['band_for_p90'], $large['credits_for_p90_x1.25'], $large['band_for_p90_x1.25']]);
+        // Median size 95,000 tokens is very_large (cap 2.16): it pays the worst document (2.0) but not p90 x 1.25 (2.375).
+        $this->assertSame(['very_large', 2.16, true, false], [$large['edge_band'], $large['edge_cap_usd'], $large['edge_covers_max'], $large['edge_covers_p90_x1.25']]);
     }
 
     public function test_an_empty_bucket_reports_no_numbers_rather_than_zeros(): void

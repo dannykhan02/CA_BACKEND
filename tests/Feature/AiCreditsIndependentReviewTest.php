@@ -34,7 +34,7 @@ class AiCreditsIndependentReviewTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        config(['ai_credits.enabled' => true]);
+        config(['ai_credits.enabled' => true, 'ai_credits.local_estimate_multiplier' => 1.0]);
     }
 
     private function workspace(int $savedAi): Workspace
@@ -46,8 +46,8 @@ class AiCreditsIndependentReviewTest extends TestCase
         return $workspace;
     }
 
-    /** $tokens is the local estimate: strlen / 3. 20000 tokens quotes the 10-credit standard band. */
-    private function document(Workspace $workspace, int $tokens = 20000): Document
+    /** $tokens is the local estimate: strlen / 3 (the estimate margin is off in setUp). 15000 tokens quotes the 10-credit regular band. */
+    private function document(Workspace $workspace, int $tokens = 15000): Document
     {
         return Document::create(['name' => 'Report.pdf', 'type' => 'PDF', 'size_kb' => 1, 'status' => 'Processing', 'classification' => 'Public',
             'year' => 2026, 'workspace_id' => $workspace->id, 'uploaded_by' => $this->user->id,

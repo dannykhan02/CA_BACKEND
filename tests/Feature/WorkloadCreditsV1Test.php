@@ -43,7 +43,7 @@ class WorkloadCreditsV1Test extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        config(['ai_credits.enabled' => true, 'document_intelligence.revision_v1' => true]);
+        config(['ai_credits.enabled' => true, 'document_intelligence.revision_v1' => true, 'document_intelligence.incremental' => false]);
     }
 
     private function workspace(int $savedAi = 100, int $legacyDocs = 0): Workspace
@@ -55,8 +55,8 @@ class WorkloadCreditsV1Test extends TestCase
         return $workspace;
     }
 
-    /** ~20,000 tokens of DOCX text at 5.6 characters per token: the medium band, 10 credits. */
-    private const MEDIUM_TEXT = 3900;
+    /** 84,100 bytes of DOCX text: 15,018 tokens at 5.6 bytes each, 17,271 with the 1.15 local-estimate margin: the regular band, 10 credits. */
+    private const REGULAR_TEXT = 2900;
 
     private function document(Workspace $workspace, int $repeats = 1, string $type = 'DOCX', ?int $pages = null): Document
     {
@@ -64,6 +64,15 @@ class WorkloadCreditsV1Test extends TestCase
             'classification' => 'Public', 'year' => 2026, 'workspace_id' => $workspace->id, 'uploaded_by' => $this->user->id,
             'file_hash' => hash('sha256', 'v1fixture'.self::$hashes++), 'pages' => $pages ?? 0,
             'extracted_text' => str_repeat('Revenue grew in the quarter. ', $repeats)]);
+    }
+
+    /** A document whose token count the provider has already given (count_method = anthropic). */
+    private function counted(Workspace $workspace, int $providerTokens, string $type = 'PDF'): Document
+    {
+        $document = $this->document($workspace, 1, $type);
+        $document->forceFill(['ai_pipeline' => ['count_method' => 'anthropic', 'tokens' => $providerTokens]])->save();
+
+        return $document->fresh();
     }
 
     private function confirm(Document $document): Document
@@ -104,14 +113,15 @@ class WorkloadCreditsV1Test extends TestCase
 
     // ============================================================ Change 1: bands and confirmation
 
-    public function test_the_bands_are_tiny_small_medium_large_and_very_large_with_the_agreed_credits(): void
+    public function test_the_bands_are_chosen_by_token_edges_with_the_agreed_credits(): void
     {
         $bands = config('ai_credits.bands');
-        $this->assertSame(['tiny', 'small', 'medium', 'large', 'very_large'], array_keys($bands));
-        $this->assertSame([2000, 6000, 30000, 90000, 250000], array_column($bands, 'max_tokens'));
-        $this->assertSame([1, 2, 10, 30, 80], array_column($bands, 'credits'));
-        $this->assertSame(30, config('ai_credits.confirm_from_credits'));
-        $this->assertSame(100, config('ai_credits.confirm_over_pages'));
+        $this->assertSame(['small', 'medium', 'regular', 'large', 'xlarge', 'very_large'], array_keys($bands));
+        $this->assertSame([4000, 8000, 18000, 35000, 90000, 250000], array_column($bands, 'max_tokens'));
+        $this->assertSame([2, 6, 10, 20, 30, 80], array_column($bands, 'credits'));
+        $this->assertSame(['v3', 30, 100], [config('ai_credits.quote_version'), config('ai_credits.confirm_from_credits'), config('ai_credits.confirm_over_pages')]);
+        $this->assertNull(config('ai_credits.min_completion_cost_usd'), 'no linear completion gate chooses a band any more');
+        $this->assertArrayNotHasKey('tiny', $bands);
     }
 
     public function test_the_per_credit_cap_the_dense_shift_and_the_plan_allowances_are_unchanged(): void
@@ -122,28 +132,76 @@ class WorkloadCreditsV1Test extends TestCase
             config('ai_credits.plans.professional.monthly'), config('ai_credits.plans.professional.annual')]);
     }
 
-    public function test_each_band_quotes_its_credits_for_a_pdf_of_that_size(): void
+    public function test_each_band_edge_is_inclusive_and_the_spend_cap_is_credits_times_0_027(): void
+    {
+        $q = app(QuoteService::class);
+        $edges = [[1, 'small', 2], [4000, 'small', 2], [4001, 'medium', 6], [8000, 'medium', 6], [8001, 'regular', 10], [18000, 'regular', 10],
+            [18001, 'large', 20], [35000, 'large', 20], [35001, 'xlarge', 30], [90000, 'xlarge', 30], [90001, 'very_large', 80], [250000, 'very_large', 80]];
+        foreach ($edges as [$tokens, $band, $credits]) {
+            $c = $q->classify($tokens, false);
+            $this->assertSame([$band, $credits, false], [$c['band'], $c['credits'], $c['declined']], $tokens.' tokens');
+            $this->assertEqualsWithDelta($credits * 0.027, $c['cap'], 0.0000001);
+        }
+        $over = $q->classify(250001, false);
+        $this->assertSame([true, 'document_too_large'], [$over['declined'], $over['reason']]);
+    }
+
+    public function test_a_dense_document_moves_up_one_band_and_stops_at_the_top(): void
+    {
+        $q = app(QuoteService::class);
+        $this->assertSame(['medium', true], [$q->classify(4000, true)['band'], $q->classify(4000, true)['shifted']]);
+        $this->assertSame('xlarge', $q->classify(35000, true)['band']);
+        $this->assertSame('very_large', $q->classify(250000, true)['band']);
+    }
+
+    public function test_no_band_cap_is_below_the_measured_cost_of_a_document_of_that_size(): void
+    {
+        // Provider token count and the highest USD cost measured at that size (docintel:cost-vs-size-report, 24 Ready documents).
+        $ws = $this->workspace(1000);
+        $q = app(QuoteService::class);
+        $measured = [[300, 0.036], [1000, 0.036], [4000, 0.051], [12000, 0.226], [18000, 0.228], [27000, 0.355], [40000, 0.657], [54000, 0.657], [77000, 0.677]];
+        foreach ($measured as [$tokens, $cost]) {
+            $quote = $q->quoteDocument($this->counted($ws, $tokens))['quote'];
+            $this->assertGreaterThanOrEqual($cost, $quote->provider_cost_cap_usd, $tokens.' tokens costs '.$cost.' but quotes '.$quote->band.' with cap '.$quote->provider_cost_cap_usd);
+        }
+        // The 39k-token spreadsheet (0.824) is multiplied by 1.6 and moved up by the dense rule: very_large.
+        $sheet = $q->quoteDocument($this->counted($ws, 39000, 'XLSX'))['quote'];
+        $this->assertSame(['very_large', 62400], [$sheet->band, $sheet->preflight['tokens']]);
+        $this->assertGreaterThanOrEqual(0.824, $sheet->provider_cost_cap_usd);
+    }
+
+    public function test_the_quote_for_documents_of_these_provider_token_sizes(): void
     {
         $ws = $this->workspace(1000);
         $q = app(QuoteService::class);
-        // PDF at 3 characters per token. Tiny (USD 0.027) can never pay the 0.05 completion gate. Small (2 credits, USD 0.054)
-        // leaves 0.004 above the gate, which 0.006 per 1,000 tokens uses up at ~666 tokens: 1,000 tokens is already medium.
-        foreach ([[500, 'small', 2], [1000, 'medium', 10], [5000, 'medium', 10], [20000, 'medium', 10], [60000, 'large', 30], [150000, 'very_large', 80]] as [$tokens, $band, $credits]) {
-            $quote = $q->quoteDocument($this->document($ws, (int) ceil($tokens * 3 / 29), 'PDF'))['quote'];
+        foreach ([[300, 'small', 2], [3000, 'small', 2], [7000, 'medium', 6], [12000, 'regular', 10], [27000, 'large', 20], [54000, 'xlarge', 30], [77000, 'xlarge', 30]] as [$tokens, $band, $credits]) {
+            $quote = $q->quoteDocument($this->counted($ws, $tokens))['quote'];
             $this->assertSame([$band, $credits], [$quote->band, $quote->credits], $tokens.' tokens');
         }
-        $this->assertTrue($q->quoteDocument($this->document($ws, (int) ceil(300000 * 3 / 29), 'PDF'))['declined']);
+    }
+
+    public function test_a_27k_token_document_lands_in_the_20_credit_band_by_count_and_by_estimate(): void
+    {
+        $ws = $this->workspace(1000);
+        $q = app(QuoteService::class);
+        $byCount = $q->quoteDocument($this->counted($ws, 27000))['quote'];
+        $this->assertSame(['large', 20, 'provider_count'], [$byCount->band, $byCount->credits, $byCount->preflight['token_source']]);
+
+        // 72,000 PDF bytes = 24,000 tokens locally, x1.15 = 27,600.
+        $byEstimate = $q->quoteDocument($this->document($ws, (int) ceil(72000 / 29), 'PDF'))['quote'];
+        $this->assertSame(['large', 20, 'local_estimate'], [$byEstimate->band, $byEstimate->credits, $byEstimate->preflight['token_source']]);
+        $this->assertEqualsWithDelta(0.54, $byEstimate->provider_cost_cap_usd, 0.0000001);
     }
 
     public function test_a_quote_of_thirty_credits_or_more_requires_confirmation_and_says_so(): void
     {
         $ws = $this->workspace(100);
-        $document = $this->document($ws, (int) ceil(60000 * 3 / 29), 'PDF'); // ~60,000 tokens: large, 30 credits
+        $document = $this->counted($ws, 54000); // xlarge, 30 credits
         $this->assertFalse($this->admit($document, false));
 
         $pipeline = $document->fresh()->ai_pipeline;
         $this->assertTrue($pipeline['awaiting_credit_confirmation']);
-        $this->assertSame([30, 'large'], [$pipeline['credit_quote']['credits'], $pipeline['credit_quote']['band']]);
+        $this->assertSame([30, 'xlarge'], [$pipeline['credit_quote']['credits'], $pipeline['credit_quote']['band']]);
         $this->assertTrue($pipeline['credit_quote']['requires_confirmation']);
         $this->assertNull($this->op($document), 'nothing is reserved until the customer accepts');
         $pending = app(EntitlementService::class)->summary($ws->id)['ai_credits']['pendingConfirmations'];
@@ -154,10 +212,10 @@ class WorkloadCreditsV1Test extends TestCase
     public function test_a_quote_under_thirty_credits_on_a_short_document_needs_no_confirmation(): void
     {
         $ws = $this->workspace(100);
-        $medium = $this->document($ws, self::MEDIUM_TEXT); // 10 credits: no longer asks
-        $this->assertTrue($this->admit($medium, false));
-        $this->assertSame(10, (int) $this->op($medium)->amount_reserved);
-        $this->assertFalse($medium->fresh()->ai_pipeline['awaiting_credit_confirmation'] ?? false);
+        $large = $this->counted($ws, 27000); // 20 credits: does not ask
+        $this->assertTrue($this->admit($large, false));
+        $this->assertSame(20, (int) $this->op($large)->amount_reserved);
+        $this->assertFalse($large->fresh()->ai_pipeline['awaiting_credit_confirmation'] ?? false);
 
         $small = $this->document($ws, 1, 'PDF', 100); // 100 pages is not over the page limit
         $this->assertTrue($this->admit($small, false));
@@ -187,9 +245,92 @@ class WorkloadCreditsV1Test extends TestCase
         $this->assertTrue($q->requiresConfirmation(2, 51));
     }
 
-    // ============================================================ Change 2: scans
+    // ============================================================ Change 2: token source
 
-    public function test_a_scan_is_priced_by_the_same_bands_and_never_below_the_bands_it_can_pay_for(): void
+    public function test_the_provider_count_is_used_as_is_and_beats_the_local_estimate(): void
+    {
+        $ws = $this->workspace(1000);
+        $document = $this->document($ws, 5000, 'PDF'); // 145,000 bytes: the local estimate would be ~48,000 x1.15
+        $document->forceFill(['ai_pipeline' => ['count_method' => 'anthropic', 'tokens' => 3000]])->save();
+
+        $quote = app(QuoteService::class)->quoteDocument($document->fresh())['quote'];
+
+        $this->assertSame(['small', 3000, 3000, 'provider_count', 1.0], [$quote->band, $quote->preflight['tokens'], $quote->preflight['raw_tokens'],
+            $quote->preflight['token_source'], $quote->preflight['estimate_multiplier']]);
+    }
+
+    public function test_a_local_estimate_is_multiplied_by_1_15_and_the_quote_says_so(): void
+    {
+        $ws = $this->workspace(1000);
+        $document = $this->document($ws, 1, 'PDF');
+        $document->update(['extracted_text' => str_repeat('x', 6000)]); // 2,000 tokens at 3.0 bytes per token
+        $q = app(QuoteService::class);
+
+        $quote = $q->quoteDocument($document->fresh())['quote'];
+        $this->assertSame([2300, 2000, 'local_estimate', 1.15, 1.0], [$quote->preflight['tokens'], $quote->preflight['raw_tokens'], $quote->preflight['token_source'],
+            $quote->preflight['estimate_multiplier'], $quote->preflight['spreadsheet_multiplier']]);
+
+        // It can move a document over an edge: 3,600 raw tokens are small, 4,140 are medium.
+        $edge = $this->document($ws, 1, 'PDF');
+        $edge->update(['extracted_text' => str_repeat('x', 10800)]);
+        $this->assertSame(['medium', 4140], [$q->quoteDocument($edge->fresh())['quote']->band, $q->quoteDocument($edge->fresh())['quote']->preflight['tokens']]);
+
+        config(['ai_credits.local_estimate_multiplier' => 1.0]);
+        $off = $this->document($ws, 1, 'PDF');
+        $off->update(['extracted_text' => str_repeat('x', 10800)]);
+        $this->assertSame(['small', 3600], [$q->quoteDocument($off->fresh())['quote']->band, $q->quoteDocument($off->fresh())['quote']->preflight['tokens']]);
+    }
+
+    public function test_a_spreadsheet_is_multiplied_by_1_6_whether_the_count_is_the_providers_or_an_estimate(): void
+    {
+        $ws = $this->workspace(1000);
+        $q = app(QuoteService::class);
+
+        $counted = $q->quoteDocument($this->counted($ws, 10000, 'XLSX'))['quote'];
+        $this->assertSame([16000, 10000, 'provider_count', 1.6], [$counted->preflight['tokens'], $counted->preflight['raw_tokens'], $counted->preflight['token_source'], $counted->preflight['spreadsheet_multiplier']]);
+        // 16,000 tokens is the regular band (18,000), and a spreadsheet is dense: one band up, large.
+        $this->assertSame(['large', 20], [$counted->band, $counted->credits]);
+
+        $estimated = $this->document($ws, 1, 'XLSX');
+        $estimated->update(['extracted_text' => str_repeat('x', 3000)]); // 1,000 tokens x1.15 x1.6
+        $quote = $q->quoteDocument($estimated->fresh())['quote'];
+        $this->assertSame([1840, 1000], [$quote->preflight['tokens'], $quote->preflight['raw_tokens']]);
+
+        config(['ai_credits.spreadsheet_token_multiplier' => 1.0]);
+        $this->assertSame(10000, $q->quoteDocument($this->counted($ws, 10000, 'XLSX'))['quote']->preflight['tokens']);
+    }
+
+    public function test_tokens_are_estimated_per_file_type_before_the_margins(): void
+    {
+        config(['ai_credits.local_estimate_multiplier' => 1.0, 'ai_credits.spreadsheet_token_multiplier' => 1.0]);
+        $q = app(QuoteService::class);
+        $estimate = fn (string $type) => $q->estimateTokens(new Document(['type' => $type, 'extracted_text' => str_repeat('x', 17000)]));
+
+        $this->assertSame(5667, $estimate('PDF'));   // 17000 / 3.0
+        $this->assertSame(3036, $estimate('DOCX'));  // 17000 / 5.6: Word text is sparser
+        $this->assertSame(5667, $estimate('XLSX'));  // no entry of its own: the spreadsheet multiplier covers it
+        $this->assertSame(5667, $estimate('TXT'));   // anything unlisted uses the default
+        $this->assertSame(5667, $estimate('pdf'));   // case does not matter
+        config(['ai_credits.local_estimate_multiplier' => 1.15, 'ai_credits.spreadsheet_token_multiplier' => 1.6]);
+        $this->assertSame([6518, 3492, 10428], [$estimate('PDF'), $estimate('DOCX'), $estimate('XLSX')]);
+    }
+
+    public function test_the_same_text_prices_higher_as_a_spreadsheet_and_lower_as_a_word_file(): void
+    {
+        $ws = $this->workspace(1000);
+        $q = app(QuoteService::class);
+        $repeats = (int) ceil(60000 / 29); // ~60,000 bytes
+        $word = $q->quoteDocument($this->document($ws, $repeats, 'DOCX'))['quote'];  // 10,715 tokens x1.15 = 12,322
+        $pdf = $q->quoteDocument($this->document($ws, $repeats, 'PDF'))['quote'];    // 20,001 x1.15 = 23,002
+        $sheet = $q->quoteDocument($this->document($ws, $repeats, 'XLSX'))['quote']; // 20,001 x1.15 x1.6 = 36,802, and a spreadsheet is dense
+        $this->assertSame([10, 20, 80], [$word->credits, $pdf->credits, $sheet->credits]);
+        $this->assertGreaterThan($word->preflight['tokens'] * 1.5, $pdf->preflight['tokens']);
+        $this->assertGreaterThan($pdf->preflight['tokens'], $sheet->preflight['tokens']);
+    }
+
+    // ============================================================ scans (kept from the first workload PR)
+
+    public function test_a_scan_is_priced_by_page_tokens_in_the_same_bands(): void
     {
         $ws = $this->workspace(100);
         $document = $this->document($ws, 1, 'PNG');
@@ -199,9 +340,9 @@ class WorkloadCreditsV1Test extends TestCase
             'engine' => 'vision', 'raw_text' => 'x', 'confidence' => 0.9]);
         $this->assertTrue($this->admit($document));
 
-        // Two words of text is tiny; one page of image is at least 600 tokens, and 600 tokens plus the OCR bound (0.006) is more
-        // than small can pay for (USD 0.054): a one-page scan quotes as medium.
-        $this->assertSame(['medium', 10], [OperationQuote::where('kind', 'document')->value('band'), (int) $this->op($document)->amount_reserved]);
+        // Two words of text, but one page of image is 600 tokens: small, 2 credits. The OCR is a spend bound, not a charge.
+        $quote = OperationQuote::where('kind', 'document')->firstOrFail();
+        $this->assertSame(['small', 2, 600, 'ocr_pages'], [$quote->band, (int) $this->op($document)->amount_reserved, $quote->preflight['tokens'], $quote->preflight['token_source']]);
         $this->assertSame(0, (int) $this->op($document, 'ocr')->amount_reserved, 'reading pages is not a separate charge');
     }
 
@@ -209,9 +350,10 @@ class WorkloadCreditsV1Test extends TestCase
     {
         $q = app(QuoteService::class);
         $this->assertSame(0.006, config('ai_credits.ocr.provider_cost_usd_per_page'));
+        $this->assertSame(600, config('ai_credits.ocr.tokens_per_page'));
 
         // pages => [band, credits, the OCR operation's own spend cap = max(pages x 0.006, 0.05)]
-        $expected = [1 => ['medium', 10, 0.05], 2 => ['medium', 10, 0.05], 10 => ['medium', 10, 0.06], 60 => ['large', 30, 0.36]];
+        $expected = [1 => ['small', 2, 0.05], 2 => ['small', 2, 0.05], 10 => ['medium', 6, 0.06], 60 => ['xlarge', 30, 0.36]];
         foreach ($expected as $pages => [$band, $credits, $cap]) {
             $scan = $q->classifyScan($pages);
             $this->assertSame([$band, $credits], [$scan['band'], $scan['credits']], $pages.' pages');
@@ -224,7 +366,7 @@ class WorkloadCreditsV1Test extends TestCase
         $ws = $this->workspace(100);
         $document = $this->document($ws, 1, 'PDF');
         $q = app(QuoteService::class);
-        $this->assertSame(10, $q->estimateTokens($document));
+        $this->assertSame(12, $q->estimateTokens($document)); // 29 bytes = 10 tokens x1.15
         $this->assertSame(6000, $q->estimateTokens($document, 10)); // 10 pages x 600
         config(['ai_credits.ocr.tokens_per_page' => 1000]);
         $this->assertSame(10000, $q->estimateTokens($document, 10));
@@ -236,48 +378,8 @@ class WorkloadCreditsV1Test extends TestCase
         foreach ([1, 2, 5, 10, 20, 40, 60] as $pages) {
             $c = $q->classifyScan($pages);
             $this->assertFalse($c['declined'], $pages.' pages');
-            $this->assertGreaterThanOrEqual($pages * (float) config('ai_credits.ocr.provider_cost_usd_per_page') + 0.05, $c['cap'] + 0.0000001, $pages.' pages: cap covers OCR plus a minimum completion');
+            $this->assertGreaterThanOrEqual($pages * (float) config('ai_credits.ocr.provider_cost_usd_per_page'), $c['cap'], $pages.' pages: cap covers the OCR bound');
         }
-    }
-
-    // ============================================================ Change 3: tokens per type
-
-    public function test_tokens_are_estimated_per_file_type(): void
-    {
-        $text = str_repeat('x', 17000);
-        $q = app(QuoteService::class);
-        $estimate = fn (string $type) => $q->estimateTokens(new Document(['type' => $type, 'extracted_text' => $text]));
-
-        $this->assertSame(5667, $estimate('PDF'));   // 17000 / 3.0
-        $this->assertSame(10000, $estimate('XLSX'));  // 17000 / 1.7: spreadsheets are denser than 3
-        $this->assertSame(3036, $estimate('DOCX'));   // 17000 / 5.6: Word text is sparser
-        $this->assertSame(5667, $estimate('TXT'));   // anything unlisted uses the default
-        $this->assertSame(5667, $estimate('pdf'));   // case does not matter
-    }
-
-    public function test_the_providers_own_count_wins_when_it_is_already_known(): void
-    {
-        $document = new Document(['type' => 'XLSX', 'extracted_text' => str_repeat('x', 17000)]);
-        $document->ai_pipeline = ['count_method' => 'anthropic', 'tokens' => 4321];
-        $this->assertSame(4321, app(QuoteService::class)->estimateTokens($document));
-
-        $local = new Document(['type' => 'XLSX', 'extracted_text' => str_repeat('x', 17000)]);
-        $local->ai_pipeline = ['count_method' => 'estimate', 'tokens' => 4321];
-        $this->assertSame(10000, app(QuoteService::class)->estimateTokens($local));
-    }
-
-    public function test_the_same_text_prices_higher_as_a_spreadsheet_and_lower_as_a_word_file(): void
-    {
-        $ws = $this->workspace(1000);
-        $q = app(QuoteService::class);
-        $repeats = (int) ceil(60000 / 29); // ~60,000 characters
-        $word = $q->quoteDocument($this->document($ws, $repeats, 'DOCX'))['quote'];  // ~10,700 tokens
-        $pdf = $q->quoteDocument($this->document($ws, $repeats, 'PDF'))['quote'];    // ~20,000 tokens
-        $sheet = $q->quoteDocument($this->document($ws, $repeats, 'XLSX'))['quote']; // ~35,000 tokens, and a spreadsheet is dense
-        $this->assertSame([10, 10], [$word->credits, $pdf->credits]);
-        $this->assertGreaterThan($pdf->credits, $sheet->credits);
-        $this->assertGreaterThan($word->preflight['tokens'] * 1.5, $pdf->preflight['tokens']);
-        $this->assertGreaterThan($pdf->preflight['tokens'], $sheet->preflight['tokens']);
     }
 
     // ============================================================ Change 4: failed and partial work
@@ -285,7 +387,7 @@ class WorkloadCreditsV1Test extends TestCase
     public function test_complete_work_settles_exactly_the_quote_and_never_more(): void
     {
         $ws = $this->workspace(100);
-        $document = $this->coverage($this->document($ws, self::MEDIUM_TEXT), 0);
+        $document = $this->coverage($this->document($ws, self::REGULAR_TEXT), 0);
         $this->assertTrue($this->admit($document));
         $quote = OperationQuote::where('kind', 'document')->firstOrFail();
 
@@ -306,7 +408,7 @@ class WorkloadCreditsV1Test extends TestCase
     public function test_a_result_with_failed_chunks_releases_the_whole_reservation_and_settles_nothing(): void
     {
         $ws = $this->workspace(100);
-        $document = $this->document($ws, self::MEDIUM_TEXT);
+        $document = $this->document($ws, self::REGULAR_TEXT);
         $this->assertTrue($this->admit($document));
         $this->coverage($document, 2);
 
@@ -324,7 +426,7 @@ class WorkloadCreditsV1Test extends TestCase
     public function test_a_retry_after_a_partial_result_is_the_first_charge_not_a_second_one(): void
     {
         $ws = $this->workspace(100);
-        $document = $this->document($ws, self::MEDIUM_TEXT);
+        $document = $this->document($ws, self::REGULAR_TEXT);
         $this->assertTrue($this->admit($document));
         $this->coverage($document, 1);
         $credits = app(WorkspaceCreditService::class);
@@ -368,7 +470,7 @@ class WorkloadCreditsV1Test extends TestCase
     public function test_reprocessing_a_document_that_was_already_paid_for_charges_nothing_again(): void
     {
         $ws = $this->workspace(100);
-        $document = $this->document($ws, self::MEDIUM_TEXT);
+        $document = $this->document($ws, self::REGULAR_TEXT);
         $this->assertTrue($this->admit($document));
         app(WorkspaceCreditService::class)->accountForReadyDocument($document->fresh());
         $document->update(['status' => 'Ready']);
@@ -413,7 +515,7 @@ class WorkloadCreditsV1Test extends TestCase
     {
         Log::spy();
         $ws = $this->workspace(100);
-        $document = $this->document($ws, self::MEDIUM_TEXT);
+        $document = $this->document($ws, self::REGULAR_TEXT);
         $this->assertTrue($this->admit($document));
         $quote = OperationQuote::where('kind', 'document')->firstOrFail();
         DocumentAiRun::create(['workspace_id' => $ws->id, 'document_id' => $document->id, 'purpose' => 'entities', 'provider' => 'anthropic',
@@ -431,7 +533,7 @@ class WorkloadCreditsV1Test extends TestCase
             return $message === 'Document cost summary'
                 && $context['document_id'] === $document->id && $context['workspace_id'] === $ws->id
                 && $context['file_type'] === 'DOCX' && $context['pages'] === 0
-                && $context['estimated_tokens'] === 20197 && $context['band'] === 'medium'
+                && $context['estimated_tokens'] === 17271 && $context['band'] === 'regular'
                 && $context['quoted_credits'] === 10 && $context['settled_credits'] === 10
                 && $context['provider_cost_usd'] === 0.17 && $context['provider_runs'] === 2 && $context['runs_with_unknown_cost'] === 0
                 && $context['input_tokens'] === 12000 && $context['output_tokens'] === 1200
@@ -444,7 +546,7 @@ class WorkloadCreditsV1Test extends TestCase
     {
         Log::spy();
         $ws = $this->workspace(100);
-        $document = $this->document($ws, self::MEDIUM_TEXT);
+        $document = $this->document($ws, self::REGULAR_TEXT);
         $this->assertTrue($this->admit($document));
         $revisionId = $this->publishable($document, ['coverage' => ['failed_chunks' => 3, 'total_chunks' => 8, 'comprehensive' => false]]);
 
@@ -518,7 +620,7 @@ class WorkloadCreditsV1Test extends TestCase
         $admission = app(AiCreditAdmission::class);
         $credits = app(WorkspaceCreditService::class);
 
-        $big = $this->document($ws, self::MEDIUM_TEXT * 3, 'PDF', 400);       // far above 100 pages and 10 credits
+        $big = $this->document($ws, self::REGULAR_TEXT * 3, 'PDF', 400);       // far above 100 pages and 10 credits
         $scan = $this->document($ws, 1, 'PNG');
         $partial = $this->coverage($this->document($ws, 5, 'XLSX'), 4);          // failed chunks do not change legacy accounting
 

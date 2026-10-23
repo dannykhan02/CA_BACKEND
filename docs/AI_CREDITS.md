@@ -2,79 +2,94 @@
 
 Dormant behind `DOCINTEL_AI_CREDITS_ENABLED` (default `false`). With the flag off, billing is the legacy rule in
 [billing-credits.md](billing-credits.md): one document unit when a revision publishes, whatever its size. Everything
-below applies only with the flag on. Config: `config/ai_credits.php`.
+below applies only with the flag on. Config: `config/ai_credits.php`. Quote version: `v3`.
 
-## Bands
+## Bands (chosen by token edges)
 
-A document is priced by its estimated tokens. The first band whose `max_tokens` covers it wins.
+A document is priced by its tokens. The first band whose `max_tokens` covers it wins (edges are inclusive). A band's provider
+spend cap is its credits x USD 0.027. There is no size-based "completion gate" any more: the edges are the price.
 
-| Band | Up to (tokens) | Credits | Provider cap (USD, credits x 0.027) |
-|---|---|---|---|
-| tiny | 2,000 | 1 | 0.027 |
-| small | 6,000 | 2 | 0.054 |
-| medium | 30,000 | 10 | 0.27 |
-| large | 90,000 | 30 | 0.81 |
-| very_large | 250,000 | 80 | 2.16 |
-| above | declined (`document_too_large`) | | |
+| Band | Up to (tokens) | Credits | Provider cap (USD) | Measured cost it must cover (USD) |
+|---|---|---|---|---|
+| small | 4,000 | 2 | 0.054 | up to 1k tokens 0.016-0.036; 2-4k 0.034-0.051 |
+| medium | 8,000 | 6 | 0.162 | (no measurement between 4k and 12k) |
+| regular | 18,000 | 10 | 0.27 | ~12k 0.226; 15-18k 0.195-0.228 |
+| large | 35,000 | 20 | 0.54 | 27k 0.355 |
+| xlarge | 90,000 | 30 | 0.81 | 40-54k PDF 0.657; 77k 0.575-0.677 |
+| very_large | 250,000 | 80 | 2.16 | 39k XLSX 0.824 (reached through the dense shift) |
+| above | declined (`document_too_large`) | | | |
+
+The measured column is `docintel:cost-vs-size-report` on 24 Ready production documents; the test
+`test_no_band_cap_is_below_the_measured_cost_of_a_document_of_that_size` pins that every measured point fits its band's cap.
 
 * A **dense** document (spreadsheet, or mostly numeric or tabular text) moves up one band.
-* A band moves up again while its provider cap is below the minimum useful completion
-  (`min_completion_cost_usd`: USD 0.05 plus 0.006 per 1,000 tokens, or the pipeline's synthesis reservation when larger).
-  **With today's gate `tiny` is never selected**: 1 credit is USD 0.027 and the gate asks for at least USD 0.05, so a tiny
-  document quotes as small. The band exists so that lowering the gate (after measuring real cost) makes it reachable
-  without a code change. The gate is unchanged.
-  **`small` is reachable only up to ~666 tokens (about one page of text)**: 2 credits is USD 0.054, only USD 0.004 above the
-  USD 0.05 base, which the 0.006 per 1,000 tokens uses up at 666 tokens. Everything from 667 to 30,000 tokens therefore
-  quotes as `medium` (10 credits) until the gate is lowered or the small cap is raised.
+* A band also moves up when its cap cannot fund what the pipeline must reserve: the incremental route's synthesis reservation,
+  or a scan's OCR bound. Otherwise it never moves up for size. If the reservation does not fit even the top band the
+  document is declined.
 * Plan allowances are unchanged: Starter 100, Professional 250 monthly AI credits.
+
+## Tokens
+
+* The **provider's count** (`ai_pipeline.count_method = 'anthropic'`) is used as is whenever it exists.
+* Otherwise the **local estimate** (text bytes over a per-type ratio: PDF 3.0, DOCX 5.6, default 3.0) is multiplied by
+  `local_estimate_multiplier` (1.15), because it runs about +/-30% off the provider's count. The quote's `preflight` records
+  `token_source` (`provider_count`, `local_estimate`, `ocr_pages`), `raw_tokens`, `estimate_multiplier` and `spreadsheet_multiplier`.
+* **Spreadsheets** (XLSX) are multiplied by `spreadsheet_token_multiplier` (1.6; provisional, one sample), whichever source the
+  count came from, and are dense. XLSX has no ratio of its own in the map so the two corrections are not stacked.
+* **Scans** use pages x `ocr.tokens_per_page` (600) when that is more than the text, never below the `small` band.
 
 ## Rules
 
-* **Confirmation.** A quote of 30 credits or more (`confirm_from_credits`, default 30), or a document of more than 100
-  pages (`confirm_over_pages`), waits for the customer to accept the price before anything is reserved. The quote carries
+* **Confirmation.** A quote of 30 credits or more (`confirm_from_credits`), or a document of more than 100 pages
+  (`confirm_over_pages`), waits for the customer to accept the price before anything is reserved. The quote carries
   `requires_confirmation: true` (`documents.ai_pipeline.credit_quote`, and `pendingConfirmations[]` in
   `GET /api/workspace/credits` as `requiresConfirmation`, with `pages`).
-* **Scans** are priced by the same bands. OCR is not a separate charge. Before any page is read, the scan must be payable
-  (balance at least the estimated price: `ocr.tokens_per_page` = 600 per page, never below `ocr.min_band` = small). The
-  OCR operation only bounds provider spend (pages x USD 0.006, at least USD 0.05; at most 60 pages). After OCR the document
-  is priced from `max(text estimate, pages x 600)` and its band must also cover the OCR bound, so a scan never prices
-  below its OCR cost. With the bound at USD 0.006 per page a 1, 2 and 10-page scan quote medium (10 credits) and a 60-page
-  scan quotes large (30):
+* **Scans.** OCR is not a separate charge. Before any page is read the scan must be payable (balance at least its estimated
+  price). The OCR operation only bounds provider spend: pages x USD 0.006 (`ocr.provider_cost_usd_per_page`, provisional: twice
+  the highest per-call cost seen in production, about USD 0.003), at least USD 0.05, at most 60 pages.
 
-  | Pages | Tokens (600/page) | Gate need (USD) | Quote | OCR spend cap |
-  |---|---|---|---|---|
-  | 1 | 600 | 0.0596 | medium, 10 | 0.05 |
-  | 2 | 1,200 | 0.0692 | medium, 10 | 0.05 |
-  | 10 | 6,000 | 0.146 | medium, 10 | 0.06 |
-  | 60 | 36,000 | 0.626 | large, 30 | 0.36 |
-* **Token estimate** (`chars_per_token`): PDF 3.0, XLSX 1.7, DOCX 5.6, anything else 3.0. The provider's own count is
-  used whenever the pipeline already has it.
-* **Charge.** The quoted credits are debited once, when a revision publishes (`DocumentRevisionPublisher`). Measured
-  provider cost never changes the charge; the cap only stops spend (a document that cannot finish inside its cap fails
-  and is released).
+  | Pages | Tokens | Quote | OCR spend cap |
+  |---|---|---|---|
+  | 1 | 600 | small, 2 | 0.05 |
+  | 2 | 1,200 | small, 2 | 0.05 |
+  | 10 | 6,000 | medium, 6 | 0.06 |
+  | 60 | 36,000 | xlarge, 30 | 0.36 |
+* **Charge.** The quoted credits are debited once, when a revision publishes. Measured provider cost never changes the charge.
+* **The cap is enforced while processing.** Every provider request reserves its worst-case cost against the quote's cap before it
+  is sent; a request that would take spend past the cap is refused with `budget_exceeded`
+  (`OperationSpend::reserveAttempt`, `AnthropicClient::callWithRetry`). On the incremental route the document budget is also
+  lowered to the cap. See the PR for what each route then does.
 * **No charge for failed or partial work.** A failed or Needs Review document releases its reservation. A revision that
-  publishes with failed extraction chunks (`ai_pipeline.coverage.failed_chunks > 0`) is delivered but not charged: the
-  reservation is released with reason `partial_result`. A re-analysis of that document is admitted as a first analysis,
-  so retrying it is the only charge.
-* **Reprocess** of a document that is already paid for reserves and charges nothing. The exception is the explicit paid
-  re-analysis of an incremental-route document (`reanalysis` quote, `ai_credits.reanalysis`), which is unchanged.
+  publishes with failed extraction chunks (`ai_pipeline.coverage.failed_chunks > 0`, which includes chunks stopped by the budget) is
+  delivered but not charged: the reservation is released with reason `partial_result`, and a re-analysis is admitted as a
+  first analysis.
+* **Reprocess** of a document that is already paid for reserves and charges nothing, except the explicit paid re-analysis of
+  an incremental-route document (`ai_credits.reanalysis`).
 
-## Cost log
+## Cost log and measurement
 
-At each publication one line is logged, `Document cost summary`: document id, file type, pages, estimated tokens, band,
-quoted and settled credits, provider cost summed from `document_ai_runs`, run counts, tokens, failed chunks. It is written
-with the flag on or off, never writes billing state, and cannot fail a publication. Voyage embeddings log their reported
-token usage (`Voyage embeddings usage`); `count_tokens` calls were already logged (`purpose=token_count`).
+At each publication one line is logged, `Document cost summary` (ids, type, pages, tokens, band, quoted and settled credits,
+provider cost from `document_ai_runs`, run counts, failed chunks), with the flag on or off. Voyage embeddings log their token
+usage; `count_tokens` calls were already logged.
 
-The estimator prices `claude-haiku-5-5` requests whose total prompt input exceeds 100,000 tokens at the long-context
-tier (`document_intelligence.pricing_long_context`), for both the cost estimate and the hard request bound.
+```
+php artisan docintel:cost-vs-size-report [--days=N] [--summary-only] [--stress=1.25]
+```
+
+Read-only. One CSV row per Ready document with priced runs, then per token bucket: count, median, p90 and max cost, the credits
+and band the p90 (and p90 x stress) needs at USD 0.027 per credit, and the band the quote gives that size with whether its cap
+covers the worst document and p90 x stress. Use it to move the edges.
+
+`claude-haiku-5-5` requests whose total prompt input exceeds 100,000 tokens are priced at the long-context tier
+(`document_intelligence.pricing_long_context`) in the estimate and in the hard request bound.
 
 ## Env
 
-`DOCINTEL_AI_CREDITS_ENABLED`, `DOCINTEL_AI_CREDITS_QUOTE_VERSION` (now `v2`), `AI_CREDITS_{TINY,SMALL,MEDIUM,LARGE,VERY_LARGE}`
-and `..._MAX_TOKENS`, `AI_CREDITS_CONFIRM_FROM_CREDITS`, `AI_CREDITS_CONFIRM_OVER_PAGES`, `AI_CREDITS_CPT_{PDF,XLSX,DOCX,DEFAULT}`,
-`AI_CREDITS_OCR_{TOKENS_PER_PAGE,MIN_BAND,MAX_PAGES,USD_PER_PAGE,MIN_CAP_USD}`. The old `AI_CREDITS_SIMPLE*`, `AI_CREDITS_STANDARD*`,
-`AI_CREDITS_OCR_SURCHARGE`, `AI_CREDITS_OCR_INCLUDED_PAGES`, `AI_CREDITS_OCR_EXTRA_PER_PAGE` and `AI_CREDITS_CONFIRM_FROM_BAND` are no longer read.
+`DOCINTEL_AI_CREDITS_ENABLED`, `DOCINTEL_AI_CREDITS_QUOTE_VERSION`, `AI_CREDITS_BAND_{SMALL,MEDIUM,REGULAR,LARGE,XLARGE,VERY_LARGE}_{CREDITS,MAX_TOKENS}`,
+`AI_CREDITS_LOCAL_ESTIMATE_MULTIPLIER`, `AI_CREDITS_SPREADSHEET_TOKEN_MULTIPLIER`, `AI_CREDITS_CONFIRM_FROM_CREDITS`,
+`AI_CREDITS_CONFIRM_OVER_PAGES`, `AI_CREDITS_CPT_{PDF,DOCX,DEFAULT}`, `AI_CREDITS_OCR_{TOKENS_PER_PAGE,MIN_BAND,MAX_PAGES,USD_PER_PAGE,MIN_CAP_USD}`.
+Band variables are prefixed `BAND_` on purpose: the earlier layouts used `AI_CREDITS_SIMPLE*`, `AI_CREDITS_STANDARD*`,
+`AI_CREDITS_{TINY,SMALL,MEDIUM,LARGE,VERY_LARGE}[_MAX_TOKENS]`, `AI_CREDITS_MIN_COST_*` and `AI_CREDITS_CPT_XLSX`, none of which is read now.
 
 ## Rollback
 
@@ -82,21 +97,3 @@ Set `DOCINTEL_AI_CREDITS_ENABLED=false` on **both** `CA_BACKEND` and `ca-horizon
 (the worker reads config at boot; a flag left on in the worker keeps quoting and reserving). Open reservations still
 settle or release correctly with the flag off (`accountForReadyDocument` is not gated on the flag), and workspaces return
 to one document unit per publication.
-
-## Measuring cost against size
-
-`ocr.provider_cost_usd_per_page` (default USD 0.006) is provisional: the highest per-call OCR cost observed in production
-was about USD 0.003, so the bound is 2x that, until the cost-vs-size report confirms it. One vision call is recorded per page
-in `document_ai_runs` (`purpose = 'ocr'`).
-
-```
-php artisan docintel:cost-vs-size-report [--days=N] [--summary-only] [--stress=1.25]
-```
-
-Read-only (a READ ONLY transaction), metadata-only, and it changes no quoting or charging. For every Ready document with priced
-runs (`estimated_cost_usd > 0`, Q&A and comparisons excluded) it prints a CSV row: document id, file type, pages, the tokens the
-quote would use (`quote_tokens`: the provider count when known, else the per-type estimate, and at least 600 per OCR page), the
-text-only estimate, the provider count, route, OCR pages, total cost, calls, and the cost and calls of first-try successful runs
-(so retries and failures are the difference). Then a summary per token bucket (0-1k, 1-2k, 2-4k, 4-6k, 6-10k, 10-20k, 20-30k,
-30-60k, 60k+): documents, median, p90, max cost; the credits the p90 (and p90 x stress) needs at USD 0.027 per credit and the
-band that gives; and the current gate's requirement and band at the bucket's median size, for comparison.

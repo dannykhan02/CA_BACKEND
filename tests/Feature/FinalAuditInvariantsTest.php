@@ -51,7 +51,8 @@ class FinalAuditInvariantsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        config(['ai_credits.enabled' => true]);
+        // Documents are sized in exact tokens here; the local-estimate margin is exercised in WorkloadCreditsV1Test.
+        config(['ai_credits.enabled' => true, 'ai_credits.local_estimate_multiplier' => 1.0]);
     }
 
     private function workspace(int $savedAi = 0, int $legacyDocs = 0): Workspace
@@ -110,7 +111,7 @@ class FinalAuditInvariantsTest extends TestCase
     {
         $ws = $this->workspace();
         $period = $this->subscribe($ws, 100);
-        $document = $this->document($ws, 20000);
+        $document = $this->document($ws, 15000);
         $this->assertTrue($this->admit($document));
         $this->assertSame(10, (int) $this->op($document)->amount_reserved);
 
@@ -134,7 +135,7 @@ class FinalAuditInvariantsTest extends TestCase
     public function test_flag_turned_off_never_leaves_a_saved_credit_reservation_to_a_free_legacy_debit(): void
     {
         $ws = $this->workspace(50);
-        $document = $this->document($ws, 20000);
+        $document = $this->document($ws, 15000);
         $this->assertTrue($this->admit($document));
         config(['ai_credits.enabled' => false]);
 
@@ -161,7 +162,7 @@ class FinalAuditInvariantsTest extends TestCase
     {
         config(['ai_credits.enabled' => false]);
         $ws = $this->workspace(50, 5);
-        $document = $this->document($ws, 20000);
+        $document = $this->document($ws, 15000);
         app(EntitlementService::class)->reserveDocument($document);
         $this->assertNull($this->op($document)->amount_reserved);
 
@@ -179,8 +180,8 @@ class FinalAuditInvariantsTest extends TestCase
     public function test_ledger_reconciles_reserve_equals_debit_plus_release_plus_open_after_a_mixed_run_with_a_flag_flip(): void
     {
         $ws = $this->workspace(200);
-        $settled = $this->document($ws, 20000);
-        $failed = $this->document($ws, 20000);
+        $settled = $this->document($ws, 15000);
+        $failed = $this->document($ws, 15000);
         $open = $this->document($ws, 1000);
         foreach ([$settled, $failed, $open] as $document) {
             $this->assertTrue($this->admit($document));
@@ -193,7 +194,7 @@ class FinalAuditInvariantsTest extends TestCase
         $reserved = $this->ledger($ws->id, 'reserve');
         $open = (int) DB::table('billing_operations')->where('workspace_id', $ws->id)->where('status', 'reserved')->sum('amount_reserved');
         $this->assertSame($reserved, $this->ledger($ws->id, 'debit') + $this->ledger($ws->id, 'release') + $open);
-        $this->assertSame([10, 10, 10], [$this->ledger($ws->id, 'debit'), $this->ledger($ws->id, 'release'), $open]);
+        $this->assertSame([10, 10, 2], [$this->ledger($ws->id, 'debit'), $this->ledger($ws->id, 'release'), $open]); // the 1,000-token document is small: 2 credits
         $this->assertGreaterThanOrEqual(0, (int) $ws->credits()->value('ai_credits_remaining'));
     }
 
@@ -333,8 +334,8 @@ class FinalAuditInvariantsTest extends TestCase
     public function test_expired_and_failed_reservations_are_released_by_the_scheduled_sweep_in_a_dormant_workspace(): void
     {
         $ws = $this->workspace(100);
-        $expired = $this->document($ws, 20000);
-        $failed = $this->document($ws, 20000);
+        $expired = $this->document($ws, 15000);
+        $failed = $this->document($ws, 15000);
         $live = $this->document($ws, 1000);
         foreach ([$expired, $failed, $live] as $document) {
             $this->assertTrue($this->admit($document));
@@ -363,7 +364,7 @@ class FinalAuditInvariantsTest extends TestCase
     public function test_concurrent_looking_settle_and_release_never_both_apply(): void
     {
         $ws = $this->workspace(100);
-        $document = $this->document($ws, 20000);
+        $document = $this->document($ws, 15000);
         $this->assertTrue($this->admit($document));
         $accountant = app(CreditAccountant::class);
 
@@ -476,7 +477,7 @@ class FinalAuditInvariantsTest extends TestCase
     {
         $ws = $this->workspace(100);
         $this->subscribe($ws, 100);
-        $document = $this->document($ws, 20000, 'Ready');
+        $document = $this->document($ws, 15000, 'Ready');
         $this->assertTrue($this->admit($document));
         DocumentAiRun::create(['workspace_id' => $ws->id, 'document_id' => $document->id, 'purpose' => 'entities', 'provider' => 'anthropic',
             'model' => 'claude-haiku-4-5-20251001', 'estimated_cost_usd' => 0.1234, 'input_tokens' => 4321, 'output_tokens' => 12, 'status' => 'success',
