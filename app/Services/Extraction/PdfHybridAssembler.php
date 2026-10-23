@@ -31,6 +31,7 @@ class PdfHybridAssembler
 
         $parts = [];
         $nodes = [];
+        $offsetShifts = [];
         $offset = 0;
         foreach ($pages as $number => $nativePage) {
             if ($number > 1) {
@@ -50,8 +51,21 @@ class PdfHybridAssembler
                 $node += ['start' => $offset, 'end' => $offset + mb_strlen($text), 'text' => $text];
             }
             $nodes[] = $node;
+            if ($ocr === null && isset($nativePage['start'])) {
+                $offsetShifts[$number] = $offset - $nativePage['start'];
+            }
             $parts[$number] = $text;
             $offset += mb_strlen($text);
+        }
+        foreach ($native->nodes as $node) {
+            if (($node['type'] ?? null) === 'page' || ! isset($offsetShifts[$node['page'] ?? 0])) {
+                continue;
+            }
+            if (isset($node['start'], $node['end'])) {
+                $node['start'] += $offsetShifts[$node['page']];
+                $node['end'] += $offsetShifts[$node['page']];
+            }
+            $nodes[] = $node;
         }
 
         $capabilities = $native->capabilities;
@@ -60,7 +74,10 @@ class PdfHybridAssembler
         $capabilities['empty_text_pages'] = array_keys(array_filter($parts,
             static fn (string $part): bool => trim($part) === ''));
 
-        return new StructuredDocument('PDF', 'smalot-page-ocr.v1', implode("\f", $parts),
+        $parserVersion = count($nodes) > count($pages)
+            ? 'smalot-ocr-grid.v1' : 'smalot-page-ocr.v1';
+
+        return new StructuredDocument('PDF', $parserVersion, implode("\f", $parts),
             $nodes, $capabilities);
     }
 }

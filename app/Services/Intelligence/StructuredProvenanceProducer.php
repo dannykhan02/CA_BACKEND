@@ -49,6 +49,17 @@ class StructuredProvenanceProducer
                     'value_origin' => ($meta['formula'] ?? null) !== null ? 'workbook_formula_cache' : 'literal',
                 ];
             }
+            if ($source->format === 'PDF' && isset($node['meta']['bbox'],
+                $node['meta']['page_width'], $node['meta']['page_height'])) {
+                [$x0, $y0, $x1, $y1] = $node['meta']['bbox'];
+                $width = $node['meta']['page_width'];
+                $height = $node['meta']['page_height'];
+                if ($width > 0 && $height > 0 && $x1 > $x0 && $y1 > $y0) {
+                    $anchors[$key]['geometry'] = ['system' => 'pdf_points_bottom_left',
+                        'box' => [$x0, $height - $y1, $x1 - $x0, $y1 - $y0],
+                        'width' => $width, 'height' => $height, 'rotation' => 0];
+                }
+            }
             if (isset($node['start'], $node['end'])) {
                 $anchors[$key] += ['start_offset' => $node['start'], 'end_offset' => $node['end'],
                     'text' => $node['text']];
@@ -78,6 +89,18 @@ class StructuredProvenanceProducer
             }
             if ($node['type'] === 'table') {
                 $tables[$node['id']] = $node;
+            }
+        }
+        if ($source->format === 'PDF') {
+            foreach ($tables as $tableId => $table) {
+                if (isset($table['meta']['unit_heading_id'], $nodes[$table['meta']['unit_heading_id']])) {
+                    $this->edge($relations, $this->key($tableId),
+                        $this->key($table['meta']['unit_heading_id']), 'caption');
+                }
+                if (isset($table['meta']['entity_heading_id'], $nodes[$table['meta']['entity_heading_id']])) {
+                    $this->edge($relations, $this->key($tableId),
+                        $this->key($table['meta']['entity_heading_id']), 'section_parent');
+                }
             }
         }
         $headerEdges = [];
@@ -117,6 +140,34 @@ class StructuredProvenanceProducer
             }
         }
         foreach ($cells as $id => $cell) {
+            if ($source->format === 'PDF') {
+                $tableId = $this->nearestTable($id, $nodes);
+                if ($tableId === null) {
+                    continue;
+                }
+                $this->edge($relations, $this->key($id), $this->key($tableId), 'table_parent');
+                if (($cell['meta']['header'] ?? false) || ! is_int($cell['meta']['grid_column'] ?? null)
+                    || $cell['meta']['grid_column'] < 2) {
+                    continue;
+                }
+                $labelId = ($cell['parent'] ?? '').'/cell[0]';
+                $path = $cell['meta']['header_path_ids'] ?? [];
+                if (! isset($cells[$labelId]) || trim($cells[$labelId]['text'] ?? '') === ''
+                    || ! is_array($path) || $path === []
+                    || count(array_filter($path, static fn ($headerId) => isset($cells[$headerId]))) !== count($path)) {
+                    continue;
+                }
+                $this->edge($relations, $this->key($id), $this->key($labelId), 'row_header');
+                $headerEdges[$id]['row'][] = $labelId;
+                $anchors[$this->key($labelId)]['kind'] = 'row_header';
+                foreach ($path as $headerId) {
+                    $this->edge($relations, $this->key($id), $this->key($headerId), 'column_header');
+                    $headerEdges[$id]['column'][] = $headerId;
+                    $anchors[$this->key($headerId)]['kind'] = 'column_header';
+                }
+
+                continue;
+            }
             if ($source->format === 'DOCX') {
                 $tableId = $this->nearestTable($id, $nodes);
                 if ($tableId === null) {
@@ -353,6 +404,16 @@ class StructuredProvenanceProducer
                         && $this->nearestTable($candidate['id'], $all) === $table;
                     if ($sameRow || $headerRow) {
                         $selected[$candidate['id']] = true;
+                    }
+                }
+            } elseif ($source->format === 'PDF') {
+                $selected[$cell['parent'].'/cell[0]'] = true;
+                foreach ($cell['meta']['header_path_ids'] ?? [] as $headerId) {
+                    $selected[$headerId] = true;
+                }
+                foreach (['unit_heading_id', 'entity_heading_id'] as $field) {
+                    if (isset($cell['meta'][$field])) {
+                        $selected[$cell['meta'][$field]] = true;
                     }
                 }
             } elseif ($source->format === 'XLSX') {

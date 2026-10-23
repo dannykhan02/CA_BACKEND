@@ -116,7 +116,7 @@ class MetricCollector
                         'source_extraction_version' => $data['source_extraction_version'] ?? null,
                         'governing_owner' => $data['governing_owner'] ?? null,
                         'ownership_requirement' => $data['ownership_requirement'] ?? null,
-                        'ownership_enforced' => ($document->ai_pipeline['route'] ?? null) === 'normal',
+                        'ownership_enforced' => true,
                         'subject' => $data['subject'] ?? null,
                         'current_source_revision' => hash('sha256', (string) $document->extracted_text),
                         'current_extraction_version' => app(EvidenceGrounding::class)->version($document),

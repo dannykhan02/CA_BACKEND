@@ -11,6 +11,7 @@ use App\Services\Kpis\KpiIdentityProfile;
 class MeasurementIntegrity
 {
     private array $sourceRevisions = [];
+
     private array $extractionVersions = [];
 
     public function __construct(private MeasurementParser $measurements) {}
@@ -29,7 +30,9 @@ class MeasurementIntegrity
         }
         $data['current_source_revision'] = $this->sourceRevisions[$owner];
         $data['current_extraction_version'] = $this->extractionVersions[$owner];
-        $data['ownership_enforced'] = str_starts_with((string) $row->pipeline_key, 'normal:');
+        // Source ownership is a property of the claim, not of the route that
+        // happened to extract it. Incremental evidence must pass the same gate.
+        $data['ownership_enforced'] = true;
 
         return $this->assess($this->measurements->parse($data['value'] ?? null, $data['unit'] ?? null,
             $data['label'] ?? null), (string) ($data['value'] ?? ''), $data['unit'] ?? null,

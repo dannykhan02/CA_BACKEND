@@ -50,4 +50,22 @@ class PdfHybridAssemblerTest extends TestCase
             }
         }
     }
+
+    public function test_native_table_cells_survive_ocr_offset_shift_on_another_page(): void
+    {
+        $native = $this->native();
+        $nodes = $native->nodes;
+        $nodes[] = ['id' => 'page:3/table[1]', 'type' => 'table', 'parent' => 'page:3',
+            'path' => 'page:3/table[1]', 'page' => 3];
+        $nodes[] = ['id' => 'page:3/table[1]/cell[1]', 'type' => 'cell',
+            'parent' => 'page:3/table[1]', 'path' => 'page:3/table[1]/cell[1]',
+            'page' => 3, 'start' => 20, 'end' => 23, 'text' => 'end'];
+        $structured = new StructuredDocument('PDF', 'fixture+poppler-grid.v1',
+            $native->text, $nodes, ['tables' => 'projected_geometry_candidates']);
+
+        $result = (new PdfHybridAssembler)->assemble($structured, [2 => ['text' => 'Scan 12.4']]);
+        self::assertSame('end', mb_substr($result->text, 29, 3));
+        self::assertSame(29, $result->node('page:3/table[1]/cell[1]')['start']);
+        self::assertSame('projected_geometry_candidates', $result->capabilities['tables']);
+    }
 }

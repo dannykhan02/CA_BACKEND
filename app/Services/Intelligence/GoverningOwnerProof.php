@@ -11,7 +11,9 @@ class GoverningOwnerProof
     public function companyClaim(array $identity, ?string $unit): bool
     {
         $scope = trim((string) ($identity['scope'] ?? ''));
-        $concept = (string) ($identity['concept'] ?? '');
+        // Incremental findings may carry the financial name as `label` before
+        // concept normalization. The ownership gate must see that claim too.
+        $concept = trim((string) ($identity['concept'] ?? '').' '.(string) ($identity['label'] ?? ''));
 
         return $this->hasCompanyName($scope)
             || preg_match('/\b(?:revenue|turnover|operating costs?|operating profit|operating margin|net income|gross profit|earnings|cash flow|assets|liabilities|funding|budget|investment)\b/iu', $concept) === 1;

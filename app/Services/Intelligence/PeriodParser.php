@@ -30,11 +30,39 @@ class PeriodParser
         // "FY2024" has no word boundary after FY, so the marker is matched by what follows it.
         $fiscal = (bool) preg_match('/\bfy(?![a-z])|\b(financial|fiscal)\s+year\b/iu', $text);
 
-        return $this->day($text, $fiscal)
+        return $this->endedDuration($text, $fiscal)
+            ?? $this->day($text, $fiscal)
             ?? $this->quarter($text, $fiscal)
             ?? $this->half($text, $fiscal)
             ?? $this->month($text, $fiscal)
             ?? $this->year($text, $fiscal);
+    }
+
+    /** A duration heading is part of the period identity; its end date alone is not. */
+    private function endedDuration(string $text, bool $fiscal): ?ReportingPeriod
+    {
+        if (! preg_match('/^(three|six|nine|twelve)\s+months?\s+ended\s+'
+            .'([a-z]{3,9})\s+(\d{1,2}),?\s+(\d{4})$/iuD', $text, $match)) {
+            return null;
+        }
+        $month = $this->monthNumber($match[2]);
+        $day = (int) $match[3];
+        $year = (int) $match[4];
+        if ($month === null || ! $this->validYear($year) || ! checkdate($month, $day, $year)
+            || $day !== (int) date('t', strtotime(sprintf('%04d-%02d-01', $year, $month)))) {
+            return null;
+        }
+        $duration = ['three' => 3, 'six' => 6, 'nine' => 9, 'twelve' => 12][mb_strtolower($match[1])];
+        $basis = $this->basis($fiscal, $text);
+        if ($duration === 3 && $month % 3 === 0) {
+            $quarter = intdiv($month, 3);
+
+            return new ReportingPeriod('quarter', $basis, $year + $quarter / 10,
+                'Q'.$quarter.' '.($basis === 'fiscal' ? 'FY' : '').$year);
+        }
+
+        return new ReportingPeriod($duration.'_months', $basis, $year + $month / 100,
+            $duration.'M '.($basis === 'fiscal' ? 'FY' : '').$year);
     }
 
     /** Complete a bare quarter only when one verified, governing source states its year and basis. */
