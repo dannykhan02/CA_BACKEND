@@ -110,6 +110,15 @@ final class StructuredPdfFieldProof
             $row['text'], (string) $value['text'], ...array_column($markers, 'text')]);
         $codes = $this->measurements->explicitCurrencyCodes($sourceCurrency);
         $claimedCurrency = $claimMeasurement->currency;
+        // A qualified dollar notation is a stronger claim than the bare symbol.
+        // The measurement parser groups both under '$', so retain the written qualifier here.
+        preg_match_all('/(?<!\p{L})(?:\p{L}{1,4})\$/u', $unit, $qualifiedMarkers);
+        foreach ($qualifiedMarkers[0] as $qualifiedMarker) {
+            if (! str_contains($sourceCurrency, $qualifiedMarker)) {
+                return ['roles' => $roles, 'sources' => array_values($sources),
+                    'rejection' => 'currency_source_mismatch'];
+            }
+        }
         if ($claimedCurrency === null || ($claimedCurrency === '$'
             ? count($markers) !== 2 || $markers[0]['text'] !== '$'
                 || $markers[1]['text'] !== '$' || $codes !== []

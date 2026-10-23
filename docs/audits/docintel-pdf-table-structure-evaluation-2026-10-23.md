@@ -150,3 +150,59 @@ Unresolved limits: the original Nasdaq source does not establish ISO `USD`; its 
 ### Flag-off ownership impact
 
 The Phase 1 ownership fix in commit `c677912` is **not** guarded by `DOCINTEL_PDF_TABLE_STRUCTURE`. `MeasurementIntegrity`, `MetricCollector` and `KpiResource` now require a governing owner for company financial claims on existing incremental documents even when PDF table extraction is off. A previously chartable, ownerless incremental claim can therefore become ineligible or display a limitation. This is a deliberate fail-closed security correction with release compatibility impact; the default-off regression asserts the same owner rejection in the collector and KPI API. The correction is also isolated for review on local branch `fix/docintel-incremental-ownership-review` at commits `72b5c07` and `7b3a363`, based on the parent of Phase 1. No branch was merged or deployed, and no production flag was changed automatically.
+
+## Phase 3 — automatic source candidates and authentic replay limit
+
+**Decision: keep the PDF flag off.** This phase proves automatic chart generation from projected page-8 income-statement cells, but it cannot establish the requested authentic Nasdaq inference replay: the original production response and the full 17-page PDF are not present in this checkout or its local test storage. A search of saved local JSON responses, fixture files and the disposable local test database found no Nasdaq response containing the reported model labels. The production figures (193 KPIs, zero eligible, zero charts) remain user-reported historical evidence, not a Phase 3 replay denominator. The committed page-8 PDF is the exact income-statement page from the original document (hash above), so its whole statement can be exercised, but page-8 results do not measure the other 16 pages.
+
+The closest available **authentic** frozen provider response is `storage/framework/testing/docintel-v10-evaluation/live-20261021-204955-e0085f8755c8.json.provider-response.json` (SHA-256 `622cca54e2ea149e36ada8fb3d177d93ea00613cc853f204d42d83bf023de6aa`). It has 20 Northstar V10 KPI observations and belongs to the **normal** inference route, with `E...` source-span references, not to the Nasdaq incremental PDF route. It is useful evidence that a frozen model response exists locally; substituting it for the missing Nasdaq response or converting its citations into Nasdaq cell references would not be an authentic Nasdaq replay. No paid inference was called. The Northstar PDF itself was evaluated independently below.
+
+### A. Source-aligned benchmark (six prepared observations)
+
+The Phase 2 result remains **6/6 verified and eligible, 3 chart candidates, 3 persisted charts and 6 navigable points** when the six manually source-aligned observations use the exact three row labels and `$ millions` unit. It is a controlled verifier benchmark. It is not an estimate of production chart yield and was not counted in the automatic source-candidate run below.
+
+### B. Authentic Nasdaq inference replay (unmodified original observations)
+
+| Required measurement | Phase 3 result |
+|---|---|
+| Original observations replayed | **Unavailable: 0 original records recovered**. The denominator of the original response is not independently known here. |
+| Original observations eligible with PDF structure | **Not measurable**. |
+| Chart candidates / persisted charts / navigable points from original observations | **Not measurable**. |
+| Rejection counts for the original response | **Not measurable**. The examples below are adversarial stand-ins, not the original records. |
+
+The smallest defect exposed by the reported original wording is the gap between model claims and the source path: `Net revenue` is not the printed row `Revenues less transaction-based expenses`; `GAAP operating expenses` is neither the exact row `Total operating expenses` nor an explicitly proven GAAP basis; `US$ millions` is more specific than the printed `$` notation and `(in millions)` caption. The verifier correctly rejects those unsupported identities. The new qualified-dollar check rejects `US$ millions` when the table proves only `$ millions`, so the currency qualifier cannot collapse silently to `$`. The existing value, period, unit and entity mutations also fail verification; a changed claim loses its stored fingerprint and eligibility. No original model field is rewritten to make it pass.
+
+### Separate automatic source-derived path
+
+`PdfSourceCandidateCollector` now runs only for an opted-in structured PDF, after incremental model evidence is merged and before provenance publication. It creates **separate** evidence records from each projected numeric cell. Each record retains the exact row label, numeric text, multirow header path, caption, entity heading and cell ID in `source_representation`, plus a distinct `canonical_representation` for the parsed period and source-supported unit. Its primary `period` field remains the verbatim header path so the existing verifier and chart parser can both rederive the canonical period without changing the shared parser. Existing model records are untouched. Stable cell IDs make reruns idempotent; absent cells are pruned from this source-candidate namespace. The normal provenance producer, `StructuredPdfFieldProof`, owner gate, `MetricCollector`, chart builder and `VerifiedPdfChartPersister` still decide acceptance. No proximity binding or weaker verification rule was added.
+
+An additional merge-job integration test starts the incremental pipeline with the committed PDF page, publishes its structured extraction, completes extraction chunks with **empty mocked model records**, and runs the real merge job. It produces 128 source candidate records and 11 persisted charts with no HTTP provider request. This establishes that the wired job can chart directly from source structure even when the model supplies no accepted observations; it does not replace the missing authentic Nasdaq inference replay.
+
+The page-8 income statement has 32 complete numeric rows and 128 projected cells. This test deleted no model data and did not copy source labels or units into a model record. Its six extra **synthetic** claims used exact source-row labels but the unsupported `US$ millions` unit; all six were rejected with `currency_source_mismatch` and were excluded from the source-only counts below. They are not a substitute for the original response.
+
+| Automatic page-8 source-derived measure | Result |
+|---|---:|
+| Extracted numeric cells / candidate facts | 128 / 128 |
+| Candidates with a source-matched structural value path | 128 |
+| Verified / analytically eligible observations | 44 / 44 |
+| Chartable series candidates | 11 |
+| Persisted charts / navigable points | 11 / 22 |
+| Distinct verification outcomes | 44 verified; 84 `governing_owner_unverified` |
+
+All 22 persisted points were checked against their exact value-anchor text and page-1 navigation reference in the committed single-page fixture (page 8 in the original release). The 44 eligible cells represent 11 rows across four columns; the chart builder keeps quarterly and nine-month periods separate and selected the two-quarter comparison for each chart. The 84 owner failures occur on rows whose company-level financial ownership cannot be safely established from the current row/heading rule, including segment and other ambiguous rows. These failures were not changed into accepted company facts. The automatic 11-chart result is a source-derived outcome and must **not** be added to the six-observation benchmark or presented as the authentic inference result.
+
+| Independent PDF fixture | Extracted / source-matched | Verified / eligible | Chart candidates | Persisted charts / points | Distinct rejection reasons |
+|---|---:|---:|---:|---:|---|
+| Northstar board review | 12 / 10 | 0 / 0 | 0 | 0 / 0 | 7 owner, 3 unit, 2 value |
+| Explicit `USD thousands` | 6 / 6 | 6 / 6 | 3 | 3 / 6 | None |
+| Conflicting scale heading | 6 / 6 | 0 / 0 | 0 | 0 / 0 | 6 `unit_source_mismatch` |
+| Explicit GAAP and non-GAAP rows | 8 / 8 | 8 / 8 | 4 | 4 / 8 | None; bases remain separate |
+| Conflicting layout/header fixture | 0 / 0 | 0 / 0 | 0 | 0 / 0 | No complete cells projected; no candidate asserted |
+
+The Nasdaq source exercises a real three-level column path (`Three/Nine Months Ended` → `September 30` → year). Its source-derived Q3 and nine-month facts stay distinct. Existing adversarial tests additionally reject quarter swaps, changed signs and values, missing scale proof, unsupported `USD`/`US$` currency claims, wrong company or segment, unsupported GAAP/non-GAAP identities, source alias claims, changed extraction revision and tampered header edges. The new cases explicitly include `Net revenue`, `GAAP operating expenses`, `US$ millions`, and a GAAP basis claim on an unmarked row. **False acceptances among these exercised adversarial claims: 0.** This is a finite test set, not a corpus false-acceptance estimate. Source-backed recovery is safe for the printed row, period and `$` scale as separate facts; a `Net revenue` alias would require explicit source terminology or a separately reviewed accounting identity rule. The arithmetic `2,393 - 623 - 289 = 1,481` corroborates the printed value, but does not by itself prove that the source names the result “Net revenue,” so no alias was added.
+
+### Release compatibility and verification
+
+The owner correction is independently isolated on `fix/docintel-incremental-ownership-review`: `72b5c07` changes owner enforcement and its provenance regression, and `7b3a363` asserts the flag-off behavior. Because it closes an incremental owner bypass even when PDF tables are disabled, it should receive a **separate safety release review** rather than be merged merely to enable PDF charts. Its release can make previously accepted ownerless financial claims ineligible; this is an explicit compatibility change. This phase did not merge either branch or deploy. The new source-candidate call is PDF-type and feature-flag guarded; the shared period parser remains unchanged. The qualified-dollar rejection runs only inside structured PDF proof. The default-off path therefore has no new Phase 3 behavior beyond the already documented ownership correction.
+
+Local verification: 48 focused unit tests passed (160 assertions); the PDF safety suite passed 15 tests (467 assertions; the optional full-PDF test skipped because that file is absent); 87 provenance and incremental pipeline feature tests passed (458 assertions), including the new opt-in merge-job test. Tests used a disposable local PostgreSQL 18 database, mocked provider calls where applicable and rolled back feature transactions. No production database, production secret, paid AI call, deployment or billing path was used.

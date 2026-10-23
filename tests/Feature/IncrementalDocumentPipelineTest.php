@@ -22,6 +22,7 @@ use App\Services\AI\Incremental\EvidenceSchema;
 use App\Services\AI\Incremental\IncrementalPipeline;
 use App\Services\AI\ResponseValidator;
 use App\Services\AnthropicClient;
+use App\Services\DocumentTextExtractor;
 use App\Services\DocumentIntelligenceService;
 use App\Services\Documents\DocumentReprocessor;
 use App\Services\Extraction\StructuredDocument;
@@ -108,6 +109,28 @@ class IncrementalDocumentPipelineTest extends TestCase
             'quote' => 'Revenue increased to USD 10 in 2024.', 'reference' => '', 'entity_type' => null, 'unit' => 'USD',
             'metric_type' => null, 'value_basis' => null, 'aggregation' => null, 'quantity_kind' => null,
             'period' => '2024', 'date_type' => null, 'due_date' => null, 'severity' => null, 'confidence' => 0.95, 'aliases' => []], $extra);
+    }
+
+    public function test_opted_in_pdf_merge_mints_and_charts_source_cells_without_model_rewrites_or_paid_calls(): void
+    {
+        config()->set('document_intelligence.pdf_table_structure', true);
+        $path = base_path('tests/Fixtures/nasdaq_q3_2026_income_statement_page.pdf');
+        $source = app(DocumentTextExtractor::class)->extractPdfStructured($path);
+        $document = $this->document($source->text);
+        $document->forceFill(['file_hash' => hash_file('sha256', $path), 'pages' => 1])->save();
+        app(StructuredExtractionStore::class)->publish($document, $source);
+        $this->plan($document);
+        DocumentChunk::where('document_id', $document->id)->where('stage', 'extraction')
+            ->update(['status' => 'completed', 'result' => json_encode(['records' => []])]);
+        app(IncrementalPipeline::class)->pump($document->id);
+        $merge = DocumentChunk::where('document_id', $document->id)->where('stage', 'merge')->sole();
+        (new MergeDocumentEvidenceJob($merge->id))->handle(app(EvidenceMerger::class),
+            app(PipelineStageRecorder::class));
+
+        self::assertSame(128, DocumentEvidence::where('document_id', $document->id)
+            ->where('source_id', 'like', 'pdf-cell:%')->count());
+        self::assertSame(11, DB::table('document_charts')->where('document_id', $document->id)->count());
+        Http::assertNothingSent();
     }
 
     public function test_small_document_keeps_simple_path_without_generation_or_chunks(): void

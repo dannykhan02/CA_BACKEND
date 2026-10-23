@@ -13,6 +13,7 @@ use App\Services\Intelligence\ChartCandidateBuilder;
 use App\Services\Intelligence\GoverningOwnerProof;
 use App\Services\Intelligence\IncrementalMetricFieldVerifier;
 use App\Services\Intelligence\MetricCollector;
+use App\Services\Intelligence\PdfSourceCandidateCollector;
 use App\Services\Intelligence\SourceProvenanceReader;
 use App\Services\Intelligence\TextRoleProvenanceProducer;
 use App\Services\Intelligence\VerifiedPdfChartPersister;
@@ -24,6 +25,114 @@ use Tests\TestCase;
 class PdfTableIncrementalSafetyTest extends TestCase
 {
     use DatabaseTransactions;
+
+    public function test_projected_source_cells_create_separate_verified_candidates_without_rewriting_model_claims(): void
+    {
+        [$document, , $ids] = $this->fixtureDocument(true, 'US$ millions');
+        $original = DocumentEvidence::whereKey($ids[0])->firstOrFail()->data;
+        $claims = DocumentEvidence::whereIn('id', $ids)->get()->mapWithKeys(
+            static fn ($row) => [$row->id => $row->data])->all();
+        $counts = app(PdfSourceCandidateCollector::class)->collect($document);
+        self::assertSame(128, $counts['extracted']);
+        self::assertSame(128, $counts['candidates']);
+        self::assertSame($counts, app(PdfSourceCandidateCollector::class)->collect($document));
+        self::assertSame($original, DocumentEvidence::whereKey($ids[0])->firstOrFail()->data);
+        $setId = app(TextRoleProvenanceProducer::class)->publish($document);
+        $verdicts = app(IncrementalMetricFieldVerifier::class)->verify($document, $setId);
+        self::assertSame(134, array_sum($verdicts));
+        foreach ($ids as $id) {
+            $data = DocumentEvidence::whereKey($id)->firstOrFail()->data;
+            foreach (['label', 'value', 'period', 'unit', 'subject'] as $field) {
+                self::assertSame($claims[$id][$field], $data[$field]);
+            }
+            self::assertSame('currency_source_mismatch', $data['grounding_rejection']);
+        }
+        $sourceFacts = DocumentEvidence::where('document_id', $document->id)
+            ->where('source_id', 'like', 'pdf-cell:%')->get();
+        self::assertCount(128, $sourceFacts);
+        $matched = app(SourceProvenanceReader::class)->forEvidence($document,
+            $sourceFacts->pluck('id')->all(), $setId);
+        self::assertCount(128, array_filter($matched,
+            static fn ($proof) => $proof['capabilities']['structural']));
+        self::assertGreaterThan(0, $sourceFacts->filter(
+            static fn ($row) => ($row->data['measurement_verification'] ?? null) === 'verified')->count());
+        $chartCounts = app(VerifiedPdfChartPersister::class)->persist($document, $setId);
+        $eligible = array_values(array_filter(app(MetricCollector::class)->collect($document)['observations'],
+            static fn ($item) => $item->integrity['analyticalEligible']));
+        $reasons = [];
+        foreach ($sourceFacts as $fact) {
+            $reason = $fact->data['grounding_rejection'] ?? 'verified';
+            $reasons[$reason] = ($reasons[$reason] ?? 0) + 1;
+        }
+        self::assertSame(['verified' => 44, 'rejected' => 90], $verdicts);
+        self::assertCount(44, $eligible);
+        self::assertCount(11, app(ChartCandidateBuilder::class)->build($eligible)['candidates']);
+        self::assertSame(['charts' => 11, 'points' => 22], $chartCounts);
+        ksort($reasons);
+        self::assertSame(['governing_owner_unverified' => 84, 'verified' => 44], $reasons);
+        foreach (DocumentChart::where('document_id', $document->id)->get() as $chart) {
+            foreach ($chart->data as $point) {
+                $anchor = DB::table('source_anchors')->where('id', $point['source']['anchor_id'])->sole();
+                self::assertSame($point['sourceValue'], $anchor->source_text);
+                self::assertSame(1, $point['source']['page']);
+            }
+        }
+    }
+
+    public function test_source_candidates_on_independent_and_adversarial_financial_pdfs(): void
+    {
+        foreach ([
+            'Northstar_Q3_2026_Board_Performance_Review.pdf' => [12, 10, 0, 0, 0, 0, 0,
+                ['governing_owner_unverified' => 7, 'unit_source_mismatch' => 3, 'value_source_mismatch' => 2]],
+            'financial_units_thousands.pdf' => [6, 6, 6, 6, 3, 3, 6, ['verified' => 6]],
+            'financial_units_adversarial.pdf' => [6, 6, 0, 0, 0, 0, 0, ['unit_source_mismatch' => 6]],
+            'financial_basis_adversarial.pdf' => [8, 8, 8, 8, 4, 4, 8, ['verified' => 8]],
+            'financial_layout_adversarial.pdf' => [0, 0, 0, 0, 0, 0, 0, []],
+        ] as $name => [$expectedExtracted, $expectedMatched, $expectedVerified, $expectedEligible,
+            $expectedCandidates, $expectedCharts, $expectedPoints, $expectedReasons]) {
+            $path = base_path('tests/Fixtures/'.$name);
+            config()->set('document_intelligence.pdf_table_structure', true);
+            $source = app(DocumentTextExtractor::class)->extractPdfStructured($path);
+            $user = User::factory()->create();
+            app(WorkspaceService::class)->createPersonalWorkspaceFor($user);
+            $document = Document::create(['workspace_id' => $user->fresh()->current_workspace_id,
+                'uploaded_by' => $user->id, 'name' => $name, 'type' => 'PDF',
+                'status' => 'Processing', 'classification' => 'Internal',
+                'size_kb' => (int) ceil(filesize($path) / 1024),
+                'year' => 2026, 'pages' => 1, 'file_hash' => hash_file('sha256', $path)]);
+            $document->forceFill(['ai_pipeline' => ['route' => 'incremental',
+                'key' => 'incremental:source-candidate-test']])->save();
+            app(StructuredExtractionStore::class)->publish($document, $source);
+            $document->refresh();
+            $counts = app(PdfSourceCandidateCollector::class)->collect($document);
+            $setId = app(TextRoleProvenanceProducer::class)->publish($document);
+            $facts = DocumentEvidence::where('document_id', $document->id)->get();
+            $matched = app(SourceProvenanceReader::class)->forEvidence($document,
+                $facts->pluck('id')->all(), $setId);
+            $matchedCount = count(array_filter($matched,
+                static fn ($proof) => $proof['capabilities']['structural']));
+            $verdicts = app(IncrementalMetricFieldVerifier::class)->verify($document, $setId);
+            $eligible = array_values(array_filter(app(MetricCollector::class)->collect($document)['observations'],
+                static fn ($item) => $item->integrity['analyticalEligible']));
+            $candidates = app(ChartCandidateBuilder::class)->build($eligible)['candidates'];
+            $persisted = app(VerifiedPdfChartPersister::class)->persist($document, $setId);
+            $reasons = [];
+            foreach (DocumentEvidence::where('document_id', $document->id)->get() as $fact) {
+                $reason = $fact->data['grounding_rejection'] ?? 'verified';
+                $reasons[$reason] = ($reasons[$reason] ?? 0) + 1;
+            }
+            self::assertSame($counts['candidates'], array_sum($verdicts), $name);
+            self::assertSame($expectedExtracted, $counts['extracted'], $name);
+            self::assertSame($expectedMatched, $matchedCount, $name);
+            self::assertSame($expectedVerified, $verdicts['verified'], $name);
+            self::assertCount($expectedEligible, $eligible, $name);
+            self::assertCount($expectedCandidates, $candidates, $name);
+            self::assertSame(['charts' => $expectedCharts, 'points' => $expectedPoints], $persisted, $name);
+            ksort($reasons);
+            ksort($expectedReasons);
+            self::assertSame($expectedReasons, $reasons, $name);
+        }
+    }
 
     public function test_nasdaq_cells_enter_the_incremental_graph_but_unproven_claims_do_not_chart(): void
     {
@@ -56,6 +165,8 @@ class PdfTableIncrementalSafetyTest extends TestCase
     {
         [$document, $source, $ids] = $this->fixtureDocument(false, '$ millions');
         self::assertSame(['page'], array_unique(array_column($source->nodes, 'type')));
+        self::assertSame(['extracted' => 0, 'candidates' => 0],
+            app(PdfSourceCandidateCollector::class)->collect($document));
         $setId = app(TextRoleProvenanceProducer::class)->publish($document);
         $proofs = app(SourceProvenanceReader::class)->forEvidence($document, $ids, $setId);
         foreach ($proofs as $proof) {
@@ -141,10 +252,13 @@ class PdfTableIncrementalSafetyTest extends TestCase
             'nine_month_as_quarter' => ['period' => '9M 2026'],
             'thousands_as_millions' => ['unit' => '$ thousands'],
             'unsupported_usd' => ['unit' => 'USD millions'],
+            'unsupported_qualified_dollar' => ['unit' => 'US$ millions'],
             'wrong_company' => ['subject' => 'Acme Inc.'],
             'wrong_segment' => ['subject' => 'Market Services'],
             'wrong_sign' => ['value' => '-1,481'],
             'unsupported_alias' => ['label' => 'Net revenue'],
+            'unsupported_gaap_label' => ['label' => 'GAAP operating expenses'],
+            'unsupported_gaap_basis' => ['accounting_basis' => 'gaap'],
             'unsupported_non_gaap' => ['value_basis' => 'non-gaap'],
         ] as $case => $change) {
             $row = DocumentEvidence::whereKey($ids[0])->firstOrFail();

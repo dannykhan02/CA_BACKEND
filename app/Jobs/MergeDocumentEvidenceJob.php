@@ -148,6 +148,11 @@ class MergeDocumentEvidenceJob implements ShouldQueue
 
             $diagnostics = $merger->merge($document);
 
+            if (config('document_intelligence.pdf_table_structure') && $document->type === 'PDF') {
+                $diagnostics['pdf_source_candidates'] = app(\App\Services\Intelligence\PdfSourceCandidateCollector::class)
+                    ->collect($document);
+            }
+
             // Nonmetric textual evidence remains available when the graph fails. Metric
             // candidates then remain limited: no field-role proof means no trusted analytics.
             $provenanceSetId = null;
