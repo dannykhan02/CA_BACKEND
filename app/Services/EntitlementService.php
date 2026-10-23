@@ -231,7 +231,8 @@ class EntitlementService
             'availableCredits' => $accountant->available($workspace), 'minimumRequiredCredits' => $quotes->minimumDocumentCredits(),
             // Large analyses wait here until the customer accepts the quoted credits.
             'pendingConfirmations' => Document::where('workspace_id', $workspace)->where('status', 'Processing')->where('ai_pipeline->awaiting_credit_confirmation', true)
-                ->get(['id', 'ai_pipeline'])->map(fn ($d) => ['documentId' => $d->id, 'credits' => $d->ai_pipeline['credit_quote']['credits'] ?? null, 'band' => $d->ai_pipeline['credit_quote']['band'] ?? null])->all()];
+                ->get(['id', 'ai_pipeline'])->map(fn ($d) => ['documentId' => $d->id, 'credits' => $d->ai_pipeline['credit_quote']['credits'] ?? null, 'band' => $d->ai_pipeline['credit_quote']['band'] ?? null,
+                    'pages' => $d->ai_pipeline['credit_quote']['pages'] ?? null, 'requiresConfirmation' => true])->all()];
     }
 
     public function assertAiAccess(string $workspace): void

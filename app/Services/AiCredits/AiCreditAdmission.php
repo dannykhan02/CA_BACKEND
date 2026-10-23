@@ -33,10 +33,12 @@ class AiCreditAdmission
                 ? 'This document is too large to analyse with AI credits.' : 'This document cannot be analysed within its credit allowance.');
         }
         $quote = $priced['quote'];
-        if ($quote->status === 'quoted' && $this->quotes->requiresConfirmation($quote->band) && ! ($document->ai_pipeline['credit_quote_confirmed'] ?? false)) {
+        $pages = (int) ($quote->preflight['pages'] ?? 0);
+        if ($quote->status === 'quoted' && $this->quotes->requiresConfirmation($quote->credits, $pages) && ! ($document->ai_pipeline['credit_quote_confirmed'] ?? false)) {
             // Explicit consent before spending a large charge: nothing is reserved and nothing paid runs.
             $document->forceFill(['ai_pipeline' => [...($document->ai_pipeline ?? []), 'awaiting_credit_confirmation' => true,
-                'credit_quote' => ['quote_id' => $quote->id, 'credits' => $quote->credits, 'band' => $quote->band]]])->save();
+                'credit_quote' => ['quote_id' => $quote->id, 'credits' => $quote->credits, 'band' => $quote->band, 'pages' => $pages,
+                    'requires_confirmation' => true]]])->save();
 
             return false;
         }
@@ -70,7 +72,11 @@ class AiCreditAdmission
         });
     }
 
-    /** OCR is priced from the page count and refused above the page cap, before any vision call. */
+    /**
+     * Before any vision call: refuse above the page cap, make sure the scan can be paid for once it is read, and
+     * reserve OCR's provider spend bound. The customer is charged for the scan as a document, by its band, when the
+     * text exists and the document is admitted; reading the pages is not a separate charge.
+     */
     public function admitOcr(Document $document, int $pages): bool
     {
         if (! QuoteService::enabled() || $this->accountant->mode($document->workspace_id) === 'legacy') {
@@ -82,9 +88,14 @@ class AiCreditAdmission
                 ? sprintf('This scanned document has more than %d pages, which is above the OCR limit.', config('ai_credits.ocr.max_pages'))
                 : 'No pages could be read from this scan.');
         }
+        $estimate = $this->quotes->classifyScan($pages);
+        if ($estimate['declined']) {
+            return $this->refuse($document, 'This scanned document cannot be analysed within its credit allowance.');
+        }
         try {
-            // Leave room for the cheapest analysis band so a scan cannot be OCR'd and then left unpaid.
-            $need = $priced['quote']->credits + $this->quotes->minimumDocumentCredits();
+            // The scan is priced after it is read, but it must be payable before it is: no OCR spend on a balance
+            // that could not then pay for the analysis.
+            $need = $estimate['credits'];
             if ($this->accountant->available($document->workspace_id) < $need) {
                 abort(402, sprintf('Insufficient credits: %d available, %d required.', $this->accountant->available($document->workspace_id), $need));
             }
@@ -123,7 +134,7 @@ class AiCreditAdmission
         $priced = $this->quotes->quoteDocument($document, $delivered ? 'reanalysis' : 'document', $delivered);
         abort_if($priced['declined'], 422, 'This document cannot be re-analysed within its credit allowance.');
         $quote = $priced['quote'];
-        if ($confirmCredits !== null && $this->quotes->requiresConfirmation($quote->band) && $confirmCredits !== $quote->credits) {
+        if ($confirmCredits !== null && $this->quotes->requiresConfirmation($quote->credits, (int) ($quote->preflight['pages'] ?? 0)) && $confirmCredits !== $quote->credits) {
             // A customer re-run of a large document shows its exact price first; nothing is reserved until it is accepted.
             throw new HttpResponseException(response()->json(['message' => sprintf('This re-analysis will use %d credits. Confirm to continue.', $quote->credits),
                 'data' => ['confirmation_required' => true, 'credits' => $quote->credits, 'band' => $quote->band]], 409));

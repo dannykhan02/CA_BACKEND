@@ -3,8 +3,8 @@
 namespace App\Services\AiCredits;
 
 use App\Models\Document;
+use App\Models\OcrResult;
 use App\Models\OperationQuote;
-use App\Services\AI\Incremental\ChunkPlanner;
 use App\Services\AI\Incremental\ExtractionCapacity;
 use App\Services\AnthropicClient;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -24,9 +24,20 @@ class QuoteService
         return array_keys(config('ai_credits.bands'));
     }
 
+    /**
+     * The least a document can cost to start: the cheapest band whose provider cap can pay for the minimum useful
+     * completion. Not simply the cheapest band, which a document could never actually be quoted in.
+     */
     public function minimumDocumentCredits(): int
     {
-        return (int) min(array_column(config('ai_credits.bands'), 'credits'));
+        $needed = $this->minCompletionCostUsd(0);
+        foreach (config('ai_credits.bands') as $band) {
+            if ($this->providerCap((int) $band['credits']) >= $needed) {
+                return (int) $band['credits'];
+            }
+        }
+
+        return (int) max(array_column(config('ai_credits.bands'), 'credits'));
     }
 
     public function providerCap(int $credits): float
@@ -44,9 +55,11 @@ class QuoteService
     }
 
     /**
+     * @param  float  $extraCostUsd  Provider cost the band's cap must also cover (OCR of a scan).
+     * @param  ?string  $minBand  The cheapest band this document may be quoted in (a scan is never "tiny").
      * @return array{band:string,credits:int,cap:float,shifted:bool,declined:bool,reason:?string}
      */
-    public function classify(int $tokens, bool $dense, float $synthesisFloorUsd = 0.0): array
+    public function classify(int $tokens, bool $dense, float $synthesisFloorUsd = 0.0, float $extraCostUsd = 0.0, ?string $minBand = null): array
     {
         $bands = config('ai_credits.bands');
         $names = array_keys($bands);
@@ -64,8 +77,12 @@ class QuoteService
         if ($dense && ! $declined) {
             $index = min(count($names) - 1, $index + (int) config('ai_credits.dense_band_shift'));
         }
+        $floorIndex = $minBand === null ? false : array_search($minBand, $names, true);
+        if (! $declined && $floorIndex !== false) {
+            $index = max($index, $floorIndex);
+        }
         // A band whose provider ceiling cannot pay for the minimum useful completion moves up, or is declined.
-        $needed = $this->minCompletionCostUsd($tokens, $synthesisFloorUsd);
+        $needed = $this->minCompletionCostUsd($tokens, $synthesisFloorUsd) + $extraCostUsd;
         while (! $declined && $this->providerCap($bands[$names[$index]]['credits']) < $needed) {
             if ($index === count($names) - 1) {
                 $declined = true;
@@ -80,21 +97,61 @@ class QuoteService
             'shifted' => $index !== $start, 'declined' => $declined, 'reason' => $reason];
     }
 
-    public function requiresConfirmation(string $band): bool
+    /** A quote of at least `confirm_from_credits`, or for a document of more than `confirm_over_pages`, needs consent first. */
+    public function requiresConfirmation(int $credits, int $pages = 0): bool
     {
-        $names = $this->bandNames();
-        $from = array_search(config('ai_credits.confirm_from_band'), $names, true);
+        return $credits >= (int) config('ai_credits.confirm_from_credits')
+            || $pages > (int) config('ai_credits.confirm_over_pages');
+    }
 
-        return $from !== false && array_search($band, $names, true) >= $from;
+    /** Characters per token for a document type; the map's `default` for any type it does not list. */
+    public function charsPerToken(?string $type): float
+    {
+        $map = config('ai_credits.chars_per_token');
+        $cpt = (float) ($map[strtoupper((string) $type)] ?? $map['default'] ?? 3.0);
+
+        return $cpt > 0 ? $cpt : 3.0;
+    }
+
+    /**
+     * Tokens the quote is priced on. The provider's own count when the pipeline already has it; otherwise the text
+     * length over a per-type ratio. A scan is also at least its page count times `ocr.tokens_per_page`.
+     */
+    public function estimateTokens(Document $document, int $ocrPages = 0): int
+    {
+        if (($document->ai_pipeline['count_method'] ?? null) === 'anthropic' && isset($document->ai_pipeline['tokens'])) {
+            $tokens = (int) $document->ai_pipeline['tokens'];
+        } else {
+            $tokens = max(1, (int) ceil(strlen((string) $document->extracted_text) / $this->charsPerToken($document->type)));
+        }
+
+        return $ocrPages > 0 ? max($tokens, $ocrPages * (int) config('ai_credits.ocr.tokens_per_page')) : $tokens;
+    }
+
+    /** Pages of this document that were read by OCR (an image is one page), or 0 when none were. */
+    public function ocrPages(Document $document): int
+    {
+        $read = OcrResult::where('document_id', $document->id)->distinct()->count('page_number');
+        if ($read > 0) {
+            return $read;
+        }
+
+        return in_array($document->type, ['JPG', 'PNG'], true) ? 1 : 0;
+    }
+
+    /** What a scan of this many pages will cost, estimated before any page is read. */
+    public function classifyScan(int $pages): array
+    {
+        return $this->classify($pages * (int) config('ai_credits.ocr.tokens_per_page'), false, 0.0,
+            $pages * (float) config('ai_credits.ocr.provider_cost_usd_per_page'), config('ai_credits.ocr.min_band'));
     }
 
     /** Local signals only: token count (no paid count call), density and file type. */
     public function documentSignals(Document $document): array
     {
         $text = (string) $document->extracted_text;
-        $tokens = ($document->ai_pipeline['count_method'] ?? null) === 'anthropic' && isset($document->ai_pipeline['tokens'])
-            ? (int) $document->ai_pipeline['tokens']
-            : app(ChunkPlanner::class)->estimate($text);
+        $ocrPages = $this->ocrPages($document);
+        $tokens = $this->estimateTokens($document, $ocrPages);
         $density = app(ExtractionCapacity::class)->density($text, $document->type);
 
         $floor = 0.0;
@@ -112,19 +169,21 @@ class QuoteService
 
         return ['incremental_route' => (bool) $incremental, 'synthesis_floor_usd' => round($floor, 6), 'tokens' => $tokens, 'dense' => $density['dense'], 'spreadsheet' => $density['spreadsheet'],
             'numeric_ratio' => $density['numeric_ratio'], 'tabular_line_ratio' => $density['tabular_line_ratio'],
-            'type' => $document->type, 'pages' => (int) $document->pages];
+            'type' => $document->type, 'pages' => max((int) $document->pages, $ocrPages), 'ocr_pages' => $ocrPages];
     }
 
-    /** OCR is quoted from the page count BEFORE any vision call. */
+    /**
+     * OCR's provider spend bound, from the page count BEFORE any vision call. It costs the customer nothing by itself:
+     * the scan is priced as a document by its band, and that band's cap is raised to cover this (see classify()).
+     */
     public function classifyOcr(int $pages): array
     {
         $o = config('ai_credits.ocr');
         if ($pages < 1 || $pages > $o['max_pages']) {
             return ['declined' => true, 'reason' => $pages < 1 ? 'no_pages' : 'ocr_page_limit', 'credits' => 0, 'cap' => 0.0, 'pages' => $pages];
         }
-        $credits = $o['surcharge_credits'] + max(0, $pages - $o['included_pages']) * $o['extra_credits_per_page'];
 
-        return ['declined' => false, 'reason' => null, 'credits' => $credits, 'pages' => $pages,
+        return ['declined' => false, 'reason' => null, 'credits' => 0, 'pages' => $pages,
             'cap' => round(max($pages * $o['provider_cost_usd_per_page'], (float) $o['min_cap_usd']), 6)];
     }
 
@@ -170,7 +229,10 @@ class QuoteService
     public function quoteDocument(Document $document, string $kind = 'document', bool $newRequest = false): array
     {
         $signals = $this->documentSignals($document);
-        $c = $this->classify($signals['tokens'], $signals['dense'], $signals['synthesis_floor_usd']);
+        $scan = $signals['ocr_pages'] > 0;
+        $c = $this->classify($signals['tokens'], $signals['dense'], $signals['synthesis_floor_usd'],
+            $scan ? $signals['ocr_pages'] * (float) config('ai_credits.ocr.provider_cost_usd_per_page') : 0.0,
+            $scan ? config('ai_credits.ocr.min_band') : null);
         if ($c['declined']) {
             return ['declined' => true, 'reason' => $c['reason'], 'signals' => $signals];
         }
