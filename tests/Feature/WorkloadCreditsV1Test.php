@@ -118,7 +118,7 @@ class WorkloadCreditsV1Test extends TestCase
         $bands = config('ai_credits.bands');
         $this->assertSame(['small', 'medium', 'regular', 'large', 'xlarge', 'very_large'], array_keys($bands));
         $this->assertSame([4000, 8000, 18000, 35000, 90000, 250000], array_column($bands, 'max_tokens'));
-        $this->assertSame([2, 6, 10, 20, 30, 80], array_column($bands, 'credits'));
+        $this->assertSame([2, 6, 10, 20, 35, 80], array_column($bands, 'credits'));
         $this->assertSame(['v3', 30, 100], [config('ai_credits.quote_version'), config('ai_credits.confirm_from_credits'), config('ai_credits.confirm_over_pages')]);
         $this->assertNull(config('ai_credits.min_completion_cost_usd'), 'no linear completion gate chooses a band any more');
         $this->assertArrayNotHasKey('tiny', $bands);
@@ -136,7 +136,7 @@ class WorkloadCreditsV1Test extends TestCase
     {
         $q = app(QuoteService::class);
         $edges = [[1, 'small', 2], [4000, 'small', 2], [4001, 'medium', 6], [8000, 'medium', 6], [8001, 'regular', 10], [18000, 'regular', 10],
-            [18001, 'large', 20], [35000, 'large', 20], [35001, 'xlarge', 30], [90000, 'xlarge', 30], [90001, 'very_large', 80], [250000, 'very_large', 80]];
+            [18001, 'large', 20], [35000, 'large', 20], [35001, 'xlarge', 35], [90000, 'xlarge', 35], [90001, 'very_large', 80], [250000, 'very_large', 80]];
         foreach ($edges as [$tokens, $band, $credits]) {
             $c = $q->classify($tokens, false);
             $this->assertSame([$band, $credits, false], [$c['band'], $c['credits'], $c['declined']], $tokens.' tokens');
@@ -174,7 +174,7 @@ class WorkloadCreditsV1Test extends TestCase
     {
         $ws = $this->workspace(1000);
         $q = app(QuoteService::class);
-        foreach ([[300, 'small', 2], [3000, 'small', 2], [7000, 'medium', 6], [12000, 'regular', 10], [27000, 'large', 20], [54000, 'xlarge', 30], [77000, 'xlarge', 30]] as [$tokens, $band, $credits]) {
+        foreach ([[300, 'small', 2], [3000, 'small', 2], [7000, 'medium', 6], [12000, 'regular', 10], [27000, 'large', 20], [54000, 'xlarge', 35], [77000, 'xlarge', 35]] as [$tokens, $band, $credits]) {
             $quote = $q->quoteDocument($this->counted($ws, $tokens))['quote'];
             $this->assertSame([$band, $credits], [$quote->band, $quote->credits], $tokens.' tokens');
         }
@@ -196,17 +196,17 @@ class WorkloadCreditsV1Test extends TestCase
     public function test_a_quote_of_thirty_credits_or_more_requires_confirmation_and_says_so(): void
     {
         $ws = $this->workspace(100);
-        $document = $this->counted($ws, 54000); // xlarge, 30 credits
+        $document = $this->counted($ws, 54000); // xlarge, 35 credits
         $this->assertFalse($this->admit($document, false));
 
         $pipeline = $document->fresh()->ai_pipeline;
         $this->assertTrue($pipeline['awaiting_credit_confirmation']);
-        $this->assertSame([30, 'xlarge'], [$pipeline['credit_quote']['credits'], $pipeline['credit_quote']['band']]);
+        $this->assertSame([35, 'xlarge'], [$pipeline['credit_quote']['credits'], $pipeline['credit_quote']['band']]);
         $this->assertTrue($pipeline['credit_quote']['requires_confirmation']);
         $this->assertNull($this->op($document), 'nothing is reserved until the customer accepts');
         $pending = app(EntitlementService::class)->summary($ws->id)['ai_credits']['pendingConfirmations'];
         $this->assertTrue($pending[0]['requiresConfirmation']);
-        $this->assertSame(30, $pending[0]['credits']);
+        $this->assertSame(35, $pending[0]['credits']);
     }
 
     public function test_a_quote_under_thirty_credits_on_a_short_document_needs_no_confirmation(): void
@@ -353,7 +353,7 @@ class WorkloadCreditsV1Test extends TestCase
         $this->assertSame(600, config('ai_credits.ocr.tokens_per_page'));
 
         // pages => [band, credits, the OCR operation's own spend cap = max(pages x 0.006, 0.05)]
-        $expected = [1 => ['small', 2, 0.05], 2 => ['small', 2, 0.05], 10 => ['medium', 6, 0.06], 60 => ['xlarge', 30, 0.36]];
+        $expected = [1 => ['small', 2, 0.05], 2 => ['small', 2, 0.05], 10 => ['medium', 6, 0.06], 60 => ['xlarge', 35, 0.36]];
         foreach ($expected as $pages => [$band, $credits, $cap]) {
             $scan = $q->classifyScan($pages);
             $this->assertSame([$band, $credits], [$scan['band'], $scan['credits']], $pages.' pages');

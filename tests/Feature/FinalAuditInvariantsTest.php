@@ -240,7 +240,7 @@ class FinalAuditInvariantsTest extends TestCase
     {
         Queue::fake();
         $ws = $this->workspace(100);
-        $document = $this->document($ws, 50000); // 30 credits
+        $document = $this->document($ws, 50000); // 35 credits
         $this->assertFalse($this->admit($document));
         $ws->credits()->update(['ai_credits_remaining' => 12]); // spent elsewhere between quote and click
 
@@ -304,14 +304,14 @@ class FinalAuditInvariantsTest extends TestCase
                 $this->fail('A large re-analysis must not reserve without the confirmed price.');
             } catch (HttpResponseException $e) {
                 $this->assertSame(409, $e->getResponse()->getStatusCode());
-                $this->assertSame(30, json_decode($e->getResponse()->getContent(), true)['data']['credits']);
+                $this->assertSame(35, json_decode($e->getResponse()->getContent(), true)['data']['credits']);
             }
         }
         $this->assertNull($this->op($document, 'reanalysis'));
 
-        $admission->admitReanalysis($document->fresh(), false, $this->user->id, 30);
-        $admission->admitReanalysis($document->fresh(), false, $this->user->id, 30); // double click
-        $this->assertSame(30, (int) $this->op($document, 'reanalysis')->amount_reserved);
+        $admission->admitReanalysis($document->fresh(), false, $this->user->id, 35);
+        $admission->admitReanalysis($document->fresh(), false, $this->user->id, 35); // double click
+        $this->assertSame(35, (int) $this->op($document, 'reanalysis')->amount_reserved);
     }
 
     public function test_internal_and_operator_reanalysis_is_not_blocked_by_the_customer_confirmation(): void
@@ -326,7 +326,7 @@ class FinalAuditInvariantsTest extends TestCase
 
         app(AiCreditAdmission::class)->admitReanalysis($document->fresh(), false, $this->user->id); // null = operator command
 
-        $this->assertSame(30, (int) $this->op($document, 'reanalysis')->amount_reserved);
+        $this->assertSame(35, (int) $this->op($document, 'reanalysis')->amount_reserved);
     }
 
     // ---------------------------------------------------------------- B: release sweep

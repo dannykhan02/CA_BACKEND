@@ -42,7 +42,7 @@ class CostVsSizeReportTest extends TestCase
     {
         $report = app(CostVsSizeReport::class);
         foreach ([[1, 'small'], [2, 'small'], [3, 'medium'], [6, 'medium'], [7, 'regular'], [10, 'regular'], [11, 'large'], [20, 'large'], [21, 'xlarge'],
-            [30, 'xlarge'], [31, 'very_large'], [80, 'very_large'], [81, 'above_top_band']] as [$credits, $band]) {
+            [35, 'xlarge'], [36, 'very_large'], [80, 'very_large'], [81, 'above_top_band']] as [$credits, $band]) {
             $this->assertSame($band, $report->bandFor($credits), (string) $credits);
         }
     }
@@ -89,11 +89,78 @@ class CostVsSizeReportTest extends TestCase
 
     public function test_the_csv_has_one_header_and_one_line_per_document_with_the_agreed_columns(): void
     {
-        $csv = app(CostVsSizeReport::class)->csv([$this->row(2100, 0.0123)]);
+        $report = app(CostVsSizeReport::class);
+        $csv = $report->csv([$this->row(2100, 0.0123)]);
         $lines = explode("\n", trim($csv));
+        $header = str_getcsv($lines[0]);
         $this->assertSame(['document_id', 'file_type', 'pages', 'quote_tokens', 'local_estimate_tokens', 'provider_tokens', 'route', 'ocr_pages',
-            'total_cost_usd', 'calls', 'first_try_cost_usd', 'first_try_calls', 'failed_or_retried_calls'], str_getcsv($lines[0]));
+            'total_cost_usd', 'calls', 'first_try_cost_usd', 'first_try_calls', 'failed_or_retried_calls'], array_slice($header, 0, 13));
+        $this->assertSame(['stage_extraction_usd', 'stage_synthesis_usd', 'stage_ocr_usd', 'stage_chart_vision_usd', 'stage_other_usd', 'largest_request_usd',
+            'largest_request_purpose', 'would_tokens', 'token_source', 'would_band', 'would_credits', 'would_cap_usd', 'synthesis_floor_usd', 'would_route',
+            'reservation_floor_usd', 'real_synthesis_cost_usd', 'floor_over_real'], array_slice($header, 13));
         $this->assertCount(2, $lines);
-        $this->assertSame(['PDF', '3', '2100', '2100', '', 'normal', '0', '0.0123', '4', '0.0123', '4', '0'], array_slice(str_getcsv($lines[1]), 1));
+        $values = str_getcsv($lines[1]);
+        $this->assertCount(count($header), $values);
+        $this->assertSame(['PDF', '3', '2100', '2100', '', 'normal', '0', '0.0123', '4', '0.0123', '4', '0'], array_slice($values, 1, 12));
+        $this->assertSame(array_fill(0, count($header) - 13, ''), array_slice($values, 13), 'columns a row has no value for are empty');
+    }
+
+    public function test_stages_follow_the_configured_model_roles_and_unknown_purposes_stay_other(): void
+    {
+        $report = app(CostVsSizeReport::class);
+        foreach ([['entities', 'extraction'], ['insights', 'extraction'], ['risks', 'extraction'], ['deadlines', 'extraction'], ['document_type', 'extraction'],
+            ['kpi_identity', 'extraction'], ['document_summary', 'synthesis'], ['brief_synthesis', 'synthesis'], ['ocr', 'ocr'], ['chart_vision', 'chart_vision'],
+            ['verification', 'other'], ['something_new', 'other']] as [$purpose, $stage]) {
+            $this->assertSame($stage, $report->stageOf($purpose), $purpose);
+        }
+    }
+
+    public function test_the_csv_adds_a_cost_and_a_model_column_for_every_real_purpose_in_alphabetical_order(): void
+    {
+        $report = app(CostVsSizeReport::class);
+        $a = $this->row(2100, 0.05) + ['by_purpose' => [
+            'entities' => ['cost' => 0.03, 'calls' => 2, 'largest' => 0.02, 'models' => 'claude-haiku-4-5-20251001|claude-sonnet-5-5'],
+            'document_summary' => ['cost' => 0.02, 'calls' => 1, 'largest' => 0.02, 'models' => 'claude-sonnet-5-5']]];
+        $b = $this->row(900, 0.004) + ['by_purpose' => ['ocr' => ['cost' => 0.004, 'calls' => 1, 'largest' => 0.004, 'models' => 'claude-haiku-4-5-20251001']]];
+
+        $lines = array_map('str_getcsv', explode("\n", trim($report->csv([$a, $b]))));
+        $header = $lines[0];
+        $this->assertSame(['cost_document_summary', 'model_document_summary', 'cost_entities', 'model_entities', 'cost_ocr', 'model_ocr'], array_slice($header, -6));
+        $first = array_combine($header, $lines[1]);
+        $second = array_combine($header, $lines[2]);
+        $this->assertSame(['0.02', 'claude-sonnet-5-5', '0.03', 'claude-haiku-4-5-20251001|claude-sonnet-5-5', '', ''], [$first['cost_document_summary'], $first['model_document_summary'],
+            $first['cost_entities'], $first['model_entities'], $first['cost_ocr'], $first['model_ocr']]);
+        $this->assertSame(['', '', '', '', '0.004', 'claude-haiku-4-5-20251001'], [$second['cost_document_summary'], $second['model_document_summary'],
+            $second['cost_entities'], $second['model_entities'], $second['cost_ocr'], $second['model_ocr']]);
+    }
+
+    public function test_the_summary_shows_what_the_quote_would_charge_against_what_the_p90_needs(): void
+    {
+        $would = fn (int $tokens, float $cost, int $credits, float $cap) => $this->row($tokens, $cost) + ['would_credits' => $credits, 'would_cap_usd' => $cap];
+        $summary = app(CostVsSizeReport::class)->summary([
+            // 2-4k: three documents quoted 2 credits (cap 0.054) that cost 0.01, 0.04 and 0.10.
+            $would(2100, 0.01, 2, 0.054), $would(3000, 0.04, 2, 0.054), $would(3900, 0.10, 2, 0.054),
+            // 0-1k: two documents quoted 2 credits that cost almost nothing.
+            $would(500, 0.005, 2, 0.054), $would(800, 0.015, 2, 0.054),
+        ]);
+
+        $mid = $this->bucket($summary, '2-4k');
+        // p90 = 0.04 + 0.8 x 0.06 = 0.088; x1.25 = 0.11 -> 4.07 -> 5 credits; the quote charges 2: it undercharges by 3.
+        $this->assertSame([2.0, 3.0 * -1.0], [$mid['median_would_credits'], $mid['would_minus_needed_x1.25']]);
+        // Cap over cost per document: 5.4, 1.35, 0.54 -> median 1.35.
+        $this->assertEqualsWithDelta(1.35, $mid['median_would_cap_over_cost'], 1e-9);
+
+        $low = $this->bucket($summary, '0-1k');
+        // p90 = 0.014; x1.25 = 0.0175 -> 1 credit; the quote charges 2: +1. Cap over cost 10.8 and 3.6 -> median 7.2.
+        $this->assertSame([2.0, 1.0], [$low['median_would_credits'], $low['would_minus_needed_x1.25']]);
+        $this->assertEqualsWithDelta(7.2, $low['median_would_cap_over_cost'], 1e-9);
+    }
+
+    public function test_the_would_quote_summary_columns_are_empty_when_the_rows_have_no_would_quote(): void
+    {
+        $bucket = $this->bucket(app(CostVsSizeReport::class)->summary([$this->row(500, 0.01)]), '0-1k');
+        $this->assertNull($bucket['median_would_credits']);
+        $this->assertNull($bucket['median_would_cap_over_cost']);
+        $this->assertNull($bucket['would_minus_needed_x1.25']);
     }
 }

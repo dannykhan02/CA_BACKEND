@@ -85,9 +85,9 @@ class CreditEconomicsReportTest extends TestCase
         $this->assertSame([16, 5, 3, 1], array_column($rows, 'starter_docs_per_month'));
         Artisan::call('docintel:credit-economics-report', ['--what-if' => true, '--json' => true]);
         $today = json_decode(Artisan::output(), true);
-        // Today's bands: 5,000 tokens is medium (6); 20,000 is large (20, cap 0.54 covers its 0.50 floor); 60,000 is xlarge by size but
-        // its 0.85 floor does not fit 0.81, so very_large; 150,000 is very_large.
-        $this->assertSame([6, 20, 80, 80], array_column($today, 'credits'));
+        // Today's bands: 5,000 tokens is medium (6); 20,000 is large (20, cap 0.54 covers its 0.50 floor); 60,000 is xlarge (35, cap
+        // 0.945 covers its 0.85 floor); 150,000 is very_large (80).
+        $this->assertSame([6, 20, 35, 80], array_column($today, 'credits'));
         $this->assertSame($before, config('ai_credits'));
         $this->assertSame(0, OperationQuote::count());
     }

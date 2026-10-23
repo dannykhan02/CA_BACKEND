@@ -166,6 +166,21 @@ class QuoteService
             $pages * (float) config('ai_credits.ocr.provider_cost_usd_per_page'), config('ai_credits.ocr.min_band'));
     }
 
+    /**
+     * What the incremental pipeline reserves for synthesis before it starts: the primary request, one degraded fallback and
+     * one repair, each at its worst-case cost (AnthropicClient::synthesisReservation). A reservation, not a cost.
+     */
+    public function synthesisFloorUsd(Document $document): float
+    {
+        try {
+            $r = app(AnthropicClient::class)->synthesisReservation($document, null, 0);
+
+            return (float) ($r['synthesis_reserved_usd'] ?? 0) + (float) ($r['synthesis_degraded_reserved_usd'] ?? 0) + (float) ($r['repair_reserved_usd'] ?? 0);
+        } catch (\Throwable) {
+            return 0.0; // local estimate unavailable
+        }
+    }
+
     /** Local signals only: token count (no paid count call), density and file type. */
     public function documentSignals(Document $document): array
     {
@@ -180,12 +195,7 @@ class QuoteService
         $incremental = config('document_intelligence.incremental')
             && ! ($basis['route_tokens'] <= config('document_intelligence.large_tokens') && mb_strlen($text) <= config('document_processing.max_extraction_chars'));
         if ($incremental) {
-            try {
-                $r = app(AnthropicClient::class)->synthesisReservation($document, null, 0);
-                $floor = (float) ($r['synthesis_reserved_usd'] ?? 0) + (float) ($r['synthesis_degraded_reserved_usd'] ?? 0) + (float) ($r['repair_reserved_usd'] ?? 0);
-            } catch (\Throwable) {
-                $floor = 0.0; // local estimate unavailable: the configured minimum still applies
-            }
+            $floor = $this->synthesisFloorUsd($document);
         }
 
         return ['incremental_route' => (bool) $incremental, 'synthesis_floor_usd' => round($floor, 6), 'tokens' => $tokens, 'raw_tokens' => $basis['raw_tokens'],
@@ -249,13 +259,25 @@ class QuoteService
         }
     }
 
-    public function quoteDocument(Document $document, string $kind = 'document', bool $newRequest = false): array
+    /**
+     * What a document would be quoted right now, without saving, reserving or changing anything: the same signals and
+     * classification quoteDocument() uses. For reports.
+     *
+     * @return array{signals:array,classification:array}
+     */
+    public function previewDocument(Document $document): array
     {
         $signals = $this->documentSignals($document);
         $scan = $signals['ocr_pages'] > 0;
-        $c = $this->classify($signals['tokens'], $signals['dense'], $signals['synthesis_floor_usd'],
+
+        return ['signals' => $signals, 'classification' => $this->classify($signals['tokens'], $signals['dense'], $signals['synthesis_floor_usd'],
             $scan ? $signals['ocr_pages'] * (float) config('ai_credits.ocr.provider_cost_usd_per_page') : 0.0,
-            $scan ? config('ai_credits.ocr.min_band') : null);
+            $scan ? config('ai_credits.ocr.min_band') : null)];
+    }
+
+    public function quoteDocument(Document $document, string $kind = 'document', bool $newRequest = false): array
+    {
+        ['signals' => $signals, 'classification' => $c] = $this->previewDocument($document);
         if ($c['declined']) {
             return ['declined' => true, 'reason' => $c['reason'], 'signals' => $signals];
         }
