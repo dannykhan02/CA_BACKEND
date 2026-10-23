@@ -288,6 +288,10 @@ class CostVsSizeReportCommandTest extends TestCase
     {
         $a = $this->document('PDF', 6000);
         $this->recordRun($a, 0.010);
+        // The old document is created up front, before any command runs, so the later --days 30 check can exclude it.
+        $old = $this->document('PDF', 6000);
+        $this->recordRun($old, 0.010);
+        Document::whereKey($old->id)->update(['created_at' => now()->subDays(60)]);
 
         $skipped = app(CostVsSizeReport::class)->rows(null, false)[0];
         $this->assertArrayNotHasKey('would_band', $skipped);
@@ -301,8 +305,7 @@ class CostVsSizeReportCommandTest extends TestCase
         $this->assertStringNotContainsString('document_id,file_type', $output);
         $this->assertStringContainsString('median_would_credits', $output);
 
-        Document::whereKey($a->id)->update(['created_at' => now()->subDays(60)]);
-        $this->assertSame([], $this->csvByDocument(['--days' => 30]));
+        $this->assertSame([$a->id], array_keys($this->csvByDocument(['--days' => 30])));
     }
 
     public function test_the_summary_table_says_where_the_quote_charges_more_than_the_cost_needs(): void
