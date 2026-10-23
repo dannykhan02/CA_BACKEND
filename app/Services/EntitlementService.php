@@ -98,8 +98,9 @@ class EntitlementService
 
     /**
      * Give a reservation back without charging, for a run that ended without publishing a revision.
-     * Idempotent, and deliberately blind to how the run ended: a no-op when the document is already
-     * settled, already released, or never reserved. Returns true only when this call released one.
+     * Idempotent, and deliberately blind to how the run ended: a no-op when there is nothing held, and a
+     * settled document's own charge is never touched (only an open re-analysis or OCR hold is returned).
+     * Returns true only when this call released one.
      * The hourly sweep (releaseFailures) remains the backstop for whatever never reaches here.
      */
     public function releaseDocumentReservation(Document $document, string $reason = 'document_not_completed'): bool
@@ -107,15 +108,18 @@ class EntitlementService
         return DB::transaction(function () use ($document, $reason) {
             Workspace::whereKey($document->workspace_id)->lockForUpdate()->firstOrFail();
             // A settled document delivered its product; that charge is final and is never refunded here.
-            if (Document::withTrashed()->whereKey($document->id)->value('credit_accounted_at') !== null) {
-                return false;
-            }
+            // A paid re-analysis (or re-OCR) of it is a separate operation with its own hold: when that run
+            // fails nothing new was delivered, so only those open variable-price holds come back.
+            $settled = Document::withTrashed()->whereKey($document->id)->value('credit_accounted_at') !== null;
             $released = false;
-            foreach (['document', 'ocr', 'reanalysis'] as $kind) {
+            foreach ($settled ? ['ocr', 'reanalysis'] : ['document', 'ocr', 'reanalysis'] as $kind) {
                 $operation = DB::table('billing_operations')->where('kind', $kind)
                     ->where('resource_id', $document->id)->lockForUpdate()->first();
                 if (! $operation || $operation->status !== 'reserved') {
                     continue;
+                }
+                if ($settled && $operation->amount_reserved === null) {
+                    continue; // a legacy one-unit hold of a settled document was already paid for
                 }
                 if ($operation->amount_reserved !== null) {
                     $released = app(CreditAccountant::class)->release($kind, $document->id, $reason, $document->uploaded_by) || $released;
@@ -144,12 +148,25 @@ class EntitlementService
         DB::transaction(function () use ($workspace) {
             Workspace::whereKey($workspace)->lockForUpdate()->firstOrFail();
             $kinds = ['document', 'ocr', 'reanalysis'];
-            $stale = DB::table('billing_operations')->where('workspace_id', $workspace)->where('status', 'reserved')->whereIn('kind', $kinds)
-                ->where(function ($q) {
-                    $q->where('updated_at', '<=', now()->subHours(config('billing.pipeline_hours')))->orWhereNotIn('resource_id', Document::select('id'))->orWhereIn('resource_id', Document::whereIn('status', ['Failed', 'Needs Review'])->select('id'));
+            $stale = DB::table('billing_operations')->where('workspace_id', $workspace)->where('status', 'reserved')
+                ->where(function ($outer) use ($kinds) {
+                    $outer->where(function ($q) use ($kinds) {
+                        $q->whereIn('kind', $kinds)->where(function ($q) {
+                            $q->where('updated_at', '<=', now()->subHours(config('billing.pipeline_hours')))->orWhereNotIn('resource_id', Document::select('id'))->orWhereIn('resource_id', Document::whereIn('status', ['Failed', 'Needs Review'])->select('id'));
+                        });
+                    })->orWhere(function ($q) {
+                        // A comparison job can be lost without ever calling failed(): its variable-price hold expires like any other.
+                        // Its resource is a comparison, not a document, so only age applies.
+                        $q->where('kind', 'comparison')->whereNotNull('amount_reserved')->where('updated_at', '<=', now()->subHours(config('billing.pipeline_hours')));
+                    });
                 })
                 ->get();
             foreach ($stale as $operation) {
+                if ($operation->kind === 'comparison') {
+                    app(CreditAccountant::class)->release('comparison', $operation->resource_id, 'reservation_expired');
+
+                    continue;
+                }
                 if ($operation->amount_reserved !== null) {
                     // Variable-price operation: Needs Review settles only when product policy says a partial result is paid.
                     $status = Document::whereKey($operation->resource_id)->value('status');

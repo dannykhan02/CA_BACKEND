@@ -125,7 +125,7 @@ class QuoteService
         $credits = $o['surcharge_credits'] + max(0, $pages - $o['included_pages']) * $o['extra_credits_per_page'];
 
         return ['declined' => false, 'reason' => null, 'credits' => $credits, 'pages' => $pages,
-            'cap' => round($pages * $o['provider_cost_usd_per_page'], 6)];
+            'cap' => round(max($pages * $o['provider_cost_usd_per_page'], (float) $o['min_cap_usd']), 6)];
     }
 
     public function reanalysisCredits(array $classification): int

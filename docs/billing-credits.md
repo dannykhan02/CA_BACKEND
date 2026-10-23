@@ -73,8 +73,10 @@ What changed on 2026-10-20 is narrower than "the charge moved to the end":
 ## Releasing a reservation
 
 `EntitlementService::releaseDocumentReservation(Document, $reason)` returns a
-reservation without charging. It is idempotent and refuses to touch a settled
-document, so it is safe to call on any terminal path. It is called when:
+reservation without charging. It is idempotent and never touches a settled
+document's own charge, so it is safe to call on any terminal path. For a settled
+document it still returns an open AI-credit re-analysis or OCR hold, because a
+failed paid re-analysis delivers nothing new. It is called when:
 
 - analysis fails terminally, or has no extracted text
   (`GenerateInsightsJob`);
@@ -83,7 +85,9 @@ document, so it is safe to call on any terminal path. It is called when:
 
 `billing:release-stale-reservations` remains the hourly backstop for anything
 that never reaches one of those paths — a worker killed mid-run, an abandoned
-pipeline, a reservation older than `BILLING_PIPELINE_HOURS` (24h). Reading a
+pipeline, a reservation older than `BILLING_PIPELINE_HOURS` (24h). With AI
+credits on, an AI comparison hold older than that is released too (a lost
+comparison job never calls `failed()`). Reading a
 workspace's credits performs the same release lazily.
 
 ## Retries
