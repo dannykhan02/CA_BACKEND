@@ -264,12 +264,12 @@ class OcrPageBatchJob implements ShouldQueue
         Cache::put("document:{$document->id}:extracted_text", $text, now()->addHours(2));
         $document->refresh();
 
-        $this->dispatchImageTextLocation($document);
+        $this->dispatchImageTextLocation($document, $results->pluck('page_number')->map(fn ($page) => (int) $page)->all());
         $this->dispatchIntelligenceChain($document, $this->revisionId === null);
     }
 
     /**
-     * Queues the optional word-box stage for a JPG/PNG source.
+     * Queues the optional word-box stage for a JPG/PNG source, or for the OCR-read pages of a PDF.
      *
      * Dispatched here because extracted_text has just been committed, so the
      * text whose quotes the boxes must locate is final for this revision.
@@ -278,15 +278,24 @@ class OcrPageBatchJob implements ShouldQueue
      * delay, cancel or fail the analysis that follows. A failed dispatch is
      * logged and dropped for the same reason.
      */
-    private function dispatchImageTextLocation(Document $document): void
+    private function dispatchImageTextLocation(Document $document, array $ocrPages = []): void
     {
-        if (! in_array($document->type, ['JPG', 'PNG'], true)
-            || ! config('ocr.image_location.enabled')) {
+        $pdf = $document->type === 'PDF';
+        if (! $pdf && ! in_array($document->type, ['JPG', 'PNG'], true)) {
+            return;
+        }
+        if (! config($pdf ? 'ocr.pdf_location.enabled' : 'ocr.image_location.enabled')) {
             return;
         }
         try {
-            LocateImageTextJob::dispatch($document->id, $this->revisionId)
-                ->onQueue(QueueTopology::for(LocateImageTextJob::class));
+            // A PDF is located only on the pages OCR read: those have no usable text layer.
+            if ($pdf) {
+                LocatePdfTextJob::dispatch($document->id, $this->revisionId, $ocrPages)
+                    ->onQueue(QueueTopology::for(LocatePdfTextJob::class));
+            } else {
+                LocateImageTextJob::dispatch($document->id, $this->revisionId)
+                    ->onQueue(QueueTopology::for(LocateImageTextJob::class));
+            }
         } catch (\Throwable $e) {
             Log::warning('Image word-box stage could not be queued', [
                 'document_id' => $document->id,

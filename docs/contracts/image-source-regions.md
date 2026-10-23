@@ -19,7 +19,15 @@ data.regions: Array<{ x: number, y: number, width: number, height: number }>
 | `data.regions` | Highlight rectangles, normalised `0..1`. Empty whenever `textLocated` is `false`. |
 
 Both fields are always present, for every document type. They are only ever non-trivial for a `JPG`
-or `PNG` source: for anything else `textLocated` is `false` and `regions` is `[]`.
+or `PNG` source, or for a `PDF` citation on a page that went through OCR (see below): for anything else
+`textLocated` is `false` and `regions` is `[]`.
+
+### Scanned PDF pages
+
+For a `PDF`, `regions` are relative to the **rendered page** named by `data.source.page` (the page as a
+viewer draws it), and only pages without a usable text layer can have any. A page with a text layer, a
+quote that is not on the cited page, or an ambiguous quote returns `textLocated: false`. See
+`docs/PDF_TEXT_LOCATION.md`.
 
 ### The orientation rule
 

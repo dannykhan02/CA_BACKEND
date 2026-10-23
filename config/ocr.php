@@ -50,4 +50,32 @@ return [
         // set this to 1 to allow a uniquely matched single word.
         'min_matched_words' => (int) env('OCR_IMAGE_LOCATION_MIN_MATCHED_WORDS', 2),
     ],
+
+    /*
+     * Word-box location for scanned PDF pages: the same idea as image_location,
+     * applied to pages that went through OCR (no usable text layer). Geometry
+     * only; extracted text, analysis and charging are untouched. Words are read
+     * with the image_location languages, confidence floor and page segmentation
+     * mode. See docs/PDF_TEXT_LOCATION.md.
+     */
+    'pdf_location' => [
+        // Kill switch. Off means the stage is never dispatched and never runs;
+        // stored boxes stay readable.
+        'enabled' => filter_var(env('OCR_PDF_LOCATION_ENABLED', true), FILTER_VALIDATE_BOOL),
+
+        // Pages located per document (lowest page numbers first). A longer scan
+        // keeps its text and analysis; only the later pages have no highlight.
+        'max_pages' => (int) env('OCR_PDF_LOCATION_MAX_PAGES', 10),
+
+        // Render resolution for pdftoppm. Boxes are normalised to 0..1, so this
+        // trades tesseract accuracy against time, not correctness.
+        'dpi' => (int) env('OCR_PDF_LOCATION_DPI', 200),
+
+        // Wall-clock cap for rendering one page and, separately, for reading it.
+        'page_timeout_seconds' => (int) env('OCR_PDF_LOCATION_PAGE_TIMEOUT', 45),
+
+        // Whole-job budget. Must stay below LocatePdfTextJob::$timeout (the
+        // default pool kills a job at 180s); pages that do not fit are skipped.
+        'total_budget_seconds' => (int) env('OCR_PDF_LOCATION_TOTAL_BUDGET', 120),
+    ],
 ];
