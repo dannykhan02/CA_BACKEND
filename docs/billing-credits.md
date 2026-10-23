@@ -73,8 +73,10 @@ What changed on 2026-10-20 is narrower than "the charge moved to the end":
 ## Releasing a reservation
 
 `EntitlementService::releaseDocumentReservation(Document, $reason)` returns a
-reservation without charging. It is idempotent and refuses to touch a settled
-document, so it is safe to call on any terminal path. It is called when:
+reservation without charging. It is idempotent and never touches a settled
+document's own charge, so it is safe to call on any terminal path. For a settled
+document it still returns an open AI-credit re-analysis or OCR hold, because a
+failed paid re-analysis delivers nothing new. It is called when:
 
 - analysis fails terminally, or has no extracted text
   (`GenerateInsightsJob`);
