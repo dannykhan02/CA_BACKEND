@@ -172,6 +172,6 @@ class DocumentCreditsPayloadTest extends TestCase
 
         config(['ai_credits.enabled' => false]);
         app()->forgetScopedInstances();
-        $this->assertArrayNotHasKey('credits', $this->postJson('/api/documents', ['file' => $file()])->assertStatus(409)->json('data'));
+        $this->assertArrayNotHasKey('credits', $this->getJson('/api/documents/'.$created->json('data.id'))->assertOk()->json('data'));
     }
 }
