@@ -79,12 +79,13 @@ class CostVsSizeReport
     }
 
     /**
-     * Per token bucket: count, median, p90 and max cost, and what the CURRENT gate and band structure make of the p90.
+     * Per token bucket: count, median, p90 and max cost, and what the CURRENT bands make of the p90.
      *
      * credits_for_p90 is what the provider cap must be worth to pay the p90 cost (cost / provider_cost_usd_per_credit,
      * rounded up); band_for_p90 is the cheapest band that has at least that many credits. The same for p90 x 1.25.
-     * gate_usd is the gate's required cap at the bucket's median size (QuoteService::minCompletionCostUsd) and gate_band
-     * the band the gate then yields for a document of that size, so the measured and the assumed cost sit side by side.
+     * edge_band is the band the quote actually gives a document of the bucket's median size (QuoteService::classify), edge_cap_usd
+     * its spend cap, and edge_covers_max / edge_covers_p90_x1.25 whether that cap pays the bucket's worst / p90 x 1.25 cost, so
+     * the measured cost and the price sit side by side.
      *
      * @param  list<array<string, mixed>>  $rows
      * @return list<array<string, mixed>>
@@ -102,7 +103,7 @@ class CostVsSizeReport
             if ($items === []) {
                 $out[] = ['bucket' => $bucket, 'documents' => 0, 'median_usd' => null, 'p90_usd' => null, 'max_usd' => null,
                     'credits_for_p90' => null, 'band_for_p90' => null, 'credits_for_p90_x'.$stress => null, 'band_for_p90_x'.$stress => null,
-                    'median_tokens' => null, 'gate_usd' => null, 'gate_band' => null];
+                    'median_tokens' => null, 'edge_band' => null, 'edge_cap_usd' => null, 'edge_covers_max' => null, 'edge_covers_p90_x'.$stress => null];
 
                 continue;
             }
@@ -110,14 +111,16 @@ class CostVsSizeReport
             $tokens = array_map(fn ($r) => (int) $r['quote_tokens'], $items);
             $p90 = $this->quantile($costs, 0.90);
             $medianTokens = (int) round($this->quantile($tokens, 0.50));
-            $gate = $this->quotes->classify($medianTokens, false);
+            $edge = $this->quotes->classify($medianTokens, false);
             $needed = fn (float $usd) => (int) ceil(round($usd / $perCredit, 6));
             $out[] = ['bucket' => $bucket, 'documents' => count($items), 'median_usd' => round($this->quantile($costs, 0.50), 4),
                 'p90_usd' => round($p90, 4), 'max_usd' => round(max($costs), 4),
                 'credits_for_p90' => $needed($p90), 'band_for_p90' => $this->bandFor($needed($p90)),
                 'credits_for_p90_x'.$stress => $needed($p90 * $stress), 'band_for_p90_x'.$stress => $this->bandFor($needed($p90 * $stress)),
-                'median_tokens' => $medianTokens, 'gate_usd' => $this->quotes->minCompletionCostUsd($medianTokens),
-                'gate_band' => $gate['declined'] ? 'declined' : $gate['band']];
+                'median_tokens' => $medianTokens, 'edge_band' => $edge['declined'] ? 'declined' : $edge['band'],
+                'edge_cap_usd' => $edge['declined'] ? null : $edge['cap'],
+                'edge_covers_max' => $edge['declined'] ? null : $edge['cap'] >= max($costs),
+                'edge_covers_p90_x'.$stress => $edge['declined'] ? null : $edge['cap'] >= $p90 * $stress];
         }
 
         return $out;

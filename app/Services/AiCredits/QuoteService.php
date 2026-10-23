@@ -24,20 +24,10 @@ class QuoteService
         return array_keys(config('ai_credits.bands'));
     }
 
-    /**
-     * The least a document can cost to start: the cheapest band whose provider cap can pay for the minimum useful
-     * completion. Not simply the cheapest band, which a document could never actually be quoted in.
-     */
+    /** The least a document can cost, which is all the start-of-processing balance check needs: the smallest band. */
     public function minimumDocumentCredits(): int
     {
-        $needed = $this->minCompletionCostUsd(0);
-        foreach (config('ai_credits.bands') as $band) {
-            if ($this->providerCap((int) $band['credits']) >= $needed) {
-                return (int) $band['credits'];
-            }
-        }
-
-        return (int) max(array_column(config('ai_credits.bands'), 'credits'));
+        return (int) min(array_column(config('ai_credits.bands'), 'credits'));
     }
 
     public function providerCap(int $credits): float
@@ -45,18 +35,9 @@ class QuoteService
         return round($credits * (float) config('ai_credits.provider_cost_usd_per_credit'), 6);
     }
 
-    /** Conservative cost a document of this size needs to finish, used to refuse caps that cannot work. */
-    public function minCompletionCostUsd(int $tokens, float $synthesisFloorUsd = 0.0): float
-    {
-        $c = config('ai_credits.min_completion_cost_usd');
-
-        // The pipeline must be able to reserve its synthesis (primary, one fallback, one repair) inside the cap.
-        return round(max($c['base'], $synthesisFloorUsd) + $tokens / 1000 * $c['per_1000_tokens'], 6);
-    }
-
     /**
      * @param  float  $extraCostUsd  Provider cost the band's cap must also cover (OCR of a scan).
-     * @param  ?string  $minBand  The cheapest band this document may be quoted in (a scan is never "tiny").
+     * @param  ?string  $minBand  The cheapest band this document may be quoted in (a scan never prices below it).
      * @return array{band:string,credits:int,cap:float,shifted:bool,declined:bool,reason:?string}
      */
     public function classify(int $tokens, bool $dense, float $synthesisFloorUsd = 0.0, float $extraCostUsd = 0.0, ?string $minBand = null): array
@@ -81,9 +62,11 @@ class QuoteService
         if (! $declined && $floorIndex !== false) {
             $index = max($index, $floorIndex);
         }
-        // A band whose provider ceiling cannot pay for the minimum useful completion moves up, or is declined.
-        $needed = $this->minCompletionCostUsd($tokens, $synthesisFloorUsd) + $extraCostUsd;
-        while (! $declined && $this->providerCap($bands[$names[$index]]['credits']) < $needed) {
+        // A band that cannot fund what the pipeline must reserve (its synthesis reservation on the incremental route, a
+        // scan's OCR bound) moves up, or the document is declined. There is no size-based "minimum completion" gate: the
+        // band edges are the price, and the caps were checked against measured cost (config/ai_credits.php).
+        $needed = $synthesisFloorUsd + $extraCostUsd;
+        while (! $declined && $needed > 0 && $this->providerCap($bands[$names[$index]]['credits']) < $needed) {
             if ($index === count($names) - 1) {
                 $declined = true;
                 $reason = 'provider_cost_exceeds_top_band';
@@ -113,24 +96,56 @@ class QuoteService
         return $cpt > 0 ? $cpt : 3.0;
     }
 
-    /**
-     * Tokens the quote is priced on. The provider's own count when the pipeline already has it; otherwise the text
-     * length over a per-type ratio. A scan is also at least its page count times `ocr.tokens_per_page`.
-     */
+    /** Tokens the quote is priced on (see tokenBasis). */
     public function estimateTokens(Document $document, int $ocrPages = 0): int
     {
-        $provider = ($document->ai_pipeline['count_method'] ?? null) === 'anthropic' && isset($document->ai_pipeline['tokens'])
-            ? (int) $document->ai_pipeline['tokens'] : null;
-
-        return $this->estimateTokensFor($document->type, strlen((string) $document->extracted_text), $provider, $ocrPages);
+        return $this->tokenBasis($document->type, strlen((string) $document->extracted_text), $this->providerTokens($document), $ocrPages)['tokens'];
     }
 
-    /** The same estimate from its parts, for reports that must not load document text. */
+    /** The provider's own token count for this document, when the pipeline has already asked for it. */
+    public function providerTokens(Document $document): ?int
+    {
+        return ($document->ai_pipeline['count_method'] ?? null) === 'anthropic' && isset($document->ai_pipeline['tokens'])
+            ? (int) $document->ai_pipeline['tokens'] : null;
+    }
+
+    /** The same figure from its parts, for reports that must not load document text. */
     public function estimateTokensFor(?string $type, int $textBytes, ?int $providerTokens, int $ocrPages = 0): int
     {
-        $tokens = $providerTokens ?? max(1, (int) ceil($textBytes / $this->charsPerToken($type)));
+        return $this->tokenBasis($type, $textBytes, $providerTokens, $ocrPages)['tokens'];
+    }
 
-        return $ocrPages > 0 ? max($tokens, $ocrPages * (int) config('ai_credits.ocr.tokens_per_page')) : $tokens;
+    /**
+     * Where a quote's token figure comes from, and what was done to it.
+     *
+     * The provider's count is used as is whenever it exists. Otherwise the local estimate (text bytes over a per-type
+     * ratio) is multiplied by `local_estimate_multiplier`, because the estimate runs about +/-30% off the provider's count.
+     * A spreadsheet is then multiplied by `spreadsheet_token_multiplier`. A scan is at least its page count times
+     * `ocr.tokens_per_page`. `route_tokens` is the unscaled figure the real route decision is closest to.
+     *
+     * @return array{tokens:int,raw_tokens:int,route_tokens:int,token_source:string,estimate_multiplier:float,spreadsheet_multiplier:float}
+     */
+    public function tokenBasis(?string $type, int $textBytes, ?int $providerTokens, int $ocrPages = 0): array
+    {
+        $sheet = strtoupper((string) $type) === 'XLSX' ? (float) config('ai_credits.spreadsheet_token_multiplier') : 1.0;
+        if ($providerTokens !== null) {
+            $source = 'provider_count';
+            $raw = $providerTokens;
+            $estimateMultiplier = 1.0;
+        } else {
+            $source = 'local_estimate';
+            $raw = max(1, (int) ceil($textBytes / $this->charsPerToken($type)));
+            $estimateMultiplier = (float) config('ai_credits.local_estimate_multiplier');
+        }
+        $tokens = (int) ceil(round($raw * $estimateMultiplier * $sheet, 6));
+        $pageTokens = $ocrPages * (int) config('ai_credits.ocr.tokens_per_page');
+        if ($ocrPages > 0 && $pageTokens > $tokens) {
+            $tokens = $pageTokens;
+            $source = 'ocr_pages';
+        }
+
+        return ['tokens' => $tokens, 'raw_tokens' => $raw, 'route_tokens' => max($raw, $pageTokens),
+            'token_source' => $source, 'estimate_multiplier' => $estimateMultiplier, 'spreadsheet_multiplier' => $sheet];
     }
 
     /** Pages of this document that were read by OCR (an image is one page), or 0 when none were. */
@@ -156,13 +171,14 @@ class QuoteService
     {
         $text = (string) $document->extracted_text;
         $ocrPages = $this->ocrPages($document);
-        $tokens = $this->estimateTokens($document, $ocrPages);
+        $basis = $this->tokenBasis($document->type, strlen($text), $this->providerTokens($document), $ocrPages);
+        $tokens = $basis['tokens'];
         $density = app(ExtractionCapacity::class)->density($text, $document->type);
 
         $floor = 0.0;
         // Only the incremental pipeline admits spend against reservations; small documents take the legacy path.
         $incremental = config('document_intelligence.incremental')
-            && ! ($tokens <= config('document_intelligence.large_tokens') && mb_strlen($text) <= config('document_processing.max_extraction_chars'));
+            && ! ($basis['route_tokens'] <= config('document_intelligence.large_tokens') && mb_strlen($text) <= config('document_processing.max_extraction_chars'));
         if ($incremental) {
             try {
                 $r = app(AnthropicClient::class)->synthesisReservation($document, null, 0);
@@ -172,7 +188,9 @@ class QuoteService
             }
         }
 
-        return ['incremental_route' => (bool) $incremental, 'synthesis_floor_usd' => round($floor, 6), 'tokens' => $tokens, 'dense' => $density['dense'], 'spreadsheet' => $density['spreadsheet'],
+        return ['incremental_route' => (bool) $incremental, 'synthesis_floor_usd' => round($floor, 6), 'tokens' => $tokens, 'raw_tokens' => $basis['raw_tokens'],
+            'token_source' => $basis['token_source'], 'estimate_multiplier' => $basis['estimate_multiplier'],
+            'spreadsheet_multiplier' => $basis['spreadsheet_multiplier'], 'dense' => $density['dense'], 'spreadsheet' => $density['spreadsheet'],
             'numeric_ratio' => $density['numeric_ratio'], 'tabular_line_ratio' => $density['tabular_line_ratio'],
             'type' => $document->type, 'pages' => max((int) $document->pages, $ocrPages), 'ocr_pages' => $ocrPages];
     }
