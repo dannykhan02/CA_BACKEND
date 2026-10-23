@@ -255,7 +255,7 @@ class WorkloadCreditsV1Test extends TestCase
 
         $quote = app(QuoteService::class)->quoteDocument($document->fresh())['quote'];
 
-        $this->assertSame(['small', 3000, 3000, 'provider_count', 1.0], [$quote->band, $quote->preflight['tokens'], $quote->preflight['raw_tokens'],
+        $this->assertSame(['small', 3000, 3000, 'provider_count', 1], [$quote->band, $quote->preflight['tokens'], $quote->preflight['raw_tokens'],
             $quote->preflight['token_source'], $quote->preflight['estimate_multiplier']]);
     }
 
@@ -267,7 +267,7 @@ class WorkloadCreditsV1Test extends TestCase
         $q = app(QuoteService::class);
 
         $quote = $q->quoteDocument($document->fresh())['quote'];
-        $this->assertSame([2300, 2000, 'local_estimate', 1.15, 1.0], [$quote->preflight['tokens'], $quote->preflight['raw_tokens'], $quote->preflight['token_source'],
+        $this->assertSame([2300, 2000, 'local_estimate', 1.15, 1], [$quote->preflight['tokens'], $quote->preflight['raw_tokens'], $quote->preflight['token_source'],
             $quote->preflight['estimate_multiplier'], $quote->preflight['spreadsheet_multiplier']]);
 
         // It can move a document over an edge: 3,600 raw tokens are small, 4,140 are medium.
