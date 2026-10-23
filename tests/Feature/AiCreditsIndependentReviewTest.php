@@ -3,17 +3,21 @@
 namespace Tests\Feature;
 
 use App\Models\Document;
+use App\Models\DocumentAiRun;
 use App\Models\OperationQuote;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Services\AiCredits\AiCreditAdmission;
 use App\Services\AiCredits\CreditAccountant;
+use App\Services\AiCredits\OperationSpend;
 use App\Services\AiCredits\QuoteService;
+use App\Services\AnthropicClient;
 use App\Services\EntitlementService;
 use App\Services\WorkspaceCreditService;
 use App\Services\WorkspaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -161,5 +165,40 @@ class AiCreditsIndependentReviewTest extends TestCase
         $this->assertSame('released', $this->op($stale, 'comparison')->status);
         $this->assertSame('reserved', $this->op($fresh, 'comparison')->status);
         $this->assertSame(88, $accountant->available($ws->id));
+    }
+
+    /**
+     * Quote validation. An OCR quote caps provider spend at pages x USD 0.02, but the provider boundary reserves a hard
+     * per-request ceiling (about USD 0.028 for one vision request on the default extraction model) before it dispatches.
+     * A one-page scan must be able to fund its own request.
+     */
+    public function test_a_one_page_scan_can_fund_its_own_vision_request(): void
+    {
+        $ws = $this->workspace(100);
+        $document = $this->document($ws, 1000);
+        $this->assertTrue(app(AiCreditAdmission::class)->admitOcr($document, 1));
+        $quote = OperationQuote::where('kind', 'ocr')->firstOrFail();
+
+        Http::fakeSequence('api.anthropic.com/*')
+            ->push(['id' => 'ocr', 'model' => 'claude-haiku-4-5-20251001', 'stop_reason' => 'end_turn',
+                'content' => [['type' => 'text', 'text' => json_encode(['text' => 'page one', 'confidence' => 0.9])]],
+                'usage' => ['input_tokens' => 1000, 'output_tokens' => 100]]);
+        app(AnthropicClient::class)->extractTextFromImage(base64_encode('png'), 'image/png', $document->fresh());
+
+        $this->assertSame(1, DocumentAiRun::where('operation_quote_id', $quote->id)->count());
+        $this->assertEqualsWithDelta(0.0015, app(OperationSpend::class)->spentUsd($quote->id), 0.000001);
+        $this->assertSame(20, (int) $quote->credits, 'the customer price of a one-page scan is unchanged');
+    }
+
+    /** The cap only changes for scans so short that pages x per-page is below one request; every longer scan keeps pages x per-page. */
+    public function test_the_ocr_provider_cap_floor_leaves_longer_scans_and_all_prices_unchanged(): void
+    {
+        $quotes = app(QuoteService::class);
+        $perPage = (float) config('ai_credits.ocr.provider_cost_usd_per_page');
+        $this->assertGreaterThan($perPage, $quotes->classifyOcr(1)['cap'], 'a single page needs headroom for one request');
+        $this->assertEqualsWithDelta(5 * $perPage, $quotes->classifyOcr(5)['cap'], 0.000001);
+        $this->assertEqualsWithDelta(60 * $perPage, $quotes->classifyOcr(60)['cap'], 0.000001);
+        $this->assertSame([20, 20, 25, 60], [$quotes->classifyOcr(1)['credits'], $quotes->classifyOcr(20)['credits'],
+            $quotes->classifyOcr(25)['credits'], $quotes->classifyOcr(60)['credits']]);
     }
 }
