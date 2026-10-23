@@ -45,7 +45,7 @@ class AiCreditsOpsCommandsTest extends TestCase
         return $document;
     }
 
-    private function status(array $options = []): string
+    private function statusOutput(array $options = []): string
     {
         Artisan::call('docintel:ai-credits-status', $options);
 
@@ -64,10 +64,10 @@ class AiCreditsOpsCommandsTest extends TestCase
         $opsBefore = DB::table('billing_operations')->count();
 
         try {
-            $ok = $this->status(['--workspace' => $ws->id]);
+            $ok = $this->statusOutput(['--workspace' => $ws->id]);
             DB::table('credit_ledger')->insert(['workspace_id' => $ws->id, 'unit' => 'saved_ai_credit', 'direction' => 'debit', 'amount' => 5,
                 'reason' => 'test', 'reference' => 'test:stray-debit', 'created_at' => now()]);
-            $bad = $this->status(['--workspace' => $ws->id]);
+            $bad = $this->statusOutput(['--workspace' => $ws->id]);
         } finally {
             putenv('AI_CREDITS_SIMPLE_CREDITS');
             putenv('AI_CREDITS_ADMISSION_MODE');
