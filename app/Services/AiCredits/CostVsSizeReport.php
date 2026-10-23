@@ -279,58 +279,86 @@ class CostVsSizeReport
         return 'above_top_band';
     }
 
+    /** Quote-token buckets for the stage-limits table (inclusive upper bounds); the last is open. */
+    public const STAGE_BUCKETS = ['<=4k' => 4000, '4-8k' => 8000, '8-18k' => 18000, '18-35k' => 35000, '35k+' => PHP_INT_MAX];
+
     /**
      * Per purpose and model: how big responses really are against the limit a request is sent with, and what admission
      * assumes. Output percentiles and cost are over successful runs; `truncated_share` is runs that stopped at max_tokens over
      * all runs of the purpose and model. The admission figures price the median successful run's input (plus the 512-token
      * envelope admission adds) at the configured max_tokens (worst case) and at the purpose's realistic output (never above it).
+     * Rows for all documents come first (`quote_tokens` = 'all'), then the same figures per quote-token bucket of the run's document
+     * (the tokens the quote counts: provider count, else the local estimate). `max_tokens_sent` is the configured figure; what a
+     * request actually sent is not stored on document_ai_runs, so it reads 'not recorded'.
      *
      * @return list<array<string, mixed>>
      */
     public function stageLimits(?int $days = null): array
     {
-        $query = DB::table('document_ai_runs')->whereNotIn('purpose', ['document_qa', 'document_comparison'])
-            ->select(['purpose', 'model', 'status', 'failure_class', 'input_tokens', 'output_tokens', 'estimated_cost_usd']);
+        $query = DB::table('document_ai_runs as r')->leftJoin('documents as d', 'd.id', '=', 'r.document_id')
+            ->whereNotIn('r.purpose', ['document_qa', 'document_comparison'])
+            ->selectRaw("r.purpose, r.model, r.status, r.failure_class, r.input_tokens, r.output_tokens, r.estimated_cost_usd, d.type as doc_type,
+                octet_length(d.extracted_text) as doc_bytes, d.ai_pipeline::jsonb ->> 'count_method' as count_method, d.ai_pipeline::jsonb ->> 'tokens' as pipeline_tokens");
         if ($days !== null) {
-            $query->where('created_at', '>=', now()->subDays($days));
+            $query->where('r.created_at', '>=', now()->subDays($days));
         }
         $groups = [];
         foreach ($query->cursor() as $run) {
-            $g = &$groups[$run->purpose.'|'.$run->model];
-            $g ??= ['purpose' => $run->purpose, 'model' => $run->model, 'all' => 0, 'truncated' => 0, 'out' => [], 'in' => [], 'cost' => []];
-            $g['all']++;
-            $g['truncated'] += in_array($run->failure_class, ['truncated', 'max_tokens'], true) ? 1 : 0;
-            if ($run->status === 'success') {
-                $g['out'][] = (int) $run->output_tokens;
-                $g['in'][] = (int) $run->input_tokens;
-                $g['cost'][] = (float) $run->estimated_cost_usd;
+            $provider = $run->count_method === 'anthropic' && is_numeric($run->pipeline_tokens) ? (int) $run->pipeline_tokens : null;
+            $bucket = $run->doc_bytes === null ? 'unknown' : $this->stageBucket($this->quotes->estimateTokensFor($run->doc_type, (int) $run->doc_bytes, $provider));
+            foreach (['all', $bucket] as $scope) {
+                $g = &$groups[$scope][$run->purpose.'|'.$run->model];
+                $g ??= ['purpose' => $run->purpose, 'model' => $run->model, 'all' => 0, 'truncated' => 0, 'out' => [], 'in' => [], 'cost' => []];
+                $g['all']++;
+                $g['truncated'] += in_array($run->failure_class, ['truncated', 'max_tokens'], true) ? 1 : 0;
+                if ($run->status === 'success') {
+                    $g['out'][] = (int) $run->output_tokens;
+                    $g['in'][] = (int) $run->input_tokens;
+                    $g['cost'][] = (float) $run->estimated_cost_usd;
+                }
+                unset($g);
             }
-            unset($g);
         }
-        ksort($groups);
+        $order = array_flip(['all', ...array_keys(self::STAGE_BUCKETS), 'unknown']);
+        uksort($groups, fn ($x, $y) => $order[$x] <=> $order[$y]);
         $pricing = app(AiPricing::class);
         $rows = [];
-        foreach ($groups as $g) {
-            $maxTokens = $this->configuredMaxTokens($g['purpose']);
-            $realisticOut = (int) (config('ai_credits.stage_realistic_output_tokens')[$g['purpose']] ?? $maxTokens);
-            $input = $g['in'] === [] ? null : 512 + (int) round($this->quantile($g['in'], 0.50));
-            $worst = $input === null || ! $g['model'] ? null : $pricing->maximum($g['model'], $input, $maxTokens);
-            $realistic = $input === null || ! $g['model'] ? null : $pricing->maximum($g['model'], $input, min($maxTokens, $realisticOut));
-            $has = $g['out'] !== [];
-            $rows[] = ['purpose' => $g['purpose'], 'model' => $g['model'], 'successful_runs' => count($g['out']),
-                'output_p50' => $has ? (int) round($this->quantile($g['out'], 0.50)) : null,
-                'output_p95' => $has ? (int) round($this->quantile($g['out'], 0.95)) : null,
-                'output_p99' => $has ? (int) round($this->quantile($g['out'], 0.99)) : null,
-                'output_max' => $has ? max($g['out']) : null,
-                'cost_p99_usd' => $has ? round($this->quantile($g['cost'], 0.99), 6) : null,
-                'cost_max_usd' => $has ? round(max($g['cost']), 6) : null,
-                'truncated_share' => round($g['truncated'] / max(1, $g['all']), 4),
-                'max_tokens' => $maxTokens, 'realistic_output_tokens' => $realisticOut,
-                'worst_case_usd' => $worst === null ? null : round($worst, 6),
-                'realistic_usd' => $realistic === null ? null : round($realistic, 6)];
+        foreach ($groups as $scope => $perPurpose) {
+            ksort($perPurpose);
+            foreach ($perPurpose as $g) {
+                $maxTokens = $this->configuredMaxTokens($g['purpose']);
+                $medianInput = $g['in'] === [] ? 0 : (int) round($this->quantile($g['in'], 0.50));
+                $realisticOut = app(RealisticOutput::class)->tokens($g['purpose'], $medianInput, $maxTokens) ?? $maxTokens;
+                $input = $g['in'] === [] ? null : 512 + $medianInput;
+                $worst = $input === null || ! $g['model'] ? null : $pricing->maximum($g['model'], $input, $maxTokens);
+                $realistic = $input === null || ! $g['model'] ? null : $pricing->maximum($g['model'], $input, min($maxTokens, $realisticOut));
+                $has = $g['out'] !== [];
+                $rows[] = ['quote_tokens' => $scope, 'purpose' => $g['purpose'], 'model' => $g['model'], 'successful_runs' => count($g['out']),
+                    'output_p50' => $has ? (int) round($this->quantile($g['out'], 0.50)) : null,
+                    'output_p95' => $has ? (int) round($this->quantile($g['out'], 0.95)) : null,
+                    'output_p99' => $has ? (int) round($this->quantile($g['out'], 0.99)) : null,
+                    'output_max' => $has ? max($g['out']) : null,
+                    'cost_p99_usd' => $has ? round($this->quantile($g['cost'], 0.99), 6) : null,
+                    'cost_max_usd' => $has ? round(max($g['cost']), 6) : null,
+                    'truncated_share' => round($g['truncated'] / max(1, $g['all']), 4),
+                    'max_tokens' => $maxTokens, 'max_tokens_sent' => 'not recorded', 'realistic_output_tokens' => $realisticOut,
+                    'worst_case_usd' => $worst === null ? null : round($worst, 6),
+                    'realistic_usd' => $realistic === null ? null : round($realistic, 6)];
+            }
         }
 
         return $rows;
+    }
+
+    private function stageBucket(int $tokens): string
+    {
+        foreach (self::STAGE_BUCKETS as $name => $max) {
+            if ($tokens <= $max) {
+                return $name;
+            }
+        }
+
+        return '35k+';
     }
 
     /** The max_tokens a purpose's request is sent with (the incremental route's figure where the routes differ). */

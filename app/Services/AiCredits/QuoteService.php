@@ -9,6 +9,7 @@ use App\Services\AI\Incremental\ExtractionCapacity;
 use App\Services\AnthropicClient;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /** Local, pre-provider pricing. Nothing here calls a paid API. */
 class QuoteService
@@ -286,6 +287,31 @@ class QuoteService
             'preflight' => $signals + ['band_shifted_for_cost' => $c['shifted']]], $newRequest);
 
         return ['declined' => false, 'quote' => $quote];
+    }
+
+    /**
+     * A quote made from the local estimate can be about 30% low. When the provider's count later puts the document in a higher band, the
+     * customer keeps the quoted credits (never charged more) and the document may spend up to that higher band's provider cap, not more.
+     * Nobody is asked again. Idempotent: a cap that is already at or above the higher band's is left alone.
+     */
+    public function raiseCapForProviderCount(OperationQuote $quote, Document $document): OperationQuote
+    {
+        $names = $this->bandNames();
+        $quoted = array_search($quote->band, $names, true);
+        if ($quoted === false || ! in_array($quote->status, ['quoted', 'reserved'], true) || $this->providerTokens($document) === null) {
+            return $quote;
+        }
+        $preview = $this->previewDocument($document);
+        $c = $preview['classification'];
+        $actual = $c['declined'] ? false : array_search($c['band'], $names, true);
+        if ($actual === false || $actual <= $quoted || $c['cap'] <= (float) $quote->provider_cost_cap_usd) {
+            return $quote;
+        }
+        $quote->update(['provider_cost_cap_usd' => $c['cap']]);
+        Log::info('Quote band raised by provider count', ['document_id' => $document->id, 'quoted_band' => $quote->band, 'quoted_credits' => $quote->credits,
+            'provider_count_band' => $c['band'], 'tokens' => $preview['signals']['tokens'], 'cap_usd' => $c['cap']]);
+
+        return $quote->refresh();
     }
 
     public function quoteOcr(Document $document, int $pages): array

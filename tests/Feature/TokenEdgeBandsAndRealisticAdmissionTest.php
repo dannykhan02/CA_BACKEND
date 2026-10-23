@@ -202,4 +202,44 @@ class TokenEdgeBandsAndRealisticAdmissionTest extends TestCase
         $this->expectExceptionMessage('budget_exceeded');
         $this->request($document, $quote, 'document_summary', 9500, 4096, 1800); // worst case about 0.061 > 0.054
     }
+
+    public function test_the_entities_estimate_scales_with_the_input_and_other_purposes_use_their_flat_figure(): void
+    {
+        $admission = app(ProviderRequestAdmission::class);
+        $entities = fn (int $tokens) => $admission->assess(null, 'entities', 'claude-haiku-5-5',
+            [['role' => 'user', 'content' => str_repeat('x', $tokens * 3)]], ['max_tokens' => 16000]);
+
+        $big = $entities(54000); // 1,500 + 0.14 x 54,000 = 9,060
+        $this->assertEqualsWithDelta(9060, $big['realistic_output_tokens'], 150);
+        $this->assertNotSame(2000, $big['realistic_output_tokens']);
+        $this->assertEqualsWithDelta(1500 + 0.14 * 3362, $entities(3362)['realistic_output_tokens'], 20);
+        $this->assertSame(16000, $entities(200000)['realistic_output_tokens'], 'the purpose cap and the request max_tokens bound it');
+
+        $summary = $admission->assess(null, 'document_summary', 'claude-sonnet-5-5',
+            [['role' => 'user', 'content' => str_repeat('x', 9500)]], ['max_tokens' => 4096]);
+        $this->assertSame(2200, $summary['realistic_output_tokens']);
+        $this->assertSame(500, $admission->assess(null, 'document_type', 'claude-haiku-5-5',
+            [['role' => 'user', 'content' => 'x']], ['max_tokens' => 4096])['realistic_output_tokens']);
+
+        config(['ai_credits.stage_realistic_output.entities.per_input_token' => 0.2]);
+        $this->assertEqualsWithDelta(1500 + 0.2 * 54000, $entities(54000)['realistic_output_tokens'], 200);
+    }
+
+    public function test_with_the_flag_off_nothing_is_quoted_and_the_internal_hold_stays_the_worst_case(): void
+    {
+        config(['ai_credits.enabled' => false]);
+        $ws = $this->workspace();
+        $document = $this->document($ws, 'PDF', 9000, 3000);
+        $admission = app(ProviderRequestAdmission::class);
+        $messages = [['role' => 'user', 'content' => str_repeat('x', 9500)]];
+
+        $this->assertNull(app(OperationSpend::class)->activeQuote($document, 'document_summary'));
+        $this->assertSame(0, OperationQuote::count());
+        $worst = $admission->assertAllowed($document, 'document_summary', 'claude-sonnet-5-5', $messages, ['max_tokens' => 4096]);
+        $this->assertSame($worst, $admission->assess($document, 'document_summary', 'claude-sonnet-5-5', $messages, ['max_tokens' => 4096])['maximum']);
+        // Without a quote the client reserves the worst case against the document scope, exactly as before.
+        $scope = app(OperationSpend::class)->internalScope($document, 'document_summary', null, null);
+        app(OperationSpend::class)->reserveInternalAttempt($scope, (string) Str::uuid(), 'document_summary', $worst);
+        $this->assertSame((int) ceil($worst * 1000000), (int) DB::table('provider_call_attempts')->where('workspace_id', $ws->id)->value('reserved_microusd'));
+    }
 }

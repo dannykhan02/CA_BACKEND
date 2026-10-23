@@ -36,20 +36,25 @@ return [
     // only when spent plus the worst case fits the cap. A refusal is `budget_exceeded`: partial / Needs Review, hold released.
     'admission_mode' => env('AI_CREDITS_ADMISSION_MODE', 'realistic'),
     'overrun_factor' => (float) env('AI_CREDITS_OVERRUN_FACTOR', 3.0),
-    // Realistic output tokens per purpose: priced with the request's real input bound, never above its max_tokens. A purpose
-    // that is not listed is admitted at its worst case. Haiku extraction purposes share one figure.
-    'stage_realistic_output_tokens' => [
-        'document_summary' => (int) env('AI_CREDITS_REALISTIC_OUTPUT_SUMMARY', 2500),
-        'insights' => (int) env('AI_CREDITS_REALISTIC_OUTPUT_INSIGHTS', 2500),
-        'entities' => (int) env('AI_CREDITS_REALISTIC_OUTPUT_EXTRACTION', 2000),
-        'risks' => (int) env('AI_CREDITS_REALISTIC_OUTPUT_EXTRACTION', 2000),
-        'deadlines' => (int) env('AI_CREDITS_REALISTIC_OUTPUT_EXTRACTION', 2000),
-        'document_type' => (int) env('AI_CREDITS_REALISTIC_OUTPUT_EXTRACTION', 2000),
-        'context_resolution' => (int) env('AI_CREDITS_REALISTIC_OUTPUT_EXTRACTION', 2000),
-        'kpi_identity' => (int) env('AI_CREDITS_REALISTIC_OUTPUT_EXTRACTION', 2000),
-        'ocr' => (int) env('AI_CREDITS_REALISTIC_OUTPUT_EXTRACTION', 2000),
-        'chart_vision' => (int) env('AI_CREDITS_REALISTIC_OUTPUT_EXTRACTION', 2000),
-    ],
+    // Realistic output per purpose, from production p95-p99 of successful runs: estimate = min(cap, base + per_input_token x
+    // the request's input tokens), then never above the request's max_tokens. Input tokens are the request's input bound / 3. A
+    // purpose that is not listed is admitted at its worst case. Override one value with AI_CREDITS_REALISTIC_<PURPOSE>_BASE,
+    // _PER_TOKEN or _CAP (for example AI_CREDITS_REALISTIC_ENTITIES_PER_TOKEN=0.2).
+    'stage_realistic_output' => (function (): array {
+        $defaults = [
+            'document_summary' => [2200, 0.0, 2500], 'insights' => [3500, 0.0, 5200], 'entities' => [1500, 0.14, 16000],
+            'deadlines' => [2500, 0.0, 4000], 'risks' => [3000, 0.0, 4096], 'document_type' => [500, 0.0, 600],
+            'ocr' => [300, 0.0, 400], 'chart_vision' => [800, 0.0, 1000],
+        ];
+        $out = [];
+        foreach ($defaults as $purpose => [$base, $perToken, $cap]) {
+            $key = 'AI_CREDITS_REALISTIC_'.strtoupper($purpose);
+            $out[$purpose] = ['base' => (int) env($key.'_BASE', $base), 'per_input_token' => (float) env($key.'_PER_TOKEN', $perToken),
+                'cap' => (int) env($key.'_CAP', $cap)];
+        }
+
+        return $out;
+    })(),
     // What the incremental route's quote and pipeline hold for synthesis before extraction spends anything. 'primary_only'
     // holds the primary synthesis request alone times `headroom`; the fallback and the repair are paid from the remaining cap
     // when they are sent, and OperationSpend refuses one that does not fit (the document ends Needs Review, hold released).

@@ -133,7 +133,7 @@ always rolled back, and a test asserts nothing is saved). One CSV row per Ready 
 `--stage-limits` (also printed after the summary by default) adds a table per purpose and model over successful runs: count,
 output-token p50 / p95 / p99 / max, cost p99 and max per request, the share of runs that stopped at `max_tokens`, the configured
 `max_tokens`, the realistic output figure, and the worst-case and realistic cost admission would assign to the median run's input.
-Use it to set `stage_realistic_output_tokens`.
+Use it to set `stage_realistic_output`.
 
 Then a summary per token bucket (0-1k, 1-2k, 2-4k, 4-6k, 6-10k, 10-20k, 20-30k, 30-60k, 60k+): documents, median / p90 / max cost, the credits
 and band the p90 (and p90 x stress) needs at USD 0.027 per credit, the band the quote gives that size and whether its cap covers the
@@ -148,12 +148,25 @@ would-quote reads the text of every document. Use it to move the edges.
 ## Admission against the cap
 
 `ai_credits.admission_mode`: `realistic` (default) admits a provider request when what is already spent plus its **realistic** cost
-(the request's input bound at its price plus `stage_realistic_output_tokens[purpose]` output tokens, never above its `max_tokens`) fits
+(the request's input bound at its price plus the purpose's estimated output tokens, never above its `max_tokens`) fits
 the quote's cap, **and** its worst case (every `max_tokens` token) fits `overrun_factor` x the cap. `strict` admits only when spent plus
 the worst case fits the cap (the earlier rule). A purpose with no realistic figure is admitted at its worst case. A refusal is
 `budget_exceeded`: the document ends Needs Review (partial), the hold is released and the customer is not charged. The input bound still
 counts each byte as a token. A small-band Sonnet 5.5 summary with 4,096 `max_tokens` and about 10 kB of input: realistic about 0.045,
 worst case about 0.061, small cap 0.054.
+
+## Operating
+
+* `php artisan docintel:ai-credits-status [--workspace=<id>] [--limit=20]` is read-only: flag (config and this process's env), admission mode,
+  bands and caps, plan allowances, deprecated `AI_CREDITS_` variables (names only), and per workspace the AI-credit balance, reserved,
+  debited, released and open holds, with `MISMATCH` when reserved != debited + released + open.
+* `php artisan docintel:grant-ai-credits <workspace> <amount> --reason="..." [--run-id=<key>]` adds saved AI credits through the accountant
+  with a ledger entry (reference `admin_grant:<run id>`). The reason is required; repeating a run id grants nothing again.
+* **Under-quoted documents.** A quote made from a low local estimate keeps its credits, but when the provider count puts the document in a
+  higher band the quote's provider cap is raised to that band's cap (`QuoteService::raiseCapForProviderCount`, at the start of the incremental
+  pipeline) and `Quote band raised by provider count` is logged. The customer is never charged more than the quote and is not asked again.
+* `--stage-limits` also prints the same figures per quote-token bucket (<=4k, 4-8k, 8-18k, 18-35k, 35k+). The `max_tokens` a request actually
+  sent is not stored on `document_ai_runs`, so the column reads `not recorded`; `max_tokens` is the configured figure.
 
 ## Switching on and off
 
@@ -170,8 +183,23 @@ worst case about 0.061, small cap 0.054.
 | `ai_credits.dense_shift.enabled` (`AI_CREDITS_DENSE_SHIFT_ENABLED`) | `false` |
 | `ai_credits.admission_mode` (`AI_CREDITS_ADMISSION_MODE`) | `realistic` (`strict` = old rule) |
 | `ai_credits.overrun_factor` (`AI_CREDITS_OVERRUN_FACTOR`) | `3.0` |
-| `ai_credits.stage_realistic_output_tokens.document_summary` / `.insights` (`AI_CREDITS_REALISTIC_OUTPUT_SUMMARY` / `_INSIGHTS`) | `2500` / `2500` |
-| `ai_credits.stage_realistic_output_tokens.{entities,risks,deadlines,document_type,context_resolution,kpi_identity,ocr,chart_vision}` (`AI_CREDITS_REALISTIC_OUTPUT_EXTRACTION`) | `2000` |
+| `ai_credits.stage_realistic_output.<purpose>` `{base, per_input_token, cap}` (`AI_CREDITS_REALISTIC_<PURPOSE>_BASE` / `_PER_TOKEN` / `_CAP`) | see below |
+
+Realistic output estimate = `min(cap, base + per_input_token x input tokens)`, then at most the request's `max_tokens`; input tokens are
+the request's input bound / 3. From production p95-p99 of successful runs:
+
+| Purpose | base | per input token | cap |
+|---|---|---|---|
+| document_summary | 2200 | 0 | 2500 |
+| insights | 3500 | 0 | 5200 |
+| entities | 1500 | 0.14 | 16000 |
+| deadlines | 2500 | 0 | 4000 |
+| risks | 3000 | 0 | 4096 |
+| document_type | 500 | 0 | 600 |
+| ocr | 300 | 0 | 400 |
+| chart_vision | 800 | 0 | 1000 |
+
+A purpose not listed (`context_resolution`, `kpi_identity`, brief, Q&A) is admitted at its worst case.
 
 ## Env
 
