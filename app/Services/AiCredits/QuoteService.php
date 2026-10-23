@@ -55,7 +55,7 @@ class QuoteService
         }
         $reason = $declined ? 'document_too_large' : null;
         $start = $index;
-        if ($dense && ! $declined) {
+        if ($dense && ! $declined && config('ai_credits.dense_shift.enabled')) {
             $index = min(count($names) - 1, $index + (int) config('ai_credits.dense_band_shift'));
         }
         $floorIndex = $minBand === null ? false : array_search($minBand, $names, true);

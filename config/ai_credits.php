@@ -27,6 +27,29 @@ return [
         'very_large' => ['max_tokens' => (int) env('AI_CREDITS_BAND_VERY_LARGE_MAX_TOKENS', 250000), 'credits' => (int) env('AI_CREDITS_BAND_VERY_LARGE_CREDITS', 80)],
     ],
     'dense_band_shift' => (int) env('AI_CREDITS_DENSE_BAND_SHIFT', 1),
+    // Off: bands follow token edges only. Measured, the rule lifted 7-, 46- and 40-page PDFs one band too high and counted a
+    // spreadsheet twice (its x1.6 token multiplier already prices its density). `dense_band_shift` applies only when this is on.
+    'dense_shift' => ['enabled' => (bool) env('AI_CREDITS_DENSE_SHIFT_ENABLED', false)],
+
+    // Provider-request admission against the quote's cap. 'realistic' (default) admits a request when what is already spent plus
+    // its realistic cost fits the cap, and its worst case (every output token) fits `overrun_factor` x the cap. 'strict' admits
+    // only when spent plus the worst case fits the cap. A refusal is `budget_exceeded`: partial / Needs Review, hold released.
+    'admission_mode' => env('AI_CREDITS_ADMISSION_MODE', 'realistic'),
+    'overrun_factor' => (float) env('AI_CREDITS_OVERRUN_FACTOR', 3.0),
+    // Realistic output tokens per purpose: priced with the request's real input bound, never above its max_tokens. A purpose
+    // that is not listed is admitted at its worst case. Haiku extraction purposes share one figure.
+    'stage_realistic_output_tokens' => [
+        'document_summary' => (int) env('AI_CREDITS_REALISTIC_OUTPUT_SUMMARY', 2500),
+        'insights' => (int) env('AI_CREDITS_REALISTIC_OUTPUT_INSIGHTS', 2500),
+        'entities' => (int) env('AI_CREDITS_REALISTIC_OUTPUT_EXTRACTION', 2000),
+        'risks' => (int) env('AI_CREDITS_REALISTIC_OUTPUT_EXTRACTION', 2000),
+        'deadlines' => (int) env('AI_CREDITS_REALISTIC_OUTPUT_EXTRACTION', 2000),
+        'document_type' => (int) env('AI_CREDITS_REALISTIC_OUTPUT_EXTRACTION', 2000),
+        'context_resolution' => (int) env('AI_CREDITS_REALISTIC_OUTPUT_EXTRACTION', 2000),
+        'kpi_identity' => (int) env('AI_CREDITS_REALISTIC_OUTPUT_EXTRACTION', 2000),
+        'ocr' => (int) env('AI_CREDITS_REALISTIC_OUTPUT_EXTRACTION', 2000),
+        'chart_vision' => (int) env('AI_CREDITS_REALISTIC_OUTPUT_EXTRACTION', 2000),
+    ],
     // What the incremental route's quote and pipeline hold for synthesis before extraction spends anything. 'primary_only'
     // holds the primary synthesis request alone times `headroom`; the fallback and the repair are paid from the remaining cap
     // when they are sent, and OperationSpend refuses one that does not fit (the document ends Needs Review, hold released).

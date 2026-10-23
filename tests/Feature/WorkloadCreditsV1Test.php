@@ -43,7 +43,7 @@ class WorkloadCreditsV1Test extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        config(['ai_credits.enabled' => true, 'document_intelligence.revision_v1' => true, 'document_intelligence.incremental' => false]);
+        config(['ai_credits.enabled' => true, 'ai_credits.dense_shift.enabled' => true, 'document_intelligence.revision_v1' => true, 'document_intelligence.incremental' => false]);
     }
 
     private function workspace(int $savedAi = 100, int $legacyDocs = 0): Workspace

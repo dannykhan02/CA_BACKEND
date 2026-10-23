@@ -13,6 +13,17 @@ class ProviderRequestAdmission
 
     public function assertAllowed(?Document $document, ?string $task, string $model, array $messages, array $options): float
     {
+        return $this->assess($document, $task, $model, $messages, $options)['maximum'];
+    }
+
+    /**
+     * The same checks, returning both bounds: the worst case (every output token the request may produce) and the realistic
+     * cost (the same input, the purpose's `ai_credits.stage_realistic_output_tokens` at most as output). Never above the worst case.
+     *
+     * @return array{maximum:float,realistic:float}
+     */
+    public function assess(?Document $document, ?string $task, string $model, array $messages, array $options): array
+    {
         $roles = config('document_intelligence.model_roles', []);
         $role = is_string($task) ? ($roles[$task] ?? null) : null;
         $selected = $role === 'synthesis' ? config('services.anthropic.synthesis_model')
@@ -105,8 +116,8 @@ class ProviderRequestAdmission
         if ($input + (int) $output > (int) $capabilities['context_window']) {
             throw new AiProcessingException('context_overflow');
         }
-        $cost = $this->pricing->maximum($model, $input, (int) $output,
-            $this->mayUseCache($messages) || $this->mayUseCache($options['system'] ?? []));
+        $mayUseCache = $this->mayUseCache($messages) || $this->mayUseCache($options['system'] ?? []);
+        $cost = $this->pricing->maximum($model, $input, (int) $output, $mayUseCache);
         if ($cost === null || ! is_finite($cost)) {
             throw new AiProcessingException('unknown_price');
         }
@@ -114,7 +125,11 @@ class ProviderRequestAdmission
             throw new AiProcessingException('budget_exceeded');
         }
 
-        return $cost;
+        $typical = is_string($task) ? config('ai_credits.stage_realistic_output_tokens', [])[$task] ?? null : null;
+        $realistic = is_numeric($typical) && (int) $typical >= 1
+            ? $this->pricing->maximum($model, $input, min((int) $output, (int) $typical), $mayUseCache) : $cost;
+
+        return ['maximum' => $cost, 'realistic' => min($cost, $realistic ?? $cost)];
     }
 
     private function mayUseCache(array $blocks): bool

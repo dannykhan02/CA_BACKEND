@@ -22,7 +22,9 @@ spend cap is its credits x USD 0.027. There is no size-based "completion gate" a
 The measured column is `docintel:cost-vs-size-report` on 24 Ready production documents; the test
 `test_no_band_cap_is_below_the_measured_cost_of_a_document_of_that_size` pins that every measured point fits its band's cap.
 
-* A **dense** document (spreadsheet, or mostly numeric or tabular text) moves up one band.
+* The **dense rule** (a spreadsheet, or mostly numeric or tabular text, moves up `dense_band_shift` bands) is **off by default**
+  (`ai_credits.dense_shift.enabled`). Bands follow token edges only; a spreadsheet's density is already priced by its x1.6 token
+  multiplier. The code is kept; set `AI_CREDITS_DENSE_SHIFT_ENABLED=true` to bring it back.
 * A band also moves up when its cap cannot fund what the pipeline must reserve: the incremental route's synthesis reservation
   (see below), or a scan's OCR bound. Otherwise it never moves up for size. If the reservation does not fit even the top band
   the document is declined.
@@ -112,7 +114,7 @@ provider cost from `document_ai_runs`, run counts, failed chunks), with the flag
 usage; `count_tokens` calls were already logged.
 
 ```
-php artisan docintel:cost-vs-size-report [--days=N] [--summary-only] [--skip-would-quote] [--stress=1.25]
+php artisan docintel:cost-vs-size-report [--days=N] [--summary-only] [--skip-would-quote] [--stress=1.25] [--stage-limits]
 ```
 
 Read-only; writes nothing and creates no quote, reservation or ledger row (the would-quote part runs inside a transaction that is
@@ -128,6 +130,11 @@ always rolled back, and a test asserts nothing is saved). One CSV row per Ready 
 * **Incremental-route documents only:** `reservation_floor_usd` (the pipeline's synthesis reservation computed now, whatever the quote
   assumed), `real_synthesis_cost_usd` and `floor_over_real`.
 
+`--stage-limits` (also printed after the summary by default) adds a table per purpose and model over successful runs: count,
+output-token p50 / p95 / p99 / max, cost p99 and max per request, the share of runs that stopped at `max_tokens`, the configured
+`max_tokens`, the realistic output figure, and the worst-case and realistic cost admission would assign to the median run's input.
+Use it to set `stage_realistic_output_tokens`.
+
 Then a summary per token bucket (0-1k, 1-2k, 2-4k, 4-6k, 6-10k, 10-20k, 20-30k, 30-60k, 60k+): documents, median / p90 / max cost, the credits
 and band the p90 (and p90 x stress) needs at USD 0.027 per credit, the band the quote gives that size and whether its cap covers the
 worst document and p90 x stress, and **where the quote overcharges**: `median_would_credits`, `median_would_cap_over_cost` (the quote's
@@ -137,6 +144,34 @@ would-quote reads the text of every document. Use it to move the edges.
 
 `claude-haiku-5-5` requests whose total prompt input exceeds 100,000 tokens are priced at the long-context tier
 (`document_intelligence.pricing_long_context`) in the estimate and in the hard request bound.
+
+## Admission against the cap
+
+`ai_credits.admission_mode`: `realistic` (default) admits a provider request when what is already spent plus its **realistic** cost
+(the request's input bound at its price plus `stage_realistic_output_tokens[purpose]` output tokens, never above its `max_tokens`) fits
+the quote's cap, **and** its worst case (every `max_tokens` token) fits `overrun_factor` x the cap. `strict` admits only when spent plus
+the worst case fits the cap (the earlier rule). A purpose with no realistic figure is admitted at its worst case. A refusal is
+`budget_exceeded`: the document ends Needs Review (partial), the hold is released and the customer is not charged. The input bound still
+counts each byte as a token. A small-band Sonnet 5.5 summary with 4,096 `max_tokens` and about 10 kB of input: realistic about 0.045,
+worst case about 0.061, small cap 0.054.
+
+## Switching on and off
+
+* **On:** set `DOCINTEL_AI_CREDITS_ENABLED=true` on **both** `CA_BACKEND` and `ca-horizon-worker` and restart both (the worker reads config
+  at boot). Nothing is quoted, reserved or charged until it is on everywhere; with it off the legacy one-unit rule applies.
+* **Off (rollback):** set it to `false` on both and restart both. See Rollback below.
+
+## Config keys added since v3
+
+| Key (env) | Default |
+|---|---|
+| `ai_credits.synthesis_reservation.mode` (`AI_CREDITS_SYNTHESIS_RESERVATION_MODE`) | `primary_only` (`full` = primary + fallback + repair) |
+| `ai_credits.synthesis_reservation.headroom` (`AI_CREDITS_SYNTHESIS_RESERVATION_HEADROOM`) | `1.0` |
+| `ai_credits.dense_shift.enabled` (`AI_CREDITS_DENSE_SHIFT_ENABLED`) | `false` |
+| `ai_credits.admission_mode` (`AI_CREDITS_ADMISSION_MODE`) | `realistic` (`strict` = old rule) |
+| `ai_credits.overrun_factor` (`AI_CREDITS_OVERRUN_FACTOR`) | `3.0` |
+| `ai_credits.stage_realistic_output_tokens.document_summary` / `.insights` (`AI_CREDITS_REALISTIC_OUTPUT_SUMMARY` / `_INSIGHTS`) | `2500` / `2500` |
+| `ai_credits.stage_realistic_output_tokens.{entities,risks,deadlines,document_type,context_resolution,kpi_identity,ocr,chart_vision}` (`AI_CREDITS_REALISTIC_OUTPUT_EXTRACTION`) | `2000` |
 
 ## Env
 

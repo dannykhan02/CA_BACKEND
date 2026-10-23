@@ -3,6 +3,7 @@
 namespace App\Services\AiCredits;
 
 use App\Models\Document;
+use App\Services\AI\AiPricing;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -276,6 +277,71 @@ class CostVsSizeReport
         }
 
         return 'above_top_band';
+    }
+
+    /**
+     * Per purpose and model: how big responses really are against the limit a request is sent with, and what admission
+     * assumes. Output percentiles and cost are over successful runs; `truncated_share` is runs that stopped at max_tokens over
+     * all runs of the purpose and model. The admission figures price the median successful run's input (plus the 512-token
+     * envelope admission adds) at the configured max_tokens (worst case) and at the purpose's realistic output (never above it).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function stageLimits(?int $days = null): array
+    {
+        $query = DB::table('document_ai_runs')->whereNotIn('purpose', ['document_qa', 'document_comparison'])
+            ->select(['purpose', 'model', 'status', 'failure_class', 'input_tokens', 'output_tokens', 'estimated_cost_usd']);
+        if ($days !== null) {
+            $query->where('created_at', '>=', now()->subDays($days));
+        }
+        $groups = [];
+        foreach ($query->cursor() as $run) {
+            $g = &$groups[$run->purpose.'|'.$run->model];
+            $g ??= ['purpose' => $run->purpose, 'model' => $run->model, 'all' => 0, 'truncated' => 0, 'out' => [], 'in' => [], 'cost' => []];
+            $g['all']++;
+            $g['truncated'] += in_array($run->failure_class, ['truncated', 'max_tokens'], true) ? 1 : 0;
+            if ($run->status === 'success') {
+                $g['out'][] = (int) $run->output_tokens;
+                $g['in'][] = (int) $run->input_tokens;
+                $g['cost'][] = (float) $run->estimated_cost_usd;
+            }
+            unset($g);
+        }
+        ksort($groups);
+        $pricing = app(AiPricing::class);
+        $rows = [];
+        foreach ($groups as $g) {
+            $maxTokens = $this->configuredMaxTokens($g['purpose']);
+            $realisticOut = (int) (config('ai_credits.stage_realistic_output_tokens')[$g['purpose']] ?? $maxTokens);
+            $input = $g['in'] === [] ? null : 512 + (int) round($this->quantile($g['in'], 0.50));
+            $worst = $input === null || ! $g['model'] ? null : $pricing->maximum($g['model'], $input, $maxTokens);
+            $realistic = $input === null || ! $g['model'] ? null : $pricing->maximum($g['model'], $input, min($maxTokens, $realisticOut));
+            $has = $g['out'] !== [];
+            $rows[] = ['purpose' => $g['purpose'], 'model' => $g['model'], 'successful_runs' => count($g['out']),
+                'output_p50' => $has ? (int) round($this->quantile($g['out'], 0.50)) : null,
+                'output_p95' => $has ? (int) round($this->quantile($g['out'], 0.95)) : null,
+                'output_p99' => $has ? (int) round($this->quantile($g['out'], 0.99)) : null,
+                'output_max' => $has ? max($g['out']) : null,
+                'cost_p99_usd' => $has ? round($this->quantile($g['cost'], 0.99), 6) : null,
+                'cost_max_usd' => $has ? round(max($g['cost']), 6) : null,
+                'truncated_share' => round($g['truncated'] / max(1, $g['all']), 4),
+                'max_tokens' => $maxTokens, 'realistic_output_tokens' => $realisticOut,
+                'worst_case_usd' => $worst === null ? null : round($worst, 6),
+                'realistic_usd' => $realistic === null ? null : round($realistic, 6)];
+        }
+
+        return $rows;
+    }
+
+    /** The max_tokens a purpose's request is sent with (the incremental route's figure where the routes differ). */
+    public function configuredMaxTokens(string $purpose): int
+    {
+        return match ($purpose) {
+            'document_summary' => (int) config('document_intelligence.synthesis_max_tokens'),
+            'insights' => (int) config('document_intelligence.structured_output_tokens.insights_v10'),
+            'entities' => (int) config('document_intelligence.extraction_max_tokens'),
+            default => (int) config('services.anthropic.max_tokens'),
+        };
     }
 
     /** Linear interpolation between ranks, as CreditEconomicsReport does. */
