@@ -167,15 +167,14 @@ class QuoteService
     }
 
     /**
-     * What the incremental pipeline reserves for synthesis before it starts: the primary request, one degraded fallback and
-     * one repair, each at its worst-case cost (AnthropicClient::synthesisReservation). A reservation, not a cost.
+     * What the incremental pipeline reserves for synthesis before it starts, at worst-case cost
+     * (AnthropicClient::synthesisReservation): the primary request alone under `ai_credits.synthesis_reservation.mode`
+     * 'primary_only', or the primary, one degraded fallback and one repair under 'full'. A reservation, not a cost.
      */
     public function synthesisFloorUsd(Document $document): float
     {
         try {
-            $r = app(AnthropicClient::class)->synthesisReservation($document, null, 0);
-
-            return (float) ($r['synthesis_reserved_usd'] ?? 0) + (float) ($r['synthesis_degraded_reserved_usd'] ?? 0) + (float) ($r['repair_reserved_usd'] ?? 0);
+            return app(SynthesisReservation::class)->floor(app(AnthropicClient::class)->synthesisReservation($document, null, 0));
         } catch (\Throwable) {
             return 0.0; // local estimate unavailable
         }

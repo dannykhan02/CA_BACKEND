@@ -546,7 +546,7 @@ class AiCreditsTest extends TestCase
         $quote = app(QuoteService::class)->quoteDocument($this->document($ws, 1000))['quote'];
         $floor = $quote->preflight['synthesis_floor_usd'];
         $this->assertTrue($quote->preflight['incremental_route']);
-        $this->assertGreaterThan(0.1, $floor, 'Even a tiny document reserves primary + fallback + repair synthesis.');
+        $this->assertGreaterThan(0.1, $floor, 'Even a tiny document reserves the primary synthesis request.');
         // At 0.027 USD per credit, 2 credits (0.054) cannot fund that reservation, so the band is not "small".
         $this->assertNotSame('small', $quote->band, 'floor='.$floor.' band='.$quote->band);
         $this->assertTrue($quote->preflight['band_shifted_for_cost']);

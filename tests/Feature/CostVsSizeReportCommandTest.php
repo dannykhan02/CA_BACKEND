@@ -254,7 +254,7 @@ class CostVsSizeReportCommandTest extends TestCase
         $row = $rows[$i->id];
 
         $this->assertSame('incremental', $row['would_route']);
-        $this->assertGreaterThan(0.1, $row['synthesis_floor_usd'], 'primary + fallback + repair are reserved even for a short document');
+        $this->assertGreaterThan(0.1, $row['synthesis_floor_usd'], 'the primary synthesis request is reserved even for a short document');
         $this->assertEqualsWithDelta($row['synthesis_floor_usd'], $row['reservation_floor_usd'], 1e-9);
         $this->assertEqualsWithDelta(0.05, $row['real_synthesis_cost_usd'], 1e-9);
         $this->assertEqualsWithDelta(round($row['reservation_floor_usd'] / 0.05, 2), $row['floor_over_real'], 1e-9);

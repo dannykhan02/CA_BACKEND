@@ -27,6 +27,15 @@ return [
         'very_large' => ['max_tokens' => (int) env('AI_CREDITS_BAND_VERY_LARGE_MAX_TOKENS', 250000), 'credits' => (int) env('AI_CREDITS_BAND_VERY_LARGE_CREDITS', 80)],
     ],
     'dense_band_shift' => (int) env('AI_CREDITS_DENSE_BAND_SHIFT', 1),
+    // What the incremental route's quote and pipeline hold for synthesis before extraction spends anything. 'primary_only'
+    // holds the primary synthesis request alone times `headroom`; the fallback and the repair are paid from the remaining cap
+    // when they are sent, and OperationSpend refuses one that does not fit (the document ends Needs Review, hold released).
+    // 'full' holds primary + degraded fallback + repair, as before. Any other value behaves as 'full'.
+    // Headroom 1.25 would lift a 15k-token document from regular to large (primary 0.234 x 1.25 > 0.27), so it ships at 1.0.
+    'synthesis_reservation' => [
+        'mode' => env('AI_CREDITS_SYNTHESIS_RESERVATION_MODE', 'primary_only'),
+        'headroom' => (float) env('AI_CREDITS_SYNTHESIS_RESERVATION_HEADROOM', 1.0),
+    ],
     // A quote needs the customer's explicit confirmation before credits are reserved when it costs at least this
     // many credits, or when the document has more than this many pages.
     'confirm_from_credits' => (int) env('AI_CREDITS_CONFIRM_FROM_CREDITS', 30),
