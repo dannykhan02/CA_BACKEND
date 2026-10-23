@@ -23,7 +23,7 @@ return [
         'medium' => ['max_tokens' => (int) env('AI_CREDITS_BAND_MEDIUM_MAX_TOKENS', 8000), 'credits' => (int) env('AI_CREDITS_BAND_MEDIUM_CREDITS', 6)],
         'regular' => ['max_tokens' => (int) env('AI_CREDITS_BAND_REGULAR_MAX_TOKENS', 18000), 'credits' => (int) env('AI_CREDITS_BAND_REGULAR_CREDITS', 10)],
         'large' => ['max_tokens' => (int) env('AI_CREDITS_BAND_LARGE_MAX_TOKENS', 35000), 'credits' => (int) env('AI_CREDITS_BAND_LARGE_CREDITS', 20)],
-        'xlarge' => ['max_tokens' => (int) env('AI_CREDITS_BAND_XLARGE_MAX_TOKENS', 90000), 'credits' => (int) env('AI_CREDITS_BAND_XLARGE_CREDITS', 30)],
+        'xlarge' => ['max_tokens' => (int) env('AI_CREDITS_BAND_XLARGE_MAX_TOKENS', 90000), 'credits' => (int) env('AI_CREDITS_BAND_XLARGE_CREDITS', 35)],
         'very_large' => ['max_tokens' => (int) env('AI_CREDITS_BAND_VERY_LARGE_MAX_TOKENS', 250000), 'credits' => (int) env('AI_CREDITS_BAND_VERY_LARGE_CREDITS', 80)],
     ],
     'dense_band_shift' => (int) env('AI_CREDITS_DENSE_BAND_SHIFT', 1),

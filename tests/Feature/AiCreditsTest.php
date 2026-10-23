@@ -116,7 +116,7 @@ class AiCreditsTest extends TestCase
     {
         $ws = $this->workspace(1000);
         $q = app(QuoteService::class);
-        $expect = ['small' => [3000, 2], 'medium' => [6000, 6], 'regular' => [15000, 10], 'large' => [30000, 20], 'xlarge' => [50000, 30], 'very_large' => [150000, 80]];
+        $expect = ['small' => [3000, 2], 'medium' => [6000, 6], 'regular' => [15000, 10], 'large' => [30000, 20], 'xlarge' => [50000, 35], 'very_large' => [150000, 80]];
         foreach ($expect as $band => [$tokens, $credits]) {
             $quote = $q->quoteDocument($this->document($ws, $tokens))['quote'];
             $this->assertSame([$band, $credits], [$quote->band, $quote->credits], $band);
@@ -212,7 +212,7 @@ class AiCreditsTest extends TestCase
         $this->assertSame(['small', 2], [$q->classifyScan(1)['band'], $q->classifyScan(1)['credits']]);
         $this->assertSame(['small', 2], [$q->classifyScan(2)['band'], $q->classifyScan(2)['credits']]);
         $this->assertSame(['medium', 6], [$q->classifyScan(10)['band'], $q->classifyScan(10)['credits']]);
-        $this->assertSame(['xlarge', 30], [$q->classifyScan(60)['band'], $q->classifyScan(60)['credits']]);
+        $this->assertSame(['xlarge', 35], [$q->classifyScan(60)['band'], $q->classifyScan(60)['credits']]);
         foreach ([1, 2, 5, 20, 60] as $pages) {
             $c = $q->classifyScan($pages);
             $this->assertGreaterThanOrEqual($pages * (float) config('ai_credits.ocr.provider_cost_usd_per_page'), $c['cap'], $pages.' pages: the cap must cover the OCR bound');
@@ -487,15 +487,15 @@ class AiCreditsTest extends TestCase
     {
         Http::fake();
         $ws = $this->workspace(100);
-        $document = $this->document($ws, 50000); // xlarge = 30 credits, confirmation from 30 credits
+        $document = $this->document($ws, 50000); // xlarge = 35 credits, confirmation from 30 credits
         $this->assertFalse($this->admit($document));
         $this->assertTrue($document->fresh()->ai_pipeline['awaiting_credit_confirmation']);
-        $this->assertSame(30, $document->fresh()->ai_pipeline['credit_quote']['credits']);
+        $this->assertSame(35, $document->fresh()->ai_pipeline['credit_quote']['credits']);
         $this->assertSame('Processing', $document->fresh()->status);
         $this->assertNull($this->op($document));
         app(AiCreditAdmission::class)->confirmDocument($document->fresh());
         $this->assertTrue($this->admit($document));
-        $this->assertSame(30, $this->op($document)->amount_reserved);
+        $this->assertSame(35, $this->op($document)->amount_reserved);
         Http::assertNothingSent();
     }
 
@@ -948,9 +948,9 @@ class AiCreditsTest extends TestCase
         $document = $this->document($ws, 50000);
         $this->assertFalse($this->admit($document));
         $pending = $this->getJson('/api/workspace/credits')->json('data.ai_credits.pendingConfirmations');
-        $this->assertSame([['documentId' => $document->id, 'credits' => 30, 'band' => 'xlarge', 'pages' => 0, 'requiresConfirmation' => true]], $pending);
+        $this->assertSame([['documentId' => $document->id, 'credits' => 35, 'band' => 'xlarge', 'pages' => 0, 'requiresConfirmation' => true]], $pending);
 
-        $this->postJson("/api/documents/{$document->id}/confirm-credits")->assertStatus(202)->assertJsonPath('data.credits', 30);
+        $this->postJson("/api/documents/{$document->id}/confirm-credits")->assertStatus(202)->assertJsonPath('data.credits', 35);
         Queue::assertPushedOn('default', ResumeAfterCreditConfirmationJob::class);
         $this->assertTrue($document->fresh()->ai_pipeline['credit_quote_confirmed']);
         $this->assertNull($this->op($document)); // credits are reserved when the resumed job runs, never by the click itself

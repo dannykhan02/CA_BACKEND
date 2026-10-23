@@ -15,7 +15,7 @@ spend cap is its credits x USD 0.027. There is no size-based "completion gate" a
 | medium | 8,000 | 6 | 0.162 | (no measurement between 4k and 12k) |
 | regular | 18,000 | 10 | 0.27 | ~12k 0.226; 15-18k 0.195-0.228 |
 | large | 35,000 | 20 | 0.54 | 27k 0.355 |
-| xlarge | 90,000 | 30 | 0.81 | 40-54k PDF 0.657; 77k 0.575-0.677 |
+| xlarge | 90,000 | 35 | 0.945 | 40-54k PDF 0.657; 77k 0.575-0.677 |
 | very_large | 250,000 | 80 | 2.16 | 39k XLSX 0.824 (reached through the dense shift) |
 | above | declined (`document_too_large`) | | | |
 
@@ -73,12 +73,28 @@ provider cost from `document_ai_runs`, run counts, failed chunks), with the flag
 usage; `count_tokens` calls were already logged.
 
 ```
-php artisan docintel:cost-vs-size-report [--days=N] [--summary-only] [--stress=1.25]
+php artisan docintel:cost-vs-size-report [--days=N] [--summary-only] [--skip-would-quote] [--stress=1.25]
 ```
 
-Read-only. One CSV row per Ready document with priced runs, then per token bucket: count, median, p90 and max cost, the credits
-and band the p90 (and p90 x stress) needs at USD 0.027 per credit, and the band the quote gives that size with whether its cap
-covers the worst document and p90 x stress. Use it to move the edges.
+Read-only; writes nothing and creates no quote, reservation or ledger row (the would-quote part runs inside a transaction that is
+always rolled back, and a test asserts nothing is saved). One CSV row per Ready document with priced runs:
+
+* **Size and cost:** tokens as the quote would count them (`quote_tokens`, `local_estimate_tokens`, `provider_tokens`), route, OCR pages,
+  total cost, calls, first-try cost (retries and failed runs are the difference).
+* **Cost by stage:** `stage_extraction_usd`, `stage_synthesis_usd`, `stage_ocr_usd`, `stage_chart_vision_usd`, `stage_other_usd`
+  (extraction and synthesis follow `document_intelligence.model_roles`), `largest_request_usd` and its purpose, and a
+  `cost_<purpose>` and `model_<purpose>` pair for every real purpose value that occurs (the models used for it, `|`-joined).
+* **Would quote:** what `QuoteService::previewDocument` returns today: `would_tokens`, `token_source`, `would_band`, `would_credits`,
+  `would_cap_usd`, `synthesis_floor_usd`, `would_route` (the route the quote assumes; `route` is the one that ran).
+* **Incremental-route documents only:** `reservation_floor_usd` (the pipeline's synthesis reservation computed now, whatever the quote
+  assumed), `real_synthesis_cost_usd` and `floor_over_real`.
+
+Then a summary per token bucket (0-1k, 1-2k, 2-4k, 4-6k, 6-10k, 10-20k, 20-30k, 30-60k, 60k+): documents, median / p90 / max cost, the credits
+and band the p90 (and p90 x stress) needs at USD 0.027 per credit, the band the quote gives that size and whether its cap covers the
+worst document and p90 x stress, and **where the quote overcharges**: `median_would_credits`, `median_would_cap_over_cost` (the quote's
+cap divided by what the document cost) and `would_minus_needed_x1.25` (credits charged minus credits the p90 x 1.25 needs; positive =
+the quote charges more than the cost needs). `--skip-would-quote` leaves the would-quote columns empty and is much faster, because the
+would-quote reads the text of every document. Use it to move the edges.
 
 `claude-haiku-5-5` requests whose total prompt input exceeds 100,000 tokens are priced at the long-context tier
 (`document_intelligence.pricing_long_context`) in the estimate and in the hard request bound.
