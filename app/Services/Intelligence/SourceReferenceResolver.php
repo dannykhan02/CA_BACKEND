@@ -247,7 +247,7 @@ class SourceReferenceResolver
         // Additive image contract: real word boxes or nothing. textLocated is
         // never inferred from matchState — a perfectly exact text offset still
         // yields false when no stored box backs it.
-        $imageRegions = $this->imageRegions($document, $navigationQuote);
+        $imageRegions = $this->imageRegions($document, $navigationQuote, is_int($citedPage) ? $citedPage : null);
 
         return [
             'state' => 'CURRENT', 'sourceId' => $sourceId, 'documentId' => $document->id,
@@ -281,7 +281,7 @@ class SourceReferenceResolver
     }
 
     /**
-     * Normalised highlight rectangles for a JPG/PNG citation, or [].
+     * Normalised highlight rectangles for a JPG/PNG citation, or for a scanned PDF page's citation, or [].
      *
      * The quote comes from the claude_vision text; the boxes come from the
      * separate 'image_text_location' provenance set written by
@@ -297,10 +297,11 @@ class SourceReferenceResolver
      *
      * @return list<array{x:float,y:float,width:float,height:float}>
      */
-    private function imageRegions(Document $document, ?string $quote): array
+    private function imageRegions(Document $document, ?string $quote, ?int $page = null): array
     {
-        if (! in_array($document->type, ['JPG', 'PNG'], true)
-            || ! is_string($quote) || trim($quote) === '') {
+        $pdf = $document->type === 'PDF';
+        if ((! $pdf && ! in_array($document->type, ['JPG', 'PNG'], true))
+            || ! is_string($quote) || trim($quote) === '' || ($pdf && ($page === null || $page < 1))) {
             return [];
         }
         $setId = $this->wordBoxes->activeSetId($document);
@@ -310,7 +311,9 @@ class SourceReferenceResolver
 
         return $this->regions->locate(
             $quote,
-            $this->wordBoxes->words($document, $setId, max(1, (int) config('ocr.image_location.max_words'))),
+            // A PDF is located page by page: only boxes of the cited page can back the highlight, and
+            // only pages that went through OCR have any, so a page with a text layer stays [].
+            $this->wordBoxes->words($document, $setId, max(1, (int) config('ocr.image_location.max_words')), $pdf ? $page : null),
             max(1, (int) config('ocr.image_location.min_matched_words')),
         );
     }

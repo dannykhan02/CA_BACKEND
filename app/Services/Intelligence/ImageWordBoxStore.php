@@ -111,6 +111,62 @@ class ImageWordBoxStore
         });
     }
 
+    /**
+     * Replaces this document's stored boxes with those of several PDF pages, in one transaction.
+     * Same set, kinds and revision rule as store(); each anchor carries its own page number and is
+     * measured against its own rendered page.
+     *
+     * @param  list<array{page:int,width:int,height:int,words:list<WordBox>}>  $pages  Already filtered by confidence.
+     * @return string The new set id.
+     */
+    public function storePages(Document $document, array $pages): string
+    {
+        $revision = hash('sha256', (string) $document->extracted_text);
+        if ($document->workspace_id === null || $revision === '' || $pages === []) {
+            throw new \InvalidArgumentException('Incomplete word-box owner.');
+        }
+
+        return DB::transaction(function () use ($document, $pages, $revision): string {
+            DB::table('source_provenance_sets')->where('document_id', $document->id)
+                ->where('workspace_id', $document->workspace_id)
+                ->where('pipeline_key', self::PIPELINE_KEY)->delete();
+
+            $setId = (string) Str::uuid();
+            DB::table('source_provenance_sets')->insert([
+                'id' => $setId, 'workspace_id' => $document->workspace_id, 'document_id' => $document->id,
+                'source_revision' => $revision, 'parser_version' => self::PARSER_VERSION,
+                'policy_version' => SourceProvenance::POLICY,
+                'graph_hash' => hash('sha256', json_encode(array_map(fn (array $p) => [$p['page'],
+                    $this->graphHash(new OrientedImage('', $p['width'], $p['height'], 1, false), $p['words'])], $pages),
+                    JSON_THROW_ON_ERROR)),
+                'pipeline_key' => self::PIPELINE_KEY, 'published' => true, 'active' => true,
+                'created_at' => now(), 'updated_at' => now(),
+            ]);
+
+            $rows = [];
+            foreach ($pages as $page) {
+                $image = new OrientedImage('', $page['width'], $page['height'], 1, false);
+                foreach ($page['words'] as $index => $word) {
+                    $rows[] = [
+                        'id' => (string) Str::uuid(), 'set_id' => $setId,
+                        'workspace_id' => $document->workspace_id, 'document_id' => $document->id,
+                        'source_key' => sprintf('ocrword:%d:%06d', $page['page'], $index),
+                        'kind' => 'ocr_region', 'modality' => 'ocr', 'page' => $page['page'],
+                        'sheet' => null, 'structural_path' => null, 'start_offset' => null, 'end_offset' => null,
+                        'source_text' => $word->text, 'source_hash' => hash('sha256', $word->text),
+                        'geometry' => json_encode($this->geometry($image, $word), JSON_THROW_ON_ERROR),
+                        'navigation_metadata' => null, 'created_at' => now(), 'updated_at' => now(),
+                    ];
+                }
+            }
+            foreach (array_chunk($rows, 500) as $batch) {
+                DB::table('source_anchors')->insert($batch);
+            }
+
+            return $setId;
+        });
+    }
+
     /** The active set for this document's current extracted text, or null. */
     public function activeSetId(Document $document): ?string
     {
@@ -128,16 +184,17 @@ class ImageWordBoxStore
     }
 
     /**
-     * Stored words in reading order.
+     * Stored words in reading order, optionally for one PDF page.
      *
      * @return list<array{text:string,geometry:array}>
      */
-    public function words(Document $document, string $setId, int $limit): array
+    public function words(Document $document, string $setId, int $limit, ?int $page = null): array
     {
         return DB::table('source_anchors')
             ->where('workspace_id', $document->workspace_id)
             ->where('document_id', $document->id)
             ->where('set_id', $setId)->where('kind', 'ocr_region')
+            ->when($page !== null, fn ($query) => $query->where('page', $page))
             ->orderBy('source_key')->limit($limit)
             ->get(['source_text', 'geometry'])
             ->map(static fn ($row) => ['text' => (string) $row->source_text,
