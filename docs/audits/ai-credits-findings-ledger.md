@@ -101,3 +101,29 @@
 | N8 | Re-run of a delivered document is bounded by the settled quote's *remaining* cap (`OperationSpend::activeQuote` `:196-207`). A free re-run can therefore stop with `budget_exceeded` when the first run already used most of the cap | Functional risk | No debit (documents fail, hold released) | No |
 
 ---
+
+## Part 3 - Charging-safety checklist
+
+Each row: check -> result -> evidence level. "OK" means the code path is sound as traced; it is not a claim about production.
+
+| # | Check | Result | Evidence |
+|---|---|---|---|
+| 1 | Duplicate charges from retries / concurrent jobs | **OK.** Quote per `(kind,resource,attempt)` is reused while `quoted/reserved` (`QuoteService.php:149-151`); `reserve` returns early on the same quote (`CreditAccountant.php:98-102`); `settle` acts only from `reserved` under the workspace lock (`:126-130`); ledger `reference` is unique with `insertOrIgnore` (`CreditLedger.php:12-22`); `credit_accounted_at` is claimed by one conditional update (`WorkspaceCreditService.php:196-208`). Existing tests cover duplicate settle/release and retry (`AiCreditsTest.php:339-374`) and forked concurrency (`WorkspaceAiCreditsConcurrencyTest.php`). | traced; existing tests not executed by me |
+| 2 | Failed jobs keeping or settling credits | **OK by default.** Failed and Needs Review release (`EntitlementService.php:142-173`). Exception: `needs_review_policy=settle` settles Needs Review, including a failed reanalysis (N-D5). | traced |
+| 3 | Paid-reanalysis failures not releasing reservations | **DEFECT (finding c).** Fixed in Phase 4. | traced; test written, not executed |
+| 4 | Charges for undelivered work | **OK in charge points.** Debit only at publish (`DocumentRevisionPublisher.php:203`) or Ready with revisions off (`GenerateDocumentSummaryJob.php:302-306`, `GenerateInsightsJob.php:284`). With revisions off a later required stage can still fail after the charge (`docs/billing-credits.md:55-61`). Gap: Needs Review plus `settle` policy. | traced |
+| 5 | Quotes changing after confirmation | **OK.** Priced columns are immutable (`OperationQuote.php:30-36`); a `quoted/reserved` quote is returned unchanged. The shown price (`ai_pipeline.credit_quote`) is the same quote that is reserved. Residual: N6 stale reuse. | traced; existing test `AiCreditsTest.php:190-207` |
+| 6 | Legacy balance conversion | **OK.** Lazy per spent unit at 10 credits (`CreditAccountant.php:199-213`); ledger pair `ai_convert_out/in`. Residual: N7 at flag-flip. | traced |
+| 7 | Reserved vs available vs used vs settled mismatches | **OK for the displayed API.** `available` is the same function admission calls (`EntitlementService.php:214`). The ledger identity `reserve = debit + release + open` holds by construction (each transition writes one ledger row). N2 breaks it for orphaned comparisons (open forever). | traced |
+| 8 | Renewals / expirations | **OK.** Each period snapshots its own allowance; no rollover; an operation settles against the period it reserved in (`usage_period_id`, `CreditAccountant.php:106-108, 133-135`). A period cut short by a re-purchase starts the new one at 0 used (customer-favourable). Grace uses the last allowance without minting new capacity (`EntitlementService.php:80-86`). | traced |
+| 9 | Unexpected OCR or reprocess charges | **Two gaps.** N4 (pre-rollout delivered scan reprocess charges OCR) and N5 (inconsistent reprocess pricing by route/status). Neither double-charges. | traced |
+| 10 | Cost attributed to the wrong operation | **OK with one inconsistency.** Runs are stamped with `operation_quote_id` at call time from the resolved quote (`AnthropicClient.php:694-696`, `operationAttribution` `:571-579`). `activeQuote` prefers an open reanalysis over an open analysis over a settled one (`OperationSpend.php:206`); post-Ready visuals and embeddings are bounded by the settled quote by design. N3: rejected requests are attributed full cost in the cap ledger but zero in the run ledger. | traced |
+| 11 | Unknown provider usage treated as zero | **OK in the cap path** (unknown runs count USD 0.05, `OperationSpend.php:94-101`; unknown attempts keep the full ceiling, `:171-175`). **Not OK in the report**: `CreditEconomicsReport.php:144, 152` sum only non-null costs, so unknown cost under-reports. | traced |
+| 12 | Operations exceeding their provider budget | **OK by construction** (see C3 verdict). Residual: wrong price table or the 1-byte-per-token bound. | traced |
+| 13 | Balance vs ledger drift | **Two small sources.** N7 clamped-debit ledger overstatement; N2 open comparison holds. No path writes a counter without a ledger row. `AuditCreditSettlements` does not reconcile counters with the ledger and omits comparisons (`:34-48`). | traced |
+
+### Cross-cutting observations
+
+1. The cap ledger (`provider_call_attempts`) and the run ledger (`document_ai_runs`) are two cost records that are not required to agree (N3). Any pricing decision should be taken from one reconciled source (see the pricing document).
+2. `billing_operations` holds one row per `(kind, resource_id)` overwritten per attempt (`CreditAccountant.php:106-110`); history is in `operation_quotes` and the ledger only. Reporting must read quotes, not operations.
+3. Nothing in the charge path reads the measured cost; every customer price is a function of the quote. All "poor value" arguments therefore reduce to quote accuracy (a, b, N1) and band prices (pricing document).
