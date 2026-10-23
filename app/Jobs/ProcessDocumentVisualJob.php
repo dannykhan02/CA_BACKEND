@@ -41,8 +41,6 @@ class ProcessDocumentVisualJob implements ShouldQueue
             || ($this->dispatchToken !== null && $unit->dispatch_token !== null && ! hash_equals($unit->dispatch_token, $this->dispatchToken))) {
             return; // Finished, claimed elsewhere, or superseded by a newer dispatch.
         }
-        $retainedPath = null;
-        $retainedExisted = false;
         try {
             app(ProviderGate::class)->hold($unit->document_id, fn () => $this->process($client, $planner));
         } catch (ProviderBusyException $e) {
@@ -65,6 +63,8 @@ class ProcessDocumentVisualJob implements ShouldQueue
             return;
         }
         $asset = $unit->result;
+        $retainedPath = null;
+        $retainedExisted = false;
         try {
             $cost = app(AiPricing::class)->estimate(app(AiModels::class)->forTask('chart_vision'), ['input_tokens' => 6000, 'output_tokens' => config('services.anthropic.max_tokens')]);
             $allowed = DB::transaction(function () use ($document, $unit, $cost) {
