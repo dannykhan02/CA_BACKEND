@@ -142,6 +142,8 @@ class SourceProvenancePublicationTest extends TestCase
 
     public function test_incremental_graph_verdict_is_shared_by_collector_and_kpi_api(): void
     {
+        config()->set('document_intelligence.pdf_table_structure', false);
+        self::assertFalse(config('document_intelligence.pdf_table_structure'));
         $text = 'Revenue 12.4 KES million in FY2025.';
         $document = $this->document($text);
         $document->forceFill(['ai_pipeline' => ['route' => 'incremental', 'key' => 'pk-proof']])->save();

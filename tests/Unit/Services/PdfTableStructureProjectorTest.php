@@ -57,8 +57,8 @@ class PdfTableStructureProjectorTest extends TestCase
         app(StructuralProvenanceValidator::class)->validate($anchors, $edges, $bindings);
         $counts = array_count_values(array_column($edges, 'type'));
         self::assertSame(128, $counts['row_header']);
-        self::assertSame(384, $counts['column_header']);
-        self::assertSame(168, $counts['table_parent']);
+        self::assertSame(640, $counts['column_header']);
+        self::assertSame(192, $counts['table_parent']);
         self::assertGreaterThanOrEqual(160, count(array_filter($anchors,
             static fn ($anchor) => isset($anchor['geometry']))));
     }
@@ -71,6 +71,16 @@ class PdfTableStructureProjectorTest extends TestCase
         $layout[0]['periods'][2] = 'Q3 2026';
         self::assertSame(0, app(PdfTableStructureProjector::class)
             ->augment($base, $layout)->capabilities['projected_tables']);
+
+        $layout = app(PdfTableGeometryProbe::class)->extract($path);
+        $layout[0]['header'][1]['bbox'] = null;
+        self::assertSame(0, app(PdfTableStructureProjector::class)
+            ->augment($base, $layout)->capabilities['projected_tables']);
+
+        $layout = app(PdfTableGeometryProbe::class)->extract($path);
+        $layout[0]['rows'][7][1]['bbox'] = null;
+        $projected = app(PdfTableStructureProjector::class)->augment($base, $layout);
+        self::assertNull($projected->node('page:1/table[1]/row[8]/cell[1]'));
 
         $layout = app(PdfTableGeometryProbe::class)->extract($path);
         $layout[0]['header'][1]['source_path'][0] = $layout[0]['header'][3]['source_path'][0];

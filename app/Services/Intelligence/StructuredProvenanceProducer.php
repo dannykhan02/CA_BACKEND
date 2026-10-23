@@ -160,10 +160,18 @@ class StructuredProvenanceProducer
                 $this->edge($relations, $this->key($id), $this->key($labelId), 'row_header');
                 $headerEdges[$id]['row'][] = $labelId;
                 $anchors[$this->key($labelId)]['kind'] = 'row_header';
-                foreach ($path as $headerId) {
-                    $this->edge($relations, $this->key($id), $this->key($headerId), 'column_header');
+                foreach ($path as $order => $headerId) {
+                    $this->edge($relations, $this->key($id), $this->key($headerId), 'column_header', $order + 1);
                     $headerEdges[$id]['column'][] = $headerId;
                     $anchors[$this->key($headerId)]['kind'] = 'column_header';
+                }
+                foreach ($cell['meta']['currency_marker_ids'] ?? [] as $order => $markerId) {
+                    if (! isset($cells[$markerId])) {
+                        continue;
+                    }
+                    $this->edge($relations, $this->key($id), $this->key($markerId),
+                        'column_header', 10 + $order);
+                    $anchors[$this->key($markerId)]['kind'] = 'column_header';
                 }
 
                 continue;
@@ -252,6 +260,9 @@ class StructuredProvenanceProducer
             }
             $candidates = [];
             foreach ($row->sources ?? [] as $citation) {
+                if (($citation['source_graph_derived'] ?? false) === true) {
+                    continue;
+                }
                 $from = $citation['start_offset'] ?? null;
                 $to = $citation['end_offset'] ?? null;
                 if (! is_int($from) || ! is_int($to) || $to <= $from) {
@@ -301,9 +312,13 @@ class StructuredProvenanceProducer
         return 'node:'.hash('sha256', $id);
     }
 
-    private function edge(array &$edges, string $from, string $to, string $type): void
+    private function edge(array &$edges, string $from, string $to, string $type, int $pathOrder = 0): void
     {
-        $edges[$from.'|'.$to.'|'.$type] = compact('from', 'to', 'type');
+        $edge = compact('from', 'to', 'type');
+        if ($pathOrder > 0) {
+            $edge['path_order'] = $pathOrder;
+        }
+        $edges[$from.'|'.$to.'|'.$type] = $edge;
         if (count($edges) > 100000) {
             throw new \RuntimeException('Provenance relationship limit exceeded.');
         }
@@ -361,6 +376,9 @@ class StructuredProvenanceProducer
         $ranges = [];
         foreach ($evidence as $row) {
             foreach ($row->sources ?? [] as $citation) {
+                if (($citation['source_graph_derived'] ?? false) === true) {
+                    continue;
+                }
                 $start = $citation['start_offset'] ?? null;
                 $end = $citation['end_offset'] ?? null;
                 if (is_int($start) && is_int($end) && $end > $start) {
@@ -408,8 +426,12 @@ class StructuredProvenanceProducer
                 }
             } elseif ($source->format === 'PDF') {
                 $selected[$cell['parent'].'/cell[0]'] = true;
-                foreach ($cell['meta']['header_path_ids'] ?? [] as $headerId) {
+                foreach (is_array($cell['meta']['header_path_ids'] ?? null)
+                    ? $cell['meta']['header_path_ids'] : [] as $headerId) {
                     $selected[$headerId] = true;
+                }
+                foreach ($cell['meta']['currency_marker_ids'] ?? [] as $markerId) {
+                    $selected[$markerId] = true;
                 }
                 foreach (['unit_heading_id', 'entity_heading_id'] as $field) {
                     if (isset($cell['meta'][$field])) {

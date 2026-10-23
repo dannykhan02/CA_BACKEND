@@ -63,6 +63,9 @@ final class PdfTableStructureProjector
             if ($column === 0 && $cell['text'] === '') {
                 continue;
             }
+            if (! $this->validBox($cell['bbox'] ?? null)) {
+                return [];
+            }
             $found = $this->findInLine($headerText, $cell['text'], $cursor);
             if ($found === null) {
                 return [];
@@ -98,6 +101,9 @@ final class PdfTableStructureProjector
             }
             $ids = [];
             foreach ($path as $part) {
+                if (! $this->validBox($part['bbox'] ?? null)) {
+                    return [];
+                }
                 if ($part['text'] === $cell['text'] && $part['bbox'] === $cell['bbox']) {
                     $ids[] = $headerIds[$column];
 
@@ -131,6 +137,8 @@ final class PdfTableStructureProjector
         $entityId = $this->headingNode($staged, $page, $tableId, 'entity',
             $table['entity_source'] ?? null, $headerStart);
         $rows = [];
+        $markerRows = [];
+        $markerTexts = [];
         foreach ($table['rows'] as $rowNumber => $cells) {
             $found = $this->rowLine($lines, $cells);
             if ($found === null) {
@@ -141,7 +149,13 @@ final class PdfTableStructureProjector
             $rowNodes = [['id' => $rowId, 'type' => 'row', 'parent' => $tableId,
                 'path' => $rowId, 'page' => $page['page']]];
             $cursor = 0;
+            $rowMarkers = [];
             foreach ($cells as $column => $cell) {
+                if (! $this->validBox($cell['bbox'] ?? null)) {
+                    $rowNodes = [];
+                    break;
+                }
+                $previous = $cursor;
                 $position = $this->findInLine($lineText, $cell['text'], $cursor);
                 if ($position === null) {
                     $rowNodes = [];
@@ -153,14 +167,52 @@ final class PdfTableStructureProjector
                 $rowNodes[] = $this->textNode($page, $id, 'cell', $rowId,
                     $lineStart + $at, $lineStart + $end, $cell['bbox'],
                     ['grid_column' => $column + 1, 'grid_span' => 1,
-                        'header_path_ids' => $headerIds[$column] ?? [],
+                        'header_path_ids' => $column === 0 ? [] : ($headerIds[$column] ?? []),
                         'unit_heading_id' => $unitId, 'entity_heading_id' => $entityId,
                         'page_width' => $table['page_width'] ?? null,
                         'page_height' => $table['page_height'] ?? null]);
+                $marker = $cell['currency_marker'] ?? null;
+                if ($column > 0 && is_array($marker)
+                    && $this->validBox($marker['bbox'] ?? null)) {
+                    $markerAt = $this->findInLine($lineText, $marker['text'], $previous);
+                    if ($markerAt !== null && $markerAt[1] <= $at
+                        && $at - $markerAt[1] <= 20) {
+                        $markerId = $rowId.'/currency['.$column.']';
+                        $rowNodes[] = $this->textNode($page, $markerId, 'cell', $rowId,
+                            $lineStart + $markerAt[0], $lineStart + $markerAt[1],
+                            $marker['bbox'], ['header' => true, 'grid_column' => $column + 1,
+                                'page_width' => $table['page_width'] ?? null,
+                                'page_height' => $table['page_height'] ?? null]);
+                        $rowMarkers[$column] = $markerId;
+                        $markerTexts[$column][$marker['text']] = true;
+                    }
+                }
             }
             if ($rowNodes !== []) {
                 array_push($rows, ...$rowNodes);
+                if (count($rowMarkers) === count($table['header']) - 1) {
+                    $markerRows[] = ['row' => $rowNumber, 'markers' => $rowMarkers];
+                }
             }
+        }
+        // Currency marks repeated across complete, separated rows are a column
+        // notation. A single nearby symbol, or any contradictory mark, proves none.
+        $firstMarkerRow = $markerRows[0] ?? null;
+        $secondMarkerRow = $firstMarkerRow === null ? null : collect($markerRows)
+            ->first(static fn ($entry) => $entry['row'] - $firstMarkerRow['row'] >= 2);
+        if ($secondMarkerRow !== null
+            && count(array_filter($markerTexts, static fn ($texts) => count($texts) === 1))
+                === count($table['header']) - 1) {
+            foreach ($rows as &$node) {
+                if ($node['type'] !== 'cell' || ($node['meta']['header'] ?? false)
+                    || ($node['meta']['grid_column'] ?? 0) < 2) {
+                    continue;
+                }
+                $column = $node['meta']['grid_column'] - 1;
+                $node['meta']['currency_marker_ids'] = [$firstMarkerRow['markers'][$column],
+                    $secondMarkerRow['markers'][$column]];
+            }
+            unset($node);
         }
         if (count($rows) < 2 * (count($table['header']) + 1)) {
             return [];
@@ -270,5 +322,12 @@ final class PdfTableStructureProjector
         }
 
         return $node;
+    }
+
+    private function validBox(mixed $box): bool
+    {
+        return is_array($box) && count($box) === 4
+            && ! array_filter($box, static fn ($item) => ! is_int($item) && ! is_float($item))
+            && $box[2] > $box[0] && $box[3] > $box[1];
     }
 }

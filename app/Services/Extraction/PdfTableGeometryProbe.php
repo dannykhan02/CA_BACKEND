@@ -91,7 +91,8 @@ final class PdfTableGeometryProbe
                     'accounting_basis_source' => null,
                     'rows' => array_map(static fn ($row, $number) => array_map(
                         static fn ($cell, $column) => ['row' => $number + 1, 'column' => $column,
-                            'text' => $cell['text'], 'bbox' => $cell['bbox']],
+                            'text' => $cell['text'], 'bbox' => $cell['bbox'],
+                            'currency_marker' => $cell['currency_marker'] ?? null],
                         $row, array_keys($row)), $rows, array_keys($rows)),
                     'status' => 'layout_candidate_only',
                 ];
@@ -262,8 +263,14 @@ final class PdfTableGeometryProbe
             return null;
         }
         $cells = [0 => $label];
+        $currencyWords = [];
         foreach ($line['words'] as $word) {
-            if ($word['bbox'][0] < $firstX - 25 || in_array($word['text'], ['$', '€', '£'], true)) {
+            if (in_array($word['text'], ['$', '€', '£'], true)) {
+                $currencyWords[] = $word;
+
+                continue;
+            }
+            if ($word['bbox'][0] < $firstX - 25) {
                 continue;
             }
             if (preg_match('/^\(?-?\d{1,3}(?:,\d{3})*(?:\.\d+)?\)?%?$|^-?\d+(?:\.\d+)?%?$/D',
@@ -284,6 +291,15 @@ final class PdfTableGeometryProbe
         }
         if (count($cells) !== count($headers)) {
             return null;
+        }
+        foreach (array_slice($cells, 1, null, true) as $column => $cell) {
+            $markers = array_values(array_filter($currencyWords,
+                static fn ($word) => $word['bbox'][2] <= $cell['bbox'][0]
+                    && $cell['bbox'][0] - $word['bbox'][2] <= 35
+                    && abs($word['bbox'][1] - $cell['bbox'][1]) <= 3));
+            if (count($markers) === 1) {
+                $cells[$column]['currency_marker'] = $markers[0];
+            }
         }
 
         ksort($cells);
