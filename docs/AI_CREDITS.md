@@ -23,9 +23,48 @@ The measured column is `docintel:cost-vs-size-report` on 24 Ready production doc
 `test_no_band_cap_is_below_the_measured_cost_of_a_document_of_that_size` pins that every measured point fits its band's cap.
 
 * A **dense** document (spreadsheet, or mostly numeric or tabular text) moves up one band.
-* A band also moves up when its cap cannot fund what the pipeline must reserve: the incremental route's synthesis reservation,
-  or a scan's OCR bound. Otherwise it never moves up for size. If the reservation does not fit even the top band the
-  document is declined.
+* A band also moves up when its cap cannot fund what the pipeline must reserve: the incremental route's synthesis reservation
+  (see below), or a scan's OCR bound. Otherwise it never moves up for size. If the reservation does not fit even the top band
+  the document is declined.
+
+### Synthesis reservation (incremental route)
+
+Only a document above `document_intelligence.large_tokens` (14,000 tokens) or `max_extraction_chars` (60,000) takes the
+incremental route; a smaller one has no reservation (floor 0). The floor is the worst-case cost of the synthesis the pipeline holds
+back from extraction (`AnthropicClient::synthesisReservation`: input bytes counted as tokens, 8,192 output tokens, at the
+synthesis model's price). Config: `ai_credits.synthesis_reservation`.
+
+| `mode` | The quote floor and the extraction-time hold |
+|---|---|
+| `primary_only` (default) | The primary synthesis request alone, times `headroom`. A fallback or a repair is paid from the cap that remains when it is sent. |
+| `full` | Primary + one degraded fallback + one repair, as before. Any other value behaves as `full`. |
+
+* **A refused recovery request.** `OperationSpend::reserveAttempt` refuses a request whose worst case does not fit the cap that
+  remains (`budget_exceeded`, not degradable). A repair that is refused fails the synthesis; a fallback that does not fit the
+  document budget ends the document `Needs Review` with `synthesis = budget_exceeded` and `partial = true`. Either way nothing
+  is delivered, so the hold is released (`needs_review_policy = release`) and the customer is not charged.
+* **Only with a quote.** `primary_only` applies to the pipeline (`IncrementalPipeline::canReserve`, `SynthesisCheckpoint`) only
+  for a document with an open quote, because a fallback is funded "at request time" by that quote's cap. Without one (credits off,
+  a legacy workspace) the pipeline still holds all three requests against the document budget.
+* **`headroom`** multiplies the primary request's bound in the floor and in the extraction-time hold. It ships at 1.0:
+  at 1.25 a 15k-token PDF-density document (primary about USD 0.234, hand-computed) would need 0.293 and be lifted from regular
+  (cap 0.27) to large.
+* **What this does not change.** Request admission is still the worst case of each request (`ProviderRequestAdmission`), added to
+  what was already spent. See the PR for why a document can still be refused at request time inside a band whose cap covers its
+  measured total cost.
+
+Quote with the incremental route on, provider token counts, PDF density (pinned by `RealisticSynthesisReservationTest`):
+
+| Tokens | Route | Band | Credits | Cap (USD) | Measured cost it must cover |
+|---|---|---|---|---|---|
+| 300 | normal | small | 2 | 0.054 | 0.036 |
+| 3,400 | normal | small | 2 | 0.054 | 0.051 |
+| 15,000 | incremental | regular | 10 | 0.27 | 0.228 |
+| 27,000 | incremental | large | 20 | 0.54 | 0.355 |
+| 54,000 | incremental | xlarge | 35 | 0.945 | 0.657 |
+| 77,000 | incremental | xlarge | 35 | 0.945 | 0.677 |
+
+With `mode = full` the same 15k document is quoted large (20 credits).
 * Plan allowances are unchanged: Starter 100, Professional 250 monthly AI credits.
 
 ## Tokens

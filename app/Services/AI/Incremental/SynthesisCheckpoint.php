@@ -6,6 +6,7 @@ use App\Models\AiPrompt;
 use App\Models\Document;
 use App\Models\DocumentChunk;
 use App\Services\AI\AiModels;
+use App\Services\AiCredits\SynthesisReservation;
 use App\Services\AnthropicClient;
 use Illuminate\Support\Facades\DB;
 
@@ -46,10 +47,14 @@ class SynthesisCheckpoint
                 // Recalculate against the exact bounded evidence, prompt and schema now available.
                 $reservation = app(AnthropicClient::class)->synthesisReservation($locked, $data, $level);
                 $locked->forceFill(['ai_pipeline' => [...$locked->ai_pipeline, ...$reservation]])->save();
-                $cost = $reservation['synthesis_reserved_usd'] === null || $reservation['repair_reserved_usd'] === null
-                    ? null : $reservation['synthesis_reserved_usd'] + $reservation['repair_reserved_usd'];
+                // With a quote cap enforced per request (SynthesisReservation) only the primary request is held here: a repair
+                // or a fallback is admitted, or refused, against the remaining cap when it is sent. The repair stays a
+                // component so a primary that times out with unknown usage does not lose the bound of a repair that did run.
+                $primaryOnly = app(SynthesisReservation::class)->fundsRecoveryAtRequestTime($locked);
+                $cost = $reservation['synthesis_reserved_usd'] === null || (! $primaryOnly && $reservation['repair_reserved_usd'] === null)
+                    ? null : $reservation['synthesis_reserved_usd'] + ($primaryOnly ? 0.0 : $reservation['repair_reserved_usd']);
                 // Below the last level, keep one cheaper fallback affordable.
-                $protect = $level < $last ? (float) ($reservation['synthesis_degraded_reserved_usd'] ?? 0) : 0.0;
+                $protect = ! $primaryOnly && $level < $last ? (float) ($reservation['synthesis_degraded_reserved_usd'] ?? 0) : 0.0;
                 if ($pipeline->canReserve($locked, $cost, synthesis: true, protect: $protect)) {
                     $pipeline->reserveCost($unit, $cost, ['synthesis_level' => $level,
                         'source_context' => $data['coverage']['source_text'] ?? null],
