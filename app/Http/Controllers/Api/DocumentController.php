@@ -9,6 +9,7 @@ use App\Http\Resources\DocumentListResource;
 use App\Http\Resources\DocumentResource;
 use App\Models\Document;
 use App\Policies\DocumentPolicy;
+use App\Services\AiCredits\DocumentCredits;
 use App\Services\AuditLogger;
 use App\Services\DocumentIntelligenceService;
 use App\Services\EntitlementService;
@@ -117,6 +118,8 @@ class DocumentController extends Controller
         $perPage = min((int) ($validated['per_page'] ?? self::DEFAULT_PER_PAGE), self::MAX_PER_PAGE);
 
         $documents = $query->paginate($perPage)->withQueryString();
+
+        app(DocumentCredits::class)->preload($documents->pluck('id'));
 
         return DocumentListResource::collection($documents);
     }

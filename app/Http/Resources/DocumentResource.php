@@ -3,6 +3,8 @@
 namespace App\Http\Resources;
 
 use App\Models\DocumentEvidence;
+use App\Services\AiCredits\DocumentCredits;
+use App\Services\AiCredits\QuoteService;
 use App\Services\DocumentIntelligenceService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -64,6 +66,8 @@ class DocumentResource extends JsonResource
             'charts' => ChartResource::collection($this->charts),
             'insights' => $this->insights ?? [],
             'progress' => $this->progress,
+            // Only with workload credits on; null until the document has a quote (the quote is made when processing starts).
+            $this->mergeWhen(QuoteService::enabled(), fn () => ['credits' => app(DocumentCredits::class)->for($this->resource)]),
             // Structured stage (key, label, optional step/total). Null once processing ends.
             'progressStage' => $this->status === 'Processing' ? ($this->ai_pipeline['progress_stage'] ?? null) : null,
             'errorMessage' => $this->error_message,

@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources;
 
+use App\Services\AiCredits\DocumentCredits;
+use App\Services\AiCredits\QuoteService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -41,6 +43,8 @@ class DocumentListResource extends JsonResource
                 : ((int) $this->intelligence_generation === 0 && $this->has_structured_data),
             'powerBIStatus' => $this->power_bi_status,
             'progress' => $this->progress,
+            // Only with workload credits on; null until the document has a quote (the quote is made when processing starts).
+            $this->mergeWhen(QuoteService::enabled(), fn () => ['credits' => app(DocumentCredits::class)->for($this->resource)]),
             'errorMessage' => $this->error_message,
             'pageFlags' => [],
             'kpis' => [],
