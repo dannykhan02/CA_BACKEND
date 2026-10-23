@@ -77,7 +77,7 @@ class PdfTextLocationTest extends TestCase
         return [$user, $document, $sourceId];
     }
 
-    private function run(Document $document, array $pages, ?FakePdfPageRenderer $renderer = null, ?WordBoxRunner $runner = null): FakePdfPageRenderer
+    private function locateWith(Document $document, array $pages, ?FakePdfPageRenderer $renderer = null, ?WordBoxRunner $runner = null): FakePdfPageRenderer
     {
         $renderer ??= new FakePdfPageRenderer;
         $this->app->instance(PdfPageRenderer::class, $renderer);
@@ -102,7 +102,7 @@ class PdfTextLocationTest extends TestCase
     public function test_a_scanned_page_is_located_and_its_citation_returns_normalised_regions(): void
     {
         [$user, $document, $sourceId] = $this->fixture();
-        $renderer = $this->run($document, [2]);
+        $renderer = $this->locateWith($document, [2]);
 
         $anchors = $this->anchors($document);
         self::assertCount(5, $anchors);
@@ -130,7 +130,7 @@ class PdfTextLocationTest extends TestCase
     public function test_extraction_analysis_and_credits_are_untouched(): void
     {
         [, $document] = $this->fixture();
-        $this->run($document, [2]);
+        $this->locateWith($document, [2]);
 
         $document->refresh();
         self::assertSame(self::TEXT, $document->extracted_text);
@@ -144,7 +144,7 @@ class PdfTextLocationTest extends TestCase
     public function test_a_citation_on_a_page_without_boxes_is_not_located(): void
     {
         [$user, $document, $sourceId] = $this->fixture(citedPage: 1);
-        $this->run($document, [2]); // Only page 2 was read by OCR; page 1 has a text layer.
+        $this->locateWith($document, [2]); // Only page 2 was read by OCR; page 1 has a text layer.
 
         Sanctum::actingAs($user);
         $this->getJson('/api/documents/'.$document->id.'/sources/'.$sourceId)->assertOk()
@@ -154,7 +154,7 @@ class PdfTextLocationTest extends TestCase
     public function test_a_quote_the_boxes_do_not_contain_is_not_located(): void
     {
         [$user, $document, $sourceId] = $this->fixture();
-        $this->run($document, [2], runner: new FakeWordBoxRunner(FakeWordBoxRunner::line(['Something', 'entirely', 'different'])));
+        $this->locateWith($document, [2], runner: new FakeWordBoxRunner(FakeWordBoxRunner::line(['Something', 'entirely', 'different'])));
 
         self::assertCount(3, $this->anchors($document));
         Sanctum::actingAs($user);
@@ -166,7 +166,7 @@ class PdfTextLocationTest extends TestCase
     public function test_a_page_with_no_confident_words_stores_nothing_and_still_completes(): void
     {
         [, $document] = $this->fixture();
-        $this->run($document, [2], runner: new FakeWordBoxRunner(FakeWordBoxRunner::line(['Total', 'amount'], confidence: 0.3)));
+        $this->locateWith($document, [2], runner: new FakeWordBoxRunner(FakeWordBoxRunner::line(['Total', 'amount'], confidence: 0.3)));
 
         self::assertCount(0, $this->anchors($document));
         self::assertSame('completed', $this->stage($document)->status);
@@ -178,7 +178,7 @@ class PdfTextLocationTest extends TestCase
     {
         config(['ocr.pdf_location.enabled' => false]);
         [, $document] = $this->fixture();
-        $renderer = $this->run($document, [2]);
+        $renderer = $this->locateWith($document, [2]);
 
         self::assertSame([], $renderer->pages);
         self::assertCount(0, $this->anchors($document));
@@ -190,7 +190,7 @@ class PdfTextLocationTest extends TestCase
     {
         config(['ocr.pdf_location.max_pages' => 2]);
         [, $document] = $this->fixture();
-        $renderer = $this->run($document, [4, 1, 3, 2, 3]);
+        $renderer = $this->locateWith($document, [4, 1, 3, 2, 3]);
 
         self::assertSame([1, 2], $renderer->pages, 'lowest page numbers first, duplicates ignored');
         $output = $this->stage($document)->output;
@@ -202,7 +202,7 @@ class PdfTextLocationTest extends TestCase
     public function test_a_render_failure_never_fails_the_document_and_leaves_no_temp_files(): void
     {
         [, $document] = $this->fixture();
-        $renderer = $this->run($document, [1, 2], new FakePdfPageRenderer(failPages: [1, 2]));
+        $renderer = $this->locateWith($document, [1, 2], new FakePdfPageRenderer(failPages: [1, 2]));
 
         self::assertCount(0, $this->anchors($document));
         $output = $this->stage($document)->output;
@@ -217,7 +217,7 @@ class PdfTextLocationTest extends TestCase
     public function test_a_tesseract_failure_is_contained_and_rendered_pages_are_cleaned_up(): void
     {
         [, $document] = $this->fixture();
-        $renderer = $this->run($document, [2], runner: FakeWordBoxRunner::failing(new \RuntimeException('Word-box OCR timed out after 45s.')));
+        $renderer = $this->locateWith($document, [2], runner: FakeWordBoxRunner::failing(new \RuntimeException('Word-box OCR timed out after 45s.')));
 
         self::assertCount(0, $this->anchors($document));
         self::assertSame('completed', $this->stage($document)->status);
@@ -229,7 +229,7 @@ class PdfTextLocationTest extends TestCase
     public function test_one_failed_page_does_not_stop_the_others(): void
     {
         [, $document] = $this->fixture();
-        $this->run($document, [1, 2], new FakePdfPageRenderer(failPages: [1]));
+        $this->locateWith($document, [1, 2], new FakePdfPageRenderer(failPages: [1]));
 
         $output = $this->stage($document)->output;
         self::assertSame([2], $output['located_pages']);
@@ -247,7 +247,7 @@ class PdfTextLocationTest extends TestCase
             }
         });
         [, $document] = $this->fixture();
-        $renderer = $this->run($document, [2]);
+        $renderer = $this->locateWith($document, [2]);
 
         self::assertSame([], $renderer->pages);
         self::assertSame('skipped', $this->stage($document)->status);
@@ -256,7 +256,7 @@ class PdfTextLocationTest extends TestCase
     public function test_boxes_stop_backing_a_highlight_once_the_extracted_text_changes(): void
     {
         [$user, $document, $sourceId] = $this->fixture();
-        $this->run($document, [2]);
+        $this->locateWith($document, [2]);
         $document->forceFill(['extracted_text' => self::TEXT.' revised'])->save();
 
         Sanctum::actingAs($user);
