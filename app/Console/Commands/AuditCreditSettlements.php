@@ -38,7 +38,11 @@ class AuditCreditSettlements extends Command
             'Each of these needs manual correction: the policy charges exactly once per document.');
 
         $held = DB::table('billing_operations')->where('status', 'reserved')
-            ->whereIn('kind', ['document', 'ocr', 'reanalysis', 'comparison'])
+            ->where(function ($q) {
+                // Legacy comparison counters are not swept, so only variable-price comparison holds belong here.
+                $q->whereIn('kind', ['document', 'ocr', 'reanalysis'])
+                    ->orWhere(fn ($c) => $c->where('kind', 'comparison')->whereNotNull('amount_reserved'));
+            })
             ->where('updated_at', '<=', now()->subDay())->orderBy('updated_at');
         $this->report('Reservations held longer than 24h', $held->count(),
             $held->limit($limit)->pluck('resource_id')->all(), $limit,
