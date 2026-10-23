@@ -85,7 +85,9 @@ failed paid re-analysis delivers nothing new. It is called when:
 
 `billing:release-stale-reservations` remains the hourly backstop for anything
 that never reaches one of those paths — a worker killed mid-run, an abandoned
-pipeline, a reservation older than `BILLING_PIPELINE_HOURS` (24h). Reading a
+pipeline, a reservation older than `BILLING_PIPELINE_HOURS` (24h). With AI
+credits on, an AI comparison hold older than that is released too (a lost
+comparison job never calls `failed()`). Reading a
 workspace's credits performs the same release lazily.
 
 ## Retries

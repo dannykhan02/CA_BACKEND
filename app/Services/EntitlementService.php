@@ -148,12 +148,25 @@ class EntitlementService
         DB::transaction(function () use ($workspace) {
             Workspace::whereKey($workspace)->lockForUpdate()->firstOrFail();
             $kinds = ['document', 'ocr', 'reanalysis'];
-            $stale = DB::table('billing_operations')->where('workspace_id', $workspace)->where('status', 'reserved')->whereIn('kind', $kinds)
-                ->where(function ($q) {
-                    $q->where('updated_at', '<=', now()->subHours(config('billing.pipeline_hours')))->orWhereNotIn('resource_id', Document::select('id'))->orWhereIn('resource_id', Document::whereIn('status', ['Failed', 'Needs Review'])->select('id'));
+            $stale = DB::table('billing_operations')->where('workspace_id', $workspace)->where('status', 'reserved')
+                ->where(function ($outer) use ($kinds) {
+                    $outer->where(function ($q) use ($kinds) {
+                        $q->whereIn('kind', $kinds)->where(function ($q) {
+                            $q->where('updated_at', '<=', now()->subHours(config('billing.pipeline_hours')))->orWhereNotIn('resource_id', Document::select('id'))->orWhereIn('resource_id', Document::whereIn('status', ['Failed', 'Needs Review'])->select('id'));
+                        });
+                    })->orWhere(function ($q) {
+                        // A comparison job can be lost without ever calling failed(): its variable-price hold expires like any other.
+                        // Its resource is a comparison, not a document, so only age applies.
+                        $q->where('kind', 'comparison')->whereNotNull('amount_reserved')->where('updated_at', '<=', now()->subHours(config('billing.pipeline_hours')));
+                    });
                 })
                 ->get();
             foreach ($stale as $operation) {
+                if ($operation->kind === 'comparison') {
+                    app(CreditAccountant::class)->release('comparison', $operation->resource_id, 'reservation_expired');
+
+                    continue;
+                }
                 if ($operation->amount_reserved !== null) {
                     // Variable-price operation: Needs Review settles only when product policy says a partial result is paid.
                     $status = Document::whereKey($operation->resource_id)->value('status');
