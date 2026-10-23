@@ -47,6 +47,9 @@ return [
         // Hard stop: more pages than this are declined, never silently OCR'd.
         'max_pages' => (int) env('AI_CREDITS_OCR_MAX_PAGES', 60),
         'provider_cost_usd_per_page' => (float) env('AI_CREDITS_OCR_USD_PER_PAGE', 0.02),
+        // Floor for the quote's provider cap. One vision request reserves a hard ceiling of about USD 0.028 on the
+        // default extraction model, so pages x per-page alone would refuse a one-page scan. Never changes the credits charged.
+        'min_cap_usd' => (float) env('AI_CREDITS_OCR_MIN_CAP_USD', 0.05),
     ],
 
     'comparison' => ['credits' => (int) env('AI_CREDITS_COMPARISON', 12)],
