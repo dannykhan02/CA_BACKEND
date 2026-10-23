@@ -79,8 +79,8 @@ class AiCreditsTest extends TestCase
     private function admit(Document $document): bool
     {
         $fresh = $document->fresh();
-        // A quote of 10 credits or more now waits for the customer's confirmation, as the large bands always did. These
-        // tests are about the accounting, so a document up to the medium band has its price accepted up front; larger
+        // A quote of 30 credits or more (large and above) waits for the customer's confirmation. These tests are about the
+        // accounting, so a document up to the medium band has its price accepted up front (harmless: it needs none); larger
         // ones still wait, which is what the confirmation tests assert.
         if (strlen((string) $fresh->extracted_text) / 3 <= 30000 && ! ($fresh->ai_pipeline['credit_quote_confirmed'] ?? false)) {
             $fresh->forceFill(['ai_pipeline' => [...($fresh->ai_pipeline ?? []), 'credit_quote_confirmed' => true]])->save();
@@ -114,8 +114,9 @@ class AiCreditsTest extends TestCase
     {
         $ws = $this->workspace(1000);
         $q = app(QuoteService::class);
-        // 1,000 tokens belongs to the tiny band, but 1 credit (USD 0.027) cannot pay the 0.05 minimum completion, so it quotes as small.
-        $expect = ['small' => [1000, 3], 'medium' => [20000, 10], 'large' => [50000, 30], 'very_large' => [150000, 80]];
+        // Tiny (1 credit, USD 0.027) cannot pay the 0.05 minimum completion, and small (2 credits, USD 0.054) leaves room for
+        // only ~666 tokens above that 0.05 gate, so 1,000 tokens is lifted all the way to medium.
+        $expect = ['small' => [500, 2], 'medium' => [1000, 10], 'large' => [50000, 30], 'very_large' => [150000, 80]];
         foreach ($expect as $band => [$tokens, $credits]) {
             $quote = $q->quoteDocument($this->document($ws, $tokens))['quote'];
             $this->assertSame([$band, $credits], [$quote->band, $quote->credits], $band);
@@ -129,8 +130,11 @@ class AiCreditsTest extends TestCase
         $this->assertSame([1, 2000], [config('ai_credits.bands.tiny.credits'), config('ai_credits.bands.tiny.max_tokens')]);
         // 1 credit is USD 0.027 of provider spend; the gate asks for at least USD 0.05 to finish a document.
         $c = $q->classify(500, false);
-        $this->assertSame(['small', 3, true], [$c['band'], $c['credits'], $c['shifted']]);
-        $this->assertSame(3, $q->minimumDocumentCredits());
+        $this->assertSame(['small', 2, true], [$c['band'], $c['credits'], $c['shifted']]);
+        $this->assertSame(2, $q->minimumDocumentCredits());
+        // Small is 2 credits = USD 0.054: only 0.004 above the 0.05 gate, which 0.006 per 1,000 tokens uses up at ~666 tokens.
+        $this->assertSame('small', $q->classify(666, false)['band']);
+        $this->assertSame('medium', $q->classify(667, false)['band']);
 
         // Once the gate asks for no more than a credit can pay, tiny is what a 2,000-token document gets.
         config(['ai_credits.min_completion_cost_usd' => ['base' => 0.01, 'per_1000_tokens' => 0.005]]);
@@ -214,8 +218,10 @@ class AiCreditsTest extends TestCase
     public function test_a_scan_never_quotes_below_the_small_band_and_its_price_covers_its_ocr_cost(): void
     {
         $q = app(QuoteService::class);
-        $this->assertSame(['small', 3], [$q->classifyScan(1)['band'], $q->classifyScan(1)['credits']]);
+        // One page is 600 tokens (small by size) but 600 tokens + 0.02 of OCR is more than small's USD 0.054: medium.
+        $this->assertSame(['medium', 10], [$q->classifyScan(1)['band'], $q->classifyScan(1)['credits']]);
         $this->assertSame(['medium', 10], [$q->classifyScan(2)['band'], $q->classifyScan(2)['credits']]);
+        $this->assertSame(['large', 30], [$q->classifyScan(10)['band'], $q->classifyScan(10)['credits']]);
         // 60 pages: 36,000 tokens (large) but 60 x 0.02 of OCR alone is more than the large cap (0.81).
         $this->assertSame(['very_large', 80], [$q->classifyScan(60)['band'], $q->classifyScan(60)['credits']]);
         foreach ([1, 2, 5, 20, 60] as $pages) {
@@ -509,14 +515,14 @@ class AiCreditsTest extends TestCase
     public function test_provider_cap_blocks_the_next_call_once_spent_and_unknown_usage_counts_conservatively(): void
     {
         $ws = $this->workspace(100);
-        $document = $this->document($ws, 1000); // small = 3 credits = 0.081 USD
+        $document = $this->document($ws, 1000); // medium = 10 credits = 0.27 USD
         $this->assertTrue($this->admit($document));
         $quote = OperationQuote::firstOrFail();
         $spend = app(OperationSpend::class);
-        $this->recordRun($quote, 0.02);
+        $this->recordRun($quote, 0.20);
         $spend->assertCallAllowed($document->fresh(), 'entities'); // still inside the cap
         $this->recordRun($quote, null); // a timeout with unknown usage is NOT zero
-        $this->assertEqualsWithDelta(0.07, $spend->spentUsd($quote->id), 0.000001);
+        $this->assertEqualsWithDelta(0.25, $spend->spentUsd($quote->id), 0.000001);
         $spend->assertCallAllowed($document->fresh(), 'entities');
         $this->recordRun($quote, null);
         $this->expectException(AiProcessingException::class);
@@ -575,7 +581,7 @@ class AiCreditsTest extends TestCase
         $this->assertTrue($this->admit($document));
         $quote = OperationQuote::firstOrFail();
         app(WorkspaceCreditService::class)->accountForReadyDocument($document->fresh());
-        $this->recordRun($quote, 0.11, 'chart_vision'); // spent past the 0.081 cap
+        $this->recordRun($quote, 0.30, 'chart_vision'); // spent past the 0.27 cap
         $this->expectException(AiProcessingException::class);
         app(OperationSpend::class)->assertCallAllowed($document->fresh(), 'chart_vision');
     }
@@ -800,13 +806,13 @@ class AiCreditsTest extends TestCase
         $summary = app(EntitlementService::class)->summary($ws->id);
         $this->assertSame(30, $summary['ai_credits']['savedCredits']);
 
-        $document = $this->document($ws, 1000); // small = 3 credits
+        $document = $this->document($ws, 1000); // medium = 10 credits
         $this->assertTrue($this->admit($document));
         $this->assertSame(3, (int) $ws->credits()->value('documents_remaining')); // reserving converts nothing
         app(WorkspaceCreditService::class)->accountForReadyDocument($document->fresh());
         $credits = $ws->credits()->first();
-        $this->assertSame([2, 7], [(int) $credits->documents_remaining, (int) $credits->ai_credits_remaining]); // one unit became 10, 3 spent
-        $this->assertSame(27, app(EntitlementService::class)->summary($ws->id)['ai_credits']['savedCredits']);
+        $this->assertSame([2, 0], [(int) $credits->documents_remaining, (int) $credits->ai_credits_remaining]); // one unit became 10, all 10 spent
+        $this->assertSame(20, app(EntitlementService::class)->summary($ws->id)['ai_credits']['savedCredits']);
         $this->assertSame(1, $this->ledger($ws->id, 'debit', 'saved_document'));
         $this->assertSame(10, $this->ledger($ws->id, 'credit', 'saved_ai_credit'));
     }
@@ -878,7 +884,7 @@ class AiCreditsTest extends TestCase
         $data = $this->getJson('/api/workspace/credits')->assertOk()->json('data');
         $this->assertSame([100, 28, 72, 15], [$data['ai_credits']['monthlyCredits'], $data['ai_credits']['monthlyCreditsUsed'],
             $data['ai_credits']['monthlyCreditsRemaining'], $data['ai_credits']['savedCredits']]);
-        $this->assertSame(3, $data['ai_credits']['minimumRequiredCredits']);
+        $this->assertSame(2, $data['ai_credits']['minimumRequiredCredits']);
         $this->assertArrayHasKey('documents_remaining', $data);
         $this->assertArrayHasKey('saved_credits', $data);
     }

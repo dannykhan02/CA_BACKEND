@@ -57,7 +57,7 @@ class AiCreditsIndependentReviewTest extends TestCase
     private function admit(Document $document): bool
     {
         $fresh = $document->fresh();
-        // A 10-credit quote waits for the customer's confirmation; these tests are about releases, so it is accepted up front.
+        // Accepting the price up front is harmless for a quote that needs no confirmation; these tests are about releases.
         $fresh->forceFill(['ai_pipeline' => [...($fresh->ai_pipeline ?? []), 'credit_quote_confirmed' => true]])->save();
 
         return app(AiCreditAdmission::class)->admitDocument($fresh->fresh());

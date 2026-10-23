@@ -16,7 +16,7 @@ return [
     // cap cannot pay for the minimum useful completion (see `min_completion_cost_usd`) moves up again.
     'bands' => [
         'tiny' => ['max_tokens' => (int) env('AI_CREDITS_TINY_MAX_TOKENS', 2000), 'credits' => (int) env('AI_CREDITS_TINY', 1)],
-        'small' => ['max_tokens' => (int) env('AI_CREDITS_SMALL_MAX_TOKENS', 6000), 'credits' => (int) env('AI_CREDITS_SMALL', 3)],
+        'small' => ['max_tokens' => (int) env('AI_CREDITS_SMALL_MAX_TOKENS', 6000), 'credits' => (int) env('AI_CREDITS_SMALL', 2)],
         'medium' => ['max_tokens' => (int) env('AI_CREDITS_MEDIUM_MAX_TOKENS', 30000), 'credits' => (int) env('AI_CREDITS_MEDIUM', 10)],
         'large' => ['max_tokens' => (int) env('AI_CREDITS_LARGE_MAX_TOKENS', 90000), 'credits' => (int) env('AI_CREDITS_LARGE', 30)],
         'very_large' => ['max_tokens' => (int) env('AI_CREDITS_VERY_LARGE_MAX_TOKENS', 250000), 'credits' => (int) env('AI_CREDITS_VERY_LARGE', 80)],
@@ -24,7 +24,7 @@ return [
     'dense_band_shift' => (int) env('AI_CREDITS_DENSE_BAND_SHIFT', 1),
     // A quote needs the customer's explicit confirmation before credits are reserved when it costs at least this
     // many credits, or when the document has more than this many pages.
-    'confirm_from_credits' => (int) env('AI_CREDITS_CONFIRM_FROM_CREDITS', 10),
+    'confirm_from_credits' => (int) env('AI_CREDITS_CONFIRM_FROM_CREDITS', 30),
     'confirm_over_pages' => (int) env('AI_CREDITS_CONFIRM_OVER_PAGES', 100),
 
     // Characters (bytes, as ChunkPlanner counts them) per model token, by document type, used to estimate a
@@ -64,6 +64,8 @@ return [
         'max_pages' => (int) env('AI_CREDITS_OCR_MAX_PAGES', 60),
         // Provider cost ceiling per page. It bounds OCR spend, and the document's band is raised until its cap
         // can also pay for this much OCR, so a scan's price never falls below its real OCR cost.
+        // NOT MEASURED: 0.02 is an assumption. Set it to about 2x the per-call average of document_ai_runs where
+        // purpose = 'ocr' (one row per page) once that is read from production (docs/AI_CREDITS.md).
         'provider_cost_usd_per_page' => (float) env('AI_CREDITS_OCR_USD_PER_PAGE', 0.02),
         // Floor for the OCR operation's provider cap. One vision request reserves a hard ceiling of about USD 0.028 on the
         // default extraction model, so pages x per-page alone would refuse a one-page scan.

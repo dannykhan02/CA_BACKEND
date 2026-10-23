@@ -85,7 +85,7 @@ class CreditEconomicsReportTest extends TestCase
         $this->assertSame([25, 6, 3, 1], array_column($rows, 'starter_docs_per_month'));
         Artisan::call('docintel:credit-economics-report', ['--what-if' => true, '--json' => true]);
         $today = json_decode(Artisan::output(), true);
-        $this->assertSame([3, 30, 80, 80], array_column($today, 'credits')); // today's bands: 5,000 tokens is small (3), the others are lifted by their synthesis floors
+        $this->assertSame([10, 30, 80, 80], array_column($today, 'credits')); // today's bands: 5,000 tokens is small by size but 2 credits (USD 0.054) cannot pay the 0.08 completion gate, so medium; the others are lifted by their synthesis floors
         $this->assertSame($before, config('ai_credits'));
         $this->assertSame(0, OperationQuote::count());
     }

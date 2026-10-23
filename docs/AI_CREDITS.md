@@ -11,7 +11,7 @@ A document is priced by its estimated tokens. The first band whose `max_tokens` 
 | Band | Up to (tokens) | Credits | Provider cap (USD, credits x 0.027) |
 |---|---|---|---|
 | tiny | 2,000 | 1 | 0.027 |
-| small | 6,000 | 3 | 0.081 |
+| small | 6,000 | 2 | 0.054 |
 | medium | 30,000 | 10 | 0.27 |
 | large | 90,000 | 30 | 0.81 |
 | very_large | 250,000 | 80 | 2.16 |
@@ -22,20 +22,24 @@ A document is priced by its estimated tokens. The first band whose `max_tokens` 
   (`min_completion_cost_usd`: USD 0.05 plus 0.006 per 1,000 tokens, or the pipeline's synthesis reservation when larger).
   **With today's gate `tiny` is never selected**: 1 credit is USD 0.027 and the gate asks for at least USD 0.05, so a tiny
   document quotes as small. The band exists so that lowering the gate (after measuring real cost) makes it reachable
-  without a code change.
+  without a code change. The gate is unchanged.
+  **`small` is reachable only up to ~666 tokens (about one page of text)**: 2 credits is USD 0.054, only USD 0.004 above the
+  USD 0.05 base, which the 0.006 per 1,000 tokens uses up at 666 tokens. Everything from 667 to 30,000 tokens therefore
+  quotes as `medium` (10 credits) until the gate is lowered or the small cap is raised.
 * Plan allowances are unchanged: Starter 100, Professional 250 monthly AI credits.
 
 ## Rules
 
-* **Confirmation.** A quote of 10 credits or more, or a document of more than 100 pages, waits for the customer to accept
-  the price before anything is reserved (`confirm_from_credits`, `confirm_over_pages`). The quote carries
+* **Confirmation.** A quote of 30 credits or more (`confirm_from_credits`, default 30), or a document of more than 100
+  pages (`confirm_over_pages`), waits for the customer to accept the price before anything is reserved. The quote carries
   `requires_confirmation: true` (`documents.ai_pipeline.credit_quote`, and `pendingConfirmations[]` in
   `GET /api/workspace/credits` as `requiresConfirmation`, with `pages`).
 * **Scans** are priced by the same bands. OCR is not a separate charge. Before any page is read, the scan must be payable
   (balance at least the estimated price: `ocr.tokens_per_page` = 600 per page, never below `ocr.min_band` = small). The
   OCR operation only bounds provider spend (pages x USD 0.02, at least USD 0.05; at most 60 pages). After OCR the document
   is priced from `max(text estimate, pages x 600)` and its band must also cover the OCR bound, so a scan never prices
-  below its OCR cost (a 2-page scan is therefore medium, 10 credits).
+  below its OCR cost. With the bound at USD 0.02 per page (an assumption, not a measurement) a 1-page scan quotes medium
+  (10 credits), 2 pages medium (10), 10 pages large (30) and 60 pages very_large (80).
 * **Token estimate** (`chars_per_token`): PDF 3.0, XLSX 1.7, DOCX 5.6, anything else 3.0. The provider's own count is
   used whenever the pipeline already has it.
 * **Charge.** The quoted credits are debited once, when a revision publishes (`DocumentRevisionPublisher`). Measured
@@ -71,3 +75,11 @@ Set `DOCINTEL_AI_CREDITS_ENABLED=false` on **both** `CA_BACKEND` and `ca-horizon
 (the worker reads config at boot; a flag left on in the worker keeps quoting and reserving). Open reservations still
 settle or release correctly with the flag off (`accountForReadyDocument` is not gated on the flag), and workspaces return
 to one document unit per publication.
+
+## Measuring the OCR bound
+
+`ocr.provider_cost_usd_per_page` (default USD 0.02) is an assumption. One vision call is recorded per page in
+`document_ai_runs` (`purpose = 'ocr'`, with `input_tokens`, `output_tokens` and `estimated_cost_usd`), so the real figure is
+`avg(estimated_cost_usd)` over those rows. Read-only command: section 7b of
+[audits/billing-goal-vs-reality-2026-10-23.md](audits/billing-goal-vs-reality-2026-10-23.md). Then set the config to about
+twice the measured average. How the quote moves with the bound: see the PR description.

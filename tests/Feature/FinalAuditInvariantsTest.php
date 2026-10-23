@@ -83,8 +83,8 @@ class FinalAuditInvariantsTest extends TestCase
     private function admit(Document $document): bool
     {
         $fresh = $document->fresh();
-        // A quote of 10 credits or more now waits for the customer's confirmation, as the large bands always did. These
-        // tests are about the accounting, so a document up to the medium band has its price accepted up front; larger
+        // A quote of 30 credits or more (large and above) waits for the customer's confirmation. These tests are about the
+        // accounting, so a document up to the medium band has its price accepted up front (harmless: it needs none); larger
         // ones still wait, which is what the confirmation tests assert.
         if (strlen((string) $fresh->extracted_text) / 3 <= 30000 && ! ($fresh->ai_pipeline['credit_quote_confirmed'] ?? false)) {
             $fresh->forceFill(['ai_pipeline' => [...($fresh->ai_pipeline ?? []), 'credit_quote_confirmed' => true]])->save();

@@ -109,7 +109,9 @@ class WorkloadCreditsV1Test extends TestCase
         $bands = config('ai_credits.bands');
         $this->assertSame(['tiny', 'small', 'medium', 'large', 'very_large'], array_keys($bands));
         $this->assertSame([2000, 6000, 30000, 90000, 250000], array_column($bands, 'max_tokens'));
-        $this->assertSame([1, 3, 10, 30, 80], array_column($bands, 'credits'));
+        $this->assertSame([1, 2, 10, 30, 80], array_column($bands, 'credits'));
+        $this->assertSame(30, config('ai_credits.confirm_from_credits'));
+        $this->assertSame(100, config('ai_credits.confirm_over_pages'));
     }
 
     public function test_the_per_credit_cap_the_dense_shift_and_the_plan_allowances_are_unchanged(): void
@@ -124,37 +126,42 @@ class WorkloadCreditsV1Test extends TestCase
     {
         $ws = $this->workspace(1000);
         $q = app(QuoteService::class);
-        // PDF at 3 characters per token. 1,000 tokens is tiny by size but cannot be completed on USD 0.027: it is lifted to small.
-        foreach ([[1000, 'small', 3], [5000, 'small', 3], [20000, 'medium', 10], [60000, 'large', 30], [150000, 'very_large', 80]] as [$tokens, $band, $credits]) {
+        // PDF at 3 characters per token. Tiny (USD 0.027) can never pay the 0.05 completion gate. Small (2 credits, USD 0.054)
+        // leaves 0.004 above the gate, which 0.006 per 1,000 tokens uses up at ~666 tokens: 1,000 tokens is already medium.
+        foreach ([[500, 'small', 2], [1000, 'medium', 10], [5000, 'medium', 10], [20000, 'medium', 10], [60000, 'large', 30], [150000, 'very_large', 80]] as [$tokens, $band, $credits]) {
             $quote = $q->quoteDocument($this->document($ws, (int) ceil($tokens * 3 / 29), 'PDF'))['quote'];
             $this->assertSame([$band, $credits], [$quote->band, $quote->credits], $tokens.' tokens');
         }
         $this->assertTrue($q->quoteDocument($this->document($ws, (int) ceil(300000 * 3 / 29), 'PDF'))['declined']);
     }
 
-    public function test_a_quote_of_ten_credits_or_more_requires_confirmation_and_says_so(): void
+    public function test_a_quote_of_thirty_credits_or_more_requires_confirmation_and_says_so(): void
     {
         $ws = $this->workspace(100);
-        $document = $this->document($ws, self::MEDIUM_TEXT);
+        $document = $this->document($ws, (int) ceil(60000 * 3 / 29), 'PDF'); // ~60,000 tokens: large, 30 credits
         $this->assertFalse($this->admit($document, false));
 
         $pipeline = $document->fresh()->ai_pipeline;
         $this->assertTrue($pipeline['awaiting_credit_confirmation']);
-        $this->assertSame(10, $pipeline['credit_quote']['credits']);
+        $this->assertSame([30, 'large'], [$pipeline['credit_quote']['credits'], $pipeline['credit_quote']['band']]);
         $this->assertTrue($pipeline['credit_quote']['requires_confirmation']);
         $this->assertNull($this->op($document), 'nothing is reserved until the customer accepts');
         $pending = app(EntitlementService::class)->summary($ws->id)['ai_credits']['pendingConfirmations'];
         $this->assertTrue($pending[0]['requiresConfirmation']);
-        $this->assertSame(10, $pending[0]['credits']);
+        $this->assertSame(30, $pending[0]['credits']);
     }
 
-    public function test_a_quote_under_ten_credits_on_a_short_document_needs_no_confirmation(): void
+    public function test_a_quote_under_thirty_credits_on_a_short_document_needs_no_confirmation(): void
     {
         $ws = $this->workspace(100);
-        $document = $this->document($ws, 1, 'PDF', 100);
-        $this->assertTrue($this->admit($document, false));
-        $this->assertSame(3, (int) $this->op($document)->amount_reserved);
-        $this->assertFalse($document->fresh()->ai_pipeline['awaiting_credit_confirmation'] ?? false);
+        $medium = $this->document($ws, self::MEDIUM_TEXT); // 10 credits: no longer asks
+        $this->assertTrue($this->admit($medium, false));
+        $this->assertSame(10, (int) $this->op($medium)->amount_reserved);
+        $this->assertFalse($medium->fresh()->ai_pipeline['awaiting_credit_confirmation'] ?? false);
+
+        $small = $this->document($ws, 1, 'PDF', 100); // 100 pages is not over the page limit
+        $this->assertTrue($this->admit($small, false));
+        $this->assertSame(2, (int) $this->op($small)->amount_reserved);
     }
 
     public function test_more_than_a_hundred_pages_requires_confirmation_whatever_it_costs(): void
@@ -162,17 +169,27 @@ class WorkloadCreditsV1Test extends TestCase
         $ws = $this->workspace(100);
         $document = $this->document($ws, 1, 'PDF', 101);
         $this->assertFalse($this->admit($document, false));
-        $this->assertSame(3, $document->fresh()->ai_pipeline['credit_quote']['credits']);
+        $this->assertSame(2, $document->fresh()->ai_pipeline['credit_quote']['credits']);
         $this->assertSame(101, $document->fresh()->ai_pipeline['credit_quote']['pages']);
         $this->assertTrue($document->fresh()->ai_pipeline['credit_quote']['requires_confirmation']);
-        $this->assertTrue(app(QuoteService::class)->requiresConfirmation(3, 101));
-        $this->assertFalse(app(QuoteService::class)->requiresConfirmation(9, 100));
-        $this->assertTrue(app(QuoteService::class)->requiresConfirmation(10, 0));
+    }
+
+    public function test_the_credit_threshold_is_a_config_value(): void
+    {
+        $q = app(QuoteService::class);
+        $this->assertFalse($q->requiresConfirmation(29, 0));
+        $this->assertTrue($q->requiresConfirmation(30, 0));
+        $this->assertTrue($q->requiresConfirmation(2, 101));
+        $this->assertFalse($q->requiresConfirmation(29, 100));
+        config(['ai_credits.confirm_from_credits' => 10]);
+        $this->assertTrue($q->requiresConfirmation(10, 0));
+        config(['ai_credits.confirm_over_pages' => 50]);
+        $this->assertTrue($q->requiresConfirmation(2, 51));
     }
 
     // ============================================================ Change 2: scans
 
-    public function test_a_scan_is_priced_by_the_same_bands_and_never_below_small(): void
+    public function test_a_scan_is_priced_by_the_same_bands_and_never_below_the_bands_it_can_pay_for(): void
     {
         $ws = $this->workspace(100);
         $document = $this->document($ws, 1, 'PNG');
@@ -182,8 +199,9 @@ class WorkloadCreditsV1Test extends TestCase
             'engine' => 'vision', 'raw_text' => 'x', 'confidence' => 0.9]);
         $this->assertTrue($this->admit($document));
 
-        // Two words of text is tiny; one page of image is at least 600 tokens and a scan is never quoted below small.
-        $this->assertSame(['small', 3], [OperationQuote::where('kind', 'document')->value('band'), (int) $this->op($document)->amount_reserved]);
+        // Two words of text is tiny; one page of image is at least 600 tokens, and 600 tokens plus the OCR bound (0.02) is more
+        // than small can pay for (USD 0.054): a one-page scan quotes as medium.
+        $this->assertSame(['medium', 10], [OperationQuote::where('kind', 'document')->value('band'), (int) $this->op($document)->amount_reserved]);
         $this->assertSame(0, (int) $this->op($document, 'ocr')->amount_reserved, 'reading pages is not a separate charge');
     }
 
