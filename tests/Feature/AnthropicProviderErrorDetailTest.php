@@ -2,12 +2,28 @@
 
 namespace Tests\Feature;
 
+use App\Models\Document;
+use App\Models\User;
 use App\Services\AnthropicClient;
+use App\Services\WorkspaceService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class AnthropicProviderErrorDetailTest extends TestCase
 {
+    use RefreshDatabase;
+
+    /** The client refuses to dispatch without a cost scope; a persisted document supplies it. */
+    private function document(): Document
+    {
+        $user = User::factory()->create();
+        app(WorkspaceService::class)->createPersonalWorkspaceFor($user);
+
+        return Document::create(['name' => 'scan.jpg', 'type' => 'JPG', 'size_kb' => 1, 'status' => 'Processing', 'classification' => 'Public',
+            'year' => 2026, 'workspace_id' => $user->fresh()->current_workspace_id, 'uploaded_by' => $user->id]);
+    }
+
     public function test_a_provider_400_surfaces_its_error_type_and_message_without_request_data(): void
     {
         $secretImage = base64_encode(random_bytes(3000));
@@ -15,7 +31,7 @@ class AnthropicProviderErrorDetailTest extends TestCase
             ['type' => 'error', 'error' => ['type' => 'invalid_request_error', 'message' => 'example']], 400)]);
 
         try {
-            app(AnthropicClient::class)->extractTextFromImage($secretImage, 'image/png');
+            app(AnthropicClient::class)->extractTextFromImage($secretImage, 'image/png', $this->document());
             $this->fail('A 400 from the provider must throw.');
         } catch (\RuntimeException $e) {
             $this->assertStringContainsString('status 400', $e->getMessage());
@@ -32,7 +48,7 @@ class AnthropicProviderErrorDetailTest extends TestCase
             ['error' => ['type' => 'invalid_request_error', 'message' => "bad data {$echo} end"]], 400)]);
 
         try {
-            app(AnthropicClient::class)->extractTextFromImage(base64_encode('x'), 'image/png');
+            app(AnthropicClient::class)->extractTextFromImage(base64_encode('x'), 'image/png', $this->document());
             $this->fail('A 400 from the provider must throw.');
         } catch (\RuntimeException $e) {
             $this->assertStringNotContainsString(substr($echo, 0, 60), $e->getMessage());
@@ -45,7 +61,7 @@ class AnthropicProviderErrorDetailTest extends TestCase
         Http::fake(['api.anthropic.com/*' => Http::response('not json', 400)]);
 
         try {
-            app(AnthropicClient::class)->extractTextFromImage(base64_encode('x'), 'image/png');
+            app(AnthropicClient::class)->extractTextFromImage(base64_encode('x'), 'image/png', $this->document());
             $this->fail('A 400 from the provider must throw.');
         } catch (\RuntimeException $e) {
             $this->assertSame('Anthropic API request failed with status 400.', $e->getMessage());
