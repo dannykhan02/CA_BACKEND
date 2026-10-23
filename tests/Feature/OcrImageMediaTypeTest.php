@@ -9,6 +9,7 @@ use App\Services\WorkspaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -73,7 +74,7 @@ class OcrImageMediaTypeTest extends TestCase
         ];
     }
 
-    /** @dataProvider files */
+    #[DataProvider('files')]
     public function test_media_type_follows_the_bytes_and_data_is_the_file_bytes(string $name, string $format, string $expected): void
     {
         $path = $this->image($name, $format);
