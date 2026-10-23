@@ -82,7 +82,15 @@ class FinalAuditInvariantsTest extends TestCase
 
     private function admit(Document $document): bool
     {
-        return app(AiCreditAdmission::class)->admitDocument($document->fresh());
+        $fresh = $document->fresh();
+        // A quote of 10 credits or more now waits for the customer's confirmation, as the large bands always did. These
+        // tests are about the accounting, so a document up to the medium band has its price accepted up front; larger
+        // ones still wait, which is what the confirmation tests assert.
+        if (strlen((string) $fresh->extracted_text) / 3 <= 30000 && ! ($fresh->ai_pipeline['credit_quote_confirmed'] ?? false)) {
+            $fresh->forceFill(['ai_pipeline' => [...($fresh->ai_pipeline ?? []), 'credit_quote_confirmed' => true]])->save();
+        }
+
+        return app(AiCreditAdmission::class)->admitDocument($fresh->fresh());
     }
 
     private function op(Document $document, string $kind = 'document'): ?object

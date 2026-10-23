@@ -54,6 +54,15 @@ class AiCreditsIndependentReviewTest extends TestCase
             'extracted_text' => str_repeat('Revenue grew in the quarter. ', (int) ceil($tokens * 3 / 30))]);
     }
 
+    private function admit(Document $document): bool
+    {
+        $fresh = $document->fresh();
+        // A 10-credit quote waits for the customer's confirmation; these tests are about releases, so it is accepted up front.
+        $fresh->forceFill(['ai_pipeline' => [...($fresh->ai_pipeline ?? []), 'credit_quote_confirmed' => true]])->save();
+
+        return app(AiCreditAdmission::class)->admitDocument($fresh->fresh());
+    }
+
     private function op(string $resourceId, string $kind): ?object
     {
         return DB::table('billing_operations')->where('kind', $kind)->where('resource_id', $resourceId)->first();
@@ -73,7 +82,7 @@ class AiCreditsIndependentReviewTest extends TestCase
         $ws = $this->workspace(100);
         $document = $this->document($ws);
         $accountant = app(CreditAccountant::class);
-        $this->assertTrue(app(AiCreditAdmission::class)->admitDocument($document->fresh()));
+        $this->assertTrue($this->admit($document));
         app(WorkspaceCreditService::class)->accountForReadyDocument($document->fresh());
         $document->update(['status' => 'Ready']);
         $this->assertSame(90, (int) $ws->credits()->value('ai_credits_remaining'));
@@ -104,7 +113,7 @@ class AiCreditsIndependentReviewTest extends TestCase
     {
         $ws = $this->workspace(100);
         $document = $this->document($ws);
-        $this->assertTrue(app(AiCreditAdmission::class)->admitDocument($document->fresh()));
+        $this->assertTrue($this->admit($document));
         app(WorkspaceCreditService::class)->accountForReadyDocument($document->fresh());
 
         $this->assertFalse(app(EntitlementService::class)->releaseDocumentReservation($document->fresh(), 'document_removed'));
@@ -187,18 +196,18 @@ class AiCreditsIndependentReviewTest extends TestCase
 
         $this->assertSame(1, DocumentAiRun::where('operation_quote_id', $quote->id)->count());
         $this->assertEqualsWithDelta(0.0015, app(OperationSpend::class)->spentUsd($quote->id), 0.000001);
-        $this->assertSame(20, (int) $quote->credits, 'the customer price of a one-page scan is unchanged');
+        $this->assertSame(0, (int) $quote->credits, 'reading the pages is no longer a separate customer charge');
     }
 
     /** The cap only changes for scans so short that pages x per-page is below one request; every longer scan keeps pages x per-page. */
-    public function test_the_ocr_provider_cap_floor_leaves_longer_scans_and_all_prices_unchanged(): void
+    public function test_the_ocr_provider_cap_floor_leaves_longer_scans_unchanged_and_ocr_stays_free_of_credits(): void
     {
         $quotes = app(QuoteService::class);
         $perPage = (float) config('ai_credits.ocr.provider_cost_usd_per_page');
         $this->assertGreaterThan($perPage, $quotes->classifyOcr(1)['cap'], 'a single page needs headroom for one request');
         $this->assertEqualsWithDelta(5 * $perPage, $quotes->classifyOcr(5)['cap'], 0.000001);
         $this->assertEqualsWithDelta(60 * $perPage, $quotes->classifyOcr(60)['cap'], 0.000001);
-        $this->assertSame([20, 20, 25, 60], [$quotes->classifyOcr(1)['credits'], $quotes->classifyOcr(20)['credits'],
+        $this->assertSame([0, 0, 0, 0], [$quotes->classifyOcr(1)['credits'], $quotes->classifyOcr(20)['credits'],
             $quotes->classifyOcr(25)['credits'], $quotes->classifyOcr(60)['credits']]);
     }
 }
