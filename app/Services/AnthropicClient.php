@@ -267,11 +267,14 @@ class AnthropicClient
             ]);
     }
 
-    private function tagAndCapture(\Throwable $e): void
+    private function tagAndCapture(\Throwable $e, array $context = []): void
     {
-        withScope(function (Scope $scope) use ($e) {
+        withScope(function (Scope $scope) use ($e, $context) {
             $scope->setTag('provider', 'anthropic');
             $scope->setTag('operation', $this->currentOperation ?? 'unknown');
+            if ($context !== []) {
+                $scope->setContext('anthropic_error', $context);
+            }
             captureException($e);
         });
     }
@@ -821,9 +824,11 @@ PROMPT;
 
         if ($response->failed()) {
             $this->recordTransportFailure($document, 'deterministic', $attempt, $started, rejected: true, requestId: $providerRequestId);
-            Log::error('Anthropic API error', ['status' => $response->status(), 'operation' => $this->currentOperation]);
-            $e = new \RuntimeException("Anthropic API request failed with status {$response->status()}.");
-            $this->tagAndCapture($e);
+            $detail = $this->providerErrorDetail($response);
+            Log::error('Anthropic API error', ['status' => $response->status(), 'operation' => $this->currentOperation] + $detail);
+            $e = new \RuntimeException("Anthropic API request failed with status {$response->status()}"
+                .($detail === [] ? '.' : " ({$detail['error_type']}: {$detail['error_message']})."));
+            $this->tagAndCapture($e, ['status' => $response->status(), 'request_id' => $providerRequestId] + $detail);
             throw $e;
         }
 
@@ -866,6 +871,24 @@ PROMPT;
         ]);
 
         return $requestId;
+    }
+
+    /**
+     * The provider's own error type and message, which say why a request was rejected. Never the request, headers or
+     * keys; a message that quotes long encoded data is redacted and the whole text is bounded.
+     *
+     * @return array{error_type: string, error_message: string}|array{}
+     */
+    private function providerErrorDetail(Response $response): array
+    {
+        $type = $response->json('error.type');
+        $message = $response->json('error.message');
+        if (! is_string($type) || preg_match('/\A[a-z0-9_]{1,64}\z/i', $type) !== 1 || ! is_string($message) || trim($message) === '') {
+            return [];
+        }
+        $message = preg_replace('/[A-Za-z0-9+\/=_-]{60,}/', '[redacted]', preg_replace('/\s+/', ' ', trim($message)));
+
+        return ['error_type' => $type, 'error_message' => mb_substr($message, 0, 300)];
     }
 
     /** Anthropic returns `request-id`; accept the proxy spelling too, and only an opaque token. */
