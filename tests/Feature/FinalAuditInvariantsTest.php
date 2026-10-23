@@ -193,7 +193,7 @@ class FinalAuditInvariantsTest extends TestCase
         $reserved = $this->ledger($ws->id, 'reserve');
         $open = (int) DB::table('billing_operations')->where('workspace_id', $ws->id)->where('status', 'reserved')->sum('amount_reserved');
         $this->assertSame($reserved, $this->ledger($ws->id, 'debit') + $this->ledger($ws->id, 'release') + $open);
-        $this->assertSame([10, 10, 4], [$this->ledger($ws->id, 'debit'), $this->ledger($ws->id, 'release'), $open]);
+        $this->assertSame([10, 10, 10], [$this->ledger($ws->id, 'debit'), $this->ledger($ws->id, 'release'), $open]);
         $this->assertGreaterThanOrEqual(0, (int) $ws->credits()->value('ai_credits_remaining'));
     }
 

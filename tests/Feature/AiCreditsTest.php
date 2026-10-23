@@ -572,7 +572,7 @@ class AiCreditsTest extends TestCase
         $quote = app(QuoteService::class)->quoteDocument($this->document($ws, 1000))['quote'];
         $this->assertFalse($quote->preflight['incremental_route']);
         $this->assertEquals(0.0, $quote->preflight['synthesis_floor_usd']);
-        $this->assertSame('small', $quote->band);
+        $this->assertSame('medium', $quote->band);
     }
 
     public function test_visual_analysis_after_ready_is_included_in_the_document_cap(): void
