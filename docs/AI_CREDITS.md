@@ -36,10 +36,17 @@ A document is priced by its estimated tokens. The first band whose `max_tokens` 
   `GET /api/workspace/credits` as `requiresConfirmation`, with `pages`).
 * **Scans** are priced by the same bands. OCR is not a separate charge. Before any page is read, the scan must be payable
   (balance at least the estimated price: `ocr.tokens_per_page` = 600 per page, never below `ocr.min_band` = small). The
-  OCR operation only bounds provider spend (pages x USD 0.02, at least USD 0.05; at most 60 pages). After OCR the document
+  OCR operation only bounds provider spend (pages x USD 0.006, at least USD 0.05; at most 60 pages). After OCR the document
   is priced from `max(text estimate, pages x 600)` and its band must also cover the OCR bound, so a scan never prices
-  below its OCR cost. With the bound at USD 0.02 per page (an assumption, not a measurement) a 1-page scan quotes medium
-  (10 credits), 2 pages medium (10), 10 pages large (30) and 60 pages very_large (80).
+  below its OCR cost. With the bound at USD 0.006 per page a 1, 2 and 10-page scan quote medium (10 credits) and a 60-page
+  scan quotes large (30):
+
+  | Pages | Tokens (600/page) | Gate need (USD) | Quote | OCR spend cap |
+  |---|---|---|---|---|
+  | 1 | 600 | 0.0596 | medium, 10 | 0.05 |
+  | 2 | 1,200 | 0.0692 | medium, 10 | 0.05 |
+  | 10 | 6,000 | 0.146 | medium, 10 | 0.06 |
+  | 60 | 36,000 | 0.626 | large, 30 | 0.36 |
 * **Token estimate** (`chars_per_token`): PDF 3.0, XLSX 1.7, DOCX 5.6, anything else 3.0. The provider's own count is
   used whenever the pipeline already has it.
 * **Charge.** The quoted credits are debited once, when a revision publishes (`DocumentRevisionPublisher`). Measured
@@ -76,10 +83,20 @@ Set `DOCINTEL_AI_CREDITS_ENABLED=false` on **both** `CA_BACKEND` and `ca-horizon
 settle or release correctly with the flag off (`accountForReadyDocument` is not gated on the flag), and workspaces return
 to one document unit per publication.
 
-## Measuring the OCR bound
+## Measuring cost against size
 
-`ocr.provider_cost_usd_per_page` (default USD 0.02) is an assumption. One vision call is recorded per page in
-`document_ai_runs` (`purpose = 'ocr'`, with `input_tokens`, `output_tokens` and `estimated_cost_usd`), so the real figure is
-`avg(estimated_cost_usd)` over those rows. Read-only command: section 7b of
-[audits/billing-goal-vs-reality-2026-10-23.md](audits/billing-goal-vs-reality-2026-10-23.md). Then set the config to about
-twice the measured average. How the quote moves with the bound: see the PR description.
+`ocr.provider_cost_usd_per_page` (default USD 0.006) is provisional: the highest per-call OCR cost observed in production
+was about USD 0.003, so the bound is 2x that, until the cost-vs-size report confirms it. One vision call is recorded per page
+in `document_ai_runs` (`purpose = 'ocr'`).
+
+```
+php artisan docintel:cost-vs-size-report [--days=N] [--summary-only] [--stress=1.25]
+```
+
+Read-only (a READ ONLY transaction), metadata-only, and it changes no quoting or charging. For every Ready document with priced
+runs (`estimated_cost_usd > 0`, Q&A and comparisons excluded) it prints a CSV row: document id, file type, pages, the tokens the
+quote would use (`quote_tokens`: the provider count when known, else the per-type estimate, and at least 600 per OCR page), the
+text-only estimate, the provider count, route, OCR pages, total cost, calls, and the cost and calls of first-try successful runs
+(so retries and failures are the difference). Then a summary per token bucket (0-1k, 1-2k, 2-4k, 4-6k, 6-10k, 10-20k, 20-30k,
+30-60k, 60k+): documents, median, p90, max cost; the credits the p90 (and p90 x stress) needs at USD 0.027 per credit and the
+band that gives; and the current gate's requirement and band at the bucket's median size, for comparison.

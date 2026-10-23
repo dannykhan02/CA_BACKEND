@@ -119,11 +119,16 @@ class QuoteService
      */
     public function estimateTokens(Document $document, int $ocrPages = 0): int
     {
-        if (($document->ai_pipeline['count_method'] ?? null) === 'anthropic' && isset($document->ai_pipeline['tokens'])) {
-            $tokens = (int) $document->ai_pipeline['tokens'];
-        } else {
-            $tokens = max(1, (int) ceil(strlen((string) $document->extracted_text) / $this->charsPerToken($document->type)));
-        }
+        $provider = ($document->ai_pipeline['count_method'] ?? null) === 'anthropic' && isset($document->ai_pipeline['tokens'])
+            ? (int) $document->ai_pipeline['tokens'] : null;
+
+        return $this->estimateTokensFor($document->type, strlen((string) $document->extracted_text), $provider, $ocrPages);
+    }
+
+    /** The same estimate from its parts, for reports that must not load document text. */
+    public function estimateTokensFor(?string $type, int $textBytes, ?int $providerTokens, int $ocrPages = 0): int
+    {
+        $tokens = $providerTokens ?? max(1, (int) ceil($textBytes / $this->charsPerToken($type)));
 
         return $ocrPages > 0 ? max($tokens, $ocrPages * (int) config('ai_credits.ocr.tokens_per_page')) : $tokens;
     }
