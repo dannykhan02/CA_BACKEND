@@ -199,10 +199,24 @@ class WorkloadCreditsV1Test extends TestCase
             'engine' => 'vision', 'raw_text' => 'x', 'confidence' => 0.9]);
         $this->assertTrue($this->admit($document));
 
-        // Two words of text is tiny; one page of image is at least 600 tokens, and 600 tokens plus the OCR bound (0.02) is more
+        // Two words of text is tiny; one page of image is at least 600 tokens, and 600 tokens plus the OCR bound (0.006) is more
         // than small can pay for (USD 0.054): a one-page scan quotes as medium.
         $this->assertSame(['medium', 10], [OperationQuote::where('kind', 'document')->value('band'), (int) $this->op($document)->amount_reserved]);
         $this->assertSame(0, (int) $this->op($document, 'ocr')->amount_reserved, 'reading pages is not a separate charge');
+    }
+
+    public function test_the_ocr_bound_default_is_twice_the_highest_observed_call_and_gives_these_scan_quotes(): void
+    {
+        $q = app(QuoteService::class);
+        $this->assertSame(0.006, config('ai_credits.ocr.provider_cost_usd_per_page'));
+
+        // pages => [band, credits, the OCR operation's own spend cap = max(pages x 0.006, 0.05)]
+        $expected = [1 => ['medium', 10, 0.05], 2 => ['medium', 10, 0.05], 10 => ['medium', 10, 0.06], 60 => ['large', 30, 0.36]];
+        foreach ($expected as $pages => [$band, $credits, $cap]) {
+            $scan = $q->classifyScan($pages);
+            $this->assertSame([$band, $credits], [$scan['band'], $scan['credits']], $pages.' pages');
+            $this->assertEqualsWithDelta($cap, $q->classifyOcr($pages)['cap'], 0.0000001, $pages.' pages: OCR spend cap');
+        }
     }
 
     public function test_the_tokens_of_a_scan_come_from_its_page_count_when_that_is_larger_than_the_text(): void

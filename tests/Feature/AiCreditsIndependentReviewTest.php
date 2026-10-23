@@ -177,7 +177,7 @@ class AiCreditsIndependentReviewTest extends TestCase
     }
 
     /**
-     * Quote validation. An OCR quote caps provider spend at pages x USD 0.02, but the provider boundary reserves a hard
+     * Quote validation. An OCR quote caps provider spend at pages x the per-page bound (USD 0.006), floored at USD 0.05, but the provider boundary reserves a hard
      * per-request ceiling (about USD 0.028 for one vision request on the default extraction model) before it dispatches.
      * A one-page scan must be able to fund its own request.
      */
@@ -205,7 +205,8 @@ class AiCreditsIndependentReviewTest extends TestCase
         $quotes = app(QuoteService::class);
         $perPage = (float) config('ai_credits.ocr.provider_cost_usd_per_page');
         $this->assertGreaterThan($perPage, $quotes->classifyOcr(1)['cap'], 'a single page needs headroom for one request');
-        $this->assertEqualsWithDelta(5 * $perPage, $quotes->classifyOcr(5)['cap'], 0.000001);
+        $this->assertEqualsWithDelta(0.05, $quotes->classifyOcr(5)['cap'], 0.000001, 'five pages x 0.006 is below the floor');
+        $this->assertEqualsWithDelta(10 * $perPage, $quotes->classifyOcr(10)['cap'], 0.000001);
         $this->assertEqualsWithDelta(60 * $perPage, $quotes->classifyOcr(60)['cap'], 0.000001);
         $this->assertSame([0, 0, 0, 0], [$quotes->classifyOcr(1)['credits'], $quotes->classifyOcr(20)['credits'],
             $quotes->classifyOcr(25)['credits'], $quotes->classifyOcr(60)['credits']]);

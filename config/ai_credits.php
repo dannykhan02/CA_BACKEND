@@ -62,11 +62,11 @@ return [
         'min_band' => env('AI_CREDITS_OCR_MIN_BAND', 'small'),
         // Hard stop: more pages than this are declined, never silently OCR'd.
         'max_pages' => (int) env('AI_CREDITS_OCR_MAX_PAGES', 60),
-        // Provider cost ceiling per page. It bounds OCR spend, and the document's band is raised until its cap
+        // Provider cost bound per page. It bounds OCR spend, and the document's band is raised until its cap
         // can also pay for this much OCR, so a scan's price never falls below its real OCR cost.
-        // NOT MEASURED: 0.02 is an assumption. Set it to about 2x the per-call average of document_ai_runs where
-        // purpose = 'ocr' (one row per page) once that is read from production (docs/AI_CREDITS.md).
-        'provider_cost_usd_per_page' => (float) env('AI_CREDITS_OCR_USD_PER_PAGE', 0.02),
+        // PROVISIONAL: the highest per-call OCR cost observed in production was about USD 0.003, so 0.006 is 2x that.
+        // Confirm or move it with `php artisan docintel:cost-vs-size-report` (and the purpose = 'ocr' rows of document_ai_runs).
+        'provider_cost_usd_per_page' => (float) env('AI_CREDITS_OCR_USD_PER_PAGE', 0.006),
         // Floor for the OCR operation's provider cap. One vision request reserves a hard ceiling of about USD 0.028 on the
         // default extraction model, so pages x per-page alone would refuse a one-page scan.
         'min_cap_usd' => (float) env('AI_CREDITS_OCR_MIN_CAP_USD', 0.05),

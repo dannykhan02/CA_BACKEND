@@ -175,7 +175,8 @@ class AiCreditsTest extends TestCase
     {
         $q = app(QuoteService::class);
         $this->assertSame([0, 0], [$q->classifyOcr(5)['credits'], $q->classifyOcr(25)['credits']]);
-        $this->assertEqualsWithDelta(0.5, $q->classifyOcr(25)['cap'], 0.000001);
+        $this->assertEqualsWithDelta(25 * 0.006, $q->classifyOcr(25)['cap'], 0.000001); // pages x the per-page bound (0.006)
+        $this->assertEqualsWithDelta(0.05, $q->classifyOcr(5)['cap'], 0.000001); // below the 0.05 floor
         $this->assertTrue($q->classifyOcr(61)['declined']);
         $this->assertSame('ocr_page_limit', $q->classifyOcr(61)['reason']);
     }
@@ -207,7 +208,7 @@ class AiCreditsTest extends TestCase
         $this->assertTrue(app(AiCreditAdmission::class)->admitOcr($document, 5));
         $this->scanned($document, 5);
         $this->assertTrue($this->admit($document));
-        // 5 pages = ~3,000 tokens: small by size, but its band must also pay for the OCR itself (5 x USD 0.02), so medium.
+        // 5 pages = ~3,000 tokens: small by size, but its band must also pay for the OCR itself (5 x USD 0.006), so medium.
         $this->assertSame([0, 10], [(int) $this->op($document, 'ocr')->amount_reserved, (int) $this->op($document)->amount_reserved]);
         $this->assertSame(5, OperationQuote::where('kind', 'document')->firstOrFail()->preflight['ocr_pages']);
         app(WorkspaceCreditService::class)->accountForReadyDocument($document->fresh());
@@ -218,15 +219,15 @@ class AiCreditsTest extends TestCase
     public function test_a_scan_never_quotes_below_the_small_band_and_its_price_covers_its_ocr_cost(): void
     {
         $q = app(QuoteService::class);
-        // One page is 600 tokens (small by size) but 600 tokens + 0.02 of OCR is more than small's USD 0.054: medium.
+        // One page is 600 tokens (small by size) but 600 tokens + 0.006 of OCR is 0.0596, more than small's USD 0.054: medium.
         $this->assertSame(['medium', 10], [$q->classifyScan(1)['band'], $q->classifyScan(1)['credits']]);
         $this->assertSame(['medium', 10], [$q->classifyScan(2)['band'], $q->classifyScan(2)['credits']]);
-        $this->assertSame(['large', 30], [$q->classifyScan(10)['band'], $q->classifyScan(10)['credits']]);
-        // 60 pages: 36,000 tokens (large) but 60 x 0.02 of OCR alone is more than the large cap (0.81).
-        $this->assertSame(['very_large', 80], [$q->classifyScan(60)['band'], $q->classifyScan(60)['credits']]);
+        $this->assertSame(['medium', 10], [$q->classifyScan(10)['band'], $q->classifyScan(10)['credits']]);
+        // 60 pages: 36,000 tokens (large); the 60 x 0.006 of OCR plus the completion gate (0.626) still fits the large cap (0.81).
+        $this->assertSame(['large', 30], [$q->classifyScan(60)['band'], $q->classifyScan(60)['credits']]);
         foreach ([1, 2, 5, 20, 60] as $pages) {
             $c = $q->classifyScan($pages);
-            $this->assertGreaterThanOrEqual($pages * 0.02, $c['cap'], $pages.' pages: the cap must cover the OCR bound');
+            $this->assertGreaterThanOrEqual($pages * (float) config('ai_credits.ocr.provider_cost_usd_per_page'), $c['cap'], $pages.' pages: the cap must cover the OCR bound');
         }
     }
 
@@ -558,7 +559,7 @@ class AiCreditsTest extends TestCase
         $floor = $quote->preflight['synthesis_floor_usd'];
         $this->assertTrue($quote->preflight['incremental_route']);
         $this->assertGreaterThan(0.1, $floor, 'Even a tiny document reserves primary + fallback + repair synthesis.');
-        // At 0.027 USD per credit, 3 credits (0.081) cannot fund that reservation, so the band is not "small".
+        // At 0.027 USD per credit, 2 credits (0.054) cannot fund that reservation, so the band is not "small".
         $this->assertNotContains($quote->band, ['tiny', 'small'], 'floor='.$floor.' band='.$quote->band);
         $this->assertTrue($quote->preflight['band_shifted_for_cost']);
         $this->assertGreaterThanOrEqual($floor, $quote->provider_cost_cap_usd);
