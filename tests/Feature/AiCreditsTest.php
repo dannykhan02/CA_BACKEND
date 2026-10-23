@@ -145,9 +145,9 @@ class AiCreditsTest extends TestCase
     public function test_dense_spreadsheet_moves_up_a_band(): void
     {
         $ws = $this->workspace(1000);
-        // 9,000 characters = 3,000 tokens, x1.6 for a spreadsheet = 4,800: medium by size, and dense moves it to regular.
+        // 8,700 characters = 2,900 tokens, x1.6 for a spreadsheet = 4,640: medium by size, and dense moves it to regular.
         $quote = app(QuoteService::class)->quoteDocument($this->document($ws, 3000, 'XLSX'))['quote'];
-        $this->assertSame(['regular', 4800], [$quote->band, $quote->preflight['tokens']]);
+        $this->assertSame(['regular', 4640], [$quote->band, $quote->preflight['tokens']]);
         $this->assertTrue($quote->preflight['spreadsheet']);
     }
 
