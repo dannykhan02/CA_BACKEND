@@ -228,7 +228,7 @@ class RealisticSynthesisReservationTest extends TestCase
 
         $document->refresh();
         $this->assertSame('Ready', $document->status);
-        $this->assertSame([['from' => 0, 'to' => 1, 'reason' => 'timeout']], $document->ai_pipeline['synthesis_degradations']);
+        $this->assertEquals([['from' => 0, 'to' => 1, 'reason' => 'timeout']], $document->ai_pipeline['synthesis_degradations']);
         $this->assertSame(2, $this->synthesisUnits($document)->count());
         $this->assertSame('completed', $this->synthesisUnits($document)->last()->status);
         Http::assertSentCount(2);
