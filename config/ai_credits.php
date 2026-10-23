@@ -8,18 +8,23 @@
 return [
     'enabled' => (bool) env('DOCINTEL_AI_CREDITS_ENABLED', false),
     // Stored on every quote so a historical charge never depends on today's config.
-    // v2: five bands (tiny..very_large), OCR no longer a separate charge, per-type token estimates.
-    'quote_version' => env('DOCINTEL_AI_CREDITS_QUOTE_VERSION', 'v2'),
+    // v3: six bands chosen by token edges calibrated on measured cost (docintel:cost-vs-size-report), no linear
+    // completion gate, a 1.15 local-estimate margin and a spreadsheet multiplier. v2 was the five-band linear-gate engine.
+    'quote_version' => env('DOCINTEL_AI_CREDITS_QUOTE_VERSION', 'v3'),
 
-    // Ordered smallest to largest; the first band whose max_tokens covers the document wins.
-    // A dense (tabular/spreadsheet) document moves up `dense_band_shift` bands, and a band whose provider
-    // cap cannot pay for the minimum useful completion (see `min_completion_cost_usd`) moves up again.
+    // Ordered smallest to largest; the first band whose max_tokens covers the document wins. A band's provider spend cap
+    // is its credits x `provider_cost_usd_per_credit`. A dense (tabular/spreadsheet) document moves up `dense_band_shift`
+    // bands. Measured cost (USD, 24 Ready documents) against these caps: <=1k tokens 0.016-0.036 (cap 0.054); 2-4k
+    // 0.034-0.051 (0.054); ~12k 0.226 and 15-18k 0.195-0.228 (0.27); 27k 0.355 (0.54); 40-54k PDF 0.657 (0.81);
+    // 77k 0.575-0.677 (0.81); 39k XLSX 0.824 (0.81, so a spreadsheet's dense shift to the next band is what covers it).
+    // Env names carry the BAND_ prefix so a variable set for an earlier band layout cannot silently apply here.
     'bands' => [
-        'tiny' => ['max_tokens' => (int) env('AI_CREDITS_TINY_MAX_TOKENS', 2000), 'credits' => (int) env('AI_CREDITS_TINY', 1)],
-        'small' => ['max_tokens' => (int) env('AI_CREDITS_SMALL_MAX_TOKENS', 6000), 'credits' => (int) env('AI_CREDITS_SMALL', 2)],
-        'medium' => ['max_tokens' => (int) env('AI_CREDITS_MEDIUM_MAX_TOKENS', 30000), 'credits' => (int) env('AI_CREDITS_MEDIUM', 10)],
-        'large' => ['max_tokens' => (int) env('AI_CREDITS_LARGE_MAX_TOKENS', 90000), 'credits' => (int) env('AI_CREDITS_LARGE', 30)],
-        'very_large' => ['max_tokens' => (int) env('AI_CREDITS_VERY_LARGE_MAX_TOKENS', 250000), 'credits' => (int) env('AI_CREDITS_VERY_LARGE', 80)],
+        'small' => ['max_tokens' => (int) env('AI_CREDITS_BAND_SMALL_MAX_TOKENS', 4000), 'credits' => (int) env('AI_CREDITS_BAND_SMALL_CREDITS', 2)],
+        'medium' => ['max_tokens' => (int) env('AI_CREDITS_BAND_MEDIUM_MAX_TOKENS', 8000), 'credits' => (int) env('AI_CREDITS_BAND_MEDIUM_CREDITS', 6)],
+        'regular' => ['max_tokens' => (int) env('AI_CREDITS_BAND_REGULAR_MAX_TOKENS', 18000), 'credits' => (int) env('AI_CREDITS_BAND_REGULAR_CREDITS', 10)],
+        'large' => ['max_tokens' => (int) env('AI_CREDITS_BAND_LARGE_MAX_TOKENS', 35000), 'credits' => (int) env('AI_CREDITS_BAND_LARGE_CREDITS', 20)],
+        'xlarge' => ['max_tokens' => (int) env('AI_CREDITS_BAND_XLARGE_MAX_TOKENS', 90000), 'credits' => (int) env('AI_CREDITS_BAND_XLARGE_CREDITS', 30)],
+        'very_large' => ['max_tokens' => (int) env('AI_CREDITS_BAND_VERY_LARGE_MAX_TOKENS', 250000), 'credits' => (int) env('AI_CREDITS_BAND_VERY_LARGE_CREDITS', 80)],
     ],
     'dense_band_shift' => (int) env('AI_CREDITS_DENSE_BAND_SHIFT', 1),
     // A quote needs the customer's explicit confirmation before credits are reserved when it costs at least this
@@ -27,15 +32,22 @@ return [
     'confirm_from_credits' => (int) env('AI_CREDITS_CONFIRM_FROM_CREDITS', 30),
     'confirm_over_pages' => (int) env('AI_CREDITS_CONFIRM_OVER_PAGES', 100),
 
-    // Characters (bytes, as ChunkPlanner counts them) per model token, by document type, used to estimate a
-    // document's tokens at quote time. Measured: PDF ~3.0, XLSX ~1.7 (denser than 3), DOCX ~5.65 (sparser).
-    // The provider's own count is used instead whenever it is already known.
+    // Characters (bytes, as ChunkPlanner counts them) per model token, by document type, for the LOCAL estimate.
+    // Measured: PDF ~3.0, DOCX ~5.65 (sparser). XLSX has no entry on purpose (default 3.0): its measured density is
+    // covered by `spreadsheet_token_multiplier` below, and listing 1.7 as well would count it twice.
     'chars_per_token' => [
         'PDF' => (float) env('AI_CREDITS_CPT_PDF', 3.0),
-        'XLSX' => (float) env('AI_CREDITS_CPT_XLSX', 1.7),
         'DOCX' => (float) env('AI_CREDITS_CPT_DOCX', 5.6),
         'default' => (float) env('AI_CREDITS_CPT_DEFAULT', 3.0),
     ],
+    // The provider's own token count (ai_pipeline.count_method = 'anthropic') is used as is whenever it exists. Only
+    // when the quote has to rely on the local estimate is the estimate multiplied by this margin, because it differs
+    // from the provider's count by about +/-30% and an under-count under-prices. 1.0 turns the margin off.
+    'local_estimate_multiplier' => (float) env('AI_CREDITS_LOCAL_ESTIMATE_MULTIPLIER', 1.15),
+    // Spreadsheets cost more per token than prose (one measured sample: 39k XLSX tokens cost USD 0.824, about 1.5x a
+    // 40-54k PDF per token). PROVISIONAL, from a single document. Applied to the tokens used for banding, provider
+    // count or estimate. 1.0 turns it off.
+    'spreadsheet_token_multiplier' => (float) env('AI_CREDITS_SPREADSHEET_TOKEN_MULTIPLIER', 1.6),
 
     // Internal provider-cost ceiling per quoted credit, in USD (3.50 KES / 129.79 = 0.02697).
     // Deterministic: it never looks at a live FX rate. fx_kes_per_usd is for reporting only.
@@ -43,13 +55,6 @@ return [
     'fx_kes_per_usd' => (float) env('AI_CREDITS_FX_KES_PER_USD', 129.79),
     'payment_fee_rate' => (float) env('AI_CREDITS_PAYMENT_FEE_RATE', 0.029),
     'margin_target' => (float) env('AI_CREDITS_MARGIN_TARGET', 0.70),
-
-    // Conservative minimum provider spend a document needs to finish (extraction + synthesis).
-    // If a band's cap is below this estimate the document moves up a band, or is declined.
-    'min_completion_cost_usd' => [
-        'base' => (float) env('AI_CREDITS_MIN_COST_BASE_USD', 0.05),
-        'per_1000_tokens' => (float) env('AI_CREDITS_MIN_COST_PER_1K_USD', 0.006),
-    ],
 
     // Cost assumed for a paid call whose usage is unknown (e.g. a timeout). Never zero.
     'unknown_usage_cost_usd' => (float) env('AI_CREDITS_UNKNOWN_USAGE_USD', 0.05),

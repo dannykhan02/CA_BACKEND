@@ -58,7 +58,7 @@ class CostVsSizeReportCommandTest extends TestCase
 
     public function test_one_row_per_ready_document_with_priced_runs_and_nothing_else(): void
     {
-        // A: PDF, 6,000 bytes = 2,000 tokens at 3.0. Three priced runs: one clean, one retry, one failed. A zero-cost run and Q&A are left out.
+        // A: PDF, 6,000 bytes = 2,000 tokens at 3.0, x1.15 local-estimate margin = 2,300. Three priced runs: one clean, one retry, one failed. A zero-cost run and Q&A are left out.
         $a = $this->document('PDF', 6000, pages: 12);
         $this->recordRun($a, 0.010);
         $this->recordRun($a, 0.004, attempt: 2);
@@ -66,7 +66,7 @@ class CostVsSizeReportCommandTest extends TestCase
         $this->recordRun($a, 0.0);
         $this->recordRun($a, null);
         $this->recordRun($a, 0.5, purpose: 'document_qa');
-        // B: DOCX, 11,000 bytes = 1,965 tokens at 5.6 locally, but the provider counted 4,000 and the quote would use that.
+        // B: DOCX, 11,000 bytes = 1,965 tokens at 5.6 (x1.15 = 2,260) locally, but the provider counted 4,000 and the quote would use that.
         $b = $this->document('DOCX', 11000, pipeline: ['count_method' => 'anthropic', 'tokens' => 4000, 'route' => 'normal']);
         $this->recordRun($b, 0.05);
         // C: XLSX, 1,700 bytes = 1,000 tokens at 1.7.
@@ -88,13 +88,13 @@ class CostVsSizeReportCommandTest extends TestCase
         $rows = $this->rows();
         $this->assertEqualsCanonicalizing([$a->id, $b->id, $c->id, $d->id], array_keys($rows));
 
-        $this->assertSame(['PDF', 12, 2000, 2000, null, 3, 1, 2], [$rows[$a->id]['file_type'], $rows[$a->id]['pages'], $rows[$a->id]['quote_tokens'],
+        $this->assertSame(['PDF', 12, 2300, 2300, null, 3, 1, 2], [$rows[$a->id]['file_type'], $rows[$a->id]['pages'], $rows[$a->id]['quote_tokens'],
             $rows[$a->id]['local_estimate_tokens'], $rows[$a->id]['provider_tokens'], $rows[$a->id]['calls'], $rows[$a->id]['first_try_calls'], $rows[$a->id]['failed_or_retried_calls']]);
         $this->assertEqualsWithDelta(0.020, $rows[$a->id]['total_cost_usd'], 1e-9);
         $this->assertEqualsWithDelta(0.010, $rows[$a->id]['first_try_cost_usd'], 1e-9, 'cost excluding the retry and the failed call');
 
-        $this->assertSame([4000, 1965, 4000, 'normal'], [$rows[$b->id]['quote_tokens'], $rows[$b->id]['local_estimate_tokens'], $rows[$b->id]['provider_tokens'], $rows[$b->id]['route']]);
-        $this->assertSame([1000, 1000], [$rows[$c->id]['quote_tokens'], $rows[$c->id]['local_estimate_tokens']]);
+        $this->assertSame([4000, 2260, 4000, 'normal'], [$rows[$b->id]['quote_tokens'], $rows[$b->id]['local_estimate_tokens'], $rows[$b->id]['provider_tokens'], $rows[$b->id]['route']]);
+        $this->assertSame([1044, 1044], [$rows[$c->id]['quote_tokens'], $rows[$c->id]['local_estimate_tokens']]); // 1,700 bytes = 567 tokens x1.15 x1.6 (spreadsheet)
         $this->assertSame([1800, 3, 3], [$rows[$d->id]['quote_tokens'], $rows[$d->id]['ocr_pages'], $rows[$d->id]['calls']]);
         $this->assertEqualsWithDelta(0.009, $rows[$d->id]['total_cost_usd'], 1e-9);
     }
@@ -112,12 +112,13 @@ class CostVsSizeReportCommandTest extends TestCase
         $output = Artisan::output();
 
         $this->assertStringContainsString('document_id,file_type,pages,quote_tokens,local_estimate_tokens,provider_tokens,route,ocr_pages,total_cost_usd,calls,first_try_cost_usd,first_try_calls,failed_or_retried_calls', $output);
-        $this->assertStringContainsString($a->id.',PDF,12,2000,2000,,,0,0.02,2,0.02,2,0', $output);
+        $this->assertStringContainsString($a->id.',PDF,12,2300,2300,,,0,0.02,2,0.02,2,0', $output);
         $this->assertStringContainsString('2 Ready documents with priced runs', $output);
-        foreach (['0-1k', '1-2k', '2-4k', '4-6k', '6-10k', '10-20k', '20-30k', '30-60k', '60k+', 'credits_for_p90', 'band_for_p90', 'credits_for_p90_x1.25', 'gate_band'] as $expected) {
+        foreach (['0-1k', '1-2k', '2-4k', '4-6k', '6-10k', '10-20k', '20-30k', '30-60k', '60k+', 'credits_for_p90', 'band_for_p90', 'credits_for_p90_x1.25', 'edge_band', 'edge_covers_max'] as $expected) {
             $this->assertStringContainsString($expected, $output);
         }
-        $this->assertStringContainsString('Current gate: needed USD = max(0.05, synthesis floor) + tokens/1000 x 0.006. Nothing was changed.', $output);
+        $this->assertStringContainsString('Bands by token edge: small <= 4000 tokens = 2 credits (cap USD 0.054)', $output);
+        $this->assertStringContainsString('Nothing was changed.', $output);
         $this->assertStringNotContainsString('SECRET-NAME', $output);
         $this->assertSame($before, [Document::count(), DocumentAiRun::count(), OperationQuote::count(), DB::table('billing_operations')->count(), DB::table('credit_ledger')->count()]);
     }
@@ -132,7 +133,7 @@ class CostVsSizeReportCommandTest extends TestCase
 
         $this->assertStringNotContainsString('document_id,file_type', $output);
         $this->assertStringNotContainsString($a->id, $output);
-        $this->assertStringContainsString('1-2k', $output);
+        $this->assertStringContainsString('2-4k', $output);
     }
 
     public function test_the_days_option_limits_documents_by_creation_date(): void

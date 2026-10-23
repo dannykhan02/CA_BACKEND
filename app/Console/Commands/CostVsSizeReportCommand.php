@@ -39,8 +39,8 @@ class CostVsSizeReportCommand extends Command
         $this->info(sprintf('%d Ready documents with priced runs. Cost = sum of estimated_cost_usd (tokens x configured price). Provider cost per credit: USD %s.',
             count($rows), config('ai_credits.provider_cost_usd_per_credit')));
         $this->table(array_keys($summary[0]), array_map('array_values', $summary));
-        $gate = config('ai_credits.min_completion_cost_usd');
-        $this->line(sprintf('Current gate: needed USD = max(%s, synthesis floor) + tokens/1000 x %s. Nothing was changed.', $gate['base'], $gate['per_1000_tokens']));
+        $this->line('Bands by token edge: '.implode(', ', array_map(fn ($name, $b) => sprintf('%s <= %d tokens = %d credits (cap USD %s)', $name, $b['max_tokens'], $b['credits'], $b['credits'] * (float) config('ai_credits.provider_cost_usd_per_credit')),
+            array_keys(config('ai_credits.bands')), config('ai_credits.bands'))).'. Nothing was changed.');
 
         return self::SUCCESS;
     }
