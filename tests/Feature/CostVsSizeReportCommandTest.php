@@ -43,7 +43,7 @@ class CostVsSizeReportCommandTest extends TestCase
         return $document;
     }
 
-    private function run(Document $document, ?float $cost, string $status = 'success', int $attempt = 1, string $purpose = 'entities'): void
+    private function recordRun(Document $document, ?float $cost, string $status = 'success', int $attempt = 1, string $purpose = 'entities'): void
     {
         DocumentAiRun::create(['workspace_id' => $document->workspace_id, 'document_id' => $document->id, 'purpose' => $purpose,
             'provider' => 'anthropic', 'model' => 'claude-haiku-4-5-20251001', 'estimated_cost_usd' => $cost, 'status' => $status,
@@ -60,28 +60,28 @@ class CostVsSizeReportCommandTest extends TestCase
     {
         // A: PDF, 6,000 bytes = 2,000 tokens at 3.0. Three priced runs: one clean, one retry, one failed. A zero-cost run and Q&A are left out.
         $a = $this->document('PDF', 6000, pages: 12);
-        $this->run($a, 0.010);
-        $this->run($a, 0.004, attempt: 2);
-        $this->run($a, 0.006, status: 'provider_error');
-        $this->run($a, 0.0);
-        $this->run($a, null);
-        $this->run($a, 0.5, purpose: 'document_qa');
+        $this->recordRun($a, 0.010);
+        $this->recordRun($a, 0.004, attempt: 2);
+        $this->recordRun($a, 0.006, status: 'provider_error');
+        $this->recordRun($a, 0.0);
+        $this->recordRun($a, null);
+        $this->recordRun($a, 0.5, purpose: 'document_qa');
         // B: DOCX, 11,000 bytes = 1,965 tokens at 5.6 locally, but the provider counted 4,000 and the quote would use that.
         $b = $this->document('DOCX', 11000, pipeline: ['count_method' => 'anthropic', 'tokens' => 4000, 'route' => 'normal']);
-        $this->run($b, 0.05);
+        $this->recordRun($b, 0.05);
         // C: XLSX, 1,700 bytes = 1,000 tokens at 1.7.
         $c = $this->document('XLSX', 1700);
-        $this->run($c, 0.002);
+        $this->recordRun($c, 0.002);
         // D: a scan, 30 bytes of text but three OCR pages: at least 3 x 600 tokens.
         $d = $this->document('PNG', 30);
         foreach ([1, 2, 3] as $page) {
             OcrResult::create(['workspace_id' => $d->workspace_id, 'document_id' => $d->id, 'page_number' => $page, 'engine' => 'vision', 'raw_text' => 'x', 'confidence' => 0.9]);
-            $this->run($d, 0.003, purpose: 'ocr');
+            $this->recordRun($d, 0.003, purpose: 'ocr');
         }
         // Left out: not Ready, deleted, and Ready with no priced run.
-        $this->run($this->document('PDF', 3000, status: 'Processing'), 0.9);
+        $this->recordRun($this->document('PDF', 3000, status: 'Processing'), 0.9);
         $deleted = $this->document('PDF', 3000);
-        $this->run($deleted, 0.9);
+        $this->recordRun($deleted, 0.9);
         $deleted->delete();
         $this->document('PDF', 3000);
 
@@ -102,10 +102,10 @@ class CostVsSizeReportCommandTest extends TestCase
     public function test_the_command_prints_csv_then_the_bucket_summary_and_changes_nothing(): void
     {
         $a = $this->document('PDF', 6000, pages: 12);
-        $this->run($a, 0.010);
-        $this->run($a, 0.010);
+        $this->recordRun($a, 0.010);
+        $this->recordRun($a, 0.010);
         $c = $this->document('XLSX', 1700);
-        $this->run($c, 0.002);
+        $this->recordRun($c, 0.002);
         $before = [Document::count(), DocumentAiRun::count(), OperationQuote::count(), DB::table('billing_operations')->count(), DB::table('credit_ledger')->count()];
 
         $this->assertSame(0, Artisan::call('docintel:cost-vs-size-report'));
@@ -125,7 +125,7 @@ class CostVsSizeReportCommandTest extends TestCase
     public function test_summary_only_omits_the_per_document_rows(): void
     {
         $a = $this->document('PDF', 6000);
-        $this->run($a, 0.010);
+        $this->recordRun($a, 0.010);
 
         Artisan::call('docintel:cost-vs-size-report', ['--summary-only' => true]);
         $output = Artisan::output();
@@ -138,10 +138,10 @@ class CostVsSizeReportCommandTest extends TestCase
     public function test_the_days_option_limits_documents_by_creation_date(): void
     {
         $old = $this->document('PDF', 6000);
-        $this->run($old, 0.010);
+        $this->recordRun($old, 0.010);
         Document::whereKey($old->id)->update(['created_at' => now()->subDays(40)]);
         $recent = $this->document('PDF', 6000);
-        $this->run($recent, 0.010);
+        $this->recordRun($recent, 0.010);
 
         $this->assertCount(2, app(CostVsSizeReport::class)->rows());
         $this->assertSame([$recent->id], array_column(app(CostVsSizeReport::class)->rows(30), 'document_id'));
