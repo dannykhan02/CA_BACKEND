@@ -16,6 +16,9 @@ return [
     // is fixed for the life of its pipeline (the mode is part of the pipeline key).
     'evidence_spans' => (bool) env('DOCINTEL_EVIDENCE_SPANS_ENABLED', false),
     'server_evidence_resolution' => (bool) env('DOCINTEL_SERVER_EVIDENCE_RESOLUTION', false),
+    // Candidate PDF grids are experimental. Keep off until role and ownership
+    // verification can consume their source paths end to end.
+    'pdf_table_structure' => (bool) env('DOCINTEL_PDF_TABLE_STRUCTURE', false),
     // Bumping this invalidates every persisted span set: segmentation output would otherwise change
     // meaning under IDs that findings already reference.
     'span_segmenter_version' => '1',

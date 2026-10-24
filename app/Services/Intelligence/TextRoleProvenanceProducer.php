@@ -65,7 +65,10 @@ class TextRoleProvenanceProducer
                 $relations[$relation['from'].'|'.$relation['to'].'|'.$relation['type']] = $relation;
             }
             array_push($bindings, ...$nativeBindings);
-            $parserVersion = $structured->parserVersion.'@'.StructuredDocument::POLICY.'@roles.v2';
+            $roleVersion = $structured->format === 'PDF'
+                && str_contains($structured->parserVersion, '+poppler-grid.v1')
+                ? 'roles.v3' : 'roles.v2';
+            $parserVersion = $structured->parserVersion.'@'.StructuredDocument::POLICY.'@'.$roleVersion;
         }
         foreach ($rows as $row) {
             if (isset($structurallyBound[$row->id])) {
@@ -73,6 +76,9 @@ class TextRoleProvenanceProducer
             }
             $data = $row->data ?? [];
             foreach ($row->sources ?? [] as $source) {
+                if (($source['source_graph_derived'] ?? false) === true) {
+                    continue;
+                }
                 $start = $source['start_offset'] ?? null;
                 $end = $source['end_offset'] ?? null;
                 $quote = $source['quote'] ?? null;

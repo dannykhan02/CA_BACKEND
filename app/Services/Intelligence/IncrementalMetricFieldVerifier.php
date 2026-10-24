@@ -9,7 +9,8 @@ use App\Models\DocumentEvidence;
 class IncrementalMetricFieldVerifier
 {
     public function __construct(private SourceProvenanceReader $provenance,
-        private ValueBasisEvidence $valueBasis) {}
+        private ValueBasisEvidence $valueBasis,
+        private StructuredPdfFieldProof $pdfFields) {}
 
     /** @return array<string,int> */
     public function verify(Document $document, ?string $setId): array
@@ -23,6 +24,12 @@ class IncrementalMetricFieldVerifier
         foreach ($rows as $row) {
             $data = is_array($row->data) ? $row->data : [];
             $roles = array_keys($proofs[$row->id]['roles'] ?? []);
+            $pdf = null;
+            if (($proofs[$row->id]['roles']['value'][0]['modality'] ?? null) === 'structured_pdf') {
+                $pdf = $this->pdfFields->prove($document,
+                    [...$data, 'source_provenance_set_id' => $setId], $proofs[$row->id]);
+                $roles = array_values(array_unique($pdf['roles'] ?? []));
+            }
             $required = ['value' => 'value_source_mismatch', 'metric' => 'concept_source_mismatch'];
             foreach (['unit' => 'unit_source_mismatch', 'period' => 'period_source_mismatch',
                 'subject' => 'subject_source_mismatch'] as $field => $reason) {
@@ -30,9 +37,9 @@ class IncrementalMetricFieldVerifier
                     $required[$field] = $reason;
                 }
             }
-            $rejection = null;
+            $rejection = $pdf['rejection'] ?? null;
             foreach ($required as $role => $reason) {
-                if (! in_array($role, $roles, true)) {
+                if ($rejection === null && ! in_array($role, $roles, true)) {
                     $rejection = $reason;
                     break;
                 }
@@ -48,7 +55,49 @@ class IncrementalMetricFieldVerifier
             $data['field_verification_policy'] = 'incremental.v1';
             $data['source_revision'] = hash('sha256', (string) $document->extracted_text);
             $data['source_provenance_set_id'] = $setId;
+            if ($pdf !== null) {
+                unset($data['governing_owner'], $data['source_extraction_version']);
+                if (isset($pdf['governing_owner'])) {
+                    $data['governing_owner'] = $pdf['governing_owner'];
+                    $data['source_extraction_version'] = $pdf['source_extraction_version'];
+                    if (trim((string) ($data['subject'] ?? '')) === '') {
+                        $data['raw_subject'] = $data['subject'] ?? null;
+                        $data['subject'] = $pdf['verified_subject'];
+                    }
+                }
+                if (isset($pdf['raw_period'])) {
+                    $data['raw_period'] = $pdf['raw_period'];
+                }
+                if (isset($pdf['source_unit'])) {
+                    $data['raw_unit_source'] = $pdf['source_unit'];
+                }
+                if (isset($pdf['accounting_basis'])) {
+                    $data['accounting_basis'] = $pdf['accounting_basis'];
+                    if (in_array(mb_strtolower((string) ($data['value_basis'] ?? '')),
+                        ['gaap', 'non-gaap'], true)) {
+                        $data['raw_value_basis'] = $data['value_basis'];
+                        unset($data['value_basis']);
+                    }
+                }
+                $sources = $row->sources ?? [];
+                $known = array_fill_keys(array_filter(array_column($sources, 'span_id')), true);
+                foreach ($pdf['sources'] ?? [] as $source) {
+                    if (! isset($known[$source['span_id']])) {
+                        $sources[] = $source;
+                        $known[$source['span_id']] = true;
+                    }
+                }
+                if ($sources !== ($row->sources ?? [])) {
+                    $row->sources = $sources;
+                }
+            }
             $data['measurement_verification'] = $rejection === null ? 'verified' : 'limited';
+            if ($pdf !== null && $rejection === null) {
+                $data['source_claim_fingerprint'] = StructuredPdfFieldProof::claimFingerprint($data);
+                $data['pdf_value_anchor_id'] = $proofs[$row->id]['roles']['value'][0]['anchor_id'];
+            } else {
+                unset($data['source_claim_fingerprint'], $data['pdf_value_anchor_id']);
+            }
             if ($rejection === null) {
                 unset($data['grounding_rejection']);
                 $counts['verified']++;
@@ -56,7 +105,7 @@ class IncrementalMetricFieldVerifier
                 $data['grounding_rejection'] = $rejection;
                 $counts['rejected']++;
             }
-            if ($data !== $row->data) {
+            if ($data !== $row->data || $row->isDirty('sources')) {
                 $row->forceFill(['data' => $data])->save();
             }
         }

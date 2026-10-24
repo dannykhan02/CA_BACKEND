@@ -90,7 +90,9 @@ class SourceProvenancePublicationTest extends TestCase
         $setId = app(TextRoleProvenanceProducer::class)->publish($document);
         self::assertSame(['verified' => 1, 'rejected' => 2],
             app(IncrementalMetricFieldVerifier::class)->verify($document, $setId));
-        self::assertTrue($integrity->forEvidence($correct->refresh())['analyticalEligible']);
+        self::assertContains('governing_owner_unverified',
+            $integrity->forEvidence($correct->refresh())['reasons']);
+        self::assertFalse($integrity->forEvidence($correct)['analyticalEligible']);
         self::assertSame('period_source_mismatch', $wrongPeriod->refresh()->data['grounding_rejection']);
         self::assertFalse($integrity->forEvidence($wrongPeriod)['analyticalEligible']);
         self::assertSame('unit_source_mismatch', $wrongUnit->refresh()->data['grounding_rejection']);
@@ -119,7 +121,8 @@ class SourceProvenancePublicationTest extends TestCase
             app(IncrementalMetricFieldVerifier::class)->verify($document, $setId));
         self::assertSame('value_basis_source_mismatch', $target->refresh()->data['grounding_rejection']);
         self::assertFalse(app(MeasurementIntegrity::class)->forEvidence($target)['analyticalEligible']);
-        self::assertTrue(app(MeasurementIntegrity::class)->forEvidence($proposed->refresh())['analyticalEligible']);
+        self::assertContains('governing_owner_unverified',
+            app(MeasurementIntegrity::class)->forEvidence($proposed->refresh())['reasons']);
     }
 
     public function test_a_period_in_another_sentence_does_not_verify_the_value(): void
@@ -139,6 +142,8 @@ class SourceProvenancePublicationTest extends TestCase
 
     public function test_incremental_graph_verdict_is_shared_by_collector_and_kpi_api(): void
     {
+        config()->set('document_intelligence.pdf_table_structure', false);
+        self::assertFalse(config('document_intelligence.pdf_table_structure'));
         $text = 'Revenue 12.4 KES million in FY2025.';
         $document = $this->document($text);
         $document->forceFill(['ai_pipeline' => ['route' => 'incremental', 'key' => 'pk-proof']])->save();
@@ -159,9 +164,12 @@ class SourceProvenancePublicationTest extends TestCase
         $setId = app(TextRoleProvenanceProducer::class)->publish($document);
         app(IncrementalMetricFieldVerifier::class)->verify($document, $setId);
         $request->attributes->set('kpi_evidence', collect(['kpi:'.$kpi->id => $row->refresh()]));
-        self::assertTrue(app(MetricCollector::class)->collect($document)['observations'][0]
-            ->integrity['analyticalEligible']);
-        self::assertTrue((new KpiResource($kpi))->toArray($request)['analyticalEligible']);
+        $collected = app(MetricCollector::class)->collect($document)['observations'][0]->integrity;
+        self::assertFalse($collected['analyticalEligible']);
+        self::assertContains('governing_owner_unverified', $collected['reasons']);
+        $api = (new KpiResource($kpi))->toArray($request);
+        self::assertFalse($api['analyticalEligible']);
+        self::assertContains('governing_owner_unverified', $api['limitationReasons']);
 
         $document->forceFill(['extracted_text' => 'Revenue 12.4 KES million in FY2024.'])->save();
         $stale = app(MeasurementIntegrity::class)->forEvidence($row->refresh());

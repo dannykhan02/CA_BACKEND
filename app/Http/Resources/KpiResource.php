@@ -2,8 +2,8 @@
 
 namespace App\Http\Resources;
 
-use App\Services\Intelligence\CanonicalMetricIdentity;
 use App\Services\AI\Incremental\EvidenceGrounding;
+use App\Services\Intelligence\CanonicalMetricIdentity;
 use App\Services\Intelligence\MeasurementIntegrity;
 use App\Services\Intelligence\MeasurementParser;
 use App\Services\Intelligence\PeriodParser;
@@ -35,7 +35,7 @@ class KpiResource extends JsonResource
                 'source_extraction_version' => $evidenceData['source_extraction_version'] ?? null,
                 'governing_owner' => $evidenceData['governing_owner'] ?? null,
                 'ownership_requirement' => $evidenceData['ownership_requirement'] ?? null,
-                'ownership_enforced' => ($this->document?->ai_pipeline['route'] ?? null) === 'normal',
+                'ownership_enforced' => true,
                 'current_source_revision' => $request->attributes->get('document_source_revision')
                     ?? hash('sha256', (string) $this->document?->extracted_text),
                 'current_extraction_version' => $this->document === null ? null

@@ -88,6 +88,8 @@ class MetricCollector
                 ->where('kind', 'metric')->orderBy('identity')->get();
             foreach ($rows as $row) {
                 $data = is_array($row->data) ? $row->data : [];
+                $currentClaimFingerprint = isset($data['source_claim_fingerprint'])
+                    ? StructuredPdfFieldProof::claimFingerprint($data) : null;
                 if (($document->ai_pipeline['route'] ?? null) === 'incremental') {
                     $data = app(CanonicalMetricIdentity::class)->incremental($data + ['kind' => 'metric']);
                 }
@@ -106,6 +108,7 @@ class MetricCollector
                         'scope' => $data['subject'] ?? null,
                         'metric_type' => $data['metric_type'] ?? null,
                         'value_basis' => $data['value_basis'] ?? null,
+                        'accounting_basis' => $data['accounting_basis'] ?? null,
                         'aggregation' => $data['aggregation'] ?? null,
                         'quantity_kind' => $data['quantity_kind'] ?? null,
                         'period' => $data['period'] ?? null,
@@ -113,10 +116,13 @@ class MetricCollector
                         'field_verification_policy' => $data['field_verification_policy'] ?? null,
                         'grounding_rejection' => $data['grounding_rejection'] ?? null,
                         'source_revision' => $data['source_revision'] ?? null,
+                        'source_claim_fingerprint' => $data['source_claim_fingerprint'] ?? null,
+                        'source_claim_current_fingerprint' => $currentClaimFingerprint,
+                        'source_provenance_set_id' => $data['source_provenance_set_id'] ?? null,
                         'source_extraction_version' => $data['source_extraction_version'] ?? null,
                         'governing_owner' => $data['governing_owner'] ?? null,
                         'ownership_requirement' => $data['ownership_requirement'] ?? null,
-                        'ownership_enforced' => ($document->ai_pipeline['route'] ?? null) === 'normal',
+                        'ownership_enforced' => true,
                         'subject' => $data['subject'] ?? null,
                         'current_source_revision' => hash('sha256', (string) $document->extracted_text),
                         'current_extraction_version' => app(EvidenceGrounding::class)->version($document),
@@ -306,14 +312,18 @@ class MetricCollector
     private function measureKey(Measurement $measurement, array $profile, bool $canonical, array $metadata): string
     {
         $explicit = static fn ($key) => trim(mb_strtolower((string) ($metadata[$key] ?? ''))) ?: null;
-
-        return hash('sha256', json_encode([
+        $parts = [
             $measurement->kind, $measurement->currency, $measurement->family,
             $explicit('metric_type'), $explicit('value_basis'),
             $canonical ? null : ($profile['value_basis'] ?? null),
             $canonical ? null : ($profile['quantity_kind'] ?? null),
             $canonical ? null : ($profile['aggregation'] ?? null),
-        ], JSON_THROW_ON_ERROR));
+        ];
+        if ($explicit('accounting_basis') !== null) {
+            $parts[] = ['accounting_basis' => $explicit('accounting_basis')];
+        }
+
+        return hash('sha256', json_encode($parts, JSON_THROW_ON_ERROR));
     }
 
     /**

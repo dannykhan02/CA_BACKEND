@@ -21,7 +21,10 @@ class ContextResolver
         $origin = $reference->sources[0]['start_offset'] ?? 0;
         $candidates = [];
         foreach ($evidence as $candidate) {
-            if ($candidate->kind === 'unresolved' || $candidate->id === $reference->id) {
+            // Source-derived PDF facts are verification inputs, not new model
+            // retrieval candidates. Keep optional paid resolution inputs stable.
+            if ($candidate->kind === 'unresolved' || $candidate->id === $reference->id
+                || ($candidate->data['source_candidate'] ?? false) === true) {
                 continue;
             }
             $near = abs(($candidate->sources[0]['start_offset'] ?? 0) - $origin);

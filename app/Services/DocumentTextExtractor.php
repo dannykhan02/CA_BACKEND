@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Services\Extraction\ArchivePreflight;
+use App\Services\Extraction\PdfTableGeometryProbe;
+use App\Services\Extraction\PdfTableStructureProjector;
 use App\Services\Extraction\StructuredDocument;
 use Smalot\PdfParser\Parser as PdfParser;
 use Symfony\Component\Process\Process;
@@ -64,11 +66,25 @@ class DocumentTextExtractor
         }
         $text = implode("\f", $parts);
 
-        return new StructuredDocument('PDF', 'smalot-page.v2', $text, $nodes,
+        $source = new StructuredDocument('PDF', 'smalot-page.v2', $text, $nodes,
             ['pages' => 'complete', 'text' => 'parser_text', 'blocks' => 'unavailable',
                 'geometry' => 'unavailable', 'tables' => 'unavailable', 'visibility' => 'unverified',
                 'reading_order' => 'parser_order_unverified', 'empty_text_pages' => $emptyPages,
                 'hybrid_ocr' => $emptyPages === [] ? 'not_needed_for_empty_pages' : 'not_run']);
+        if (! config('document_intelligence.pdf_table_structure', false)) {
+            return $source;
+        }
+        try {
+            $tables = app(PdfTableGeometryProbe::class)->extract($path);
+
+            return app(PdfTableStructureProjector::class)
+                ->augment($source, $tables);
+        } catch (\Throwable $error) {
+            // Layout support is optional. Prose extraction and the existing
+            // page-only evidence path remain available on parser failure.
+            return new StructuredDocument('PDF', 'smalot-page.v2', $text, $nodes,
+                [...$source->capabilities, 'table_extraction_error' => $error::class]);
+        }
     }
 
     /**

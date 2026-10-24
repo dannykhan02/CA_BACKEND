@@ -11,6 +11,7 @@ use App\Services\Kpis\KpiIdentityProfile;
 class MeasurementIntegrity
 {
     private array $sourceRevisions = [];
+
     private array $extractionVersions = [];
 
     public function __construct(private MeasurementParser $measurements) {}
@@ -29,7 +30,9 @@ class MeasurementIntegrity
         }
         $data['current_source_revision'] = $this->sourceRevisions[$owner];
         $data['current_extraction_version'] = $this->extractionVersions[$owner];
-        $data['ownership_enforced'] = str_starts_with((string) $row->pipeline_key, 'normal:');
+        // Source ownership is a property of the claim, not of the route that
+        // happened to extract it. Incremental evidence must pass the same gate.
+        $data['ownership_enforced'] = true;
 
         return $this->assess($this->measurements->parse($data['value'] ?? null, $data['unit'] ?? null,
             $data['label'] ?? null), (string) ($data['value'] ?? ''), $data['unit'] ?? null,
@@ -50,9 +53,17 @@ class MeasurementIntegrity
         $revisionProofMissing = $currentRevision !== null && (! is_string($sourceRevision) || $sourceRevision === '');
         $revisionMatches = $currentRevision === null || (! $revisionProofMissing
             && is_string($sourceRevision) && hash_equals($currentRevision, $sourceRevision));
+        $fingerprint = $metadata['source_claim_fingerprint'] ?? null;
+        $claimMatches = ! is_string($fingerprint)
+            || hash_equals($fingerprint,
+                is_string($metadata['source_claim_current_fingerprint'] ?? null)
+                    ? $metadata['source_claim_current_fingerprint']
+                    : StructuredPdfFieldProof::claimFingerprint([
+                        ...$metadata, 'value' => $rawValue, 'unit' => $rawUnit,
+                    ]));
         $sourceVerified = $trustedSource && $quotes !== []
             && $fieldProof !== null && in_array('value', $fieldProof, true)
-            && ! $revisionProofMissing && $revisionMatches;
+            && ! $revisionProofMissing && $revisionMatches && $claimMatches;
         $ownershipEnforced = ($metadata['ownership_enforced'] ?? false) === true;
         $ownershipRequirement = ($metadata['ownership_requirement'] ?? null) === 'company'
             || app(GoverningOwnerProof::class)->companyClaim($metadata, $rawUnit)
@@ -63,7 +74,9 @@ class MeasurementIntegrity
             && in_array('governing_owner', $fieldProof ?? [], true)
             && $this->validOwnerProof($ownerProof, $sources, $sourceRevision,
                 $metadata['source_extraction_version'] ?? null,
-                $metadata['current_extraction_version'] ?? null);
+                $metadata['current_extraction_version'] ?? null,
+                $metadata['source_provenance_set_id'] ?? null,
+                $metadata['subject'] ?? $metadata['scope'] ?? null);
         $populationVerified = $sourceVerified && $ownershipRequirement === 'population'
             && trim((string) ($metadata['subject'] ?? $metadata['scope'] ?? '')) !== ''
             && in_array('subject', $fieldProof ?? [], true);
@@ -83,6 +96,9 @@ class MeasurementIntegrity
         $reasons = [];
         if (! $sourceVerified) {
             $reasons[] = 'missing_source_reference';
+        }
+        if (! $claimMatches) {
+            $reasons[] = 'source_claim_changed';
         }
         if ($revisionProofMissing) {
             $reasons[] = 'revision_proof_missing';
@@ -143,7 +159,8 @@ class MeasurementIntegrity
     }
 
     private function validOwnerProof(?array $proof, array $sources, mixed $revision,
-        mixed $extractionVersion, mixed $currentExtractionVersion): bool
+        mixed $extractionVersion, mixed $currentExtractionVersion,
+        mixed $provenanceSetId, mixed $claimedSubject): bool
     {
         if ($proof === null || ! is_string($revision) || $revision === ''
             || ($proof['source_revision'] ?? null) !== $revision
@@ -154,8 +171,22 @@ class MeasurementIntegrity
             || ! is_string($proof['entity'] ?? null) || trim($proof['entity']) === ''
             || ! in_array($proof['relationship'] ?? null,
                 ['table_caption', 'value_row', 'cited_section_to_table',
-                    'reporting_entity_section_table'], true)
+                    'reporting_entity_section_table', 'structured_table_heading'], true)
             || ! is_array($proof['source_spans'] ?? null) || $proof['source_spans'] === []) {
+            return false;
+        }
+        if (($proof['relationship'] ?? null) === 'structured_table_heading'
+            && (! is_string($provenanceSetId) || $provenanceSetId === ''
+                || ($proof['source_provenance_set_id'] ?? null) !== $provenanceSetId
+                || ! is_array($proof['source_anchor_ids'] ?? null)
+                || count($proof['source_anchor_ids'] ?? []) !== 4
+                || ! is_string($claimedSubject)
+                || mb_strtolower(rtrim(trim($claimedSubject), '.'))
+                    !== mb_strtolower(rtrim(trim($proof['entity']), '.'))
+                || array_column($proof['source_spans'], 'span_id') !== [
+                    $proof['source_anchor_ids'][0], $proof['source_anchor_ids'][2],
+                    $proof['source_anchor_ids'][3],
+                ])) {
             return false;
         }
         $byId = [];

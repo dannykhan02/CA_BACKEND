@@ -3,15 +3,67 @@
 namespace App\Services\Intelligence;
 
 use App\Models\Document;
+use App\Services\AI\Incremental\EvidenceGrounding;
 use App\Services\AI\Incremental\EvidenceSpanSet;
 
 /** Exact source relationship between a metric cell and its governing organization. */
 class GoverningOwnerProof
 {
+    /** A parser-owned table-to-heading edge supplies the governing organization. */
+    public function resolveStructured(Document $document, array $path, array $value,
+        string $claimedScope): ?array
+    {
+        $entities = $path['entities'] ?? [];
+        $row = $path['row'] ?? null;
+        $table = $path['table'] ?? null;
+        if (count($entities) !== 1 || ! is_array($row) || ! is_array($table)
+            || $entities[0]['page'] !== $value['page']
+            || $row['page'] !== $value['page'] || $table['page'] !== $value['page']
+            || $entities[0]['end_offset'] >= $value['start_offset']
+            || $row['end_offset'] >= $value['start_offset']
+            || $table['kind'] !== 'table') {
+            return null;
+        }
+        $names = $this->companyNames($entities[0]['text']);
+        if (count($names) !== 1 || (trim($claimedScope) !== ''
+            && ! $this->sameName($names[0], trim($claimedScope)))) {
+            return null;
+        }
+        if (preg_match('/^(.*?)\b(?:revenues?|expenses?|income|profit|loss|cash flow|assets?|liabilities|earnings|dividends?)\b/iu',
+            $row['text'], $metricMatch) !== 1) {
+            return null;
+        }
+        $prefix = trim($metricMatch[1]);
+        if ($prefix !== '' && preg_match('/^(?:(?:total|net|gross|operating|adjusted|non-gaap|gaap|consolidated|basic|diluted|attributable|underlying|recurring)\s*)+$/iuD',
+            $prefix) !== 1) {
+            return null;
+        }
+        // A row that names a different scoped business unit cannot inherit the
+        // report-wide organization merely because it sits in a consolidated table.
+        if (preg_match('/\b(?:segment|division|business unit)\b/iu', $row['text']) === 1
+            && ! $this->containsName($row['text'], $names[0])) {
+            return null;
+        }
+        $revision = hash('sha256', (string) $document->extracted_text);
+        $version = app(EvidenceGrounding::class)->version($document);
+
+        return ['entity' => $names[0], 'kind' => 'organization',
+            'relationship' => 'structured_table_heading', 'source_revision' => $revision,
+            'extraction_version' => $version, 'source_provenance_set_id' => $path['set_id'],
+            'source_anchor_ids' => [$entities[0]['anchor_id'], $table['anchor_id'],
+                $row['anchor_id'], $value['anchor_id']],
+            'source_spans' => array_map(static fn ($anchor) => [
+                'span_id' => $anchor['anchor_id'], 'page' => $anchor['page'],
+                'start_offset' => $anchor['start_offset'], 'end_offset' => $anchor['end_offset'],
+            ], [$entities[0], $row, $value])];
+    }
+
     public function companyClaim(array $identity, ?string $unit): bool
     {
         $scope = trim((string) ($identity['scope'] ?? ''));
-        $concept = (string) ($identity['concept'] ?? '');
+        // Incremental findings may carry the financial name as `label` before
+        // concept normalization. The ownership gate must see that claim too.
+        $concept = trim((string) ($identity['concept'] ?? '').' '.(string) ($identity['label'] ?? ''));
 
         return $this->hasCompanyName($scope)
             || preg_match('/\b(?:revenue|turnover|operating costs?|operating profit|operating margin|net income|gross profit|earnings|cash flow|assets|liabilities|funding|budget|investment)\b/iu', $concept) === 1;
@@ -252,7 +304,7 @@ class GoverningOwnerProof
     /** @return list<string> */
     private function companyNames(string $text): array
     {
-        preg_match_all('/\b\p{Lu}[\p{L}\p{N}&.-]*(?:[ \t]+\p{Lu}[\p{L}\p{N}&.-]*){0,5}[ \t]+(?i:Ltd|Limited|PLC|LLC|Inc|Corporation)\b/u',
+        preg_match_all('/\b\p{Lu}[\p{L}\p{N}&.,-]*(?:[ \t]+\p{Lu}[\p{L}\p{N}&.,-]*){0,5}[ \t]+(?i:Ltd|Limited|PLC|LLC|Inc|Corporation)\b/u',
             $text, $matches);
 
         return array_values(array_unique(array_map('trim', $matches[0])));
@@ -265,7 +317,7 @@ class GoverningOwnerProof
 
     private function sameName(string $left, string $right): bool
     {
-        return mb_strtolower(trim($left)) === mb_strtolower(trim($right));
+        return mb_strtolower(rtrim(trim($left), '.')) === mb_strtolower(rtrim(trim($right), '.'));
     }
 
     private function current(Document $document, array $source): bool

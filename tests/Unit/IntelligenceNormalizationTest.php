@@ -87,6 +87,18 @@ class IntelligenceNormalizationTest extends TestCase
         $this->assertFalse($dollar->compatibleWith($usd), 'an unattributed dollar must not join a USD series');
     }
 
+    public function test_duration_header_keeps_quarter_and_cumulative_periods_separate(): void
+    {
+        $quarter = $this->periods->parse('Three Months Ended September 30, 2026');
+        $cumulative = $this->periods->parse('Nine Months Ended September 30, 2026');
+
+        $this->assertSame('Q3 2026', $quarter?->label);
+        $this->assertSame('quarter', $quarter?->granularity);
+        $this->assertSame('9M 2026', $cumulative?->label);
+        $this->assertSame('9_months', $cumulative?->granularity);
+        $this->assertNull($this->periods->parse('Three Months Ended September 29, 2026'));
+    }
+
     public function test_one_currency_at_two_scales_is_one_measurement(): void
     {
         $millions = $this->measurements->parse('9,800', 'USD million');

@@ -11,6 +11,7 @@ use App\Services\AI\Incremental\IncrementalPipeline;
 use App\Services\Intelligence\DocumentRevisionPublisher;
 use App\Services\Intelligence\IncrementalMetricFieldVerifier;
 use App\Services\Intelligence\TextRoleProvenanceProducer;
+use App\Services\Intelligence\VerifiedPdfChartPersister;
 use App\Services\Pipeline\DocumentProgress;
 use App\Services\Pipeline\PipelineStageRecorder;
 use App\Services\WorkspaceCreditService;
@@ -147,6 +148,11 @@ class MergeDocumentEvidenceJob implements ShouldQueue
 
             $diagnostics = $merger->merge($document);
 
+            if (config('document_intelligence.pdf_table_structure') && $document->type === 'PDF') {
+                $diagnostics['pdf_source_candidates'] = app(\App\Services\Intelligence\PdfSourceCandidateCollector::class)
+                    ->collect($document);
+            }
+
             // Nonmetric textual evidence remains available when the graph fails. Metric
             // candidates then remain limited: no field-role proof means no trusted analytics.
             $provenanceSetId = null;
@@ -161,6 +167,10 @@ class MergeDocumentEvidenceJob implements ShouldQueue
             }
             $diagnostics['metric_field_verification'] = app(IncrementalMetricFieldVerifier::class)
                 ->verify($document, $provenanceSetId);
+            if (config('document_intelligence.pdf_table_structure') && $document->type === 'PDF') {
+                $diagnostics['verified_pdf_charts'] = app(VerifiedPdfChartPersister::class)
+                    ->persist($document, $provenanceSetId);
+            }
 
             $clock = hrtime(true);
             app(ContextResolver::class)->resolve($document);
