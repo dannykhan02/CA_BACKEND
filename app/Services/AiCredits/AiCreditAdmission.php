@@ -14,6 +14,8 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  */
 class AiCreditAdmission
 {
+    public const WAITING_STAGE = 'awaiting_confirmation';
+
     public function __construct(private QuoteService $quotes, private CreditAccountant $accountant) {}
 
     /** True when paid AI may proceed for this document now. Never calls a provider. */
@@ -21,9 +23,7 @@ class AiCreditAdmission
     {
         if (! QuoteService::enabled() || $this->accountant->mode($document->workspace_id) === 'legacy' || $document->credit_accounted_at) {
             // A document that waited for a confirmation while credits were on proceeds under the other rules; stop waiting.
-            if ($document->ai_pipeline['awaiting_credit_confirmation'] ?? false) {
-                $document->forceFill(['ai_pipeline' => [...$document->ai_pipeline, 'awaiting_credit_confirmation' => false]])->save();
-            }
+            $this->stopWaiting($document);
 
             return true;
         }
@@ -37,6 +37,7 @@ class AiCreditAdmission
         if ($quote->status === 'quoted' && $this->quotes->requiresConfirmation($quote->credits, $pages) && ! ($document->ai_pipeline['credit_quote_confirmed'] ?? false)) {
             // Explicit consent before spending a large charge: nothing is reserved and nothing paid runs.
             $document->forceFill(['ai_pipeline' => [...($document->ai_pipeline ?? []), 'awaiting_credit_confirmation' => true,
+                'progress_stage' => ['key' => self::WAITING_STAGE, 'label' => 'Waiting for your confirmation', 'updated_at' => now()->toIso8601String()],
                 'credit_quote' => ['quote_id' => $quote->id, 'credits' => $quote->credits, 'band' => $quote->band, 'pages' => $pages,
                     'requires_confirmation' => true]]])->save();
 
@@ -51,11 +52,49 @@ class AiCreditAdmission
 
             return $this->refuse($document, $e->getMessage());
         }
-        if ($document->ai_pipeline['awaiting_credit_confirmation'] ?? false) {
-            $document->forceFill(['ai_pipeline' => [...$document->ai_pipeline, 'awaiting_credit_confirmation' => false]])->save();
-        }
+        $this->stopWaiting($document);
 
         return true;
+    }
+
+    /** Clears the waiting flag and its "Waiting for your confirmation" stage once the document is admitted. */
+    private function stopWaiting(Document $document): void
+    {
+        $pipeline = $document->ai_pipeline ?? [];
+        if (! ($pipeline['awaiting_credit_confirmation'] ?? false)) {
+            return;
+        }
+        $pipeline['awaiting_credit_confirmation'] = false;
+        if (($pipeline['progress_stage']['key'] ?? null) === self::WAITING_STAGE) {
+            $pipeline['progress_stage'] = ['key' => 'planning', 'label' => 'Planning document analysis', 'updated_at' => now()->toIso8601String()];
+        }
+        $document->forceFill(['ai_pipeline' => $pipeline])->save();
+    }
+
+    /**
+     * The customer declines a large quote, or it is abandoned: nothing was reserved or charged, any hold is released,
+     * and the document ends instead of waiting for ever. Only a document that is still waiting and unconfirmed is ended.
+     */
+    public function declineDocument(Document $document): bool
+    {
+        $ended = DB::transaction(function () use ($document) {
+            $locked = Document::whereKey($document->id)->lockForUpdate()->firstOrFail();
+            $pipeline = $locked->ai_pipeline ?? [];
+            if (! ($pipeline['awaiting_credit_confirmation'] ?? false) || ($pipeline['credit_quote_confirmed'] ?? false)) {
+                return false;
+            }
+            $pipeline['awaiting_credit_confirmation'] = false;
+            unset($pipeline['progress_stage'], $pipeline['insights_held']);
+            $locked->forceFill(['status' => 'Failed', 'ai_pipeline' => $pipeline,
+                'error_message' => 'Analysis was not started because the credit quote was declined.'])->save();
+
+            return true;
+        });
+        if ($ended) {
+            $this->accountant->releaseDocument($document->id, 'quote_declined');
+        }
+
+        return $ended;
     }
 
     /** The customer accepts the quoted credits for a large analysis; the caller then resumes the pipeline. */
