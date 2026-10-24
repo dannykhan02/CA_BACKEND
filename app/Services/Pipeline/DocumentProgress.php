@@ -15,6 +15,7 @@ class DocumentProgress
     public const LABELS = [
         'scanning' => 'Scanning file',
         'extracting_text' => 'Extracting text',
+        'awaiting_confirmation' => 'Waiting for your confirmation',
         'planning' => 'Planning document analysis',
         'extracting' => 'Extracting intelligence',
         'recovering' => 'Recovering a dense section',

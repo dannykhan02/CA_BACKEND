@@ -5,12 +5,14 @@ namespace App\Jobs;
 use App\Jobs\Concerns\DispatchesIntelligenceChain;
 use App\Jobs\Concerns\GuardsDocumentIntelligence;
 use App\Jobs\Concerns\SkipsUnchangedDocuments;
+use App\Exceptions\AiProcessingException;
 use App\Models\Document;
 use App\Models\DocumentAiRun;
 use App\Models\DocumentChart;
 use App\Models\DocumentChartPoint;
 use App\Models\DocumentKpi;
 use App\Services\AI\Incremental\IncrementalPipeline;
+use App\Services\AiCredits\AiCreditAdmission;
 use App\Services\AnthropicClient;
 use App\Services\EntitlementService;
 use App\Services\Intelligence\DocumentRevisionPublisher;
@@ -56,6 +58,15 @@ class GenerateInsightsJob implements ShouldQueue
             if (! $document) {
                 Log::warning("GenerateInsightsJob: Document {$this->documentId} not found — unexpected null, possible soft-delete race.");
             }
+
+            return;
+        }
+
+        // A large quote the customer has not confirmed yet: nothing paid may start from this route. The upload
+        // chain reaches this job right after extraction parks the document, so it steps aside and leaves a marker
+        // for ResumeAfterCreditConfirmationJob, which runs the analysis once the credits are reserved.
+        if ($document->ai_pipeline['awaiting_credit_confirmation'] ?? false) {
+            $this->markHeld($document);
 
             return;
         }
@@ -124,6 +135,12 @@ class GenerateInsightsJob implements ShouldQueue
         try {
             $result = $client->extractDocumentInsights($text, $document->name, $document);
         } catch (\Throwable $e) {
+            if ($this->isNotReserved($e)) {
+                // Refused before any provider call: the analysis has not started, so the document keeps its status.
+                $this->holdUntilReserved($document, $insightsStage);
+
+                return;
+            }
             $failed = DB::transaction(function () use ($document, $recorder, $insightsStage) {
                 $current = Document::whereKey($document->id)->lockForUpdate()->first();
                 if (! $current || $current->status !== 'Processing'
@@ -367,8 +384,46 @@ class GenerateInsightsJob implements ShouldQueue
         return is_numeric($stripped) ? (float) $stripped : null;
     }
 
+    private function isNotReserved(\Throwable $e): bool
+    {
+        return $e instanceof AiProcessingException && str_contains($e->getMessage(), 'credits_not_reserved');
+    }
+
+    /** Records that this stage was held back, atomically so concurrent progress writes are not overwritten. */
+    private function markHeld(Document $document): void
+    {
+        DB::update("UPDATE documents SET ai_pipeline = jsonb_set(COALESCE(ai_pipeline, '{}'::jsonb), '{insights_held}', 'true'::jsonb, true) WHERE id = ?", [$document->id]);
+    }
+
+    /**
+     * credits_not_reserved is "not started", never a failure. If the document is waiting for a confirmation it stays
+     * Processing and the resume picks this stage up; if nothing is waiting, admission is run again and, once the
+     * credits are held, this stage is retried.
+     */
+    private function holdUntilReserved(Document $document, $insightsStage): void
+    {
+        $insightsStage->update(['status' => 'skipped', 'completed_at' => now()]);
+        $current = $document->fresh();
+        if (! $current || $current->status !== 'Processing') {
+            return;
+        }
+        $this->markHeld($current);
+        if ($current->ai_pipeline['awaiting_credit_confirmation'] ?? false) {
+            return;
+        }
+        if (app(AiCreditAdmission::class)->admitDocument($current)) {
+            DB::update("UPDATE documents SET ai_pipeline = ai_pipeline - 'insights_held' WHERE id = ?", [$document->id]);
+            $this->release(5);
+        }
+    }
+
     public function failed(\Throwable $e): void
     {
+        if ($this->isNotReserved($e)) {
+            Log::warning('GenerateInsightsJob stopped before credits were reserved; document left as it was.', ['document_id' => $this->documentId]);
+
+            return;
+        }
         $this->finalizeIntelligenceFailure('ai_analysis', $e);
         $document = Document::find($this->documentId);
         if (! $document || ! app(DocumentRevisionPublisher::class)->owns($document, $this->revisionId)) {
