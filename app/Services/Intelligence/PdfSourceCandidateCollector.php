@@ -19,6 +19,8 @@ final class PdfSourceCandidateCollector
         }
         $source = $this->extractions->active($document);
         if ($source === null || ! str_contains($source->parserVersion, '+poppler-grid.v1')) {
+            $this->sourceFacts($document)->delete();
+
             return ['extracted' => 0, 'candidates' => 0];
         }
         $nodes = array_column($source->nodes, null, 'id');
@@ -75,6 +77,7 @@ final class PdfSourceCandidateCollector
             $current[] = $sourceId;
             $data = ['label' => $label, 'value' => $value, 'period' => $periodSource,
                 'unit' => $unit, 'subject' => '', 'source_candidate' => true,
+                'source_file_hash' => $document->file_hash,
                 'canonical_representation' => ['label' => $label,
                     'period' => $period?->label, 'unit' => $unit],
                 'source_representation' => ['label' => $row['text'], 'value' => $cell['text'],
@@ -89,14 +92,20 @@ final class PdfSourceCandidateCollector
                         'span_id' => 'pdf-row:'.hash('sha256', $cell['parent'])]]]);
             $candidates++;
         }
-        $stale = DocumentEvidence::where('workspace_id', $document->workspace_id)
-            ->where('document_id', $document->id)->where('pipeline_key', $key)
-            ->where('source_id', 'like', 'pdf-cell:%');
+        $stale = $this->sourceFacts($document);
         if ($current !== []) {
             $stale->whereNotIn('source_id', $current);
         }
         $stale->delete();
 
         return compact('extracted', 'candidates');
+    }
+
+    private function sourceFacts(Document $document)
+    {
+        return DocumentEvidence::where('workspace_id', $document->workspace_id)
+            ->where('document_id', $document->id)
+            ->where('pipeline_key', $document->ai_pipeline['key'] ?? 'legacy')
+            ->where('source_id', 'like', 'pdf-cell:%');
     }
 }

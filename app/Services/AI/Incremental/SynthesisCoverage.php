@@ -12,8 +12,8 @@ class SynthesisCoverage
     {
         $rows = DocumentEvidence::where('workspace_id', $document->workspace_id)
             ->where('document_id', $document->id)->where('pipeline_key', $document->ai_pipeline['key'])
-            ->orderBy('identity')->get()->filter(fn ($row) => $row->kind !== 'unresolved'
-                || isset($row->data['resolved_evidence_id']));
+            ->orderBy('identity')->get()->filter(fn ($row) => ($row->data['source_candidate'] ?? false) !== true
+                && ($row->kind !== 'unresolved' || isset($row->data['resolved_evidence_id'])));
         $groups = [];
         foreach ($rows as $row) {
             $source = $row->sources[0] ?? [];

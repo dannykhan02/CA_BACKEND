@@ -277,6 +277,27 @@ class StructuredProvenanceProducer
                     $candidates[$id] = $cell;
                 }
             }
+            // A collector-created PDF fact names its projected cell. A row can
+            // legitimately print the same value in two period columns; the
+            // citation alone cannot distinguish those occurrences.
+            if (count($candidates) > 1 && $source->format === 'PDF'
+                && ($row->data['source_candidate'] ?? false) === true) {
+                $declared = $row->data['source_representation']['cell_id'] ?? null;
+                $labelId = is_string($declared)
+                    ? ($cells[$declared]['parent'] ?? '').'/cell[0]' : null;
+                $fileHash = $row->data['source_file_hash'] ?? null;
+                $identity = is_string($declared) && is_string($fileHash)
+                    ? hash('sha256', $fileHash.'|'.$declared) : null;
+                if ($identity !== null && $row->identity === $identity
+                    && $row->source_id === 'pdf-cell:'.$identity
+                    && isset($candidates[$declared], $cells[$labelId])
+                    && ($row->data['source_representation']['value'] ?? null)
+                        === $candidates[$declared]['text']
+                    && ($row->data['source_representation']['label'] ?? null)
+                        === $cells[$labelId]['text']) {
+                    $candidates = [$declared => $candidates[$declared]];
+                }
+            }
             if (count($candidates) !== 1) {
                 continue;
             }

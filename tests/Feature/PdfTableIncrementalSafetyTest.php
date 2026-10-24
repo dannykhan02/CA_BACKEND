@@ -15,6 +15,7 @@ use App\Services\Intelligence\IncrementalMetricFieldVerifier;
 use App\Services\Intelligence\MetricCollector;
 use App\Services\Intelligence\PdfSourceCandidateCollector;
 use App\Services\Intelligence\SourceProvenanceReader;
+use App\Services\Intelligence\StructuredProvenanceProducer;
 use App\Services\Intelligence\TextRoleProvenanceProducer;
 use App\Services\Intelligence\VerifiedPdfChartPersister;
 use App\Services\WorkspaceService;
@@ -79,11 +80,37 @@ class PdfTableIncrementalSafetyTest extends TestCase
         }
     }
 
+    public function test_equivalent_model_and_source_facts_make_one_chart_point_per_period(): void
+    {
+        [$document, , $modelIds] = $this->fixtureDocument(true, '$ millions');
+        self::assertSame(128, app(PdfSourceCandidateCollector::class)
+            ->collect($document)['candidates']);
+        $setId = app(TextRoleProvenanceProducer::class)->publish($document);
+        self::assertSame(['verified' => 50, 'rejected' => 84],
+            app(IncrementalMetricFieldVerifier::class)->verify($document, $setId));
+        foreach ($modelIds as $id) {
+            self::assertSame('verified', DocumentEvidence::whereKey($id)
+                ->firstOrFail()->data['measurement_verification']);
+        }
+        self::assertSame(['charts' => 11, 'points' => 22],
+            app(VerifiedPdfChartPersister::class)->persist($document, $setId));
+        self::assertSame(['charts' => 11, 'points' => 22],
+            app(VerifiedPdfChartPersister::class)->persist($document, $setId));
+        $charts = DocumentChart::where('document_id', $document->id)->get();
+        self::assertCount(11, $charts->pluck('title')->unique());
+        foreach ($charts as $chart) {
+            self::assertContains(array_column($chart->data, 'label'), [
+                ['Q3 2025', 'Q3 2026'], ['9M 2025', '9M 2026'],
+            ]);
+            self::assertCount(2, $chart->data);
+        }
+    }
+
     public function test_source_candidates_on_independent_and_adversarial_financial_pdfs(): void
     {
         foreach ([
-            'Northstar_Q3_2026_Board_Performance_Review.pdf' => [12, 10, 0, 0, 0, 0, 0,
-                ['governing_owner_unverified' => 7, 'unit_source_mismatch' => 3, 'value_source_mismatch' => 2]],
+            'Northstar_Q3_2026_Board_Performance_Review.pdf' => [12, 12, 0, 0, 0, 0, 0,
+                ['governing_owner_unverified' => 9, 'unit_source_mismatch' => 3]],
             'financial_units_thousands.pdf' => [6, 6, 6, 6, 3, 3, 6, ['verified' => 6]],
             'financial_units_adversarial.pdf' => [6, 6, 0, 0, 0, 0, 0, ['unit_source_mismatch' => 6]],
             'financial_basis_adversarial.pdf' => [8, 8, 8, 8, 4, 4, 8, ['verified' => 8]],
@@ -111,6 +138,24 @@ class PdfTableIncrementalSafetyTest extends TestCase
                 $facts->pluck('id')->all(), $setId);
             $matchedCount = count(array_filter($matched,
                 static fn ($proof) => $proof['capabilities']['structural']));
+            if (str_starts_with($name, 'Northstar_')) {
+                $equalValues = $facts->filter(static fn ($fact) => ($fact->data['label'] ?? null) === 'Operating profit'
+                    && ($fact->data['value'] ?? null) === '10.0');
+                self::assertCount(2, $equalValues);
+                $anchors = $equalValues->map(static fn ($fact) => $matched[$fact->id]['roles']['value'][0]['anchor_id'] ?? null)->all();
+                self::assertCount(2, array_unique($anchors));
+                self::assertNotContains(null, $anchors);
+                $equalValues = $equalValues->values();
+                $tampered = clone $equalValues[0];
+                $data = $tampered->data;
+                $data['source_representation']['cell_id'] =
+                    $equalValues[1]->data['source_representation']['cell_id'];
+                $tampered->data = $data;
+                [, , $badBindings] = app(StructuredProvenanceProducer::class)
+                    ->build($source, [$tampered]);
+                self::assertSame([], array_values(array_filter($badBindings,
+                    static fn ($binding) => $binding['role'] === 'value')));
+            }
             $verdicts = app(IncrementalMetricFieldVerifier::class)->verify($document, $setId);
             $eligible = array_values(array_filter(app(MetricCollector::class)->collect($document)['observations'],
                 static fn ($item) => $item->integrity['analyticalEligible']));
@@ -296,6 +341,29 @@ class PdfTableIncrementalSafetyTest extends TestCase
             app(IncrementalMetricFieldVerifier::class)->verify($document, $setId));
         self::assertCount(0, array_filter(app(MetricCollector::class)->collect($document)['observations'],
             static fn ($item) => $item->integrity['analyticalEligible']));
+        self::assertSame(['charts' => 0, 'points' => 0],
+            app(VerifiedPdfChartPersister::class)->persist($document, $setId));
+        self::assertSame(0, DocumentChart::where('document_id', $document->id)->count());
+    }
+
+    public function test_missing_active_extraction_prunes_only_its_source_candidates_and_retracts_charts(): void
+    {
+        [$document] = $this->fixtureDocument(true, '$ millions');
+        $other = $this->fixtureDocument(true, '$ millions')[0];
+        $collector = app(PdfSourceCandidateCollector::class);
+        self::assertSame(128, $collector->collect($document)['candidates']);
+        self::assertSame(128, $collector->collect($other)['candidates']);
+        $setId = app(TextRoleProvenanceProducer::class)->publish($document);
+        app(IncrementalMetricFieldVerifier::class)->verify($document, $setId);
+        self::assertSame(11, app(VerifiedPdfChartPersister::class)
+            ->persist($document, $setId)['charts']);
+
+        $document->forceFill(['extracted_text' => $document->extracted_text.' changed'])->save();
+        self::assertSame(['extracted' => 0, 'candidates' => 0], $collector->collect($document));
+        self::assertSame(0, DocumentEvidence::where('document_id', $document->id)
+            ->where('source_id', 'like', 'pdf-cell:%')->count());
+        self::assertSame(128, DocumentEvidence::where('document_id', $other->id)
+            ->where('source_id', 'like', 'pdf-cell:%')->count());
         self::assertSame(['charts' => 0, 'points' => 0],
             app(VerifiedPdfChartPersister::class)->persist($document, $setId));
         self::assertSame(0, DocumentChart::where('document_id', $document->id)->count());

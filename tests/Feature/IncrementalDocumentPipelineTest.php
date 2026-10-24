@@ -20,11 +20,12 @@ use App\Services\AI\Incremental\EvidenceBudget;
 use App\Services\AI\Incremental\EvidenceMerger;
 use App\Services\AI\Incremental\EvidenceSchema;
 use App\Services\AI\Incremental\IncrementalPipeline;
+use App\Services\AI\Incremental\SynthesisCoverage;
 use App\Services\AI\ResponseValidator;
 use App\Services\AnthropicClient;
-use App\Services\DocumentTextExtractor;
 use App\Services\DocumentIntelligenceService;
 use App\Services\Documents\DocumentReprocessor;
+use App\Services\DocumentTextExtractor;
 use App\Services\Extraction\StructuredDocument;
 use App\Services\Extraction\StructuredExtractionStore;
 use App\Services\Ocr\OcrEngineResolver;
@@ -130,6 +131,8 @@ class IncrementalDocumentPipelineTest extends TestCase
         self::assertSame(128, DocumentEvidence::where('document_id', $document->id)
             ->where('source_id', 'like', 'pdf-cell:%')->count());
         self::assertSame(11, DB::table('document_charts')->where('document_id', $document->id)->count());
+        self::assertSame(['batches' => [], 'uncovered' => [], 'eligible' => 0],
+            app(SynthesisCoverage::class)->plan($document));
         Http::assertNothingSent();
     }
 
@@ -329,6 +332,12 @@ class IncrementalDocumentPipelineTest extends TestCase
         $reference->id = 'reference';
         $candidate->id = 'target';
         self::assertSame('target', app(ContextResolver::class)->candidates($reference, [$candidate])[0]['id']);
+        $sourceCandidate = clone $candidate;
+        $sourceCandidate->id = 'pdf-cell:source-only';
+        $sourceCandidate->data = [...$candidate->data, 'source_candidate' => true];
+        $sourceCandidate->sources = [['start_offset' => 101]];
+        self::assertSame(['target'], array_column(app(ContextResolver::class)
+            ->candidates($reference, [$sourceCandidate, $candidate]), 'id'));
     }
 
     public function test_invalid_quote_is_rejected_before_merge(): void
