@@ -1,10 +1,5 @@
 <?php
 
-// Offline evaluation only. All database work is rolled back.
-require dirname(__DIR__).'/vendor/autoload.php';
-$app = require dirname(__DIR__).'/bootstrap/app.php';
-$app->make(Kernel::class)->bootstrap();
-
 use App\Models\Document;
 use App\Models\DocumentEvidence;
 use App\Models\User;
@@ -21,6 +16,11 @@ use App\Services\Intelligence\VerifiedPdfChartPersister;
 use App\Services\WorkspaceService;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\DB;
+
+// Offline evaluation only. All database work is rolled back.
+require dirname(__DIR__).'/vendor/autoload.php';
+$app = require dirname(__DIR__).'/bootstrap/app.php';
+$app->make(Kernel::class)->bootstrap();
 
 if (count($argv) < 2 || ! app()->environment('testing')
     || config('database.default') !== 'pgsql'
