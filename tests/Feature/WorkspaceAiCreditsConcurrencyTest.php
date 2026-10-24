@@ -45,7 +45,7 @@ class WorkspaceAiCreditsConcurrencyTest extends TestCase
     private function document($workspace, User $user): Document
     {
         return Document::create(['name' => 'Race.pdf', 'type' => 'PDF', 'size_kb' => 1, 'status' => 'Processing', 'classification' => 'Public',
-            'year' => 2026, 'workspace_id' => $workspace->id, 'uploaded_by' => $user->id, 'extracted_text' => str_repeat('Revenue grew in the quarter. ', 2000)]);
+            'year' => 2026, 'workspace_id' => $workspace->id, 'uploaded_by' => $user->id, 'extracted_text' => str_repeat('Revenue grew in the quarter. ', 1500)]); // ~14,500 tokens x1.15 = regular band, 10 credits
     }
 
     /** @param  array<int, callable(): void>  $jobs  each runs in its own process: exit 0 = succeeded, 2 = refused with 402 */

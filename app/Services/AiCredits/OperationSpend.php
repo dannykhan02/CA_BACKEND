@@ -101,14 +101,19 @@ class OperationSpend
         return round($known + $unknown * (float) config('ai_credits.unknown_usage_cost_usd') + $attempts / 1000000, 6);
     }
 
-    /** Quote row serializes competing workers. Amounts are integer micro-USD to avoid float comparisons in admission. */
-    public function reserveAttempt(string $quoteId, string $attemptId, string $purpose, float $estimateUsd): void
+    /**
+     * Quote row serializes competing workers. Amounts are integer micro-USD to avoid float comparisons in admission.
+     * The attempt is held at $estimateUsd and must fit the cap with what is already spent. With $worstCaseUsd (realistic admission)
+     * the request's worst case must also fit `ai_credits.overrun_factor` x the cap, a hard guard against a runaway response.
+     */
+    public function reserveAttempt(string $quoteId, string $attemptId, string $purpose, float $estimateUsd, ?float $worstCaseUsd = null): void
     {
         $micros = (int) ceil($estimateUsd * 1000000);
+        $worstMicros = $worstCaseUsd === null ? null : (int) ceil($worstCaseUsd * 1000000);
         if ($micros < 1) {
             throw new AiProcessingException('invalid_provider_config');
         }
-        DB::transaction(function () use ($quoteId, $attemptId, $purpose, $micros) {
+        DB::transaction(function () use ($quoteId, $attemptId, $purpose, $micros, $worstMicros) {
             $quote = OperationQuote::whereKey($quoteId)->lockForUpdate()->first();
             if (! $quote || ! in_array($quote->status, ['reserved', 'settled'], true)) {
                 throw new AiProcessingException('credits_not_reserved');
@@ -118,13 +123,27 @@ class OperationSpend
             }
             $cap = (int) floor($quote->provider_cost_cap_usd * 1000000);
             $spent = (int) round($this->spentUsd($quoteId) * 1000000);
-            if ($spent + $micros > $cap) {
+            if ($spent + $micros > $cap
+                || ($worstMicros !== null && $spent + $worstMicros > $cap * max(1.0, (float) config('ai_credits.overrun_factor')))) {
                 throw new AiProcessingException('budget_exceeded');
             }
             DB::table('provider_call_attempts')->insert(['id' => $attemptId, 'operation_quote_id' => $quoteId,
                 'purpose' => $purpose, 'status' => 'reserved', 'reserved_microusd' => $micros,
                 'created_at' => now(), 'updated_at' => now()]);
         }, 3);
+    }
+
+    /**
+     * Admits a provider request by `ai_credits.admission_mode`. 'strict': spent + worst case must fit the cap. 'realistic'
+     * (default): spent + realistic cost must fit the cap, and the worst case must fit overrun_factor x the cap.
+     *
+     * @param  array{maximum:float,realistic:float}  $assessment  ProviderRequestAdmission::assess()
+     */
+    public function reserveForRequest(string $quoteId, string $attemptId, string $purpose, array $assessment): void
+    {
+        config('ai_credits.admission_mode') === 'strict'
+            ? $this->reserveAttempt($quoteId, $attemptId, $purpose, $assessment['maximum'])
+            : $this->reserveAttempt($quoteId, $attemptId, $purpose, $assessment['realistic'], $assessment['maximum']);
     }
 
     /** A reservation may authorize one dispatch only. A crash after this point is an uncertain outcome. */

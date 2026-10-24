@@ -7,6 +7,7 @@ use App\Jobs\ResumeAfterCreditConfirmationJob;
 use App\Models\AiPrompt;
 use App\Models\Document;
 use App\Models\DocumentAiRun;
+use App\Models\OcrResult;
 use App\Models\OperationQuote;
 use App\Models\Subscription;
 use App\Models\SubscriptionUsagePeriod;
@@ -45,7 +46,9 @@ class AiCreditsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        config(['ai_credits.enabled' => true]);
+        // These tests are about reservation, settlement and caps, so they size documents in exact tokens: the local-estimate
+        // margin is off here and exercised in WorkloadCreditsV1Test.
+        config(['ai_credits.enabled' => true, 'ai_credits.local_estimate_multiplier' => 1.0, 'ai_credits.dense_shift.enabled' => true]);
     }
 
     private function workspace(int $savedAi = 0, int $legacyDocs = 0): Workspace
@@ -77,7 +80,15 @@ class AiCreditsTest extends TestCase
 
     private function admit(Document $document): bool
     {
-        return app(AiCreditAdmission::class)->admitDocument($document->fresh());
+        $fresh = $document->fresh();
+        // A quote of 30 credits or more (large and above) waits for the customer's confirmation. These tests are about the
+        // accounting, so a document up to the medium band has its price accepted up front (harmless: it needs none); larger
+        // ones still wait, which is what the confirmation tests assert.
+        if (strlen((string) $fresh->extracted_text) / 3 <= 30000 && ! ($fresh->ai_pipeline['credit_quote_confirmed'] ?? false)) {
+            $fresh->forceFill(['ai_pipeline' => [...($fresh->ai_pipeline ?? []), 'credit_quote_confirmed' => true]])->save();
+        }
+
+        return app(AiCreditAdmission::class)->admitDocument($fresh->fresh());
     }
 
     private function op(Document $document, string $kind = 'document'): ?object
@@ -105,12 +116,21 @@ class AiCreditsTest extends TestCase
     {
         $ws = $this->workspace(1000);
         $q = app(QuoteService::class);
-        $expect = ['simple' => [1000, 4], 'standard' => [20000, 10], 'large' => [50000, 30], 'very_large' => [150000, 80]];
+        $expect = ['small' => [3000, 2], 'medium' => [6000, 6], 'regular' => [15000, 10], 'large' => [30000, 20], 'xlarge' => [50000, 35], 'very_large' => [150000, 80]];
         foreach ($expect as $band => [$tokens, $credits]) {
             $quote = $q->quoteDocument($this->document($ws, $tokens))['quote'];
             $this->assertSame([$band, $credits], [$quote->band, $quote->credits], $band);
             $this->assertEqualsWithDelta($credits * 0.027, $quote->provider_cost_cap_usd, 0.000001);
         }
+    }
+
+    public function test_there_is_no_tiny_band_and_no_linear_completion_gate(): void
+    {
+        $q = app(QuoteService::class);
+        $this->assertArrayNotHasKey('tiny', config('ai_credits.bands'));
+        $this->assertNull(config('ai_credits.min_completion_cost_usd'));
+        $this->assertSame(['small', 2], [$q->classify(1, false)['band'], $q->classify(1, false)['credits']]);
+        $this->assertSame(2, $q->minimumDocumentCredits());
     }
 
     public function test_a_document_above_the_top_band_is_declined_not_priced(): void
@@ -125,26 +145,27 @@ class AiCreditsTest extends TestCase
     public function test_dense_spreadsheet_moves_up_a_band(): void
     {
         $ws = $this->workspace(1000);
-        $quote = app(QuoteService::class)->quoteDocument($this->document($ws, 1000, 'XLSX'))['quote'];
-        $this->assertSame('standard', $quote->band);
+        // 8,700 characters = 2,900 tokens, x1.6 for a spreadsheet = 4,640: medium by size, and dense moves it to regular.
+        $quote = app(QuoteService::class)->quoteDocument($this->document($ws, 3000, 'XLSX'))['quote'];
+        $this->assertSame(['regular', 4640], [$quote->band, $quote->preflight['tokens']]);
         $this->assertTrue($quote->preflight['spreadsheet']);
     }
 
     public function test_a_band_whose_provider_cap_cannot_finish_the_work_moves_up_or_declines(): void
     {
         $q = app(QuoteService::class);
-        // The pipeline's own synthesis reservation (0.30 USD) does not fit the 4- or 10-credit ceiling.
+        // The pipeline's own synthesis reservation (0.30 USD) does not fit the 2-, 6- or 10-credit ceilings (0.054, 0.162, 0.27).
         $this->assertSame('large', $q->classify(1000, false, 0.30)['band']);
         $this->assertTrue($q->classify(1000, false, 5.0)['declined']);
         $this->assertSame('provider_cost_exceeds_top_band', $q->classify(1000, false, 5.0)['reason']);
     }
 
-    public function test_ocr_is_priced_from_the_page_count_and_hard_capped(): void
+    public function test_ocr_is_not_a_separate_charge_only_a_provider_spend_bound_and_hard_capped(): void
     {
         $q = app(QuoteService::class);
-        $this->assertSame(20, $q->classifyOcr(5)['credits']);
-        $this->assertSame(25, $q->classifyOcr(25)['credits']); // 20 + (25-20) extra pages
-        $this->assertEqualsWithDelta(0.5, $q->classifyOcr(25)['cap'], 0.000001);
+        $this->assertSame([0, 0], [$q->classifyOcr(5)['credits'], $q->classifyOcr(25)['credits']]);
+        $this->assertEqualsWithDelta(25 * 0.006, $q->classifyOcr(25)['cap'], 0.000001); // pages x the per-page bound (0.006)
+        $this->assertEqualsWithDelta(0.05, $q->classifyOcr(5)['cap'], 0.000001); // below the 0.05 floor
         $this->assertTrue($q->classifyOcr(61)['declined']);
         $this->assertSame('ocr_page_limit', $q->classifyOcr(61)['reason']);
     }
@@ -161,23 +182,50 @@ class AiCreditsTest extends TestCase
         $this->assertNull($this->op($document, 'ocr'));
     }
 
-    public function test_ocr_reserves_its_own_operation_and_settles_with_the_document(): void
+    private function scanned(Document $document, int $pages): void
+    {
+        for ($page = 1; $page <= $pages; $page++) {
+            OcrResult::create(['workspace_id' => $document->workspace_id, 'document_id' => $document->id, 'page_number' => $page,
+                'engine' => 'vision', 'raw_text' => 'page '.$page, 'confidence' => 0.9]);
+        }
+    }
+
+    public function test_a_scan_is_priced_by_the_bands_like_any_document_and_ocr_adds_no_charge(): void
     {
         $ws = $this->workspace(100);
         $document = $this->document($ws);
         $this->assertTrue(app(AiCreditAdmission::class)->admitOcr($document, 5));
+        $this->scanned($document, 5);
         $this->assertTrue($this->admit($document));
-        $this->assertSame([20, 4], [$this->op($document, 'ocr')->amount_reserved, $this->op($document)->amount_reserved]);
+        // 5 pages = 3,000 tokens (600 a page): small. The OCR itself (5 x USD 0.006) is a spend bound, not a charge.
+        $this->assertSame([0, 2], [(int) $this->op($document, 'ocr')->amount_reserved, (int) $this->op($document)->amount_reserved]);
+        $this->assertSame(5, OperationQuote::where('kind', 'document')->firstOrFail()->preflight['ocr_pages']);
         app(WorkspaceCreditService::class)->accountForReadyDocument($document->fresh());
-        $this->assertSame(76, (int) $ws->credits()->value('ai_credits_remaining'));
+        $this->assertSame(98, (int) $ws->credits()->value('ai_credits_remaining'));
+        $this->assertSame('completed', $this->op($document, 'ocr')->status);
     }
 
-    public function test_ocr_needs_room_for_the_analysis_too(): void
+    public function test_a_scan_is_priced_by_page_tokens_and_its_cap_covers_its_ocr_cost(): void
     {
-        $ws = $this->workspace(22); // 20 for OCR but only 2 left for the cheapest analysis (4)
+        $q = app(QuoteService::class);
+        // 600 tokens a page. One and two pages are small; ten pages are 6,000 tokens (medium); sixty are 36,000 (past the 35,000 edge).
+        $this->assertSame(['small', 2], [$q->classifyScan(1)['band'], $q->classifyScan(1)['credits']]);
+        $this->assertSame(['small', 2], [$q->classifyScan(2)['band'], $q->classifyScan(2)['credits']]);
+        $this->assertSame(['medium', 6], [$q->classifyScan(10)['band'], $q->classifyScan(10)['credits']]);
+        $this->assertSame(['xlarge', 35], [$q->classifyScan(60)['band'], $q->classifyScan(60)['credits']]);
+        foreach ([1, 2, 5, 20, 60] as $pages) {
+            $c = $q->classifyScan($pages);
+            $this->assertGreaterThanOrEqual($pages * (float) config('ai_credits.ocr.provider_cost_usd_per_page'), $c['cap'], $pages.' pages: the cap must cover the OCR bound');
+        }
+    }
+
+    public function test_ocr_needs_the_balance_to_pay_for_the_scan_before_it_is_read(): void
+    {
+        $ws = $this->workspace(1); // a 5-page scan quotes as small: 2 credits
         $document = $this->document($ws);
         $this->assertFalse(app(AiCreditAdmission::class)->admitOcr($document, 5));
-        $this->assertStringContainsString('Insufficient credits: 22 available, 24 required.', $document->fresh()->error_message);
+        $this->assertStringContainsString('Insufficient credits: 1 available, 2 required.', $document->fresh()->error_message);
+        $this->assertNull($this->op($document, 'ocr'));
     }
 
     public function test_comparison_quote_is_twelve_credits(): void
@@ -190,16 +238,16 @@ class AiCreditsTest extends TestCase
     public function test_quote_is_immutable_and_survives_config_changes_and_provider_variance(): void
     {
         $ws = $this->workspace(100);
-        $document = $this->document($ws, 20000);
+        $document = $this->document($ws, 15000);
         $this->assertTrue($this->admit($document));
         $quote = OperationQuote::firstOrFail();
-        config(['ai_credits.bands.standard.credits' => 99, 'ai_credits.quote_version' => 'v2']);
+        config(['ai_credits.bands.regular.credits' => 99, 'ai_credits.quote_version' => 'v4']);
         $this->recordRun($quote, 0.20); // actual provider cost differs from the cap
         $this->assertTrue($this->admit($document)); // retry never re-prices
         $this->assertSame(1, OperationQuote::count());
         app(WorkspaceCreditService::class)->accountForReadyDocument($document->fresh());
         $this->assertSame(10, (int) $this->op($document)->amount_settled);
-        $this->assertSame('v1', $quote->fresh()->quote_version);
+        $this->assertSame('v3', $quote->fresh()->quote_version);
         $this->expectException(\LogicException::class);
         $quote->update(['credits' => 1]);
     }
@@ -209,7 +257,7 @@ class AiCreditsTest extends TestCase
     public function test_multi_credit_reservation_holds_the_exact_amount_without_debiting(): void
     {
         $ws = $this->workspace(25);
-        $document = $this->document($ws, 20000);
+        $document = $this->document($ws, 15000);
         $this->assertTrue($this->admit($document));
         $summary = app(EntitlementService::class)->summary($ws->id);
         $this->assertSame(10, $summary['ai_credits']['savedCreditsReserved']);
@@ -222,7 +270,7 @@ class AiCreditsTest extends TestCase
     {
         $ws = $this->workspace(50);
         $period = $this->subscribe($ws, 100);
-        $document = $this->document($ws, 20000);
+        $document = $this->document($ws, 15000);
         $this->assertTrue($this->admit($document));
         $this->assertSame('subscription_ai_credit', $this->op($document)->funding_bucket);
         app(WorkspaceCreditService::class)->accountForReadyDocument($document->fresh());
@@ -236,12 +284,12 @@ class AiCreditsTest extends TestCase
     {
         $ws = $this->workspace(50);
         $this->subscribe($ws, 5);
-        $document = $this->document($ws, 20000);
+        $document = $this->document($ws, 15000);
         $this->assertFalse($this->admit($document)); // 5 monthly < 10; today's rule: saved credits stay untouched
         $this->assertStringContainsString('Insufficient credits: 5 available, 10 required.', $document->fresh()->error_message);
 
         config(['ai_credits.saved_fallback_during_subscription' => true]);
-        $retry = $this->document($ws, 20000);
+        $retry = $this->document($ws, 15000);
         $this->assertTrue($this->admit($retry));
         $this->assertSame('saved_ai_credit', $this->op($retry)->funding_bucket);
     }
@@ -250,7 +298,7 @@ class AiCreditsTest extends TestCase
     {
         Http::fake();
         $ws = $this->workspace(7);
-        $document = $this->document($ws, 20000);
+        $document = $this->document($ws, 15000);
         $this->assertFalse($this->admit($document));
         $this->assertSame('Failed', $document->fresh()->status);
         $this->assertSame('Insufficient credits: 7 available, 10 required.', $document->fresh()->error_message);
@@ -264,8 +312,8 @@ class AiCreditsTest extends TestCase
     public function test_balance_never_goes_negative_when_two_operations_compete(): void
     {
         $ws = $this->workspace(10);
-        $a = $this->document($ws, 20000);
-        $b = $this->document($ws, 20000);
+        $a = $this->document($ws, 15000);
+        $b = $this->document($ws, 15000);
         $this->assertTrue($this->admit($a));
         $this->assertFalse($this->admit($b));
         app(WorkspaceCreditService::class)->accountForReadyDocument($a->fresh());
@@ -277,7 +325,7 @@ class AiCreditsTest extends TestCase
     public function test_failed_document_releases_its_credits_once(): void
     {
         $ws = $this->workspace(25);
-        $document = $this->document($ws, 20000);
+        $document = $this->document($ws, 15000);
         $this->assertTrue($this->admit($document));
         $document->update(['status' => 'Failed']);
         $entitlements = app(EntitlementService::class);
@@ -293,7 +341,7 @@ class AiCreditsTest extends TestCase
     public function test_needs_review_releases_by_default_and_settles_only_under_an_explicit_policy(): void
     {
         $ws = $this->workspace(40);
-        $released = $this->document($ws, 20000);
+        $released = $this->document($ws, 15000);
         $this->assertTrue($this->admit($released));
         $released->update(['status' => 'Needs Review']);
         app(EntitlementService::class)->summary($ws->id);
@@ -301,7 +349,7 @@ class AiCreditsTest extends TestCase
         $this->assertSame(0, $this->ledger($ws->id, 'debit'));
 
         config(['ai_credits.needs_review_policy' => 'settle']);
-        $paid = $this->document($ws, 20000);
+        $paid = $this->document($ws, 15000);
         $this->assertTrue($this->admit($paid));
         $paid->update(['status' => 'Needs Review']);
         app(EntitlementService::class)->summary($ws->id);
@@ -312,7 +360,7 @@ class AiCreditsTest extends TestCase
     public function test_merged_evidence_alone_never_debits(): void
     {
         $ws = $this->workspace(40);
-        $document = $this->document($ws, 20000);
+        $document = $this->document($ws, 15000);
         $this->assertTrue($this->admit($document));
         app(WorkspaceCreditService::class)->accountForReadyDocument($document->fresh(), false);
         $this->assertSame('reserved', $this->op($document)->status);
@@ -323,13 +371,13 @@ class AiCreditsTest extends TestCase
     public function test_expired_reservation_releases_unless_the_work_was_recovered_into_ready(): void
     {
         $ws = $this->workspace(40);
-        $stalled = $this->document($ws, 20000);
+        $stalled = $this->document($ws, 15000);
         $this->assertTrue($this->admit($stalled));
         DB::table('billing_operations')->where('resource_id', $stalled->id)->update(['updated_at' => now()->subHours(25)]);
         app(EntitlementService::class)->summary($ws->id);
         $this->assertSame('reservation_expired', $this->op($stalled)->release_reason);
 
-        $recovered = $this->document($ws, 20000);
+        $recovered = $this->document($ws, 15000);
         $this->assertTrue($this->admit($recovered));
         app(WorkspaceCreditService::class)->accountForReadyDocument($recovered->fresh());
         app(EntitlementService::class)->summary($ws->id);
@@ -339,7 +387,7 @@ class AiCreditsTest extends TestCase
     public function test_retries_split_and_synthesis_fallback_never_add_credits(): void
     {
         $ws = $this->workspace(100);
-        $document = $this->document($ws, 20000);
+        $document = $this->document($ws, 15000);
         for ($i = 0; $i < 5; $i++) {
             $this->assertTrue($this->admit($document)); // queue retry / restart / duplicate delivery
         }
@@ -356,7 +404,7 @@ class AiCreditsTest extends TestCase
     public function test_duplicate_settlement_and_release_each_happen_once(): void
     {
         $ws = $this->workspace(100);
-        $document = $this->document($ws, 20000);
+        $document = $this->document($ws, 15000);
         $this->assertTrue($this->admit($document));
         $accountant = app(CreditAccountant::class);
         $this->assertTrue($accountant->settle('document', $document->id));
@@ -364,7 +412,7 @@ class AiCreditsTest extends TestCase
         $this->assertFalse($accountant->release('document', $document->id, 'late_failure')); // a settled charge is never released
         $this->assertSame(90, (int) $ws->credits()->value('ai_credits_remaining'));
 
-        $other = $this->document($ws, 20000);
+        $other = $this->document($ws, 15000);
         $this->assertTrue($this->admit($other));
         $this->assertTrue($accountant->release('document', $other->id, 'x'));
         $this->assertFalse($accountant->release('document', $other->id, 'x'));
@@ -376,7 +424,7 @@ class AiCreditsTest extends TestCase
     public function test_explicit_reanalysis_is_charged_once_and_internal_recovery_is_free(): void
     {
         $ws = $this->workspace(100);
-        $document = $this->document($ws, 20000);
+        $document = $this->document($ws, 15000);
         $this->assertTrue($this->admit($document));
         app(WorkspaceCreditService::class)->accountForReadyDocument($document->fresh());
         $document->update(['status' => 'Ready']);
@@ -399,7 +447,7 @@ class AiCreditsTest extends TestCase
     public function test_summary_only_refresh_costs_no_credits(): void
     {
         $ws = $this->workspace(100);
-        $document = $this->document($ws, 20000);
+        $document = $this->document($ws, 15000);
         $this->assertTrue($this->admit($document));
         app(WorkspaceCreditService::class)->accountForReadyDocument($document->fresh());
         app(AiCreditAdmission::class)->admitReanalysis($document->fresh(), true, $this->user->id);
@@ -409,7 +457,7 @@ class AiCreditsTest extends TestCase
     public function test_reanalysis_of_a_never_delivered_document_is_a_normal_analysis_not_a_second_purchase(): void
     {
         $ws = $this->workspace(100);
-        $document = $this->document($ws, 20000);
+        $document = $this->document($ws, 15000);
         $this->assertTrue($this->admit($document));
         $document->update(['status' => 'Needs Review']);
         app(EntitlementService::class)->summary($ws->id); // releases
@@ -422,7 +470,7 @@ class AiCreditsTest extends TestCase
     public function test_insufficient_credits_abort_a_reanalysis_without_touching_the_document(): void
     {
         $ws = $this->workspace(10);
-        $document = $this->document($ws, 20000);
+        $document = $this->document($ws, 15000);
         $this->assertTrue($this->admit($document));
         app(WorkspaceCreditService::class)->accountForReadyDocument($document->fresh());
         $document->update(['status' => 'Ready']);
@@ -439,15 +487,15 @@ class AiCreditsTest extends TestCase
     {
         Http::fake();
         $ws = $this->workspace(100);
-        $document = $this->document($ws, 50000); // large = 30 credits, confirmation from 'large'
+        $document = $this->document($ws, 50000); // xlarge = 35 credits, confirmation from 30 credits
         $this->assertFalse($this->admit($document));
         $this->assertTrue($document->fresh()->ai_pipeline['awaiting_credit_confirmation']);
-        $this->assertSame(30, $document->fresh()->ai_pipeline['credit_quote']['credits']);
+        $this->assertSame(35, $document->fresh()->ai_pipeline['credit_quote']['credits']);
         $this->assertSame('Processing', $document->fresh()->status);
         $this->assertNull($this->op($document));
         app(AiCreditAdmission::class)->confirmDocument($document->fresh());
         $this->assertTrue($this->admit($document));
-        $this->assertSame(30, $this->op($document)->amount_reserved);
+        $this->assertSame(35, $this->op($document)->amount_reserved);
         Http::assertNothingSent();
     }
 
@@ -456,14 +504,14 @@ class AiCreditsTest extends TestCase
     public function test_provider_cap_blocks_the_next_call_once_spent_and_unknown_usage_counts_conservatively(): void
     {
         $ws = $this->workspace(100);
-        $document = $this->document($ws, 1000); // simple = 4 credits = 0.108 USD
+        $document = $this->document($ws, 15000); // regular = 10 credits = 0.27 USD
         $this->assertTrue($this->admit($document));
         $quote = OperationQuote::firstOrFail();
         $spend = app(OperationSpend::class);
-        $this->recordRun($quote, 0.05);
+        $this->recordRun($quote, 0.20);
         $spend->assertCallAllowed($document->fresh(), 'entities'); // still inside the cap
         $this->recordRun($quote, null); // a timeout with unknown usage is NOT zero
-        $this->assertEqualsWithDelta(0.10, $spend->spentUsd($quote->id), 0.000001);
+        $this->assertEqualsWithDelta(0.25, $spend->spentUsd($quote->id), 0.000001);
         $spend->assertCallAllowed($document->fresh(), 'entities');
         $this->recordRun($quote, null);
         $this->expectException(AiProcessingException::class);
@@ -478,13 +526,13 @@ class AiCreditsTest extends TestCase
         $this->seed(DocumentSummaryPromptSeederV3::class);
         $ws = $this->workspace(100);
         $capped = $this->document($ws, 1000);
-        $quote = app(QuoteService::class)->issue($ws->id, 'document', $capped->id, ['band' => 'simple', 'credits' => 4, 'cap' => 0.04, 'preflight' => []]);
+        $quote = app(QuoteService::class)->issue($ws->id, 'document', $capped->id, ['band' => 'small', 'credits' => 3, 'cap' => 0.04, 'preflight' => []]);
         app(CreditAccountant::class)->reserve($quote, $this->user->id);
         $this->assertTrue(app(IncrementalPipeline::class)->route($capped->fresh()));
         $this->assertEqualsWithDelta(0.04, $capped->fresh()->ai_pipeline['budget_usd'], 0.000001);
 
         $roomy = $this->document($ws, 1000);
-        $quote = app(QuoteService::class)->issue($ws->id, 'document', $roomy->id, ['band' => 'very_large', 'credits' => 4, 'cap' => 50.0, 'preflight' => []]);
+        $quote = app(QuoteService::class)->issue($ws->id, 'document', $roomy->id, ['band' => 'very_large', 'credits' => 3, 'cap' => 50.0, 'preflight' => []]);
         app(CreditAccountant::class)->reserve($quote, $this->user->id);
         $this->assertTrue(app(IncrementalPipeline::class)->route($roomy->fresh()));
         $this->assertLessThan(1.0, $roomy->fresh()->ai_pipeline['budget_usd']); // the existing size formula still governs
@@ -498,9 +546,9 @@ class AiCreditsTest extends TestCase
         $quote = app(QuoteService::class)->quoteDocument($this->document($ws, 1000))['quote'];
         $floor = $quote->preflight['synthesis_floor_usd'];
         $this->assertTrue($quote->preflight['incremental_route']);
-        $this->assertGreaterThan(0.1, $floor, 'Even a tiny document reserves primary + fallback + repair synthesis.');
-        // At 0.027 USD per credit, 4 credits (0.108) cannot fund that reservation, so the band is not "simple".
-        $this->assertNotSame('simple', $quote->band, 'floor='.$floor.' band='.$quote->band);
+        $this->assertGreaterThan(0.1, $floor, 'Even a tiny document reserves the primary synthesis request.');
+        // At 0.027 USD per credit, 2 credits (0.054) cannot fund that reservation, so the band is not "small".
+        $this->assertNotSame('small', $quote->band, 'floor='.$floor.' band='.$quote->band);
         $this->assertTrue($quote->preflight['band_shifted_for_cost']);
         $this->assertGreaterThanOrEqual($floor, $quote->provider_cost_cap_usd);
     }
@@ -512,7 +560,7 @@ class AiCreditsTest extends TestCase
         $quote = app(QuoteService::class)->quoteDocument($this->document($ws, 1000))['quote'];
         $this->assertFalse($quote->preflight['incremental_route']);
         $this->assertEquals(0.0, $quote->preflight['synthesis_floor_usd']);
-        $this->assertSame('simple', $quote->band);
+        $this->assertSame('small', $quote->band);
     }
 
     public function test_visual_analysis_after_ready_is_included_in_the_document_cap(): void
@@ -522,7 +570,7 @@ class AiCreditsTest extends TestCase
         $this->assertTrue($this->admit($document));
         $quote = OperationQuote::firstOrFail();
         app(WorkspaceCreditService::class)->accountForReadyDocument($document->fresh());
-        $this->recordRun($quote, 0.11, 'chart_vision'); // spent past the 0.108 cap
+        $this->recordRun($quote, 0.30, 'chart_vision'); // spent past the 0.054 cap
         $this->expectException(AiProcessingException::class);
         app(OperationSpend::class)->assertCallAllowed($document->fresh(), 'chart_vision');
     }
@@ -747,13 +795,13 @@ class AiCreditsTest extends TestCase
         $summary = app(EntitlementService::class)->summary($ws->id);
         $this->assertSame(30, $summary['ai_credits']['savedCredits']);
 
-        $document = $this->document($ws, 1000); // simple = 4 credits
+        $document = $this->document($ws, 1000); // small = 2 credits
         $this->assertTrue($this->admit($document));
         $this->assertSame(3, (int) $ws->credits()->value('documents_remaining')); // reserving converts nothing
         app(WorkspaceCreditService::class)->accountForReadyDocument($document->fresh());
         $credits = $ws->credits()->first();
-        $this->assertSame([2, 6], [(int) $credits->documents_remaining, (int) $credits->ai_credits_remaining]); // one unit became 10, 4 spent
-        $this->assertSame(26, app(EntitlementService::class)->summary($ws->id)['ai_credits']['savedCredits']);
+        $this->assertSame([2, 8], [(int) $credits->documents_remaining, (int) $credits->ai_credits_remaining]); // one unit became 10, 2 spent
+        $this->assertSame(28, app(EntitlementService::class)->summary($ws->id)['ai_credits']['savedCredits']);
         $this->assertSame(1, $this->ledger($ws->id, 'debit', 'saved_document'));
         $this->assertSame(10, $this->ledger($ws->id, 'credit', 'saved_ai_credit'));
     }
@@ -779,10 +827,10 @@ class AiCreditsTest extends TestCase
         $ws = $this->workspace(0, 2);
         $period = $this->subscribe($ws, 100);
         app(CreditLedger::class)->record($ws->id, 'period_ai_credits:'.$period->id, 'subscription_ai_credit', 'credit', 100, 'monthly_allowance_created');
-        $a = $this->document($ws, 20000);
+        $a = $this->document($ws, 15000);
         $this->assertTrue($this->admit($a));
         app(WorkspaceCreditService::class)->accountForReadyDocument($a->fresh());
-        $b = $this->document($ws, 20000);
+        $b = $this->document($ws, 15000);
         $this->assertTrue($this->admit($b));
         $b->update(['status' => 'Failed']);
         app(EntitlementService::class)->summary($ws->id);
@@ -795,7 +843,7 @@ class AiCreditsTest extends TestCase
     public function test_billing_operation_and_ledger_writes_are_idempotent(): void
     {
         $ws = $this->workspace(100);
-        $document = $this->document($ws, 20000);
+        $document = $this->document($ws, 15000);
         $quote = app(QuoteService::class)->quoteDocument($document)['quote'];
         $accountant = app(CreditAccountant::class);
         $accountant->reserve($quote, $this->user->id);
@@ -825,7 +873,7 @@ class AiCreditsTest extends TestCase
         $data = $this->getJson('/api/workspace/credits')->assertOk()->json('data');
         $this->assertSame([100, 28, 72, 15], [$data['ai_credits']['monthlyCredits'], $data['ai_credits']['monthlyCreditsUsed'],
             $data['ai_credits']['monthlyCreditsRemaining'], $data['ai_credits']['savedCredits']]);
-        $this->assertSame(4, $data['ai_credits']['minimumRequiredCredits']);
+        $this->assertSame(2, $data['ai_credits']['minimumRequiredCredits']);
         $this->assertArrayHasKey('documents_remaining', $data);
         $this->assertArrayHasKey('saved_credits', $data);
     }
@@ -900,9 +948,9 @@ class AiCreditsTest extends TestCase
         $document = $this->document($ws, 50000);
         $this->assertFalse($this->admit($document));
         $pending = $this->getJson('/api/workspace/credits')->json('data.ai_credits.pendingConfirmations');
-        $this->assertSame([['documentId' => $document->id, 'credits' => 30, 'band' => 'large']], $pending);
+        $this->assertSame([['documentId' => $document->id, 'credits' => 35, 'band' => 'xlarge', 'pages' => 0, 'requiresConfirmation' => true]], $pending);
 
-        $this->postJson("/api/documents/{$document->id}/confirm-credits")->assertStatus(202)->assertJsonPath('data.credits', 30);
+        $this->postJson("/api/documents/{$document->id}/confirm-credits")->assertStatus(202)->assertJsonPath('data.credits', 35);
         Queue::assertPushedOn('default', ResumeAfterCreditConfirmationJob::class);
         $this->assertTrue($document->fresh()->ai_pipeline['credit_quote_confirmed']);
         $this->assertNull($this->op($document)); // credits are reserved when the resumed job runs, never by the click itself
@@ -916,7 +964,7 @@ class AiCreditsTest extends TestCase
     {
         Log::spy();
         $ws = $this->workspace(100);
-        $document = $this->document($ws, 20000);
+        $document = $this->document($ws, 15000);
         $this->assertTrue($this->admit($document));
         $this->recordRun(OperationQuote::firstOrFail(), 0.05);
         app(WorkspaceCreditService::class)->accountForReadyDocument($document->fresh());

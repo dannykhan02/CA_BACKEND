@@ -79,13 +79,15 @@ class CreditEconomicsReportTest extends TestCase
     {
         $before = config('ai_credits');
         $this->artisan('docintel:credit-economics-report', ['--what-if' => true, '--json' => true])->assertSuccessful();
-        Artisan::call('docintel:credit-economics-report', ['--what-if' => true, '--json' => true, '--floor-share' => '0.5', '--bands' => '4:6000,15:30000,30:90000,60:250000']);
+        Artisan::call('docintel:credit-economics-report', ['--what-if' => true, '--json' => true, '--floor-share' => '0.5', '--bands' => '2:4000,6:8000,10:18000,20:35000,30:90000,60:250000']);
         $rows = json_decode(Artisan::output(), true);
-        $this->assertSame([4, 15, 30, 60], array_column($rows, 'credits'));
-        $this->assertSame([25, 6, 3, 1], array_column($rows, 'starter_docs_per_month'));
+        $this->assertSame([6, 20, 30, 60], array_column($rows, 'credits'));
+        $this->assertSame([16, 5, 3, 1], array_column($rows, 'starter_docs_per_month'));
         Artisan::call('docintel:credit-economics-report', ['--what-if' => true, '--json' => true]);
         $today = json_decode(Artisan::output(), true);
-        $this->assertSame([4, 30, 80, 80], array_column($today, 'credits')); // the memo's baseline
+        // Today's bands: 5,000 tokens is medium (6); 20,000 is large (20, cap 0.54 covers its 0.50 floor); 60,000 is xlarge (35, cap
+        // 0.945 covers its 0.85 floor); 150,000 is very_large (80).
+        $this->assertSame([6, 20, 35, 80], array_column($today, 'credits'));
         $this->assertSame($before, config('ai_credits'));
         $this->assertSame(0, OperationQuote::count());
     }

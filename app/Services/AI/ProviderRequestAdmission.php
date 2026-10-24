@@ -4,6 +4,7 @@ namespace App\Services\AI;
 
 use App\Exceptions\AiProcessingException;
 use App\Models\Document;
+use App\Services\AiCredits\RealisticOutput;
 use Illuminate\Support\Facades\Log;
 
 /** Local admission for every paid Anthropic message, including each retry. */
@@ -12,6 +13,17 @@ class ProviderRequestAdmission
     public function __construct(private AiPricing $pricing) {}
 
     public function assertAllowed(?Document $document, ?string $task, string $model, array $messages, array $options): float
+    {
+        return $this->assess($document, $task, $model, $messages, $options)['maximum'];
+    }
+
+    /**
+     * The same checks, returning both bounds: the worst case (every output token the request may produce) and the realistic
+     * cost (the same input, the purpose's `ai_credits.stage_realistic_output` at most as output). Never above the worst case.
+     *
+     * @return array{maximum:float,realistic:float,realistic_output_tokens:int}
+     */
+    public function assess(?Document $document, ?string $task, string $model, array $messages, array $options): array
     {
         $roles = config('document_intelligence.model_roles', []);
         $role = is_string($task) ? ($roles[$task] ?? null) : null;
@@ -105,8 +117,8 @@ class ProviderRequestAdmission
         if ($input + (int) $output > (int) $capabilities['context_window']) {
             throw new AiProcessingException('context_overflow');
         }
-        $cost = $this->pricing->maximum($model, $input, (int) $output,
-            $this->mayUseCache($messages) || $this->mayUseCache($options['system'] ?? []));
+        $mayUseCache = $this->mayUseCache($messages) || $this->mayUseCache($options['system'] ?? []);
+        $cost = $this->pricing->maximum($model, $input, (int) $output, $mayUseCache);
         if ($cost === null || ! is_finite($cost)) {
             throw new AiProcessingException('unknown_price');
         }
@@ -114,7 +126,10 @@ class ProviderRequestAdmission
             throw new AiProcessingException('budget_exceeded');
         }
 
-        return $cost;
+        $realisticOutput = app(RealisticOutput::class)->tokens($task, app(RealisticOutput::class)->inputTokens($input), (int) $output);
+        $realistic = $realisticOutput === null ? $cost : $this->pricing->maximum($model, $input, $realisticOutput, $mayUseCache);
+
+        return ['maximum' => $cost, 'realistic' => min($cost, $realistic ?? $cost), 'realistic_output_tokens' => $realisticOutput ?? (int) $output];
     }
 
     private function mayUseCache(array $blocks): bool

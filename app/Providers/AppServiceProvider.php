@@ -10,6 +10,7 @@ use App\Observers\WorkspaceObserver;
 use App\Policies\DocumentNotePolicy;
 use App\Services\AI\Incremental\EvidenceGrounding;
 use App\Services\AI\ProviderGate;
+use App\Services\AiCredits\DocumentCredits;
 use App\Services\Intelligence\B2\StageASnapshot;
 use App\Services\Ocr\OcrEngineResolver;
 use App\Services\Ocr\TesseractBinary;
@@ -32,6 +33,9 @@ class AppServiceProvider extends ServiceProvider
     {
         // One gate per process: it tracks the permit a job is already holding.
         $this->app->singleton(ProviderGate::class);
+
+        // One quote lookup per request: a document list preloads the quotes of its whole page.
+        $this->app->scoped(DocumentCredits::class);
 
         // One span set per process: a document's evidence spans are segmented once per
         // extraction version and reused by every chunk, validation and merge in the same worker.

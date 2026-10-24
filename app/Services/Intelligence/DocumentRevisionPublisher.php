@@ -5,6 +5,7 @@ namespace App\Services\Intelligence;
 use App\Exceptions\RevisionPublicationRefused;
 use App\Models\Document;
 use App\Models\DocumentIntelligenceRevision;
+use App\Services\AiCredits\DocumentCostLogger;
 use App\Services\WorkspaceCreditService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -12,6 +13,9 @@ use Illuminate\Support\Facades\Log;
 /** Candidate construction happens outside the short, pointer-only publication transaction. */
 class DocumentRevisionPublisher
 {
+    /** Set by commit() when this call performed the publication, so only that call logs the cost summary. */
+    private bool $publishedNow = false;
+
     public function enabled(): bool
     {
         return (bool) config('document_intelligence.revision_v1', false);
@@ -101,7 +105,14 @@ class DocumentRevisionPublisher
     public function publish(Document $document, string $revisionId): DocumentIntelligenceRevision
     {
         try {
-            return $this->commit($document, $revisionId);
+            $revision = $this->commit($document, $revisionId);
+            if ($this->publishedNow) {
+                $this->publishedNow = false;
+                // After the commit, outside the transaction: a log line must never be able to affect publication or billing.
+                app(DocumentCostLogger::class)->log(Document::withTrashed()->findOrFail($document->id));
+            }
+
+            return $revision;
         } catch (RevisionPublicationRefused $refusal) {
             // The transaction that refused has rolled back, so the condition is recorded here.
             Log::warning('Document revision publication refused', ['document_id' => $refusal->documentId,
@@ -201,6 +212,7 @@ class DocumentRevisionPublisher
             // transaction and this document lock, so a publication is never charged without
             // publishing and never published without being charged.
             app(WorkspaceCreditService::class)->accountForReadyDocument($locked);
+            $this->publishedNow = true;
             Log::info('Document intelligence revision published', ['document_id' => $locked->id,
                 'old_revision_id' => $previous, 'new_revision_id' => $revisionId,
                 'generation' => $revision->generation]);

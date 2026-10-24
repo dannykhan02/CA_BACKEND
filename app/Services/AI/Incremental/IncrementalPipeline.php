@@ -14,6 +14,8 @@ use App\Models\DocumentIntelligenceRevision;
 use App\Services\AI\AiModels;
 use App\Services\AI\AiPricing;
 use App\Services\AiCredits\OperationSpend;
+use App\Services\AiCredits\QuoteService;
+use App\Services\AiCredits\SynthesisReservation;
 use App\Services\AnthropicClient;
 use App\Services\Extraction\StructuredDocument;
 use App\Services\Extraction\StructuredExtractionStore;
@@ -282,8 +284,10 @@ class IncrementalPipeline
             );
 
             // AI credits: the quoted provider ceiling can only lower the document budget, never raise it.
-            if ($cap = app(OperationSpend::class)->activeQuote($locked, null)?->provider_cost_cap_usd) {
-                $metadata['budget_usd'] = min($metadata['budget_usd'], $cap);
+            if ($quote = app(OperationSpend::class)->activeQuote($locked, null)) {
+                // A quote made from a low local estimate keeps its credits but gets the cap of the band the provider count implies.
+                $quote = app(QuoteService::class)->raiseCapForProviderCount($quote, $locked);
+                $metadata['budget_usd'] = min($metadata['budget_usd'], $quote->provider_cost_cap_usd);
             }
 
             // A new pipeline starts at the top of the synthesis fallback ladder.
@@ -312,6 +316,7 @@ class IncrementalPipeline
      * Caller holds the document lock, serializing all paid stage admissions. Extraction must leave
      * the primary synthesis, one degraded synthesis retry and one repair affordable; a synthesis
      * admission passes $protect (the next fallback's reserve) so it cannot consume that headroom.
+     * A document whose quote cap funds recovery at request time (SynthesisReservation) leaves the primary synthesis alone.
      */
     public function canReserve(Document $document, ?float $cost, bool $synthesis = false, float $protect = 0,
         bool $continuation = false): bool
@@ -327,12 +332,16 @@ class IncrementalPipeline
                 $document->forceFill(['ai_pipeline' => [...$document->ai_pipeline,
                     ...$this->client->synthesisReservation($document)]])->save();
             }
-            $reserves = [$document->ai_pipeline['synthesis_reserved_usd'], $document->ai_pipeline['synthesis_degraded_reserved_usd'],
-                $document->ai_pipeline['repair_reserved_usd']];
+            $policy = app(SynthesisReservation::class);
+            $primaryOnly = $policy->fundsRecoveryAtRequestTime($document);
+            $reserves = $primaryOnly ? [$document->ai_pipeline['synthesis_reserved_usd']]
+                : [$document->ai_pipeline['synthesis_reserved_usd'], $document->ai_pipeline['synthesis_degraded_reserved_usd'],
+                    $document->ai_pipeline['repair_reserved_usd']];
             if (in_array(null, $reserves, true)) {
                 return false;
             }
-            $protected = $continuation ? $this->continuationProtection($document) : array_sum($reserves);
+            $protected = $continuation ? $this->continuationProtection($document)
+                : ($primaryOnly ? $policy->floor($document->ai_pipeline) : array_sum($reserves));
         }
         $committed = DocumentChunk::where('document_id', $document->id)
             ->where('pipeline_key', $document->ai_pipeline['key'])->sum('reserved_cost');

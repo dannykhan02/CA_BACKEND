@@ -56,6 +56,15 @@ class VoyageEmbeddingClient
         }
 
         $data = $response->json();
+        // Usage is logged, never billed: embeddings have no per-document cost record, so this is the only trace of it.
+        Log::info('Voyage embeddings usage', [
+            'provider' => 'voyage', 'operation' => 'embeddings',
+            'model' => preg_match('/\A[a-zA-Z0-9._-]{1,100}\z/', (string) ($data['model'] ?? config('services.voyage.model')))
+                ? ($data['model'] ?? config('services.voyage.model')) : '[invalid]',
+            'inputs' => count($texts),
+            'total_tokens' => is_int($data['usage']['total_tokens'] ?? null) ? $data['usage']['total_tokens'] : null,
+            'duration_ms' => (int) ((hrtime(true) - $started) / 1000000),
+        ]);
 
         return [
             'embeddings' => array_map(fn ($item) => $item['embedding'], $data['data']),

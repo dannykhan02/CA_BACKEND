@@ -43,7 +43,7 @@ class DocumentDownloadFileNameTest extends TestCase
 
         $workspace = Workspace::create([
             'type' => WorkspaceType::Organization,
-            'name' => 'Org ' . $user->id,
+            'name' => 'Org '.$user->id,
         ]);
 
         WorkspaceMember::create([
@@ -61,7 +61,7 @@ class DocumentDownloadFileNameTest extends TestCase
     private function readyDocument(Workspace $workspace, string $name, string $type): Document
     {
         $disk = Storage::disk('documents');
-        $path = 'documents/' . $workspace->id . '/' . uniqid() . '.bin';
+        $path = 'documents/'.$workspace->id.'/'.uniqid().'.bin';
         $disk->put($path, 'file-bytes');
 
         return Document::create([
@@ -183,5 +183,28 @@ class DocumentDownloadFileNameTest extends TestCase
         // The fallback knows only `tiff` (lowercased type), which this name
         // already ends with, so nothing is appended.
         $this->assertSame('plate.tiff', $this->downloadedName($user, $document));
+    }
+
+    public function test_a_docx_original_is_served_as_word_not_as_a_zip(): void
+    {
+        [$user, $workspace] = $this->orgUser();
+        $document = $this->readyDocument($workspace, 'contract.docx', 'DOCX');
+
+        Sanctum::actingAs($user);
+        $response = $this->get("/api/documents/{$document->id}/download");
+        $response->assertOk();
+        $this->assertStringStartsWith(
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            (string) $response->headers->get('content-type'),
+        );
+    }
+
+    public function test_a_scanned_image_original_is_served_with_its_image_type(): void
+    {
+        [$user, $workspace] = $this->orgUser();
+        $document = $this->readyDocument($workspace, 'scan.jpg', 'JPG');
+
+        Sanctum::actingAs($user);
+        $this->get("/api/documents/{$document->id}/download")->assertOk()->assertHeader('content-type', 'image/jpeg');
     }
 }

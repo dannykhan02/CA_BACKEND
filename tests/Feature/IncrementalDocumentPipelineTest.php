@@ -21,6 +21,7 @@ use App\Services\AI\Incremental\EvidenceMerger;
 use App\Services\AI\Incremental\EvidenceSchema;
 use App\Services\AI\Incremental\IncrementalPipeline;
 use App\Services\AI\Incremental\SynthesisCoverage;
+use App\Services\AI\Incremental\VisualPlanner;
 use App\Services\AI\ResponseValidator;
 use App\Services\AnthropicClient;
 use App\Services\DocumentIntelligenceService;
@@ -357,6 +358,45 @@ class IncrementalDocumentPipelineTest extends TestCase
         self::assertSame('Ready', $document->fresh()->status);
         self::assertSame('visual_timeout', $unit->fresh()->failure_class);
         self::assertTrue(app(DocumentIntelligenceService::class)->processingDetails($document)['partial']);
+    }
+
+    private function visualUnit(Document $document, string $bytes, string $inputHash): DocumentChunk
+    {
+        Storage::fake('documents');
+        $document->update(['status' => 'Ready']);
+        $document = $document->fresh();
+        $path = 'ai-visuals/'.$document->workspace_id.'/'.$document->id.'/asset';
+        Storage::disk('documents')->put($path, $bytes);
+
+        return DocumentChunk::create(['workspace_id' => $document->workspace_id, 'document_id' => $document->id,
+            'pipeline_key' => hash('sha256', $document->workspace_id.'|'.$document->id.'|'.$document->file_hash.'|visual-v1'),
+            'identity' => 'visual:'.$inputHash, 'stage' => 'visual', 'input_hash' => $inputHash, 'status' => 'queued',
+            'pipeline_version' => config('document_intelligence.pipeline_version'), 'prompt_version' => '1',
+            'result' => ['path' => $path, 'media_type' => 'image/png', 'page' => 1]]);
+    }
+
+    public function test_visual_job_records_a_failed_unit_instead_of_crashing_when_the_input_changed(): void
+    {
+        $unit = $this->visualUnit($this->document(), 'synthetic image bytes', hash('sha256', 'a different image'));
+
+        (new ProcessDocumentVisualJob($unit->id))->handle(app(AnthropicClient::class), app(VisualPlanner::class));
+
+        self::assertSame('failed', $unit->fresh()->status);
+        self::assertSame('input_changed', $unit->fresh()->failure_class);
+        self::assertSame('Ready', $unit->document->fresh()->status);
+        Http::assertNothingSent();
+    }
+
+    public function test_visual_job_completes_when_the_image_holds_no_charts(): void
+    {
+        $this->fakeProvider($this->response(['charts' => []]));
+        $unit = $this->visualUnit($this->document(), 'synthetic image bytes', hash('sha256', 'synthetic image bytes'));
+
+        (new ProcessDocumentVisualJob($unit->id))->handle(app(AnthropicClient::class), app(VisualPlanner::class));
+
+        self::assertSame('completed', $unit->fresh()->status);
+        self::assertNull($unit->fresh()->failure_class);
+        self::assertSame([], Storage::disk('documents')->allFiles('chart-visuals'));
     }
 
     public function test_evidence_budget_trims_whole_records_retaining_sources(): void

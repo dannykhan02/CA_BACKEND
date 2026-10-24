@@ -27,10 +27,9 @@ class ClaudeVisionOcrProvider implements OcrProviderInterface
             || $limit < $size[0] * $size[1]) {
             throw new \RuntimeException('Image dimensions are invalid or exceed the processing limit.');
         }
-        $mediaType = match (strtolower(pathinfo($imagePath, PATHINFO_EXTENSION))) {
-            'jpg', 'jpeg' => 'image/jpeg',
-            'webp' => 'image/webp',
-            'gif' => 'image/gif',
+        // The bytes decide, not the name: the batch job hands over an extensionless temp copy of the stored file.
+        $mediaType = match ($size['mime'] ?? null) {
+            'image/jpeg', 'image/png', 'image/gif', 'image/webp' => $size['mime'],
             default => 'image/png', // pdftoppm -png always produces this
         };
 

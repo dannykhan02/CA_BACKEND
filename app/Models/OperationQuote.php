@@ -34,4 +34,17 @@ class OperationQuote extends Model
             }
         });
     }
+
+    /**
+     * The one sanctioned change to a priced column: the provider spend cap may be RAISED, never lowered, when the provider's token count
+     * shows the document is bigger than the local estimate. The credits and the band (what the customer pays) never change.
+     */
+    public function raiseProviderCap(float $cap): void
+    {
+        if ($cap <= (float) $this->provider_cost_cap_usd) {
+            return;
+        }
+        static::query()->whereKey($this->getKey())->toBase()->update(['provider_cost_cap_usd' => $cap]);
+        $this->setRawAttributes(array_merge($this->getAttributes(), ['provider_cost_cap_usd' => $cap]), true);
+    }
 }
