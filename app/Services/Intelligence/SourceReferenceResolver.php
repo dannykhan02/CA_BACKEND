@@ -29,6 +29,16 @@ class SourceReferenceResolver
             || ($document->published_intelligence_revision_id === null && (int) $document->intelligence_generation > 0)) {
             return ['state' => 'NOT_READY'];
         }
+        if ($document->type === 'PDF' && str_starts_with($sourceId, 'pdf-cell:')) {
+            $live = DB::table('documents')->where('id', $document->id)
+                ->where('workspace_id', $document->workspace_id)->whereNull('deleted_at')
+                ->first(['file_hash', 'extracted_text']);
+            if ($live === null || $live->file_hash !== $document->file_hash
+                || hash('sha256', (string) $live->extracted_text)
+                    !== hash('sha256', (string) $document->extracted_text)) {
+                return ['state' => 'STALE_REFERENCE'];
+            }
+        }
         $pipeline = (string) ($document->ai_pipeline['key'] ?? 'legacy');
         $owner = DB::table('document_evidence')->where('workspace_id', $document->workspace_id)
             ->where('document_id', $document->id)->where('source_id', $sourceId);
@@ -54,6 +64,14 @@ class SourceReferenceResolver
             return $historical ? ['state' => 'STALE_REFERENCE'] : $this->legacy($document, $sourceId);
         }
         $revision = hash('sha256', (string) $document->extracted_text);
+        if ($document->type === 'PDF' && str_starts_with($sourceId, 'pdf-cell:')) {
+            $pdfEvidence = json_decode($evidence->data, true) ?: [];
+            $evidenceRevision = $pdfEvidence['source_revision'] ?? null;
+            if (! is_string($evidenceRevision) || ! hash_equals($revision, $evidenceRevision)
+                || ($pdfEvidence['source_file_hash'] ?? null) !== $document->file_hash) {
+                return ['state' => 'STALE_REFERENCE'];
+            }
+        }
         $published = $document->published_intelligence_revision_id
             ? DocumentIntelligenceRevision::whereKey($document->published_intelligence_revision_id)
                 ->where('document_id', $document->id)->where('workspace_id', $document->workspace_id)->first()
@@ -119,6 +137,7 @@ class SourceReferenceResolver
                 }
             }
         }
+        $data = json_decode($evidence->data, true) ?: [];
         $sources = json_decode($evidence->sources, true) ?: [];
         $fieldSources = [];
         $valueSources = [];
@@ -142,7 +161,28 @@ class SourceReferenceResolver
         // A field-grounded measurement can cite its value row plus governing headings.
         // Navigation chooses the single value occurrence; all field quotes remain visible.
         if ($fieldSources !== []) {
-            if (count($fieldSources) !== count($sources) || count($valueSources) !== 1) {
+            $untyped = array_values(array_filter($sources, static fn ($item) =>
+                ! is_array($item) || ! is_array($item['roles'] ?? null)));
+            $value = $valueSources[0] ?? null;
+            $verifiedPdfRow = $document->type === 'PDF' && str_starts_with($sourceId, 'pdf-cell:')
+                && ($data['source_candidate'] ?? false) === true
+                && ($data['measurement_verification'] ?? null) === 'verified'
+                && ($data['source_revision'] ?? null) === $revision
+                && ($data['source_claim_fingerprint'] ?? null) === StructuredPdfFieldProof::claimFingerprint($data)
+                && count($valueSources) === 1 && count($untyped) === 1
+                && is_array($untyped[0]) && is_array($value)
+                && ($untyped[0]['page'] ?? null) === ($value['page'] ?? null)
+                && is_int($untyped[0]['start_offset'] ?? null)
+                && is_int($untyped[0]['end_offset'] ?? null)
+                && is_int($value['start_offset'] ?? null)
+                && is_int($value['end_offset'] ?? null)
+                && $untyped[0]['start_offset'] <= $value['start_offset']
+                && $untyped[0]['end_offset'] >= $value['end_offset']
+                && mb_substr((string) $document->extracted_text,
+                    $untyped[0]['start_offset'], $untyped[0]['end_offset'] - $untyped[0]['start_offset'])
+                    === ($untyped[0]['quote'] ?? null);
+            if ((count($fieldSources) !== count($sources) && ! $verifiedPdfRow)
+                || count($valueSources) !== 1) {
                 return ['state' => 'SOURCE_AMBIGUOUS'];
             }
             $sources = $valueSources;
@@ -168,7 +208,6 @@ class SourceReferenceResolver
         $end = $citation['end_offset'] ?? null;
         $rangeValid = is_int($start) && is_int($end) && $end > $start && $quote !== null
             && mb_substr((string) $document->extracted_text, $start, $end - $start) === $quote;
-        $data = json_decode($evidence->data, true) ?: [];
         if (is_string($data['source_revision'] ?? null)
             && ! hash_equals($revision, $data['source_revision'])) {
             return ['state' => 'SOURCE_UNAVAILABLE'];

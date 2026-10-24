@@ -48,7 +48,8 @@ class EvidenceBudget
     public function forDocument(Document $document, ?\DateTimeImmutable $asOf = null): array
     {
         $records = DocumentEvidence::where('workspace_id', $document->workspace_id)->where('document_id', $document->id)
-            ->where('pipeline_key', $document->ai_pipeline['key'])->orderBy('identity')->get();
+            ->where('pipeline_key', $document->ai_pipeline['key'])->orderBy('identity')->get()
+            ->reject(static fn (DocumentEvidence $record) => ($record->data['source_candidate'] ?? false) === true);
         $unresolved = $records->filter(fn ($record) => $record->kind === 'unresolved' && ! isset($record->data['resolved_evidence_id']))->count();
         $records = $records->filter(fn ($record) => $record->kind !== 'unresolved' || isset($record->data['resolved_evidence_id']));
         if (config('intelligence_v2.enabled')) {
