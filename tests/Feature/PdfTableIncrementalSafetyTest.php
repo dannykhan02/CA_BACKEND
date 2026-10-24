@@ -15,6 +15,7 @@ use App\Services\Intelligence\IncrementalMetricFieldVerifier;
 use App\Services\Intelligence\MetricCollector;
 use App\Services\Intelligence\PdfSourceCandidateCollector;
 use App\Services\Intelligence\SourceProvenanceReader;
+use App\Services\Intelligence\StructuredPdfFieldProof;
 use App\Services\Intelligence\StructuredProvenanceProducer;
 use App\Services\Intelligence\TextRoleProvenanceProducer;
 use App\Services\Intelligence\VerifiedPdfChartPersister;
@@ -109,8 +110,8 @@ class PdfTableIncrementalSafetyTest extends TestCase
     public function test_source_candidates_on_independent_and_adversarial_financial_pdfs(): void
     {
         foreach ([
-            'Northstar_Q3_2026_Board_Performance_Review.pdf' => [12, 12, 0, 0, 0, 0, 0,
-                ['governing_owner_unverified' => 9, 'unit_source_mismatch' => 3]],
+            'Northstar_Q3_2026_Board_Performance_Review.pdf' => [12, 12, 12, 12, 4, 4, 12,
+                ['verified' => 12]],
             'financial_units_thousands.pdf' => [6, 6, 6, 6, 3, 3, 6, ['verified' => 6]],
             'financial_units_adversarial.pdf' => [6, 6, 0, 0, 0, 0, 0, ['unit_source_mismatch' => 6]],
             'financial_basis_adversarial.pdf' => [8, 8, 8, 8, 4, 4, 8, ['verified' => 8]],
@@ -155,6 +156,37 @@ class PdfTableIncrementalSafetyTest extends TestCase
                     ->build($source, [$tampered]);
                 self::assertSame([], array_values(array_filter($badBindings,
                     static fn ($binding) => $binding['role'] === 'value')));
+                $first = $facts->first(static fn ($fact) => ($fact->data['label'] ?? null) === 'Revenue');
+                $proof = $matched[$first->id];
+                $path = $proof['pdf_table_path'];
+                $owners = app(GoverningOwnerProof::class);
+                self::assertSame('NORTHSTAR DISTRIBUTION LTD', $owners->resolveReportOwner(
+                    $document, $path, $proof['roles']['value'][0], '')['entity']);
+                $missingFooter = [...$path, 'report_footer' => []];
+                self::assertNull($owners->resolveReportOwner($document, $missingFooter,
+                    $proof['roles']['value'][0], ''));
+                $missingCover = [...$path, 'report_cover' => []];
+                self::assertNull($owners->resolveReportOwner($document, $missingCover,
+                    $proof['roles']['value'][0], ''));
+                $duplicateCover = [...$path, 'report_cover' => [
+                    $path['report_cover'][0], $path['report_cover'][0],
+                ]];
+                self::assertNull($owners->resolveReportOwner($document, $duplicateCover,
+                    $proof['roles']['value'][0], ''));
+                $conflictingFooter = $path;
+                $conflictingFooter['report_footer'][0]['text'] = 'OTHER DISTRIBUTION LTD';
+                self::assertNull($owners->resolveReportOwner($document, $conflictingFooter,
+                    $proof['roles']['value'][0], ''));
+                $unrelatedCaption = $path;
+                $unrelatedCaption['captions'][0]['text'] = 'Regional dispatch schedule (KES million)';
+                self::assertNull($owners->resolveReportOwner($document, $unrelatedCaption,
+                    $proof['roles']['value'][0], ''));
+                $margin = $facts->first(static fn ($fact) => ($fact->data['label'] ?? null) === 'Operating margin');
+                self::assertSame('%', $margin->data['unit']);
+                $badUnit = app(StructuredPdfFieldProof::class)->prove(
+                    $document, [...$margin->data, 'unit' => 'KES million',
+                        'source_provenance_set_id' => $setId], $matched[$margin->id]);
+                self::assertSame('unit_source_mismatch', $badUnit['rejection']);
             }
             $verdicts = app(IncrementalMetricFieldVerifier::class)->verify($document, $setId);
             $eligible = array_values(array_filter(app(MetricCollector::class)->collect($document)['observations'],
@@ -177,6 +209,86 @@ class PdfTableIncrementalSafetyTest extends TestCase
             ksort($expectedReasons);
             self::assertSame($expectedReasons, $reasons, $name);
         }
+    }
+
+    public function test_optional_original_apple_statement_keeps_duration_scope_and_share_units_separate(): void
+    {
+        $path = getenv('DOCINTEL_APPLE_PDF') ?: '/tmp/docintel-apple-fy25-q2.pdf';
+        if (! is_file($path)) {
+            $this->markTestSkipped('Original Apple PDF is an external audit input.');
+        }
+        self::assertSame('e333dd821d9ef827e82d8e0b696493a127c4ee171ea63aca3a80dc1dfea60e89',
+            hash_file('sha256', $path));
+        config()->set('document_intelligence.pdf_table_structure', true);
+        $source = app(DocumentTextExtractor::class)->extractPdfStructured($path);
+        self::assertSame(2, $source->capabilities['projected_tables']);
+        $user = User::factory()->create();
+        app(WorkspaceService::class)->createPersonalWorkspaceFor($user);
+        $document = Document::create(['workspace_id' => $user->fresh()->current_workspace_id,
+            'uploaded_by' => $user->id, 'name' => basename($path), 'type' => 'PDF',
+            'status' => 'Processing', 'classification' => 'Internal',
+            'size_kb' => (int) ceil(filesize($path) / 1024), 'year' => 2025,
+            'pages' => 3, 'file_hash' => hash_file('sha256', $path)]);
+        $document->forceFill(['ai_pipeline' => ['route' => 'incremental',
+            'key' => 'incremental:apple-phase5']])->save();
+        app(StructuredExtractionStore::class)->publish($document, $source);
+        $document->refresh();
+        self::assertSame(['extracted' => 132, 'candidates' => 132],
+            app(PdfSourceCandidateCollector::class)->collect($document));
+        $set = app(TextRoleProvenanceProducer::class)->publish($document);
+        self::assertSame(['verified' => 18, 'rejected' => 114],
+            app(IncrementalMetricFieldVerifier::class)->verify($document, $set));
+        self::assertSame(['charts' => 4, 'points' => 8],
+            app(VerifiedPdfChartPersister::class)->persist($document, $set));
+        $facts = DocumentEvidence::where('document_id', $document->id)->get();
+        foreach ($facts->filter(static fn ($fact) => in_array($fact->data['label'] ?? '',
+            ['Basic', 'Diluted'], true)) as $shares) {
+            self::assertNotSame('verified', $shares->data['measurement_verification']);
+        }
+        foreach (DocumentChart::where('document_id', $document->id)->get() as $chart) {
+            self::assertCount(2, $chart->data);
+            self::assertCount(1, array_unique(array_map(static fn ($point) => explode(' ', $point['label'])[0], $chart->data)));
+            foreach ($chart->data as $point) {
+                $anchor = DB::table('source_anchors')->where('id', $point['source']['anchor_id'])->sole();
+                self::assertSame($point['sourceValue'], $anchor->source_text);
+                self::assertContains($point['source']['page'], [1, 3]);
+            }
+        }
+    }
+
+    public function test_optional_walmart_balance_table_cannot_borrow_the_preceding_roi_unit_caption(): void
+    {
+        $path = getenv('DOCINTEL_WALMART_PDF') ?: '/tmp/docintel-walmart-q3-fy26.pdf';
+        if (! is_file($path)) {
+            $this->markTestSkipped('Original Walmart PDF is an external audit input.');
+        }
+        self::assertSame('86de6bebc0851a20fcc258b097863f46d32f04e92bc6d0c80f7fecff4a5beab3',
+            hash_file('sha256', $path));
+        config()->set('document_intelligence.pdf_table_structure', true);
+        $source = app(DocumentTextExtractor::class)->extractPdfStructured($path);
+        self::assertSame(1, $source->capabilities['projected_tables']);
+        $user = User::factory()->create();
+        app(WorkspaceService::class)->createPersonalWorkspaceFor($user);
+        $document = Document::create(['workspace_id' => $user->fresh()->current_workspace_id,
+            'uploaded_by' => $user->id, 'name' => basename($path), 'type' => 'PDF',
+            'status' => 'Processing', 'classification' => 'Internal',
+            'size_kb' => (int) ceil(filesize($path) / 1024), 'year' => 2025,
+            'pages' => 19, 'file_hash' => hash_file('sha256', $path)]);
+        $document->forceFill(['ai_pipeline' => ['route' => 'incremental',
+            'key' => 'incremental:walmart-phase5']])->save();
+        app(StructuredExtractionStore::class)->publish($document, $source);
+        $document->refresh();
+        self::assertSame(['extracted' => 12, 'candidates' => 12],
+            app(PdfSourceCandidateCollector::class)->collect($document));
+        $set = app(TextRoleProvenanceProducer::class)->publish($document);
+        self::assertSame(['verified' => 0, 'rejected' => 12],
+            app(IncrementalMetricFieldVerifier::class)->verify($document, $set));
+        foreach (DocumentEvidence::where('document_id', $document->id)->get() as $fact) {
+            self::assertSame('unit_source_mismatch', $fact->data['grounding_rejection']);
+            self::assertSame('', $fact->data['unit']);
+        }
+        self::assertSame(['charts' => 0, 'points' => 0],
+            app(VerifiedPdfChartPersister::class)->persist($document, $set));
     }
 
     public function test_nasdaq_cells_enter_the_incremental_graph_but_unproven_claims_do_not_chart(): void

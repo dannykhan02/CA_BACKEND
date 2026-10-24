@@ -62,6 +62,13 @@ final class PdfTableGeometryProbe
                     if ($lines[$next]['y'] - $lastRowY > 45) {
                         break;
                     }
+                    // A standalone note marker starts a subordinate exhibit. Do
+                    // not silently treat its reused columns as the same table.
+                    if (count($rows) >= 2
+                        && preg_match('/^(?:\(\d{1,2}\)(?:\s+\p{L}.*)?|\d{1,2})$/uD',
+                            trim($lines[$next]['text'])) === 1) {
+                        break;
+                    }
                     $row = $this->numericRow($lines[$next], $headers);
                     if ($row === null) {
                         continue;
@@ -88,6 +95,7 @@ final class PdfTableGeometryProbe
                     'heading' => $heading['text'],
                     'unit_source' => $heading['unit_source'],
                     'entity_source' => $heading['entity_source'],
+                    'report_footer' => $this->reportFooter($lines, $pageIndex + 1),
                     'accounting_basis_source' => null,
                     'rows' => array_map(static fn ($row, $number) => array_map(
                         static fn ($cell, $column) => ['row' => $number + 1, 'column' => $column,
@@ -332,6 +340,29 @@ final class PdfTableGeometryProbe
         return ['text' => implode("\n", array_reverse($text)),
             'unit_source' => $unit, 'entity_source' => $entity,
             'period_scope_ambiguous' => $ambiguous];
+    }
+
+    private function reportFooter(array $lines, int $pageNumber): ?array
+    {
+        $found = [];
+        foreach ($lines as $line) {
+            if (preg_match('/\b(?:Ltd\.?|Limited|Inc\.?|Corporation|PLC|LLC)\b.*\bPage\s+'
+                .$pageNumber.'\s*$/iu', $line['text']) === 1) {
+                $nameWords = [];
+                foreach ($line['words'] as $word) {
+                    if ($word['text'] === '|') {
+                        break;
+                    }
+                    $nameWords[] = $word;
+                }
+                if ($nameWords !== []) {
+                    $found[] = ['text' => $line['text'],
+                        'bbox' => $this->union($nameWords)];
+                }
+            }
+        }
+
+        return count($found) === 1 ? $found[0] : null;
     }
 
     private function union(array $cells): array

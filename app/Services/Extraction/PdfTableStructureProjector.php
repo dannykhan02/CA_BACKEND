@@ -32,6 +32,7 @@ final class PdfTableStructureProjector
             if ($projection === []) {
                 continue;
             }
+            $projection = $this->attachReportOwner($projection, $pages, $page, $table);
             array_push($nodes, ...$projection);
             $accepted++;
         }
@@ -48,8 +49,13 @@ final class PdfTableStructureProjector
         $text = $page['text'];
         $lines = $this->lines($text);
         $header = $this->headerLine($lines, $table['header']);
+        $splitHeader = false;
         if ($header === null) {
-            return [];
+            $header = $this->splitHeaderSpan($text, $table);
+            $splitHeader = true;
+            if ($header === null) {
+                return [];
+            }
         }
         [$headerText, $headerStart] = $header;
         $tableId = $page['id'].'/table['.($ordinal + 1).']';
@@ -58,6 +64,7 @@ final class PdfTableStructureProjector
         $staged[] = ['id' => $headerRow, 'type' => 'row', 'parent' => $tableId,
             'path' => $headerRow, 'page' => $page['page'], 'meta' => ['explicit_header' => true]];
         $headerIds = [];
+        $headerOffsets = [];
         $cursor = 0;
         foreach ($table['header'] as $column => $cell) {
             if ($column === 0 && $cell['text'] === '') {
@@ -72,6 +79,7 @@ final class PdfTableStructureProjector
             }
             [$at, $end] = $found;
             $cursor = $end;
+            $headerOffsets[$column] = $headerStart + $at;
             $id = $headerRow.'/cell['.$column.']';
             $headerIds[$column] = $id;
             $staged[] = $this->textNode($page, $id, 'cell', $headerRow,
@@ -109,15 +117,23 @@ final class PdfTableStructureProjector
 
                     continue;
                 }
-                $scopeText = $path[0]['text'];
-                $scope = mb_strpos($text, $scopeText, max(0, $headerStart - 250));
-                if ($scope === false || $scope >= $headerStart) {
-                    return [];
-                }
-                $partAt = $part['text'] === $scopeText ? $scope
-                    : mb_strpos($text, $part['text'], $scope + mb_strlen($scopeText));
-                if ($partAt === false || $partAt >= $headerStart) {
-                    return [];
+                if ($splitHeader) {
+                    $yearAt = $headerOffsets[$column];
+                    $partAt = mb_strrpos(mb_substr($text, 0, $yearAt), $part['text']);
+                    if ($partAt === false || $yearAt - $partAt > 250) {
+                        return [];
+                    }
+                } else {
+                    $scopeText = $path[0]['text'];
+                    $scope = mb_strpos($text, $scopeText, max(0, $headerStart - 250));
+                    if ($scope === false || $scope >= $headerStart) {
+                        return [];
+                    }
+                    $partAt = $part['text'] === $scopeText ? $scope
+                        : mb_strpos($text, $part['text'], $scope + mb_strlen($scopeText));
+                    if ($partAt === false || $partAt >= $headerStart) {
+                        return [];
+                    }
                 }
                 $id = $headerRow.'/fragment:'.substr(hash('sha256', json_encode($part['bbox']).$part['text']), 0, 16);
                 if (! isset($pathIds[$id])) {
@@ -137,14 +153,20 @@ final class PdfTableStructureProjector
         $entityId = $this->headingNode($staged, $page, $tableId, 'entity',
             $table['entity_source'] ?? null, $headerStart);
         $rows = [];
+        $rowSearchEnd = $headerStart + mb_strlen($headerText);
         $markerRows = [];
         $markerTexts = [];
         foreach ($table['rows'] as $rowNumber => $cells) {
-            $found = $this->rowLine($lines, $cells);
+            $found = $splitHeader
+                ? $this->orderedRowSpan($text, $cells, $rowSearchEnd)
+                : $this->rowLine($lines, $cells);
             if ($found === null) {
                 continue; // A layout row without an exact text projection is not evidence.
             }
             [$lineText, $lineStart] = $found;
+            if ($splitHeader) {
+                $rowSearchEnd = $lineStart + mb_strlen($lineText);
+            }
             $rowId = $tableId.'/row['.($rowNumber + 1).']';
             $rowNodes = [['id' => $rowId, 'type' => 'row', 'parent' => $tableId,
                 'path' => $rowId, 'page' => $page['page']]];
@@ -239,6 +261,128 @@ final class PdfTableStructureProjector
         return $lines;
     }
 
+    /** Header words may be separate Smalot lines even when Poppler aligns them. */
+    private function splitHeaderSpan(string $text, array $table): ?array
+    {
+        $headers = array_slice($table['header'], 1);
+        if ($headers === [] || count($headers) > 8) {
+            return null;
+        }
+        $scope = $headers[0]['source_path'][0]['text'] ?? null;
+        if (! is_string($scope)) {
+            return null;
+        }
+        $start = mb_strpos($text, $scope);
+        if ($start === false || mb_strpos($text, $scope, $start + 1) !== false) {
+            return null;
+        }
+        $cursor = $start;
+        foreach ($headers as $cell) {
+            $path = $cell['source_path'] ?? [];
+            foreach (array_slice($path, -2) as $part) {
+                $at = mb_strpos($text, $part['text'], $cursor);
+                if ($at === false || $at - $start > 400) {
+                    return null;
+                }
+                $cursor = $at + mb_strlen($part['text']);
+            }
+        }
+        $firstYear = mb_strpos($text, $headers[0]['text'], $start);
+        if ($firstYear === false || $firstYear >= $cursor) {
+            return null;
+        }
+
+        return [mb_substr($text, $firstYear, $cursor - $firstYear), $firstYear];
+    }
+
+    /** Keep the original word order and reject a jump across more than one short row. */
+    private function orderedRowSpan(string $text, array $cells, int $after): ?array
+    {
+        $label = $cells[0]['text'] ?? '';
+        $firstWord = preg_split('/\s+/u', $label)[0] ?? '';
+        if ($firstWord === '') {
+            return null;
+        }
+        $search = $after;
+        while (($at = mb_strpos($text, $firstWord, $search)) !== false && $at - $after <= 500) {
+            $end = $at;
+            $window = mb_substr($text, $at, 500);
+            foreach ($cells as $index => $cell) {
+                $found = $this->findInLine($window, $cell['text'], $end - $at);
+                if ($found === null) {
+                    $end = $at;
+                    break;
+                }
+                if ($index > 0 && preg_match('/\p{L}/u', mb_substr($window,
+                    $end - $at, $found[0] - ($end - $at))) === 1) {
+                    $end = $at;
+                    break;
+                }
+                $end = $at + $found[1];
+            }
+            if ($end > $at) {
+                return [mb_substr($text, $at, $end - $at), $at];
+            }
+            $search = $at + mb_strlen($firstWord);
+        }
+
+        return null;
+    }
+
+    /** A cover identity and the same printed page footer jointly name a report. */
+    private function attachReportOwner(array $projection, array $pages, array $page,
+        array $table): array
+    {
+        $cover = $pages[1] ?? null;
+        if ($cover === null || $page['page'] === 1
+            || ($table['entity_source'] ?? null) !== null
+            || preg_match('/\b(?:financial|statement|results)\b/iu',
+                (string) ($table['unit_source'] ?? '')) !== 1) {
+            return $projection;
+        }
+        preg_match_all('/^([\p{L}\p{N}&., -]{3,100}\b(?:Ltd\.?|Limited|Inc\.?|Corporation|PLC|LLC))\s*\n(?=[^\n]*(?:report|review|statement|earnings))/imu',
+            $cover['text'], $identities, PREG_OFFSET_CAPTURE);
+        if (count($identities[1]) !== 1) {
+            return $projection;
+        }
+        $name = trim($identities[1][0][0]);
+        $footerGeometry = $table['report_footer'] ?? null;
+        preg_match_all('/^\s*'.preg_quote($name, '/').'\s*\|[^\n]*\bPage\s+'
+            .$page['page'].'\s*$/mu', $page['text'], $footers, PREG_OFFSET_CAPTURE);
+        if (mb_substr_count($cover['text'], $name) < 2
+            || ! is_array($footerGeometry)
+            || ($footerGeometry['bbox'][1] ?? 0) <= ($table['bbox'][3] ?? 0) + 20
+            || ! str_starts_with($footerGeometry['text'] ?? '', $name)
+            || count($footers[0]) !== 1) {
+            return $projection;
+        }
+        $footerByte = $footers[0][0][1];
+        $footerAt = mb_strlen(substr($page['text'], 0, $footerByte));
+        $coverAt = mb_strlen(substr($cover['text'], 0, $identities[1][0][1]));
+        $tableId = $projection[0]['id'];
+        $coverId = $tableId.'/heading:report_cover';
+        $footerId = $tableId.'/heading:report_footer';
+        $projection[0]['meta']['report_owner_cover_id'] = $coverId;
+        $projection[0]['meta']['report_owner_footer_id'] = $footerId;
+        foreach ($projection as &$node) {
+            if (($node['type'] ?? null) === 'cell'
+                && ! ($node['meta']['header'] ?? false)
+                && ($node['meta']['grid_column'] ?? 0) >= 2) {
+                $node['meta']['report_owner_cover_id'] = $coverId;
+                $node['meta']['report_owner_footer_id'] = $footerId;
+            }
+        }
+        unset($node);
+        $projection[] = $this->textNode($cover, $coverId, 'section_heading', $cover['id'],
+            $coverAt, $coverAt + mb_strlen($name), null, ['heading_kind' => 'report_cover']);
+        $nameAt = mb_strpos($page['text'], $name, $footerAt);
+        $projection[] = $this->textNode($page, $footerId, 'section_heading', $page['id'],
+            $nameAt, $nameAt + mb_strlen($name), $footerGeometry['bbox'],
+            ['heading_kind' => 'report_footer']);
+
+        return $projection;
+    }
+
     private function headerLine(array $lines, array $cells): ?array
     {
         $wanted = array_values(array_filter(array_column($cells, 'text'), static fn ($s) => $s !== ''));
@@ -280,7 +424,7 @@ final class PdfTableStructureProjector
     /** Returns Unicode offsets within one line, and enforces token boundaries. */
     private function findInLine(string $line, string $part, int $after): ?array
     {
-        $pattern = '/(?<![\p{L}\p{N}])'.str_replace('\\ ', '\\s+', preg_quote($part, '/'))
+        $pattern = '/(?<![\p{L}\p{N}])'.str_replace(' ', '\\s+', preg_quote($part, '/'))
             .'(?![\p{L}\p{N}])/u';
         if (! preg_match($pattern, $line, $match, PREG_OFFSET_CAPTURE,
             strlen(mb_substr($line, 0, $after)))) {

@@ -171,7 +171,8 @@ class MeasurementIntegrity
             || ! is_string($proof['entity'] ?? null) || trim($proof['entity']) === ''
             || ! in_array($proof['relationship'] ?? null,
                 ['table_caption', 'value_row', 'cited_section_to_table',
-                    'reporting_entity_section_table', 'structured_table_heading'], true)
+                    'reporting_entity_section_table', 'structured_table_heading',
+                    'structured_report_owner'], true)
             || ! is_array($proof['source_spans'] ?? null) || $proof['source_spans'] === []) {
             return false;
         }
@@ -186,6 +187,20 @@ class MeasurementIntegrity
                 || array_column($proof['source_spans'], 'span_id') !== [
                     $proof['source_anchor_ids'][0], $proof['source_anchor_ids'][2],
                     $proof['source_anchor_ids'][3],
+                ])) {
+            return false;
+        }
+        if (($proof['relationship'] ?? null) === 'structured_report_owner'
+            && (! is_string($provenanceSetId) || $provenanceSetId === ''
+                || ($proof['source_provenance_set_id'] ?? null) !== $provenanceSetId
+                || ! is_array($proof['source_anchor_ids'] ?? null)
+                || count($proof['source_anchor_ids'] ?? []) !== 5
+                || ! is_string($claimedSubject)
+                || mb_strtolower(rtrim(trim($claimedSubject), '.'))
+                    !== mb_strtolower(rtrim(trim($proof['entity']), '.'))
+                || array_column($proof['source_spans'], 'span_id') !== [
+                    $proof['source_anchor_ids'][0], $proof['source_anchor_ids'][1],
+                    $proof['source_anchor_ids'][3], $proof['source_anchor_ids'][4],
                 ])) {
             return false;
         }

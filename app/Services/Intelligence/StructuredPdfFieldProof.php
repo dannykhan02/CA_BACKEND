@@ -86,60 +86,67 @@ final class StructuredPdfFieldProof
         $unit = trim((string) ($data['unit'] ?? ''));
         $sourceUnit = $caption['text'] ?? '';
         $perShare = preg_match('/\bper\s+(?:common\s+)?share\b/iu', $row['text']) === 1;
-        preg_match_all('/\b(thousands?|millions?|billions?)\b/iu', $sourceUnit, $scales);
-        $sourceScales = array_unique(array_map('mb_strtolower', $scales[1]));
+        $sourceScale = PdfCaptionScale::forRow($sourceUnit, $row['text']);
         $claimMeasurement = $this->measurements->parse((string) ($data['value'] ?? ''), $unit,
             (string) ($data['label'] ?? ''));
-        if ($caption === null || $claimMeasurement === null || count($sourceScales) !== 1
+        $printedPercent = $unit === '%' && str_ends_with(trim((string) $value['text']), '%')
+            && $claimMeasurement?->canonicalUnit === '%' && $claimMeasurement->currency === null;
+        if ($printedPercent) {
+            $add($value, 'unit');
+            $roles[] = 'unit';
+            $roles[] = 'scale';
+        } elseif ($caption === null || $claimMeasurement === null || $sourceScale === null
             || ($perShare && preg_match('/except\s+per\s+share/iu', $sourceUnit) !== 1)) {
             return ['roles' => $roles, 'sources' => array_values($sources),
                 'rejection' => 'unit_source_mismatch'];
         }
-        $expectedScale = $perShare ? 1.0 : match (rtrim($sourceScales[0], 's')) {
-            'thousand' => 1e3, 'million' => 1e6, 'billion' => 1e9,
-            default => null,
-        };
-        if ($expectedScale === null || $claimMeasurement->scale !== $expectedScale) {
-            return ['roles' => $roles, 'sources' => array_values($sources),
-                'rejection' => 'scale_source_mismatch'];
-        }
-        $add($caption, 'scale');
-        $roles[] = 'scale';
-        $markers = $path['currencies'] ?? [];
-        $sourceCurrency = implode(' ', [$sourceUnit, ...array_column($headers, 'text'),
-            $row['text'], (string) $value['text'], ...array_column($markers, 'text')]);
-        $codes = $this->measurements->explicitCurrencyCodes($sourceCurrency);
-        $claimedCurrency = $claimMeasurement->currency;
-        // A qualified dollar notation is a stronger claim than the bare symbol.
-        // The measurement parser groups both under '$', so retain the written qualifier here.
-        preg_match_all('/(?<!\p{L})(?:\p{L}{1,4})\$/u', $unit, $qualifiedMarkers);
-        foreach ($qualifiedMarkers[0] as $qualifiedMarker) {
-            if (! str_contains($sourceCurrency, $qualifiedMarker)) {
+        if (! $printedPercent) {
+            $expectedScale = $perShare ? 1.0 : match ($sourceScale) {
+                'thousand' => 1e3, 'million' => 1e6, 'billion' => 1e9,
+                default => null,
+            };
+            if ($expectedScale === null || $claimMeasurement->scale !== $expectedScale) {
+                return ['roles' => $roles, 'sources' => array_values($sources),
+                    'rejection' => 'scale_source_mismatch'];
+            }
+            $add($caption, 'scale');
+            $roles[] = 'scale';
+            $markers = $path['currencies'] ?? [];
+            $sourceCurrency = implode(' ', [$sourceUnit, ...array_column($headers, 'text'),
+                $row['text'], (string) $value['text'], ...array_column($markers, 'text')]);
+            $codes = $this->measurements->explicitCurrencyCodes($sourceCurrency);
+            $claimedCurrency = $claimMeasurement->currency;
+            // A qualified dollar notation is a stronger claim than the bare symbol.
+            // The measurement parser groups both under '$', so retain the written qualifier here.
+            preg_match_all('/(?<!\p{L})(?:\p{L}{1,4})\$/u', $unit, $qualifiedMarkers);
+            foreach ($qualifiedMarkers[0] as $qualifiedMarker) {
+                if (! str_contains($sourceCurrency, $qualifiedMarker)) {
+                    return ['roles' => $roles, 'sources' => array_values($sources),
+                        'rejection' => 'currency_source_mismatch'];
+                }
+            }
+            if ($claimedCurrency === null || ($claimedCurrency === '$'
+                ? count($markers) !== 2 || $markers[0]['text'] !== '$'
+                    || $markers[1]['text'] !== '$' || $codes !== []
+                : count($codes) !== 1 || $codes[0] !== $claimedCurrency)) {
                 return ['roles' => $roles, 'sources' => array_values($sources),
                     'rejection' => 'currency_source_mismatch'];
             }
-        }
-        if ($claimedCurrency === null || ($claimedCurrency === '$'
-            ? count($markers) !== 2 || $markers[0]['text'] !== '$'
-                || $markers[1]['text'] !== '$' || $codes !== []
-            : count($codes) !== 1 || $codes[0] !== $claimedCurrency)) {
-            return ['roles' => $roles, 'sources' => array_values($sources),
-                'rejection' => 'currency_source_mismatch'];
-        }
-        $add($caption, 'unit');
-        foreach ($markers as $marker) {
-            $add($marker, 'currency');
-        }
-        if ($claimedCurrency !== '$') {
-            foreach ([$caption, ...$headers, $row, $value] as $anchor) {
-                if ($this->measurements->isoCurrency($anchor['text'] ?? '') === $claimedCurrency) {
-                    $add($anchor, 'currency');
-                    break;
+            $add($caption, 'unit');
+            foreach ($markers as $marker) {
+                $add($marker, 'currency');
+            }
+            if ($claimedCurrency !== '$') {
+                foreach ([$caption, ...$headers, $row, $value] as $anchor) {
+                    if ($this->measurements->isoCurrency($anchor['text'] ?? '') === $claimedCurrency) {
+                        $add($anchor, 'currency');
+                        break;
+                    }
                 }
             }
+            $roles[] = 'unit';
+            $roles[] = 'currency';
         }
-        $roles[] = 'unit';
-        $roles[] = 'currency';
 
         $basisText = $row['text'].' '.($caption['text'] ?? '');
         $sourceBasis = preg_match('/\bnon[\s-]?gaap\b/iu', $basisText) === 1
@@ -160,13 +167,22 @@ final class StructuredPdfFieldProof
 
         $owner = $this->owners->resolveStructured($document, $path, $value,
             (string) ($data['subject'] ?? ''));
-        if ($owner === null || $entity === null) {
+        if ($owner === null) {
+            $owner = $this->owners->resolveReportOwner($document, $path, $value,
+                (string) ($data['subject'] ?? ''));
+        }
+        if ($owner === null) {
             return ['roles' => $roles, 'sources' => array_values($sources),
                 'rejection' => 'governing_owner_unverified'];
         }
-        $add($entity, 'subject');
+        $ownerAnchors = $owner['relationship'] === 'structured_report_owner'
+            ? [$path['report_cover'][0], $path['report_footer'][0]] : [$entity];
+        foreach ($ownerAnchors as $anchor) {
+            $add($anchor, 'subject');
+            $add($anchor, 'governing_owner');
+        }
         $roles[] = 'subject';
-        foreach ([$entity, $row, $value] as $anchor) {
+        foreach ([$row, $value] as $anchor) {
             $add($anchor, 'governing_owner');
         }
         $roles[] = 'governing_owner';
