@@ -116,6 +116,8 @@ class MetricCollector
                         'field_verification_policy' => $data['field_verification_policy'] ?? null,
                         'grounding_rejection' => $data['grounding_rejection'] ?? null,
                         'source_revision' => $data['source_revision'] ?? null,
+                        'source_file_hash' => $data['source_file_hash'] ?? null,
+                        'current_file_hash' => $document->file_hash,
                         'source_claim_fingerprint' => $data['source_claim_fingerprint'] ?? null,
                         'source_claim_current_fingerprint' => $currentClaimFingerprint,
                         'source_provenance_set_id' => $data['source_provenance_set_id'] ?? null,

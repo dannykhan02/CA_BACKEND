@@ -138,7 +138,11 @@ class SourceProvenanceReader
                     && is_string($edge->structural_path)
                     && str_starts_with($edge->structural_path, $tablePath.'/heading:')
                     && $this->currentAnchor($document, $edge)) {
-                    $headings[$edge->from_anchor_id][$edge->type][] = $this->anchor($edge);
+                    $headingType = str_ends_with($edge->structural_path, '/heading:report_cover')
+                        ? 'report_cover'
+                        : (str_ends_with($edge->structural_path, '/heading:report_footer')
+                            ? 'report_footer' : $edge->type);
+                    $headings[$edge->from_anchor_id][$headingType][] = $this->anchor($edge);
                 }
             }
         }
@@ -190,6 +194,8 @@ class SourceProvenanceReader
                 'table' => $path['table_parent'][0],
                 'captions' => $headings[$tableId]['caption'] ?? [],
                 'entities' => $headings[$tableId]['section_parent'] ?? [],
+                'report_cover' => $headings[$tableId]['report_cover'] ?? [],
+                'report_footer' => $headings[$tableId]['report_footer'] ?? [],
                 'set_id' => $values[$valueId]['set_id']];
         }
 

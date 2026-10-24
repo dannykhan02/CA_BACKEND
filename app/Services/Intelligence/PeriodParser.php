@@ -48,12 +48,19 @@ class PeriodParser
         $month = $this->monthNumber($match[2]);
         $day = (int) $match[3];
         $year = (int) $match[4];
-        if ($month === null || ! $this->validYear($year) || ! checkdate($month, $day, $year)
-            || $day !== (int) date('t', strtotime(sprintf('%04d-%02d-01', $year, $month)))) {
+        if ($month === null || ! $this->validYear($year) || ! checkdate($month, $day, $year)) {
             return null;
         }
         $duration = ['three' => 3, 'six' => 6, 'nine' => 9, 'twelve' => 12][mb_strtolower($match[1])];
         $basis = $this->basis($fiscal, $text);
+        // A 52/53-week fiscal calendar may end on a Saturday. Preserve its exact
+        // printed end date: mapping it to a calendar quarter would assert a
+        // relationship the source did not state.
+        if ($day !== (int) date('t', strtotime(sprintf('%04d-%02d-01', $year, $month)))) {
+            return new ReportingPeriod($duration.'_months', $basis,
+                $year + $month / 100 + $day / 10000,
+                sprintf('%dM ended %04d-%02d-%02d', $duration, $year, $month, $day));
+        }
         if ($duration === 3 && $month % 3 === 0) {
             $quarter = intdiv($month, 3);
 

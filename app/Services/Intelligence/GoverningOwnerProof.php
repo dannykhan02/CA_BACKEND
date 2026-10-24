@@ -9,6 +9,49 @@ use App\Services\AI\Incremental\EvidenceSpanSet;
 /** Exact source relationship between a metric cell and its governing organization. */
 class GoverningOwnerProof
 {
+    /** Cover plus matching table-page footer and financial caption, all on one revision. */
+    public function resolveReportOwner(Document $document, array $path, array $value,
+        string $claimedScope): ?array
+    {
+        $covers = $path['report_cover'] ?? [];
+        $footers = $path['report_footer'] ?? [];
+        $captions = $path['captions'] ?? [];
+        $row = $path['row'] ?? null;
+        $table = $path['table'] ?? null;
+        if (count($covers) !== 1 || count($footers) !== 1 || count($captions) !== 1
+            || ! is_array($row) || ! is_array($table)
+            || $table['kind'] !== 'table'
+            || $covers[0]['page'] !== 1 || $table['page'] <= 1
+            || $footers[0]['page'] !== $table['page']
+            || $row['page'] !== $table['page'] || $value['page'] !== $table['page']
+            || $covers[0]['end_offset'] >= $row['start_offset']
+            || $row['end_offset'] >= $value['start_offset']
+            || $captions[0]['page'] !== $table['page']
+            || $captions[0]['end_offset'] >= $row['start_offset']
+            || preg_match('/\bfinancial\s+results\b/iu', $captions[0]['text']) !== 1) {
+            return null;
+        }
+        $coverNames = $this->companyNames($covers[0]['text']);
+        $footerNames = $this->companyNames($footers[0]['text']);
+        if (count($coverNames) !== 1 || count($footerNames) !== 1
+            || ! $this->sameName($coverNames[0], $footerNames[0])
+            || ($claimedScope !== '' && ! $this->sameName($coverNames[0], $claimedScope))) {
+            return null;
+        }
+        $revision = hash('sha256', (string) $document->extracted_text);
+        $version = app(EvidenceGrounding::class)->version($document);
+        $anchors = [$covers[0], $footers[0], $table, $row, $value];
+
+        return ['entity' => $coverNames[0], 'kind' => 'organization',
+            'relationship' => 'structured_report_owner', 'source_revision' => $revision,
+            'extraction_version' => $version, 'source_provenance_set_id' => $path['set_id'],
+            'source_anchor_ids' => array_column($anchors, 'anchor_id'),
+            'source_spans' => array_map(static fn ($anchor) => [
+                'span_id' => $anchor['anchor_id'], 'page' => $anchor['page'],
+                'start_offset' => $anchor['start_offset'], 'end_offset' => $anchor['end_offset'],
+            ], [$covers[0], $footers[0], $row, $value])];
+    }
+
     /** A parser-owned table-to-heading edge supplies the governing organization. */
     public function resolveStructured(Document $document, array $path, array $value,
         string $claimedScope): ?array

@@ -54,9 +54,7 @@ final class PdfSourceCandidateCollector
                 continue;
             }
             $captionText = (string) ($caption['text'] ?? '');
-            preg_match_all('/\b(thousands?|millions?|billions?)\b/iu', $captionText, $scaleMatches);
-            $scales = array_unique(array_map('mb_strtolower', $scaleMatches[1]));
-            $scale = count($scales) === 1 ? $scales[0] : null;
+            $scale = PdfCaptionScale::forRow($captionText, $label);
             $codes = $this->measurements->explicitCurrencyCodes($captionText.' '.$periodSource.' '.$label.' '.$value);
             $markers = array_map(static fn ($id) => $nodes[$id]['text'] ?? null,
                 $cell['meta']['currency_marker_ids'] ?? []);
@@ -64,8 +62,9 @@ final class PdfSourceCandidateCollector
                 : (count($codes) === 0 && count($markers) === 2
                     && $markers[0] === $markers[1] ? $markers[0] : null);
             $perShare = preg_match('/\bper\s+(?:common\s+)?share\b/iu', $label) === 1;
-            $unit = $currency === null ? '' : ($perShare ? $currency.' per share'
-                : ($scale === null ? '' : $currency.' '.$scale));
+            $unit = str_ends_with($value, '%') ? '%'
+                : ($currency === null ? '' : ($perShare ? $currency.' per share'
+                    : ($scale === null ? '' : $currency.' '.$scale)));
             $rowStart = $row['start'];
             $lineStart = mb_strrpos(mb_substr($source->text, 0, $rowStart), "\n");
             $lineStart = $lineStart === false ? 0 : $lineStart + 1;

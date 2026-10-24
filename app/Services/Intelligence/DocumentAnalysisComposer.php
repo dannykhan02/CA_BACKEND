@@ -38,6 +38,7 @@ class DocumentAnalysisComposer
         private MaterialityScorer $materialityScorer,
         private CoverageStateBuilder $coverageStates,
         private HistoricalRiskRule $historicalRisks,
+        private VerifiedPdfFindingPresenter $pdfFindings,
     ) {}
 
     /** @return array<string,mixed> */
@@ -50,8 +51,31 @@ class DocumentAnalysisComposer
         $cited = $this->findings->citedSourceIds($summary);
 
         $collected = $this->metrics->collect($document);
+        $pdfTables = config('document_intelligence.pdf_table_structure') && $document->type === 'PDF';
+        $sourceCurrent = true;
+        if ($pdfTables) {
+            $live = \Illuminate\Support\Facades\DB::table('documents')->where('id', $document->id)
+                ->where('workspace_id', $document->workspace_id)->whereNull('deleted_at')
+                ->first(['file_hash', 'extracted_text']);
+            $sourceCurrent = $live !== null && $live->file_hash === $document->file_hash
+                && hash('sha256', (string) $live->extracted_text)
+                    === hash('sha256', (string) $document->extracted_text);
+            $sourceRevision = hash('sha256', (string) $document->extracted_text);
+            foreach ($evidence as $row) {
+                $data = $row->data ?? [];
+                if (($data['source_candidate'] ?? false) === true
+                    && (($data['source_file_hash'] ?? null) !== $document->file_hash
+                        || ($data['source_revision'] ?? null) !== $sourceRevision)) {
+                    $sourceCurrent = false;
+                    break;
+                }
+            }
+        }
+        $presentation = $sourceCurrent
+            ? $this->pdfFindings->reconcile($document, $evidence, $collected['observations'])
+            : ['rows' => $evidence, 'equivalents' => [], 'hidden' => []];
         $eligible = array_values(array_filter($collected['observations'],
-            fn (MetricObservation $observation) => $observation->integrity['analyticalEligible']));
+            fn (MetricObservation $observation) => $sourceCurrent && $observation->integrity['analyticalEligible']));
         $comparisons = $this->comparisons->build($eligible);
         $derived = $this->charts->build($eligible, $cited);
         $limitedMeasurements = $collected['rejected'];
@@ -69,6 +93,7 @@ class DocumentAnalysisComposer
                 && in_array($chart['unitVerification'], ['verified', 'dimensionless'], true)
                 && ($chart['basis'] !== 'time_series' || $this->sourceCharts->continuousPeriods($labels));
             $chart['origin'] = 'generated';
+            $chart['logicalChartId'] = $chart['id'];
             $chart['verification'] = $chart['numericVerification'];
             $chart['recommendedType'] = $chart['type'];
             $chart['renderEligible'] = $renderEligible;
@@ -122,7 +147,14 @@ class DocumentAnalysisComposer
                 ]);
             }
         }
-        $groups = $this->groups->build($evidence);
+        $groups = $this->groups->build($presentation['rows']);
+        foreach ($groups as &$group) {
+            foreach ($group['items'] as &$item) {
+                $item['equivalentSourceIds'] = $presentation['equivalents'][$item['sourceId']] ?? [];
+            }
+            unset($item);
+        }
+        unset($group);
 
         $shown = [];
         foreach ($charts as $chart) {
@@ -131,7 +163,17 @@ class DocumentAnalysisComposer
         foreach ($takeaways as $takeaway) {
             $shown = [...$shown, ...$takeaway['sourceIds']];
         }
-        $important = $this->findings->build($evidence, $summary, array_values(array_unique($shown)), $materiality);
+        foreach ($presentation['equivalents'] as $preferred => $alternates) {
+            if (in_array($preferred, $shown, true) || array_intersect($alternates, $shown)) {
+                $shown = [...$shown, $preferred, ...$alternates];
+            }
+        }
+        $important = $this->findings->build($presentation['rows'], $summary,
+            array_values(array_unique($shown)), $materiality);
+        foreach ($important as &$finding) {
+            $finding['equivalentSourceIds'] = $presentation['equivalents'][$finding['sourceId']] ?? [];
+        }
+        unset($finding);
 
         $analysis = [
             'overview' => ['takeaways' => $takeaways, 'summaryNotes' => $notes],
@@ -143,6 +185,14 @@ class DocumentAnalysisComposer
             'analysisGroups' => $groups,
             'analyticalComparisons' => $comparisons,
             'limitations' => [
+                'pdfFinancialTables' => $pdfTables
+                    ? ['scope' => 'clean_native_text_duration_tables',
+                        'completeDocumentAnalysis' => false,
+                        'sourceRevisionCurrent' => $sourceCurrent,
+                        'message' => $sourceCurrent
+                            ? 'Financial comparisons cover only tables with independently verified dates, units, reporting scope and exact source cells. Other tables may remain unsupported.'
+                            : 'Financial table comparisons are unavailable because the source document has changed. Process the current revision to restore source verification.']
+                    : null,
                 'measurementCount' => count($limitedMeasurements),
                 'measurements' => array_slice($limitedMeasurements, 0, 100),
                 'visualGroupCount' => count($derived['rejectedGroups']),
@@ -153,8 +203,10 @@ class DocumentAnalysisComposer
             'importantFindings' => $important,
             'stats' => [
                 'acceptedFindings' => $evidence->count(),
+                'presentedFindings' => $presentation['rows']->count(),
+                'reconciledEquivalentFindings' => count($presentation['hidden']),
                 'metricFindings' => $collected['stats']['metric_findings'],
-                'chartableFindings' => $collected['stats']['chartable'],
+                'chartableFindings' => $sourceCurrent ? $collected['stats']['chartable'] : 0,
                 'chartCandidates' => count($derived['candidates']),
                 'analyticalComparisons' => count($comparisons),
                 'takeaways' => count($takeaways),
@@ -231,10 +283,16 @@ class DocumentAnalysisComposer
         foreach ($analysis['analysisGroups'] as $group) {
             foreach ($group['items'] as $item) {
                 $ids[$item['sourceId']] = true;
+                foreach ($item['equivalentSourceIds'] ?? [] as $alternate) {
+                    $ids[$alternate] = true;
+                }
             }
         }
         foreach ($analysis['importantFindings'] as $finding) {
             $ids[$finding['sourceId']] = true;
+            foreach ($finding['equivalentSourceIds'] ?? [] as $alternate) {
+                $ids[$alternate] = true;
+            }
         }
         foreach ($analysis['tier1'] ?? [] as $item) {
             $ids[$item['sourceId']] = true;

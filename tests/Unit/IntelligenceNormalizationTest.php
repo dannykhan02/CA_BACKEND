@@ -96,7 +96,9 @@ class IntelligenceNormalizationTest extends TestCase
         $this->assertSame('quarter', $quarter?->granularity);
         $this->assertSame('9M 2026', $cumulative?->label);
         $this->assertSame('9_months', $cumulative?->granularity);
-        $this->assertNull($this->periods->parse('Three Months Ended September 29, 2026'));
+        $dated = $this->periods->parse('Three Months Ended September 29, 2026');
+        $this->assertSame('3M ended 2026-09-29', $dated?->label);
+        $this->assertFalse($quarter->comparableWith($dated));
     }
 
     public function test_one_currency_at_two_scales_is_one_measurement(): void

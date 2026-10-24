@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Document;
+use App\Models\DocumentChart;
 use App\Models\DocumentEvidence;
 use App\Models\User;
 use App\Services\DocumentTextExtractor;
@@ -68,6 +69,12 @@ foreach (array_slice($argv, 1) as $path) {
             $facts->pluck('id')->all(), $set);
         $matched = count(array_filter($proofs,
             static fn ($proof) => $proof['capabilities']['structural'] ?? false));
+        $firstPath = reset($proofs)['pdf_table_path'] ?? [];
+        $pathContext = array_map(static fn ($key) => array_map(
+            static fn ($anchor) => ['text' => $anchor['text'], 'page' => $anchor['page'],
+                'start' => $anchor['start_offset'], 'end' => $anchor['end_offset']],
+            $firstPath[$key] ?? []),
+            ['captions', 'entities', 'report_cover', 'report_footer']);
         $verdicts = $time('verification_ms', static fn () => app(IncrementalMetricFieldVerifier::class)->verify($document, $set));
         $facts = DocumentEvidence::where('document_id', $document->id)->get();
         $eligible = array_values(array_filter(app(MetricCollector::class)
@@ -75,6 +82,32 @@ foreach (array_slice($argv, 1) as $path) {
             static fn ($item) => $item->integrity['analyticalEligible']));
         $charts = app(ChartCandidateBuilder::class)->build($eligible)['candidates'];
         $persisted = $time('persistence_ms', static fn () => app(VerifiedPdfChartPersister::class)->persist($document, $set));
+        // Payload bytes exclude indexes, WAL and allocator overhead. They make
+        // graph growth comparable across fixtures without retaining any rows.
+        $payloadBytes = [];
+        foreach (['structured_extractions', 'document_evidence', 'source_anchors',
+            'source_relationships', 'evidence_role_bindings', 'document_charts',
+            'document_chart_points'] as $table) {
+            $ownerColumn = in_array($table, ['source_relationships', 'source_anchors',
+                'evidence_role_bindings'], true) ? 'set_id' : 'document_id';
+            if ($table === 'document_chart_points') {
+                $payloadBytes[$table] = (int) DB::table($table.' as item')
+                    ->join('document_charts as chart', 'chart.id', '=', 'item.document_chart_id')
+                    ->where('chart.document_id', $document->id)
+                    ->selectRaw('COALESCE(SUM(pg_column_size(item)), 0) AS bytes')->value('bytes');
+            } else {
+                $payloadBytes[$table] = (int) DB::table($table.' as item')
+                    ->where('item.'.$ownerColumn, $ownerColumn === 'set_id' ? $set : $document->id)
+                    ->selectRaw('COALESCE(SUM(pg_column_size(item)), 0) AS bytes')->value('bytes');
+            }
+        }
+        $chartPoints = DocumentChart::where('document_id', $document->id)->get()
+            ->map(static fn ($chart) => ['title' => $chart->title,
+                'points' => array_map(static fn ($point) => [
+                    'period' => $point['label'] ?? null,
+                    'source_value' => $point['sourceValue'] ?? null,
+                    'source' => $point['source'] ?? null,
+                ], $chart->data ?? [])])->all();
         $rows = [];
         foreach ($facts as $fact) {
             $label = $fact->data['label'] ?? '';
@@ -85,9 +118,22 @@ foreach (array_slice($argv, 1) as $path) {
             $rows[$label]['entity'] = $fact->data['source_representation']['entity'] ?? null;
         }
         $reasons = [];
+        $sourceNodes = array_column($source->nodes, null, 'id');
+        $factDetails = [];
         foreach ($facts as $fact) {
             $reason = $fact->data['grounding_rejection'] ?? 'verified';
             $reasons[$reason] = ($reasons[$reason] ?? 0) + 1;
+            $data = $fact->data;
+            $cell = $sourceNodes[$data['source_representation']['cell_id'] ?? ''] ?? [];
+            $factDetails[] = ['label' => $data['label'] ?? null,
+                'value' => $data['value'] ?? null,
+                'period' => $data['canonical_representation']['period'] ?? null,
+                'unit' => $data['unit'] ?? null,
+                'subject' => $data['subject'] ?? null,
+                'accounting_basis' => $data['accounting_basis'] ?? null,
+                'page' => $cell['page'] ?? null, 'bbox' => $cell['meta']['bbox'] ?? null,
+                'value_anchor_id' => $data['pdf_value_anchor_id'] ?? null,
+                'outcome' => $reason];
         }
         echo json_encode(['file' => realpath($path), 'sha256' => hash_file('sha256', $path),
             'bytes' => filesize($path),
@@ -97,11 +143,15 @@ foreach (array_slice($argv, 1) as $path) {
             'tables' => $source->capabilities['projected_tables'] ?? 0,
             'cells' => $collection['extracted'], 'candidates' => $collection['candidates'],
             'source_matched' => $matched, 'verdicts' => $verdicts,
+            'first_path_context' => array_combine(
+                ['captions', 'entities', 'report_cover', 'report_footer'], $pathContext),
             'eligible' => count($eligible), 'reasons' => $reasons,
             'chart_candidates' => array_column($charts, 'title'), 'persisted' => $persisted,
+            'chart_points' => $chartPoints,
             'published_anchors' => DB::table('source_anchors')->where('set_id', $set)->count(),
             'published_edges' => DB::table('source_relationships')->where('set_id', $set)->count(),
-            'rows' => $rows, 'timings' => $times,
+            'payload_bytes' => $payloadBytes,
+            'rows' => $rows, 'facts' => $factDetails, 'timings' => $times,
             'php_peak_bytes' => memory_get_peak_usage(true)], JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR)."\n";
     } finally {
         DB::rollBack();

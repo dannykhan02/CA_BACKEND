@@ -304,3 +304,110 @@ The final focused local regression run passed **40 tests, 636 assertions, one fu
 5. Trial deterministic chart prominence on real accepted charts, preserving all facts and valid charts, and document the observed quality change. Keep the separate ownership safety release impact assessment and confirm no billing/token effect.
 
 Until those gates close, the measured result supports **NO-GO**. The Nasdaq 11-chart capability is real but too narrow to justify even a limited external beta.
+
+## Phase 5 — cross-document table coverage (2026-10-24)
+
+### Decision
+
+**NO-GO for activation.** The default-off source pipeline now makes four manually checked financial comparisons from the independent Apple PDF, in addition to Nasdaq. Northstar's fictional board pack also has four verified charts after a bounded report-owner repair. UPS still yields no projected tables, Apple's balance sheet remains unsupported, and Walmart's balance table lacks a provable unit/date path. Two real issuers with correct charts establish that the architecture can generalize to another native-text layout; the remaining failures do not support a general PDF rollout or external beta. No feature activation, merge, deployment, paid inference, production database access, production write, billing change, or Power BI access occurred.
+
+The three issuer downloads are the exact Phase 4 bytes and SHA-256 values listed above. The complete Nasdaq original retains SHA-256 `011ca88fabd30dd4cb3a27587221811feb69a8f0869a46a2cdef892c975177b2`. The untracked `docs/DOCINTEL_CHART_ELIGIBILITY_REVIEW_2026_10_23.md` predates this work and was left untouched. The separate ownership safety branch was neither checked out nor changed.
+
+### First-loss diagnosis, before changing extraction
+
+The original pages were rendered and checked against `pdftotext -bbox-layout` words. This table separates the first loss from later barriers exposed by fixing it.
+
+| Original table | Poppler words and boxes | First loss in Phase 4 code | Later barrier or remaining limitation |
+|---|---|---|---|
+| Apple page 1, condensed income statement | Four aligned year/date columns and numeric rows are correctly extracted, including `29,589` at `[333.78,344.72,363.78,355.60]` | `PeriodParser::endedDuration` required the last calendar day of a month. The printed March 29, 2025 and March 30, 2024 fiscal dates returned `null`; `header()` therefore emitted no candidate. | Once periods were recognized, Smalot split each date/year onto separate lines and split `Total net sales (1)` across lines. The old single-line projector rejected the header and that row. The caption also names both millions and a share-count exception. |
+| Apple page 2, condensed balance sheet | The March 29, 2025 and September 28, 2024 headers, `Total assets` 331,233/364,980, and boxes are present | The header detector requires a duration scope for year-only rows; a balance sheet has **as-of dates**, so no candidate is formed. | There is no proved as-of path or tested liability/equity section path. This page remains unsupported. |
+| Apple page 3, condensed cash flows | Two aligned six-month date columns and numeric rows are correct | The same non-month-end `PeriodParser` condition rejects the header. | Smalot's split header then needs bounded exact projection. Both stages are now repaired for this page. |
+| UPS page 2, three segment boxes | Poppler has separate `$676`, `M`, `3Q`, `2025`, `Non-GAAP`, `Adjusted` words at sensible coordinates. The International Segment `Operating profit` row is visible. | `header()` cannot parse `3Q 2025`; even a syntax extension would then see duplicate 2025/2024 columns because GAAP and adjusted columns share periods. The unique-period guard correctly rejects the header. | `numericRow()` requires every period column to be populated and accepts bare numeric tokens, while Revenue has blank adjusted cells and the printed values split dollar/M tokens. The first box's segment name is across the page break. Smalot text order also differs from visual x order. No header/row/basis/segment relationship was asserted. |
+| UPS pages 8–14, reconciliation exhibits | Poppler reads the year, GAAP/non-GAAP labels, and values | Single-period side-by-side exhibits or repeated years across several measures fail the unique multi-period header rule; the page 10/14 segment matrices repeat years under separate measures. | A row-to-measure, accounting-basis, segment, and unit path would be required before comparison. |
+| UPS page 15, two cost-per-piece exhibits | Poppler reads 2025/2024, `$12.92`/`$11.50`, and the percentage-change column | The mixed year and `% Change` header is not one all-year grid, so `header()` rejects it. | The two duration scopes and GAAP/non-GAAP rows must remain distinct. `pdfplumber` finds isolated numeric rows but does not link them to the correct duration headers. |
+
+For Apple page 1 and 3, the first loss was period parsing, followed by exact text projection. Later provenance and structural validation passed once those two stages were corrected. For UPS, the first loss is header recognition; it is inaccurate to blame Smalot projection or the verifier for zero tables because no candidate reaches them.
+
+### Alternative extractor benchmark
+
+An isolated `pdfplumber==0.11.7` prototype uses its `lines` and `text` table strategies on the same original pages. It was installed only under `/tmp/docintel-pdfplumber`; no Python service or production dependency was added. Its [official license](https://github.com/jsvine/pdfplumber/blob/stable/LICENSE.txt) is MIT; the [official table documentation](https://github.com/jsvine/pdfplumber/blob/stable/README.md#extracting-tables) describes the line and inferred-text strategies and cell coordinates. The local installation additionally pulled `pdfminer.six`, Pillow, pypdfium2, cryptography, cffi, charset-normalizer, and pycparser. The current container has Poppler but no Python installation path for this feature, so integration would add packaging and subprocess maintenance.
+
+| Same original page | Poppler probe/projector: useful rows × value columns | `pdfplumber` raw line/text output | Source-relationship assessment | Poppler seconds / peak RSS KiB | `pdfplumber` seconds / peak RSS KiB |
+|---|---|---|---|---:|---:|
+| Nasdaq page 8 | 32 × 4, three-level period path | 0 line tables; text 57 × 17 | Over-split text grid, no correct multirow header path | 0.440 / 71,904 | 0.597 / 45,492 |
+| Apple page 1 | 19 × 4 main statement; footnote exhibits excluded | lines 44 × 8 including four spacer columns and footnote exhibits; text 85 × 16 | Headers fall outside the ruled table; one printed `23,867` becomes `2 3,867`. Some individual numeric cells have usable coordinates, but no exact four-column period path. | 0.736 / 79,516 | 1.309 / 53,648 |
+| Apple page 2 | 0 | lines 40 × 4; text 78 × 13 | `Total assets` row/values appear, but the as-of header is outside the extracted table and spacer columns remain. Numeric recovery improves; full source-context accuracy does not. | 0.412 / 77,524 | 0.404 / 47,332 |
+| Apple page 3 | 28 × 2 | lines 38 × 4; text 77 × 13 | `Net income` values appear in columns 2 and 4, but the six-month date path is outside the table. | 0.514 / 77,452 | 0.400 / 47,608 |
+| UPS page 2 | 0 | 0 line tables; text 55 × 14 | Text grid mixes three segment boxes and splits labels/values; no safe GAAP/adjusted path. | 0.157 / 68,592 | 0.563 / 44,604 |
+| UPS page 15 | 0 | eight mostly one-row line tables; text 41 × 5 | Dollar and percentage cells are separated, with no verified three-/nine-month header ownership. | 0.090 / 68,892 | 0.221 / 43,288 |
+| Walmart page 19 | 4 × 3 balance data | one 40 × 6 line table; text 69 × 16 | The line table combines ROA, ROI and balance data; balance values occupy one text cell per row rather than three dated cells. | 0.127 / 73,180 | 0.483 / 42,952 |
+| Northstar page 3 | 4 × 3 | three line tables, main table 5 × 1; text 49 × 16 | The main line cell contains whole rows, with no quarter column relationships. | 0.104 / 68,352 | 0.291 / 40,912 |
+
+Both methods expose word coordinates. `pdfplumber` exposes cell boxes too; its Apple page-1 `Operating income` box contains the correct word box, but its extra spacer columns and missing period header prevent direct provenance publication. Poppler's projected cells retain exact Smalot offsets and Poppler PDF-point boxes. `pdfplumber` did not recover a single additional **complete** row/period/unit/scope relationship in these settings, despite finding useful Apple and UPS row text. No integration was made. The prototype is `bin/docintel-pdfplumber-benchmark.py`; `bin/docintel-poppler-benchmark.php` reproduces the one-page comparison. Each timing is one fresh process on the stated page; the PHP command includes Laravel bootstrap, Smalot and two Poppler passes, while the Python command runs both table strategies. They are indicative resource observations, not normalized throughput or production percentiles.
+
+### Independent source reference and measured coverage
+
+`docs/audits/docintel-pdf-phase5-reference-values.csv` contains 22 visually transcribed printed values, with row label, period column and duration, unit, reporting scope, stated accounting basis, original page, and PDF-point cell box. The entries were checked against rendered originals and a separate Poppler word-box read, without using production extractor output as an extraction rule. This is one reviewer plus an independent representation check, **not** a second human review. The score script `bin/docintel-pdf-reference-score.py` reads the reference and rollback-only audit JSON; it does not feed production extraction.
+
+The scorer checks exact row/value/box, the duration-bearing period, normalized printed unit, issuer identity, and absence of an unsupported GAAP/non-GAAP claim for selected positives. Consolidated or segment scope is also checked visually against the statement and section title; that richer scope is not reduced to an issuer-name string in the score script.
+
+| Corpus | Exact numeric + row + box | Correct period path | Selected source-supported positives verified | Negative cases wrongly accepted |
+|---|---:|---:|---:|---:|
+| Nasdaq (4 references) | 4 | 4 | 2/2 | 0/2 |
+| Apple (6) | 5 | 5 | 4/4 | 0/2 |
+| UPS (5) | 0 | 0 | No eligible positive selected | 0/5; all absent |
+| Walmart (3) | 3 | 0: bare years omit the October 31 as-of date | No eligible positive selected | 0/3; all rejected |
+| Northstar (4, fictional) | 4 | 4 | 4/4 | No negative value selected |
+| **Total (22)** | **16/22** | **13/22** | **10/10 selected** | **0/12 selected** |
+
+The negative set contains six reconstructed/rejected cells and six absent cells. This purposive sample tests particular relationships and adversarial cases; its 10/10 selected positives and 0/12 selected false acceptances are **not** estimates of corpus recall or false-acceptance rate. Walmart's three values are numeric matches but do not satisfy full period-context coverage. UPS and Apple's page-2 as-of value show the missing-layout coverage directly.
+
+### Implemented bounded changes and remaining context gaps
+
+- A non-month-end `Three/Six/Nine/Twelve Months Ended` header retains its exact printed date and duration, instead of being called a calendar quarter. The Nasdaq month-end Q3/9M labels are unchanged. Multi-line Smalot projection requires an ordered, bounded exact sequence and rejects a missing value or intervening row text. Apple's main statement stops at the standalone numbered footnote exhibit. The source text itself is unchanged.
+- A caption with a primary scale and an explicit share-count exception supplies the primary scale only to rows outside that exception. Apple `Basic`/`Diluted` share counts remain ineligible. A cell printed with `%` supplies its own percent unit; Northstar `Operating margin` no longer inherits KES million. Walmart's unrelated preceding `Dollars in millions` caption still does not bind to `Certain Balance Sheet Data`.
+- Northstar's table gains a report-owner path only when a cover name is followed by a report title, the same unique name appears in the table-page footer, the Poppler footer box is below the financial grid, and the table caption says financial results. Cover and footer anchors, table, row and value are included in the same revision-pinned provenance set. A footer alone or a conflicting footer name fails the owner proof. This establishes a source-supported owner for the fictional report, without treating arbitrary page footers as company proof.
+- The Nasdaq subsection investigation confirms that geometry sees the section text but the projector does not publish row-to-subsection nodes or edges. The same 84 cells remain owner-rejected: 64 potentially recoverable consolidated line items, 12 segment rows, and eight `Basic`/`Diluted` share counts. A larger owner-label regex cannot safely replace those edges. Revision-pinned section ownership with explicit segment and share-count scope remains a separate implementation gate. No Nasdaq-specific owner rule was added.
+
+### Final rollback-only source flow and chart review
+
+The full structured extraction → separate `pdf-cell:` candidates → provenance publication → exact value/period/unit/owner verification → chart builder → idempotent persistence flow ran in disposable PostgreSQL 18 transactions. Each transaction rolled back. The table counts are complete candidates, not claims made by a model. Incorrect table detections in the inspected statement pages were zero; the other two projected Nasdaq detail tables were not visually re-adjudicated in Phase 5. Apple page 2 and UPS are missed tables, and Walmart's detected table has an incomplete as-of/unit context.
+
+| Input | Correct / incorrect projected tables | Numeric / source-matched cells | Verified / eligible | Rejections | Valid series | Charts / navigable points |
+|---|---:|---:|---:|---|---:|---:|
+| Nasdaq page-8 fixture | 1 / 0 | 128 / 128 | 44 / 44 | 84 owner | 11 | 11 / 22 |
+| Nasdaq complete 17-page original | 3 / 0 confirmed; two detail tables not re-reviewed | 172 / 172 | 44 / 44 | 84 owner, 16 scale, 28 unit | 11 | 11 / 22 |
+| Apple three-page original | 2 / 0; balance sheet missed | 132 / 132 | 18 / 18 | 94 owner, 20 unit | 4 | 4 / 8 |
+| UPS 15-page original | 0 / 0; financial grids missed | 0 / 0 | 0 / 0 | none asserted | 0 | 0 / 0 |
+| Walmart 19-page original | 1 / 0; as-of path incomplete | 12 / 12 | 0 / 0 | 12 unit | 0 | 0 / 0 |
+| Northstar seven-page fictional fixture | 1 / 0 | 12 / 12 | 12 / 12 | none | 4 | 4 / 12 |
+
+All eight Apple persisted points retain exact value-anchor offsets and page navigation. The original page images were manually checked for the plotted pairs: `Net income` 57,552 → 61,110 (six months, page 3), `Operating income` 68,273 → 72,421 (six months, page 1), `Total operating expenses` 28,853 → 30,721 (six months, page 1), and `Income before provision for income taxes` 28,058 → 29,310 (three months, page 1). Each comparison keeps the same row, duration, `$` marker, millions caption, Apple reporting entity and unmarked GAAP/non-GAAP basis in both periods. The page-3 net-income pair agrees with the page-1 six-month pair. The chart builder did not combine three- and six-month points. Northstar's twelve points were checked against the page-3 grid, including different anchors for the two printed `10.0` profit cells and `%` for all margin cells. No unsupported ISO `USD` or GAAP status was added.
+
+The final focused local regression gate passed **114 tests and 1,094 assertions** across period parsing, geometry, projector, source graph, chart contracts and the original 17-page Nasdaq PDF. The exact-hash Apple and Walmart optional tests passed locally; the main Nasdaq fixture still has 44 eligible cells and 11 charts, and the complete original also has 44 and 11. Existing model-origin evidence remains untouched, source-origin evidence stays separate, chart persistence remains idempotent, and the PDF flag remains false by default.
+
+The working `pdfplumber` prototype is retained for a future larger evaluation. A future UPS or as-of balance-sheet implementation should first establish explicit period/basis/segment header ownership and exact Smalot projection on a reference corpus. It should not be shipped by treating nearby text or a plausible arithmetic pair as a source edge. The original production Nasdaq provider response remains unavailable for an authentic inference replay, and the Phase 4 release gates on model/source display deduplication, interruption behavior, resource percentiles, and the separate ownership safety rollout remain open. **Recommendation: NO-GO for activation or beta; continue default-off development and review the isolated ownership safety branch separately.**
+
+## Phase 6 — architecture decision before further parser development (2026-10-24)
+
+Decision: **restrict the feature scope and finish the release contract before any new layout rules.** The [architecture decision record](../architecture/docintel-pdf-phase6-decision-2026-10-24.md) compares the dual-extractor path with a canonical PDF source ledger, defines the supported native-text subset, ranks the three investments, and names the smallest next experiment. `DOCINTEL_PDF_TABLE_STRUCTURE` remains default-off. No parser, production, inference, billing or ownership-branch implementation changed in this phase.
+
+The 22-cell reference confirms 10/10 selected source-supported positives and 0/12 selected false acceptances, with important coverage gaps: UPS contributes 0/5 because no grid is detected; Apple's balance-sheet as-of cell is absent; Walmart's 3/3 numeric matches lack an as-of/unit proof. Apple income/cash-flow projection was repaired in Phase 5. A canonical Poppler ledger could remove the Smalot-offset join, but no *remaining* selected cell is blocked solely by that join. UPS first fails repeated basis/segment header detection, and Walmart lacks applicable scale. The current dominant bottleneck is complete source relationship proof, not geometry alone. These are corpus observations, not a general accuracy estimate.
+
+An independent disposable PostgreSQL 18 rerun of `bin/docintel-pdf-source-audit.php` on the same exact-hash Nasdaq page, Apple, UPS, Walmart and Northstar inputs reproduced respectively 128/44/11, 132/18/4, 0/0/0, 12/0/0 and 12/12/4 for candidate cells/eligible observations/persisted charts. The benchmark now records row payload bytes using `pg_column_size` and rolls back every document transaction. Values exclude indexes, WAL and PDF asset storage.
+
+The unchanged Phase 5 reference scorer reproduced Nasdaq 2/2, Apple 4/4 and Northstar 4/4 selected positives verified; all 12 selected negative cases were either rejected or absent (Apple one absent, UPS five absent). No original Nasdaq model response was introduced into this audit.
+
+| Input | Anchors / edges | Row payload KiB | Extraction → persistence stage sum, ms |
+|---|---:|---:|---:|
+| Nasdaq page 8 | 229 / 1,190 | 650 | 1,507 |
+| Apple | 273 / 1,283 | 641 | 2,228 |
+| UPS | 15 / 0 | 42 | 755 |
+| Walmart | 29 / 74 | 74 | 507 |
+| Northstar | 30 / 74 | 79 | 254 |
+
+These are one-process local timings, excluding the independent geometry probe, and cannot establish throughput or percentiles. The 128–132-cell statements each retain about 0.64 MiB of database row payload; large-table growth remains an open gate. Six focused backend tests passed with 94 assertions, including idempotent chart points, revision retraction, missing-extraction pruning, flag-off rejection, mocked merge-to-chart without HTTP, and generic completed-merge recovery. Three existing frontend suites passed 61 tests for chart/source contract behavior. They do **not** exercise a `verified_pdf_table` document-chart response.
+
+The user-facing contract review found a concrete release gap: `VerifiedPdfChartPersister` writes `source_metadata.origin=verified_pdf_table`, while `ChartResource` only recognizes `document_visual` and `model_unverified`. Its response therefore presents that persisted chart as an ineligible historical chart. `UnifiedCharts` combines it with the independently generated analysis chart, so the same comparison can appear twice. `AnalysisGrouper` and `ImportantFindingsBuilder` key by source ID; equivalent model and source facts have different IDs, and finding-level deduplication remains unverified. The existing point-level chart deduplication test does not cover these responses. The original Nasdaq model response still has not been recovered or authentically replayed.
+
+The isolated ownership correction remains on `fix/docintel-incremental-ownership-review` (`72b5c07`, `7b3a363`), with flag-off compatibility risk and no measured production impact. It was not merged for the PDF work. The next experiment is one local exact-hash Apple upload with a mocked equivalent model fact, public API/frontend contract checks, an injected stop after source collection, and a changed revision/retry. Until that vertical slice is correct, chart count is not a release metric and no external activation is recommended.

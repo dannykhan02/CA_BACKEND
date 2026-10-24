@@ -101,6 +101,12 @@ class StructuredProvenanceProducer
                     $this->edge($relations, $this->key($tableId),
                         $this->key($table['meta']['entity_heading_id']), 'section_parent');
                 }
+                foreach (['report_owner_cover_id', 'report_owner_footer_id'] as $field) {
+                    if (isset($table['meta'][$field], $nodes[$table['meta'][$field]])) {
+                        $this->edge($relations, $this->key($tableId),
+                            $this->key($table['meta'][$field]), 'section_parent');
+                    }
+                }
             }
         }
         $headerEdges = [];
@@ -454,7 +460,8 @@ class StructuredProvenanceProducer
                 foreach ($cell['meta']['currency_marker_ids'] ?? [] as $markerId) {
                     $selected[$markerId] = true;
                 }
-                foreach (['unit_heading_id', 'entity_heading_id'] as $field) {
+                foreach (['unit_heading_id', 'entity_heading_id',
+                    'report_owner_cover_id', 'report_owner_footer_id'] as $field) {
                     if (isset($cell['meta'][$field])) {
                         $selected[$cell['meta'][$field]] = true;
                     }
