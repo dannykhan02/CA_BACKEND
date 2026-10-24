@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\DocumentEvidence;
 use App\Services\Intelligence\Brief\BriefAssembler;
 use App\Services\Intelligence\Materiality\MaterialityReadModel;
 use App\Services\Intelligence\Materiality\MaterialityScorer;
@@ -32,10 +33,10 @@ class IntelligenceBriefEvidencePathTest extends TestCase
         self::assertNotNull($measure);
         self::assertNotEmpty($measure['evidence']);
         self::assertSame($stored->id, $measure['evidence'][0]['record_id']);
-        self::assertSame($stored->id, \App\Models\DocumentEvidence::findOrFail($measure['evidence'][0]['record_id'])->id);
+        self::assertSame($stored->id, DocumentEvidence::findOrFail($measure['evidence'][0]['record_id'])->id);
         self::assertSame('kpi:stored-figure', $measure['evidence'][0]['source_id']);
         self::assertSame(10, $measure['evidence'][0]['start_offset']);
-        self::assertSame(60, $measure['evidence'][0]['end_offset']);
+        self::assertSame($stored->sources[0]['end_offset'], $measure['evidence'][0]['end_offset']);
 
         unset($record['record_id']);
         $withoutId = app(BriefAssembler::class)->assemble($document->name, $document->type,
