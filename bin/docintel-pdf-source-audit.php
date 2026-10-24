@@ -82,6 +82,25 @@ foreach (array_slice($argv, 1) as $path) {
             static fn ($item) => $item->integrity['analyticalEligible']));
         $charts = app(ChartCandidateBuilder::class)->build($eligible)['candidates'];
         $persisted = $time('persistence_ms', static fn () => app(VerifiedPdfChartPersister::class)->persist($document, $set));
+        // Payload bytes exclude indexes, WAL and allocator overhead. They make
+        // graph growth comparable across fixtures without retaining any rows.
+        $payloadBytes = [];
+        foreach (['structured_extractions', 'document_evidence', 'source_anchors',
+            'source_relationships', 'evidence_role_bindings', 'document_charts',
+            'document_chart_points'] as $table) {
+            $ownerColumn = in_array($table, ['source_relationships', 'source_anchors',
+                'evidence_role_bindings'], true) ? 'set_id' : 'document_id';
+            if ($table === 'document_chart_points') {
+                $payloadBytes[$table] = (int) DB::table($table.' as item')
+                    ->join('document_charts as chart', 'chart.id', '=', 'item.document_chart_id')
+                    ->where('chart.document_id', $document->id)
+                    ->selectRaw('COALESCE(SUM(pg_column_size(item)), 0) AS bytes')->value('bytes');
+            } else {
+                $payloadBytes[$table] = (int) DB::table($table.' as item')
+                    ->where('item.'.$ownerColumn, $ownerColumn === 'set_id' ? $set : $document->id)
+                    ->selectRaw('COALESCE(SUM(pg_column_size(item)), 0) AS bytes')->value('bytes');
+            }
+        }
         $chartPoints = DocumentChart::where('document_id', $document->id)->get()
             ->map(static fn ($chart) => ['title' => $chart->title,
                 'points' => array_map(static fn ($point) => [
@@ -131,6 +150,7 @@ foreach (array_slice($argv, 1) as $path) {
             'chart_points' => $chartPoints,
             'published_anchors' => DB::table('source_anchors')->where('set_id', $set)->count(),
             'published_edges' => DB::table('source_relationships')->where('set_id', $set)->count(),
+            'payload_bytes' => $payloadBytes,
             'rows' => $rows, 'facts' => $factDetails, 'timings' => $times,
             'php_peak_bytes' => memory_get_peak_usage(true)], JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR)."\n";
     } finally {
