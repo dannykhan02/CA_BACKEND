@@ -42,6 +42,19 @@ class DocumentDownloadController extends Controller
     ];
 
     /**
+     * The content type each type is served as, rather than whatever the disk's
+     * mime guesser makes of the stored object (a .docx can come back as
+     * application/zip, which a browser will not offer to open as Word).
+     */
+    private const TYPE_CONTENT_TYPES = [
+        'PDF' => 'application/pdf',
+        'DOCX' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'XLSX' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'JPG' => 'image/jpeg',
+        'PNG' => 'image/png',
+    ];
+
+    /**
      * Refusal code for a document that never had an original file recorded.
      *
      * A code, not just a status, because 404 is already ambiguous on this
@@ -131,6 +144,10 @@ class DocumentDownloadController extends Controller
             'classification' => $document->classification,
         ]);
 
-        return $disk->download($document->file_path, $downloadName);
+        $headers = isset(self::TYPE_CONTENT_TYPES[$document->type])
+            ? ['Content-Type' => self::TYPE_CONTENT_TYPES[$document->type]]
+            : [];
+
+        return $disk->download($document->file_path, $downloadName, $headers);
     }
 }
