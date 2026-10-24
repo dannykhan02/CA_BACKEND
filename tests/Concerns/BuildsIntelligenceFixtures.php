@@ -8,6 +8,7 @@ use App\Models\DocumentIntelligenceSummary;
 use App\Models\DocumentKpi;
 use App\Models\DocumentRisk;
 use App\Models\User;
+use App\Services\AI\Incremental\EvidenceGrounding;
 use App\Services\AI\Incremental\EvidenceMerger;
 use App\Services\WorkspaceService;
 use Illuminate\Support\Str;
@@ -85,13 +86,36 @@ trait BuildsIntelligenceFixtures
             'severity' => null, 'metric_type' => null, 'value_basis' => null, 'aggregation' => null,
             'quantity_kind' => null, 'aliases' => [], 'reference' => '', 'kind' => $kind];
         if ($kind === 'metric') {
+            $revision = hash('sha256', (string) $document->extracted_text);
+            $extractionVersion = app(EvidenceGrounding::class)->version($document);
+            $ownerQuote = 'Fixture Reporting Organization: '.$record['quote'];
             $record += ['source_fields_verified' => array_values(array_merge(['value', 'metric'],
                 trim((string) $record['unit']) === '' ? [] : ['unit'],
                 trim((string) $record['period']) === '' ? [] : ['period'],
-                trim((string) $record['subject']) === '' ? [] : ['subject'])),
+                trim((string) $record['subject']) === '' ? [] : ['subject'],
+                ['governing_owner'])),
                 'field_verification_policy' => 'incremental.v1',
                 'measurement_verification' => 'verified',
-                'source_revision' => hash('sha256', (string) $document->extracted_text)];
+                'source_revision' => $revision,
+                'source_extraction_version' => $extractionVersion,
+                'ownership_requirement' => 'company',
+                'governing_owner' => [
+                    'entity' => 'Fixture Reporting Organization',
+                    'kind' => 'organization',
+                    'relationship' => 'value_row',
+                    'source_revision' => $revision,
+                    'extraction_version' => $extractionVersion,
+                    'source_spans' => [['span_id' => 'E001', 'page' => $page,
+                        'start_offset' => 10, 'end_offset' => 10 + mb_strlen($ownerQuote)]],
+                ]];
+        }
+
+        $sources = [['chunk_id' => (string) Str::uuid(), 'span_id' => 'E001',
+            'start_offset' => 10,
+            'end_offset' => $kind === 'metric' ? 10 + mb_strlen($ownerQuote) : 60,
+            'quote' => $kind === 'metric' ? $ownerQuote : $record['quote'], 'page' => $page]];
+        if ($kind === 'metric') {
+            $sources[0]['roles'] = ['governing_owner'];
         }
 
         return DocumentEvidence::create([
@@ -104,8 +128,7 @@ trait BuildsIntelligenceFixtures
             'kind' => $kind,
             'source_id' => $sourceId,
             'data' => $record,
-            'sources' => [['chunk_id' => (string) Str::uuid(), 'span_id' => 'E001',
-                'start_offset' => 10, 'end_offset' => 60, 'quote' => $record['quote'], 'page' => $page]],
+            'sources' => $sources,
         ]);
     }
 
