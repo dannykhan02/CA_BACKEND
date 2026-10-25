@@ -110,17 +110,21 @@ class DetectDocumentRisksRetryTest extends TestCase
             if ($attempt === 2) {
                 $this->travel(1)->seconds();
             }
-            try {
-                $this->queuedJob($document, $attempt)->handle($client, $recorder);
-                $this->fail('Malformed output should reach the queue worker.');
-            } catch (AnthropicStructuredOutputException $e) {
-                $this->assertSame('malformed_output', $e->outputStatus);
+            if ($attempt === 1) {
+                try {
+                    $this->queuedJob($document, $attempt)->handle($client, $recorder);
+                    $this->fail('First malformed output should reach the queue worker.');
+                } catch (AnthropicStructuredOutputException $e) {
+                    $this->assertSame('malformed_output', $e->outputStatus);
+                }
+            } else {
+                $this->queuedJob($document, $attempt, true)->handle($client, $recorder);
             }
-            $this->assertSame('processing', $document->processingJobs()->where('stage', 'risks')
+            $this->assertSame($attempt === 1 ? 'processing' : 'failed', $document->processingJobs()->where('stage', 'risks')
                 ->orderByDesc('created_at')->orderByDesc('id')->firstOrFail()->status);
         }
 
-        // Laravel invokes failed() on a restored job after its second delivery is exhausted.
+        // Laravel may invoke failed() on a restored job; it must be idempotent.
         $this->queuedJob($document, 2)->failed($this->malformed());
         $last = $document->processingJobs()->where('stage', 'risks')
             ->orderByDesc('created_at')->orderByDesc('id')->firstOrFail();

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Exceptions\AnthropicStructuredOutputException;
 use App\Jobs\ExtractDocumentEntitiesJob;
 use App\Jobs\GenerateInsightsJob;
 use App\Models\Document;
@@ -14,6 +15,8 @@ use Database\Seeders\DocumentEntitiesPromptSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Contracts\Queue\Job as QueueJob;
+use Mockery;
 use Tests\TestCase;
 
 class AnthropicStructuredPipelineTest extends TestCase
@@ -43,6 +46,19 @@ class AnthropicStructuredPipelineTest extends TestCase
             'content' => [['type' => 'text', 'text' => $text]]];
     }
 
+    private function queuedEntitiesJob(Document $document, int $attempt, bool $forceReprocess = false,
+        bool $expectsFail = false): ExtractDocumentEntitiesJob
+    {
+        $queueJob = Mockery::mock(QueueJob::class);
+        $queueJob->shouldReceive('uuid')->andReturn('entity-retry-uuid');
+        $queueJob->shouldReceive('attempts')->andReturn($attempt);
+        $queueJob->shouldReceive('fail')->times($expectsFail ? 1 : 0);
+        $job = new ExtractDocumentEntitiesJob($document->id, $forceReprocess);
+        $job->setJob($queueJob);
+
+        return $job;
+    }
+
     public function test_malformed_then_valid_response_audits_both_and_persists_once(): void
     {
         $document = $this->document();
@@ -52,7 +68,13 @@ class AnthropicStructuredPipelineTest extends TestCase
             ->push($this->response('{"entities":'))
             ->push($this->response($valid))]);
 
-        (new ExtractDocumentEntitiesJob($document->id))->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+        try {
+            $this->queuedEntitiesJob($document, 1)->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+            $this->fail('Malformed schema-constrained output should reach the queue worker.');
+        } catch (AnthropicStructuredOutputException $e) {
+            $this->assertSame('malformed_output', $e->outputStatus);
+        }
+        $this->queuedEntitiesJob($document, 2)->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
         (new ExtractDocumentEntitiesJob($document->id))->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
 
         $this->assertSame(1, $document->entities()->count());
@@ -77,12 +99,21 @@ class AnthropicStructuredPipelineTest extends TestCase
             ->push($this->response('{"entities":'))
             ->push($this->response('{"entities":'))]);
 
-        (new ExtractDocumentEntitiesJob($document->id, true))->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+        try {
+            $this->queuedEntitiesJob($document, 1, true)->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+            $this->fail('First malformed output should reach the queue worker.');
+        } catch (AnthropicStructuredOutputException $e) {
+            $this->assertSame('malformed_output', $e->outputStatus);
+        }
+        $this->queuedEntitiesJob($document, 2, true, true)
+            ->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
 
         Http::assertSentCount(2);
         $this->assertSame(['Old value'], $document->entities()->pluck('value')->all());
         $this->assertSame(2, DocumentAiRun::where('document_id', $document->id)->where('purpose', 'entities')->where('status', 'malformed_output')->count());
         $this->assertSame(0, DocumentAiRun::where('document_id', $document->id)->where('purpose', 'entities')->where('status', 'success')->count());
+        $this->assertSame('failed', $document->processingJobs()->where('stage', 'entities')
+            ->orderByDesc('created_at')->orderByDesc('id')->value('status'));
         $this->assertSame(1, DB::table('billing_operations')->where('resource_id', $document->id)->count());
     }
 
