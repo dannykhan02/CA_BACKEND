@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Exceptions\AiProcessingException;
+use App\Exceptions\AnthropicStructuredOutputException;
 use App\Jobs\Concerns\GuardsDocumentIntelligence;
 use App\Jobs\Concerns\SkipsUnchangedDocuments;
 use App\Models\Document;
@@ -22,6 +23,8 @@ class DetectDocumentRisksJob implements ShouldQueue
 {
     use Batchable, Dispatchable, GuardsDocumentIntelligence, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments;
 
+    // At most 2 queue attempts x 2 structured responses x 4 transport attempts = 16 Anthropic requests.
+    // When HTTP succeeds but both JSON responses are malformed, the bound is 4 requests.
     public int $tries = 2;
 
     public int $timeout = 60;
@@ -56,6 +59,11 @@ class DetectDocumentRisksJob implements ShouldQueue
         } catch (\Throwable $e) {
             if ($this->abandonIntelligence($document, $stage)) {
                 return;
+            }
+            if ($e instanceof AnthropicStructuredOutputException && $e->outputStatus === 'malformed_output') {
+                // Leave this attempt open until the queue retries or invokes failed() on exhaustion.
+                // A retry gets a new stage row; only a terminal outcome is reported as failed.
+                throw $e;
             }
             $recorder->fail($stage, 'Document analysis failed.');
             $this->fail($e);
