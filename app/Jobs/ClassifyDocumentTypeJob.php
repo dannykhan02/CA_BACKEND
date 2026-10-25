@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Exceptions\AiProcessingException;
 use App\Jobs\Concerns\GuardsDocumentIntelligence;
 use App\Jobs\Concerns\SkipsUnchangedDocuments;
 use App\Models\Document;
@@ -63,8 +62,7 @@ class ClassifyDocumentTypeJob implements ShouldQueue
             if ($this->abandonIntelligence($document, $stage)) {
                 return;
             }
-            $recorder->fail($stage, 'Document analysis failed.');
-            $this->fail($e);
+            $this->handleIntelligenceFailure($stage, $recorder, $e);
 
             return;
         }
@@ -97,7 +95,7 @@ class ClassifyDocumentTypeJob implements ShouldQueue
         $this->finalizeIntelligenceFailure('document_type', $e);
         Log::error('ClassifyDocumentTypeJob failed after retries', [
             'document_id' => $this->documentId,
-            'failure_class' => $e instanceof AiProcessingException ? $e->classification : 'analysis_failure',
+            'failure_class' => $this->intelligenceFailureDiagnostics($e)['classification'],
         ]);
     }
 }

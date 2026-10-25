@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Exceptions\AnthropicStructuredOutputException;
+use App\Exceptions\AiProcessingException;
 use App\Models\AiPrompt;
 use App\Models\Document;
 use App\Models\DocumentAiRun;
@@ -104,6 +105,7 @@ class AnthropicStructuredOutputTest extends TestCase
 
     public function test_malformed_response_retries_once_and_validates_schema(): void
     {
+        config(['document_intelligence.structured_models' => []]);
         Http::fake(['api.anthropic.com/*' => Http::sequence()
             ->push($this->response('invalid'))
             ->push($this->response('{"entities":[]}'))]);
@@ -118,6 +120,7 @@ class AnthropicStructuredOutputTest extends TestCase
 
     public function test_second_malformed_response_fails_without_another_retry(): void
     {
+        config(['document_intelligence.structured_models' => []]);
         Http::fake(['api.anthropic.com/*' => Http::sequence()
             ->push($this->response('bad'))->push($this->response('still bad'))]);
         $client = $this->entitiesClient();
@@ -262,8 +265,132 @@ class AnthropicStructuredOutputTest extends TestCase
             );
             $this->fail('Refusal accepted.');
         } catch (AnthropicStructuredOutputException $e) {
-            $this->assertSame('provider_error', $e->outputStatus);
+            $this->assertSame('refusal', $e->outputStatus);
         }
         Http::assertSentCount(1);
+    }
+
+    public function test_literal_control_character_is_classified_before_cleaning(): void
+    {
+        $raw = "{\"risks\":[{\"title\":\"line\nfeed\"}]}";
+        try {
+            $this->decode($this->response($raw));
+            $this->fail('Literal newline in a JSON string was accepted.');
+        } catch (AnthropicStructuredOutputException $e) {
+            $this->assertSame('malformed_output', $e->outputStatus);
+            $this->assertSame('raw_output', $e->diagnostics['parse_phase']);
+            $this->assertSame(JSON_ERROR_CTRL_CHAR, $e->diagnostics['json_error_category']);
+        }
+    }
+
+    public function test_escaped_newlines_quotes_backslashes_and_unicode_survive_cleaning(): void
+    {
+        $value = "line\n\"quoted\" \\ path ☃";
+        $raw = json_encode(['risks' => [['evidence' => $value]]], JSON_THROW_ON_ERROR);
+        $this->assertSame($value, $this->decode($this->response("```json\n{$raw}\n```"))['risks'][0]['evidence']);
+        $this->assertSame($value, $this->decode($this->response(" \n{$raw}\n "))['risks'][0]['evidence']);
+    }
+
+    public function test_tool_block_and_multiple_complete_json_blocks_are_not_accepted(): void
+    {
+        $tool = $this->response('');
+        $tool['content'] = [['type' => 'tool_use', 'input' => ['risks' => []]]];
+        try {
+            $this->decode($tool);
+            $this->fail('Tool block was accepted as a text response.');
+        } catch (AnthropicStructuredOutputException $e) {
+            $this->assertSame('unsupported_response', $e->outputStatus);
+        }
+        $two = $this->response('{"risks":[]}');
+        $two['content'][] = ['type' => 'text', 'text' => '{"risks":[]}'];
+        $this->expectException(AnthropicStructuredOutputException::class);
+        $this->decode($two);
+    }
+
+    public function test_schema_constrained_legacy_response_uses_one_request_and_requires_fields(): void
+    {
+        Http::fake(['api.anthropic.com/*' => Http::response($this->response('{"risks":[]}'))]);
+        $client = app(AnthropicClient::class);
+        (new \ReflectionProperty($client, 'currentOperation'))->setValue($client, 'risks');
+        $document = $this->document();
+        $result = (new \ReflectionMethod(AnthropicClient::class, 'structuredCall'))->invoke(
+            $client, 'Return JSON', $document, 'risks',
+            fn (array $response) => (new \ReflectionMethod(AnthropicClient::class, 'parseRisksResponse'))->invoke($client, $response));
+        $this->assertSame([], $result['risks']);
+        Http::assertSentCount(1);
+        $schema = Http::recorded()->first()[0]['output_config']['format'];
+        $this->assertSame('json_schema', $schema['type']);
+        $this->assertSame(['risks'], $schema['schema']['required']);
+        $this->assertContains('evidence', $schema['schema']['properties']['risks']['items']['required']);
+        $this->assertFalse($schema['schema']['properties']['risks']['items']['additionalProperties']);
+
+        foreach (['document_type', 'entities', 'deadlines'] as $purpose) {
+            $schema = \App\Services\AI\LegacyIntelligenceSchema::for($purpose);
+            $this->assertContains($purpose === 'document_type' ? 'document_type' : $purpose, $schema['required']);
+            $this->assertFalse($schema['additionalProperties']);
+        }
+    }
+
+    public function test_schema_constrained_malformed_response_has_no_prompt_correction(): void
+    {
+        Http::fake(['api.anthropic.com/*' => Http::response($this->response("{\"risks\":\"bad\nvalue\"}"))]);
+        $client = app(AnthropicClient::class);
+        (new \ReflectionProperty($client, 'currentOperation'))->setValue($client, 'risks');
+        try {
+            (new \ReflectionMethod(AnthropicClient::class, 'structuredCall'))->invoke(
+                $client, 'Return JSON', $this->document(), 'risks',
+                fn (array $response) => (new \ReflectionMethod(AnthropicClient::class, 'decodeJsonContent'))->invoke($client, $response));
+            $this->fail('Malformed constrained output accepted.');
+        } catch (AnthropicStructuredOutputException $e) {
+            $this->assertSame('json_schema', $e->diagnostics['structured_output_mode']);
+            $this->assertSame('raw_output', $e->diagnostics['parse_phase']);
+        }
+        Http::assertSentCount(1);
+    }
+
+    public function test_missing_required_risk_field_remains_validation_failure(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        (new \ReflectionMethod(AnthropicClient::class, 'parseRisksResponse'))
+            ->invoke(app(AnthropicClient::class), $this->response('{"risks":[{"title":"Item"}]}'));
+    }
+
+    public function test_insight_schemas_follow_prompt_versions(): void
+    {
+        $legacy = \App\Services\AI\LegacyIntelligenceSchema::for('insights', 6);
+        $this->assertSame(['kpis', 'charts', 'insights'], $legacy['required']);
+        $this->assertArrayNotHasKey('identity', $legacy['properties']['kpis']['items']['properties']);
+
+        $v9 = \App\Services\AI\LegacyIntelligenceSchema::for('insights', 9);
+        $this->assertArrayHasKey('identity', $v9['properties']['kpis']['items']['properties']);
+        $this->assertArrayHasKey('source_context', $v9['properties']['kpis']['items']['properties']);
+        $this->assertArrayHasKey('charts', $v9['properties']);
+
+        $v10 = \App\Services\AI\LegacyIntelligenceSchema::for('insights', 10);
+        $this->assertSame(['kpis', 'insights'], $v10['required']);
+        $this->assertArrayNotHasKey('charts', $v10['properties']);
+        $this->assertSame(['type' => 'null'], $v10['properties']['kpis']['items']['properties']['trend']);
+    }
+
+    public function test_unsupported_provider_schema_is_terminal_and_audited(): void
+    {
+        Http::fake(['api.anthropic.com/*' => Http::response([
+            'error' => ['type' => 'invalid_request_error',
+                'message' => 'output_config.format.schema: keyword maxItems is not supported'],
+        ], 400, ['request-id' => 'req_synthetic_schema'])]);
+        $client = $this->entitiesClient();
+        $document = $this->document();
+        try {
+            (new \ReflectionMethod(AnthropicClient::class, 'structuredCall'))->invoke(
+                $client, 'Return JSON', $document, 'entities',
+                fn (array $response) => (new \ReflectionMethod(AnthropicClient::class, 'decodeJsonContent'))->invoke($client, $response));
+            $this->fail('Unsupported schema was accepted.');
+        } catch (AiProcessingException $e) {
+            $this->assertSame('unsupported_schema', $e->classification);
+        }
+        Http::assertSentCount(1);
+        $run = DocumentAiRun::where('document_id', $document->id)->sole();
+        $this->assertSame('unsupported_schema', $run->failure_class);
+        $this->assertSame('req_synthetic_schema', $run->provider_request_id);
     }
 }

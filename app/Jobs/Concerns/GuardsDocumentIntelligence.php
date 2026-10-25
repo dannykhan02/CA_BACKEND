@@ -2,6 +2,8 @@
 
 namespace App\Jobs\Concerns;
 
+use App\Exceptions\AiProcessingException;
+use App\Exceptions\AnthropicStructuredOutputException;
 use App\Models\Document;
 use App\Models\ProcessingJob;
 use App\Services\EntitlementService;
@@ -12,6 +14,35 @@ use Illuminate\Support\Facades\DB;
 trait GuardsDocumentIntelligence
 {
     protected ?string $intelligenceStageAttemptId = null;
+
+    private function intelligenceFailureDiagnostics(\Throwable $e): array
+    {
+        $classification = $e instanceof AnthropicStructuredOutputException ? $e->outputStatus
+            : ($e instanceof AiProcessingException ? $e->classification : 'analysis_failure');
+
+        return ['provider' => 'anthropic', 'classification' => $classification,
+            'queue_attempt' => $this->job ? $this->attempts() : 1,
+            'recovery' => $classification === 'malformed_output' ? 'exhausted' : 'terminal',
+            'incomplete' => $classification === 'truncated']
+            + ($e instanceof AnthropicStructuredOutputException ? $e->diagnostics : []);
+    }
+
+    private function handleIntelligenceFailure(ProcessingJob $stage, PipelineStageRecorder $recorder, \Throwable $e): void
+    {
+        if ($this->shouldRetryMalformedOutput($e)) {
+            throw $e;
+        }
+        $recorder->fail($stage, 'Document analysis failed.', $this->intelligenceFailureDiagnostics($e));
+        $this->fail($e);
+    }
+
+    private function shouldRetryMalformedOutput(\Throwable $e): bool
+    {
+        // Schema-constrained output has no useful prompt repair. Limit queue
+        // recovery to one later delivery, even if a job declares more tries.
+        return $e instanceof AnthropicStructuredOutputException
+            && $e->outputStatus === 'malformed_output' && $this->attempts() < 2;
+    }
 
     private function startIntelligence(Document $document, string $stage, PipelineStageRecorder $recorder): ?ProcessingJob
     {
@@ -106,7 +137,7 @@ trait GuardsDocumentIntelligence
                 ->orderByDesc('created_at')->orderByDesc('id')->first();
         }
         if (! $attempt && ($this->queuedStageId ?? null)) {
-            DB::transaction(function () use ($stage, $queueUuid, $queueAttempt): void {
+            DB::transaction(function () use ($stage, $queueUuid, $queueAttempt, $e): void {
                 $document = Document::whereKey($this->documentId)->lockForUpdate()->first();
                 $reserved = ProcessingJob::whereKey($this->queuedStageId)
                     ->where('document_id', $this->documentId)->where('stage', $stage)
@@ -119,13 +150,13 @@ trait GuardsDocumentIntelligence
 
                 $recorder = app(PipelineStageRecorder::class);
                 if (($queueAttempt ?? 1) === 1 && in_array($reserved->status, ['pending', 'processing'], true)) {
-                    $recorder->fail($reserved, 'Analysis attempt failed or timed out. Please retry this section.');
+                    $recorder->fail($reserved, 'Analysis attempt failed or timed out. Please retry this section.', $this->intelligenceFailureDiagnostics($e));
                 } elseif ($queueUuid && in_array($reserved->status, ['pending', 'processing', 'failed'], true)) {
                     // The worker failed before it could claim a fresh queue
                     // retry row. Keep the reservation as history and record
                     // this execution as a separate terminal attempt.
                     $retry = $recorder->start($document, $stage, $queueUuid, null, $queueAttempt);
-                    $recorder->fail($retry, 'Analysis attempt failed or timed out. Please retry this section.');
+                    $recorder->fail($retry, 'Analysis attempt failed or timed out. Please retry this section.', $this->intelligenceFailureDiagnostics($e));
                 }
             });
 
@@ -133,7 +164,7 @@ trait GuardsDocumentIntelligence
         }
 
         if ($attempt && $attempt->document_id === $this->documentId && $attempt->stage === $stage) {
-            app(PipelineStageRecorder::class)->fail($attempt, 'Analysis attempt failed or timed out. Please retry this section.');
+            app(PipelineStageRecorder::class)->fail($attempt, 'Analysis attempt failed or timed out. Please retry this section.', $this->intelligenceFailureDiagnostics($e));
         }
     }
 

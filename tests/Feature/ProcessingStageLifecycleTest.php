@@ -8,16 +8,23 @@ use App\Jobs\DetectDocumentRisksJob;
 use App\Jobs\ExtractDocumentEntitiesJob;
 use App\Jobs\GenerateDocumentSummaryJob;
 use App\Jobs\GenerateInsightsJob;
+use App\Exceptions\AnthropicStructuredOutputException;
 use App\Models\Document;
 use App\Models\DocumentEntity;
+use App\Models\DocumentRisk;
 use App\Models\ProcessingJob;
 use App\Models\User;
 use App\Services\AnthropicClient;
 use App\Services\DocumentIntelligenceService;
 use App\Services\Pipeline\PipelineStageRecorder;
 use App\Services\WorkspaceService;
+use Database\Seeders\DocumentDeadlinesPromptSeeder;
+use Database\Seeders\DocumentRisksPromptSeeder;
+use Database\Seeders\AiPromptSeeder;
+use Database\Seeders\DocumentSummaryPromptSeeder;
 use Illuminate\Contracts\Queue\Job as QueueJob;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -67,6 +74,176 @@ class ProcessingStageLifecycleTest extends TestCase
         }
 
         return $queueJob;
+    }
+
+    private function providerResponse(string $text, string $stop = 'end_turn'): array
+    {
+        return ['model' => config('services.anthropic.extraction_model'), 'stop_reason' => $stop,
+            'usage' => ['input_tokens' => 20, 'output_tokens' => 10],
+            'content' => [['type' => 'text', 'text' => $text]]];
+    }
+
+    public function test_deadline_malformed_response_recovers_on_second_queue_attempt(): void
+    {
+        config(['ai_credits.enabled' => false]);
+        $this->seed(DocumentDeadlinesPromptSeeder::class);
+        $document = $this->document();
+        $document->forceFill(['credit_accounted_at' => now()])->save();
+        Http::fake(['api.anthropic.com/*' => Http::sequence()
+            ->push($this->providerResponse("{\"deadlines\":\"bad\nvalue\"}"))
+            ->push($this->providerResponse('{"deadlines":[]}'))]);
+        $job = new DetectDocumentDeadlinesJob($document->id, true);
+        $job->setJob($this->queueJob('deadline-queue', 1));
+        try {
+            $job->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+            $this->fail('First malformed response was accepted.');
+        } catch (AnthropicStructuredOutputException $e) {
+            $this->assertSame('malformed_output', $e->outputStatus);
+        }
+        $this->assertSame('processing', app(DocumentIntelligenceService::class)->getProcessingStatus($document)['deadlines']);
+
+        $retry = new DetectDocumentDeadlinesJob($document->id, true);
+        $retry->setJob($this->queueJob('deadline-queue', 2));
+        $retry->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+
+        Http::assertSentCount(2);
+        $this->assertSame('completed', app(DocumentIntelligenceService::class)->getProcessingStatus($document)['deadlines']);
+        $this->assertSame(1, $document->processingJobs()->where('stage', 'deadlines')->where('status', 'skipped')->count());
+        $this->assertSame(1, $document->processingJobs()->where('stage', 'deadlines')->where('status', 'completed')->count());
+        $this->assertDatabaseCount('document_deadlines', 0);
+    }
+
+    public function test_risk_malformed_retry_exhaustion_records_final_stage_diagnostics(): void
+    {
+        config(['ai_credits.enabled' => false]);
+        $this->seed(DocumentRisksPromptSeeder::class);
+        $document = $this->document();
+        $document->forceFill(['credit_accounted_at' => now()])->save();
+        Http::fake(['api.anthropic.com/*' => Http::response($this->providerResponse("{\"risks\":\"bad\nvalue\"}"))]);
+        foreach ([1, 2] as $attempt) {
+            $job = new DetectDocumentRisksJob($document->id, true);
+            $job->setJob($this->queueJob('risk-queue', $attempt, $attempt === 2));
+            if ($attempt === 1) {
+                try {
+                    $job->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+                    $this->fail('First malformed response was accepted.');
+                } catch (AnthropicStructuredOutputException $e) {
+                    $this->assertSame('malformed_output', $e->outputStatus);
+                }
+            } else {
+                $job->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+            }
+        }
+
+        Http::assertSentCount(2);
+        $this->assertSame('failed', app(DocumentIntelligenceService::class)->getProcessingStatus($document)['risks']);
+        $latest = $document->processingJobs()->where('stage', 'risks')->latest('created_at')->latest('id')->first();
+        $this->assertSame('malformed_output', $latest->output['diagnostics']['classification']);
+        $this->assertSame('json_schema', $latest->output['diagnostics']['structured_output_mode']);
+        $this->assertSame(2, $latest->output['diagnostics']['queue_attempt']);
+        $this->assertDatabaseCount('document_risks', 0);
+    }
+
+    public function test_deadline_refusal_fails_immediately_without_queue_retry(): void
+    {
+        config(['ai_credits.enabled' => false]);
+        $this->seed(DocumentDeadlinesPromptSeeder::class);
+        $document = $this->document();
+        $document->forceFill(['credit_accounted_at' => now()])->save();
+        Http::fake(['api.anthropic.com/*' => Http::response($this->providerResponse('', 'refusal'))]);
+        $job = new DetectDocumentDeadlinesJob($document->id, true);
+        $job->setJob($this->queueJob('refused-queue', 1, true));
+        $job->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+
+        Http::assertSentCount(1);
+        $stage = $document->processingJobs()->where('stage', 'deadlines')->sole();
+        $this->assertSame('failed', $stage->status);
+        $this->assertSame('refusal', $stage->output['diagnostics']['classification']);
+        $this->assertSame('Ready', $document->fresh()->status);
+    }
+
+    public function test_repeated_risk_delivery_replaces_findings_without_duplicates(): void
+    {
+        config(['ai_credits.enabled' => false]);
+        $this->seed(DocumentRisksPromptSeeder::class);
+        $document = $this->document();
+        $document->forceFill(['credit_accounted_at' => now()])->save();
+        $risk = ['risk_type' => 'timeline', 'title' => 'Late filing',
+            'description' => 'A stated filing may be delayed.', 'severity' => 'medium',
+            'confidence' => 0.8, 'evidence' => 'Filing may be delayed.'];
+        Http::fake(['api.anthropic.com/*' => Http::response($this->providerResponse(
+            json_encode(['risks' => [$risk]], JSON_THROW_ON_ERROR)))]);
+
+        foreach ([1, 2] as $attempt) {
+            $job = new DetectDocumentRisksJob($document->id, true);
+            $job->setJob($this->queueJob('same-risk-queue', $attempt));
+            $job->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+        }
+
+        Http::assertSentCount(2);
+        $this->assertSame(1, DocumentRisk::where('document_id', $document->id)->count());
+        $this->assertSame('completed', app(DocumentIntelligenceService::class)->getProcessingStatus($document)['risks']);
+    }
+
+    public function test_insights_malformed_response_recovers_before_ready_transition(): void
+    {
+        config(['ai_credits.enabled' => false]);
+        $this->seed(AiPromptSeeder::class);
+        $document = $this->document();
+        $document->forceFill(['status' => 'Processing', 'credit_accounted_at' => now()])->save();
+        Http::fake(['api.anthropic.com/*' => Http::sequence()
+            ->push($this->providerResponse("{\"kpis\":\"bad\nvalue\"}"))
+            ->push($this->providerResponse('{"kpis":[],"charts":[],"insights":[]}'))]);
+
+        $first = new GenerateInsightsJob($document->id, true);
+        $first->setJob($this->queueJob('insights-queue', 1));
+        try {
+            $first->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+            $this->fail('First malformed response was accepted.');
+        } catch (AnthropicStructuredOutputException $e) {
+            $this->assertSame('malformed_output', $e->outputStatus);
+        }
+        $this->assertSame('Processing', $document->fresh()->status);
+
+        $retry = new GenerateInsightsJob($document->id, true);
+        $retry->setJob($this->queueJob('insights-queue', 2));
+        $retry->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+
+        Http::assertSentCount(2);
+        $this->assertSame('Ready', $document->fresh()->status);
+        $this->assertSame('completed', $document->processingJobs()->where('stage', 'ai_analysis')
+            ->orderByDesc('created_at')->orderByDesc('id')->value('status'));
+    }
+
+    public function test_normal_summary_malformed_response_recovers_on_second_queue_attempt(): void
+    {
+        config(['ai_credits.enabled' => false]);
+        $this->seed(DocumentSummaryPromptSeeder::class);
+        $document = $this->document();
+        $document->forceFill(['credit_accounted_at' => now()])->save();
+        $summary = $this->summaryResult();
+        unset($summary['prompt_version']);
+        $summary['document_type_assessment'] = ['document_type' => 'other',
+            'confidence' => 0.8, 'reasoning' => 'No more specific type.'];
+        Http::fake(['api.anthropic.com/*' => Http::sequence()
+            ->push($this->providerResponse("{\"executive_summary\":\"bad\nvalue\"}"))
+            ->push($this->providerResponse(json_encode($summary, JSON_THROW_ON_ERROR)))]);
+
+        $first = new GenerateDocumentSummaryJob($document->id, true);
+        $first->setJob($this->queueJob('summary-queue', 1));
+        try {
+            $first->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+            $this->fail('First malformed response was accepted.');
+        } catch (AnthropicStructuredOutputException $e) {
+            $this->assertSame('malformed_output', $e->outputStatus);
+        }
+        $retry = new GenerateDocumentSummaryJob($document->id, true);
+        $retry->setJob($this->queueJob('summary-queue', 2));
+        $retry->handle(app(AnthropicClient::class), app(PipelineStageRecorder::class));
+
+        Http::assertSentCount(2);
+        $this->assertSame('completed', app(DocumentIntelligenceService::class)->getProcessingStatus($document)['document_summary']);
+        $this->assertSame(1, $document->intelligenceSummary()->count());
     }
 
     public function test_optional_intelligence_jobs_fail_on_timeout(): void

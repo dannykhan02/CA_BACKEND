@@ -2,8 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Exceptions\AiProcessingException;
-use App\Exceptions\AnthropicStructuredOutputException;
 use App\Jobs\Concerns\GuardsDocumentIntelligence;
 use App\Jobs\Concerns\SkipsUnchangedDocuments;
 use App\Models\Document;
@@ -23,8 +21,8 @@ class DetectDocumentRisksJob implements ShouldQueue
 {
     use Batchable, Dispatchable, GuardsDocumentIntelligence, InteractsWithQueue, Queueable, SerializesModels, SkipsUnchangedDocuments;
 
-    // At most 2 queue attempts x 2 structured responses x 4 transport attempts = 16 Anthropic requests.
-    // When HTTP succeeds but both JSON responses are malformed, the bound is 4 requests.
+    // With the configured schema, malformed output uses one response per queue attempt.
+    // At most 2 queue attempts x 4 transport attempts = 8 Anthropic HTTP requests.
     public int $tries = 2;
 
     public int $timeout = 60;
@@ -60,13 +58,7 @@ class DetectDocumentRisksJob implements ShouldQueue
             if ($this->abandonIntelligence($document, $stage)) {
                 return;
             }
-            if ($e instanceof AnthropicStructuredOutputException && $e->outputStatus === 'malformed_output') {
-                // Leave this attempt open until the queue retries or invokes failed() on exhaustion.
-                // A retry gets a new stage row; only a terminal outcome is reported as failed.
-                throw $e;
-            }
-            $recorder->fail($stage, 'Document analysis failed.');
-            $this->fail($e);
+            $this->handleIntelligenceFailure($stage, $recorder, $e);
 
             return;
         }
@@ -106,7 +98,7 @@ class DetectDocumentRisksJob implements ShouldQueue
         $this->finalizeIntelligenceFailure('risks', $e);
         Log::error('DetectDocumentRisksJob failed after retries', [
             'document_id' => $this->documentId,
-            'failure_class' => $e instanceof AiProcessingException ? $e->classification : 'analysis_failure',
+            'failure_class' => $this->intelligenceFailureDiagnostics($e)['classification'],
         ]);
     }
 }
