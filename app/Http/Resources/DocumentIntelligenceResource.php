@@ -9,6 +9,7 @@ use App\Services\Intelligence\B2\BriefReadService;
 use App\Services\Intelligence\DocumentAnalysisComposer;
 use App\Services\Intelligence\ImportantFindingsBuilder;
 use App\Services\Intelligence\SourceReferenceResolver;
+use App\Services\Intelligence\VerifiedPdfChartReadModel;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -62,6 +63,21 @@ class DocumentIntelligenceResource extends JsonResource
         }
         foreach (app(ImportantFindingsBuilder::class)->citedSourceIds($this->resource->intelligenceSummary) as $cited) {
             $referenced[$cited] = true;
+        }
+        // Verified chart points are rendered from DocumentResource, but their source chips
+        // use this response's evidence map. Include only charts that still pass read-time proof.
+        if ($this->type === 'PDF' && config('document_intelligence.pdf_table_structure')) {
+            $chartReader = app(VerifiedPdfChartReadModel::class);
+            foreach ($this->resource->charts()->where('source_metadata->origin', 'verified_pdf_table')->get() as $chart) {
+                if ($chartReader->candidate($this->resource, $chart) === null) {
+                    continue;
+                }
+                foreach ($chart->data ?? [] as $point) {
+                    foreach ($point['sourceIds'] ?? [] as $sourceId) {
+                        $referenced[$sourceId] = true;
+                    }
+                }
+            }
         }
         // The risks, deadlines and entities this response returns are all rendered, so their
         // evidence - including its span locations - stays available exactly as before.

@@ -68,7 +68,10 @@ class TextRoleProvenanceProducer
             $roleVersion = $structured->format === 'PDF'
                 && str_contains($structured->parserVersion, '+poppler-grid.v1')
                 ? 'roles.v3' : 'roles.v2';
-            $parserVersion = $structured->parserVersion.'@'.StructuredDocument::POLICY.'@'.$roleVersion;
+            $parserVersion = $structured->format === 'PDF'
+                && str_contains($structured->parserVersion, '+basic-grid.v1')
+                ? 'pdf-basic.v1@structured.v1@roles.v4'
+                : $structured->parserVersion.'@'.StructuredDocument::POLICY.'@'.$roleVersion;
         }
         foreach ($rows as $row) {
             if (isset($structurallyBound[$row->id])) {

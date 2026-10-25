@@ -4,6 +4,7 @@ namespace App\Services\Intelligence;
 
 use App\Models\Document;
 use App\Models\DocumentIntelligenceRevision;
+use App\Models\DocumentEvidence;
 use Illuminate\Support\Facades\DB;
 
 /** Bounded read of the exact provenance occurrence used by verification. */
@@ -29,7 +30,7 @@ class SourceReferenceResolver
             || ($document->published_intelligence_revision_id === null && (int) $document->intelligence_generation > 0)) {
             return ['state' => 'NOT_READY'];
         }
-        if ($document->type === 'PDF' && str_starts_with($sourceId, 'pdf-cell:')) {
+        if ($document->type === 'PDF' && $this->pdfTableSource($sourceId)) {
             $live = DB::table('documents')->where('id', $document->id)
                 ->where('workspace_id', $document->workspace_id)->whereNull('deleted_at')
                 ->first(['file_hash', 'extracted_text']);
@@ -64,7 +65,7 @@ class SourceReferenceResolver
             return $historical ? ['state' => 'STALE_REFERENCE'] : $this->legacy($document, $sourceId);
         }
         $revision = hash('sha256', (string) $document->extracted_text);
-        if ($document->type === 'PDF' && str_starts_with($sourceId, 'pdf-cell:')) {
+        if ($document->type === 'PDF' && $this->pdfTableSource($sourceId)) {
             $pdfEvidence = json_decode($evidence->data, true) ?: [];
             $evidenceRevision = $pdfEvidence['source_revision'] ?? null;
             if (! is_string($evidenceRevision) || ! hash_equals($revision, $evidenceRevision)
@@ -83,6 +84,17 @@ class SourceReferenceResolver
         $set = $published
             ? ($published->provenance_set_id ? $setQuery->where('id', $published->provenance_set_id)->first(['id']) : null)
             : $setQuery->where('active', true)->first(['id']);
+        if (str_starts_with($sourceId, 'pdf-category:')) {
+            $categorical = DocumentEvidence::whereKey($evidence->id)
+                ->where('workspace_id', $document->workspace_id)
+                ->where('document_id', $document->id)
+                ->where('pipeline_key', $pipeline)->first();
+            if ($set === null || $categorical === null
+                || app(PdfCategoricalFieldVerifier::class)
+                    ->current($document, $categorical, $set->id) === null) {
+                return ['state' => 'SOURCE_UNAVAILABLE'];
+            }
+        }
         // Structural context can be present in the pinned graph without a role
         // binding or a one-hop relationship in this response. A changed hash
         // anywhere in that graph invalidates its provenance as a whole.
@@ -379,6 +391,12 @@ class SourceReferenceResolver
             && hash('sha256', mb_substr((string) $document->extracted_text,
                 (int) $anchor->start_offset, (int) $anchor->end_offset - (int) $anchor->start_offset))
                 === $anchor->source_hash;
+    }
+
+    private function pdfTableSource(string $sourceId): bool
+    {
+        return str_starts_with($sourceId, 'pdf-cell:')
+            || str_starts_with($sourceId, 'pdf-category:');
     }
 
     /** Historical typed evidence has no structural anchor or trustworthy raw occurrence. */

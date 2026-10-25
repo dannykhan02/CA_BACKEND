@@ -22,14 +22,25 @@ final class PdfTableStructureProjector
             }
         }
         $accepted = 0;
+        $rejected = 0;
+        $reasons = [];
         foreach ($tables as $ordinal => $table) {
             $page = $pages[$table['page'] ?? 0] ?? null;
             if ($page === null || ! isset($table['rows'], $table['header'])
                 || ($table['status'] ?? null) !== 'layout_candidate_only') {
+                $reason = 'invalid_candidate';
+                $rejected++;
+                $reasons[$reason] = min(1000, ($reasons[$reason] ?? 0) + 1);
                 continue;
             }
-            $projection = $this->project($page, $table, $ordinal);
+            $reason = null;
+            $projection = ($table['structural_type'] ?? null) === 'basic_relational'
+                ? $this->projectBasic($page, $table, $ordinal, $reason)
+                : $this->project($page, $table, $ordinal, $reason);
             if ($projection === []) {
+                $reason ??= 'exact_projection_failed';
+                $rejected++;
+                $reasons[$reason] = min(1000, ($reasons[$reason] ?? 0) + 1);
                 continue;
             }
             $projection = $this->attachReportOwner($projection, $pages, $page, $table);
@@ -37,14 +48,163 @@ final class PdfTableStructureProjector
             $accepted++;
         }
 
-        return new StructuredDocument('PDF', $source->parserVersion.'+poppler-grid.v1', $source->text,
-            $nodes, [...$source->capabilities, 'tables' => $accepted > 0
-                ? 'projected_geometry_candidates' : 'unavailable',
-                'geometry' => $accepted > 0 ? 'poppler_points_top_left' : 'unavailable',
-                'projected_tables' => $accepted]);
+        $basic = count(array_filter($nodes, static fn ($node) =>
+            ($node['type'] ?? null) === 'table'
+            && ($node['meta']['structural_type'] ?? null) === 'basic_relational'));
+        $basicRequested = config('document_intelligence.pdf_basic_table_structure', false)
+            || count(array_filter($tables, static fn ($table) =>
+                ($table['structural_type'] ?? null) === 'basic_relational')) > 0;
+        $capabilities = [...$source->capabilities, 'tables' => $accepted > 0
+            ? 'projected_geometry_candidates' : 'unavailable',
+            'geometry' => $accepted > 0 ? 'poppler_points_top_left' : 'unavailable',
+            'projected_tables' => $accepted,
+            'table_projection_status' => $accepted > 0 ? 'projected'
+                : ($tables === [] ? 'no_candidates_detected' : 'candidates_rejected'),
+            'table_candidate_count' => min(1000, count($tables)),
+            'table_rejected_count' => min(1000, $rejected),
+            'table_rejection_reasons' => $reasons];
+        if ($basicRequested) {
+            $capabilities['projected_basic_tables'] = $basic;
+        }
+
+        return new StructuredDocument('PDF', $source->parserVersion.'+poppler-grid.v1'
+            .($basicRequested ? '+basic-grid.v1' : ''), $source->text,
+            $nodes, $capabilities);
     }
 
-    private function project(array $page, array $table, int $ordinal): array
+    /** Basic grids retain exact cells but make no financial or chart claim. */
+    private function projectBasic(array $page, array $table, int $ordinal, ?string &$reason): array
+    {
+        $headerBoxes = array_column($table['header'], 'bbox');
+        foreach ($headerBoxes as $column => $box) {
+            if (! $this->validBox($box)
+                || ($column > 0 && $box[0] <= $headerBoxes[$column - 1][0])) {
+                $reason = 'column_geometry_ambiguous';
+                return [];
+            }
+        }
+        foreach ($table['rows'] as $cells) {
+            if (count($cells) !== count($headerBoxes)) {
+                $reason = 'missing_or_extra_cell';
+                return [];
+            }
+            $y = $cells[0]['bbox'][1] ?? null;
+            $previousX = null;
+            foreach ($cells as $column => $cell) {
+                if (($cell['missing'] ?? false) === true && $cell['text'] === ''
+                    && $cell['bbox'] === null) {
+                    continue;
+                }
+                $box = $cell['bbox'] ?? null;
+                if (! $this->validBox($box) || ! is_numeric($y)
+                    || abs($box[1] - $y) > 4
+                    || $box[0] < $headerBoxes[$column][0] - 40
+                    || ($column + 1 < count($headerBoxes)
+                        && $box[0] >= $headerBoxes[$column + 1][0] - 12)
+                    || ($previousX !== null && $box[0] <= $previousX)) {
+                    $reason = 'cell_column_geometry_mismatch';
+                    return [];
+                }
+                $previousX = $box[0];
+            }
+        }
+        $lines = $this->lines($page['text']);
+        $header = $this->headerLine($lines, $table['header']);
+        if ($header === null) {
+            $reason = 'header_text_unmatched';
+            return [];
+        }
+        [$headerText, $headerStart] = $header;
+        $tableId = $page['id'].'/table['.($ordinal + 1).']';
+        $headerRowId = $tableId.'/row[0]';
+        $staged = [['id' => $headerRowId, 'type' => 'row', 'parent' => $tableId,
+            'path' => $headerRowId, 'page' => $page['page'], 'meta' => ['explicit_header' => true]]];
+        $cursor = 0;
+        $headers = [];
+        foreach ($table['header'] as $column => $cell) {
+            if (! $this->validBox($cell['bbox'] ?? null)
+                || ($position = $this->findInLine($headerText, $cell['text'], $cursor)) === null) {
+                $reason = 'header_text_or_geometry_unmatched';
+                return [];
+            }
+            [$at, $end] = $position;
+            $cursor = $end;
+            $id = $headerRowId.'/cell['.$column.']';
+            $headers[$column] = $id;
+            $staged[] = $this->textNode($page, $id, 'cell', $headerRowId,
+                $headerStart + $at, $headerStart + $end, $cell['bbox'],
+                ['grid_column' => $column + 1, 'grid_span' => 1, 'header' => true,
+                    'page_width' => $table['page_width'], 'page_height' => $table['page_height']]);
+        }
+        $lastStart = $headerStart + mb_strlen($headerText);
+        $seen = [];
+        foreach ($table['rows'] as $rowNumber => $cells) {
+            $found = $this->rowLine($lines, $cells);
+            if ($found === null || $found[1] <= $lastStart) {
+                $reason = 'row_text_unmatched_or_unordered';
+                return [];
+            }
+            [$rowText, $rowStart] = $found;
+            $lastStart = $rowStart;
+            $rowId = $tableId.'/row['.($rowNumber + 1).']';
+            $staged[] = ['id' => $rowId, 'type' => 'row', 'parent' => $tableId,
+                'path' => $rowId, 'page' => $page['page']];
+            $cursor = 0;
+            foreach ($cells as $column => $cell) {
+                if (($cell['missing'] ?? false) === true) {
+                    continue;
+                }
+                if (! $this->validBox($cell['bbox'] ?? null)
+                    || ($position = $this->findInLine($rowText, $cell['text'], $cursor)) === null) {
+                    $reason = 'cell_text_or_geometry_unmatched';
+                    return [];
+                }
+                [$at, $end] = $position;
+                $cursor = $end;
+                $id = $rowId.'/cell['.$column.']';
+                if (isset($seen[$id])) {
+                    $reason = 'duplicate_cell';
+                    return [];
+                }
+                $seen[$id] = true;
+                $staged[] = $this->textNode($page, $id, 'cell', $rowId,
+                    $rowStart + $at, $rowStart + $end, $cell['bbox'],
+                    ['grid_column' => $column + 1, 'grid_span' => 1,
+                        'header_path_ids' => [$headers[$column]],
+                        'page_width' => $table['page_width'],
+                        'page_height' => $table['page_height']]);
+            }
+        }
+        $captionId = null;
+        $caption = $table['caption_source'] ?? null;
+        if (is_array($caption) && $this->validBox($caption['bbox'] ?? null)
+            && is_string($caption['text'] ?? null)) {
+            $before = mb_substr($page['text'], 0, $headerStart);
+            $at = mb_strrpos($before, $caption['text']);
+            if ($at !== false && $headerStart - ($at + mb_strlen($caption['text'])) < 180) {
+                $captionId = $tableId.'/heading:caption';
+                $staged[] = $this->textNode($page, $captionId, 'section_heading', $page['id'],
+                    $at, $at + mb_strlen($caption['text']), $caption['bbox'],
+                    ['heading_kind' => 'caption', 'page_width' => $table['page_width'],
+                        'page_height' => $table['page_height']]);
+            }
+        }
+        $tableNode = ['id' => $tableId, 'type' => 'table', 'parent' => $page['id'],
+            'path' => $tableId, 'page' => $page['page'],
+            'meta' => ['bbox' => $table['bbox'], 'structural_type' => 'basic_relational',
+                'caption_id' => $captionId,
+                'caption_ambiguous' => ($table['caption_ambiguous'] ?? false)
+                    || ($caption !== null && $captionId === null),
+                'layout_status' => ($table['partial'] ?? false)
+                    ? 'partial_reconstruction' : 'structurally_reconstructed',
+                'semantic_status' => 'uninterpreted', 'evidence_status' => 'unverified',
+                'analytical_status' => 'undetermined',
+                'page_width' => $table['page_width'], 'page_height' => $table['page_height']]];
+
+        return [$tableNode, ...$staged];
+    }
+
+    private function project(array $page, array $table, int $ordinal, ?string &$reason): array
     {
         $text = $page['text'];
         $lines = $this->lines($text);
@@ -54,6 +214,7 @@ final class PdfTableStructureProjector
             $header = $this->splitHeaderSpan($text, $table);
             $splitHeader = true;
             if ($header === null) {
+                $reason = 'header_text_unmatched';
                 return [];
             }
         }
@@ -71,10 +232,12 @@ final class PdfTableStructureProjector
                 continue;
             }
             if (! $this->validBox($cell['bbox'] ?? null)) {
+                $reason = 'invalid_header_geometry';
                 return [];
             }
             $found = $this->findInLine($headerText, $cell['text'], $cursor);
             if ($found === null) {
+                $reason = 'header_text_unmatched';
                 return [];
             }
             [$at, $end] = $found;
@@ -95,21 +258,29 @@ final class PdfTableStructureProjector
             }
             $path = $cell['source_path'] ?? [];
             if ($path === []) {
+                $reason = 'period_path_missing';
                 return [];
             }
             $parsed = $this->periods->parse(implode(' ', array_column($path, 'text')));
             if ($parsed === null || $parsed->label !== ($table['periods'][$column] ?? null)) {
+                $reason = 'period_path_mismatch';
                 return [];
             }
             $yearCenter = ($cell['bbox'][0] + $cell['bbox'][2]) / 2;
             foreach (array_slice($path, 0, -1) as $part) {
+                if (! $this->validBox($part['bbox'] ?? null)) {
+                    $reason = 'invalid_header_geometry';
+                    return [];
+                }
                 if ($yearCenter < $part['bbox'][0] - 20 || $yearCenter > $part['bbox'][2] + 20) {
+                    $reason = 'period_path_geometry_mismatch';
                     return [];
                 }
             }
             $ids = [];
             foreach ($path as $part) {
                 if (! $this->validBox($part['bbox'] ?? null)) {
+                    $reason = 'invalid_header_geometry';
                     return [];
                 }
                 if ($part['text'] === $cell['text'] && $part['bbox'] === $cell['bbox']) {
@@ -121,17 +292,20 @@ final class PdfTableStructureProjector
                     $yearAt = $headerOffsets[$column];
                     $partAt = mb_strrpos(mb_substr($text, 0, $yearAt), $part['text']);
                     if ($partAt === false || $yearAt - $partAt > 250) {
+                        $reason = 'period_path_text_unmatched';
                         return [];
                     }
                 } else {
                     $scopeText = $path[0]['text'];
                     $scope = mb_strpos($text, $scopeText, max(0, $headerStart - 250));
                     if ($scope === false || $scope >= $headerStart) {
+                        $reason = 'period_path_text_unmatched';
                         return [];
                     }
                     $partAt = $part['text'] === $scopeText ? $scope
                         : mb_strpos($text, $part['text'], $scope + mb_strlen($scopeText));
                     if ($partAt === false || $partAt >= $headerStart) {
+                        $reason = 'period_path_text_unmatched';
                         return [];
                     }
                 }
@@ -237,6 +411,7 @@ final class PdfTableStructureProjector
             unset($node);
         }
         if (count($rows) < 2 * (count($table['header']) + 1)) {
+            $reason = 'insufficient_exact_rows';
             return [];
         }
         $tableNode = ['id' => $tableId, 'type' => 'table', 'parent' => $page['id'],
@@ -404,7 +579,8 @@ final class PdfTableStructureProjector
 
     private function rowLine(array $lines, array $cells): ?array
     {
-        $wanted = array_column($cells, 'text');
+        $wanted = array_values(array_filter(array_column($cells, 'text'),
+            static fn ($text) => $text !== ''));
         $found = [];
         foreach ($lines as [$line, $start]) {
             $cursor = 0;

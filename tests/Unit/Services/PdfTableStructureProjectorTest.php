@@ -29,6 +29,9 @@ class PdfTableStructureProjectorTest extends TestCase
         $source = app(PdfTableStructureProjector::class)->augment($base, $layout);
         self::assertSame($base->text, $source->text);
         self::assertSame(1, $source->capabilities['projected_tables']);
+        self::assertSame('projected', $source->capabilities['table_projection_status']);
+        self::assertSame(1, $source->capabilities['table_candidate_count']);
+        self::assertSame(0, $source->capabilities['table_rejected_count']);
 
         $rows = array_values(array_filter($source->nodes,
             static fn ($node) => $node['type'] === 'row' && $node['id'] !== 'page:1/table[1]/row[0]'));
@@ -69,8 +72,11 @@ class PdfTableStructureProjectorTest extends TestCase
         $base = app(DocumentTextExtractor::class)->extractPdfStructured($path);
         $layout = app(PdfTableGeometryProbe::class)->extract($path);
         $layout[0]['periods'][2] = 'Q3 2026';
-        self::assertSame(0, app(PdfTableStructureProjector::class)
-            ->augment($base, $layout)->capabilities['projected_tables']);
+        $rejected = app(PdfTableStructureProjector::class)->augment($base, $layout);
+        self::assertSame(0, $rejected->capabilities['projected_tables']);
+        self::assertSame('candidates_rejected', $rejected->capabilities['table_projection_status']);
+        self::assertSame(1, $rejected->capabilities['table_rejected_count']);
+        self::assertSame(['period_path_mismatch' => 1], $rejected->capabilities['table_rejection_reasons']);
 
         $layout = app(PdfTableGeometryProbe::class)->extract($path);
         $layout[0]['header'][1]['bbox'] = null;
@@ -93,6 +99,36 @@ class PdfTableStructureProjectorTest extends TestCase
         config()->set('document_intelligence.pdf_table_structure', false);
         $source = app(DocumentTextExtractor::class)->extractPdfStructured($this->fixture());
         self::assertSame(['page'], array_unique(array_column($source->nodes, 'type')));
+    }
+
+    public function test_swapped_value_columns_do_not_project_as_a_valid_relationship(): void
+    {
+        $path = base_path('tests/Fixtures/Northstar_Q3_2026_Board_Performance_Review.pdf');
+        config()->set('document_intelligence.pdf_table_structure', false);
+        $base = app(DocumentTextExtractor::class)->extractPdfStructured($path);
+        $layout = app(PdfTableGeometryProbe::class)->extract($path);
+        self::assertCount(1, $layout);
+        foreach ($layout[0]['rows'] as &$row) {
+            [$row[1], $row[2]] = [$row[2], $row[1]];
+        }
+        unset($row);
+
+        $source = app(PdfTableStructureProjector::class)->augment($base, $layout);
+        self::assertSame(0, $source->capabilities['projected_tables']);
+        self::assertSame('candidates_rejected', $source->capabilities['table_projection_status']);
+        self::assertSame(['insufficient_exact_rows' => 1], $source->capabilities['table_rejection_reasons']);
+        self::assertNotContains('table', array_column($source->nodes, 'type'));
+    }
+
+    public function test_no_candidates_are_distinguished_from_rejected_candidates(): void
+    {
+        config()->set('document_intelligence.pdf_table_structure', true);
+        $source = app(DocumentTextExtractor::class)->extractPdfStructured(
+            base_path('tests/Fixtures/test_5page.pdf'));
+        self::assertSame('no_candidates_detected', $source->capabilities['table_projection_status']);
+        self::assertSame(0, $source->capabilities['table_candidate_count']);
+        self::assertSame(0, $source->capabilities['table_rejected_count']);
+        self::assertSame([], $source->capabilities['table_rejection_reasons']);
     }
 
     public function test_opt_in_projects_tables_without_changing_prose_text(): void

@@ -24,9 +24,20 @@ class ChartResource extends JsonResource
             }
             $verified = $reader->candidate($document, $this->resource);
             $valid = $verified !== null;
+            $strategy = $metadata['verification_strategy'] ?? 'financial.v1';
             $points = is_array($this->data) ? $this->data : [];
             $ids = array_values(array_unique(array_merge(...array_map(
                 static fn ($point) => $point['sourceIds'] ?? [], $points))));
+            $unit = $verified['unit'] ?? null;
+            if ($valid && $strategy === 'categorical.v1') {
+                $scaleLabel = match ($verified['scale']) {
+                    1000 => 'thousand', 1000000 => 'million', 1000000000 => 'billion',
+                    default => null,
+                };
+                if ($scaleLabel !== null) {
+                    $unit .= ' '.$scaleLabel;
+                }
+            }
 
             return [
                 'id' => (string) $this->id, 'logicalChartId' => $metadata['candidate_id'] ?? null,
@@ -36,16 +47,20 @@ class ChartResource extends JsonResource
                 'sourcePage' => $valid ? ($points[0]['source']['page'] ?? null) : null,
                 'sourceImageUrl' => null, 'sourceImageMediaType' => null,
                 'sourceOrigin' => 'verified_pdf_table',
+                'verificationStrategy' => $strategy,
                 'valueStatus' => $valid ? 'exact' : 'unavailable',
                 'dimensionsVerified' => $valid, 'valuesVerified' => $valid,
-                'basis' => 'time_series', 'axis' => null, 'series' => null,
-                'valueFormat' => $valid ? ['unit' => $verified['unit'],
+                'basis' => $strategy === 'categorical.v1' ? 'categorical' : 'time_series',
+                'axis' => null, 'series' => null,
+                'valueFormat' => $valid ? ['unit' => $unit,
                     'kind' => $verified['unitKind'], 'scale' => $verified['scale'],
                     'sourceUnit' => $verified['sourceUnit'] ?? null,
                     'unitVerification' => 'verified'] : null,
                 'sourceRevision' => $this->intelligence_revision_id,
                 'recommendedType' => $this->type, 'renderEligible' => $valid,
-                'eligibilityReason' => $valid ? 'Current source-verified PDF table cells' : null,
+                'eligibilityReason' => $valid ? ($strategy === 'categorical.v1'
+                    ? 'Current source-verified category and value cells'
+                    : 'Current source-verified PDF table cells') : null,
                 'unavailabilityReason' => $valid ? null
                     : 'PDF table source proof is unavailable for the current document revision.',
                 'exportSupport' => ['csv' => $valid, 'png' => $valid,

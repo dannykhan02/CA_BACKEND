@@ -75,15 +75,25 @@ class DocumentTextExtractor
             return $source;
         }
         try {
-            $tables = app(PdfTableGeometryProbe::class)->extract($path);
-
-            return app(PdfTableStructureProjector::class)
-                ->augment($source, $tables);
+            $probe = app(PdfTableGeometryProbe::class);
+            $tables = config('document_intelligence.pdf_basic_table_structure', false)
+                ? $probe->extractAll($path) : $probe->extract($path);
         } catch (\Throwable $error) {
             // Layout support is optional. Prose extraction and the existing
             // page-only evidence path remain available on parser failure.
             return new StructuredDocument('PDF', 'smalot-page.v2', $text, $nodes,
-                [...$source->capabilities, 'table_extraction_error' => $error::class]);
+                [...$source->capabilities, 'table_projection_status' => 'geometry_extraction_failed',
+                    'table_candidate_count' => null, 'table_rejected_count' => null,
+                    'table_rejection_reasons' => [], 'table_extraction_error' => $error::class]);
+        }
+        try {
+            return app(PdfTableStructureProjector::class)->augment($source, $tables);
+        } catch (\Throwable $error) {
+            return new StructuredDocument('PDF', 'smalot-page.v2', $text, $nodes,
+                [...$source->capabilities, 'table_projection_status' => 'projection_failed',
+                    'table_candidate_count' => min(1000, count($tables)),
+                    'table_rejected_count' => null, 'table_rejection_reasons' => [],
+                    'table_extraction_error' => $error::class]);
         }
     }
 

@@ -15,11 +15,17 @@ final class VerifiedPdfChartReadModel
 
     public function __construct(private MetricCollector $metrics,
         private ChartCandidateBuilder $builder,
-        private StructuredExtractionStore $extractions) {}
+        private StructuredExtractionStore $extractions,
+        private PdfCategoricalChartBuilder $categorical) {}
 
     public function candidate(Document $document, DocumentChart $chart): ?array
     {
         $metadata = $chart->source_metadata;
+        if (is_array($metadata)
+            && ($metadata['verification_strategy'] ?? null)
+                === PdfCategoricalCandidateCollector::STRATEGY) {
+            return $this->categoricalCandidate($document, $chart, $metadata);
+        }
         if (! config('document_intelligence.pdf_table_structure') || $document->type !== 'PDF'
             || ! is_array($metadata) || ($metadata['origin'] ?? null) !== 'verified_pdf_table'
             || $chart->workspace_id !== $document->workspace_id || $chart->document_id !== $document->id
@@ -110,6 +116,76 @@ final class VerifiedPdfChartReadModel
                     ->where('workspace_id', $document->workspace_id)
                     ->where('document_id', $document->id)->where('evidence_id', $evidence->id)
                     ->where('anchor_id', $anchor->id)->where('role', 'value')->exists()) {
+                return null;
+            }
+        }
+
+        return $candidate;
+    }
+
+    private function categoricalCandidate(Document $document, DocumentChart $chart,
+        array $metadata): ?array
+    {
+        if (! config('document_intelligence.pdf_table_structure')
+            || ! config('document_intelligence.pdf_basic_table_structure')
+            || $document->type !== 'PDF'
+            || ($metadata['origin'] ?? null) !== 'verified_pdf_table'
+            || $chart->workspace_id !== $document->workspace_id
+            || $chart->document_id !== $document->id
+            || $chart->intelligence_revision_id !== $document->intelligenceRevisionForRelations()
+            || $document->published_intelligence_revision_id !== null
+                && $chart->intelligence_revision_id !== $document->published_intelligence_revision_id) {
+            return null;
+        }
+        $revision = hash('sha256', (string) $document->extracted_text);
+        $pipeline = $document->ai_pipeline['key'] ?? 'legacy';
+        $setId = $metadata['provenance_set_id'] ?? null;
+        $candidateId = $metadata['candidate_id'] ?? null;
+        $live = DB::table('documents')->where('id', $document->id)
+            ->where('workspace_id', $document->workspace_id)->whereNull('deleted_at')
+            ->first(['file_hash', 'extracted_text']);
+        if (! is_string($setId) || ! is_string($candidateId)
+            || ($metadata['source_revision'] ?? null) !== $revision
+            || ($metadata['pipeline_key'] ?? null) !== $pipeline
+            || $live === null || $live->file_hash !== $document->file_hash
+            || hash('sha256', (string) $live->extracted_text) !== $revision
+            || ! DB::table('source_provenance_sets')->where('id', $setId)
+                ->where('workspace_id', $document->workspace_id)->where('document_id', $document->id)
+                ->where('pipeline_key', $pipeline)->where('source_revision', $revision)
+                ->where('policy_version', SourceProvenance::POLICY)
+                ->where('published', true)->where('active', true)->exists()
+            || $document->published_intelligence_revision_id !== null
+                && ! DB::table('document_intelligence_revisions')
+                    ->where('id', $document->published_intelligence_revision_id)
+                    ->where('workspace_id', $document->workspace_id)->where('document_id', $document->id)
+                    ->where('state', 'published')->where('provenance_set_id', $setId)->exists()) {
+            return null;
+        }
+        $source = $this->extractions->active($document);
+        if ($source === null || ! str_contains($source->parserVersion, '+basic-grid.v1')) {
+            return null;
+        }
+        $candidate = collect($this->categorical->build($document, $setId))
+            ->first(static fn ($item) => $item['id'] === $candidateId);
+        if ($candidate === null || $chart->type !== 'bar'
+            || $chart->title !== $candidate['title']
+            || $chart->description !== $candidate['description']
+            || ($metadata['table_id'] ?? null) !== $candidate['tableId']
+            || ($metadata['value_column'] ?? null) !== $candidate['valueColumn']
+            || ($metadata['source_references'] ?? null) != $candidate['references']) {
+            return null;
+        }
+        $points = $chart->data ?? [];
+        if (count($points) !== count($candidate['points']) || count($points) < 2) {
+            return null;
+        }
+        foreach ($points as $index => $point) {
+            $reference = $point['source'] ?? null;
+            unset($point['source']);
+            $sourceId = $point['sourceIds'][0] ?? null;
+            if ($point != $candidate['points'][$index]
+                || ! is_string($sourceId)
+                || $reference != ($candidate['references'][$sourceId] ?? null)) {
                 return null;
             }
         }

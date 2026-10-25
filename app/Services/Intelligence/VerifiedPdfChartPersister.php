@@ -14,7 +14,8 @@ final class VerifiedPdfChartPersister
 {
     public function __construct(private MetricCollector $metrics,
         private ChartCandidateBuilder $builder,
-        private StructuredExtractionStore $extractions) {}
+        private StructuredExtractionStore $extractions,
+        private PdfCategoricalChartBuilder $categorical) {}
 
     public function persist(Document $document, ?string $setId): array
     {
@@ -35,10 +36,12 @@ final class VerifiedPdfChartPersister
                 && ($chart['sourceVerification'] ?? null) === 'verified'
                 && ($chart['unitVerification'] ?? null) === 'verified'
                 && ($chart['numericVerification'] ?? null) === 'parsed'));
-        if ($candidates === []) {
+        $categorical = $this->categorical->build($document, $setId);
+        if ($candidates === [] && $categorical === []) {
             return $this->retract($document);
         }
-        $sourceIds = array_values(array_unique(array_merge(...array_column($candidates, 'sourceIds'))));
+        $sourceIds = $candidates === [] ? []
+            : array_values(array_unique(array_merge(...array_column($candidates, 'sourceIds'))));
         $rows = DocumentEvidence::where('workspace_id', $document->workspace_id)
             ->where('document_id', $document->id)
             ->where('pipeline_key', $document->ai_pipeline['key'] ?? 'legacy')
@@ -68,7 +71,8 @@ final class VerifiedPdfChartPersister
                 'end_offset' => $valueSources[0]['end_offset']];
         }
 
-        return DB::transaction(function () use ($document, $setId, $candidates, $references): array {
+        return DB::transaction(function () use ($document, $setId, $candidates, $references,
+            $categorical): array {
             $current = Document::where('workspace_id', $document->workspace_id)
                 ->whereKey($document->id)->lockForUpdate()->first();
             if ($current === null || $current->file_hash !== $document->file_hash
@@ -109,6 +113,42 @@ final class VerifiedPdfChartPersister
                         'source_revision' => hash('sha256', (string) $document->extracted_text),
                         'provenance_set_id' => $setId, 'pipeline_key' => $document->ai_pipeline['key'],
                         'candidate_id' => $candidate['id'], 'source_references' => $references],
+                ]);
+                foreach ($pointData as $order => $point) {
+                    DocumentChartPoint::create(['document_chart_id' => $chart->id,
+                        'workspace_id' => $document->workspace_id, 'label' => $point['label'],
+                        'value' => $point['value'], 'sort_order' => $order]);
+                    $counts['points']++;
+                }
+                $counts['charts']++;
+            }
+            foreach (array_slice($categorical, 0, max(0, 12 - $counts['charts'])) as $candidate) {
+                $pointData = [];
+                foreach ($candidate['points'] as $point) {
+                    $sourceId = $point['sourceIds'][0] ?? null;
+                    $reference = is_string($sourceId) ? ($candidate['references'][$sourceId] ?? null) : null;
+                    if (! is_array($reference) || ! is_numeric($point['value'] ?? null)) {
+                        $pointData = [];
+                        break;
+                    }
+                    $pointData[] = [...$point, 'source' => $reference];
+                }
+                if (count($pointData) < 2 || count($pointData) !== count($candidate['points'])) {
+                    continue;
+                }
+                $chart = DocumentChart::create([
+                    'workspace_id' => $document->workspace_id, 'document_id' => $document->id,
+                    'intelligence_revision_id' => $document->intelligenceRevisionForRelations(),
+                    'type' => 'bar', 'title' => $candidate['title'],
+                    'description' => $candidate['description'], 'data' => $pointData,
+                    'source_metadata' => ['origin' => 'verified_pdf_table',
+                        'verification_strategy' => PdfCategoricalCandidateCollector::STRATEGY,
+                        'source_revision' => hash('sha256', (string) $document->extracted_text),
+                        'provenance_set_id' => $setId,
+                        'pipeline_key' => $document->ai_pipeline['key'] ?? 'legacy',
+                        'candidate_id' => $candidate['id'], 'table_id' => $candidate['tableId'],
+                        'value_column' => $candidate['valueColumn'],
+                        'source_references' => $candidate['references']],
                 ]);
                 foreach ($pointData as $order => $point) {
                     DocumentChartPoint::create(['document_chart_id' => $chart->id,
