@@ -96,7 +96,7 @@ class AnthropicProviderErrorDiagnosticsTest extends TestCase
         return $records[0]['context'];
     }
 
-    private function runExtraction(Document $document, DocumentChunk $chunk, \Closure $fake): TestHandler
+    private function runExtraction(Document $document, DocumentChunk $chunk, \Closure $fake, string $classification = 'deterministic'): TestHandler
     {
         Http::fake(['api.anthropic.com/*' => $fake]);
         $handler = new TestHandler;
@@ -107,8 +107,7 @@ class AnthropicProviderErrorDiagnosticsTest extends TestCase
                     (int) $chunk->end_offset - (int) $chunk->start_offset));
             self::fail('A rejected provider request must not return an extraction result.');
         } catch (AiProcessingException $e) {
-            self::assertSame('deterministic', $e->classification,
-                'Classification of an unclassified 4xx must not move.');
+            self::assertSame($classification, $e->classification);
         }
 
         return $handler;
@@ -185,7 +184,7 @@ class AnthropicProviderErrorDiagnosticsTest extends TestCase
         $document = $this->document(spans: true);
         $chunk = $this->firstLeaf($document);
         $handler = $this->runExtraction($document, $chunk,
-            $this->rejection('output_config.format.schema: maxItems is not supported'));
+            $this->rejection('output_config.format.schema: maxItems is not supported'), 'unsupported_schema');
 
         $context = $this->captureProviderError($handler);
         self::assertSame(400, $context['status']);
@@ -196,7 +195,7 @@ class AnthropicProviderErrorDiagnosticsTest extends TestCase
         self::assertSame('claude-haiku-4-5-20251001', $context['model']);
         self::assertSame($document->id, $context['document_id']);
         self::assertSame($chunk->id, $context['chunk_id']);
-        self::assertSame('deterministic', $context['failure_class']);
+        self::assertSame('unsupported_schema', $context['failure_class']);
         self::assertIsInt($context['duration_ms']);
         self::assertGreaterThanOrEqual(0, $context['duration_ms']);
     }

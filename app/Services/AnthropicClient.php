@@ -18,6 +18,7 @@ use App\Services\AI\Incremental\ExtractionCapacity;
 use App\Services\AI\Incremental\ExtractionExperiment;
 use App\Services\AI\Incremental\IncrementalPipeline;
 use App\Services\AI\Incremental\SynthesisSchema;
+use App\Services\AI\LegacyIntelligenceSchema;
 use App\Services\AI\PromptManager;
 use App\Services\AI\ProviderGate;
 use App\Services\AI\ProviderRequestAdmission;
@@ -517,6 +518,11 @@ PROMPT;
             'output_tokens' => $response['usage']['output_tokens'] ?? null,
             'duration_ms' => $response['_telemetry']['duration_ms'] ?? null,
             'result' => $status, 'failure_class' => $response['_telemetry']['failure_class'] ?? null,
+            'structured_output_mode' => $response['_telemetry']['structured_output_mode'] ?? null,
+            'structured_response_attempt' => $response['_telemetry']['structured_response_attempt'] ?? null,
+            'provider_request_id' => $response['_telemetry']['provider_request_id'] ?? null,
+            'stop_reason' => $response['stop_reason'] ?? null,
+            'recovery_attempted' => $response['_telemetry']['recovery_attempted'] ?? false,
         ]);
         if (! $document) {
             return null;
@@ -600,6 +606,13 @@ PROMPT;
     {
         $this->currentDocumentId = $document?->id;
         $this->currentChunkId = null;
+        $model = $requestOptions['model'] ?? $this->modelFor($this->currentOperation ?? $purpose);
+        if (! isset($requestOptions['output_config']['format'])
+            && in_array($model, config('document_intelligence.structured_models', []), true)
+            && ($schema = LegacyIntelligenceSchema::for($purpose, (int) $this->lastResolvedPromptVersion)) !== null) {
+            $requestOptions['output_config']['format'] = ['type' => 'json_schema', 'schema' => $schema];
+        }
+        $schemaMode = isset($requestOptions['output_config']['format']);
         // Resolve an operation's initial output cap once, at the shared
         // structured-response boundary. Explicit request options still win
         // (for example synthesis or a controlled test override).
@@ -627,6 +640,8 @@ PROMPT;
                 throw $e;
             }
             try {
+                $response['_telemetry']['structured_output_mode'] = $schemaMode ? 'json_schema' : 'prompt';
+                $response['_telemetry']['structured_response_attempt'] = $attempt + 1;
                 $parsed = $parser($response);
                 $response['_telemetry']['optional_items_dropped'] = array_sum($parsed['_optional_items_dropped'] ?? []);
                 $response['_telemetry']['partial'] = ! empty($parsed['_optional_items_dropped']);
@@ -636,8 +651,12 @@ PROMPT;
                 return $parsed;
             } catch (AnthropicStructuredOutputException $e) {
                 $response['_telemetry']['failure_class'] = $e->outputStatus;
+                $response['_telemetry']['structured_output_mode'] = $schemaMode ? 'json_schema' : 'prompt';
+                $response['_telemetry']['recovery_attempted'] = $attempt > 0;
                 $this->recordAiRun($document, $purpose, $response, $e->outputStatus);
-                if (($requestOptions['single_response'] ?? false) || $attempt === 1 || ! in_array($e->outputStatus, ['malformed_output', 'truncated'], true)) {
+                if (($requestOptions['single_response'] ?? false) || $attempt === 1
+                    || ! in_array($e->outputStatus, ['malformed_output', 'truncated'], true)
+                    || ($schemaMode && $e->outputStatus === 'malformed_output')) {
                     throw $e;
                 }
                 if ($e->outputStatus === 'truncated') {
@@ -650,6 +669,18 @@ PROMPT;
             } catch (\Throwable $e) {
                 $response['_telemetry']['failure_class'] = 'invalid_schema';
                 $this->recordAiRun($document, $purpose, $response, 'invalid_schema');
+                if ($e instanceof \RuntimeException && ! $e instanceof AiProcessingException
+                    && LegacyIntelligenceSchema::for($purpose, (int) $this->lastResolvedPromptVersion) !== null) {
+                    throw new AnthropicStructuredOutputException('invalid_schema',
+                        'Anthropic structured response failed application validation.', $e, [
+                            'operation' => $purpose, 'provider' => 'anthropic',
+                            'model' => $response['model'] ?? $model,
+                            'structured_output_mode' => $schemaMode ? 'json_schema' : 'prompt',
+                            'structured_response_attempt' => $attempt + 1,
+                            'provider_request_id' => $response['_telemetry']['provider_request_id'] ?? null,
+                            'stop_reason' => $response['stop_reason'] ?? null,
+                        ]);
+                }
                 throw $e;
             }
         }
@@ -791,7 +822,7 @@ PROMPT;
         $providerRequestId = null;
         if ($response->failed()) {
             $kind = $this->classifyFailure($response->status(), (string) $response->json('error.message'));
-            $typed = ($options['typed_errors'] ?? false) || in_array($kind, ['authentication', 'billing', 'invalid_model'], true);
+            $typed = ($options['typed_errors'] ?? false) || in_array($kind, ['authentication', 'billing', 'invalid_model', 'unsupported_schema'], true);
             /*
              * One diagnostic per rejected response, emitted before the branches below so that every
              * non-2xx path is covered exactly once. The failure class logged here is the one the run
@@ -911,6 +942,7 @@ PROMPT;
             in_array($status, [401, 403], true) => 'authentication',
             $status === 402 || preg_match('/credit balance|insufficient.*credit|billing|purchase credits/i', $message) === 1 => 'billing',
             $status === 404 || ($status === 400 && preg_match('/model.*(invalid|not found|unavailable|not exist|not supported)|invalid.*model/i', $message) === 1) => 'invalid_model',
+            $status === 400 && preg_match('/(?:output_config|output_format|json.schema|grammar|schema).*?(?:unsupported|not supported|invalid|not allowed)|(?:unsupported|not supported|invalid).*?(?:output_config|output_format|json.schema|grammar|schema)/i', $message) === 1 => 'unsupported_schema',
             $status === 429 || $status >= 500 => 'transient',
             $status === 413 || ($status === 400 && preg_match('/context|too many tokens|too long/i', $message) === 1) => 'context_overflow',
             default => 'deterministic',
@@ -1142,7 +1174,12 @@ PROMPT;
         $metadata = [
             'operation' => $this->currentOperation ?? 'unknown',
             'document_id' => $this->currentDocumentId,
+            'provider' => 'anthropic',
             'stop_reason' => $response['stop_reason'] ?? null,
+            'provider_request_id' => $response['_telemetry']['provider_request_id'] ?? null,
+            'structured_output_mode' => $response['_telemetry']['structured_output_mode'] ?? 'unknown',
+            'structured_response_attempt' => $response['_telemetry']['structured_response_attempt'] ?? null,
+            'recovery_attempted' => ($response['_telemetry']['structured_response_attempt'] ?? 1) > 1,
             'input_tokens' => $response['usage']['input_tokens'] ?? null,
             'output_tokens' => $response['usage']['output_tokens'] ?? null,
             'content_block_count' => count($blocks),
@@ -1152,8 +1189,15 @@ PROMPT;
         if (($response['stop_reason'] ?? null) === 'max_tokens') {
             $this->structuredOutputFailure('truncated', 'Anthropic response reached max_tokens.', $metadata, $text);
         }
+        if (($response['stop_reason'] ?? null) === 'refusal') {
+            $this->structuredOutputFailure('refusal', 'Anthropic refused the structured request.', $metadata, $text);
+        }
         if (isset($response['stop_reason']) && ! in_array($response['stop_reason'], ['end_turn', 'stop_sequence'], true)) {
             $this->structuredOutputFailure('provider_error', 'Anthropic stopped without a final text response.', $metadata, $text);
+        }
+        if (array_filter($blocks, fn ($block) => ! is_array($block)
+            || ! in_array($block['type'] ?? null, ['text', 'thinking', 'redacted_thinking'], true))) {
+            $this->structuredOutputFailure('unsupported_response', 'Unexpected Anthropic content block.', $metadata, $text);
         }
         $cleaned = trim($text);
         if (preg_match('/\A```(?:json)?[ \t]*\R([\s\S]*?)\R```\z/i', $cleaned, $match)) {
@@ -1162,6 +1206,8 @@ PROMPT;
         try {
             $decoded = json_decode($cleaned, true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $e) {
+            $metadata['parse_phase'] = json_validate($text) ? 'after_cleaning' : 'raw_output';
+            $metadata['json_error_category'] = $e->getCode();
             $this->structuredOutputFailure('malformed_output', $e->getMessage(), $metadata, $text, $e);
         }
         if (! is_array($decoded) || (array_is_list($decoded) && ($decoded !== [] || $cleaned !== '{}'))) {
@@ -1181,7 +1227,10 @@ PROMPT;
             'json_error' => $detail,
             'response_characters' => mb_strlen($text),
         ]);
-        $e = new AnthropicStructuredOutputException($status, "Anthropic structured response {$status}: {$detail}", $previous);
+        $safe = array_intersect_key($metadata, array_flip(['operation', 'provider', 'model', 'stop_reason',
+            'provider_request_id', 'structured_output_mode', 'structured_response_attempt',
+            'parse_phase', 'json_error_category', 'recovery_attempted']));
+        $e = new AnthropicStructuredOutputException($status, "Anthropic structured response {$status}: {$detail}", $previous, $safe);
         withScope(function (Scope $scope) use ($e, $metadata, $status) {
             $scope->setTag('provider', 'anthropic');
             $scope->setTag('operation', $metadata['operation']);

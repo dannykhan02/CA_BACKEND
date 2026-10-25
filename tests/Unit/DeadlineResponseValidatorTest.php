@@ -144,6 +144,14 @@ class DeadlineResponseValidatorTest extends TestCase
         self::assertSame([], (new ResponseValidator)->validateDeadlines(['deadlines' => []])['deadlines']);
     }
 
+    public function test_all_rejected_deadlines_cannot_be_reported_as_a_valid_empty_result(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        (new ResponseValidator)->validateDeadlines(['deadlines' => [
+            $this->deadline(['date_type' => 'relative', 'due_date' => '2026-07-14']),
+        ]]);
+    }
+
     public function test_a_missing_or_non_array_deadlines_envelope_is_still_a_clean_failure(): void
     {
         foreach ([[], ['deadlines' => null], ['deadlines' => 'none']] as $decoded) {

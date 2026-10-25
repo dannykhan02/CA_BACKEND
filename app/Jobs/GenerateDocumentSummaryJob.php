@@ -209,6 +209,12 @@ class GenerateDocumentSummaryJob implements ShouldQueue
             if (! app(DocumentRevisionPublisher::class)->owns($document->fresh(), $this->revisionId)) {
                 return;
             }
+            if (! $checkpoint && $this->shouldRetryMalformedOutput($e)) {
+                if ($this->abandonIntelligence($document, $stage)) {
+                    return;
+                }
+                throw $e;
+            }
             $retryScheduled = false;
             $failure = $e instanceof AiProcessingException ? $e->classification
                 : ($e instanceof AnthropicStructuredOutputException ? $e->outputStatus : 'validation');
@@ -225,7 +231,7 @@ class GenerateDocumentSummaryJob implements ShouldQueue
             if (! $checkpoint && $this->abandonIntelligence($document, $stage)) {
                 return;
             }
-            $recorder->fail($stage, 'Document summary failed.');
+            $recorder->fail($stage, 'Document summary failed.', $this->intelligenceFailureDiagnostics($e));
             if (! $retryScheduled) {
                 $this->fail($e);
             }
@@ -504,7 +510,7 @@ class GenerateDocumentSummaryJob implements ShouldQueue
         });
         Log::error('GenerateDocumentSummaryJob failed after retries', [
             'document_id' => $this->documentId,
-            'failure_class' => $e instanceof AiProcessingException ? $e->classification : 'synthesis_failure',
+            'failure_class' => $this->intelligenceFailureDiagnostics($e)['classification'],
         ]);
     }
 }

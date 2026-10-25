@@ -141,7 +141,13 @@ class GenerateInsightsJob implements ShouldQueue
 
                 return;
             }
-            $failed = DB::transaction(function () use ($document, $recorder, $insightsStage) {
+            if ($this->shouldRetryMalformedOutput($e)) {
+                if ($this->abandonIntelligence($document, $insightsStage)) {
+                    return;
+                }
+                throw $e;
+            }
+            $failed = DB::transaction(function () use ($document, $recorder, $insightsStage, $e) {
                 $current = Document::whereKey($document->id)->lockForUpdate()->first();
                 if (! $current || $current->status !== 'Processing'
                     || ! app(DocumentRevisionPublisher::class)->owns($current, $this->revisionId)) {
@@ -149,7 +155,8 @@ class GenerateInsightsJob implements ShouldQueue
 
                     return false;
                 }
-                $recorder->fail($insightsStage, 'Analysis could not be completed. Please try again.');
+                $recorder->fail($insightsStage, 'Analysis could not be completed. Please try again.',
+                    $this->intelligenceFailureDiagnostics($e));
                 $current->forceFill([
                     'status' => 'Needs Review',
                     'error_message' => 'Analysis could not be completed. Please try again.',
@@ -440,9 +447,7 @@ class GenerateInsightsJob implements ShouldQueue
         }
         app(EntitlementService::class)->releaseDocumentReservation($document, 'analysis_failed');
 
-        Log::error('GenerateInsightsJob failed after retries', [
-            'document_id' => $this->documentId,
-            'error' => $e->getMessage(),
-        ]);
+        Log::error('GenerateInsightsJob failed after retries',
+            SafeExceptionContext::for($e, ['document_id' => $this->documentId]));
     }
 }

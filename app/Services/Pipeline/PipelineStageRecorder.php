@@ -55,11 +55,13 @@ class PipelineStageRecorder
         ]);
     }
 
-    public function fail(ProcessingJob $job, string $message): void
+    public function fail(ProcessingJob $job, string $message, array $diagnostics = []): void
     {
-        ProcessingJob::whereKey($job->id)->whereIn('status', ['pending', 'processing'])->update([
-            'status' => 'failed', 'error_message' => $message, 'completed_at' => now(),
-        ]);
+        $updates = ['status' => 'failed', 'error_message' => $message, 'completed_at' => now()];
+        if ($diagnostics !== []) {
+            $updates['output'] = json_encode(['diagnostics' => $diagnostics]);
+        }
+        ProcessingJob::whereKey($job->id)->whereIn('status', ['pending', 'processing'])->update($updates);
     }
 
     public function isCurrent(ProcessingJob $job): bool

@@ -219,7 +219,7 @@ class ResponseValidator
     {
         $allowedTypes = ['organization', 'person', 'department', 'location', 'regulator', 'contract', 'reference', 'date', 'other'];
 
-        if (! array_key_exists('entities', $decoded) || ! is_array($decoded['entities'])) {
+        if (! array_key_exists('entities', $decoded) || ! is_array($decoded['entities']) || ! array_is_list($decoded['entities'])) {
             throw new \RuntimeException('AI response missing required array field: entities');
         }
 
@@ -249,7 +249,7 @@ class ResponseValidator
     {
         $allowedSeverities = ['low', 'medium', 'high', 'critical'];
 
-        if (! array_key_exists('risks', $decoded) || ! is_array($decoded['risks'])) {
+        if (! array_key_exists('risks', $decoded) || ! is_array($decoded['risks']) || ! array_is_list($decoded['risks'])) {
             throw new \RuntimeException('AI response missing required array field: risks');
         }
 
@@ -300,7 +300,7 @@ class ResponseValidator
      */
     public function validateDeadlines(array $decoded): array
     {
-        if (! array_key_exists('deadlines', $decoded) || ! is_array($decoded['deadlines'])) {
+        if (! array_key_exists('deadlines', $decoded) || ! is_array($decoded['deadlines']) || ! array_is_list($decoded['deadlines'])) {
             throw new \RuntimeException('AI response missing required array field: deadlines');
         }
 
@@ -315,6 +315,9 @@ class ResponseValidator
                 $dropped++;
                 $dropReasons[$rejection->reason] = ($dropReasons[$rejection->reason] ?? 0) + 1;
             }
+        }
+        if ($decoded['deadlines'] !== [] && $kept === []) {
+            throw new \RuntimeException('AI response contained deadlines but none passed validation.');
         }
         $decoded['deadlines'] = $kept;
         // Metadata only, never evidence or raw responses.
