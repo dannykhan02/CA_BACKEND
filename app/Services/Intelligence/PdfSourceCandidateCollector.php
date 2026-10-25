@@ -35,7 +35,9 @@ final class PdfSourceCandidateCollector
             }
             $row = $nodes[$cell['parent'].'/cell[0]'] ?? null;
             $table = $nodes[dirname(dirname($cell['id']))] ?? null;
-            if ($row === null || $table === null || ($table['type'] ?? null) !== 'table') {
+            if ($row === null || $table === null || ($table['type'] ?? null) !== 'table'
+                || ($table['meta']['structural_type'] ?? 'multi_period_financial_grid')
+                    !== 'multi_period_financial_grid') {
                 continue;
             }
             $extracted++;

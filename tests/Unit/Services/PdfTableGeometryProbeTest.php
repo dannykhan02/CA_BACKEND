@@ -47,4 +47,16 @@ class PdfTableGeometryProbeTest extends TestCase
         self::assertSame([], app(PdfTableGeometryProbe::class)->extract(
             base_path('tests/Fixtures/test_5page.pdf')));
     }
+
+    public function test_single_period_cost_composition_in_existing_report_is_outside_candidate_scope(): void
+    {
+        $path = base_path('tests/Fixtures/Northstar_Q3_2026_Board_Performance_Review.pdf');
+        $tables = app(PdfTableGeometryProbe::class)->extract($path);
+        self::assertCount(1, $tables);
+        self::assertSame('Financial results by quarter (KES million)', $tables[0]['unit_source']);
+        self::assertNotContains('Logistics', array_map(
+            static fn (array $row): string => $row[0]['text'], $tables[0]['rows']));
+        self::assertStringContainsString('Q3 operating costs by function',
+            app(\App\Services\DocumentTextExtractor::class)->extractPdfStructured($path)->text);
+    }
 }

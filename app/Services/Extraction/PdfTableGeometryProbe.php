@@ -17,6 +17,17 @@ final class PdfTableGeometryProbe
     /** @return list<array<string,mixed>> */
     public function extract(string $path): array
     {
+        return $this->scan($path, false);
+    }
+
+    /** Financial candidates plus conservative native-text relational grids. */
+    public function extractAll(string $path): array
+    {
+        return $this->scan($path, true);
+    }
+
+    private function scan(string $path, bool $includeBasic): array
+    {
         if (! is_file($path) || ! is_readable($path)) {
             throw new \InvalidArgumentException('PDF is not readable.');
         }
@@ -44,6 +55,7 @@ final class PdfTableGeometryProbe
         $hash = hash_file('sha256', $path);
         foreach ($pages as $pageIndex => $page) {
             $lines = $this->lines($xpath, $page);
+            $financialRegions = [];
             foreach ($lines as $index => $line) {
                 $header = $this->header($lines, $index);
                 if ($header === null) {
@@ -82,6 +94,7 @@ final class PdfTableGeometryProbe
                 $allBoxes = array_values(array_filter(array_merge($headers, ...$rows),
                     static fn ($cell) => is_array($cell['bbox'] ?? null)));
                 $tables[] = [
+                    'structural_type' => 'multi_period_financial_grid',
                     'page' => $pageIndex + 1,
                     'page_width' => (float) $page->attributes->getNamedItem('width')?->nodeValue,
                     'page_height' => (float) $page->attributes->getNamedItem('height')?->nodeValue,
@@ -104,10 +117,124 @@ final class PdfTableGeometryProbe
                         $row, array_keys($row)), $rows, array_keys($rows)),
                     'status' => 'layout_candidate_only',
                 ];
+                $financialRegions[] = $tables[array_key_last($tables)]['bbox'];
+            }
+            if ($includeBasic) {
+                foreach ($lines as $index => $line) {
+                    $candidate = $this->basicTable($lines, $index, $pageIndex + 1, $page, $hash);
+                    if ($candidate === null) {
+                        continue;
+                    }
+                    $box = $candidate['bbox'];
+                    if (count(array_filter($financialRegions, static fn ($region) =>
+                        $box[0] < $region[2] && $box[2] > $region[0]
+                        && $box[1] < $region[3] && $box[3] > $region[1])) > 0) {
+                        continue;
+                    }
+                    $tables[] = $candidate;
+                }
             }
         }
 
         return $tables;
+    }
+
+    /** Single-line grids with explicit headers; one blank total cell is allowed. */
+    private function basicTable(array $lines, int $index, int $page, \DOMNode $pageNode,
+        string $hash): ?array
+    {
+        $header = $this->columns($lines[$index]);
+        if (count($header) < 2 || count($header) > 6
+            || count(array_unique(array_column($header, 'text'))) !== count($header)
+            || count(array_filter($header, static fn ($cell) => preg_match('/\p{L}/u', $cell['text']) === 1
+                && mb_strlen($cell['text']) <= 48)) !== count($header)) {
+            return null;
+        }
+        // A dated financial header belongs to the existing proof path.
+        if ($this->header($lines, $index) !== null) {
+            return null;
+        }
+        $starts = array_column(array_column($header, 'bbox'), 0);
+        $rows = [];
+        $numericColumns = [];
+        $partial = false;
+        $lastY = $lines[$index]['y'];
+        for ($next = $index + 1; $next < count($lines) && count($rows) < 100; $next++) {
+            if ($lines[$next]['y'] - $lastY > 45) {
+                break;
+            }
+            $cells = array_fill(0, count($header), []);
+            foreach ($lines[$next]['words'] as $word) {
+                $column = 0;
+                for ($c = 1; $c < count($starts); $c++) {
+                    if ($word['bbox'][0] >= $starts[$c] - 12) {
+                        $column = $c;
+                    }
+                }
+                $cells[$column][] = $word;
+            }
+            $missing = array_keys(array_filter($cells, static fn ($words) => $words === []));
+            $isTotal = $cells[0] !== [] && preg_match('/^(?:grand\s+)?total\b/iu',
+                implode(' ', array_column($cells[0], 'text'))) === 1;
+            if ($cells[0] === [] || (count($missing) > 0
+                && (! $isTotal || count($missing) !== 1))) {
+                $partial = count($rows) >= 2 && count(array_filter($lines[$next]['words'],
+                    static fn ($word) => preg_match('/^\(?-?\d[\d,.]*\)?%?$/D', $word['text']) === 1)) > 0;
+                break;
+            }
+            $row = array_map(fn ($words) => $words === []
+                ? ['text' => '', 'bbox' => null, 'missing' => true]
+                : ['text' => implode(' ', array_column($words, 'text')),
+                    'bbox' => $this->union($words)], $cells);
+            if (preg_match('/\p{L}/u', $row[0]['text']) !== 1) {
+                break;
+            }
+            $rowNumeric = [];
+            foreach (array_slice($row, 1, null, true) as $column => $cell) {
+                if (preg_match('/^\(?-?\d{1,3}(?:,\d{3})*(?:\.\d+)?\)?%?$|^-?\d+(?:\.\d+)?%?$/D',
+                    $cell['text']) === 1) {
+                    $rowNumeric[$column] = true;
+                }
+            }
+            if ($rowNumeric === []) {
+                break;
+            }
+            $numericColumns[] = array_keys($rowNumeric);
+            $rows[] = $row;
+            $lastY = $lines[$next]['y'];
+        }
+        if (count($rows) < 2 || count(array_unique(array_map(
+            static fn ($row) => $row[0]['text'], $rows))) < 2) {
+            return null;
+        }
+        $shared = array_intersect(...$numericColumns);
+        if ($shared === []) {
+            return null;
+        }
+        $all = array_values(array_filter(array_merge($header, ...$rows),
+            static fn ($cell) => is_array($cell['bbox'] ?? null)));
+        $heading = $this->heading($lines, $index);
+        $previous = $lines[$index - 1] ?? null;
+        $nearbyHeading = $previous !== null && $lines[$index]['y'] - $previous['y'] <= 45;
+        $caption = $nearbyHeading && count($this->columns($previous)) === 1
+            ? ['text' => $previous['text'], 'bbox' => $this->union($previous['words'])] : null;
+
+        return ['structural_type' => 'basic_relational', 'page' => $page,
+            'page_width' => (float) $pageNode->attributes->getNamedItem('width')?->nodeValue,
+            'page_height' => (float) $pageNode->attributes->getNamedItem('height')?->nodeValue,
+            'source_hash' => $hash, 'bbox' => $this->union($all),
+            'header' => array_map(static fn ($cell, $column) => [
+                'row' => 0, 'column' => $column, 'text' => $cell['text'], 'bbox' => $cell['bbox']],
+                $header, array_keys($header)),
+            'rows' => array_map(static fn ($row, $number) => array_map(
+                static fn ($cell, $column) => ['row' => $number + 1, 'column' => $column,
+                    'text' => $cell['text'], 'bbox' => $cell['bbox'],
+                    'missing' => $cell['missing'] ?? false],
+                $row, array_keys($row)), $rows, array_keys($rows)),
+            'heading' => $heading['text'], 'unit_source' => $heading['unit_source'],
+            'caption_source' => $caption, 'caption_ambiguous' => $nearbyHeading && $caption === null,
+            'partial' => $partial,
+            'status' => 'layout_candidate_only'];
     }
 
     /** @return ?array{array,array,array,bool} Grid columns and their source header paths. */

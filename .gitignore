@@ -42,6 +42,14 @@ Thumbs.db
 
 # Local test fixtures - not for version control
 *.pdf
+!tests/Fixtures/synthetic_single_period_costs.pdf
+!tests/Fixtures/synthetic_single_period_costs_conflict.pdf
+!tests/Fixtures/synthetic_single_period_costs_duplicate.pdf
+!tests/Fixtures/synthetic_single_period_costs_no_unit.pdf
+!tests/Fixtures/synthetic_single_period_costs_forecast.pdf
+!tests/Fixtures/synthetic_single_period_costs_share_conflict.pdf
+!tests/Fixtures/synthetic_single_period_costs_ambiguous_caption.pdf
+!tests/Fixtures/synthetic_single_period_costs_scale.pdf
 !tests/Fixtures/Northstar_Q3_2026_Board_Performance_Review.pdf
 *.docx
 !tests/Fixtures/embedded-emf.docx

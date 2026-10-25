@@ -93,6 +93,10 @@ class StructuredProvenanceProducer
         }
         if ($source->format === 'PDF') {
             foreach ($tables as $tableId => $table) {
+                if (isset($table['meta']['caption_id'], $nodes[$table['meta']['caption_id']])) {
+                    $this->edge($relations, $this->key($tableId),
+                        $this->key($table['meta']['caption_id']), 'caption');
+                }
                 if (isset($table['meta']['unit_heading_id'], $nodes[$table['meta']['unit_heading_id']])) {
                     $this->edge($relations, $this->key($tableId),
                         $this->key($table['meta']['unit_heading_id']), 'caption');
@@ -282,6 +286,46 @@ class StructuredProvenanceProducer
                     }
                     $candidates[$id] = $cell;
                 }
+            }
+            if (($row->kind ?? null) === 'table_category') {
+                $data = $row->data ?? [];
+                $id = $data['value_cell_id'] ?? null;
+                $categoryId = $data['category_cell_id'] ?? null;
+                $headerId = $data['header_cell_id'] ?? null;
+                $captionId = $data['caption_cell_id'] ?? null;
+                $fileHash = $data['source_file_hash'] ?? null;
+                $identity = is_string($fileHash) && is_string($id)
+                    ? hash('sha256', $fileHash.'|'.$id) : null;
+                if (($data['strategy'] ?? null) !== PdfCategoricalCandidateCollector::STRATEGY
+                    || $identity === null || $row->identity !== $identity
+                    || $row->source_id !== 'pdf-category:'.$identity
+                    || ! isset($candidates[$id], $cells[$categoryId], $cells[$headerId])
+                    || ($cells[$categoryId]['text'] ?? null) !== ($data['label'] ?? null)
+                    || ($cells[$id]['text'] ?? null) !== ($data['value'] ?? null)
+                    || ($cells[$id]['meta']['header_path_ids'] ?? null) !== [$headerId]
+                    || ($cells[$id]['parent'] ?? null) !== ($cells[$categoryId]['parent'] ?? null)
+                    || ($data['row_id'] ?? null) !== ($cells[$id]['parent'] ?? null)
+                    || ($data['table_id'] ?? null) !== $this->nearestTable($id, $nodes)) {
+                    continue;
+                }
+                $bindings[] = ['evidence_id' => $row->id,
+                    'anchor' => $this->key($id), 'role' => 'value'];
+                $bindings[] = ['evidence_id' => $row->id,
+                    'anchor' => $this->key($categoryId), 'role' => 'metric'];
+                if (is_string($data['unit'] ?? null) && $data['unit'] !== '') {
+                    $bindings[] = ['evidence_id' => $row->id,
+                        'anchor' => $this->key($headerId), 'role' => 'unit'];
+                }
+                // A basic-table period lives in the table caption, not a value
+                // column. The categorical strategy proves that caption edge.
+                $scaleId = $data['scale_source_cell_id'] ?? null;
+                if (($data['scale'] ?? 1) !== 1 && is_string($scaleId)
+                    && isset($nodes[$scaleId])) {
+                    $bindings[] = ['evidence_id' => $row->id,
+                        'anchor' => $this->key($scaleId), 'role' => 'scale'];
+                }
+                $bound[$row->id] = true;
+                continue;
             }
             // A collector-created PDF fact names its projected cell. A row can
             // legitimately print the same value in two period columns; the
@@ -482,6 +526,27 @@ class StructuredProvenanceProducer
                             $selected[$table['parent'].'/cell:'
                                 .Coordinate::stringFromColumnIndex($column).$bounds[0][1]] = true;
                         }
+                    }
+                }
+            }
+        }
+        if ($source->format === 'PDF') {
+            $basicTables = [];
+            foreach (array_keys($selected) as $id) {
+                if (($all[$id]['type'] ?? null) !== 'cell') {
+                    continue;
+                }
+                $tableId = $this->nearestTable($id, $all);
+                if ($tableId !== null
+                    && ($all[$tableId]['meta']['structural_type'] ?? null) === 'basic_relational') {
+                    $basicTables[$tableId] = true;
+                }
+            }
+            foreach ($all as $id => $node) {
+                foreach ($basicTables as $tableId => $_) {
+                    if ($id === $tableId || str_starts_with($id, $tableId.'/')) {
+                        $selected[$id] = true;
+                        break;
                     }
                 }
             }

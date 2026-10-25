@@ -151,6 +151,10 @@ class MergeDocumentEvidenceJob implements ShouldQueue
             if (config('document_intelligence.pdf_table_structure') && $document->type === 'PDF') {
                 $diagnostics['pdf_source_candidates'] = app(\App\Services\Intelligence\PdfSourceCandidateCollector::class)
                     ->collect($document);
+                if (config('document_intelligence.pdf_basic_table_structure')) {
+                    $diagnostics['pdf_categorical_candidates'] = app(\App\Services\Intelligence\PdfCategoricalCandidateCollector::class)
+                        ->collect($document);
+                }
             }
 
             // Nonmetric textual evidence remains available when the graph fails. Metric
@@ -167,6 +171,12 @@ class MergeDocumentEvidenceJob implements ShouldQueue
             }
             $diagnostics['metric_field_verification'] = app(IncrementalMetricFieldVerifier::class)
                 ->verify($document, $provenanceSetId);
+            if (config('document_intelligence.pdf_table_structure')
+                && config('document_intelligence.pdf_basic_table_structure')
+                && $document->type === 'PDF') {
+                $diagnostics['categorical_field_verification'] = app(\App\Services\Intelligence\PdfCategoricalFieldVerifier::class)
+                    ->verify($document, $provenanceSetId);
+            }
             if (config('document_intelligence.pdf_table_structure') && $document->type === 'PDF') {
                 $diagnostics['verified_pdf_charts'] = app(VerifiedPdfChartPersister::class)
                     ->persist($document, $provenanceSetId);
