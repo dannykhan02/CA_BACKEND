@@ -74,7 +74,7 @@ class ChartResource extends JsonResource
             ['document_visual', 'model_unverified'], true) ? $metadata['origin'] : null;
         $modelStructure = $origin === 'model_unverified'
             ? app(ModelChartStructure::class)->inspect((string) $this->type, $this->data,
-                (string) $this->title) : null;
+                (string) $this->title, (string) $this->description, is_array($metadata) ? $metadata : []) : null;
         $source = $origin === 'document_visual' ? $metadata : null;
         if ($source !== null) {
             // Recheck old persisted metadata under the current deterministic policy. No chart is

@@ -55,6 +55,19 @@ class SourceChartContractTest extends TestCase
         self::assertSame(['csv' => false, 'png' => false, 'word' => false,
             'originalImage' => false], $serialized['exportSupport']);
         self::assertNull($serialized['sourcePage']);
+        self::assertNull($serialized['valueFormat']);
+        $chart->description = 'Values in KES million';
+        $reported = (new ChartResource($chart))->resolve($request);
+        self::assertSame('KES million', $reported['valueFormat']['unit']);
+        self::assertSame('unit_unverified', $reported['valueFormat']['unitVerification']);
+        self::assertSame('ai_interpreted', $reported['evidenceStatus']);
+        $chart->description = '';
+        $chart->title = 'Survey area (ha)';
+        $chart->source_metadata = ['origin' => 'model_unverified', 'reported_unit' => 'm²'];
+        $conflict = (new ChartResource($chart))->resolve($request);
+        self::assertFalse($conflict['renderEligible']);
+        self::assertNull($conflict['valueFormat']);
+        $chart->source_metadata = ['origin' => 'model_unverified'];
         $line = $chart->replicate();
         $line->type = 'line';
         $line->title = 'Payments over time (TVD)';
@@ -125,6 +138,24 @@ class SourceChartContractTest extends TestCase
         self::assertSame('contradiction', $diagnostic['row_match']['points'][0]['status']);
         self::assertTrue($diagnostic['api']['renderEligible']);
         self::assertSame('ai_interpreted', $diagnostic['api']['evidenceStatus']);
+    }
+
+    public function test_four_persisted_model_charts_remain_in_the_chart_relation_and_api_collection(): void
+    {
+        [, $document] = $this->document();
+        foreach (['Receipts', 'Area', 'Budget', 'Payment schedule'] as $title) {
+            DocumentChart::create(['document_id' => $document->id,
+                'workspace_id' => $document->workspace_id, 'type' => 'bar',
+                'title' => $title, 'description' => '',
+                'data' => [['label' => 'First', 'value' => 1], ['label' => 'Second', 'value' => 2]],
+                'source_metadata' => ['origin' => 'model_unverified']]);
+        }
+        $charts = ChartResource::collection($document->charts()->get())
+            ->resolve(Request::create('/api/documents/'.$document->id));
+        self::assertCount(4, $charts);
+        self::assertSame('Payment schedule', $charts[3]['title']);
+        self::assertTrue($charts[3]['renderEligible']);
+        self::assertSame('ai_interpreted', $charts[3]['evidenceStatus']);
     }
 
     private function document(): array

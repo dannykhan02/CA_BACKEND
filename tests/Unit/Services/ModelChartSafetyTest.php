@@ -52,6 +52,20 @@ class ModelChartSafetyTest extends TestCase
         $good = [$this->point('Pasture', 2.91), $this->point('Woodland', 1.22)];
         self::assertTrue($gate->inspect('bar', $good)['eligible']);
         self::assertSame('ha', $gate->inspect('bar', $good, 'Survey area (ha)')['unit']);
+        self::assertSame('KES million', $gate->inspect('line', [
+            $this->point('2025', 12), $this->point('2026', 13),
+        ], 'Operating receipts', 'Values in KES million')['unit']);
+        self::assertSame('ha', $gate->inspect('bar', $good, 'Survey area', '',
+            ['reported_unit' => 'hectares'])['unit']);
+        self::assertSame('%', $gate->inspect('pie', [
+            $this->point('North', 40), $this->point('South', 60),
+        ], 'Budget distribution', 'Unit: %')['unit']);
+        self::assertNull($gate->inspect('bar', $good, 'Survey area')['unit']);
+        self::assertNull($gate->inspect('bar', $good, 'Survey area (old)')['unit']);
+        self::assertFalse($gate->inspect('bar', $good, 'Survey area (ha)', '',
+            ['reported_unit' => 'm²'])['eligible']);
+        self::assertFalse($gate->inspect('bar', $good, 'Survey area (KES million)',
+            'Values in KES')['eligible']);
         self::assertFalse($gate->inspect('bar', [$this->point('Pasture (m²)', 29100),
             $this->point('Woodland (m²)', 12200)], 'Survey area (ha)')['eligible']);
         foreach ([
