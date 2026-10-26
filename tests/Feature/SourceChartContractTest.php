@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\WorkspaceType;
+use App\Http\Resources\ChartResource;
 use App\Jobs\AnalyzeEmbeddedVisualsJob;
 use App\Jobs\PurgeDocumentChartImagesJob;
 use App\Models\Document;
@@ -12,10 +13,14 @@ use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
 use App\Services\DocumentIntelligenceService;
+use App\Services\Extraction\StructuredDocument;
+use App\Services\Extraction\StructuredExtractionStore;
 use App\Services\Intelligence\SourceChartAccess;
 use App\Services\Intelligence\SourceChartContract;
 use App\Services\WorkspaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -26,6 +31,101 @@ use Tests\TestCase;
 class SourceChartContractTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_model_charts_render_by_default_with_unverified_origin_and_export_limits(): void
+    {
+        [, $document] = $this->document();
+        $chart = DocumentChart::create([
+            'document_id' => $document->id, 'workspace_id' => $document->workspace_id,
+            'type' => 'bar', 'title' => 'Survey area', 'description' => '',
+            'data' => [['label' => 'Pasture', 'value' => 2.91],
+                ['label' => 'Woodland', 'value' => 1.22]],
+            'source_metadata' => ['origin' => 'model_unverified'],
+        ]);
+        $request = Request::create('/api/documents/'.$document->id);
+        self::assertArrayNotHasKey('model_chart_rendering', config('document_intelligence'));
+        self::assertArrayNotHasKey('model_chart_match_shadow', config('document_intelligence'));
+        $serialized = (new ChartResource($chart))->resolve($request);
+        self::assertTrue($serialized['renderEligible']);
+        self::assertSame('model_unverified', $serialized['sourceOrigin']);
+        self::assertSame('ai_interpreted', $serialized['evidenceStatus']);
+        self::assertSame('AI-interpreted · Not independently verified', $serialized['evidenceLabel']);
+        self::assertFalse($serialized['valuesVerified']);
+        self::assertFalse($serialized['dimensionsVerified']);
+        self::assertSame(['csv' => false, 'png' => false, 'word' => false,
+            'originalImage' => false], $serialized['exportSupport']);
+        self::assertNull($serialized['sourcePage']);
+        $line = $chart->replicate();
+        $line->type = 'line';
+        $line->title = 'Payments over time (TVD)';
+        $line->data = [['label' => '2025-11-20', 'value' => 1245000],
+            ['label' => '2026-01-20', 'value' => 11205000]];
+        self::assertTrue((new ChartResource($line))->resolve($request)['renderEligible']);
+        $pie = $chart->replicate();
+        $pie->type = 'pie';
+        $pie->title = 'Land-use share (%)';
+        $pie->data = [['label' => 'Pasture', 'value' => 40],
+            ['label' => 'Woodland', 'value' => 60]];
+        self::assertTrue((new ChartResource($pie))->resolve($request)['renderEligible']);
+        $chart->data = [['label' => 'Pasture', 'value' => 2.91],
+            ['label' => 'Total', 'value' => 4.13]];
+        $invalid = (new ChartResource($chart))->resolve($request);
+        self::assertFalse($invalid['renderEligible']);
+        self::assertStringContainsString('Totals', $invalid['unavailabilityReason']);
+    }
+
+    public function test_row_matcher_runs_only_on_explicit_diagnostic_and_cannot_block_rendering(): void
+    {
+        [, $document] = $this->document();
+        $table = 'page:1/table[1]';
+        $nodes = [['id' => 'page:1', 'type' => 'page', 'page' => 1],
+            ['id' => $table, 'type' => 'table', 'parent' => 'page:1', 'page' => 1,
+                'meta' => ['structural_type' => 'basic_relational']]];
+        $text = '';
+        foreach ([['A', '10'], ['B', '20']] as $r => $values) {
+            $row = $table.'/row['.($r + 1).']';
+            $nodes[] = ['id' => $row, 'type' => 'row', 'parent' => $table, 'page' => 1];
+            foreach ($values as $c => $value) {
+                $start = mb_strlen($text);
+                $text .= $value;
+                $nodes[] = ['id' => $row.'/cell['.$c.']', 'type' => 'cell',
+                    'parent' => $row, 'page' => 1, 'text' => $value,
+                    'start' => $start, 'end' => mb_strlen($text),
+                    'meta' => ['bbox' => [10 + $c * 100, 20 + $r * 20,
+                        80 + $c * 100, 30 + $r * 20]]];
+                $text .= ' ';
+            }
+            $text .= "\n";
+        }
+        $source = new StructuredDocument('PDF', 'smalot-page.v2+poppler-grid.v1+basic-grid.v1',
+            $text, $nodes, []);
+        $this->mock(StructuredExtractionStore::class,
+            fn ($mock) => $mock->shouldReceive('active')->once()->andReturn($source));
+        $chart = DocumentChart::create(['document_id' => $document->id,
+            'workspace_id' => $document->workspace_id, 'type' => 'bar', 'title' => 'Values',
+            'description' => '', 'data' => [['label' => 'A', 'value' => 11],
+                ['label' => 'B', 'value' => 20]],
+            'source_metadata' => ['origin' => 'model_unverified']]);
+        $request = Request::create('/api/documents/'.$document->id);
+        $request->attributes->set('chart_published_document', $document);
+        $serialized = (new ChartResource($chart))->resolve($request);
+        self::assertTrue($serialized['renderEligible']);
+        self::assertSame('ai_interpreted', $serialized['evidenceStatus']);
+        self::assertFalse($serialized['valuesVerified']);
+        self::assertNull($serialized['unavailabilityReason']);
+
+        self::assertSame(0, Artisan::call('docintel:model-chart-diagnostic',
+            ['document' => $document->id, 'chart' => $chart->id]));
+        $ordinary = json_decode(Artisan::output(), true, flags: JSON_THROW_ON_ERROR);
+        self::assertTrue($ordinary['api']['renderEligible']);
+        self::assertArrayNotHasKey('row_match', $ordinary);
+        self::assertSame(0, Artisan::call('docintel:model-chart-diagnostic',
+            ['document' => $document->id, 'chart' => $chart->id, '--match-rows' => true]));
+        $diagnostic = json_decode(Artisan::output(), true, flags: JSON_THROW_ON_ERROR);
+        self::assertSame('contradiction', $diagnostic['row_match']['points'][0]['status']);
+        self::assertTrue($diagnostic['api']['renderEligible']);
+        self::assertSame('ai_interpreted', $diagnostic['api']['evidenceStatus']);
+    }
 
     private function document(): array
     {
