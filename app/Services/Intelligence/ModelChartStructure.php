@@ -5,7 +5,7 @@ namespace App\Services\Intelligence;
 /** Rendering safety only. This class never establishes source provenance. */
 final class ModelChartStructure
 {
-    public function inspect(string $type, mixed $data, string $title = ''): array
+    public function inspect(string $type, mixed $data, string $title = '', string $description = '', array $metadata = []): array
     {
         $fail = static fn (string $reason): array => ['eligible' => false, 'reason' => $reason, 'unit' => null];
         if (! in_array($type, ['bar', 'line', 'pie'], true) || ! is_array($data)
@@ -15,8 +15,21 @@ final class ModelChartStructure
         $labels = [];
         $units = [];
         $sum = 0.0;
-        if (preg_match('/\((ha|m²|m2|km²|km2|kg|t|%|[A-Z]{3})\)\s*$/u', $title, $titleUnit)) {
-            $units[$titleUnit[1]] = true;
+        $unitPattern = '(?:(?-i:[A-Z]{3})(?:\s+(?:thousand|million|billion))?|ha|hectares|m²|m2|km²|km2|kg|t|%)';
+        foreach (['reported_unit', 'unit'] as $field) {
+            if (isset($metadata[$field]) && is_string($metadata[$field])
+                && preg_match('/^'.$unitPattern.'$/iuD', trim($metadata[$field]))) {
+                $units[$this->normalizeUnit($metadata[$field])] = true;
+            }
+        }
+        if (preg_match('/\(('.$unitPattern.')\)\s*$/iu', $title, $titleUnit)) {
+            $units[$this->normalizeUnit($titleUnit[1])] = true;
+        }
+        if (preg_match_all('/\b(?:values?|amounts?|figures?)\s+(?:are\s+)?in\s+('.$unitPattern.')(?=$|[\s.,;])|\bunits?\s*:\s*('.$unitPattern.')(?=$|[\s.,;])/iu',
+            $description, $descriptionUnits, PREG_SET_ORDER)) {
+            foreach ($descriptionUnits as $match) {
+                $units[$this->normalizeUnit($match[1] ?: $match[2])] = true;
+            }
         }
         foreach ($data as $point) {
             if (! is_array($point) || ! is_string($point['label'] ?? null)
@@ -36,8 +49,8 @@ final class ModelChartStructure
             if (isset($point['children']) || isset($point['series']) || isset($point['value_unit'])) {
                 return $fail('Nested or separately unitized model values are unsupported.');
             }
-            if (preg_match('/\((ha|m²|m2|km²|km2|kg|t|%|[A-Z]{3})\)\s*$/u', $label, $match)) {
-                $units[$match[1]] = true;
+            if (preg_match('/\(('.$unitPattern.')\)\s*$/iu', $label, $match)) {
+                $units[$this->normalizeUnit($match[1])] = true;
             }
             $sum += (float) $point['value'];
         }
@@ -82,5 +95,18 @@ final class ModelChartStructure
         }
 
         return ['eligible' => true, 'reason' => null, 'unit' => array_key_first($units)];
+    }
+
+    private function normalizeUnit(string $unit): string
+    {
+        $unit = preg_replace('/\s+/u', ' ', trim($unit));
+        if (preg_match('/^([A-Z]{3})(?:\s+(thousand|million|billion))?$/iuD', $unit, $match)) {
+            return strtoupper($match[1]).(isset($match[2]) && $match[2] !== '' ? ' '.strtolower($match[2]) : '');
+        }
+
+        return match (mb_strtolower($unit)) {
+            'hectares', 'ha' => 'ha', 'm2', 'm²' => 'm²', 'km2', 'km²' => 'km²',
+            'kg' => 'kg', 't' => 't', '%' => '%', default => $unit,
+        };
     }
 }

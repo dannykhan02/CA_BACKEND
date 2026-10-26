@@ -47,7 +47,8 @@ final class ModelChartDiagnostic extends Command
                     'description' => $chart->description, 'data' => $chart->data,
                     'source_metadata' => $chart->source_metadata],
                 'structure' => $structure->inspect((string) $chart->type, $chart->data,
-                    (string) $chart->title),
+                    (string) $chart->title, (string) $chart->description,
+                    is_array($chart->source_metadata) ? $chart->source_metadata : []),
                 'api' => array_intersect_key($api, array_flip([
                     'sourceOrigin', 'evidenceStatus', 'evidenceLabel', 'renderEligible',
                     'unavailabilityReason', 'valueFormat', 'sourcePage', 'sourceRevision',
