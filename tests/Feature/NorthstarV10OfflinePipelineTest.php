@@ -2,16 +2,16 @@
 
 namespace Tests\Feature;
 
+use App\Http\Resources\ChartResource;
 use App\Http\Resources\DocumentIntelligenceResource;
 use App\Http\Resources\DocumentResource;
-use App\Http\Resources\ChartResource;
 use App\Http\Resources\KpiResource;
 use App\Jobs\GenerateInsightsJob;
-use App\Models\Document;
 use App\Models\AiPrompt;
+use App\Models\Document;
 use App\Models\DocumentAiRun;
-use App\Models\DocumentEvidence;
 use App\Models\DocumentChart;
+use App\Models\DocumentEvidence;
 use App\Models\DocumentKpi;
 use App\Models\User;
 use App\Services\AI\Incremental\EvidenceGrounding;
@@ -26,8 +26,8 @@ use App\Services\WorkspaceService;
 use Database\Seeders\DocumentInsightsPromptSeederV10;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class NorthstarV10OfflinePipelineTest extends TestCase
@@ -226,7 +226,7 @@ class NorthstarV10OfflinePipelineTest extends TestCase
         self::assertFalse($serialized['exportSupport']['csv']);
         self::assertFalse($serialized['exportSupport']['png']);
         self::assertFalse($serialized['exportSupport']['word']);
-        self::assertStringContainsString('unverified model response', $serialized['unavailabilityReason']);
+        self::assertStringContainsString('explicit ordered time axis', $serialized['unavailabilityReason']);
 
         $historical = DocumentChart::create(['workspace_id' => $document->workspace_id,
             'document_id' => $document->id, 'type' => 'bar', 'title' => 'Historical unknown',

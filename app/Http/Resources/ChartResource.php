@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Services\DocumentIntelligenceService;
+use App\Services\Intelligence\ModelChartStructure;
 use App\Services\Intelligence\SourceChartAccess;
 use App\Services\Intelligence\SourceChartContract;
 use App\Services\Intelligence\VerifiedPdfChartReadModel;
@@ -47,6 +48,8 @@ class ChartResource extends JsonResource
                 'sourcePage' => $valid ? ($points[0]['source']['page'] ?? null) : null,
                 'sourceImageUrl' => null, 'sourceImageMediaType' => null,
                 'sourceOrigin' => 'verified_pdf_table',
+                'evidenceStatus' => $valid ? 'source_verified' : 'unavailable',
+                'evidenceLabel' => $valid ? 'Source-verified' : null,
                 'verificationStrategy' => $strategy,
                 'valueStatus' => $valid ? 'exact' : 'unavailable',
                 'dimensionsVerified' => $valid, 'valuesVerified' => $valid,
@@ -69,6 +72,9 @@ class ChartResource extends JsonResource
         }
         $origin = is_array($metadata) && in_array($metadata['origin'] ?? null,
             ['document_visual', 'model_unverified'], true) ? $metadata['origin'] : null;
+        $modelStructure = $origin === 'model_unverified'
+            ? app(ModelChartStructure::class)->inspect((string) $this->type, $this->data,
+                (string) $this->title) : null;
         $source = $origin === 'document_visual' ? $metadata : null;
         if ($source !== null) {
             // Recheck old persisted metadata under the current deterministic policy. No chart is
@@ -86,9 +92,12 @@ class ChartResource extends JsonResource
             ? route('documents.charts.image', ['document' => $document->id, 'chart' => $this->id], false) : null;
         $renderEligible = $source !== null && $image !== null && $source['dimensions_verified']
             && $source['values_verified'] && $source['value_status'] === 'exact';
+        if ($origin === 'model_unverified') {
+            $renderEligible = $modelStructure['eligible'];
+        }
         $unavailabilityReason = $renderEligible ? null : ($source === null
             ? ($origin === 'model_unverified'
-                ? 'These chart values came from an unverified model response; inspect the original document.'
+                ? $modelStructure['reason']
                 : 'The origin of this historical chart is unavailable.')
             : ($image === null ? 'The original chart image is unavailable for this document revision.'
                 : (! $source['values_verified'] ? 'The numeric values were not verified as exact printed labels.'
@@ -105,20 +114,29 @@ class ChartResource extends JsonResource
             'sourceImageUrl' => $image,
             'sourceImageMediaType' => $image ? $source['media_type'] : null,
             'sourceOrigin' => $origin,
+            'evidenceStatus' => $origin === 'model_unverified' ? 'ai_interpreted'
+                : ($origin === 'document_visual' ? 'image_transcribed' : 'unavailable'),
+            'evidenceLabel' => $origin === 'model_unverified'
+                ? 'AI-interpreted · Not independently verified' : null,
             'valueStatus' => $source['value_status'] ?? 'unavailable',
             'dimensionsVerified' => $source['dimensions_verified'] ?? false,
             'valuesVerified' => $source['values_verified'] ?? false,
             'basis' => $source['basis'] ?? null,
             'axis' => $source['axis'] ?? null,
             'series' => $source['series'] ?? null,
-            'valueFormat' => isset($source['unit']) ? ['unit' => $source['unit']] : null,
+            'valueFormat' => isset($source['unit']) ? ['unit' => $source['unit']]
+                : ($origin === 'model_unverified' && $modelStructure['unit'] !== null
+                    ? ['unit' => $modelStructure['unit'], 'unitVerification' => 'unit_unverified'] : null),
             'sourceRevision' => $this->intelligence_revision_id,
             'recommendedType' => $this->type,
             'renderEligible' => $renderEligible,
-            'eligibilityReason' => $renderEligible ? 'Retained source image, exact printed values and verified dimensions' : null,
+            'eligibilityReason' => $renderEligible ? ($origin === 'model_unverified'
+                ? 'Model chart passed structural rendering checks; source relationships remain unverified.'
+                : 'Retained source image, exact printed values and verified dimensions') : null,
             'unavailabilityReason' => $unavailabilityReason,
-            'exportSupport' => ['csv' => ($source['values_verified'] ?? false) && ($source['value_status'] ?? null) === 'exact',
-                'png' => $renderEligible,
+            'exportSupport' => ['csv' => $origin === 'model_unverified' ? false
+                : (($source['values_verified'] ?? false) && ($source['value_status'] ?? null) === 'exact'),
+                'png' => $origin === 'model_unverified' ? false : $renderEligible,
                 'word' => $source !== null, 'originalImage' => $image !== null],
         ];
     }
