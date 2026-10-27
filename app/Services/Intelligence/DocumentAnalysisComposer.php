@@ -9,6 +9,7 @@ use App\Services\Intelligence\Attention\HistoricalRiskRule;
 use App\Services\Intelligence\Materiality\MaterialityReadModel;
 use App\Services\Intelligence\Materiality\MaterialityScorer;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -30,6 +31,7 @@ class DocumentAnalysisComposer
         private MetricCollector $metrics,
         private AnalyticalComparisonBuilder $comparisons,
         private ChartCandidateBuilder $charts,
+        private AnalyticalDatasetReadModel $datasets,
         private SourceChartContract $sourceCharts,
         private TakeawayBuilder $takeaways,
         private AnalysisGrouper $groups,
@@ -54,7 +56,7 @@ class DocumentAnalysisComposer
         $pdfTables = config('document_intelligence.pdf_table_structure') && $document->type === 'PDF';
         $sourceCurrent = true;
         if ($pdfTables) {
-            $live = \Illuminate\Support\Facades\DB::table('documents')->where('id', $document->id)
+            $live = DB::table('documents')->where('id', $document->id)
                 ->where('workspace_id', $document->workspace_id)->whereNull('deleted_at')
                 ->first(['file_hash', 'extracted_text']);
             $sourceCurrent = $live !== null && $live->file_hash === $document->file_hash
@@ -78,6 +80,13 @@ class DocumentAnalysisComposer
             fn (MetricObservation $observation) => $sourceCurrent && $observation->integrity['analyticalEligible']));
         $comparisons = $this->comparisons->build($eligible);
         $derived = $this->charts->build($eligible, $cited);
+        // Preserve the builder's relevance order within each set, but do not let a
+        // table-only candidate consume a slot ahead of a source-verified visual.
+        $renderable = array_values(array_filter($derived['candidates'], $this->renderEligible(...)));
+        $notRenderable = array_values(array_filter($derived['candidates'],
+            fn (array $chart): bool => ! $this->renderEligible($chart)));
+        $ranked = [...$renderable, ...$notRenderable];
+        $datasets = $this->datasets->build($document, $eligible, $ranked, $evidence);
         $limitedMeasurements = $collected['rejected'];
         foreach ($collected['observations'] as $observation) {
             if ($observation->integrity['analyticalEligible']) {
@@ -87,11 +96,7 @@ class DocumentAnalysisComposer
                 'codes' => array_values(array_unique($observation->integrity['reasons']))];
         }
         $charts = array_map(function (array $chart) use ($document): array {
-            $labels = array_column($chart['series'][0]['data'] ?? $chart['points'], 'label');
-            $renderEligible = $chart['numericVerification'] === 'parsed'
-                && $chart['sourceVerification'] === 'verified'
-                && in_array($chart['unitVerification'], ['verified', 'dimensionless'], true)
-                && ($chart['basis'] !== 'time_series' || $this->sourceCharts->continuousPeriods($labels));
+            $renderEligible = $this->renderEligible($chart);
             $chart['origin'] = 'generated';
             $chart['logicalChartId'] = $chart['id'];
             $chart['verification'] = $chart['numericVerification'];
@@ -110,7 +115,7 @@ class DocumentAnalysisComposer
             $chart['exportSupport'] = ['csv' => true, 'png' => $renderEligible, 'word' => true];
 
             return $chart;
-        }, array_slice($derived['candidates'], 0, self::MAX_CHARTS));
+        }, array_slice($ranked, 0, self::MAX_CHARTS));
         $v2 = (bool) config('intelligence_v2.enabled');
         $materiality = null;
         $records = [];
@@ -179,11 +184,14 @@ class DocumentAnalysisComposer
             'overview' => ['takeaways' => $takeaways, 'summaryNotes' => $notes],
             'visualAnalysis' => [
                 'charts' => $charts,
-                'omitted' => max(0, count($derived['candidates']) - count($charts)),
+                'omitted' => max(0, count($ranked) - count($charts)),
                 'rejected' => array_filter($derived['rejected']),
+                'diagnostics' => $this->visualDiagnostics($evidence, $collected, $eligible, $derived,
+                    $renderable, $notRenderable, $charts, $sourceCurrent),
             ],
             'analysisGroups' => $groups,
             'analyticalComparisons' => $comparisons,
+            'analyticalDatasets' => $datasets,
             'limitations' => [
                 'pdfFinancialTables' => $pdfTables
                     ? ['scope' => 'clean_native_text_duration_tables',
@@ -313,5 +321,67 @@ class DocumentAnalysisComposer
             ->where('document_id', $document->id)->where('pipeline_key', $key)
             ->where('kind', '!=', 'normal_source')
             ->orderBy('identity')->get();
+    }
+
+    private function renderEligible(array $chart): bool
+    {
+        $labels = array_column($chart['series'][0]['data'] ?? $chart['points'], 'label');
+
+        return $chart['numericVerification'] === 'parsed'
+            && $chart['sourceVerification'] === 'verified'
+            && in_array($chart['unitVerification'], ['verified', 'dimensionless'], true)
+            && ($chart['basis'] !== 'time_series' || $this->sourceCharts->continuousPeriods($labels));
+    }
+
+    private function visualDiagnostics(Collection $evidence, array $collected, array $eligible, array $derived,
+        array $renderable, array $notRenderable, array $charts, bool $sourceCurrent): array
+    {
+        $reasonCounts = [];
+        foreach ($collected['rejected'] as $item) {
+            foreach ($item['codes'] as $code) {
+                $reasonCounts[$code] = ($reasonCounts[$code] ?? 0) + 1;
+            }
+        }
+        foreach ($collected['observations'] as $observation) {
+            if ($observation->integrity['analyticalEligible']) {
+                continue;
+            }
+            foreach (array_unique($observation->integrity['reasons']) as $code) {
+                $reasonCounts[$code] = ($reasonCounts[$code] ?? 0) + 1;
+            }
+        }
+        if (! $sourceCurrent && $collected['stats']['chartable'] > 0) {
+            $reasonCounts['source_revision_stale'] = $collected['stats']['chartable'];
+        }
+        ksort($reasonCounts);
+        $sourceSets = [];
+        $duplicates = 0;
+        foreach ($derived['candidates'] as $candidate) {
+            $ids = array_values(array_unique($candidate['sourceIds']));
+            sort($ids);
+            $key = $candidate['basis'].'|'.$candidate['type'].'|'.implode('|', $ids);
+            if (isset($sourceSets[$key])) {
+                $duplicates++;
+            }
+            $sourceSets[$key] = true;
+        }
+
+        return [
+            'structuredEventFindings' => $evidence->filter(fn (DocumentEvidence $row) => in_array($row->kind, ['deadline', 'obligation'], true))->count(),
+            'storedMetricFindings' => $collected['stats']['metric_findings'],
+            'eligibleMeasurements' => count($eligible),
+            'ineligibleMeasurements' => $collected['stats']['metric_findings'] - count($eligible),
+            'ineligibleReasons' => $reasonCounts,
+            'sourceRevisionCurrent' => $sourceCurrent,
+            'metricGroups' => count(array_unique(array_map(fn (MetricObservation $item) => $item->groupKey(), $eligible))),
+            'candidateVisualizations' => count($derived['candidates']),
+            'duplicateSourceSetCandidates' => $duplicates,
+            'unsupportedGroups' => count($derived['rejectedGroups']),
+            'renderableCandidates' => count($renderable),
+            'tableOnlyCandidates' => count($notRenderable),
+            'returnedGeneratedVisualizations' => count($charts),
+            'omittedByLimit' => max(0, count($derived['candidates']) - count($charts)),
+            'renderableOmittedByLimit' => max(0, count($renderable) - self::MAX_CHARTS),
+        ];
     }
 }

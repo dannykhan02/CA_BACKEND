@@ -31,6 +31,8 @@ readonly class MetricObservation
         public string $sourceContext = '',
         /** For verified PDF cells, the selected column and value row, without adjacent headers. */
         public string $basisContext = '',
+        /** Explicit actual/forecast/target status, separate from total/rate value basis. */
+        public string $metricType = '',
     ) {}
 
     /** Charts group on concept and measurement together; neither alone is enough. */
