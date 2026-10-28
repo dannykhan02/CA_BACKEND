@@ -124,10 +124,10 @@ class AiCreditsStatus extends Command
             [$reserved, $debited, $released] = [$sum('reserve'), $sum('debit'), $sum('release')];
             $open = (int) DB::table('billing_operations')->where('workspace_id', $id)->where('status', 'reserved')->whereNotNull('amount_reserved')->sum('amount_reserved');
             $b = $accountant->balances($id);
-            $rows[] = [$id, $b['saved'], $accountant->trialBalance($id)['available'], $b['monthly']['remaining'] ?? '-', $reserved, $debited, $released, $open, $absorbed,
-                $reserved === $debited + $released + $open ? 'ok' : 'MISMATCH ('.($reserved - $debited - $released - $open).')'];
+            $rows[] = [$id, $b['saved'], $accountant->trialBalance($id)['available'], $b['monthly']['remaining'] ?? '-', $reserved, $debited, $released, $open,
+                $reserved === $debited + $released + $open ? 'ok' : 'MISMATCH ('.($reserved - $debited - $released - $open).')', $absorbed];
         }
-        $this->table(['workspace', 'saved balance', 'trial left', 'monthly left', 'reserved', 'debited', 'released', 'open holds', 'absorbed', 'check'], $rows);
+        $this->table(['workspace', 'saved balance', 'trial left', 'monthly left', 'reserved', 'debited', 'released', 'open holds', 'check', 'absorbed'], $rows);
         $this->line('check: reserved must equal debited + released + open holds, over monthly, saved and trial credits. Absorbed credits (cost above a hold, not charged) are listed apart. Nothing was changed.');
     }
 }

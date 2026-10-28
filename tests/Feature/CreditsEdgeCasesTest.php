@@ -259,12 +259,14 @@ class CreditsEdgeCasesTest extends TestCase
         $this->trialRow($workspace, 11, now()->subMinute()); // 15 - 4 charged; 6 are still held
         app(CreditAccountant::class)->expireTrial($workspace->id); // expiry rows are not hold lifecycle
 
-        $this->artisan('docintel:ai-credits-status', ['--workspace' => $workspace->id])
-            ->expectsOutputToContain('ok')
-            ->doesntExpectOutputToContain('MISMATCH')
-            ->expectsOutputToContain('trial left')
-            ->expectsOutputToContain('absorbed')
-            ->assertSuccessful();
+        // One capture: 'trial left' and 'absorbed' sit in the same table header write, which expectsOutputToContain cannot match twice.
+        self::assertSame(0, \Illuminate\Support\Facades\Artisan::call('docintel:ai-credits-status', ['--workspace' => $workspace->id]));
+        $output = \Illuminate\Support\Facades\Artisan::output();
+        self::assertStringNotContainsString('MISMATCH', $output);
+        self::assertStringContainsString('trial left', $output);
+        self::assertStringContainsString('absorbed', $output);
+        // reserved 10 = debited 4 + released 0 + open 6, then check ok, then the absorbed credits (4 held, formula above it).
+        self::assertMatchesRegularExpression('/\|\s*10\s*\|\s*4\s*\|\s*0\s*\|\s*6\s*\|\s*ok\s*\|\s*\d+\s*\|/', $output);
     }
 
     // ------------------------------------------------------------------ handled cases that must stay handled

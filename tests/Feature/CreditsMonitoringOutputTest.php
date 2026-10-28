@@ -29,9 +29,12 @@ class CreditsMonitoringOutputTest extends TestCase
 
     private function document(array $pipeline = [], string $status = 'Failed'): Document
     {
-        return Document::create(['name' => 'Report.pdf', 'type' => 'PDF', 'size_kb' => 1, 'status' => $status, 'classification' => 'Public',
-            'year' => 2026, 'workspace_id' => $this->workspace->id, 'uploaded_by' => $this->user->id, 'file_hash' => hash('sha256', uniqid('', true)),
-            'ai_pipeline' => $pipeline]);
+        $document = Document::create(['name' => 'Report.pdf', 'type' => 'PDF', 'size_kb' => 1, 'status' => $status, 'classification' => 'Public',
+            'year' => 2026, 'workspace_id' => $this->workspace->id, 'uploaded_by' => $this->user->id, 'file_hash' => hash('sha256', uniqid('', true))]);
+        // ai_pipeline is not mass assignable: create() would silently drop it.
+        $document->forceFill(['ai_pipeline' => $pipeline])->save();
+
+        return $document;
     }
 
     private function settledQuote(array $attributes): OperationQuote
@@ -55,16 +58,12 @@ class CreditsMonitoringOutputTest extends TestCase
             $_SERVER[$name] = $_ENV[$name] = '1';
         }
         try {
-            $this->artisan('docintel:ai-credits-status')
-                ->expectsOutputToContain('Plan and admission settings')
-                ->expectsOutputToContain('Settlement: mode actual')
-                ->expectsOutputToContain('Admission minimum ratio 0.4')
-                ->expectsOutputToContain('Free trial: 15 credits, expires after 30 days.')
-                ->expectsOutputToContain('Referral reward: 30 saved credits, when the referred user\'s first paid subscription is active.')
-                ->expectsOutputToContain('AI_CREDITS_NOT_A_REAL_SETTING')
-                ->assertSuccessful();
-
+            // One capture: several of these strings share an output line, so expectsOutputToContain could satisfy only one of them.
             $output = $this->runAndCapture();
+            foreach (['Plan and admission settings', 'Settlement: mode actual', 'Admission minimum ratio 0.4', 'Free trial: 15 credits, expires after 30 days.',
+                'Referral reward: 30 saved credits, when the referred user\'s first paid subscription is active.', 'AI_CREDITS_NOT_A_REAL_SETTING'] as $expected) {
+                self::assertStringContainsString($expected, $output);
+            }
             $deprecated = collect(explode("\n", $output))->first(fn ($line) => str_contains($line, 'Deprecated (set, but'));
             foreach ($names as $name) {
                 self::assertStringNotContainsString($name, (string) $deprecated, $name.' is a current setting');
@@ -92,14 +91,13 @@ class CreditsMonitoringOutputTest extends TestCase
         $this->document(['credit_block' => ['code' => 'plan_limit', 'reason' => 'ocr_required', 'at' => now()->toIso8601String()]]);
         $this->document(['credit_block' => ['code' => 'plan_limit', 'reason' => 'document_size', 'at' => now()->subDays(9)->toIso8601String()]]);
 
-        $this->artisan('credits:audit-settlements')
-            ->expectsOutputToContain('Settled at the quoted amount (fallback): 1')
-            ->expectsOutputToContain('- no_recorded_cost: 1')
-            ->expectsOutputToContain('Absorbed credits (cost above the hold, not charged): 7 credits over 1 document(s)')
-            ->expectsOutputToContain('- '.$absorbed->resource_id.': 7')
-            ->expectsOutputToContain('Refused for credits or plan limits and still blocked: 2')
-            ->expectsOutputToContain('- insufficient_credits: 1')
-            ->expectsOutputToContain('- plan_limit:ocr_required: 1')
-            ->assertSuccessful();
+        self::assertSame(0, \Illuminate\Support\Facades\Artisan::call('credits:audit-settlements'));
+        $output = \Illuminate\Support\Facades\Artisan::output();
+        foreach (['Settled at the quoted amount (fallback): 1', '- no_recorded_cost: 1',
+            'Absorbed credits (cost above the hold, not charged): 7 credits over 1 document(s)', '- '.$absorbed->resource_id.': 7',
+            'Refused for credits or plan limits and still blocked: 2', '- insufficient_credits: 1', '- plan_limit:ocr_required: 1'] as $expected) {
+            self::assertStringContainsString($expected, $output);
+        }
+        self::assertStringNotContainsString('document_size', $output, 'the 9-day-old block is outside the window');
     }
 }
