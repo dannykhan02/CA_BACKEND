@@ -48,5 +48,12 @@ trap - EXIT HUP INT TERM
 
 case "$role" in
     web) exec frankenphp run --config /etc/caddy/Caddyfile --adapter caddyfile ;;
-    worker) exec php artisan horizon ;;
+    worker)
+        # Run the Laravel scheduler beside Horizon in this container (no extra Railway service).
+        # Off unless WORKER_RUNS_SCHEDULER=1; restarts schedule:work if it ever exits.
+        if [ "${WORKER_RUNS_SCHEDULER:-0}" = "1" ]; then
+            ( while true; do php artisan schedule:work || true; echo "WARNING: schedule:work exited; restarting in 10s" >&2; sleep 10; done ) &
+            echo "Scheduler running inside the worker"
+        fi
+        exec php artisan horizon ;;
 esac
