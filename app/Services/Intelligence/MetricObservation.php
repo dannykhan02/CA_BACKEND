@@ -41,4 +41,17 @@ readonly class MetricObservation
         return $this->conceptKey.'|'.$this->measureKey.'|'
             .mb_strtolower((string) ($this->integrity['governingOwner'] ?? ''));
     }
+
+    public function valueStatus(): string
+    {
+        foreach ([$this->metricType, $this->valueBasis] as $field) {
+            $status = mb_strtolower(trim($field));
+            if (in_array($status, ['actual', 'forecast', 'projected', 'planned', 'target',
+                'budget', 'budgeted', 'estimated', 'amended', 'revised'], true)) {
+                return $status;
+            }
+        }
+
+        return 'unspecified';
+    }
 }

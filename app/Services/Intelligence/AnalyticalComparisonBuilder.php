@@ -151,7 +151,9 @@ class AnalyticalComparisonBuilder
                     'rawUnit' => $costs->measurement->unitText, 'sourceId' => $costs->sourceId],
                 'reported' => ['label' => $profit->label, 'rawValue' => $profit->rawValue,
                     'rawUnit' => $profit->measurement->unitText, 'sourceId' => $profit->sourceId],
-                'gap' => round((float) (string) $calculated / $scale, 6), 'gapUnit' => $profit->measurement->unitText,
+                'gap' => round((float) (string) $calculated / $scale, 6), 'exactGap' => (string) $calculated,
+                'exactGapUnit' => $profit->measurement->canonicalUnit,
+                'gapUnit' => $profit->measurement->unitText,
                 'direction' => 'at', 'sourceIds' => [$revenue->sourceId, $costs->sourceId, $profit->sourceId],
                 'verification' => 'source_verified', 'calculation' => 'revenue_minus_operating_costs_equals_operating_profit'];
         }
@@ -194,7 +196,9 @@ class AnalyticalComparisonBuilder
                 'rawUnit' => $left->measurement->unitText, 'sourceId' => $left->sourceId],
             'right' => ['label' => $right->label, 'rawValue' => $right->rawValue,
                 'rawUnit' => $right->measurement->unitText, 'sourceId' => $right->sourceId],
-            'gap' => round($gap / $scale, 6), 'gapUnit' => $unit,
+            'gap' => round($gap / $scale, 6), 'exactGap' => $gapDecimal === null ? null : (string) $gapDecimal,
+            'exactGapUnit' => $percent ? 'percentage points' : $left->measurement->canonicalUnit,
+            'gapUnit' => $unit,
             'direction' => ($gapDecimal?->compareTo('0') ?? ($gap <=> 0)) > 0
                 ? 'above' : (($gapDecimal?->compareTo('0') ?? ($gap <=> 0)) < 0 ? 'below' : 'at'),
             'sourceIds' => [$left->sourceId, $right->sourceId],

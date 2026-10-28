@@ -126,7 +126,7 @@ class AnalyticalDatasetReadModel
                 'granularity' => $observation->period?->granularity,
                 'periodBasis' => $observation->period?->basis,
                 'category' => $time ? null : (string) $point['label'],
-                'valueStatus' => $this->valueStatus($observation),
+                'valueStatus' => $observation->valueStatus(),
                 'sourceIds' => [$observation->sourceId],
                 'evidenceAssurance' => 'source_verified',
                 'numericVerification' => $observation->integrity['numericVerification'],
@@ -171,19 +171,6 @@ class AnalyticalDatasetReadModel
                 ? $rows[0]['unitVerification'] : 'unavailable',
             $candidate['currency'], (float) $candidate['scale'],
             $rows, $views, $reasons), null];
-    }
-
-    private function valueStatus(MetricObservation $observation): string
-    {
-        foreach ([$observation->metricType, $observation->valueBasis] as $field) {
-            $status = mb_strtolower(trim($field));
-            if (in_array($status, ['actual', 'forecast', 'projected', 'planned', 'target',
-                'budget', 'budgeted', 'estimated', 'amended', 'revised'], true)) {
-                return $status;
-            }
-        }
-
-        return 'unspecified';
     }
 
     /** Conservative chart-coordinate conversion; the exact decimal remains the source value. */

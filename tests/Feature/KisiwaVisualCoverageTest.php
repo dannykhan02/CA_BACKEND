@@ -83,18 +83,27 @@ class KisiwaVisualCoverageTest extends TestCase
         self::assertEqualsCanonicalizing(['Residential', 'Commercial', 'Community'],
             array_column($land['points'], 'category'));
         self::assertNotContains('Land instalment', array_column($datasets, 'title'));
+        self::assertSame([], $analysis['visualSummaries']['timeline']);
+        self::assertNotContains('Land instalment', array_column($analysis['visualSummaries']['kpis'], 'title'));
 
         $api = (new DocumentIntelligenceResource($document->fresh()))
             ->resolve(Request::create('/api/documents/'.$document->id.'/intelligence'));
         self::assertCount(3, $api['analysis']['visualAnalysis']['charts']);
         self::assertCount(3, $api['analysis']['analyticalDatasets']['items']);
+        self::assertArrayHasKey('visualSummaries', $api['analysis']);
+        $withoutSummaries = $api['analysis'];
+        unset($withoutSummaries['visualSummaries']);
+        $visualBytes = strlen(json_encode($api['analysis'], JSON_THROW_ON_ERROR))
+            - strlen(json_encode($withoutSummaries, JSON_THROW_ON_ERROR));
+        self::assertLessThan(4_000, $visualBytes);
         $withoutDatasets = $api['analysis'];
         unset($withoutDatasets['analyticalDatasets']);
         $addedBytes = strlen(json_encode($api['analysis'], JSON_THROW_ON_ERROR))
             - strlen(json_encode($withoutDatasets, JSON_THROW_ON_ERROR));
         self::assertLessThan(12_000, $addedBytes);
         fwrite(STDERR, json_encode(['fixture' => 'stage2-kisiwa-synthetic',
-            'dataset_count' => count($datasets), 'additional_analysis_bytes' => $addedBytes],
+            'dataset_count' => count($datasets), 'additional_analysis_bytes' => $addedBytes,
+            'stage3_visual_bytes' => $visualBytes],
             JSON_THROW_ON_ERROR)."\n");
     }
 

@@ -32,6 +32,7 @@ class DocumentAnalysisComposer
         private AnalyticalComparisonBuilder $comparisons,
         private ChartCandidateBuilder $charts,
         private AnalyticalDatasetReadModel $datasets,
+        private DocumentVisualSummaryReadModel $visualSummaries,
         private SourceChartContract $sourceCharts,
         private TakeawayBuilder $takeaways,
         private AnalysisGrouper $groups,
@@ -179,6 +180,9 @@ class DocumentAnalysisComposer
             $finding['equivalentSourceIds'] = $presentation['equivalents'][$finding['sourceId']] ?? [];
         }
         unset($finding);
+        $visualSummaries = $this->visualSummaries->build($document,
+            $sourceCurrent ? $collected['observations'] : [], $comparisons,
+            array_column($important, 'sourceId'), $charts, $evidence);
 
         $analysis = [
             'overview' => ['takeaways' => $takeaways, 'summaryNotes' => $notes],
@@ -192,6 +196,7 @@ class DocumentAnalysisComposer
             'analysisGroups' => $groups,
             'analyticalComparisons' => $comparisons,
             'analyticalDatasets' => $datasets,
+            'visualSummaries' => $visualSummaries,
             'limitations' => [
                 'pdfFinancialTables' => $pdfTables
                     ? ['scope' => 'clean_native_text_duration_tables',
@@ -281,6 +286,13 @@ class DocumentAnalysisComposer
         foreach ($analysis['analyticalComparisons'] ?? [] as $comparison) {
             foreach ($comparison['sourceIds'] as $id) {
                 $ids[$id] = true;
+            }
+        }
+        foreach (['kpis', 'comparisons', 'timeline'] as $family) {
+            foreach ($analysis['visualSummaries'][$family] ?? [] as $visual) {
+                foreach ($visual['sourceIds'] as $id) {
+                    $ids[$id] = true;
+                }
             }
         }
         foreach ($analysis['overview']['takeaways'] as $takeaway) {
