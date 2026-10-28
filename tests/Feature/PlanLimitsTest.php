@@ -84,7 +84,9 @@ class PlanLimitsTest extends TestCase
 
     private function upload(string $name, string $mime): \Illuminate\Testing\TestResponse
     {
-        return $this->postJson('/api/documents', ['file' => UploadedFile::fake()->create($name, 50, $mime), 'classification' => 'Public']);
+        // Distinct content per upload: identical bytes would hit the workspace duplicate-hash rule (409). The MIME type follows the extension.
+        return $this->postJson('/api/documents', ['file' => UploadedFile::fake()->createWithContent($name, 'fixture '.$mime.' '.uniqid('', true)),
+            'classification' => 'Public']);
     }
 
     private function trial(Workspace $workspace): void
@@ -208,8 +210,8 @@ class PlanLimitsTest extends TestCase
         Queue::fake();
         $this->workspace();
 
-        self::assertNotSame(403, $this->upload('letter.docx', self::DOCX)->getStatusCode());
-        self::assertNotSame(403, $this->upload('report.pdf', 'application/pdf')->getStatusCode());
+        self::assertSame(202, $this->upload('letter.docx', self::DOCX)->getStatusCode());
+        self::assertSame(202, $this->upload('report.pdf', 'application/pdf')->getStatusCode());
         self::assertSame(2, Document::count());
     }
 
@@ -221,8 +223,8 @@ class PlanLimitsTest extends TestCase
         $workspace = $this->workspace();
         $this->subscribe($workspace, 'starter');
 
-        self::assertNotSame(403, $this->upload('book.xlsx', self::XLSX)->getStatusCode());
-        self::assertNotSame(403, $this->upload('scan.jpg', 'image/jpeg')->getStatusCode());
+        self::assertSame(202, $this->upload('book.xlsx', self::XLSX)->getStatusCode());
+        self::assertSame(202, $this->upload('scan.jpg', 'image/jpeg')->getStatusCode());
         self::assertSame(2, Document::count());
     }
 
@@ -239,8 +241,12 @@ class PlanLimitsTest extends TestCase
 
         $fresh = $document->fresh();
         self::assertSame('Failed', $fresh->status);
-        self::assertSame(['code' => 'plan_limit', 'reason' => 'ocr_required', 'plan' => 'free', 'required_plan' => 'starter'],
-            array_intersect_key($fresh->ai_pipeline['credit_block'], array_flip(['code', 'reason', 'plan', 'required_plan'])));
+        // jsonb does not keep key order, so compare the block by sorted keys.
+        $expected = ['code' => 'plan_limit', 'reason' => 'ocr_required', 'plan' => 'free', 'required_plan' => 'starter'];
+        $actual = array_intersect_key($fresh->ai_pipeline['credit_block'], $expected);
+        ksort($expected);
+        ksort($actual);
+        self::assertSame($expected, $actual);
         self::assertSame(0, DB::table('billing_operations')->where('resource_id', $document->id)->count());
         self::assertSame(0, DB::table('credit_ledger')->where('related_id', $document->id)->count());
         self::assertSame(0, DB::table('operation_quotes')->where('resource_id', $document->id)->count());
@@ -351,7 +357,7 @@ class PlanLimitsTest extends TestCase
         self::assertSame(0, (int) $row->trial_credits_remaining);
         self::assertNull($row->trial_credits_expires_at);
 
-        self::assertNotSame(403, $this->upload('book.xlsx', self::XLSX)->getStatusCode());
+        self::assertSame(202, $this->upload('book.xlsx', self::XLSX)->getStatusCode());
         $big = $this->document($workspace, 200000);
         self::assertNull(app(PlanLimits::class)->sizeBlock($big, 200000));
         self::assertNull(app(PlanLimits::class)->ocrBlock($big));
