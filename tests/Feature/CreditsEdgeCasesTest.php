@@ -216,4 +216,30 @@ class CreditsEdgeCasesTest extends TestCase
         config(['ai_credits.admission_min_ratio' => 0.4]);
         self::assertSame(3, app(CreditAccountant::class)->requiredToStart(6));
     }
+
+    // ------------------------------------------------------------------ A11
+
+    public function test_a11_a_reanalysis_is_held_to_the_plan_size_limit(): void
+    {
+        config(['ai_credits.plan_limits.free' => ['allowed_types' => '', 'allow_ocr' => true, 'max_quote_tokens' => 18000],
+            'ai_credits.plan_limits.starter' => ['allowed_types' => '', 'allow_ocr' => true, 'max_quote_tokens' => 90000]]);
+        $workspace = $this->workspace(500);
+        $document = Document::create(['name' => 'Big.pdf', 'type' => 'PDF', 'size_kb' => 1, 'status' => 'Ready', 'classification' => 'Public',
+            'year' => 2026, 'workspace_id' => $workspace->id, 'uploaded_by' => $this->user->id, 'file_hash' => hash('sha256', uniqid('', true)),
+            'extracted_text' => str_repeat('abc', 20000), 'credit_accounted_at' => now()]);
+
+        try {
+            app(\App\Services\AiCredits\AiCreditAdmission::class)->admitReanalysis($document, false, $this->user->id);
+            self::fail('A free workspace must not re-analyse a 20,000-token document.');
+        } catch (\Illuminate\Http\Exceptions\HttpResponseException $e) {
+            self::assertSame(403, $e->getResponse()->getStatusCode());
+            $body = json_decode($e->getResponse()->getContent(), true);
+            self::assertSame('plan_limit', $body['code']);
+            self::assertSame('document_size', $body['reason']);
+            self::assertSame(20000, $body['quote_tokens']);
+            self::assertSame('starter', $body['required_plan']);
+        }
+        self::assertSame(0, DB::table('billing_operations')->where('resource_id', $document->id)->count());
+        self::assertSame(500, $this->saved($workspace));
+    }
 }
