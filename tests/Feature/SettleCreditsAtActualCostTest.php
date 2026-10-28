@@ -10,6 +10,7 @@ use App\Models\SubscriptionUsagePeriod;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceCredit;
+use App\Services\AiCredits\ActualCostSettlement;
 use App\Services\AiCredits\CreditAccountant;
 use App\Services\AiCredits\DocumentCredits;
 use App\Services\AiCredits\QuoteService;
@@ -320,5 +321,76 @@ class SettleCreditsAtActualCostTest extends TestCase
         self::assertSame('reserved', $quote->fresh()->status);
         self::assertStringContainsString($document->id, $output);
         self::assertStringContainsString('Nothing was changed.', $output);
+    }
+
+    public function test_an_exact_integer_result_is_not_rounded_up(): void
+    {
+        $workspace = $this->workspace(500);
+        $document = $this->document($workspace);
+        $quote = $this->reserved($workspace, $document, 10);
+        $this->cost($workspace, $document, $quote, '0.064800'); // 0.0648 x 1.25 = 0.081; 0.081 / 0.027 = 3 exactly
+
+        $this->settle($document);
+
+        self::assertSame(3, $quote->fresh()->charged_credits);
+        self::assertSame(7, $quote->fresh()->released_credits);
+        self::assertSame(497, $this->saved($workspace));
+    }
+
+    public function test_the_smallest_recorded_cost_charges_the_minimum(): void
+    {
+        $workspace = $this->workspace(500);
+        $document = $this->document($workspace);
+        $quote = $this->reserved($workspace, $document, 10);
+        $this->cost($workspace, $document, $quote, '0.000001');
+
+        $this->settle($document);
+
+        self::assertSame(1, $quote->fresh()->charged_credits);
+        self::assertSame('actual', $quote->fresh()->settlement_basis);
+    }
+
+    public function test_more_than_six_decimals_round_up_and_never_down(): void
+    {
+        // document_ai_runs stores six decimals, so the parser is exercised directly.
+        self::assertSame(1, ActualCostSettlement::toScaled('0.0000001', 6));
+        self::assertSame(421161, ActualCostSettlement::toScaled('0.421161', 6));
+        self::assertSame(421162, ActualCostSettlement::toScaled('0.4211611', 6));
+        self::assertSame(421160, ActualCostSettlement::toScaled('0.42116', 6));
+        self::assertSame(2000000, ActualCostSettlement::toScaled('2', 6));
+        self::assertSame(12500, ActualCostSettlement::toScaled('1.25', 4));
+        self::assertSame(27000, ActualCostSettlement::toScaled('0.027', 6));
+        self::assertNull(ActualCostSettlement::toScaled('1e-5', 6));
+        self::assertNull(ActualCostSettlement::toScaled('-1', 6));
+        self::assertSame('0.000001', ActualCostSettlement::formatMicros(1));
+        self::assertSame('12.500000', ActualCostSettlement::formatMicros(12500000));
+    }
+
+    public function test_an_arithmetic_overflow_falls_back_to_the_quote_and_warns(): void
+    {
+        Log::spy();
+        config(['ai_credits.settlement_buffer' => 1000000.0]);
+        $workspace = $this->workspace(500);
+        $document = $this->document($workspace);
+        $quote = $this->reserved($workspace, $document, 10);
+        $this->cost($workspace, $document, $quote, '999999.999999');
+
+        $this->settle($document);
+
+        $quote = $quote->fresh();
+        self::assertSame(10, $quote->charged_credits);
+        self::assertSame(0, $quote->released_credits);
+        self::assertSame('quoted_fallback', $quote->settlement_basis);
+        self::assertSame(490, $this->saved($workspace));
+        Log::shouldHaveReceived('warning')->withArgs(fn ($message, $context = []) => str_contains($message, 'fell back')
+            && ($context['reason'] ?? null) === 'cost_overflow')->once();
+    }
+
+    public function test_the_settlement_code_uses_no_bcmath_functions(): void
+    {
+        foreach (['app/Services/AiCredits/ActualCostSettlement.php', 'app/Services/AiCredits/CreditAccountant.php',
+            'app/Console/Commands/CreditsSettlementPreview.php'] as $path) {
+            self::assertDoesNotMatchRegularExpression('/\bbc[a-z]+\s*\(/', file_get_contents(base_path($path)), $path);
+        }
     }
 }
