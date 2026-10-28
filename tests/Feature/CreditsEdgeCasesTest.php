@@ -266,4 +266,106 @@ class CreditsEdgeCasesTest extends TestCase
             ->expectsOutputToContain('absorbed')
             ->assertSuccessful();
     }
+
+    // ------------------------------------------------------------------ handled cases that must stay handled
+
+    public function test_a1_two_partial_holds_cannot_take_the_same_credits(): void
+    {
+        $workspace = $this->workspace();
+        $this->monthly($workspace, 4);
+        $accountant = app(CreditAccountant::class);
+        $first = $this->quote($workspace, $this->document($workspace), 6);
+        $second = $this->quote($workspace, $this->document($workspace), 6);
+
+        $accountant->reserve($first, $this->user->id); // holds all 4 available
+        self::assertSame(0, $accountant->balances($workspace->id)['monthly']['remaining'], 'open holds are subtracted from what is available');
+
+        try {
+            $accountant->reserve($second, $this->user->id);
+            self::fail('The second hold would have taken credits the first already holds.');
+        } catch (HttpException $e) {
+            self::assertSame('Insufficient credits: 0 available, 3 required.', $e->getMessage());
+        }
+        self::assertSame(4, (int) DB::table('billing_operations')->where('status', 'reserved')->sum('amount_reserved'));
+        self::assertSame(1, DB::table('billing_operations')->count());
+    }
+
+    public function test_a1_a_hold_is_reserved_once_when_the_same_quote_is_reserved_twice(): void
+    {
+        $workspace = $this->workspace();
+        $this->monthly($workspace, 10);
+        $quote = $this->quote($workspace, $this->document($workspace), 6);
+
+        app(CreditAccountant::class)->reserve($quote, $this->user->id);
+        app(CreditAccountant::class)->reserve($quote->fresh(), $this->user->id);
+
+        self::assertSame(1, DB::table('billing_operations')->count());
+        self::assertSame(1, DB::table('credit_ledger')->where('reference', 'ai_reserve:'.$quote->id)->count());
+        self::assertSame(4, app(CreditAccountant::class)->balances($workspace->id)['monthly']['remaining']);
+    }
+
+    public function test_a6_an_upgrade_does_not_move_held_trial_credits_and_settlement_stays_non_negative(): void
+    {
+        $workspace = $this->workspace();
+        $this->trialRow($workspace, 15, now()->addDays(10));
+        $document = $this->document($workspace);
+        $quote = $this->quote($workspace, $document, 6);
+        $accountant = app(CreditAccountant::class);
+        $accountant->reserve($quote, $this->user->id);
+        $this->monthly($workspace, 100); // the first paid subscription starts while the hold is open
+
+        self::assertSame(9, $accountant->carryOverTrial($workspace->id, $this->user->id));
+        self::assertSame(0, $accountant->carryOverTrial($workspace->id, $this->user->id));
+        $row = WorkspaceCredit::where('workspace_id', $workspace->id)->firstOrFail();
+        self::assertSame(6, (int) $row->trial_credits_remaining, 'the held 6 stay in the trial pocket');
+        self::assertSame(9, (int) $row->ai_credits_remaining);
+
+        $this->cost($workspace, $document, $quote, '0.030000'); // 2 credits
+        $accountant->settleDocument($document->id, $this->user->id);
+
+        $row = $row->fresh();
+        self::assertSame(4, (int) $row->trial_credits_remaining);
+        self::assertSame(9, (int) $row->ai_credits_remaining);
+        self::assertSame(2, $quote->fresh()->charged_credits);
+    }
+
+    public function test_a18_a_pocket_that_is_short_at_settlement_never_goes_negative(): void
+    {
+        Log::spy();
+        $workspace = $this->workspace();
+        $this->trialRow($workspace, 15, now()->addDays(10));
+        $document = $this->document($workspace);
+        $quote = $this->quote($workspace, $document, 6);
+        app(CreditAccountant::class)->reserve($quote, $this->user->id);
+        $this->trialRow($workspace, 1, now()->addDays(10)); // a corrupted balance: less than the hold
+        $this->cost($workspace, $document, $quote, '0.100000'); // 5 credits
+
+        app(CreditAccountant::class)->settleDocument($document->id, $this->user->id);
+
+        self::assertSame(0, (int) WorkspaceCredit::where('workspace_id', $workspace->id)->value('trial_credits_remaining'));
+        Log::shouldHaveReceived('warning')->withArgs(fn ($message) => $message === 'AI credit settlement exceeded the trial balance.')->once();
+    }
+
+    public function test_a18_monthly_usage_never_exceeds_the_allowance(): void
+    {
+        $workspace = $this->workspace();
+        $period = $this->monthly($workspace, 5);
+        $accountant = app(CreditAccountant::class);
+        $documents = [];
+        foreach ([6, 6, 6] as $credits) {
+            $document = $this->document($workspace);
+            $quote = $this->quote($workspace, $document, $credits);
+            try {
+                $accountant->reserve($quote, $this->user->id);
+                $this->cost($workspace, $document, $quote, '0.500000');
+                $accountant->settleDocument($document->id, $this->user->id);
+            } catch (HttpException) {
+                // refused: nothing to settle
+            }
+            $documents[] = $document;
+        }
+
+        self::assertLessThanOrEqual(5, (int) $period->fresh()->ai_credits_used);
+        self::assertGreaterThanOrEqual(0, $accountant->balances($workspace->id)['monthly']['remaining']);
+    }
 }
