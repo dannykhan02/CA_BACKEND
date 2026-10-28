@@ -45,7 +45,8 @@ class DocumentAnalysisComposer
     ) {}
 
     /** @return array<string,mixed> */
-    public function compose(Document $document, ?\DateTimeImmutable $asOf = null): array
+    public function compose(Document $document, ?\DateTimeImmutable $asOf = null,
+        ?string $visualPageFamily = null, int $visualPageOffset = 0): array
     {
         $asOf ??= new \DateTimeImmutable;
         $document->loadMissing(['risks', 'deadlines', 'intelligenceSummary']);
@@ -87,7 +88,8 @@ class DocumentAnalysisComposer
         $notRenderable = array_values(array_filter($derived['candidates'],
             fn (array $chart): bool => ! $this->renderEligible($chart)));
         $ranked = [...$renderable, ...$notRenderable];
-        $datasets = $this->datasets->build($document, $eligible, $ranked, $evidence);
+        $datasets = $this->datasets->build($document, $eligible, $ranked, $evidence,
+            $visualPageFamily === 'datasets' ? $visualPageOffset : 0);
         $limitedMeasurements = $collected['rejected'];
         foreach ($collected['observations'] as $observation) {
             if ($observation->integrity['analyticalEligible']) {
@@ -96,7 +98,7 @@ class DocumentAnalysisComposer
             $limitedMeasurements[] = ['sourceId' => $observation->sourceId,
                 'codes' => array_values(array_unique($observation->integrity['reasons']))];
         }
-        $charts = array_map(function (array $chart) use ($document): array {
+        $chartPresenter = function (array $chart) use ($document): array {
             $renderEligible = $this->renderEligible($chart);
             $chart['origin'] = 'generated';
             $chart['logicalChartId'] = $chart['id'];
@@ -116,7 +118,11 @@ class DocumentAnalysisComposer
             $chart['exportSupport'] = ['csv' => true, 'png' => $renderEligible, 'word' => true];
 
             return $chart;
-        }, array_slice($ranked, 0, self::MAX_CHARTS));
+        };
+        $charts = array_map($chartPresenter, array_slice($ranked, 0, self::MAX_CHARTS));
+        $pageCharts = $visualPageFamily === 'charts'
+            ? array_map($chartPresenter, array_slice($ranked, $visualPageOffset, self::MAX_CHARTS))
+            : $charts;
         $v2 = (bool) config('intelligence_v2.enabled');
         $materiality = null;
         $records = [];
@@ -182,13 +188,14 @@ class DocumentAnalysisComposer
         unset($finding);
         $visualSummaries = $this->visualSummaries->build($document,
             $sourceCurrent ? $collected['observations'] : [], $comparisons,
-            array_column($important, 'sourceId'), $charts, $evidence);
+            array_column($important, 'sourceId'), $charts, $evidence,
+            $visualPageFamily, $visualPageOffset);
 
         $analysis = [
             'overview' => ['takeaways' => $takeaways, 'summaryNotes' => $notes],
             'visualAnalysis' => [
-                'charts' => $charts,
-                'omitted' => max(0, count($ranked) - count($charts)),
+                'charts' => $pageCharts,
+                'omitted' => max(0, count($ranked) - ($visualPageFamily === 'charts' ? $visualPageOffset : 0) - count($pageCharts)),
                 'rejected' => array_filter($derived['rejected']),
                 'diagnostics' => $this->visualDiagnostics($evidence, $collected, $eligible, $derived,
                     $renderable, $notRenderable, $charts, $sourceCurrent),
