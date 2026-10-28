@@ -15,6 +15,7 @@ use App\Models\ProcessingJob;
 use App\Models\Workspace;
 use App\Services\AuditLogger;
 use App\Services\Documents\DocumentStorageService;
+use App\Services\AiCredits\PlanLimits;
 use App\Services\Documents\SupportedDocumentTypes;
 use App\Services\Documents\UploadDispatchRecovery;
 use App\Services\EntitlementService;
@@ -32,6 +33,11 @@ class DocumentUploadController extends Controller
     public function store(UploadDocumentRequest $request): JsonResponse
     {
         $file = $request->file('file');
+        // Plan limits first: a type the plan does not include is refused before anything is stored, held or dispatched.
+        $planType = app(SupportedDocumentTypes::class)->typeForExtension(preg_replace('/[^a-z0-9]/', '', strtolower($file->getClientOriginalExtension())));
+        if ($planType !== null && ($planBlock = app(PlanLimits::class)->uploadBlock($request->user()->current_workspace_id, $planType)) !== null) {
+            return response()->json($planBlock + ['message' => 'Your plan does not include this file type.'], 403);
+        }
         app(EntitlementService::class)->assertProcessing($request->user()->current_workspace_id, (int) ceil($file->getSize() / 1024) * 1024);
         $hash = hash_file('sha256', $file->getRealPath());
 

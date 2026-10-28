@@ -100,6 +100,11 @@ return [
     'settlement_buffer' => (float) env('AI_CREDITS_SETTLEMENT_BUFFER', 1.25),
     'settlement_min' => (int) env('AI_CREDITS_SETTLEMENT_MIN', 1),
 
+    // With settlement_mode 'actual' only: a document may start when a bucket has at least ceil(quote x this) credits, and that
+    // bucket's available credits (never more than the quote) are held. 1.0 = the whole quote must be available, as before. The
+    // quote shown to the customer does not change; if the final cost exceeds the hold, the hold is charged and the rest absorbed.
+    'admission_min_ratio' => (float) env('AI_CREDITS_ADMISSION_MIN_RATIO', 1.0),
+
     // Cost assumed for a paid call whose usage is unknown (e.g. a timeout). Never zero.
     'unknown_usage_cost_usd' => (float) env('AI_CREDITS_UNKNOWN_USAGE_USD', 0.05),
 
@@ -138,16 +143,42 @@ return [
     'needs_review_policy' => env('AI_CREDITS_NEEDS_REVIEW_POLICY', 'release'), // release | settle
 
     // Whether saved credits may pay once a subscription's monthly credits are insufficient.
-    // false preserves today's rule: saved credits are untouched while a subscription is active.
+    // false preserves today's rule: saved credits are untouched while a subscription is active. Monthly credits are always tried first.
+    // Env: AI_CREDITS_SAVED_FALLBACK (default false). Admission, refusal messages and the credits summary all follow it.
     'saved_fallback_during_subscription' => (bool) env('AI_CREDITS_SAVED_FALLBACK', false),
 
     'grants' => [
-        'free_trial_credits' => (int) env('AI_CREDITS_FREE_TRIAL', 20),
+        // AI_CREDITS_FREE_TRIAL is the earlier name and still works when AI_CREDITS_FREE_TRIAL_CREDITS is not set.
+        'free_trial_credits' => (int) env('AI_CREDITS_FREE_TRIAL_CREDITS', env('AI_CREDITS_FREE_TRIAL', 20)),
         'referral_reward_credits' => (int) env('AI_CREDITS_REFERRAL_REWARD', 100),
     ],
     // Existing saved document units are converted lazily, only when a customer spends, so nothing
     // is lost and nothing is irreversibly rewritten by enabling the flag.
     'legacy_saved_credits_per_document' => (int) env('AI_CREDITS_LEGACY_PER_DOCUMENT', 10),
+
+    // Trials granted after this is set expire after this many days, into a separate trial pocket (workspace_credits.trial_credits_*).
+    // Null/unset = trial credits are saved credits that never expire, as before. A trial still unexpired when the first paid
+    // subscription starts is carried over into saved credits, once.
+    'free_trial_days' => ($days = env('AI_CREDITS_FREE_TRIAL_DAYS')) === null || $days === '' ? null : max(1, (int) $days),
+
+    // What each plan may do. A workspace without an active paid subscription period is 'free'; monthly and annual variants of
+    // a plan share its tier. Defaults are today's behaviour: every type, OCR on, no size limit. allowed_types is a comma list of
+    // extensions (pdf,docx,xlsx,jpg,png; jpg also covers jpeg); empty = all. max_quote_tokens is checked against the quote's tokens.
+    'plan_limits' => (function (): array {
+        $limits = [];
+        foreach (['free', 'starter', 'professional'] as $plan) {
+            $key = 'AI_CREDITS_'.strtoupper($plan);
+            $tokens = env($key.'_MAX_QUOTE_TOKENS');
+            $ocr = env($key.'_ALLOW_OCR');
+            $limits[$plan] = [
+                'allowed_types' => (string) env($key.'_ALLOWED_TYPES', ''),
+                'allow_ocr' => $ocr === null || $ocr === '' ? true : filter_var($ocr, FILTER_VALIDATE_BOOLEAN),
+                'max_quote_tokens' => $tokens === null || $tokens === '' ? null : max(1, (int) $tokens),
+            ];
+        }
+
+        return $limits;
+    })(),
 
     // Monthly AI credits granted by NEW subscription periods. Annual plans can differ from monthly.
     'plans' => [

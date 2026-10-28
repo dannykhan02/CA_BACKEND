@@ -24,7 +24,7 @@ class ActualCostSettlement
         return config('ai_credits.settlement_mode') === 'actual' ? 'actual' : 'quoted';
     }
 
-    /** @return array{charged:int,released:int,actual_cost_usd:?string,basis:string,reason:?string} */
+    /** @return array{charged:int,released:int,actual_cost_usd:?string,basis:string,reason:?string,absorbed:int} absorbed: credits the formula wanted above the hold, which the customer is not charged */
     public function plan(OperationQuote $quote, ?int $amount = null, ?string $mode = null): array
     {
         $quoted = $amount ?? (int) $quote->credits;
@@ -75,9 +75,10 @@ class ActualCostSettlement
         $numerator = $micros * $buffer;
         $denominator = $perCredit * 10000;
         $credits = intdiv($numerator, $denominator) + ($numerator % $denominator > 0 ? 1 : 0);
-        $charged = min($quoted, max(1, (int) config('ai_credits.settlement_min'), $credits));
+        $formula = max(1, (int) config('ai_credits.settlement_min'), $credits);
+        $charged = min($quoted, $formula);
 
-        return $this->result($quoted, $charged, $actual, 'actual', null);
+        return $this->result($quoted, $charged, $actual, 'actual', null, $formula - $charged);
     }
 
     /**
@@ -105,8 +106,8 @@ class ActualCostSettlement
         return intdiv($micros, 1000000).'.'.str_pad((string) ($micros % 1000000), 6, '0', STR_PAD_LEFT);
     }
 
-    private function result(int $quoted, int $charged, ?string $actual, string $basis, ?string $reason): array
+    private function result(int $quoted, int $charged, ?string $actual, string $basis, ?string $reason, int $absorbed = 0): array
     {
-        return ['charged' => $charged, 'released' => $quoted - $charged, 'actual_cost_usd' => $actual, 'basis' => $basis, 'reason' => $reason];
+        return ['charged' => $charged, 'released' => $quoted - $charged, 'actual_cost_usd' => $actual, 'basis' => $basis, 'reason' => $reason, 'absorbed' => $absorbed];
     }
 }

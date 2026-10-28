@@ -16,7 +16,7 @@ class AiCreditAdmission
 {
     public const WAITING_STAGE = 'awaiting_confirmation';
 
-    public function __construct(private QuoteService $quotes, private CreditAccountant $accountant) {}
+    public function __construct(private QuoteService $quotes, private CreditAccountant $accountant, private PlanLimits $plans) {}
 
     /** True when paid AI may proceed for this document now. Never calls a provider. */
     public function admitDocument(Document $document): bool
@@ -28,6 +28,13 @@ class AiCreditAdmission
             return true;
         }
         $priced = $this->quotes->quoteDocument($document);
+        // The plan's size limit comes first, on the quote's own token count: nothing is held, charged or sent to a provider.
+        $tokens = (int) ($priced['signals']['tokens'] ?? $priced['quote']->preflight['tokens'] ?? 0);
+        if (($block = $this->plans->sizeBlock($document, $tokens)) !== null) {
+            return $this->refuse($document, $block['required_plan'] !== null
+                ? sprintf('This document is larger than your plan allows. Upgrade to the %s plan to analyse it.', ucfirst($block['required_plan']))
+                : 'This document is larger than your plan allows.', $block);
+        }
         if ($priced['declined']) {
             return $this->refuse($document, $priced['reason'] === 'document_too_large'
                 ? 'This document is too large to analyse with AI credits.' : 'This document cannot be analysed within its credit allowance.');
@@ -50,11 +57,44 @@ class AiCreditAdmission
                 throw $e;
             }
 
-            return $this->refuse($document, $e->getMessage());
+            return $this->refuse($document, $e->getMessage(), $this->accountant->shortfall($document->workspace_id, (int) $quote->credits));
         }
         $this->stopWaiting($document);
+        $this->clearCreditBlock($document);
 
         return true;
+    }
+
+    /** A document that was refused for credits and is admitted on a retry no longer carries the old block. */
+    private function clearCreditBlock(Document $document): void
+    {
+        $pipeline = $document->fresh()?->ai_pipeline ?? [];
+        if (! isset($pipeline['credit_block'])) {
+            return;
+        }
+        unset($pipeline['credit_block']);
+        $document->forceFill(['ai_pipeline' => $pipeline])->save();
+    }
+
+    /** False (and the document ends as Failed with a plan_limit block) when the plan does not include OCR. Before any OCR or AI call. */
+    public function assertOcrAllowed(Document $document): bool
+    {
+        if (($block = $this->plans->ocrBlock($document)) === null) {
+            return true;
+        }
+
+        return $this->refuse($document, $block['required_plan'] !== null
+            ? sprintf('Scanned documents and images need the %s plan or higher.', ucfirst($block['required_plan']))
+            : 'Scanned documents and images are not included in your plan.', $block);
+    }
+
+    /** Records a plan_limit block on a document whose status the caller has already set. */
+    public function recordBlock(Document $document, array $block): void
+    {
+        $fresh = $document->fresh();
+        if ($fresh) {
+            $fresh->forceFill(['ai_pipeline' => [...($fresh->ai_pipeline ?? []), 'credit_block' => $block]])->save();
+        }
     }
 
     /** Clears the waiting flag and its "Waiting for your confirmation" stage once the document is admitted. */
@@ -121,6 +161,9 @@ class AiCreditAdmission
         if (! QuoteService::enabled() || $this->accountant->mode($document->workspace_id) === 'legacy') {
             return true;
         }
+        if (! $this->assertOcrAllowed($document)) {
+            return false;
+        }
         $priced = $this->quotes->quoteOcr($document, $pages);
         if ($priced['declined']) {
             return $this->refuse($document, $priced['reason'] === 'ocr_page_limit'
@@ -134,7 +177,7 @@ class AiCreditAdmission
         try {
             // The scan is priced after it is read, but it must be payable before it is: no OCR spend on a balance
             // that could not then pay for the analysis.
-            $need = $estimate['credits'];
+            $need = $this->accountant->requiredToStart($estimate['credits']);
             if ($this->accountant->available($document->workspace_id) < $need) {
                 abort(402, sprintf('Insufficient credits: %d available, %d required.', $this->accountant->available($document->workspace_id), $need));
             }
@@ -144,16 +187,24 @@ class AiCreditAdmission
                 throw $e;
             }
 
-            return $this->refuse($document, $e->getMessage());
+            return $this->refuse($document, $e->getMessage(), $this->accountant->shortfall($document->workspace_id, (int) $estimate['credits']));
         }
 
         return true;
     }
 
-    private function refuse(Document $document, string $message): bool
+    /**
+     * The document ends as Failed with its message, as before. A refusal for credits or a plan limit also leaves a structured
+     * ai_pipeline.credit_block so the client can show what to do. Nothing is held, charged or sent to a provider.
+     */
+    private function refuse(Document $document, string $message, ?array $block = null): bool
     {
         $this->accountant->releaseDocument($document->id, 'admission_refused');
-        $document->forceFill(['status' => 'Failed', 'error_message' => $message])->save();
+        $pipeline = $document->ai_pipeline ?? [];
+        if ($block !== null) {
+            $pipeline['credit_block'] = $block;
+        }
+        $document->forceFill(['status' => 'Failed', 'error_message' => $message, 'ai_pipeline' => $pipeline])->save();
 
         return false;
     }

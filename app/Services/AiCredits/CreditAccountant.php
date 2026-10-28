@@ -27,6 +27,8 @@ class CreditAccountant
 
     public const SAVED = 'saved_ai_credit';
 
+    public const TRIAL = 'trial_ai_credit';
+
     /** 'credits' = AI-credit accounting applies; 'legacy' = the 1-document-unit rules still govern this workspace. */
     public function mode(string $workspaceId): string
     {
@@ -50,7 +52,7 @@ class CreditAccountant
         $held = fn () => DB::table('billing_operations')->where('workspace_id', $workspaceId)->where('status', 'reserved')->whereNotNull('amount_reserved');
         $rate = max(1, (int) config('ai_credits.legacy_saved_credits_per_document'));
         $saved = (int) ($credits?->ai_credits_remaining ?? 0) + (int) ($credits?->documents_remaining ?? 0) * $rate;
-        $savedHeld = (int) $held()->whereNull('usage_period_id')->sum('amount_reserved');
+        $savedHeld = (int) $held()->whereNull('usage_period_id')->where(fn ($q) => $q->whereNull('funding_bucket')->orWhere('funding_bucket', '!=', self::TRIAL))->sum('amount_reserved');
         $monthly = null;
         if ($period && $period->ai_credits_allowed !== null) {
             $periodHeld = (int) $held()->where('usage_period_id', $period->id)->sum('amount_reserved');
@@ -63,30 +65,187 @@ class CreditAccountant
             'legacy_period' => $period && $period->ai_credits_allowed === null, 'paid' => $ent->paid($sub)];
     }
 
-    /** Credits usable right now for a new operation (the bucket that would fund it). */
+    /** Whether saved credits may fund an operation now: always without a subscription period, otherwise only with the fallback on. */
+    public function savedUsable(string $workspaceId): bool
+    {
+        return $this->balances($workspaceId)['monthly'] === null || (bool) config('ai_credits.saved_fallback_during_subscription');
+    }
+
+    /**
+     * Credits usable right now for a new operation: what the single bucket that would fund it can give. Buckets are never added
+     * together, because a hold is never split. Saved credits count only where holdPlan() may use them.
+     */
     public function available(string $workspaceId): int
     {
         $b = $this->balances($workspaceId);
-        if ($b['monthly'] !== null) {
-            return config('ai_credits.saved_fallback_during_subscription') ? max($b['monthly']['remaining'], $b['saved_available']) : $b['monthly']['remaining'];
+        $pockets = [$b['monthly']['remaining'] ?? 0, $this->trialAvailable($workspaceId)];
+        if ($b['monthly'] === null || config('ai_credits.saved_fallback_during_subscription')) {
+            $pockets[] = $b['saved_available'];
         }
 
-        return $b['saved_available'];
+        return max($pockets);
     }
 
-    /** @return array{0:string,1:?int} bucket and usage period id; aborts 402 when nothing can pay. */
-    public function fund(string $workspaceId, int $credits): array
+    /**
+     * Credits a hold must cover for the operation to start. The whole quote, except in settlement mode 'actual' with
+     * ai_credits.admission_min_ratio below 1: then ceil(quote x ratio), at least 1 (integer math on ten-thousandths).
+     */
+    public function requiredToStart(int $credits): int
+    {
+        if (ActualCostSettlement::mode() !== 'actual') {
+            return $credits;
+        }
+        $ratio = (int) round(max(0.0, min(1.0, (float) config('ai_credits.admission_min_ratio'))) * 10000);
+
+        return max(1, min($credits, intdiv($credits * $ratio + 9999, 10000)));
+    }
+
+    /** @return array{remaining:int,expires_at:?\Carbon\Carbon,expired:bool,held:int,available:int} the trial pocket; expired credits count as 0 (checked on read) */
+    public function trialBalance(string $workspaceId): array
+    {
+        $row = WorkspaceCredit::where('workspace_id', $workspaceId)->first();
+        $remaining = (int) ($row?->trial_credits_remaining ?? 0);
+        $expiresAt = $row?->trial_credits_expires_at ? \Illuminate\Support\Carbon::parse($row->trial_credits_expires_at) : null;
+        $expired = $expiresAt !== null && ! $expiresAt->isFuture();
+        $held = (int) DB::table('billing_operations')->where('workspace_id', $workspaceId)->where('status', 'reserved')
+            ->where('funding_bucket', self::TRIAL)->whereNotNull('amount_reserved')->sum('amount_reserved');
+
+        return ['remaining' => $remaining, 'expires_at' => $expiresAt, 'expired' => $expired, 'held' => $held,
+            'available' => $expired ? 0 : max(0, $remaining - $held)];
+    }
+
+    /** Trial credits usable now (0 once expired, and net of open trial holds). */
+    public function trialAvailable(string $workspaceId): int
+    {
+        return $this->trialBalance($workspaceId)['available'];
+    }
+
+    /** Grants a trial into the expiring trial pocket. Idempotent on the reference. Caller holds the workspace transaction. */
+    public function grantTrial(string $workspaceId, int $credits, int $days, string $reference, ?string $userId = null): void
+    {
+        $row = WorkspaceCredit::where('workspace_id', $workspaceId)->lockForUpdate()->firstOrFail();
+        if (DB::table('credit_ledger')->where('reference', $reference)->exists()) {
+            return;
+        }
+        $row->forceFill(['trial_credits_remaining' => (int) $row->trial_credits_remaining + $credits,
+            'trial_credits_expires_at' => now()->addDays($days)])->save();
+        app(CreditLedger::class)->record($workspaceId, $reference, self::TRIAL, 'credit', $credits, 'trial_grant', 'user', $userId, $userId,
+            (int) $row->trial_credits_remaining);
+    }
+
+    /**
+     * When the first paid subscription starts, whatever is left of an unexpired trial becomes saved credits, once
+     * (reference trial_carryover:<workspace>). An expired trial carries nothing. Credits held by an open document stay in the pocket.
+     * Caller holds the workspace transaction. Returns the credits moved.
+     */
+    public function carryOverTrial(string $workspaceId, ?string $userId = null): int
+    {
+        $row = WorkspaceCredit::where('workspace_id', $workspaceId)->lockForUpdate()->first();
+        if (! $row || DB::table('credit_ledger')->where('reference', 'trial_carryover:'.$workspaceId)->exists()) {
+            return 0;
+        }
+        $move = $this->trialAvailable($workspaceId);
+        if ($move < 1) {
+            return 0;
+        }
+        $row->forceFill(['trial_credits_remaining' => (int) $row->trial_credits_remaining - $move,
+            'ai_credits_remaining' => (int) $row->ai_credits_remaining + $move])->save();
+        $ledger = app(CreditLedger::class);
+        $ledger->record($workspaceId, 'trial_carryover_out:'.$workspaceId, self::TRIAL, 'debit', $move, 'trial_carried_over', 'workspace', $workspaceId, $userId,
+            (int) $row->trial_credits_remaining);
+        $rate = max(1, (int) config('ai_credits.legacy_saved_credits_per_document'));
+        $ledger->record($workspaceId, 'trial_carryover:'.$workspaceId, self::SAVED, 'credit', $move, 'trial_carried_over', 'workspace', $workspaceId, $userId,
+            (int) $row->ai_credits_remaining + (int) $row->documents_remaining * $rate);
+
+        return $move;
+    }
+
+    /**
+     * Writes off an expired trial's unused credits (the part held by an open document stays until that settles). One ledger row
+     * per workspace and expiry, so a rerun does nothing. Returns the credits expired.
+     */
+    public function expireTrial(string $workspaceId): int
+    {
+        return DB::transaction(function () use ($workspaceId) {
+            Workspace::whereKey($workspaceId)->lockForUpdate()->firstOrFail();
+            $row = WorkspaceCredit::where('workspace_id', $workspaceId)->lockForUpdate()->first();
+            $balance = $this->trialBalance($workspaceId);
+            $expire = $balance['remaining'] - $balance['held'];
+            if (! $row || ! $balance['expired'] || $expire < 1) {
+                return 0;
+            }
+            $row->forceFill(['trial_credits_remaining' => $balance['held']])->save();
+            app(CreditLedger::class)->record($workspaceId, 'trial_expire:'.$workspaceId.':'.$balance['expires_at']->getTimestamp(), self::TRIAL, 'debit',
+                $expire, 'trial_expired', 'workspace', $workspaceId, null, (int) $row->trial_credits_remaining);
+
+            return $expire;
+        });
+    }
+
+    /** Debits the trial pocket. It cannot go negative: a trial that expired mid-document pays only what is left (logged). */
+    private function debitTrial(string $workspaceId, int $amount, string $quoteId): int
+    {
+        $row = WorkspaceCredit::where('workspace_id', $workspaceId)->lockForUpdate()->firstOrFail();
+        $take = min($amount, (int) $row->trial_credits_remaining);
+        if ($take < $amount) {
+            Log::warning('AI credit settlement exceeded the trial balance.', ['workspace_id' => $workspaceId, 'quote_id' => $quoteId]);
+        }
+        $row->forceFill(['trial_credits_remaining' => (int) $row->trial_credits_remaining - $take])->save();
+
+        return (int) $row->trial_credits_remaining;
+    }
+
+    /**
+     * The one bucket that funds a hold, and how much it holds. In order: monthly (full quote, then at least the required
+     * minimum: all it has), trial, then saved credits where allowed. A hold is never split across buckets and never exceeds
+     * what the bucket has available. Null when nothing can pay.
+     *
+     * @return ?array{bucket:string,period_id:?int,hold:int}
+     */
+    public function holdPlan(string $workspaceId, int $credits): ?array
     {
         $b = $this->balances($workspaceId);
-        if ($b['monthly'] !== null && $b['monthly']['remaining'] >= $credits) {
-            return [self::MONTHLY, $b['monthly']['period_id']];
+        $need = $this->requiredToStart($credits);
+        $savedAllowed = $b['monthly'] === null || config('ai_credits.saved_fallback_during_subscription');
+        $pockets = [];
+        if ($b['monthly'] !== null) {
+            $pockets[] = [self::MONTHLY, $b['monthly']['period_id'], $b['monthly']['remaining']];
         }
-        if ($b['monthly'] === null || config('ai_credits.saved_fallback_during_subscription')) {
-            if ($b['saved_available'] >= $credits) {
-                return [self::SAVED, null];
+        $pockets[] = [self::TRIAL, null, $this->trialAvailable($workspaceId)];
+        if ($savedAllowed) {
+            $pockets[] = [self::SAVED, null, $b['saved_available']];
+        }
+        foreach ($pockets as [$bucket, $periodId, $available]) {
+            if ($available >= $credits) {
+                return ['bucket' => $bucket, 'period_id' => $periodId, 'hold' => $credits];
+            }
+            if ($need < $credits && $available >= $need) {
+                return ['bucket' => $bucket, 'period_id' => $periodId, 'hold' => $available];
             }
         }
-        abort(402, sprintf('Insufficient credits: %d available, %d required.', $this->available($workspaceId), $credits));
+
+        return null;
+    }
+
+    /** Why a hold of this quote could not start: what each bucket has, as it would be used (see savedUsable). Stored as ai_pipeline.credit_block. */
+    public function shortfall(string $workspaceId, int $quoted): array
+    {
+        $b = $this->balances($workspaceId);
+
+        return ['code' => 'insufficient_credits', 'quoted_credits' => $quoted, 'required_to_start' => $this->requiredToStart($quoted),
+            'monthly_available' => (int) ($b['monthly']['remaining'] ?? 0), 'trial_available' => $this->trialAvailable($workspaceId),
+            'saved_available' => $this->savedUsable($workspaceId) ? (int) $b['saved_available'] : 0, 'at' => now()->toIso8601String()];
+    }
+
+    /** @return array{0:string,1:?int,2:int} bucket, usage period id and held credits; aborts 402 when nothing can pay. */
+    public function fund(string $workspaceId, int $credits): array
+    {
+        $plan = $this->holdPlan($workspaceId, $credits);
+        if ($plan === null) {
+            abort(402, sprintf('Insufficient credits: %d available, %d required.', $this->available($workspaceId), $this->requiredToStart($credits)));
+        }
+
+        return [$plan['bucket'], $plan['period_id'], $plan['hold']];
     }
 
     public function reserve(OperationQuote $quote, ?string $userId = null): void
@@ -101,17 +260,17 @@ class CreditAccountant
                 return; // idempotent: a retry or duplicate delivery never reserves twice
             }
             abort_if($quote->status !== 'quoted' && $quote->status !== 'reserved', 409, 'This quote is no longer open.');
-            [$bucket, $periodId] = $this->fund($quote->workspace_id, $quote->credits);
+            [$bucket, $periodId, $hold] = $this->fund($quote->workspace_id, $quote->credits);
             $attempt = $op ? $op->attempt_number + 1 : 1;
             DB::table('billing_operations')->updateOrInsert(['kind' => $quote->kind, 'resource_id' => $quote->resource_id], [
                 'workspace_id' => $quote->workspace_id, 'usage_period_id' => $periodId, 'status' => 'reserved', 'attempt_number' => $attempt,
-                'quote_id' => $quote->id, 'amount_reserved' => $quote->credits, 'amount_settled' => null, 'funding_bucket' => $bucket,
+                'quote_id' => $quote->id, 'amount_reserved' => $hold, 'amount_settled' => null, 'funding_bucket' => $bucket,
                 'quote_version' => $quote->quote_version, 'release_reason' => null, 'created_at' => now(), 'updated_at' => now(),
             ]);
-            $quote->update(['status' => 'reserved', 'funding_bucket' => $bucket, 'accepted_at' => $quote->accepted_at ?? now(), 'reserved_at' => now()]);
-            app(CreditLedger::class)->record($quote->workspace_id, 'ai_reserve:'.$quote->id, $bucket, 'reserve', $quote->credits,
+            $quote->update(['status' => 'reserved', 'held_credits' => $hold, 'funding_bucket' => $bucket, 'accepted_at' => $quote->accepted_at ?? now(), 'reserved_at' => now()]);
+            app(CreditLedger::class)->record($quote->workspace_id, 'ai_reserve:'.$quote->id, $bucket, 'reserve', $hold,
                 $quote->kind.'_started', $quote->kind, $quote->resource_id, $userId);
-            $this->log('reserved', $quote->refresh(), ['reserved_credits' => $quote->credits]);
+            $this->log('reserved', $quote->refresh(), ['reserved_credits' => $hold]);
         }, 3);
     }
 
@@ -142,13 +301,19 @@ class CreditAccountant
                 SubscriptionUsagePeriod::whereKey($op->usage_period_id)->increment('ai_credits_used', $amount);
                 $period = SubscriptionUsagePeriod::find($op->usage_period_id);
                 $balance = max(0, $period->ai_credits_allowed - $period->ai_credits_used);
+            } elseif ($op->funding_bucket === self::TRIAL) {
+                $balance = $this->debitTrial($op->workspace_id, $amount, $op->quote_id);
             } else {
                 $balance = $this->debitSaved($op->workspace_id, $amount, $op->quote_id);
             }
             DB::table('billing_operations')->where('id', $op->id)->update(['status' => 'completed', 'amount_settled' => $amount, 'updated_at' => now()]);
             OperationQuote::whereKey($op->quote_id)->update(['status' => 'settled', 'settled_at' => now(), 'updated_at' => now(),
                 'charged_credits' => $amount, 'released_credits' => $plan['released'], 'actual_cost_usd' => $plan['actual_cost_usd'],
-                'settlement_basis' => $plan['basis']]);
+                'settlement_basis' => $plan['basis'], 'absorbed_credits' => $plan['absorbed'] > 0 ? $plan['absorbed'] : null]);
+            if ($plan['absorbed'] > 0) {
+                Log::warning('AI credit settlement absorbed credits', ['document_id' => $resourceId, 'quote_id' => $quote->id, 'kind' => $kind,
+                    'hold' => $reserved, 'formula_result' => $plan['charged'] + $plan['absorbed']]);
+            }
             app(CreditLedger::class)->record($op->workspace_id, 'ai_debit:'.$op->quote_id, $op->funding_bucket, 'debit', $amount,
                 $kind.'_completed', $kind, $resourceId, $userId, $balance);
             if ($plan['released'] > 0) {
