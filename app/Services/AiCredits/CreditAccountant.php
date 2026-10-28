@@ -65,15 +65,25 @@ class CreditAccountant
             'legacy_period' => $period && $period->ai_credits_allowed === null, 'paid' => $ent->paid($sub)];
     }
 
-    /** Credits usable right now for a new operation (the bucket that would fund it). */
+    /** Whether saved credits may fund an operation now: always without a subscription period, otherwise only with the fallback on. */
+    public function savedUsable(string $workspaceId): bool
+    {
+        return $this->balances($workspaceId)['monthly'] === null || (bool) config('ai_credits.saved_fallback_during_subscription');
+    }
+
+    /**
+     * Credits usable right now for a new operation: what the single bucket that would fund it can give. Buckets are never added
+     * together, because a hold is never split. Saved credits count only where holdPlan() may use them.
+     */
     public function available(string $workspaceId): int
     {
         $b = $this->balances($workspaceId);
-        if ($b['monthly'] !== null) {
-            return config('ai_credits.saved_fallback_during_subscription') ? max($b['monthly']['remaining'], $b['saved_available']) : $b['monthly']['remaining'];
+        $pockets = [$b['monthly']['remaining'] ?? 0, $this->trialAvailable($workspaceId)];
+        if ($b['monthly'] === null || config('ai_credits.saved_fallback_during_subscription')) {
+            $pockets[] = $b['saved_available'];
         }
 
-        return $b['saved_available'];
+        return max($pockets);
     }
 
     /**

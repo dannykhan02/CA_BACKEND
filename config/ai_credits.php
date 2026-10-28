@@ -143,7 +143,8 @@ return [
     'needs_review_policy' => env('AI_CREDITS_NEEDS_REVIEW_POLICY', 'release'), // release | settle
 
     // Whether saved credits may pay once a subscription's monthly credits are insufficient.
-    // false preserves today's rule: saved credits are untouched while a subscription is active.
+    // false preserves today's rule: saved credits are untouched while a subscription is active. Monthly credits are always tried first.
+    // Env: AI_CREDITS_SAVED_FALLBACK (default false). Admission, refusal messages and the credits summary all follow it.
     'saved_fallback_during_subscription' => (bool) env('AI_CREDITS_SAVED_FALLBACK', false),
 
     'grants' => [
