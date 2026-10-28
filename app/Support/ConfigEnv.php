@@ -55,6 +55,17 @@ class ConfigEnv
         return (int) $raw;
     }
 
+    /** One of $allowed (case-insensitive); null/empty is $default, and so is anything else. */
+    public static function choice(string $name, mixed $raw, string $default, array $allowed): string
+    {
+        if ($raw === null || $raw === '') {
+            return $default;
+        }
+        $value = strtolower(trim((string) $raw));
+
+        return in_array($value, $allowed, true) ? $value : self::reject($name, 'not one of '.implode(', ', $allowed), $default);
+    }
+
     private static function reject(string $name, string $why, mixed $default): mixed
     {
         self::$invalid[$name] = $why;

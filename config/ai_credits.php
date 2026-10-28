@@ -157,7 +157,10 @@ return [
     'grants' => [
         // AI_CREDITS_FREE_TRIAL is the earlier name and still works when AI_CREDITS_FREE_TRIAL_CREDITS is not set.
         'free_trial_credits' => ConfigEnv::integer('AI_CREDITS_FREE_TRIAL_CREDITS', env('AI_CREDITS_FREE_TRIAL_CREDITS', env('AI_CREDITS_FREE_TRIAL')), 20, 0),
-        'referral_reward_credits' => (int) env('AI_CREDITS_REFERRAL_REWARD', 100),
+        // Saved AI credits the referrer earns. When: 'first_purchase' (today) = the referred user's first completed payment of any kind;
+        // 'first_payment' = the referred user's first paid SUBSCRIPTION becoming active (the moment a trial carries over).
+        'referral_reward_credits' => ConfigEnv::integer('AI_CREDITS_REFERRAL_REWARD', env('AI_CREDITS_REFERRAL_REWARD'), 100, 0),
+        'referral_reward_trigger' => ConfigEnv::choice('AI_CREDITS_REFERRAL_TRIGGER', env('AI_CREDITS_REFERRAL_TRIGGER'), 'first_purchase', ['first_purchase', 'first_payment']),
     ],
     // Existing saved document units are converted lazily, only when a customer spends, so nothing
     // is lost and nothing is irreversibly rewritten by enabling the flag.
