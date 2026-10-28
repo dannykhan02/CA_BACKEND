@@ -18,7 +18,8 @@ class AnalyticalDatasetReadModel
     public function __construct(private SourceChartContract $sourceCharts) {}
 
     /** @param list<MetricObservation> $observations @param list<array<string,mixed>> $candidates */
-    public function build(Document $document, array $observations, array $candidates, Collection $evidence): array
+    public function build(Document $document, array $observations, array $candidates, Collection $evidence,
+        int $offset = 0): array
     {
         $revision = $document->intelligenceRevisionForRelations();
         if (($document->published_intelligence_revision_id !== null
@@ -57,9 +58,9 @@ class AnalyticalDatasetReadModel
         ksort($unsupported);
 
         return ['items' => array_map(static fn (AnalyticalDataset $item) => $item->toArray(),
-            array_slice($ordered, 0, self::MAX_DATASETS)),
-            'diagnostics' => ['eligible' => $count, 'returned' => min($count, self::MAX_DATASETS),
-                'omittedByLimit' => max(0, $count - self::MAX_DATASETS), 'unsupported' => $unsupported]];
+            array_slice($ordered, $offset, self::MAX_DATASETS)),
+            'diagnostics' => ['eligible' => $count, 'returned' => min(max(0, $count - $offset), self::MAX_DATASETS),
+                'omittedByLimit' => max(0, $count - $offset - self::MAX_DATASETS), 'unsupported' => $unsupported]];
     }
 
     private function fromCandidate(Document $document, array $candidate, array $bySource,

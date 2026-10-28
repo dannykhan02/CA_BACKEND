@@ -22,7 +22,8 @@ class DocumentVisualSummaryReadModel
      * @param  list<string>  $rankedSourceIds  @param list<array<string,mixed>> $featuredCharts
      */
     public function build(Document $document, array $observations, array $comparisons,
-        array $rankedSourceIds, array $featuredCharts, Collection $evidence): array
+        array $rankedSourceIds, array $featuredCharts, Collection $evidence,
+        ?string $pageFamily = null, int $offset = 0): array
     {
         $revision = $document->intelligenceRevisionForRelations();
         if (($document->published_intelligence_revision_id !== null
@@ -194,7 +195,7 @@ class DocumentVisualSummaryReadModel
         usort($events, static fn (array $a, array $b) => [$a['date'], $a['id']] <=> [$b['date'], $b['id']]);
         ksort($unsupported);
 
-        return $this->response($document, $kpis, $cards, $events, $unsupported);
+        return $this->response($document, $kpis, $cards, $events, $unsupported, $pageFamily, $offset);
     }
 
     private function deadlineSourceCurrent(Document $document, DocumentDeadline $deadline,
@@ -244,21 +245,25 @@ class DocumentVisualSummaryReadModel
     }
 
     private function response(Document $document, array $kpis, array $comparisons,
-        array $events, array $unsupported): array
+        array $events, array $unsupported, ?string $pageFamily = null, int $offset = 0): array
     {
+        $kpiOffset = $pageFamily === 'kpis' ? $offset : 0;
+        $comparisonOffset = $pageFamily === 'comparisons' ? $offset : 0;
+        $eventOffset = $pageFamily === 'timeline' ? $offset : 0;
+
         return ['owner' => ['workspaceId' => $document->workspace_id,
             'documentId' => $document->id,
             'intelligenceRevisionId' => $document->intelligenceRevisionForRelations(),
             'pipelineKey' => $document->ai_pipeline['key'] ?? null,
             'sourceRevisionHash' => hash('sha256', (string) $document->extracted_text)],
-            'kpis' => array_slice($kpis, 0, self::MAX_KPIS),
-            'comparisons' => array_slice($comparisons, 0, self::MAX_COMPARISONS),
-            'timeline' => array_slice($events, 0, self::MAX_EVENTS),
+            'kpis' => array_slice($kpis, $kpiOffset, self::MAX_KPIS),
+            'comparisons' => array_slice($comparisons, $comparisonOffset, self::MAX_COMPARISONS),
+            'timeline' => array_slice($events, $eventOffset, self::MAX_EVENTS),
             'diagnostics' => ['eligibleKpis' => count($kpis),
                 'eligibleComparisons' => count($comparisons), 'eligibleEvents' => count($events),
-                'omittedKpis' => max(0, count($kpis) - self::MAX_KPIS),
-                'omittedComparisons' => max(0, count($comparisons) - self::MAX_COMPARISONS),
-                'omittedEvents' => max(0, count($events) - self::MAX_EVENTS),
+                'omittedKpis' => max(0, count($kpis) - $kpiOffset - self::MAX_KPIS),
+                'omittedComparisons' => max(0, count($comparisons) - $comparisonOffset - self::MAX_COMPARISONS),
+                'omittedEvents' => max(0, count($events) - $eventOffset - self::MAX_EVENTS),
                 'unsupported' => $unsupported]];
     }
 }

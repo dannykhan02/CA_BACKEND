@@ -145,6 +145,8 @@ Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(functio
 
     Route::get('/documents/{document}/intelligence', [DocumentIntelligenceController::class, 'show'])
         ->name('documents.intelligence');
+    Route::get('/documents/{document}/intelligence/visuals', [DocumentIntelligenceController::class, 'visuals'])
+        ->middleware('throttle:60,1')->name('documents.intelligence.visuals');
 
     Route::get('/documents/{document}/sources/{sourceId}', [DocumentSourceReferenceController::class, 'show'])
         ->middleware('throttle:60,1')->name('documents.sources.show');
