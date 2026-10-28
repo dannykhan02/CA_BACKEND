@@ -115,7 +115,7 @@ class CreditAccountant
         }, 3);
     }
 
-    /** Exactly the quoted amount, once. Returns true when this call performed the debit. */
+    /** The quoted amount, or in ai_credits.settlement_mode 'actual' the recorded cost (ActualCostSettlement), once. Returns true when this call performed the debit. */
     public function settle(string $kind, string $resourceId, ?string $userId = null): bool
     {
         return DB::transaction(function () use ($kind, $resourceId, $userId) {
@@ -128,7 +128,15 @@ class CreditAccountant
             if ($op->status !== 'reserved' || $op->amount_reserved === null) {
                 return false;
             }
-            $amount = (int) $op->amount_reserved;
+            $quote = OperationQuote::whereKey($op->quote_id)->lockForUpdate()->firstOrFail();
+            $reserved = (int) $op->amount_reserved;
+            $plan = app(ActualCostSettlement::class)->plan($quote, $reserved);
+            if ($plan['basis'] === 'quoted_fallback') {
+                Log::warning('AI credit settlement fell back to the quoted amount.', ['document_id' => $resourceId, 'quote_id' => $quote->id,
+                    'kind' => $kind, 'reason' => $plan['reason']]);
+            }
+            // The hold never moved a balance, so charging less than it IS the release: only the charged amount is debited.
+            $amount = $plan['charged'];
             $balance = null;
             if ($op->funding_bucket === self::MONTHLY) {
                 SubscriptionUsagePeriod::whereKey($op->usage_period_id)->increment('ai_credits_used', $amount);
@@ -138,10 +146,17 @@ class CreditAccountant
                 $balance = $this->debitSaved($op->workspace_id, $amount, $op->quote_id);
             }
             DB::table('billing_operations')->where('id', $op->id)->update(['status' => 'completed', 'amount_settled' => $amount, 'updated_at' => now()]);
-            OperationQuote::whereKey($op->quote_id)->update(['status' => 'settled', 'settled_at' => now(), 'updated_at' => now()]);
+            OperationQuote::whereKey($op->quote_id)->update(['status' => 'settled', 'settled_at' => now(), 'updated_at' => now(),
+                'charged_credits' => $amount, 'released_credits' => $plan['released'], 'actual_cost_usd' => $plan['actual_cost_usd'],
+                'settlement_basis' => $plan['basis']]);
             app(CreditLedger::class)->record($op->workspace_id, 'ai_debit:'.$op->quote_id, $op->funding_bucket, 'debit', $amount,
                 $kind.'_completed', $kind, $resourceId, $userId, $balance);
-            $this->log('settled', OperationQuote::findOrFail($op->quote_id), ['settled_credits' => $amount]);
+            if ($plan['released'] > 0) {
+                app(CreditLedger::class)->record($op->workspace_id, 'ai_release_unused:'.$op->quote_id, $op->funding_bucket, 'release',
+                    $plan['released'], $kind.'_settled_below_quote', $kind, $resourceId, $userId);
+            }
+            $this->log('settled', OperationQuote::findOrFail($op->quote_id), ['settled_credits' => $amount, 'released_credits' => $plan['released'],
+                'settlement_basis' => $plan['basis']]);
 
             return true;
         }, 3);

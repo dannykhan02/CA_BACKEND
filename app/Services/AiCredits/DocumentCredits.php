@@ -36,7 +36,7 @@ class DocumentCredits
     }
 
     /**
-     * @return ?array{quoted:?int,state:string,charged:?int,requiresConfirmation:bool} null when credits are off or the document has no quote yet
+     * @return ?array{quoted:?int,state:string,charged:?int,requiresConfirmation:bool,quotedCredits:int,chargedCredits:?int,releasedCredits:?int,settlementBasis:?string} null when credits are off or the document has no quote yet
      */
     public function for(Document $document): ?array
     {
@@ -61,7 +61,13 @@ class DocumentCredits
             default => 'quoted',
         };
 
-        return ['quoted' => (int) $quote->credits, 'state' => $state, 'charged' => $state === 'charged' ? (int) $quote->credits : null,
-            'requiresConfirmation' => $state === 'awaiting_confirmation'];
+        // A quote settled before settlement columns existed has null charged_credits: it was charged its quote.
+        $charged = $state === 'charged' ? (int) ($quote->charged_credits ?? $quote->credits) : null;
+
+        return ['quoted' => (int) $quote->credits, 'state' => $state, 'charged' => $charged,
+            'requiresConfirmation' => $state === 'awaiting_confirmation',
+            'quotedCredits' => (int) $quote->credits, 'chargedCredits' => $charged,
+            'releasedCredits' => $state === 'charged' ? (int) ($quote->released_credits ?? 0) : null,
+            'settlementBasis' => $state === 'charged' ? ($quote->settlement_basis ?? 'quoted') : null];
     }
 }
