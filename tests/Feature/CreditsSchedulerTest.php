@@ -33,7 +33,9 @@ class CreditsSchedulerTest extends TestCase
         self::assertStringContainsString('web|worker|scheduler', $script);
         self::assertStringContainsString('exec php artisan schedule:work', $script);
         self::assertStringContainsString('web) exec frankenphp run --config /etc/caddy/Caddyfile --adapter caddyfile ;;', $script);
-        self::assertStringContainsString('worker) exec php artisan horizon ;;', $script);
+        // The worker still execs Horizon; the in-worker scheduler is opt-in via WORKER_RUNS_SCHEDULER=1.
+        self::assertMatchesRegularExpression('/worker\)\n(?:.*\n)*?\s*exec php artisan horizon ;;/', $script);
+        self::assertStringContainsString('if [ "${WORKER_RUNS_SCHEDULER:-0}" = "1" ]; then', $script);
         // The scheduler branch ends before the ClamAV startup checks.
         self::assertLessThan(strpos($script, 'freshclam'), strpos($script, 'schedule:work'));
     }
