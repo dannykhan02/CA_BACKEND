@@ -5,6 +5,8 @@
  * production cost quantiles (see docs/tasks/ai-credits-implementation.md). The system is
  * dormant until DOCINTEL_AI_CREDITS_ENABLED=true; with it off, 1 document = 1 unit as before.
  */
+use App\Support\ConfigEnv;
+
 return [
     'enabled' => (bool) env('DOCINTEL_AI_CREDITS_ENABLED', false),
     // Stored on every quote so a historical charge never depends on today's config.
@@ -103,7 +105,8 @@ return [
     // With settlement_mode 'actual' only: a document may start when a bucket has at least ceil(quote x this) credits, and that
     // bucket's available credits (never more than the quote) are held. 1.0 = the whole quote must be available, as before. The
     // quote shown to the customer does not change; if the final cost exceeds the hold, the hold is charged and the rest absorbed.
-    'admission_min_ratio' => (float) env('AI_CREDITS_ADMISSION_MIN_RATIO', 1.0),
+    // Anything outside (0, 1] or not a number is 1.0 (the whole quote), with one warning at boot.
+    'admission_min_ratio' => ConfigEnv::number('AI_CREDITS_ADMISSION_MIN_RATIO', env('AI_CREDITS_ADMISSION_MIN_RATIO'), 1.0, 0.0, 1.0, true),
 
     // Cost assumed for a paid call whose usage is unknown (e.g. a timeout). Never zero.
     'unknown_usage_cost_usd' => (float) env('AI_CREDITS_UNKNOWN_USAGE_USD', 0.05),
@@ -149,7 +152,7 @@ return [
 
     'grants' => [
         // AI_CREDITS_FREE_TRIAL is the earlier name and still works when AI_CREDITS_FREE_TRIAL_CREDITS is not set.
-        'free_trial_credits' => (int) env('AI_CREDITS_FREE_TRIAL_CREDITS', env('AI_CREDITS_FREE_TRIAL', 20)),
+        'free_trial_credits' => ConfigEnv::integer('AI_CREDITS_FREE_TRIAL_CREDITS', env('AI_CREDITS_FREE_TRIAL_CREDITS', env('AI_CREDITS_FREE_TRIAL')), 20, 0),
         'referral_reward_credits' => (int) env('AI_CREDITS_REFERRAL_REWARD', 100),
     ],
     // Existing saved document units are converted lazily, only when a customer spends, so nothing
@@ -159,7 +162,7 @@ return [
     // Trials granted after this is set expire after this many days, into a separate trial pocket (workspace_credits.trial_credits_*).
     // Null/unset = trial credits are saved credits that never expire, as before. A trial still unexpired when the first paid
     // subscription starts is carried over into saved credits, once.
-    'free_trial_days' => ($days = env('AI_CREDITS_FREE_TRIAL_DAYS')) === null || $days === '' ? null : max(1, (int) $days),
+    'free_trial_days' => ConfigEnv::integer('AI_CREDITS_FREE_TRIAL_DAYS', env('AI_CREDITS_FREE_TRIAL_DAYS'), null, 1),
 
     // What each plan may do. A workspace without an active paid subscription period is 'free'; monthly and annual variants of
     // a plan share its tier. Defaults are today's behaviour: every type, OCR on, no size limit. allowed_types is a comma list of
@@ -168,12 +171,11 @@ return [
         $limits = [];
         foreach (['free', 'starter', 'professional'] as $plan) {
             $key = 'AI_CREDITS_'.strtoupper($plan);
-            $tokens = env($key.'_MAX_QUOTE_TOKENS');
             $ocr = env($key.'_ALLOW_OCR');
             $limits[$plan] = [
                 'allowed_types' => (string) env($key.'_ALLOWED_TYPES', ''),
                 'allow_ocr' => $ocr === null || $ocr === '' ? true : filter_var($ocr, FILTER_VALIDATE_BOOLEAN),
-                'max_quote_tokens' => $tokens === null || $tokens === '' ? null : max(1, (int) $tokens),
+                'max_quote_tokens' => ConfigEnv::integer($key.'_MAX_QUOTE_TOKENS', env($key.'_MAX_QUOTE_TOKENS'), null, 1),
             ];
         }
 
@@ -185,4 +187,7 @@ return [
         'starter' => ['monthly' => (int) env('AI_CREDITS_STARTER_MONTHLY', 100), 'annual' => (int) env('AI_CREDITS_STARTER_ANNUAL', 100)],
         'professional' => ['monthly' => (int) env('AI_CREDITS_PROFESSIONAL_MONTHLY', 250), 'annual' => (int) env('AI_CREDITS_PROFESSIONAL_ANNUAL', 250)],
     ],
+
+    // Variables above that were ignored as unusable (see App\Support\ConfigEnv); AppServiceProvider logs one warning.
+    'invalid_env' => ConfigEnv::invalid(),
 ];

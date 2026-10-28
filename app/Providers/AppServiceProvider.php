@@ -68,6 +68,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // A billing variable that could not be used falls back to today's behaviour; say so once per process.
+        if (($ignored = config('ai_credits.invalid_env')) !== null && $ignored !== []) {
+            \Illuminate\Support\Facades\Log::warning('Unusable AI credit settings were ignored; the defaults are in effect.', ['variables' => $ignored]);
+        }
+
         // Safety net: a dispatch without an explicit onQueue() still reaches its pool.
         Queue::route(QueueTopology::ROUTES);
 

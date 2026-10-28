@@ -97,7 +97,9 @@ class CreditAccountant
         if (ActualCostSettlement::mode() !== 'actual' || ($kind !== null && ! in_array($kind, ActualCostSettlement::KINDS, true))) {
             return $credits;
         }
-        $ratio = (int) round(max(0.0, min(1.0, (float) config('ai_credits.admission_min_ratio'))) * 10000);
+        // Defence in depth (the config already rejects these): zero, negative or non-numeric means the whole quote, above 1 is 1.
+        $configured = (float) config('ai_credits.admission_min_ratio');
+        $ratio = (int) round(min(1.0, $configured > 0.0 ? $configured : 1.0) * 10000);
 
         return max(1, min($credits, intdiv($credits * $ratio + 9999, 10000)));
     }

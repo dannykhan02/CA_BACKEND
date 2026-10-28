@@ -175,4 +175,45 @@ class CreditsEdgeCasesTest extends TestCase
         self::assertSame(1, DB::table('credit_ledger')->where('reference', 'ai_debit:'.$quote->id)->count());
         self::assertSame(0, DB::table('credit_ledger')->where('reference', 'ai_release_unused:'.$quote->id)->count());
     }
+
+    // ------------------------------------------------------------------ A20
+
+    public function test_a20_unusable_settings_fall_back_to_todays_behaviour_and_are_remembered_once(): void
+    {
+        \App\Support\ConfigEnv::reset();
+        $number = fn ($raw) => \App\Support\ConfigEnv::number('AI_CREDITS_ADMISSION_MIN_RATIO', $raw, 1.0, 0.0, 1.0, true);
+        self::assertSame(1.0, $number(null));
+        self::assertSame(1.0, $number(''));
+        self::assertSame(0.4, $number('0.4'));
+        self::assertSame(1.0, $number('1'));
+        self::assertSame([], \App\Support\ConfigEnv::invalid());
+        foreach (['0', '-0.5', '1.5', 'abc', 'NaN'] as $bad) {
+            self::assertSame(1.0, $number($bad), $bad);
+        }
+        self::assertSame(['AI_CREDITS_ADMISSION_MIN_RATIO' => 'not a number'], \App\Support\ConfigEnv::invalid());
+
+        \App\Support\ConfigEnv::reset();
+        $integer = fn (string $name, $raw, ?int $default, int $min) => \App\Support\ConfigEnv::integer($name, $raw, $default, $min);
+        self::assertSame(15, $integer('AI_CREDITS_FREE_TRIAL_CREDITS', '15', 20, 0));
+        self::assertSame(0, $integer('AI_CREDITS_FREE_TRIAL_CREDITS', '0', 20, 0));
+        self::assertSame(20, $integer('AI_CREDITS_FREE_TRIAL_CREDITS', '-5', 20, 0), 'negative trial credits');
+        self::assertNull($integer('AI_CREDITS_FREE_TRIAL_DAYS', '0', null, 1), 'zero trial days means no expiry, not a one-day trial');
+        self::assertNull($integer('AI_CREDITS_FREE_TRIAL_DAYS', '', null, 1));
+        self::assertNull($integer('AI_CREDITS_FREE_MAX_QUOTE_TOKENS', 'abc', null, 1), 'a typo must not become a limit of one token');
+        self::assertNull($integer('AI_CREDITS_FREE_MAX_QUOTE_TOKENS', '18k', null, 1));
+        self::assertNull($integer('AI_CREDITS_FREE_MAX_QUOTE_TOKENS', '1.5', null, 1));
+        self::assertSame(18000, $integer('AI_CREDITS_FREE_MAX_QUOTE_TOKENS', '18000', null, 1));
+        self::assertSame(['AI_CREDITS_FREE_TRIAL_CREDITS', 'AI_CREDITS_FREE_TRIAL_DAYS', 'AI_CREDITS_FREE_MAX_QUOTE_TOKENS'], array_keys(\App\Support\ConfigEnv::invalid()));
+        \App\Support\ConfigEnv::reset();
+    }
+
+    public function test_a20_a_ratio_outside_the_range_is_never_applied_even_if_it_reaches_the_engine(): void
+    {
+        foreach ([0.0, -1.0, 7.0] as $ratio) {
+            config(['ai_credits.admission_min_ratio' => $ratio]);
+            self::assertSame(6, app(CreditAccountant::class)->requiredToStart(6), (string) $ratio);
+        }
+        config(['ai_credits.admission_min_ratio' => 0.4]);
+        self::assertSame(3, app(CreditAccountant::class)->requiredToStart(6));
+    }
 }
