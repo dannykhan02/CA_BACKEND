@@ -21,6 +21,7 @@ class OperationQuote extends Model
         'credits' => 'integer',
         'provider_cost_cap_usd' => 'float',
         'preflight' => 'array',
+        'charged_credits' => 'integer', 'released_credits' => 'integer',
         'accepted_at' => 'datetime', 'reserved_at' => 'datetime', 'settled_at' => 'datetime', 'released_at' => 'datetime',
     ];
 

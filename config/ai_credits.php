@@ -93,6 +93,13 @@ return [
     'payment_fee_rate' => (float) env('AI_CREDITS_PAYMENT_FEE_RATE', 0.029),
     'margin_target' => (float) env('AI_CREDITS_MARGIN_TARGET', 0.70),
 
+    // What a document is charged when it settles. 'quoted' charges the quote, as before. 'actual' charges
+    // clamp(ceil(recorded provider cost x buffer / provider_cost_usd_per_credit), settlement_min, quoted credits) and releases the
+    // rest. A document with no complete cost record is charged its quote (basis 'quoted_fallback').
+    'settlement_mode' => env('AI_CREDITS_SETTLEMENT_MODE', 'quoted'), // quoted | actual
+    'settlement_buffer' => (float) env('AI_CREDITS_SETTLEMENT_BUFFER', 1.25),
+    'settlement_min' => (int) env('AI_CREDITS_SETTLEMENT_MIN', 1),
+
     // Cost assumed for a paid call whose usage is unknown (e.g. a timeout). Never zero.
     'unknown_usage_cost_usd' => (float) env('AI_CREDITS_UNKNOWN_USAGE_USD', 0.05),
 
