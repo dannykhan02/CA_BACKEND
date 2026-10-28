@@ -155,4 +155,24 @@ class CreditsEdgeCasesTest extends TestCase
         self::assertSame([9, 4], array_map('intval', $rows), 'every expiry that moved credits has its own row');
         self::assertSame(0, $accountant->expireTrial($workspace->id));
     }
+
+    public function test_a18_absorbed_credits_write_exactly_one_info_ledger_row(): void
+    {
+        $workspace = $this->workspace(100);
+        $this->monthly($workspace, 3);
+        $document = $this->document($workspace);
+        $quote = $this->quote($workspace, $document, 6);
+        app(CreditAccountant::class)->reserve($quote, $this->user->id);
+        $this->cost($workspace, $document, $quote, '0.200000'); // formula 10 credits, hold 3
+
+        app(CreditAccountant::class)->settleDocument($document->id, $this->user->id);
+        app(CreditAccountant::class)->settleDocument($document->id, $this->user->id); // a duplicate delivery
+
+        $rows = DB::table('credit_ledger')->where('reference', 'ai_absorbed:'.$quote->id)->get();
+        self::assertCount(1, $rows);
+        self::assertSame('info', $rows[0]->direction);
+        self::assertSame(7, (int) $rows[0]->amount);
+        self::assertSame(1, DB::table('credit_ledger')->where('reference', 'ai_debit:'.$quote->id)->count());
+        self::assertSame(0, DB::table('credit_ledger')->where('reference', 'ai_release_unused:'.$quote->id)->count());
+    }
 }

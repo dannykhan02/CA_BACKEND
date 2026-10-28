@@ -317,6 +317,9 @@ class CreditAccountant
             if ($plan['absorbed'] > 0) {
                 Log::warning('AI credit settlement absorbed credits', ['document_id' => $resourceId, 'quote_id' => $quote->id, 'kind' => $kind,
                     'hold' => $reserved, 'formula_result' => $plan['charged'] + $plan['absorbed']]);
+                // Evidence only ('info' moves no balance and is outside the reserve/debit/release reconciliation): what we absorbed.
+                app(CreditLedger::class)->record($op->workspace_id, 'ai_absorbed:'.$op->quote_id, $op->funding_bucket, 'info', $plan['absorbed'],
+                    $kind.'_cost_above_hold', $kind, $resourceId, $userId);
             }
             app(CreditLedger::class)->record($op->workspace_id, 'ai_debit:'.$op->quote_id, $op->funding_bucket, 'debit', $amount,
                 $kind.'_completed', $kind, $resourceId, $userId, $balance);
