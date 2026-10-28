@@ -138,6 +138,16 @@ class CreditAccountant
         return null;
     }
 
+    /** Why a hold of this quote could not start: what each bucket has, as it would be used (see savedUsable). Stored as ai_pipeline.credit_block. */
+    public function shortfall(string $workspaceId, int $quoted): array
+    {
+        $b = $this->balances($workspaceId);
+
+        return ['code' => 'insufficient_credits', 'quoted_credits' => $quoted, 'required_to_start' => $this->requiredToStart($quoted),
+            'monthly_available' => (int) ($b['monthly']['remaining'] ?? 0), 'trial_available' => $this->trialAvailable($workspaceId),
+            'saved_available' => $this->savedUsable($workspaceId) ? (int) $b['saved_available'] : 0, 'at' => now()->toIso8601String()];
+    }
+
     /** @return array{0:string,1:?int,2:int} bucket, usage period id and held credits; aborts 402 when nothing can pay. */
     public function fund(string $workspaceId, int $credits): array
     {

@@ -230,7 +230,7 @@ class EntitlementService
             'savedCredits' => $b['saved'], 'savedCreditsReserved' => $b['saved_reserved'], 'savedCreditsAvailable' => $b['saved_available'],
             // Whether saved credits may pay now (during a subscription only with AI_CREDITS_SAVED_FALLBACK); availableCredits already follows it.
             'savedCreditsUsable' => $accountant->savedUsable($workspace), 'savedFallbackDuringSubscription' => (bool) config('ai_credits.saved_fallback_during_subscription'),
-            'availableCredits' => $accountant->available($workspace), 'minimumRequiredCredits' => $quotes->minimumDocumentCredits(),
+            'availableCredits' => $accountant->available($workspace), 'minimumRequiredCredits' => $accountant->requiredToStart($quotes->minimumDocumentCredits()),
             // Large analyses wait here until the customer accepts the quoted credits.
             'pendingConfirmations' => Document::where('workspace_id', $workspace)->where('status', 'Processing')->where('ai_pipeline->awaiting_credit_confirmation', true)
                 ->get(['id', 'ai_pipeline'])->map(fn ($d) => ['documentId' => $d->id, 'credits' => $d->ai_pipeline['credit_quote']['credits'] ?? null, 'band' => $d->ai_pipeline['credit_quote']['band'] ?? null,

@@ -50,11 +50,23 @@ class AiCreditAdmission
                 throw $e;
             }
 
-            return $this->refuse($document, $e->getMessage());
+            return $this->refuse($document, $e->getMessage(), $this->accountant->shortfall($document->workspace_id, (int) $quote->credits));
         }
         $this->stopWaiting($document);
+        $this->clearCreditBlock($document);
 
         return true;
+    }
+
+    /** A document that was refused for credits and is admitted on a retry no longer carries the old block. */
+    private function clearCreditBlock(Document $document): void
+    {
+        $pipeline = $document->fresh()?->ai_pipeline ?? [];
+        if (! isset($pipeline['credit_block'])) {
+            return;
+        }
+        unset($pipeline['credit_block']);
+        $document->forceFill(['ai_pipeline' => $pipeline])->save();
     }
 
     /** Clears the waiting flag and its "Waiting for your confirmation" stage once the document is admitted. */
@@ -134,7 +146,7 @@ class AiCreditAdmission
         try {
             // The scan is priced after it is read, but it must be payable before it is: no OCR spend on a balance
             // that could not then pay for the analysis.
-            $need = $estimate['credits'];
+            $need = $this->accountant->requiredToStart($estimate['credits']);
             if ($this->accountant->available($document->workspace_id) < $need) {
                 abort(402, sprintf('Insufficient credits: %d available, %d required.', $this->accountant->available($document->workspace_id), $need));
             }
@@ -144,16 +156,24 @@ class AiCreditAdmission
                 throw $e;
             }
 
-            return $this->refuse($document, $e->getMessage());
+            return $this->refuse($document, $e->getMessage(), $this->accountant->shortfall($document->workspace_id, (int) $estimate['credits']));
         }
 
         return true;
     }
 
-    private function refuse(Document $document, string $message): bool
+    /**
+     * The document ends as Failed with its message, as before. A refusal for credits or a plan limit also leaves a structured
+     * ai_pipeline.credit_block so the client can show what to do. Nothing is held, charged or sent to a provider.
+     */
+    private function refuse(Document $document, string $message, ?array $block = null): bool
     {
         $this->accountant->releaseDocument($document->id, 'admission_refused');
-        $document->forceFill(['status' => 'Failed', 'error_message' => $message])->save();
+        $pipeline = $document->ai_pipeline ?? [];
+        if ($block !== null) {
+            $pipeline['credit_block'] = $block;
+        }
+        $document->forceFill(['status' => 'Failed', 'error_message' => $message, 'ai_pipeline' => $pipeline])->save();
 
         return false;
     }
