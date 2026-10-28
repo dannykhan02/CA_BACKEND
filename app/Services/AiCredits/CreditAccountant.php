@@ -52,7 +52,7 @@ class CreditAccountant
         $held = fn () => DB::table('billing_operations')->where('workspace_id', $workspaceId)->where('status', 'reserved')->whereNotNull('amount_reserved');
         $rate = max(1, (int) config('ai_credits.legacy_saved_credits_per_document'));
         $saved = (int) ($credits?->ai_credits_remaining ?? 0) + (int) ($credits?->documents_remaining ?? 0) * $rate;
-        $savedHeld = (int) $held()->whereNull('usage_period_id')->sum('amount_reserved');
+        $savedHeld = (int) $held()->whereNull('usage_period_id')->where(fn ($q) => $q->whereNull('funding_bucket')->orWhere('funding_bucket', '!=', self::TRIAL))->sum('amount_reserved');
         $monthly = null;
         if ($period && $period->ai_credits_allowed !== null) {
             $periodHeld = (int) $held()->where('usage_period_id', $period->id)->sum('amount_reserved');
@@ -100,10 +100,99 @@ class CreditAccountant
         return max(1, min($credits, intdiv($credits * $ratio + 9999, 10000)));
     }
 
-    /** Trial credits usable now (0 once expired). Filled in by the plan-ladder work; no trial pocket exists yet. */
+    /** @return array{remaining:int,expires_at:?\Carbon\Carbon,expired:bool,held:int,available:int} the trial pocket; expired credits count as 0 (checked on read) */
+    public function trialBalance(string $workspaceId): array
+    {
+        $row = WorkspaceCredit::where('workspace_id', $workspaceId)->first();
+        $remaining = (int) ($row?->trial_credits_remaining ?? 0);
+        $expiresAt = $row?->trial_credits_expires_at ? \Illuminate\Support\Carbon::parse($row->trial_credits_expires_at) : null;
+        $expired = $expiresAt !== null && ! $expiresAt->isFuture();
+        $held = (int) DB::table('billing_operations')->where('workspace_id', $workspaceId)->where('status', 'reserved')
+            ->where('funding_bucket', self::TRIAL)->whereNotNull('amount_reserved')->sum('amount_reserved');
+
+        return ['remaining' => $remaining, 'expires_at' => $expiresAt, 'expired' => $expired, 'held' => $held,
+            'available' => $expired ? 0 : max(0, $remaining - $held)];
+    }
+
+    /** Trial credits usable now (0 once expired, and net of open trial holds). */
     public function trialAvailable(string $workspaceId): int
     {
-        return 0;
+        return $this->trialBalance($workspaceId)['available'];
+    }
+
+    /** Grants a trial into the expiring trial pocket. Idempotent on the reference. Caller holds the workspace transaction. */
+    public function grantTrial(string $workspaceId, int $credits, int $days, string $reference, ?string $userId = null): void
+    {
+        $row = WorkspaceCredit::where('workspace_id', $workspaceId)->lockForUpdate()->firstOrFail();
+        if (DB::table('credit_ledger')->where('reference', $reference)->exists()) {
+            return;
+        }
+        $row->forceFill(['trial_credits_remaining' => (int) $row->trial_credits_remaining + $credits,
+            'trial_credits_expires_at' => now()->addDays($days)])->save();
+        app(CreditLedger::class)->record($workspaceId, $reference, self::TRIAL, 'credit', $credits, 'trial_grant', 'user', $userId, $userId,
+            (int) $row->trial_credits_remaining);
+    }
+
+    /**
+     * When the first paid subscription starts, whatever is left of an unexpired trial becomes saved credits, once
+     * (reference trial_carryover:<workspace>). An expired trial carries nothing. Credits held by an open document stay in the pocket.
+     * Caller holds the workspace transaction. Returns the credits moved.
+     */
+    public function carryOverTrial(string $workspaceId, ?string $userId = null): int
+    {
+        $row = WorkspaceCredit::where('workspace_id', $workspaceId)->lockForUpdate()->first();
+        if (! $row || DB::table('credit_ledger')->where('reference', 'trial_carryover:'.$workspaceId)->exists()) {
+            return 0;
+        }
+        $move = $this->trialAvailable($workspaceId);
+        if ($move < 1) {
+            return 0;
+        }
+        $row->forceFill(['trial_credits_remaining' => (int) $row->trial_credits_remaining - $move,
+            'ai_credits_remaining' => (int) $row->ai_credits_remaining + $move])->save();
+        $ledger = app(CreditLedger::class);
+        $ledger->record($workspaceId, 'trial_carryover_out:'.$workspaceId, self::TRIAL, 'debit', $move, 'trial_carried_over', 'workspace', $workspaceId, $userId,
+            (int) $row->trial_credits_remaining);
+        $rate = max(1, (int) config('ai_credits.legacy_saved_credits_per_document'));
+        $ledger->record($workspaceId, 'trial_carryover:'.$workspaceId, self::SAVED, 'credit', $move, 'trial_carried_over', 'workspace', $workspaceId, $userId,
+            (int) $row->ai_credits_remaining + (int) $row->documents_remaining * $rate);
+
+        return $move;
+    }
+
+    /**
+     * Writes off an expired trial's unused credits (the part held by an open document stays until that settles). One ledger row
+     * per workspace and expiry, so a rerun does nothing. Returns the credits expired.
+     */
+    public function expireTrial(string $workspaceId): int
+    {
+        return DB::transaction(function () use ($workspaceId) {
+            Workspace::whereKey($workspaceId)->lockForUpdate()->firstOrFail();
+            $row = WorkspaceCredit::where('workspace_id', $workspaceId)->lockForUpdate()->first();
+            $balance = $this->trialBalance($workspaceId);
+            $expire = $balance['remaining'] - $balance['held'];
+            if (! $row || ! $balance['expired'] || $expire < 1) {
+                return 0;
+            }
+            $row->forceFill(['trial_credits_remaining' => $balance['held']])->save();
+            app(CreditLedger::class)->record($workspaceId, 'trial_expire:'.$workspaceId.':'.$balance['expires_at']->getTimestamp(), self::TRIAL, 'debit',
+                $expire, 'trial_expired', 'workspace', $workspaceId, null, (int) $row->trial_credits_remaining);
+
+            return $expire;
+        });
+    }
+
+    /** Debits the trial pocket. It cannot go negative: a trial that expired mid-document pays only what is left (logged). */
+    private function debitTrial(string $workspaceId, int $amount, string $quoteId): int
+    {
+        $row = WorkspaceCredit::where('workspace_id', $workspaceId)->lockForUpdate()->firstOrFail();
+        $take = min($amount, (int) $row->trial_credits_remaining);
+        if ($take < $amount) {
+            Log::warning('AI credit settlement exceeded the trial balance.', ['workspace_id' => $workspaceId, 'quote_id' => $quoteId]);
+        }
+        $row->forceFill(['trial_credits_remaining' => (int) $row->trial_credits_remaining - $take])->save();
+
+        return (int) $row->trial_credits_remaining;
     }
 
     /**
@@ -212,6 +301,8 @@ class CreditAccountant
                 SubscriptionUsagePeriod::whereKey($op->usage_period_id)->increment('ai_credits_used', $amount);
                 $period = SubscriptionUsagePeriod::find($op->usage_period_id);
                 $balance = max(0, $period->ai_credits_allowed - $period->ai_credits_used);
+            } elseif ($op->funding_bucket === self::TRIAL) {
+                $balance = $this->debitTrial($op->workspace_id, $amount, $op->quote_id);
             } else {
                 $balance = $this->debitSaved($op->workspace_id, $amount, $op->quote_id);
             }

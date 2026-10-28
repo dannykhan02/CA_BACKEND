@@ -16,7 +16,7 @@ class AiCreditAdmission
 {
     public const WAITING_STAGE = 'awaiting_confirmation';
 
-    public function __construct(private QuoteService $quotes, private CreditAccountant $accountant) {}
+    public function __construct(private QuoteService $quotes, private CreditAccountant $accountant, private PlanLimits $plans) {}
 
     /** True when paid AI may proceed for this document now. Never calls a provider. */
     public function admitDocument(Document $document): bool
@@ -28,6 +28,13 @@ class AiCreditAdmission
             return true;
         }
         $priced = $this->quotes->quoteDocument($document);
+        // The plan's size limit comes first, on the quote's own token count: nothing is held, charged or sent to a provider.
+        $tokens = (int) ($priced['signals']['tokens'] ?? $priced['quote']->preflight['tokens'] ?? 0);
+        if (($block = $this->plans->sizeBlock($document, $tokens)) !== null) {
+            return $this->refuse($document, $block['required_plan'] !== null
+                ? sprintf('This document is larger than your plan allows. Upgrade to the %s plan to analyse it.', ucfirst($block['required_plan']))
+                : 'This document is larger than your plan allows.', $block);
+        }
         if ($priced['declined']) {
             return $this->refuse($document, $priced['reason'] === 'document_too_large'
                 ? 'This document is too large to analyse with AI credits.' : 'This document cannot be analysed within its credit allowance.');
@@ -67,6 +74,27 @@ class AiCreditAdmission
         }
         unset($pipeline['credit_block']);
         $document->forceFill(['ai_pipeline' => $pipeline])->save();
+    }
+
+    /** False (and the document ends as Failed with a plan_limit block) when the plan does not include OCR. Before any OCR or AI call. */
+    public function assertOcrAllowed(Document $document): bool
+    {
+        if (($block = $this->plans->ocrBlock($document)) === null) {
+            return true;
+        }
+
+        return $this->refuse($document, $block['required_plan'] !== null
+            ? sprintf('Scanned documents and images need the %s plan or higher.', ucfirst($block['required_plan']))
+            : 'Scanned documents and images are not included in your plan.', $block);
+    }
+
+    /** Records a plan_limit block on a document whose status the caller has already set. */
+    public function recordBlock(Document $document, array $block): void
+    {
+        $fresh = $document->fresh();
+        if ($fresh) {
+            $fresh->forceFill(['ai_pipeline' => [...($fresh->ai_pipeline ?? []), 'credit_block' => $block]])->save();
+        }
     }
 
     /** Clears the waiting flag and its "Waiting for your confirmation" stage once the document is admitted. */
@@ -132,6 +160,9 @@ class AiCreditAdmission
     {
         if (! QuoteService::enabled() || $this->accountant->mode($document->workspace_id) === 'legacy') {
             return true;
+        }
+        if (! $this->assertOcrAllowed($document)) {
+            return false;
         }
         $priced = $this->quotes->quoteOcr($document, $pages);
         if ($priced['declined']) {

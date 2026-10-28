@@ -7,6 +7,7 @@ use App\Exceptions\AiProcessingException;
 use App\Jobs\Concerns\DispatchesIntelligenceChain;
 use App\Models\Document;
 use App\Services\AiCredits\AiCreditAdmission;
+use App\Services\AiCredits\PlanLimits;
 use App\Services\Documents\DocumentStorageService;
 use App\Services\DocumentTextExtractor;
 use App\Services\EntitlementService;
@@ -215,6 +216,18 @@ class ExtractDocumentTextJob implements ShouldQueue
         $ocrEnabled = $document->workspace?->settings?->ocr_enabled ?? false;
         $ocrEligibleTypes = ['PDF', 'JPG', 'PNG'];
         $isOcrEligibleType = in_array($document->type, $ocrEligibleTypes, true);
+
+        // The plan decides before any rasterizing, OCR or AI call; a PDF with even one scanned page counts as needing OCR.
+        if ($isOcrEligibleType && $ocrEnabled && ($planBlock = app(PlanLimits::class)->ocrBlock($document)) !== null) {
+            $recorder->skip($document, 'ocr_check', 'ocr not included in the plan');
+            $this->markExtractionFailed($planBlock['required_plan'] !== null
+                ? sprintf('Scanned documents and images need the %s plan or higher.', ucfirst($planBlock['required_plan']))
+                : 'Scanned documents and images are not included in your plan.');
+            app(AiCreditAdmission::class)->recordBlock($document, $planBlock);
+            app(EntitlementService::class)->releaseDocumentReservation($document, 'plan_limit');
+
+            return null;
+        }
 
         if (! $isOcrEligibleType || ! $ocrEnabled) {
             $recorder->skip($document, 'ocr_check', $ocrEnabled ? 'document type not eligible for OCR' : 'ocr disabled for workspace');

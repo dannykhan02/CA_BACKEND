@@ -6,6 +6,7 @@ use App\Jobs\RetryDeferredBillingEvent;
 use App\Models\CreditPurchase;
 use App\Models\Subscription;
 use App\Models\Workspace;
+use App\Services\AiCredits\CreditAccountant;
 use App\Services\AiCredits\QuoteService;
 use App\Support\QueueTopology;
 use Carbon\CarbonImmutable;
@@ -111,6 +112,10 @@ class SubscriptionService
             if ($wasGrandfathered && ! $usage->wasRecentlyCreated) {
                 $usage->update(['period_end' => $end, 'documents_allowed' => $snapshot['documents'], 'comparisons_allowed' => $snapshot['comparisons'], 'storage_bytes' => $snapshot['storage_bytes'], 'ai_credits_allowed' => $snapshot['ai_credits'] ?? null]);
             }
+        }
+        // An unexpired trial becomes saved credits when the first credit-mode subscription period starts (once, by ledger reference).
+        if (($snapshot['ai_credits'] ?? null) !== null) {
+            app(CreditAccountant::class)->carryOverTrial($purchase->workspace_id, $purchase->user_id);
         }
         // subscription.create may arrive before charge.success/verification.
         foreach (DB::table('billing_webhook_events')->whereNull('processed_at')->where('event_type', 'subscription.create')->get() as $event) {

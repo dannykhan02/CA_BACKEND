@@ -148,12 +148,37 @@ return [
     'saved_fallback_during_subscription' => (bool) env('AI_CREDITS_SAVED_FALLBACK', false),
 
     'grants' => [
-        'free_trial_credits' => (int) env('AI_CREDITS_FREE_TRIAL', 20),
+        // AI_CREDITS_FREE_TRIAL is the earlier name and still works when AI_CREDITS_FREE_TRIAL_CREDITS is not set.
+        'free_trial_credits' => (int) env('AI_CREDITS_FREE_TRIAL_CREDITS', env('AI_CREDITS_FREE_TRIAL', 20)),
         'referral_reward_credits' => (int) env('AI_CREDITS_REFERRAL_REWARD', 100),
     ],
     // Existing saved document units are converted lazily, only when a customer spends, so nothing
     // is lost and nothing is irreversibly rewritten by enabling the flag.
     'legacy_saved_credits_per_document' => (int) env('AI_CREDITS_LEGACY_PER_DOCUMENT', 10),
+
+    // Trials granted after this is set expire after this many days, into a separate trial pocket (workspace_credits.trial_credits_*).
+    // Null/unset = trial credits are saved credits that never expire, as before. A trial still unexpired when the first paid
+    // subscription starts is carried over into saved credits, once.
+    'free_trial_days' => ($days = env('AI_CREDITS_FREE_TRIAL_DAYS')) === null || $days === '' ? null : max(1, (int) $days),
+
+    // What each plan may do. A workspace without an active paid subscription period is 'free'; monthly and annual variants of
+    // a plan share its tier. Defaults are today's behaviour: every type, OCR on, no size limit. allowed_types is a comma list of
+    // extensions (pdf,docx,xlsx,jpg,png; jpg also covers jpeg); empty = all. max_quote_tokens is checked against the quote's tokens.
+    'plan_limits' => (function (): array {
+        $limits = [];
+        foreach (['free', 'starter', 'professional'] as $plan) {
+            $key = 'AI_CREDITS_'.strtoupper($plan);
+            $tokens = env($key.'_MAX_QUOTE_TOKENS');
+            $ocr = env($key.'_ALLOW_OCR');
+            $limits[$plan] = [
+                'allowed_types' => (string) env($key.'_ALLOWED_TYPES', ''),
+                'allow_ocr' => $ocr === null || $ocr === '' ? true : filter_var($ocr, FILTER_VALIDATE_BOOLEAN),
+                'max_quote_tokens' => $tokens === null || $tokens === '' ? null : max(1, (int) $tokens),
+            ];
+        }
+
+        return $limits;
+    })(),
 
     // Monthly AI credits granted by NEW subscription periods. Annual plans can differ from monthly.
     'plans' => [

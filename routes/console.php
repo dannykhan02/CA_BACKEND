@@ -70,6 +70,9 @@ Schedule::call(function () {
 // Expired (24h), failed and orphaned credit reservations are otherwise released only when someone reads that workspace's credits.
 Schedule::command('billing:release-stale-reservations')->hourly()->withoutOverlapping();
 
+// Trial credits past their expiry are written off (availability already reads them as 0). Nothing expires until AI_CREDITS_FREE_TRIAL_DAYS is set.
+Schedule::command('credits:expire-trials', ['--apply' => true])->hourly()->withoutOverlapping();
+
 // Billing events retry through Horizon. `billing:reconcile-events` is an
 // operator-triggered fallback; no billing correctness schedule is required.
 

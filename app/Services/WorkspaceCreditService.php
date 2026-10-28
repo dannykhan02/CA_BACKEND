@@ -42,7 +42,11 @@ class WorkspaceCreditService
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-            if ($inserted && QuoteService::enabled()) {
+            if ($inserted && QuoteService::enabled() && config('ai_credits.free_trial_days') !== null) {
+                // A trial granted after AI_CREDITS_FREE_TRIAL_DAYS is set lives in its own expiring pocket.
+                app(CreditAccountant::class)->grantTrial($workspace->id, (int) config('ai_credits.grants.free_trial_credits'),
+                    (int) config('ai_credits.free_trial_days'), 'trial:'.$user->id, $user->id);
+            } elseif ($inserted && QuoteService::enabled()) {
                 // Non-renewable saved AI credits through the same variable-price system.
                 app(CreditAccountant::class)->grantSaved($workspace->id, (int) config('ai_credits.grants.free_trial_credits'), 'trial:'.$user->id,
                     'trial_grant', 'user', $user->id, $user->id);
