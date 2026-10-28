@@ -36,7 +36,7 @@ class DocumentCredits
     }
 
     /**
-     * @return ?array{quoted:?int,state:string,charged:?int,requiresConfirmation:bool,quotedCredits:int,chargedCredits:?int,releasedCredits:?int,settlementBasis:?string} null when credits are off or the document has no quote yet
+     * @return ?array{quoted:?int,state:string,charged:?int,requiresConfirmation:bool,quotedCredits:int,chargedCredits:?int,releasedCredits:?int,settlementBasis:?string,heldCredits:?int,absorbedCredits:?int} null when credits are off or the document has no quote yet
      */
     public function for(Document $document): ?array
     {
@@ -68,6 +68,9 @@ class DocumentCredits
             'requiresConfirmation' => $state === 'awaiting_confirmation',
             'quotedCredits' => (int) $quote->credits, 'chargedCredits' => $charged,
             'releasedCredits' => $state === 'charged' ? (int) ($quote->released_credits ?? 0) : null,
-            'settlementBasis' => $state === 'charged' ? ($quote->settlement_basis ?? 'quoted') : null];
+            'settlementBasis' => $state === 'charged' ? ($quote->settlement_basis ?? 'quoted') : null,
+            // What was held (null before a hold) and the credits above the hold that were not charged to the customer.
+            'heldCredits' => in_array($quote->status, ['reserved', 'settled'], true) ? (int) ($quote->held_credits ?? $quote->credits) : null,
+            'absorbedCredits' => $state === 'charged' ? (int) ($quote->absorbed_credits ?? 0) : null];
     }
 }

@@ -100,6 +100,11 @@ return [
     'settlement_buffer' => (float) env('AI_CREDITS_SETTLEMENT_BUFFER', 1.25),
     'settlement_min' => (int) env('AI_CREDITS_SETTLEMENT_MIN', 1),
 
+    // With settlement_mode 'actual' only: a document may start when a bucket has at least ceil(quote x this) credits, and that
+    // bucket's available credits (never more than the quote) are held. 1.0 = the whole quote must be available, as before. The
+    // quote shown to the customer does not change; if the final cost exceeds the hold, the hold is charged and the rest absorbed.
+    'admission_min_ratio' => (float) env('AI_CREDITS_ADMISSION_MIN_RATIO', 1.0),
+
     // Cost assumed for a paid call whose usage is unknown (e.g. a timeout). Never zero.
     'unknown_usage_cost_usd' => (float) env('AI_CREDITS_UNKNOWN_USAGE_USD', 0.05),
 

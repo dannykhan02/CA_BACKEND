@@ -27,6 +27,8 @@ class CreditAccountant
 
     public const SAVED = 'saved_ai_credit';
 
+    public const TRIAL = 'trial_ai_credit';
+
     /** 'credits' = AI-credit accounting applies; 'legacy' = the 1-document-unit rules still govern this workspace. */
     public function mode(string $workspaceId): string
     {
@@ -74,19 +76,67 @@ class CreditAccountant
         return $b['saved_available'];
     }
 
-    /** @return array{0:string,1:?int} bucket and usage period id; aborts 402 when nothing can pay. */
-    public function fund(string $workspaceId, int $credits): array
+    /**
+     * Credits a hold must cover for the operation to start. The whole quote, except in settlement mode 'actual' with
+     * ai_credits.admission_min_ratio below 1: then ceil(quote x ratio), at least 1 (integer math on ten-thousandths).
+     */
+    public function requiredToStart(int $credits): int
+    {
+        if (ActualCostSettlement::mode() !== 'actual') {
+            return $credits;
+        }
+        $ratio = (int) round(max(0.0, min(1.0, (float) config('ai_credits.admission_min_ratio'))) * 10000);
+
+        return max(1, min($credits, intdiv($credits * $ratio + 9999, 10000)));
+    }
+
+    /** Trial credits usable now (0 once expired). Filled in by the plan-ladder work; no trial pocket exists yet. */
+    public function trialAvailable(string $workspaceId): int
+    {
+        return 0;
+    }
+
+    /**
+     * The one bucket that funds a hold, and how much it holds. In order: monthly (full quote, then at least the required
+     * minimum: all it has), trial, then saved credits where allowed. A hold is never split across buckets and never exceeds
+     * what the bucket has available. Null when nothing can pay.
+     *
+     * @return ?array{bucket:string,period_id:?int,hold:int}
+     */
+    public function holdPlan(string $workspaceId, int $credits): ?array
     {
         $b = $this->balances($workspaceId);
-        if ($b['monthly'] !== null && $b['monthly']['remaining'] >= $credits) {
-            return [self::MONTHLY, $b['monthly']['period_id']];
+        $need = $this->requiredToStart($credits);
+        $savedAllowed = $b['monthly'] === null || config('ai_credits.saved_fallback_during_subscription');
+        $pockets = [];
+        if ($b['monthly'] !== null) {
+            $pockets[] = [self::MONTHLY, $b['monthly']['period_id'], $b['monthly']['remaining']];
         }
-        if ($b['monthly'] === null || config('ai_credits.saved_fallback_during_subscription')) {
-            if ($b['saved_available'] >= $credits) {
-                return [self::SAVED, null];
+        $pockets[] = [self::TRIAL, null, $this->trialAvailable($workspaceId)];
+        if ($savedAllowed) {
+            $pockets[] = [self::SAVED, null, $b['saved_available']];
+        }
+        foreach ($pockets as [$bucket, $periodId, $available]) {
+            if ($available >= $credits) {
+                return ['bucket' => $bucket, 'period_id' => $periodId, 'hold' => $credits];
+            }
+            if ($need < $credits && $available >= $need) {
+                return ['bucket' => $bucket, 'period_id' => $periodId, 'hold' => $available];
             }
         }
-        abort(402, sprintf('Insufficient credits: %d available, %d required.', $this->available($workspaceId), $credits));
+
+        return null;
+    }
+
+    /** @return array{0:string,1:?int,2:int} bucket, usage period id and held credits; aborts 402 when nothing can pay. */
+    public function fund(string $workspaceId, int $credits): array
+    {
+        $plan = $this->holdPlan($workspaceId, $credits);
+        if ($plan === null) {
+            abort(402, sprintf('Insufficient credits: %d available, %d required.', $this->available($workspaceId), $this->requiredToStart($credits)));
+        }
+
+        return [$plan['bucket'], $plan['period_id'], $plan['hold']];
     }
 
     public function reserve(OperationQuote $quote, ?string $userId = null): void
@@ -101,17 +151,17 @@ class CreditAccountant
                 return; // idempotent: a retry or duplicate delivery never reserves twice
             }
             abort_if($quote->status !== 'quoted' && $quote->status !== 'reserved', 409, 'This quote is no longer open.');
-            [$bucket, $periodId] = $this->fund($quote->workspace_id, $quote->credits);
+            [$bucket, $periodId, $hold] = $this->fund($quote->workspace_id, $quote->credits);
             $attempt = $op ? $op->attempt_number + 1 : 1;
             DB::table('billing_operations')->updateOrInsert(['kind' => $quote->kind, 'resource_id' => $quote->resource_id], [
                 'workspace_id' => $quote->workspace_id, 'usage_period_id' => $periodId, 'status' => 'reserved', 'attempt_number' => $attempt,
-                'quote_id' => $quote->id, 'amount_reserved' => $quote->credits, 'amount_settled' => null, 'funding_bucket' => $bucket,
+                'quote_id' => $quote->id, 'amount_reserved' => $hold, 'amount_settled' => null, 'funding_bucket' => $bucket,
                 'quote_version' => $quote->quote_version, 'release_reason' => null, 'created_at' => now(), 'updated_at' => now(),
             ]);
-            $quote->update(['status' => 'reserved', 'funding_bucket' => $bucket, 'accepted_at' => $quote->accepted_at ?? now(), 'reserved_at' => now()]);
-            app(CreditLedger::class)->record($quote->workspace_id, 'ai_reserve:'.$quote->id, $bucket, 'reserve', $quote->credits,
+            $quote->update(['status' => 'reserved', 'held_credits' => $hold, 'funding_bucket' => $bucket, 'accepted_at' => $quote->accepted_at ?? now(), 'reserved_at' => now()]);
+            app(CreditLedger::class)->record($quote->workspace_id, 'ai_reserve:'.$quote->id, $bucket, 'reserve', $hold,
                 $quote->kind.'_started', $quote->kind, $quote->resource_id, $userId);
-            $this->log('reserved', $quote->refresh(), ['reserved_credits' => $quote->credits]);
+            $this->log('reserved', $quote->refresh(), ['reserved_credits' => $hold]);
         }, 3);
     }
 
@@ -148,7 +198,11 @@ class CreditAccountant
             DB::table('billing_operations')->where('id', $op->id)->update(['status' => 'completed', 'amount_settled' => $amount, 'updated_at' => now()]);
             OperationQuote::whereKey($op->quote_id)->update(['status' => 'settled', 'settled_at' => now(), 'updated_at' => now(),
                 'charged_credits' => $amount, 'released_credits' => $plan['released'], 'actual_cost_usd' => $plan['actual_cost_usd'],
-                'settlement_basis' => $plan['basis']]);
+                'settlement_basis' => $plan['basis'], 'absorbed_credits' => $plan['absorbed'] > 0 ? $plan['absorbed'] : null]);
+            if ($plan['absorbed'] > 0) {
+                Log::warning('AI credit settlement absorbed credits', ['document_id' => $resourceId, 'quote_id' => $quote->id, 'kind' => $kind,
+                    'hold' => $reserved, 'formula_result' => $plan['charged'] + $plan['absorbed']]);
+            }
             app(CreditLedger::class)->record($op->workspace_id, 'ai_debit:'.$op->quote_id, $op->funding_bucket, 'debit', $amount,
                 $kind.'_completed', $kind, $resourceId, $userId, $balance);
             if ($plan['released'] > 0) {
