@@ -242,7 +242,7 @@ class SettleCreditsAtActualCostTest extends TestCase
 
         $this->settle($second);
 
-        self::assertSame(288, $this->saved($other)); // 0.27 x 1.25 / 0.027 = 12.5 -> 13 credits
+        self::assertSame(287, $this->saved($other)); // 0.27 x 1.25 = 0.3375; / 0.027 = 12.5 -> ceil 13; 300 - 13 = 287
         self::assertSame(CreditAccountant::SAVED, DB::table('credit_ledger')->where('reference', 'ai_release_unused:'.$savedQuote->id)->value('unit'));
     }
 
