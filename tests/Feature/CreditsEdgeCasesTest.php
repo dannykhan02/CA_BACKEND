@@ -242,4 +242,28 @@ class CreditsEdgeCasesTest extends TestCase
         self::assertSame(0, DB::table('billing_operations')->where('resource_id', $document->id)->count());
         self::assertSame(500, $this->saved($workspace));
     }
+
+    // ------------------------------------------------------------------ A19
+
+    public function test_a19_the_status_reconciliation_counts_trial_holds_and_shows_absorbed_credits(): void
+    {
+        $workspace = $this->workspace();
+        $this->trialRow($workspace, 15, now()->addDay());
+        $open = $this->document($workspace);
+        app(CreditAccountant::class)->reserve($this->quote($workspace, $open, 6), $this->user->id); // stays open
+        $done = $this->document($workspace);
+        $quote = $this->quote($workspace, $done, 4);
+        app(CreditAccountant::class)->reserve($quote, $this->user->id);
+        $this->cost($workspace, $done, $quote, '0.500000'); // formula above the hold: absorbed
+        app(CreditAccountant::class)->settleDocument($done->id, $this->user->id);
+        $this->trialRow($workspace, 11, now()->subMinute()); // 15 - 4 charged; 6 are still held
+        app(CreditAccountant::class)->expireTrial($workspace->id); // expiry rows are not hold lifecycle
+
+        $this->artisan('docintel:ai-credits-status', ['--workspace' => $workspace->id])
+            ->expectsOutputToContain('ok')
+            ->doesntExpectOutputToContain('MISMATCH')
+            ->expectsOutputToContain('trial left')
+            ->expectsOutputToContain('absorbed')
+            ->assertSuccessful();
+    }
 }
