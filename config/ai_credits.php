@@ -140,6 +140,10 @@ return [
         'max_per_workspace_per_day' => (int) env('AI_CREDITS_QA_MAX_PER_DAY', 100),
         'max_per_user_per_hour' => (int) env('AI_CREDITS_QA_MAX_PER_HOUR', 30),
         'max_cost_usd_per_workspace_per_day' => (float) env('AI_CREDITS_QA_MAX_USD_PER_DAY', 2.0),
+        // Free workspaces only (credit mode). Unset = the same as everyone, so nothing changes until these are set. Reaching one is
+        // a plan_limit error (reason qa_daily_limit) that names the plan to upgrade to.
+        'free_max_per_workspace_per_day' => ConfigEnv::integer('AI_CREDITS_FREE_QA_PER_DAY', env('AI_CREDITS_FREE_QA_PER_DAY'), (int) env('AI_CREDITS_QA_MAX_PER_DAY', 100), 0),
+        'free_max_cost_usd_per_day' => ConfigEnv::number('AI_CREDITS_FREE_QA_MAX_COST_USD', env('AI_CREDITS_FREE_QA_MAX_COST_USD'), (float) env('AI_CREDITS_QA_MAX_USD_PER_DAY', 2.0), 0.0, 1000000.0),
     ],
 
     // Failed work always releases. Needs Review releases unless product explicitly decides otherwise.
