@@ -90,9 +90,11 @@ class CreditAccountant
      * Credits a hold must cover for the operation to start. The whole quote, except in settlement mode 'actual' with
      * ai_credits.admission_min_ratio below 1: then ceil(quote x ratio), at least 1 (integer math on ten-thousandths).
      */
-    public function requiredToStart(int $credits): int
+    public function requiredToStart(int $credits, ?string $kind = null): int
     {
-        if (ActualCostSettlement::mode() !== 'actual') {
+        // Only operations that settle at actual cost may start on a partial hold. A comparison or a metered question is a fixed
+        // price: held short it would also be CHARGED short (settle() charges the hold), so it needs the whole price.
+        if (ActualCostSettlement::mode() !== 'actual' || ($kind !== null && ! in_array($kind, ActualCostSettlement::KINDS, true))) {
             return $credits;
         }
         $ratio = (int) round(max(0.0, min(1.0, (float) config('ai_credits.admission_min_ratio'))) * 10000);
@@ -202,10 +204,10 @@ class CreditAccountant
      *
      * @return ?array{bucket:string,period_id:?int,hold:int}
      */
-    public function holdPlan(string $workspaceId, int $credits): ?array
+    public function holdPlan(string $workspaceId, int $credits, ?string $kind = null): ?array
     {
         $b = $this->balances($workspaceId);
-        $need = $this->requiredToStart($credits);
+        $need = $this->requiredToStart($credits, $kind);
         $savedAllowed = $b['monthly'] === null || config('ai_credits.saved_fallback_during_subscription');
         $pockets = [];
         if ($b['monthly'] !== null) {
@@ -238,11 +240,11 @@ class CreditAccountant
     }
 
     /** @return array{0:string,1:?int,2:int} bucket, usage period id and held credits; aborts 402 when nothing can pay. */
-    public function fund(string $workspaceId, int $credits): array
+    public function fund(string $workspaceId, int $credits, ?string $kind = null): array
     {
-        $plan = $this->holdPlan($workspaceId, $credits);
+        $plan = $this->holdPlan($workspaceId, $credits, $kind);
         if ($plan === null) {
-            abort(402, sprintf('Insufficient credits: %d available, %d required.', $this->available($workspaceId), $this->requiredToStart($credits)));
+            abort(402, sprintf('Insufficient credits: %d available, %d required.', $this->available($workspaceId), $this->requiredToStart($credits, $kind)));
         }
 
         return [$plan['bucket'], $plan['period_id'], $plan['hold']];
@@ -260,7 +262,7 @@ class CreditAccountant
                 return; // idempotent: a retry or duplicate delivery never reserves twice
             }
             abort_if($quote->status !== 'quoted' && $quote->status !== 'reserved', 409, 'This quote is no longer open.');
-            [$bucket, $periodId, $hold] = $this->fund($quote->workspace_id, $quote->credits);
+            [$bucket, $periodId, $hold] = $this->fund($quote->workspace_id, $quote->credits, $quote->kind);
             $attempt = $op ? $op->attempt_number + 1 : 1;
             DB::table('billing_operations')->updateOrInsert(['kind' => $quote->kind, 'resource_id' => $quote->resource_id], [
                 'workspace_id' => $quote->workspace_id, 'usage_period_id' => $periodId, 'status' => 'reserved', 'attempt_number' => $attempt,
