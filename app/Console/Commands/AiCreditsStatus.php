@@ -40,6 +40,8 @@ class AiCreditsStatus extends Command
         $this->table(['plan', 'monthly', 'annual'], array_map(fn ($plan, $a) => [$plan, $a['monthly'], $a['annual']],
             array_keys(config('ai_credits.plans')), config('ai_credits.plans')));
 
+        $this->settings();
+
         $deprecated = $this->deprecatedVariables();
         $this->line($deprecated === [] ? 'No deprecated AI_CREDITS_ variables are set.'
             : 'Deprecated (set, but the current config does not read them): '.implode(', ', $deprecated));
@@ -47,6 +49,32 @@ class AiCreditsStatus extends Command
         $this->workspaces($accountant);
 
         return self::SUCCESS;
+    }
+
+    /** Effective values of the settlement, admission, plan, Q&A and referral settings (booleans and numbers only; no secrets here). */
+    private function settings(): void
+    {
+        $yn = fn ($v) => $v ? 'yes' : 'no';
+        $or = fn ($v, string $none = 'none') => $v === null || $v === '' ? $none : $v;
+        $this->info('Plan and admission settings');
+        $this->line(sprintf('Settlement: mode %s, buffer %s, minimum charge %s. Admission minimum ratio %s (applies in actual mode only). Saved credits during a subscription: %s.',
+            config('ai_credits.settlement_mode'), config('ai_credits.settlement_buffer'), config('ai_credits.settlement_min'),
+            config('ai_credits.admission_min_ratio'), $yn(config('ai_credits.saved_fallback_during_subscription'))));
+        $this->line(sprintf('Free trial: %s credits, expires after %s.', config('ai_credits.grants.free_trial_credits'),
+            $or(config('ai_credits.free_trial_days') === null ? null : config('ai_credits.free_trial_days').' days', 'never (plain saved credits)')));
+        $rows = [];
+        foreach (config('ai_credits.plan_limits') as $plan => $limits) {
+            $rows[] = [$plan, $or($limits['allowed_types'], 'all types'), $yn($limits['allow_ocr']), $or($limits['max_quote_tokens'], 'no limit')];
+        }
+        $this->table(['plan', 'allowed types', 'OCR', 'max quote tokens'], $rows);
+        $this->line(sprintf('Q&A: customer price %s credits, %s per workspace per day, USD %s per day; free plan %s per day, USD %s per day.',
+            config('ai_credits.qa.credits'), config('ai_credits.qa.max_per_workspace_per_day'), config('ai_credits.qa.max_cost_usd_per_workspace_per_day'),
+            config('ai_credits.qa.free_max_per_workspace_per_day'), config('ai_credits.qa.free_max_cost_usd_per_day')));
+        $this->line(sprintf('Referral reward: %s saved credits, when %s.', config('ai_credits.grants.referral_reward_credits'),
+            config('ai_credits.grants.referral_reward_trigger') === 'first_payment' ? 'the referred user\'s first paid subscription is active' : 'the referred user\'s first payment completes'));
+        if (config('ai_credits.invalid_env')) {
+            $this->warn('Ignored as unusable (defaults in effect): '.implode(', ', array_keys(config('ai_credits.invalid_env'))));
+        }
     }
 
     /** @return list<string> names only */
@@ -60,6 +88,12 @@ class AiCreditsStatus extends Command
         foreach (array_keys(config('ai_credits.stage_realistic_output', [])) as $purpose) {
             foreach (['BASE', 'PER_TOKEN', 'CAP'] as $part) {
                 $read['AI_CREDITS_REALISTIC_'.strtoupper($purpose).'_'.$part] = true;
+            }
+        }
+        // Plan limits are read with a computed name (AI_CREDITS_<PLAN>_<SETTING>), which the pattern above cannot see.
+        foreach (array_keys(config('ai_credits.plan_limits', [])) as $plan) {
+            foreach (['ALLOWED_TYPES', 'ALLOW_OCR', 'MAX_QUOTE_TOKENS'] as $setting) {
+                $read['AI_CREDITS_'.strtoupper($plan).'_'.$setting] = true;
             }
         }
         $set = array_merge(array_keys($_ENV), array_keys($_SERVER), array_keys(getenv()));

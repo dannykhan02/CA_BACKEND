@@ -315,7 +315,7 @@ class CreditAccountant
             DB::table('billing_operations')->where('id', $op->id)->update(['status' => 'completed', 'amount_settled' => $amount, 'updated_at' => now()]);
             OperationQuote::whereKey($op->quote_id)->update(['status' => 'settled', 'settled_at' => now(), 'updated_at' => now(),
                 'charged_credits' => $amount, 'released_credits' => $plan['released'], 'actual_cost_usd' => $plan['actual_cost_usd'],
-                'settlement_basis' => $plan['basis'], 'absorbed_credits' => $plan['absorbed'] > 0 ? $plan['absorbed'] : null]);
+                'settlement_basis' => $plan['basis'], 'settlement_reason' => $plan['reason'], 'absorbed_credits' => $plan['absorbed'] > 0 ? $plan['absorbed'] : null]);
             if ($plan['absorbed'] > 0) {
                 Log::warning('AI credit settlement absorbed credits', ['document_id' => $resourceId, 'quote_id' => $quote->id, 'kind' => $kind,
                     'hold' => $reserved, 'formula_result' => $plan['charged'] + $plan['absorbed']]);
