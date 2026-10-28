@@ -22,7 +22,7 @@ class CreditsSettlementPreview extends Command
     {
         $days = max(1, (int) $this->option('days'));
         $rows = [];
-        $totals = ['quoted' => 0, 'charge' => 0, 'cost' => '0'];
+        $totals = ['quoted' => 0, 'charge' => 0, 'cost' => 0];
 
         $documents = Document::where('status', 'Ready')->where('updated_at', '>=', now()->subDays($days))->orderBy('updated_at')->get();
         $quotes = OperationQuote::where('kind', 'document')->whereIn('resource_id', $documents->pluck('id'))->get()
@@ -35,7 +35,7 @@ class CreditsSettlementPreview extends Command
             $plan = $settlement->plan($quote, null, 'actual');
             $totals['quoted'] += (int) $quote->credits;
             $totals['charge'] += $plan['charged'];
-            $totals['cost'] = bcadd($totals['cost'], $plan['actual_cost_usd'] ?? '0', 6);
+            $totals['cost'] += ActualCostSettlement::toScaled($plan['actual_cost_usd'] ?? '0', 6) ?? 0;
             $rows[] = [$document->id, $document->type, $document->ai_pipeline['route'] ?? '-', $quote->credits,
                 $plan['actual_cost_usd'] ?? '-', $plan['charged'], $plan['released'],
                 $plan['basis'].($plan['reason'] ? ' ('.$plan['reason'].')' : '')];
@@ -46,7 +46,7 @@ class CreditsSettlementPreview extends Command
         }
         $this->table(['document_id', 'file_type', 'route', 'quoted_credits', 'actual_cost_usd', 'would_charge', 'would_release', 'basis'], $rows);
         $this->line(sprintf('Documents: %d. Total quoted: %d. Total would_charge: %d. Total actual cost (USD): %s.',
-            count($rows), $totals['quoted'], $totals['charge'], $totals['cost']));
+            count($rows), $totals['quoted'], $totals['charge'], ActualCostSettlement::formatMicros($totals['cost'])));
         $this->line('Nothing was changed.');
 
         return self::SUCCESS;
