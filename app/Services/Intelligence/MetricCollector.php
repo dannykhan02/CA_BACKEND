@@ -251,7 +251,7 @@ class MetricCollector
         if ($integrity['unitVerification'] === 'dimensionless') {
             $type = mb_strtolower((string) $record['metadata']['metric_type']);
             $measurement = new Measurement($measurement->magnitude, $type, null, $type, 1.0,
-                '', $type, $measurement->numericVerified);
+                '', $type, $measurement->numericVerified, $measurement->exactMagnitude);
         }
 
         return new MetricObservation(
@@ -275,6 +275,7 @@ class MetricCollector
             aggregation: (string) ($record['metadata']['aggregation'] ?? $profile['aggregation'] ?? ''),
             sourceContext: implode("\n", array_map(fn ($source) => (string) ($source['quote'] ?? ''), $record['sources'] ?? [])),
             basisContext: (string) ($record['metadata']['basis_context'] ?? ''),
+            metricType: (string) ($record['metadata']['metric_type'] ?? ''),
         );
     }
 

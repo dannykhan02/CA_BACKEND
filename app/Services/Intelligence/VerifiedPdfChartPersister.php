@@ -7,6 +7,7 @@ use App\Models\DocumentChart;
 use App\Models\DocumentChartPoint;
 use App\Models\DocumentEvidence;
 use App\Services\Extraction\StructuredExtractionStore;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
 /** Persists only chart candidates whose PDF cell proofs survived the normal integrity gates. */
@@ -75,16 +76,10 @@ final class VerifiedPdfChartPersister
             $categorical): array {
             $current = Document::where('workspace_id', $document->workspace_id)
                 ->whereKey($document->id)->lockForUpdate()->first();
-            if ($current === null || $current->file_hash !== $document->file_hash
-                || hash('sha256', (string) $current->extracted_text)
-                    !== hash('sha256', (string) $document->extracted_text)
-                || ! app(DocumentRevisionPublisher::class)->ownsPipeline($current,
-                    (string) ($document->ai_pipeline['key'] ?? 'legacy'))) {
+            if (! $this->ownsCurrentSource($current, $document)) {
                 return ['charts' => 0, 'points' => 0];
             }
-            DocumentChart::where('workspace_id', $document->workspace_id)
-                ->where('document_id', $document->id)
-                ->where('source_metadata->origin', 'verified_pdf_table')->delete();
+            $this->ownedCharts($current)->delete();
             $counts = ['charts' => 0, 'points' => 0];
             foreach (array_slice($candidates, 0, 12) as $candidate) {
                 $points = $candidate['points'] ?: ($candidate['series'][0]['data'] ?? []);
@@ -168,16 +163,33 @@ final class VerifiedPdfChartPersister
         return DB::transaction(function () use ($document): array {
             $current = Document::where('workspace_id', $document->workspace_id)
                 ->whereKey($document->id)->lockForUpdate()->first();
-            if ($current !== null && app(DocumentRevisionPublisher::class)->ownsPipeline($current,
-                (string) ($document->ai_pipeline['key'] ?? 'legacy'))) {
-                DocumentChart::where('workspace_id', $document->workspace_id)
-                    ->where('document_id', $document->id)
-                    ->where('source_metadata->origin', 'verified_pdf_table')
-                    ->where('source_metadata->pipeline_key', $document->ai_pipeline['key'] ?? 'legacy')
-                    ->delete();
+            if ($this->ownsCurrentSource($current, $document)) {
+                $this->ownedCharts($current)->delete();
             }
 
             return ['charts' => 0, 'points' => 0];
         });
+    }
+
+    private function ownsCurrentSource(?Document $current, Document $snapshot): bool
+    {
+        $pipeline = (string) ($snapshot->ai_pipeline['key'] ?? 'legacy');
+
+        return $current !== null
+            && $current->file_hash === $snapshot->file_hash
+            && hash('sha256', (string) $current->extracted_text)
+                === hash('sha256', (string) $snapshot->extracted_text)
+            && $current->intelligenceRevisionForRelations() === $snapshot->intelligenceRevisionForRelations()
+            && (string) ($current->ai_pipeline['key'] ?? 'legacy') === $pipeline
+            && app(DocumentRevisionPublisher::class)->ownsPipeline($current, $pipeline);
+    }
+
+    private function ownedCharts(Document $document): Builder
+    {
+        return DocumentChart::where('workspace_id', $document->workspace_id)
+            ->where('document_id', $document->id)
+            ->where('intelligence_revision_id', $document->intelligenceRevisionForRelations())
+            ->where('source_metadata->origin', 'verified_pdf_table')
+            ->where('source_metadata->pipeline_key', $document->ai_pipeline['key'] ?? 'legacy');
     }
 }

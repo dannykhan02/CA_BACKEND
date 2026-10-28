@@ -344,6 +344,8 @@ class DocumentIntelligenceAnalysisTest extends TestCase
         $analysis = $this->analyze($document);
         $this->assertSame(4, $analysis['stats']['metricFindings']);
         $this->assertSame(0, $analysis['stats']['chartableFindings']);
+        $this->assertSame(4, $analysis['visualAnalysis']['diagnostics']['ineligibleMeasurements']);
+        $this->assertNotEmpty($analysis['visualAnalysis']['diagnostics']['ineligibleReasons']);
         $this->assertSame([], $analysis['visualAnalysis']['charts']);
     }
 
@@ -368,6 +370,32 @@ class DocumentIntelligenceAnalysisTest extends TestCase
         $charts = $this->analyze($document)['visualAnalysis']['charts'];
         $this->assertCount(1, $charts);
         $this->assertSame(['2023', '2024'], array_column($charts[0]['points'], 'label'));
+    }
+
+    public function test_renderable_chart_is_not_displaced_by_twelve_gapped_candidates(): void
+    {
+        $document = $this->intelligenceDocument();
+        foreach (['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo', 'Foxtrot',
+            'Golf', 'Hotel', 'India', 'Juliet', 'Kilo', 'Lima'] as $name) {
+            $this->metricFinding($document, $name.' receipts', '100', 'KES million', 'Q1 2023');
+            $this->metricFinding($document, $name.' receipts', '120', 'KES million', 'Q3 2023');
+        }
+        $this->metricFinding($document, 'Kisiwa operating receipts', '100', 'KES million', 'Q1 2023');
+        $this->metricFinding($document, 'Kisiwa operating receipts', '101', 'KES million', 'Q2 2023');
+
+        $analysis = $this->analyze($document);
+        self::assertSame(13, $analysis['stats']['chartCandidates']);
+        self::assertSame(1, $analysis['visualAnalysis']['omitted']);
+        self::assertSame(13, $analysis['visualAnalysis']['diagnostics']['candidateVisualizations']);
+        self::assertSame(1, $analysis['visualAnalysis']['diagnostics']['renderableCandidates']);
+        self::assertSame(12, $analysis['visualAnalysis']['diagnostics']['tableOnlyCandidates']);
+        self::assertSame(1, $analysis['visualAnalysis']['diagnostics']['omittedByLimit']);
+        self::assertSame(0, $analysis['visualAnalysis']['diagnostics']['renderableOmittedByLimit']);
+        self::assertCount(12, $analysis['visualAnalysis']['charts']);
+        self::assertContains('Kisiwa operating receipts',
+            array_column($analysis['visualAnalysis']['charts'], 'title'));
+        self::assertSame(1, count(array_filter($analysis['visualAnalysis']['charts'],
+            fn ($chart) => $chart['renderEligible'])));
     }
 
     // ---------------------------------------------------------------- takeaways
@@ -649,6 +677,9 @@ class DocumentIntelligenceAnalysisTest extends TestCase
 
         $analysis = $this->analyze($document);
         $this->assertSame(4, $analysis['stats']['chartableFindings']);
+        $this->assertSame(4, $analysis['visualAnalysis']['diagnostics']['eligibleMeasurements']);
+        $this->assertSame(0, $analysis['visualAnalysis']['diagnostics']['candidateVisualizations']);
+        $this->assertGreaterThan(0, $analysis['visualAnalysis']['diagnostics']['unsupportedGroups']);
         $this->assertSame([], $analysis['visualAnalysis']['charts']);
         $this->assertNotSame([], $analysis['analysisGroups']);
     }

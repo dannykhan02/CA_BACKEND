@@ -47,15 +47,24 @@ final class PdfCategoricalFieldProof
             ->where('workspace_id', $document->workspace_id)->whereNull('deleted_at')
             ->first(['file_hash', 'extracted_text', 'ai_pipeline']);
         $livePipeline = json_decode($live->ai_pipeline ?? '{}', true);
+        $published = $document->published_intelligence_revision_id !== null
+            && $document->intelligenceRevisionForRelations() === $document->published_intelligence_revision_id
+            ? $document->publishedIntelligenceRevision : null;
+        $publishedPipeline = $published?->workspace_id === $document->workspace_id
+            && $published?->document_id === $document->id
+            && $published?->state === 'published'
+            && $published?->pipeline_key === $row->pipeline_key
+            && $published?->file_hash === $document->file_hash
+            && $published?->extracted_text_hash === $revision;
         if ($identity === null || $row->identity !== $identity
             || $row->source_id !== 'pdf-category:'.$identity
             || ($data['strategy'] ?? null) !== PdfCategoricalCandidateCollector::STRATEGY
             || ($data['source_file_hash'] ?? null) !== $document->file_hash
             || $live === null || $live->file_hash !== $document->file_hash
             || hash('sha256', (string) $live->extracted_text) !== $revision
-            || ($livePipeline['key'] ?? 'legacy') !== $row->pipeline_key
-            || ! app(DocumentRevisionPublisher::class)->ownsPipeline($document,
-                (string) $row->pipeline_key)) {
+            || (! $publishedPipeline && ($livePipeline['key'] ?? 'legacy') !== $row->pipeline_key)
+            || (! $publishedPipeline && ! app(DocumentRevisionPublisher::class)->ownsPipeline($document,
+                (string) $row->pipeline_key))) {
             return $reject('categorical_revision_mismatch');
         }
         $set = DB::table('source_provenance_sets')->where('id', $setId)
@@ -81,8 +90,7 @@ final class PdfCategoricalFieldProof
             return $reject('categorical_column_ambiguous');
         }
         $header = $view['columns'][$column] ?? null;
-        $matchingRows = array_values(array_filter($view['rows'], static fn ($candidate) =>
-            $candidate['row_id'] === ($data['row_id'] ?? null)));
+        $matchingRows = array_values(array_filter($view['rows'], static fn ($candidate) => $candidate['row_id'] === ($data['row_id'] ?? null)));
         $selected = $matchingRows[0] ?? null;
         $category = $selected['cells'][0] ?? null;
         $value = $selected['cells'][$column] ?? null;
