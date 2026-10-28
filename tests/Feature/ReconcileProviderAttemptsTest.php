@@ -47,7 +47,7 @@ class ReconcileProviderAttemptsTest extends TestCase
         return $id;
     }
 
-    private function run(string $purpose, string $cost, int $minutesOld): DocumentAiRun
+    private function reconcile(string $purpose, string $cost, int $minutesOld): DocumentAiRun
     {
         return DocumentAiRun::create(['workspace_id' => $this->workspace->id, 'document_id' => $this->document->id, 'file_hash' => $this->document->file_hash,
             'purpose' => $purpose, 'provider' => 'anthropic', 'model' => 'test', 'input_tokens' => 1, 'output_tokens' => 1, 'status' => 'success',
@@ -62,7 +62,7 @@ class ReconcileProviderAttemptsTest extends TestCase
     public function test_a_dry_run_writes_nothing(): void
     {
         $matched = $this->attempt('dispatched', 180);
-        $this->run('entities', '0.050000', 179);
+        $this->reconcile('entities', '0.050000', 179);
         $abandoned = $this->attempt('reserved', 180, 'risks');
         $before = DB::table('provider_call_attempts')->orderBy('id')->get()->all();
         $writes = [];
@@ -84,7 +84,7 @@ class ReconcileProviderAttemptsTest extends TestCase
     public function test_apply_settles_a_matched_attempt_at_the_run_cost_and_links_the_run(): void
     {
         $attempt = $this->attempt('dispatched', 180);
-        $run = $this->run('entities', '0.050000', 179);
+        $run = $this->reconcile('entities', '0.050000', 179);
 
         $this->artisan('credits:reconcile-attempts', ['--apply' => true])->assertSuccessful();
 
@@ -98,7 +98,7 @@ class ReconcileProviderAttemptsTest extends TestCase
     {
         $neverSent = $this->attempt('reserved', 180, 'risks');
         $lost = $this->attempt('uncertain', 180, 'deadlines', 70000);
-        $this->run('entities', '0.010000', 179); // another purpose: not a match for either
+        $this->reconcile('entities', '0.010000', 179); // another purpose: not a match for either
 
         $this->artisan('credits:reconcile-attempts', ['--apply' => true])->assertSuccessful();
 
@@ -111,7 +111,7 @@ class ReconcileProviderAttemptsTest extends TestCase
     public function test_attempts_younger_than_the_threshold_are_untouched(): void
     {
         $young = $this->attempt('dispatched', 10);
-        $this->run('entities', '0.050000', 9);
+        $this->reconcile('entities', '0.050000', 9);
         $old = $this->attempt('reserved', 90, 'risks');
 
         $this->artisan('credits:reconcile-attempts', ['--apply' => true])->assertSuccessful();
@@ -126,7 +126,7 @@ class ReconcileProviderAttemptsTest extends TestCase
     public function test_a_second_run_changes_nothing(): void
     {
         $this->attempt('dispatched', 180);
-        $this->run('entities', '0.050000', 179);
+        $this->reconcile('entities', '0.050000', 179);
         $this->attempt('uncertain', 180, 'risks');
         $this->artisan('credits:reconcile-attempts', ['--apply' => true])->assertSuccessful();
         $after = DB::table('provider_call_attempts')->orderBy('id')->get()->all();
