@@ -163,8 +163,7 @@ class CreditAccountant
     }
 
     /**
-     * Writes off an expired trial's unused credits (the part held by an open document stays until that settles). One ledger row
-     * per workspace and expiry, so a rerun does nothing. Returns the credits expired.
+     * Writes off an expired trial's unused credits (the part held by an open document stays until that settles). One ledger row per expiry that moves credits; a rerun with nothing left does nothing. Returns the credits expired.
      */
     public function expireTrial(string $workspaceId): int
     {
@@ -177,7 +176,10 @@ class CreditAccountant
                 return 0;
             }
             $row->forceFill(['trial_credits_remaining' => $balance['held']])->save();
-            app(CreditLedger::class)->record($workspaceId, 'trial_expire:'.$workspaceId.':'.$balance['expires_at']->getTimestamp(), self::TRIAL, 'debit',
+            // A hold left in the pocket expires on a later run with the same expiry date, so the reference carries a sequence number:
+            // a repeated reference would be ignored by the ledger and the balance would move without a row.
+            $sequence = DB::table('credit_ledger')->where('workspace_id', $workspaceId)->where('reason', 'trial_expired')->count() + 1;
+            app(CreditLedger::class)->record($workspaceId, 'trial_expire:'.$workspaceId.':'.$balance['expires_at']->getTimestamp().':'.$sequence, self::TRIAL, 'debit',
                 $expire, 'trial_expired', 'workspace', $workspaceId, null, (int) $row->trial_credits_remaining);
 
             return $expire;

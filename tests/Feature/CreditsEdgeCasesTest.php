@@ -110,4 +110,49 @@ class CreditsEdgeCasesTest extends TestCase
         app(CreditAccountant::class)->reserve($documentQuote, $this->user->id);
         self::assertSame(5, (int) DB::table('billing_operations')->where('quote_id', $documentQuote->id)->value('amount_reserved'));
     }
+
+    // ------------------------------------------------------------------ A7 and A18: expiry
+
+    public function test_a7_expiry_keeps_the_credits_an_open_hold_needs_and_settlement_never_goes_negative(): void
+    {
+        $workspace = $this->workspace();
+        $document = $this->document($workspace);
+        $quote = $this->quote($workspace, $document, 6);
+        $this->trialRow($workspace, 15, now()->addDay());
+        app(CreditAccountant::class)->reserve($quote, $this->user->id);
+        self::assertSame('trial_ai_credit', DB::table('billing_operations')->where('quote_id', $quote->id)->value('funding_bucket'));
+        $this->trialRow($workspace, 15, now()->subMinute()); // expires while the hold is open
+
+        self::assertSame(0, app(CreditAccountant::class)->trialAvailable($workspace->id));
+        self::assertSame(9, app(CreditAccountant::class)->expireTrial($workspace->id), 'the 6 held credits stay');
+        self::assertSame(6, (int) WorkspaceCredit::where('workspace_id', $workspace->id)->value('trial_credits_remaining'));
+
+        $this->cost($workspace, $document, $quote, '0.100000'); // 0.1 x 1.25 / 0.027 = 4.63 -> 5 credits
+        app(CreditAccountant::class)->settleDocument($document->id, $this->user->id);
+
+        self::assertSame(1, (int) WorkspaceCredit::where('workspace_id', $workspace->id)->value('trial_credits_remaining'));
+        self::assertSame(5, $quote->fresh()->charged_credits);
+    }
+
+    public function test_a18_a_second_expiry_of_a_released_hold_writes_its_own_ledger_row(): void
+    {
+        $workspace = $this->workspace();
+        $document = $this->document($workspace);
+        $quote = $this->quote($workspace, $document, 6);
+        $this->trialRow($workspace, 15, now()->addDay());
+        app(CreditAccountant::class)->reserve($quote, $this->user->id);
+        $this->trialRow($workspace, 15, now()->subMinute());
+        $accountant = app(CreditAccountant::class);
+        self::assertSame(9, $accountant->expireTrial($workspace->id));
+        $this->cost($workspace, $document, $quote, '0.030000'); // 2 credits charged, 4 released back into the (expired) pocket
+        $accountant->settleDocument($document->id, $this->user->id);
+        self::assertSame(4, (int) WorkspaceCredit::where('workspace_id', $workspace->id)->value('trial_credits_remaining'));
+
+        self::assertSame(4, $accountant->expireTrial($workspace->id));
+
+        self::assertSame(0, (int) WorkspaceCredit::where('workspace_id', $workspace->id)->value('trial_credits_remaining'));
+        $rows = DB::table('credit_ledger')->where('workspace_id', $workspace->id)->where('reason', 'trial_expired')->orderBy('id')->pluck('amount')->all();
+        self::assertSame([9, 4], array_map('intval', $rows), 'every expiry that moved credits has its own row');
+        self::assertSame(0, $accountant->expireTrial($workspace->id));
+    }
 }
