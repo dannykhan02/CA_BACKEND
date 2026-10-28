@@ -3,9 +3,17 @@ set -eu
 
 role=${1:-web}
 case "$role" in
-    web|worker) ;;
-    *) echo "FATAL: expected web or worker role" >&2; exit 1 ;;
+    web|worker|scheduler) ;;
+    *) echo "FATAL: expected web, worker or scheduler role" >&2; exit 1 ;;
 esac
+
+# The scheduler only runs the Laravel scheduler (routes/console.php): no web server, no queue workers and no document scanning,
+# so it skips the ClamAV startup below. Run exactly one scheduler service; the credit jobs also take a cache lock.
+if [ "$role" = scheduler ]; then
+    php artisan config:cache
+    php artisan config:check-production-safety
+    exec php artisan schedule:work
+fi
 
 database_dir=${CLAMAV_DATABASE_DIRECTORY:-/var/lib/clamav}
 mkdir -p "$database_dir"

@@ -84,8 +84,17 @@ class WorkspaceCreditService
                 WorkspaceCredit::where('workspace_id', $purchase->workspace_id)->value('documents_remaining'));
         }
 
-        if ($purchase->user_id !== null && ! CreditPurchase::where('user_id', $purchase->user_id)
-            ->where('status', 'completed')->whereKeyNot($purchase->id)->exists()) {
+        if ($purchase->user_id === null) {
+            return;
+        }
+        if (config('ai_credits.grants.referral_reward_trigger') === 'first_payment') {
+            // The referred user's first paid subscription is now active in credit mode (the moment a trial carries over). The pending
+            // referral row, locked and flipped to rewarded, is what makes this happen once. Same-IP and same-device signups never got a
+            // trial (unique trial_grants indexes), so their referral is already reward_eligible = false.
+            if ($purchase->plan_key !== null && QuoteService::enabled() && app(CreditAccountant::class)->mode($purchase->workspace_id) === 'credits') {
+                $this->grantReferralReward($purchase);
+            }
+        } elseif (! CreditPurchase::where('user_id', $purchase->user_id)->where('status', 'completed')->whereKeyNot($purchase->id)->exists()) {
             $this->grantReferralReward($purchase);
         }
     }

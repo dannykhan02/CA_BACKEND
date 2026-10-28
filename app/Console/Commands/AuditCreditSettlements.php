@@ -3,6 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\Document;
+use App\Models\OperationQuote;
+use Illuminate\Support\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -48,7 +50,39 @@ class AuditCreditSettlements extends Command
             $held->limit($limit)->pluck('resource_id')->all(), $limit,
             'billing:release-stale-reservations releases these on its hourly run.');
 
+        $this->monitoring($limit);
+
         return $doubled->isEmpty() ? self::SUCCESS : self::FAILURE;
+    }
+
+    /** Last 7 days of the actual-cost and plan rules, for monitoring only (never affects the exit code). */
+    private function monitoring(int $limit): void
+    {
+        $since = now()->subDays(7);
+        $this->line('');
+        $this->info('Last 7 days: actual-cost settlement and plan rules');
+
+        $fallbacks = OperationQuote::where('settlement_basis', 'quoted_fallback')->where('settled_at', '>=', $since)
+            ->selectRaw("coalesce(settlement_reason, 'unknown') as reason, count(*) as total")->groupBy('reason')->orderByDesc('total')->get();
+        $this->line(sprintf('Settled at the quoted amount (fallback): %d', $fallbacks->sum('total')));
+        foreach ($fallbacks as $row) {
+            $this->line(sprintf('  - %s: %d', $row->reason, $row->total));
+        }
+
+        $absorbed = OperationQuote::where('absorbed_credits', '>', 0)->where('settled_at', '>=', $since)->orderByDesc('absorbed_credits')->get(['resource_id', 'absorbed_credits']);
+        $this->line(sprintf('Absorbed credits (cost above the hold, not charged): %d credits over %d document(s)', $absorbed->sum('absorbed_credits'), $absorbed->count()));
+        foreach ($absorbed->take($limit) as $row) {
+            $this->line(sprintf('  - %s: %d', $row->resource_id, $row->absorbed_credits));
+        }
+
+        // A retry that succeeds clears its block, so these are the documents blocked now, with the block recorded in the window.
+        $blocked = Document::where('status', 'Failed')->whereNotNull('ai_pipeline->credit_block')->where('updated_at', '>=', $since)->get(['id', 'ai_pipeline'])
+            ->map(fn ($d) => $d->ai_pipeline['credit_block'] ?? [])
+            ->filter(fn ($block) => isset($block['at']) && Carbon::parse($block['at'])->gte($since));
+        $this->line(sprintf('Refused for credits or plan limits and still blocked: %d', $blocked->count()));
+        foreach ($blocked->groupBy(fn ($b) => $b['code'].($b['reason'] ?? false ? ':'.$b['reason'] : ''))->map->count()->sortDesc() as $kind => $total) {
+            $this->line(sprintf('  - %s: %d', $kind, $total));
+        }
     }
 
     /** @param  array<int, string>  $ids */

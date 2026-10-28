@@ -222,6 +222,13 @@ class AiCreditAdmission
         $delivered = $document->credit_accounted_at !== null || DB::table('billing_operations')
             ->where('kind', 'document')->where('resource_id', $document->id)->where('status', 'completed')->whereNotNull('amount_reserved')->exists();
         $priced = $this->quotes->quoteDocument($document, $delivered ? 'reanalysis' : 'document', $delivered);
+        // A re-run is held to the plan's size limit like the first analysis: no hold, no charge, nothing sent to a provider.
+        $tokens = (int) ($priced['signals']['tokens'] ?? $priced['quote']->preflight['tokens'] ?? 0);
+        if (($block = $this->plans->sizeBlock($document, $tokens)) !== null) {
+            throw new HttpResponseException(response()->json($block + ['message' => $block['required_plan'] !== null
+                ? sprintf('This document is larger than your plan allows. Upgrade to the %s plan to re-analyse it.', ucfirst($block['required_plan']))
+                : 'This document is larger than your plan allows.'], 403));
+        }
         abort_if($priced['declined'], 422, 'This document cannot be re-analysed within its credit allowance.');
         $quote = $priced['quote'];
         if ($confirmCredits !== null && $this->quotes->requiresConfirmation($quote->credits, (int) ($quote->preflight['pages'] ?? 0)) && $confirmCredits !== $quote->credits) {
