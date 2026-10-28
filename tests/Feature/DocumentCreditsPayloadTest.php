@@ -65,27 +65,27 @@ class DocumentCreditsPayloadTest extends TestCase
 
         $quoted = $this->document();
         $this->quote($quoted);
-        $this->assertSame(['quoted' => 2, 'state' => 'quoted', 'charged' => null, 'requiresConfirmation' => false, 'quotedCredits' => 2, 'chargedCredits' => null, 'releasedCredits' => null, 'settlementBasis' => null], $this->payload($quoted));
+        $this->assertSame(['quoted' => 2, 'state' => 'quoted', 'charged' => null, 'requiresConfirmation' => false, 'quotedCredits' => 2, 'chargedCredits' => null, 'releasedCredits' => null, 'settlementBasis' => null, 'heldCredits' => null, 'absorbedCredits' => null, 'creditBlock' => null], $this->payload($quoted));
 
         $big = $this->document();
         $this->quote($big, 35, 'xlarge');
-        $this->assertSame(['quoted' => 35, 'state' => 'awaiting_confirmation', 'charged' => null, 'requiresConfirmation' => true, 'quotedCredits' => 35, 'chargedCredits' => null, 'releasedCredits' => null, 'settlementBasis' => null], $this->payload($big));
+        $this->assertSame(['quoted' => 35, 'state' => 'awaiting_confirmation', 'charged' => null, 'requiresConfirmation' => true, 'quotedCredits' => 35, 'chargedCredits' => null, 'releasedCredits' => null, 'settlementBasis' => null, 'heldCredits' => null, 'absorbedCredits' => null, 'creditBlock' => null], $this->payload($big));
         $big->forceFill(['ai_pipeline' => ['credit_quote_confirmed' => true]])->save();
-        $this->assertSame(['quoted' => 35, 'state' => 'quoted', 'charged' => null, 'requiresConfirmation' => false, 'quotedCredits' => 35, 'chargedCredits' => null, 'releasedCredits' => null, 'settlementBasis' => null], $this->payload($big));
+        $this->assertSame(['quoted' => 35, 'state' => 'quoted', 'charged' => null, 'requiresConfirmation' => false, 'quotedCredits' => 35, 'chargedCredits' => null, 'releasedCredits' => null, 'settlementBasis' => null, 'heldCredits' => null, 'absorbedCredits' => null, 'creditBlock' => null], $this->payload($big));
 
         $reserved = $this->document();
         $accountant->reserve($this->quote($reserved), $this->user->id);
-        $this->assertSame(['quoted' => 2, 'state' => 'reserved', 'charged' => null, 'requiresConfirmation' => false, 'quotedCredits' => 2, 'chargedCredits' => null, 'releasedCredits' => null, 'settlementBasis' => null], $this->payload($reserved));
+        $this->assertSame(['quoted' => 2, 'state' => 'reserved', 'charged' => null, 'requiresConfirmation' => false, 'quotedCredits' => 2, 'chargedCredits' => null, 'releasedCredits' => null, 'settlementBasis' => null, 'heldCredits' => 2, 'absorbedCredits' => null, 'creditBlock' => null], $this->payload($reserved));
 
         $charged = $this->document('Ready');
         $accountant->reserve($this->quote($charged), $this->user->id);
         $accountant->settle('document', $charged->id);
-        $this->assertSame(['quoted' => 2, 'state' => 'charged', 'charged' => 2, 'requiresConfirmation' => false, 'quotedCredits' => 2, 'chargedCredits' => 2, 'releasedCredits' => 0, 'settlementBasis' => 'quoted'], $this->payload($charged));
+        $this->assertSame(['quoted' => 2, 'state' => 'charged', 'charged' => 2, 'requiresConfirmation' => false, 'quotedCredits' => 2, 'chargedCredits' => 2, 'releasedCredits' => 0, 'settlementBasis' => 'quoted', 'heldCredits' => 2, 'absorbedCredits' => 0, 'creditBlock' => null], $this->payload($charged));
 
         $released = $this->document();
         $accountant->reserve($this->quote($released), $this->user->id);
         $accountant->release('document', $released->id, 'test');
-        $this->assertSame(['quoted' => 2, 'state' => 'not_charged', 'charged' => null, 'requiresConfirmation' => false, 'quotedCredits' => 2, 'chargedCredits' => null, 'releasedCredits' => null, 'settlementBasis' => null], $this->payload($released));
+        $this->assertSame(['quoted' => 2, 'state' => 'not_charged', 'charged' => null, 'requiresConfirmation' => false, 'quotedCredits' => 2, 'chargedCredits' => null, 'releasedCredits' => null, 'settlementBasis' => null, 'heldCredits' => null, 'absorbedCredits' => null, 'creditBlock' => null], $this->payload($released));
 
         $partial = $this->document('Needs Review'); // the hold is released a moment later; the document already was not delivered
         $accountant->reserve($this->quote($partial), $this->user->id);
