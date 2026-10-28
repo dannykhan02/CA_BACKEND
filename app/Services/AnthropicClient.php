@@ -1204,17 +1204,8 @@ PROMPT;
             $cleaned = trim($match[1]);
         }
         try {
-            try {
-                $decoded = json_decode($cleaned, true, 512, JSON_THROW_ON_ERROR);
-            } catch (JsonException $e) {
-                if ($e->getCode() !== JSON_ERROR_CTRL_CHAR) {
-                    throw $e;
-                }
-                // A raw newline, tab or other control character inside a string literal: escape it and decode once more.
-                $decoded = json_decode($this->escapeControlCharacters($cleaned), true, 512, JSON_THROW_ON_ERROR);
-            }
+            $decoded = json_decode($cleaned, true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $e) {
-            // Still unusable: the same retryable malformed_output failure as any other unparseable response.
             $metadata['parse_phase'] = json_validate($text) ? 'after_cleaning' : 'raw_output';
             $metadata['json_error_category'] = $e->getCode();
             $this->structuredOutputFailure('malformed_output', $e->getMessage(), $metadata, $text, $e);
@@ -1224,37 +1215,6 @@ PROMPT;
         }
 
         return $decoded;
-    }
-
-    /**
-     * Escapes raw control characters (U+0000 to U+001F) that sit INSIDE JSON string literals: \n, \r and \t become their escapes, the
-     * rest \u00XX. Whitespace between tokens, and anything already escaped, is left alone.
-     */
-    private function escapeControlCharacters(string $json): string
-    {
-        $out = '';
-        $inString = false;
-        $escaped = false;
-        foreach (str_split($json) as $char) {
-            if ($inString && ! $escaped && ord($char) < 0x20) {
-                $out .= match ($char) {
-                    "\n" => '\\n', "\r" => '\\r', "\t" => '\\t',
-                    default => sprintf('\\u%04x', ord($char)),
-                };
-
-                continue;
-            }
-            $out .= $char;
-            if ($escaped) {
-                $escaped = false;
-            } elseif ($inString && $char === '\\') {
-                $escaped = true;
-            } elseif ($char === '"') {
-                $inString = ! $inString;
-            }
-        }
-
-        return $out;
     }
 
     private ?string $currentDocumentId = null;
