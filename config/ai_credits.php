@@ -192,7 +192,7 @@ return [
     // Monthly AI credits granted by NEW subscription periods. Annual plans can differ from monthly.
     'plans' => [
         'starter' => ['monthly' => (int) env('AI_CREDITS_STARTER_MONTHLY', 100), 'annual' => (int) env('AI_CREDITS_STARTER_ANNUAL', 100)],
-        'professional' => ['monthly' => (int) env('AI_CREDITS_PROFESSIONAL_MONTHLY', 250), 'annual' => (int) env('AI_CREDITS_PROFESSIONAL_ANNUAL', 250)],
+        'professional' => ['monthly' => (int) env('AI_CREDITS_PROFESSIONAL_MONTHLY', 300), 'annual' => (int) env('AI_CREDITS_PROFESSIONAL_ANNUAL', 300)],
     ],
 
     // Variables above that were ignored as unusable (see App\Support\ConfigEnv); AppServiceProvider logs one warning.
