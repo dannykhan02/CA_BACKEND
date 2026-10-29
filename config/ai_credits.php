@@ -144,6 +144,19 @@ return [
         // a plan_limit error (reason qa_daily_limit) that names the plan to upgrade to.
         'free_max_per_workspace_per_day' => ConfigEnv::integer('AI_CREDITS_FREE_QA_PER_DAY', env('AI_CREDITS_FREE_QA_PER_DAY'), (int) env('AI_CREDITS_QA_MAX_PER_DAY', 100), 0),
         'free_max_cost_usd_per_day' => ConfigEnv::number('AI_CREDITS_FREE_QA_MAX_COST_USD', env('AI_CREDITS_FREE_QA_MAX_COST_USD'), (float) env('AI_CREDITS_QA_MAX_USD_PER_DAY', 2.0), 0.0, 1000000.0),
+        // Starter and Professional workspaces (credit mode), same rules as the free keys: unset or unusable = the general limit above.
+        'plans' => (function (): array {
+            $plans = [];
+            foreach (['starter', 'professional'] as $plan) {
+                $key = 'AI_CREDITS_'.strtoupper($plan);
+                $plans[$plan] = [
+                    'max_per_day' => ConfigEnv::integer($key.'_QA_PER_DAY', env($key.'_QA_PER_DAY'), (int) env('AI_CREDITS_QA_MAX_PER_DAY', 100), 0),
+                    'max_cost_usd_per_day' => ConfigEnv::number($key.'_QA_MAX_COST_USD', env($key.'_QA_MAX_COST_USD'), (float) env('AI_CREDITS_QA_MAX_USD_PER_DAY', 2.0), 0.0, 1000000.0),
+                ];
+            }
+
+            return $plans;
+        })(),
     ],
 
     // Failed work always releases. Needs Review releases unless product explicitly decides otherwise.
