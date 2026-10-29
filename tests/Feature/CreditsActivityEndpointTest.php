@@ -128,6 +128,31 @@ class CreditsActivityEndpointTest extends TestCase
         $this->assertSame($gone->id, $byCredits[-3]['document_id']);
     }
 
+    public function test_a_non_uuid_related_id_does_not_break_the_endpoint(): void
+    {
+        $this->row($this->workspace, 'ai_debit:q1', CreditAccountant::SAVED, 'debit', 2, 'document', 'x');
+
+        $recent = $this->activity()->assertOk()->json('data.recent');
+
+        $this->assertCount(1, $recent);
+        $this->assertSame('charged', $recent[0]['type']);
+        $this->assertNull($recent[0]['document_id']);
+        $this->assertNull($recent[0]['document_name']);
+    }
+
+    public function test_a_uuid_related_id_on_a_non_document_row_is_not_looked_up(): void
+    {
+        $document = $this->document($this->workspace, 'Real.pdf');
+        $this->row($this->workspace, 'ai_debit:q1', CreditAccountant::SAVED, 'debit', 2, 'qa', $document->id);
+        $this->row($this->workspace, 'referral:r1', CreditAccountant::SAVED, 'credit', 5, 'referral', $document->id);
+
+        $recent = collect($this->activity()->assertOk()->json('data.recent'));
+
+        $this->assertCount(2, $recent);
+        $this->assertSame([null, null], $recent->pluck('document_id')->all());
+        $this->assertSame([null, null], $recent->pluck('document_name')->all());
+    }
+
     public function test_another_workspaces_rows_never_appear(): void
     {
         $other = $this->makeWorkspace(false);

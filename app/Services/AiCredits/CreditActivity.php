@@ -4,6 +4,7 @@ namespace App\Services\AiCredits;
 
 use App\Models\Document;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
  * Read-only, customer-safe view of a workspace's AI-credit ledger: what was earned into saved credits, what is held right now and
@@ -41,9 +42,11 @@ class CreditActivity
         $sources = $this->sources($workspaceId);
         $recent = $this->recentRows($workspaceId, $limit);
         $holds = DB::table('billing_operations')->where('workspace_id', $workspaceId)->where('status', 'reserved')->whereNotNull('amount_reserved')
-            ->whereIn('kind', self::DOCUMENT_KINDS)->get(['resource_id', 'amount_reserved']);
+            ->whereIn('kind', self::DOCUMENT_KINDS)->get(['resource_id', 'amount_reserved'])
+            ->filter(fn ($hold) => Str::isUuid((string) $hold->resource_id));
 
-        $ids = $holds->pluck('resource_id')->merge(collect($recent)->pluck('document_id'))->filter()->unique()->values()->all();
+        // Only valid UUIDs reach the documents table (a uuid column rejects anything else); with none, no query runs.
+        $ids = $holds->pluck('resource_id')->merge(collect($recent)->pluck('document_id'))->filter(fn ($id) => is_string($id) && Str::isUuid($id))->unique()->values()->all();
         $names = $ids === [] ? collect() : Document::where('workspace_id', $workspaceId)->whereIn('id', $ids)->pluck('name', 'id');
 
         $heldByDocument = [];
@@ -99,7 +102,8 @@ class CreditActivity
                 continue;
             }
             [$type, $sign] = $mapped;
-            $isDocument = in_array($row->related_type, self::DOCUMENT_KINDS, true) && str_starts_with($row->reference, 'ai_');
+            $isDocument = in_array($row->related_type, self::DOCUMENT_KINDS, true) && str_starts_with($row->reference, 'ai_')
+                && is_string($row->related_id) && Str::isUuid($row->related_id);
             $out[] = ['id' => (string) $row->id, 'at' => \Illuminate\Support\Carbon::parse($row->created_at)->toIso8601String(), 'type' => $type,
                 'credits' => $sign * (int) $row->amount, 'bucket' => self::BUCKETS[$row->unit],
                 'document_id' => $isDocument ? $row->related_id : null];
