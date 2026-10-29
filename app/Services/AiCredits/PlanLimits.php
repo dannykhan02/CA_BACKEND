@@ -32,7 +32,7 @@ class PlanLimits
         return in_array($sub->plan_key, self::LADDER, true) ? $sub->plan_key : 'starter';
     }
 
-    /** @return array{allowed_types:array<int,string>,allow_ocr:bool,max_quote_tokens:?int} allowed_types are document type keys (PDF, DOCX, ...); empty = all */
+    /** @return array{allowed_types:array<int,string>,allow_ocr:bool,max_quote_tokens:?int,max_ocr_pages:int} allowed_types are document type keys (PDF, DOCX, ...); empty = all */
     public function limits(string $plan): array
     {
         $config = config("ai_credits.plan_limits.{$plan}") ?? [];
@@ -46,7 +46,8 @@ class PlanLimits
         }
 
         return ['allowed_types' => array_values($allowed), 'allow_ocr' => (bool) ($config['allow_ocr'] ?? true),
-            'max_quote_tokens' => isset($config['max_quote_tokens']) ? (int) $config['max_quote_tokens'] : null];
+            'max_quote_tokens' => isset($config['max_quote_tokens']) ? (int) $config['max_quote_tokens'] : null,
+            'max_ocr_pages' => max(0, (int) ($config['max_ocr_pages'] ?? 0))];
     }
 
     public function allowsType(string $plan, string $type): bool
@@ -83,14 +84,23 @@ class PlanLimits
             'required_plan' => $this->requiredPlan($plan, fn (array $l) => $l['allowed_types'] === [] || in_array($type, $l['allowed_types'], true))];
     }
 
-    /** Null when OCR may run; otherwise the credit_block that stops the document before any OCR or AI call. */
-    public function ocrBlock(Document $document): ?array
+    /**
+     * Null when OCR may run; otherwise the credit_block that stops the document before any OCR or AI call. $ocrPages is how many
+     * pages need OCR. A plan without OCR still reads a PDF when 1 <= $ocrPages <= its max_ocr_pages and fewer than all pages need
+     * it (at least one page has native text); an unknown page count or $ocrPages never qualifies.
+     */
+    public function ocrBlock(Document $document, ?int $ocrPages = null): ?array
     {
         if (! $this->applies($document->workspace_id)) {
             return null;
         }
         $plan = $this->planFor($document->workspace_id);
-        if ($this->limits($plan)['allow_ocr']) {
+        $limits = $this->limits($plan);
+        if ($limits['allow_ocr']) {
+            return null;
+        }
+        $total = (int) $document->pages;
+        if ($document->type === 'PDF' && $ocrPages !== null && $ocrPages >= 1 && $ocrPages <= $limits['max_ocr_pages'] && $total > 0 && $ocrPages < $total) {
             return null;
         }
 

@@ -90,11 +90,17 @@ class SubscriptionService
             $subscription->periods()->where('period_start', '<', $start)->where('period_end', '>', $start)->update(['period_end' => $start]);
         }
         $months = $purchase->billing_interval === 'annual' ? 12 : 1;
+        // An automatic renewal replays the stored snapshot; its new periods get the higher of that and today's plan allowance, never
+        // less. The snapshot itself is not rewritten, and a NULL (legacy) allowance stays NULL.
+        $aiCredits = $snapshot['ai_credits'] ?? null;
+        if ($aiCredits !== null && $recurring && ! $manual) {
+            $aiCredits = max((int) $aiCredits, (int) config('ai_credits.plans.'.$purchase->plan_key.'.'.$purchase->billing_interval, 0));
+        }
         for ($i = 0; $i < $months; $i++) {
             $usage = $subscription->periods()->firstOrCreate(['period_start' => $start->addMonthsNoOverflow($i)], [
                 'period_end' => $start->addMonthsNoOverflow($i + 1)->min($end),
                 'documents_allowed' => $snapshot['documents'], 'comparisons_allowed' => $snapshot['comparisons'],
-                'storage_bytes' => $snapshot['storage_bytes'], 'ai_credits_allowed' => $snapshot['ai_credits'] ?? null,
+                'storage_bytes' => $snapshot['storage_bytes'], 'ai_credits_allowed' => $aiCredits,
             ]);
             if ($usage->wasRecentlyCreated) {
                 app(CreditLedger::class)->record($purchase->workspace_id, 'period_documents:'.$usage->id,

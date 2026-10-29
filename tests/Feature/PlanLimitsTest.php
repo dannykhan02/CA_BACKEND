@@ -343,7 +343,7 @@ class PlanLimitsTest extends TestCase
     public function test_with_no_env_set_nothing_is_limited_and_a_trial_is_plain_saved_credits(): void
     {
         foreach (['free', 'starter', 'professional'] as $plan) {
-            self::assertSame(['allowed_types' => '', 'allow_ocr' => true, 'max_quote_tokens' => null], config("ai_credits.plan_limits.{$plan}"));
+            self::assertSame(['allowed_types' => '', 'allow_ocr' => true, 'max_quote_tokens' => null, 'max_ocr_pages' => 0], config("ai_credits.plan_limits.{$plan}"));
         }
         self::assertNull(config('ai_credits.free_trial_days'));
         Storage::fake('documents');

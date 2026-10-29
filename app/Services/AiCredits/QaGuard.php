@@ -25,11 +25,11 @@ class QaGuard
 
             return null;
         }
-        $free = $this->isFree($workspaceId);
+        $plan = $this->planOf($workspaceId);
         $dayLimit = (int) config('ai_credits.qa.max_per_workspace_per_day');
-        $freeDayLimit = $free ? (int) config('ai_credits.qa.free_max_per_workspace_per_day') : null;
-        $this->hit('qa:ws:'.$workspaceId.':'.now()->format('Ymd'), $freeDayLimit !== null ? min($dayLimit, $freeDayLimit) : $dayLimit, 90000,
-            $freeDayLimit !== null && $freeDayLimit <= $dayLimit);
+        $planDayLimit = $this->planDayLimit($plan);
+        $this->hit('qa:ws:'.$workspaceId.':'.now()->format('Ymd'), $planDayLimit !== null ? min($dayLimit, $planDayLimit) : $dayLimit, 90000,
+            $planDayLimit !== null && $planDayLimit <= $dayLimit ? $plan : null);
         $this->hit('qa:user:'.$user->id.':'.now()->format('YmdH'), (int) config('ai_credits.qa.max_per_user_per_hour'), 4000);
         $this->assertDailySpendBelowCeiling($workspaceId);
 
@@ -56,37 +56,72 @@ class QaGuard
 
     private function assertDailySpendBelowCeiling(?string $workspaceId): void
     {
-        $spent = (float) DocumentAiRun::where('workspace_id', $workspaceId)->where('purpose', 'document_qa')->where('created_at', '>=', now()->startOfDay())->sum('estimated_cost_usd');
-        $ceiling = (float) config('ai_credits.qa.max_cost_usd_per_workspace_per_day');
-        if ($workspaceId !== null && QuoteService::enabled() && $this->isFree($workspaceId)) {
-            $freeCeiling = (float) config('ai_credits.qa.free_max_cost_usd_per_day');
-            if ($freeCeiling <= $ceiling && $spent >= $freeCeiling) {
-                $this->planLimit();
-            }
+        // Integer micro-dollars: no float comparison decides a cap.
+        $spent = $this->micros((float) DocumentAiRun::where('workspace_id', $workspaceId)->where('purpose', 'document_qa')->where('created_at', '>=', now()->startOfDay())->sum('estimated_cost_usd'));
+        $ceiling = $this->micros((float) config('ai_credits.qa.max_cost_usd_per_workspace_per_day'));
+        $plan = $workspaceId !== null && QuoteService::enabled() ? $this->planOf($workspaceId) : null;
+        $planCeiling = $this->planCostCeiling($plan);
+        if ($plan !== null && $planCeiling !== null && $planCeiling <= $ceiling && $spent >= $planCeiling) {
+            $this->planLimit($plan);
         }
         abort_if($spent >= $ceiling, 429, 'Daily question limit reached. Please try again tomorrow.');
     }
 
-    private function hit(string $key, int $limit, int $ttlSeconds, bool $planLimit = false): void
+    private function micros(float $usd): int
+    {
+        return (int) round($usd * 1000000);
+    }
+
+    /** The plan's own daily question count, or null when the workspace has no plan-specific limit (not in credit mode). */
+    private function planDayLimit(?string $plan): ?int
+    {
+        return match ($plan) {
+            'free' => (int) config('ai_credits.qa.free_max_per_workspace_per_day'),
+            'starter', 'professional' => (int) config('ai_credits.qa.plans.'.$plan.'.max_per_day', config('ai_credits.qa.max_per_workspace_per_day')),
+            default => null,
+        };
+    }
+
+    /** The plan's own daily provider-cost ceiling in micro-dollars, or null. */
+    private function planCostCeiling(?string $plan): ?int
+    {
+        return match ($plan) {
+            'free' => $this->micros((float) config('ai_credits.qa.free_max_cost_usd_per_day')),
+            'starter', 'professional' => $this->micros((float) config('ai_credits.qa.plans.'.$plan.'.max_cost_usd_per_day', config('ai_credits.qa.max_cost_usd_per_workspace_per_day'))),
+            default => null,
+        };
+    }
+
+    private function hit(string $key, int $limit, int $ttlSeconds, ?string $planLimit = null): void
     {
         Cache::add($key, 0, $ttlSeconds);
         if (Cache::increment($key) > $limit) {
-            $planLimit ? $this->planLimit() : abort(429, 'Too many questions. Please slow down and try again shortly.');
+            $planLimit !== null ? $this->planLimit($planLimit) : abort(429, 'Too many questions. Please slow down and try again shortly.');
         }
     }
 
-    private function isFree(?string $workspaceId): bool
+    /** The workspace's plan when plan limits apply to it (credit mode); null otherwise. */
+    private function planOf(?string $workspaceId): ?string
     {
         $plans = app(PlanLimits::class);
 
-        return $workspaceId !== null && $plans->applies($workspaceId) && $plans->planFor($workspaceId) === 'free';
+        return $workspaceId !== null && $plans->applies($workspaceId) ? $plans->planFor($workspaceId) : null;
     }
 
-    /** The free plan's daily question allowance is used up. */
-    private function planLimit(): never
+    /** The plan's daily question allowance is used up. */
+    private function planLimit(string $plan): never
     {
-        throw new HttpResponseException(response()->json(['code' => 'plan_limit', 'reason' => 'qa_daily_limit', 'plan' => 'free',
-            'required_plan' => 'starter', 'resets_at' => now()->addDay()->startOfDay()->toIso8601String(),
-            'message' => 'You have used your free questions for today. Upgrade to the Starter plan to ask more.'], 429));
+        $required = match ($plan) {
+            'free' => 'starter',
+            'starter' => 'professional',
+            default => null,
+        };
+        $message = match ($plan) {
+            'free' => 'You have used your free questions for today. Upgrade to the Starter plan to ask more.',
+            'starter' => 'You have used your questions for today. Upgrade to the Professional plan to ask more.',
+            default => 'You have used your questions for today. Please try again tomorrow.',
+        };
+        throw new HttpResponseException(response()->json(['code' => 'plan_limit', 'reason' => 'qa_daily_limit', 'plan' => $plan,
+            'required_plan' => $required, 'resets_at' => now()->addDay()->startOfDay()->toIso8601String(), 'message' => $message], 429));
     }
 }

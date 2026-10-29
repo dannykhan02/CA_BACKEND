@@ -144,6 +144,19 @@ return [
         // a plan_limit error (reason qa_daily_limit) that names the plan to upgrade to.
         'free_max_per_workspace_per_day' => ConfigEnv::integer('AI_CREDITS_FREE_QA_PER_DAY', env('AI_CREDITS_FREE_QA_PER_DAY'), (int) env('AI_CREDITS_QA_MAX_PER_DAY', 100), 0),
         'free_max_cost_usd_per_day' => ConfigEnv::number('AI_CREDITS_FREE_QA_MAX_COST_USD', env('AI_CREDITS_FREE_QA_MAX_COST_USD'), (float) env('AI_CREDITS_QA_MAX_USD_PER_DAY', 2.0), 0.0, 1000000.0),
+        // Starter and Professional workspaces (credit mode), same rules as the free keys: unset or unusable = the general limit above.
+        'plans' => (function (): array {
+            $plans = [];
+            foreach (['starter', 'professional'] as $plan) {
+                $key = 'AI_CREDITS_'.strtoupper($plan);
+                $plans[$plan] = [
+                    'max_per_day' => ConfigEnv::integer($key.'_QA_PER_DAY', env($key.'_QA_PER_DAY'), (int) env('AI_CREDITS_QA_MAX_PER_DAY', 100), 0),
+                    'max_cost_usd_per_day' => ConfigEnv::number($key.'_QA_MAX_COST_USD', env($key.'_QA_MAX_COST_USD'), (float) env('AI_CREDITS_QA_MAX_USD_PER_DAY', 2.0), 0.0, 1000000.0),
+                ];
+            }
+
+            return $plans;
+        })(),
     ],
 
     // Failed work always releases. Needs Review releases unless product explicitly decides otherwise.
@@ -183,6 +196,9 @@ return [
                 'allowed_types' => (string) env($key.'_ALLOWED_TYPES', ''),
                 'allow_ocr' => $ocr === null || $ocr === '' ? true : filter_var($ocr, FILTER_VALIDATE_BOOLEAN),
                 'max_quote_tokens' => ConfigEnv::integer($key.'_MAX_QUOTE_TOKENS', env($key.'_MAX_QUOTE_TOKENS'), null, 1),
+                // Only read when allow_ocr is false: a PDF with at most this many scanned pages, and at least one page of native
+                // text, may still be read (those pages only). 0 = any page needing OCR is blocked, as before.
+                'max_ocr_pages' => (int) ConfigEnv::integer($key.'_MAX_OCR_PAGES', env($key.'_MAX_OCR_PAGES'), 0, 0),
             ];
         }
 
@@ -192,7 +208,7 @@ return [
     // Monthly AI credits granted by NEW subscription periods. Annual plans can differ from monthly.
     'plans' => [
         'starter' => ['monthly' => (int) env('AI_CREDITS_STARTER_MONTHLY', 100), 'annual' => (int) env('AI_CREDITS_STARTER_ANNUAL', 100)],
-        'professional' => ['monthly' => (int) env('AI_CREDITS_PROFESSIONAL_MONTHLY', 250), 'annual' => (int) env('AI_CREDITS_PROFESSIONAL_ANNUAL', 250)],
+        'professional' => ['monthly' => (int) env('AI_CREDITS_PROFESSIONAL_MONTHLY', 300), 'annual' => (int) env('AI_CREDITS_PROFESSIONAL_ANNUAL', 300)],
     ],
 
     // Variables above that were ignored as unusable (see App\Support\ConfigEnv); AppServiceProvider logs one warning.

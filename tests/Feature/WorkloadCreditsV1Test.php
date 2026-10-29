@@ -128,7 +128,7 @@ class WorkloadCreditsV1Test extends TestCase
     {
         $this->assertSame(0.027, config('ai_credits.provider_cost_usd_per_credit'));
         $this->assertSame(1, config('ai_credits.dense_band_shift'));
-        $this->assertSame([100, 100, 250, 250], [config('ai_credits.plans.starter.monthly'), config('ai_credits.plans.starter.annual'),
+        $this->assertSame([100, 100, 300, 300], [config('ai_credits.plans.starter.monthly'), config('ai_credits.plans.starter.annual'),
             config('ai_credits.plans.professional.monthly'), config('ai_credits.plans.professional.annual')]);
     }
 

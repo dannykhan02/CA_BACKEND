@@ -77,9 +77,9 @@ class AiCreditAdmission
     }
 
     /** False (and the document ends as Failed with a plan_limit block) when the plan does not include OCR. Before any OCR or AI call. */
-    public function assertOcrAllowed(Document $document): bool
+    public function assertOcrAllowed(Document $document, ?int $ocrPages = null): bool
     {
-        if (($block = $this->plans->ocrBlock($document)) === null) {
+        if (($block = $this->plans->ocrBlock($document, $ocrPages)) === null) {
             return true;
         }
 
@@ -161,7 +161,7 @@ class AiCreditAdmission
         if (! QuoteService::enabled() || $this->accountant->mode($document->workspace_id) === 'legacy') {
             return true;
         }
-        if (! $this->assertOcrAllowed($document)) {
+        if (! $this->assertOcrAllowed($document, $pages)) {
             return false;
         }
         $priced = $this->quotes->quoteOcr($document, $pages);
