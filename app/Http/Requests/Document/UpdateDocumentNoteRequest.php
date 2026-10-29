@@ -24,6 +24,8 @@ class UpdateDocumentNoteRequest extends StoreDocumentNoteRequest
         $rules['content'] = ['sometimes', 'nullable', 'array'];
         $rules['contentSchemaVersion'] = ['sometimes', 'nullable', 'integer', 'in:1'];
         $rules['version'] = ['required', 'integer', 'min:1'];
+        $rules['removeCitationIds'] = ['sometimes', 'array', 'max:50'];
+        $rules['removeCitationIds.*'] = ['required', 'uuid', 'distinct'];
         $rules['appendCitations'] = ['sometimes', 'array', 'max:50'];
         foreach ($rules as $field => $rule) {
             if (str_starts_with($field, 'citations.*')) {

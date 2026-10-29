@@ -87,6 +87,18 @@ class DocumentNoteController extends Controller
             if (array_key_exists('contentSchemaVersion', $data) && ! isset($data['content'])) {
                 $this->fail(422, 'NOTE_INVALID_CONTENT', 'A schema version requires rich content.');
             }
+            if (array_key_exists('removeCitationIds', $data)) {
+                if (array_key_exists('citations', $data)) {
+                    $this->fail(422, 'INVALID_CITATION', 'Citation removal and replacement cannot be combined.');
+                }
+                $ids = $data['removeCitationIds'];
+                if ($current->citations()->whereIn('id', $ids)->count() !== count($ids)) {
+                    $this->fail(422, 'INVALID_CITATION', 'Every removed reference must belong to this note.');
+                }
+                // Rich clients must explicitly remove inline markers too. The
+                // existing reference validator below rejects any dangling IDs.
+                $current->citations()->whereIn('id', $ids)->delete();
+            }
             if (array_key_exists('citations', $data) && array_key_exists('appendCitations', $data)) {
                 $this->fail(422, 'INVALID_CITATION', 'Citation replacement and append cannot be combined.');
             }

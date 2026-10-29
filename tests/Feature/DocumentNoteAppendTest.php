@@ -74,6 +74,37 @@ class DocumentNoteAppendTest extends TestCase
         return '/api/documents/'.$document->id.'/notes'.($note === null ? '' : '/'.$note);
     }
 
+    public function test_detach_preserves_historical_sibling_references_and_requires_note_ownership_and_version(): void
+    {
+        $author = $this->actor();
+        $document = $this->document($author);
+        $revision = $this->revision($document, 1, 'old-source');
+        Sanctum::actingAs($author);
+        $one = 'draft:'.Str::uuid();
+        $two = 'draft:'.Str::uuid();
+        $created = $this->postJson($this->url($document), ['content' => $this->content('My writing', [$one, $two]),
+            'contentSchemaVersion' => 1, 'citations' => [$this->citation($revision, 'old-source', $one),
+                $this->citation($revision, 'old-source', $two)]])->assertCreated();
+        $id = $created->json('data.id');
+        $first = $created->json('data.citations.0.id');
+        $second = $created->json('data.citations.1.id');
+        $this->revision($document, 2, 'new-source');
+        $payload = ['version' => 1, 'removeCitationIds' => [$first],
+            'content' => $this->content('My writing', [$second]), 'contentSchemaVersion' => 1];
+        $this->patchJson($this->url($document, $id), [...$payload, 'removeCitationIds' => [(string) Str::uuid()]])
+            ->assertStatus(422)->assertJsonPath('error.code', 'INVALID_CITATION');
+        $this->patchJson($this->url($document, $id), [...$payload, 'content' => $this->content('My writing', [$first, $second])])
+            ->assertStatus(422);
+        $this->assertDatabaseHas('document_note_citations', ['id' => $first]);
+        $this->patchJson($this->url($document, $id), $payload)->assertOk()
+            ->assertJsonPath('data.version', 2)->assertJsonCount(1, 'data.citations')
+            ->assertJsonPath('data.citations.0.id', $second);
+        $this->assertDatabaseMissing('document_note_citations', ['id' => $first]);
+        $this->patchJson($this->url($document, $id), $payload)->assertStatus(409);
+        Sanctum::actingAs($this->actor($author->currentWorkspace));
+        $this->patchJson($this->url($document, $id), [...$payload, 'version' => 2])->assertNotFound();
+    }
+
     public function test_existing_replacement_contract_rejects_historical_citation_during_append_attempt(): void
     {
         $author = $this->actor();
