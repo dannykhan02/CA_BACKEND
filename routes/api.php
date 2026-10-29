@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BillingController;
+use App\Http\Controllers\Api\CreditActivityController;
 use App\Http\Controllers\Api\CreditPurchaseController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DocumentApproveController;
@@ -117,6 +118,7 @@ Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(functio
     Route::post('/workspace/billing/manage', [BillingController::class, 'manage'])->middleware('throttle:10,1');
     Route::get('/workspace/credits', [WorkspaceCreditController::class, 'show'])
         ->name('workspace.credits');
+    Route::get('/credits/activity', [CreditActivityController::class, 'show'])->name('credits.activity');
     Route::post('/workspace/credits/purchases', [CreditPurchaseController::class, 'store'])
         ->name('workspace.credits.purchases');
     Route::post('/workspace/credits/purchases/{reference}/verify', [CreditPurchaseController::class, 'verify'])
