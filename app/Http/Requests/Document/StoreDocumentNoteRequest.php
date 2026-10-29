@@ -19,6 +19,13 @@ class StoreDocumentNoteRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'appendReferences' => ['sometimes', 'array', 'max:50'],
+            'appendReferences.*' => ['required', 'array:intelligence_revision_id,reference_type,finding_id'],
+            'appendReferences.*.intelligence_revision_id' => ['required', 'uuid'],
+            'appendReferences.*.reference_type' => ['required', 'in:finding'],
+            'appendReferences.*.finding_id' => ['required', 'string', 'max:200'],
+            'removeReferenceIds' => ['sometimes', 'array', 'max:50'],
+            'removeReferenceIds.*' => ['required', 'uuid', 'distinct'],
             'body' => ['required_without:content', 'string', 'min:1', 'max:20000', 'not_regex:/^\s*$/u'],
             'content' => ['sometimes', 'array'],
             'contentSchemaVersion' => ['required_with:content', 'integer', 'in:1'],

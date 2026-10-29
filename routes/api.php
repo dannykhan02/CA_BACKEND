@@ -156,6 +156,7 @@ Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(functio
         ->middleware('throttle:60,1')->name('documents.sources.docx-window');
 
     Route::middleware(ProtectDocumentNotes::class)->group(function () {
+        Route::get('/documents/{document}/note-references', [DocumentNoteController::class, 'referenceCounts']);
         Route::get('/documents/{document}/notes', [DocumentNoteController::class, 'index'])
             ->name('documents.notes.index');
         Route::post('/documents/{document}/notes', [DocumentNoteController::class, 'store'])

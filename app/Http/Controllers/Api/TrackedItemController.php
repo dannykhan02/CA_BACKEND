@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\TrackedItem;
+use App\Services\DocumentIntelligenceService;
 use App\Services\IntelligenceAccess;
 use App\Services\TrackingService;
 use Carbon\Carbon;
@@ -15,11 +16,13 @@ class TrackedItemController extends Controller
 
     public function index(Request $r)
     {
-        $r->validate(['filter' => 'nullable|in:open,upcoming,overdue,completed,dismissed']);
+        $r->validate(['filter' => 'nullable|in:all,open,upcoming,overdue,completed,dismissed']);
         $q = TrackedItem::whereIn('document_id', $this->access->documents($r->user())->select('id'))
             ->where('workspace_id', $r->user()->current_workspace_id)->with('document:id,name');
         $filter = $r->query('filter', 'open');
-        $q->where('status', in_array($filter, ['completed', 'dismissed']) ? $filter : 'open');
+        if ($filter !== 'all') {
+            $q->where('status', in_array($filter, ['completed', 'dismissed']) ? $filter : 'open');
+        }
         if ($filter === 'upcoming') {
             $q->whereDate('due_date', '>=', today());
         }
@@ -31,7 +34,24 @@ class TrackedItemController extends Controller
             $q->where('document_id', $doc->id);
         }
 
-        return $q->orderBy('due_date')->orderBy('id')->paginate(30);
+        $currentKeys = [];
+        if ($r->filled('deadline_ids')) {
+            $ids = explode(',', $r->query('deadline_ids'));
+            abort_if(! $r->filled('document_id') || count($ids) > 25 || collect($ids)->contains(fn ($id) => ! ctype_digit($id)), 422);
+            $view = app(DocumentIntelligenceService::class)->publishedView($doc);
+            foreach ($view->deadlines()->whereIn('id', $ids)->get() as $deadline) {
+                $currentKeys[(string) $deadline->id] = $this->tracking->sourceKey($deadline);
+            }
+            $q->whereIn('source_key', array_values($currentKeys));
+        }
+        $page = $q->orderBy('due_date')->orderBy('id')->paginate(30);
+        if ($r->filled('deadline_ids')) {
+            $page->getCollection()->each(function ($item) use ($currentKeys) {
+                $item->setAttribute('current_deadline_ids', array_keys(array_filter($currentKeys, fn ($key) => $key === $item->source_key)));
+            });
+        }
+
+        return $page;
     }
 
     public function attention(Request $r)
