@@ -217,8 +217,9 @@ class ExtractDocumentTextJob implements ShouldQueue
         $ocrEligibleTypes = ['PDF', 'JPG', 'PNG'];
         $isOcrEligibleType = in_array($document->type, $ocrEligibleTypes, true);
 
-        // The plan decides before any rasterizing, OCR or AI call; a PDF with even one scanned page counts as needing OCR.
-        if ($isOcrEligibleType && $ocrEnabled && ($planBlock = app(PlanLimits::class)->ocrBlock($document)) !== null) {
+        // The plan decides before any rasterizing, OCR or AI call; a PDF with even one scanned page counts as needing OCR
+        // (unless the plan's max_ocr_pages covers it). No page manifest (pdfPageNumbers empty) means every page, so it never qualifies.
+        if ($isOcrEligibleType && $ocrEnabled && ($planBlock = app(PlanLimits::class)->ocrBlock($document, count($pdfPageNumbers))) !== null) {
             $recorder->skip($document, 'ocr_check', 'ocr not included in the plan');
             $this->markExtractionFailed($planBlock['required_plan'] !== null
                 ? sprintf('Scanned documents and images need the %s plan or higher.', ucfirst($planBlock['required_plan']))

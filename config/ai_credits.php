@@ -183,6 +183,9 @@ return [
                 'allowed_types' => (string) env($key.'_ALLOWED_TYPES', ''),
                 'allow_ocr' => $ocr === null || $ocr === '' ? true : filter_var($ocr, FILTER_VALIDATE_BOOLEAN),
                 'max_quote_tokens' => ConfigEnv::integer($key.'_MAX_QUOTE_TOKENS', env($key.'_MAX_QUOTE_TOKENS'), null, 1),
+                // Only read when allow_ocr is false: a PDF with at most this many scanned pages, and at least one page of native
+                // text, may still be read (those pages only). 0 = any page needing OCR is blocked, as before.
+                'max_ocr_pages' => (int) ConfigEnv::integer($key.'_MAX_OCR_PAGES', env($key.'_MAX_OCR_PAGES'), 0, 0),
             ];
         }
 
