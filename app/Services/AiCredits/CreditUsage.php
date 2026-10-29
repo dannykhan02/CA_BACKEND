@@ -71,9 +71,8 @@ class CreditUsage
                 array_keys($holds), $holds)),
             'totals' => ['charged' => $charged, 'returned' => $returned, 'held' => $charged + $returned, 'documents' => $documents->count(),
                 'unused_last_cycle' => $this->unusedLastCycle($sub)],
-            'series' => $range === '6m'
-                ? ['range' => '6m', 'months' => $this->months($workspaceId, $paid ? $sub : null)]
-                : ['range' => 'cycle', 'days' => $this->days($dailyRows, $cycleStart, $now)],
+            'series' => ['range' => $range === '6m' ? '6m' : 'cycle', 'months' => $this->months($workspaceId, $paid ? $sub : null)]
+                + ($range === '6m' ? [] : ['days' => $this->days($dailyRows, $cycleStart, $now)]),
             'top_documents' => $documents->sortByDesc('charged')->take(self::TOP_DOCUMENTS)->map(fn ($row, $id) => [
                 'document_id' => $id, 'document_name' => $info->get($id)?->name, 'type' => $info->get($id)?->type,
                 'charged' => $row['charged'], 'held' => $row['charged'] + $row['returned'], 'returned' => $row['returned']])->values()->all(),

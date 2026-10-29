@@ -160,7 +160,7 @@ class CreditsUsageEndpointTest extends TestCase
         $days = collect($data['series']['days'])->keyBy('date');
 
         $this->assertSame('cycle', $data['series']['range']);
-        $this->assertArrayNotHasKey('months', $data['series']);
+        $this->assertCount(6, $data['series']['months']);
         $this->assertCount(30, $days);
         $this->assertSame('2026-09-16', $data['series']['days'][0]['date']);
         $this->assertSame('2026-10-15', $data['series']['days'][29]['date']);
