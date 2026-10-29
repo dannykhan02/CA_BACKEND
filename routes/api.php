@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BillingController;
 use App\Http\Controllers\Api\CreditActivityController;
 use App\Http\Controllers\Api\CreditPurchaseController;
+use App\Http\Controllers\Api\CreditUsageController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DocumentApproveController;
 use App\Http\Controllers\Api\DocumentChartImageController;
@@ -119,6 +120,7 @@ Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(functio
     Route::get('/workspace/credits', [WorkspaceCreditController::class, 'show'])
         ->name('workspace.credits');
     Route::get('/credits/activity', [CreditActivityController::class, 'show'])->name('credits.activity');
+    Route::get('/credits/usage', [CreditUsageController::class, 'show'])->name('credits.usage');
     Route::post('/workspace/credits/purchases', [CreditPurchaseController::class, 'store'])
         ->name('workspace.credits.purchases');
     Route::post('/workspace/credits/purchases/{reference}/verify', [CreditPurchaseController::class, 'verify'])

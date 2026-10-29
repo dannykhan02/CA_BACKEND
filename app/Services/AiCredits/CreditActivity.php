@@ -64,7 +64,7 @@ class CreditActivity
     }
 
     /** Lifetime credits added to saved, by source. One grouped query; spending is never subtracted. */
-    private function sources(string $workspaceId): array
+    public function sources(string $workspaceId): array
     {
         $rows = DB::table('credit_ledger')->where('workspace_id', $workspaceId)->where('unit', CreditAccountant::SAVED)->where('direction', 'credit')
             ->where(fn ($q) => $q->where('reference', 'like', 'referral:%')->orWhere('reference', 'like', 'trial\_carryover:%')
