@@ -54,6 +54,33 @@ class QaGuard
             : app(CreditAccountant::class)->release('qa', $quote->resource_id, 'qa_failed', $userId);
     }
 
+    /**
+     * Today's question allowance for display, in credit mode only (null otherwise). Free workspaces see a count against their day limit;
+     * paid ones see the share of the daily provider-cost ceiling used, as a whole percent. No amounts of money leave this method.
+     *
+     * @return array{mode:string,used?:int,limit?:int,percent?:int,resets_at:string}|null
+     */
+    public function usageToday(string $workspaceId): ?array
+    {
+        $plan = QuoteService::enabled() ? $this->planOf($workspaceId) : null;
+        if ($plan === null) {
+            return null;
+        }
+        $resetsAt = now()->addDay()->startOfDay()->toIso8601String();
+        $today = DocumentAiRun::where('workspace_id', $workspaceId)->where('purpose', 'document_qa')->where('created_at', '>=', now()->startOfDay());
+        if ($plan === 'free') {
+            $dayLimit = (int) config('ai_credits.qa.max_per_workspace_per_day');
+
+            return ['mode' => 'count', 'used' => $today->count(), 'limit' => min($dayLimit, $this->planDayLimit($plan) ?? $dayLimit), 'resets_at' => $resetsAt];
+        }
+        $ceiling = $this->micros((float) config('ai_credits.qa.max_cost_usd_per_workspace_per_day'));
+        $ceiling = min($ceiling, $this->planCostCeiling($plan) ?? $ceiling);
+        $spent = $this->micros((float) $today->sum('estimated_cost_usd'));
+        $percent = $ceiling < 1 ? 100 : min(100, intdiv($spent * 100 + intdiv($ceiling, 2), $ceiling));
+
+        return ['mode' => 'percent', 'percent' => $percent, 'resets_at' => $resetsAt];
+    }
+
     private function assertDailySpendBelowCeiling(?string $workspaceId): void
     {
         // Integer micro-dollars: no float comparison decides a cap.
