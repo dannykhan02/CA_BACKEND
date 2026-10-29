@@ -175,7 +175,7 @@ class CreditsUsageEndpointTest extends TestCase
         $this->assertSame(1, $data['totals']['documents']);
     }
 
-    public function test_a_subscription_cycle_starts_at_the_period_start(): void
+    public function test_a_subscription_cycle_starts_at_the_current_usage_period_start(): void
     {
         $this->subscribe();
         $this->row('ai_debit:q1', CreditAccountant::MONTHLY, 'debit', 5, null, null, null, '2026-09-30 09:00:00');
@@ -190,6 +190,33 @@ class CreditsUsageEndpointTest extends TestCase
         $this->assertSame('monthly', $data['plan']['interval']);
         $this->assertSame('2026-10-01', Carbon::parse($data['plan']['cycle_start'])->toDateString());
         $this->assertSame('2026-11-01', Carbon::parse($data['plan']['resets_at'])->toDateString());
+    }
+
+    public function test_an_annual_subscription_cycles_on_the_monthly_usage_period(): void
+    {
+        $sub = Subscription::create(['workspace_id' => $this->workspace->id, 'user_id' => $this->user->id, 'plan_key' => 'starter', 'billing_interval' => 'annual',
+            'status' => 'active', 'current_period_start' => '2026-03-01 00:00:00', 'current_period_end' => '2027-03-01 00:00:00']);
+        $this->period($sub, '2026-09-01', '2026-10-01', 100, 80);
+        $this->period($sub, '2026-10-01', '2026-11-01', 100, 20);
+        // A usage period that has not started yet is never listed as a month.
+        $this->period($sub, '2026-11-01', '2026-12-01', 100, 0);
+        $this->row('ai_debit:early', CreditAccountant::MONTHLY, 'debit', 50, null, null, null, '2026-09-20 09:00:00');
+        $this->row('ai_debit:in', CreditAccountant::MONTHLY, 'debit', 6, null, null, null, '2026-10-02 09:00:00');
+
+        $data = $this->usage()->assertOk()->json('data');
+
+        $this->assertSame('annual', $data['plan']['interval']);
+        $this->assertSame('2026-10-01', Carbon::parse($data['plan']['cycle_start'])->toDateString());
+        $this->assertSame('2026-11-01', Carbon::parse($data['plan']['cycle_end'])->toDateString());
+        $this->assertSame('2026-11-01', Carbon::parse($data['plan']['resets_at'])->toDateString());
+        $this->assertLessThanOrEqual(31, count($data['series']['days']));
+        $this->assertSame('2026-10-01', $data['series']['days'][0]['date']);
+        $this->assertSame('2026-10-15', $data['series']['days'][count($data['series']['days']) - 1]['date']);
+        $this->assertSame(6, $data['totals']['charged']);
+        $this->assertSame(20, $data['totals']['unused_last_cycle']);
+        $this->assertSame(['2026-09-01', '2026-10-01'], array_map(fn ($m) => Carbon::parse($m['start'])->toDateString(), $data['series']['months']));
+        $this->assertSame(['2026-09-01', '2026-10-01'], array_map(fn ($m) => Carbon::parse($m['start'])->toDateString(),
+            $this->usage('?range=6m')->json('data.series.months')));
     }
 
     public function test_top_documents_are_limited_to_five_and_retries_of_one_document_are_grouped(): void

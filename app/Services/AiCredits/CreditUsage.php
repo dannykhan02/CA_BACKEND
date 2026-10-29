@@ -26,6 +26,8 @@ class CreditUsage
 
     private const FREE_CYCLE_DAYS = 30;
 
+    private const MAX_CYCLE_DAYS = 31;
+
     /** SQL fragments: a ledger row's contribution to "charged" and to "returned" (LIKE underscores escaped). */
     private const CHARGED = "case when direction = 'debit' and reference like 'ai\\_debit:%' then amount else 0 end";
 
@@ -43,13 +45,18 @@ class CreditUsage
         $sub = $ent->subscription($workspaceId);
         $paid = $ent->paid($sub);
         $now = now();
-        $cycleStart = $paid ? Carbon::instance($sub->current_period_start) : $now->copy()->subDays(self::FREE_CYCLE_DAYS - 1)->startOfDay();
+        // The cycle is the current usage period (the one balances() uses for monthly credits), never the subscription's own
+        // period, which spans a year on annual plans. Without one: the last 30 days.
+        $period = $paid ? $ent->period($sub) : null;
+        $cycleStart = $period ? Carbon::instance($period->period_start) : $now->copy()->subDays(self::FREE_CYCLE_DAYS - 1)->startOfDay();
+        // Queries and the daily series never reach back more than 31 dates, even for an unusually long period.
+        $windowStart = $cycleStart->copy()->max($now->copy()->subDays(self::MAX_CYCLE_DAYS - 1)->startOfDay());
         $balances = $accountant->balances($workspaceId);
 
-        $dailyRows = $this->dailyRows($workspaceId, $cycleStart);
+        $dailyRows = $this->dailyRows($workspaceId, $windowStart);
         $charged = (int) $dailyRows->sum('charged');
         $returned = (int) $dailyRows->sum('returned');
-        $documents = $this->documentRows($workspaceId, $cycleStart);
+        $documents = $this->documentRows($workspaceId, $windowStart);
         $info = $documents->isEmpty() ? collect() : Document::where('workspace_id', $workspaceId)->whereIn('id', $documents->keys()->all())->get(['id', 'name', 'type'])->keyBy('id');
 
         [$holds, $holdNames] = $this->openHolds($workspaceId);
@@ -58,8 +65,8 @@ class CreditUsage
         return [
             'enabled' => true,
             'plan' => ['key' => app(PlanLimits::class)->planFor($workspaceId), 'interval' => $paid ? $sub->billing_interval : null,
-                'cycle_start' => $cycleStart->toIso8601String(), 'cycle_end' => $paid ? $sub->current_period_end?->toIso8601String() : null,
-                'resets_at' => $paid ? $sub->current_period_end?->toIso8601String() : null],
+                'cycle_start' => $cycleStart->toIso8601String(), 'cycle_end' => $period?->period_end->toIso8601String(),
+                'resets_at' => $period?->period_end->toIso8601String()],
             'limits' => [
                 'monthly' => $balances['monthly'] === null ? null
                     : ['allowed' => $balances['monthly']['allowed'], 'used' => $balances['monthly']['used'], 'held' => $balances['monthly']['reserved']],
@@ -70,9 +77,9 @@ class CreditUsage
             'on_hold' => array_values(array_map(fn ($id, $credits) => ['document_id' => $id, 'document_name' => $holdNames->get($id), 'credits' => $credits],
                 array_keys($holds), $holds)),
             'totals' => ['charged' => $charged, 'returned' => $returned, 'held' => $charged + $returned, 'documents' => $documents->count(),
-                'unused_last_cycle' => $this->unusedLastCycle($sub)],
+                'unused_last_cycle' => $this->unusedLastCycle($sub, $period)],
             'series' => ['range' => $range === '6m' ? '6m' : 'cycle', 'months' => $this->months($workspaceId, $paid ? $sub : null)]
-                + ($range === '6m' ? [] : ['days' => $this->days($dailyRows, $cycleStart, $now)]),
+                + ($range === '6m' ? [] : ['days' => $this->days($dailyRows, $windowStart, $now)]),
             'top_documents' => $documents->sortByDesc('charged')->take(self::TOP_DOCUMENTS)->map(fn ($row, $id) => [
                 'document_id' => $id, 'document_name' => $info->get($id)?->name, 'type' => $info->get($id)?->type,
                 'charged' => $row['charged'], 'held' => $row['charged'] + $row['returned'], 'returned' => $row['returned']])->values()->all(),
@@ -145,12 +152,13 @@ class CreditUsage
     }
 
     /** The previous closed usage period's allowed minus used (floor 0), or null when there is none or it had no AI allowance. */
-    private function unusedLastCycle(?object $sub): ?int
+    private function unusedLastCycle(?object $sub, ?object $current): ?int
     {
         if (! $sub || ! $sub->exists) {
             return null;
         }
-        $previous = $sub->periods()->where('period_end', '<=', now())->orderByDesc('period_end')->first();
+        $previous = $sub->periods()->where('period_end', '<=', now())->when($current, fn ($q) => $q->whereKeyNot($current->id))
+            ->orderByDesc('period_end')->first();
 
         return $previous && $previous->ai_credits_allowed !== null ? max(0, (int) $previous->ai_credits_allowed - (int) $previous->ai_credits_used) : null;
     }
@@ -160,7 +168,7 @@ class CreditUsage
     {
         $now = now();
         if ($sub) {
-            return $sub->periods()->orderByDesc('period_start')->limit(self::MONTHS)->get()->reverse()->values()->map(fn ($period) => [
+            return $sub->periods()->where('period_start', '<=', $now)->orderByDesc('period_start')->limit(self::MONTHS)->get()->reverse()->values()->map(fn ($period) => [
                 'start' => $period->period_start->toIso8601String(), 'end' => $period->period_end->toIso8601String(),
                 'allowed' => $period->ai_credits_allowed === null ? null : (int) $period->ai_credits_allowed, 'used' => (int) $period->ai_credits_used,
                 'current' => $period->period_start->lte($now) && $period->period_end->gt($now)])->all();
