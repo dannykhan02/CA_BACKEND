@@ -76,6 +76,46 @@ class PlanAllowanceTest extends TestCase
         $this->assertSame([300], SubscriptionUsagePeriod::pluck('ai_credits_allowed')->unique()->values()->all());
     }
 
+    /** An automatic renewal: Paystack charges the stored subscription; the stored snapshot says $snapshot credits. */
+    private function renewWithSnapshot(int $snapshot): SubscriptionUsagePeriod
+    {
+        $user = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->createPersonalWorkspaceFor($user);
+        $start = now()->subMonth();
+        $allowance = ['documents' => 100, 'comparisons' => 30, 'storage_bytes' => 1073741824, 'ai_credits' => $snapshot];
+        $sub = Subscription::create(['workspace_id' => $workspace->id, 'user_id' => $user->id, 'plan_key' => 'professional', 'billing_interval' => 'monthly',
+            'status' => 'active', 'current_period_start' => $start, 'current_period_end' => now(), 'provider' => 'paystack', 'auto_renews' => true,
+            'provider_customer_code' => 'CUS_renew', 'provider_plan_code' => 'PLN_renew', 'provider_subscription_code' => 'SUB_renew',
+            'metadata' => ['last_paid_at' => $start->toIso8601String(), 'amount' => 350000, 'currency' => 'KES', 'renewal_requested' => 'automatic', 'allowance' => $allowance]]);
+        $sub->periods()->create(['period_start' => $start, 'period_end' => now(), 'documents_allowed' => 100, 'comparisons_allowed' => 30,
+            'storage_bytes' => 1073741824, 'ai_credits_allowed' => $snapshot]);
+        $raw = json_encode(['event' => 'charge.success', 'data' => ['id' => 777001, 'reference' => 'renewal-'.$snapshot, 'status' => 'success', 'amount' => 350000,
+            'currency' => 'KES', 'paid_at' => now()->toIso8601String(), 'plan' => 'PLN_renew', 'customer' => ['customer_code' => 'CUS_renew'],
+            'subscription' => ['subscription_code' => 'SUB_renew']]]);
+        $this->call('POST', '/api/paystack/webhook', [], [], [], ['CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json',
+            'HTTP_X_PAYSTACK_SIGNATURE' => hash_hmac('sha512', $raw, 'sk_test_allowance')], $raw)->assertOk();
+
+        $renewed = $sub->periods()->where('period_start', '>=', now()->subMinute())->get();
+        $this->assertCount(1, $renewed);
+        $this->assertSame($snapshot, $sub->fresh()->metadata['allowance']['ai_credits']);
+
+        return $renewed->first();
+    }
+
+    public function test_a_renewal_with_an_old_snapshot_gets_the_higher_current_allowance(): void
+    {
+        config(['ai_credits.plans.professional.monthly' => 300]);
+
+        $this->assertSame(300, $this->renewWithSnapshot(250)->ai_credits_allowed);
+    }
+
+    public function test_a_renewal_never_lowers_a_higher_snapshot(): void
+    {
+        config(['ai_credits.plans.professional.monthly' => 250]);
+
+        $this->assertSame(300, $this->renewWithSnapshot(300)->ai_credits_allowed);
+    }
+
     public function test_the_dry_run_changes_nothing(): void
     {
         $this->subscription('professional', [[now()->subDay(), now()->addMonth(), 250]]);
