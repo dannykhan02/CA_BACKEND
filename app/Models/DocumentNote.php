@@ -17,6 +17,16 @@ class DocumentNote extends Model
 
     protected $casts = ['version' => 'integer', 'content' => 'array'];
 
+    public function document()
+    {
+        return $this->belongsTo(Document::class);
+    }
+
+    public function references()
+    {
+        return $this->hasMany(DocumentNoteReference::class, 'note_id')->orderBy('created_at')->orderBy('id');
+    }
+
     public function citations()
     {
         return $this->hasMany(DocumentNoteCitation::class, 'note_id')->orderBy('created_at')->orderBy('id');

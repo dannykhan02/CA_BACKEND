@@ -8,6 +8,7 @@ use App\Http\Requests\Document\UpdateDocumentNoteRequest;
 use App\Http\Resources\DocumentNoteResource;
 use App\Models\Document;
 use App\Models\DocumentNote;
+use App\Models\DocumentNoteReference;
 use App\Services\AuditLogger;
 use App\Services\DocumentNoteAccess;
 use App\Services\RichNoteContent;
@@ -30,7 +31,11 @@ class DocumentNoteController extends Controller
         $perPage = min(max((int) $request->query('per_page', 20), 1), 100);
         $notes = DocumentNote::where('workspace_id', $doc->workspace_id)
             ->where('document_id', $doc->id)->where('user_id', $request->user()->id)
-            ->with('citations')->orderByDesc('created_at')->orderByDesc('id')->paginate($perPage);
+            ->when($request->filled('finding_id'), fn ($query) => $query->whereHas('references', fn ($refs) => $refs
+                ->where('finding_id', $request->query('finding_id'))->where('intelligence_revision_id', $request->query('revision'))))
+            ->with(['citations', 'references', 'document:id,published_intelligence_revision_id'])->orderByDesc('created_at')->orderByDesc('id')->paginate($perPage);
+
+        $this->setReferenceStates($notes->items(), $doc);
 
         return response()->json([
             'data' => DocumentNoteResource::collection($notes->items())->resolve($request),
@@ -54,6 +59,7 @@ class DocumentNoteController extends Controller
                 'document_id' => $doc->id, 'workspace_id' => $doc->workspace_id,
                 'user_id' => $request->user()->id, 'body' => $rich['body'] ?? $data['body'], 'version' => 1,
             ]);
+            $this->updateFindingReferences($doc, $note, $data);
             $references = $this->replaceCitations($note, $data['citations'] ?? []);
             if ($rich !== null) {
                 $note->content = $this->resolveReferences($data['content'], $rich['references'], $references);
@@ -66,7 +72,7 @@ class DocumentNoteController extends Controller
             return $note;
         });
 
-        return response()->json(['data' => (new DocumentNoteResource($note->load('citations')))->resolve($request)], 201);
+        return response()->json(['data' => $this->noteResource($note, $request)], 201);
     }
 
     public function update(UpdateDocumentNoteRequest $request, string $document, string $note): JsonResponse
@@ -77,6 +83,7 @@ class DocumentNoteController extends Controller
             $current = $this->access->note($request->user(), $doc, $note, true);
             $this->assertVersion($request, $current, (int) $data['version']);
             $this->assertRichAvailable($data);
+            $this->updateFindingReferences($doc, $current, $data);
             $rich = isset($data['content']) ? $this->validateRich($data) : null;
             if (array_key_exists('content', $data) && $data['content'] === null && ! isset($data['body'])) {
                 $this->fail(422, 'NOTE_INVALID_BODY', 'A body is required to replace rich content with plain text.');
@@ -147,7 +154,7 @@ class DocumentNoteController extends Controller
             return $current;
         });
 
-        return response()->json(['data' => (new DocumentNoteResource($updated->load('citations')))->resolve($request)]);
+        return response()->json(['data' => $this->noteResource($updated, $request)]);
     }
 
     public function destroy(Request $request, string $document, string $note): JsonResponse
@@ -170,11 +177,104 @@ class DocumentNoteController extends Controller
         return response()->json(['data' => ['id' => $deleted->id, 'deleted' => true]]);
     }
 
+    private function noteResource(DocumentNote $note, Request $request): array
+    {
+        $note->load(['citations', 'references', 'document']);
+        $this->setReferenceStates([$note], $note->document);
+
+        return (new DocumentNoteResource($note))->resolve($request);
+    }
+
+    /** Resolve availability in bounded batches, not one query per note attachment. */
+    private function setReferenceStates(array $notes, Document $document): void
+    {
+        $refs = collect($notes)->flatMap(fn ($note) => $note->references)
+            ->where('intelligence_revision_id', $document->published_intelligence_revision_id);
+        $ids = $refs->pluck('finding_id')->unique()->values()->all();
+        $available = [];
+        if ($ids !== []) {
+            foreach (['risk' => 'document_risks', 'deadline' => 'document_deadlines'] as $kind => $table) {
+                $keys = array_values(array_filter(array_map(fn ($id) => str_starts_with($id, $kind.':') ? substr($id, strlen($kind) + 1) : null, $ids), fn ($id) => $id !== null && ctype_digit($id)));
+                if ($keys !== []) {
+                    foreach (DB::table($table)->where('document_id', $document->id)->where('intelligence_revision_id', $document->published_intelligence_revision_id)->whereIn('id', $keys)->pluck('id') as $id) {
+                        $available[$kind.':'.$id] = true;
+                    }
+                }
+            }
+            $evidenceIds = array_values(array_filter($ids, fn ($id) => ! preg_match('/^(risk|deadline):[1-9][0-9]*$/D', $id)));
+            $pipeline = DB::table('document_intelligence_revisions')->where('id', $document->published_intelligence_revision_id)->where('document_id', $document->id)->value('pipeline_key');
+            if ($pipeline !== null && $evidenceIds !== []) {
+                foreach (DB::table('document_evidence')->where('document_id', $document->id)->where('pipeline_key', $pipeline)->whereIn('source_id', $evidenceIds)->pluck('source_id') as $id) {
+                    $available[$id] = true;
+                }
+            }
+        }
+        foreach ($notes as $note) {
+            $note->setAttribute('reference_states', $note->references->mapWithKeys(fn ($ref) => [$ref->id => $ref->intelligence_revision_id !== $document->published_intelligence_revision_id ? 'earlier_revision'
+                    : (isset($available[$ref->finding_id]) ? 'current' : 'unavailable'),
+            ])->all());
+        }
+    }
+
+    public function referenceCounts(Request $request, string $document): JsonResponse
+    {
+        $doc = $this->access->document($request->user(), $document);
+        $counts = DocumentNoteReference::query()
+            ->where('document_id', $doc->id)->where('intelligence_revision_id', $request->query('revision'))
+            ->whereIn('note_id', DocumentNote::where('document_id', $doc->id)->where('user_id', $request->user()->id)->select('id'))
+            ->selectRaw('finding_id, count(distinct note_id) as total')->groupBy('finding_id')->pluck('total', 'finding_id');
+
+        return response()->json(['data' => (object) $counts->all()]);
+    }
+
+    private function updateFindingReferences(Document $doc, DocumentNote $note, array $data): void
+    {
+        $removed = $data['removeReferenceIds'] ?? [];
+        if ($note->references()->whereIn('id', $removed)->count() !== count($removed)) {
+            $this->fail(422, 'INVALID_REFERENCE', 'Every removed reference must belong to this note.');
+        }
+        $note->references()->whereIn('id', $removed)->delete();
+        foreach ($data['appendReferences'] ?? [] as $reference) {
+            $revision = DB::table('document_intelligence_revisions')->where('id', $reference['intelligence_revision_id'])
+                ->where('id', $doc->published_intelligence_revision_id)->where('document_id', $doc->id)
+                ->where('workspace_id', $doc->workspace_id)->where('state', 'published')->first();
+            if (! $revision) {
+                $this->fail(422, 'REFERENCE_REVISION_STALE', 'The finding revision is no longer current. Your note is retained.');
+            }
+            $id = $reference['finding_id'];
+            $finding = null;
+            if (preg_match('/^(risk|deadline):([1-9][0-9]*)$/D', $id, $parts)) {
+                $table = $parts[1] === 'risk' ? 'document_risks' : 'document_deadlines';
+                $finding = DB::table($table)->where('id', $parts[2])->where('document_id', $doc->id)
+                    ->where('workspace_id', $doc->workspace_id)->where('intelligence_revision_id', $revision->id)->first();
+            } else {
+                $evidence = DB::table('document_evidence')->where('document_id', $doc->id)->where('workspace_id', $doc->workspace_id)
+                    ->where('pipeline_key', $revision->pipeline_key)->where('source_id', $id)->first();
+                if ($evidence) {
+                    $record = json_decode($evidence->data, true) ?: [];
+                    $finding = (object) ['title' => $record['label'] ?? $id, 'evidence' => $record['quote'] ?? null];
+                }
+            }
+            if (! $finding) {
+                $this->fail(422, 'REFERENCE_UNAVAILABLE', 'This finding is unavailable in the selected document revision.');
+            }
+            $note->references()->firstOrCreate([
+                'document_id' => $doc->id, 'intelligence_revision_id' => $revision->id,
+                'reference_type' => 'finding', 'finding_id' => $id,
+            ], ['label' => mb_substr($finding->title, 0, 200), 'source_id' => $id,
+                'quote_snapshot' => isset($finding->evidence) ? mb_substr($finding->evidence, 0, 1000) : null]);
+        }
+        if ($note->references()->count() > 50) {
+            $this->fail(422, 'TOO_MANY_REFERENCES', 'A note may have at most 50 finding references.');
+        }
+        $note->unsetRelation('references');
+    }
+
     private function assertVersion(Request $request, DocumentNote $note, int $version): void
     {
         if ($note->version !== $version) {
             $this->fail(409, 'NOTE_VERSION_CONFLICT', 'Note changed since it was loaded.', [
-                'current' => (new DocumentNoteResource($note->load('citations')))->resolve($request),
+                'current' => $this->noteResource($note, $request),
             ]);
         }
     }
