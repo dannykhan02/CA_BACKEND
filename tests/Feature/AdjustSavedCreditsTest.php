@@ -132,4 +132,104 @@ class AdjustSavedCreditsTest extends TestCase
         $this->assertStringNotContainsString('MISMATCH', $output);
         $this->assertMatchesRegularExpression('/\|\s*ok\s*\|/', $output);
     }
+
+    private function legacyArgs(Workspace $workspace, string $units = '-5', array $extra = []): array
+    {
+        return ['workspace' => $workspace->id, '--legacy-units' => $units, '--reason' => 'legacy correction', '--run-id' => 'legacy-1'] + $extra;
+    }
+
+    private function legacyUnits(Workspace $workspace): int
+    {
+        return (int) $workspace->credits()->value('documents_remaining');
+    }
+
+    private function legacyRows(Workspace $workspace)
+    {
+        return DB::table('credit_ledger')->where('workspace_id', $workspace->id)->where('reference', 'like', 'saved\_adjust\_legacy:%')->get();
+    }
+
+    public function test_the_legacy_dry_run_changes_nothing(): void
+    {
+        $workspace = $this->workspace();
+        $workspace->credits()->update(['documents_remaining' => 5]);
+
+        $this->artisan('credits:adjust-saved', $this->legacyArgs($workspace))
+            ->expectsOutputToContain('legacy document units 5, delta -5, new balance 0')->expectsOutputToContain('Nothing was changed.')->assertExitCode(0);
+
+        $this->assertSame(5, $this->legacyUnits($workspace));
+        $this->assertCount(0, $this->legacyRows($workspace));
+    }
+
+    public function test_legacy_apply_takes_5_from_5_to_0_with_one_ledger_row_and_leaves_ai_credits_alone(): void
+    {
+        $workspace = $this->workspace(40);
+        $workspace->credits()->update(['documents_remaining' => 5]);
+
+        $this->artisan('credits:adjust-saved', $this->legacyArgs($workspace, '-5', ['--apply' => true]))->assertExitCode(0);
+
+        $this->assertSame(0, $this->legacyUnits($workspace));
+        $this->assertSame(40, $this->saved($workspace));
+        $rows = $this->legacyRows($workspace);
+        $this->assertCount(1, $rows);
+        $this->assertSame('saved_adjust_legacy:'.$workspace->id.':legacy-1', $rows[0]->reference);
+        $this->assertSame('saved_document', $rows[0]->unit);
+        $this->assertSame('debit', $rows[0]->direction);
+        $this->assertSame(5, (int) $rows[0]->amount);
+        $this->assertSame(0, (int) $rows[0]->resulting_balance);
+        $this->assertCount(0, $this->adjustRows($workspace));
+    }
+
+    public function test_the_same_legacy_run_id_twice_changes_once(): void
+    {
+        $workspace = $this->workspace();
+        $workspace->credits()->update(['documents_remaining' => 8]);
+        $this->artisan('credits:adjust-saved', $this->legacyArgs($workspace, '-3', ['--apply' => true]))->assertExitCode(0);
+
+        $this->artisan('credits:adjust-saved', $this->legacyArgs($workspace, '-3', ['--apply' => true]))
+            ->expectsOutputToContain('already applied')->assertExitCode(0);
+
+        $this->assertSame(5, $this->legacyUnits($workspace));
+        $this->assertCount(1, $this->legacyRows($workspace));
+    }
+
+    public function test_legacy_units_below_zero_and_zero_are_refused(): void
+    {
+        $workspace = $this->workspace();
+        $workspace->credits()->update(['documents_remaining' => 4]);
+
+        $this->artisan('credits:adjust-saved', $this->legacyArgs($workspace, '-5', ['--apply' => true]))->assertExitCode(1);
+        $this->artisan('credits:adjust-saved', $this->legacyArgs($workspace, '0', ['--apply' => true]))->assertExitCode(1);
+
+        $this->assertSame(4, $this->legacyUnits($workspace));
+        $this->assertCount(0, $this->legacyRows($workspace));
+    }
+
+    public function test_both_or_neither_of_the_delta_and_legacy_units_are_refused(): void
+    {
+        $workspace = $this->workspace();
+        $workspace->credits()->update(['documents_remaining' => 5]);
+
+        $this->artisan('credits:adjust-saved', $this->legacyArgs($workspace, '-1', ['--apply' => true, 'delta' => '-1']))->assertExitCode(1);
+        $this->artisan('credits:adjust-saved', ['workspace' => $workspace->id, '--reason' => 'x', '--run-id' => 'none-1', '--apply' => true])->assertExitCode(1);
+
+        $this->assertSame(5, $this->legacyUnits($workspace));
+        $this->assertSame(150, $this->saved($workspace));
+        $this->assertCount(0, DB::table('credit_ledger')->where('reference', 'like', 'saved\_adjust%')->get());
+    }
+
+    public function test_the_status_check_stays_ok_after_a_legacy_adjustment(): void
+    {
+        $workspace = $this->workspace(150);
+        $workspace->credits()->update(['documents_remaining' => 5]);
+        $ledger = app(CreditLedger::class);
+        $ledger->record($workspace->id, 'hold-legacy-reserve', CreditAccountant::SAVED, 'reserve', 10, 'test');
+        $ledger->record($workspace->id, 'hold-legacy-release', CreditAccountant::SAVED, 'release', 10, 'test');
+        $this->artisan('credits:adjust-saved', $this->legacyArgs($workspace, '-5', ['--apply' => true]))->assertExitCode(0);
+
+        Artisan::call('docintel:ai-credits-status', ['--workspace' => $workspace->id]);
+        $output = Artisan::output();
+
+        $this->assertStringNotContainsString('MISMATCH', $output);
+        $this->assertMatchesRegularExpression('/\|\s*ok\s*\|/', $output);
+    }
 }
