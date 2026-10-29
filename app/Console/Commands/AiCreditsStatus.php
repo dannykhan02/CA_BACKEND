@@ -67,6 +67,14 @@ class AiCreditsStatus extends Command
             $rows[] = [$plan, $or($limits['allowed_types'], 'all types'), $yn($limits['allow_ocr']), $or($limits['max_quote_tokens'], 'no limit')];
         }
         $this->table(['plan', 'allowed types', 'OCR', 'max quote tokens'], $rows);
+        foreach (config('ai_credits.plans') as $plan => $credits) {
+            $this->line(sprintf('Plan credits per month: %s monthly %s, annual %s.', $plan, $credits['monthly'], $credits['annual']));
+        }
+        $this->line('Scanned pages allowed in a PDF when OCR is off (max_ocr_pages): '.implode(', ', array_map(
+            fn ($plan, $limits) => $plan.' '.($limits['max_ocr_pages'] ?? 0), array_keys(config('ai_credits.plan_limits')), config('ai_credits.plan_limits'))).'.');
+        foreach (config('ai_credits.qa.plans', []) as $plan => $qa) {
+            $this->line(sprintf('Q&A %s plan: %s per day, USD %s per day.', $plan, $qa['max_per_day'], $qa['max_cost_usd_per_day']));
+        }
         $this->line(sprintf('Q&A: customer price %s credits, %s per workspace per day, USD %s per day; free plan %s per day, USD %s per day.',
             config('ai_credits.qa.credits'), config('ai_credits.qa.max_per_workspace_per_day'), config('ai_credits.qa.max_cost_usd_per_workspace_per_day'),
             config('ai_credits.qa.free_max_per_workspace_per_day'), config('ai_credits.qa.free_max_cost_usd_per_day')));
@@ -92,7 +100,13 @@ class AiCreditsStatus extends Command
         }
         // Plan limits are read with a computed name (AI_CREDITS_<PLAN>_<SETTING>), which the pattern above cannot see.
         foreach (array_keys(config('ai_credits.plan_limits', [])) as $plan) {
-            foreach (['ALLOWED_TYPES', 'ALLOW_OCR', 'MAX_QUOTE_TOKENS'] as $setting) {
+            foreach (['ALLOWED_TYPES', 'ALLOW_OCR', 'MAX_QUOTE_TOKENS', 'MAX_OCR_PAGES'] as $setting) {
+                $read['AI_CREDITS_'.strtoupper($plan).'_'.$setting] = true;
+            }
+        }
+        // Per-plan Q&A limits are read with a computed name as well (AI_CREDITS_<PLAN>_QA_PER_DAY / _QA_MAX_COST_USD).
+        foreach (array_keys(config('ai_credits.qa.plans', [])) as $plan) {
+            foreach (['QA_PER_DAY', 'QA_MAX_COST_USD'] as $setting) {
                 $read['AI_CREDITS_'.strtoupper($plan).'_'.$setting] = true;
             }
         }
