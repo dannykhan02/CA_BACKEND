@@ -80,9 +80,10 @@ class CreditsUsageEndpointTest extends TestCase
             'storage_bytes' => 1073741824, 'ai_credits_allowed' => $allowed, 'ai_credits_used' => $used]);
     }
 
-    private function qaRun(float $cost, string $at = self::NOW, string $purpose = 'document_qa'): void
+    private function qaRun(float $cost, string $at = self::NOW, string $purpose = 'document_qa', ?Document $document = null): void
     {
-        DocumentAiRun::create(['workspace_id' => $this->workspace->id, 'purpose' => $purpose, 'provider' => 'anthropic', 'model' => 'claude-sonnet-5-5',
+        $document ??= $this->document('Asked.pdf');
+        DocumentAiRun::create(['workspace_id' => $this->workspace->id, 'document_id' => $document->id, 'purpose' => $purpose, 'provider' => 'anthropic', 'model' => 'claude-sonnet-5-5',
             'estimated_cost_usd' => $cost, 'status' => 'success', 'request_attempt' => 1, 'created_at' => Carbon::parse($at)]);
     }
 
