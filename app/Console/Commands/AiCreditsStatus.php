@@ -24,6 +24,9 @@ class AiCreditsStatus extends Command
     /** Trial carry-over and expiry rows are balance moves outside the hold lifecycle (their references start with trial_). */
     private const NOT_HOLD_LIFECYCLE = 'trial\_%';
 
+    /** Operator adjustments (credits:adjust-saved) move the saved balance outside the hold lifecycle too. */
+    private const NOT_ADJUSTMENT = 'saved\_adjust:%';
+
     public function handle(CreditAccountant $accountant): int
     {
         $fromEnv = $_ENV['DOCINTEL_AI_CREDITS_ENABLED'] ?? $_SERVER['DOCINTEL_AI_CREDITS_ENABLED'] ?? (getenv('DOCINTEL_AI_CREDITS_ENABLED') ?: null);
@@ -119,7 +122,7 @@ class AiCreditsStatus extends Command
 
     private function workspaces(CreditAccountant $accountant): void
     {
-        $ledger = DB::table('credit_ledger')->whereIn('unit', self::AI_UNITS)->whereIn('direction', ['reserve', 'debit', 'release'])->where('reference', 'not like', self::NOT_HOLD_LIFECYCLE);
+        $ledger = DB::table('credit_ledger')->whereIn('unit', self::AI_UNITS)->whereIn('direction', ['reserve', 'debit', 'release'])->where('reference', 'not like', self::NOT_HOLD_LIFECYCLE)->where('reference', 'not like', self::NOT_ADJUSTMENT);
         if ($this->option('workspace')) {
             $ledger->where('workspace_id', $this->option('workspace'));
         }
@@ -133,7 +136,7 @@ class AiCreditsStatus extends Command
         $rows = [];
         foreach ($ids as $id) {
             $sum = fn (string $direction) => (int) DB::table('credit_ledger')->where('workspace_id', $id)->whereIn('unit', self::AI_UNITS)->where('direction', $direction)
-                ->where('reference', 'not like', self::NOT_HOLD_LIFECYCLE)->sum('amount');
+                ->where('reference', 'not like', self::NOT_HOLD_LIFECYCLE)->where('reference', 'not like', self::NOT_ADJUSTMENT)->sum('amount');
             $absorbed = (int) DB::table('credit_ledger')->where('workspace_id', $id)->where('direction', 'info')->where('reference', 'like', 'ai\_absorbed:%')->sum('amount');
             [$reserved, $debited, $released] = [$sum('reserve'), $sum('debit'), $sum('release')];
             $open = (int) DB::table('billing_operations')->where('workspace_id', $id)->where('status', 'reserved')->whereNotNull('amount_reserved')->sum('amount_reserved');
