@@ -42,7 +42,8 @@ class FreeOcrPagesTest extends TestCase
         return $workspace;
     }
 
-    private function pdf(Workspace $workspace, ?int $pages): Document
+    /** $pages = 0 means the page count is unknown (documents.pages is NOT NULL). */
+    private function pdf(Workspace $workspace, int $pages): Document
     {
         return Document::create(['name' => 'Mixed.pdf', 'type' => 'PDF', 'size_kb' => 1, 'status' => 'Processing', 'classification' => 'Public',
             'year' => 2026, 'workspace_id' => $workspace->id, 'uploaded_by' => $this->user->id, 'file_hash' => hash('sha256', uniqid('', true)),
@@ -105,7 +106,7 @@ class FreeOcrPagesTest extends TestCase
         $this->limits(2);
         $workspace = $this->workspace();
 
-        self::assertSame('ocr_required', app(PlanLimits::class)->ocrBlock($this->pdf($workspace, null)->fresh(), 1)['reason']);
+        self::assertSame('ocr_required', app(PlanLimits::class)->ocrBlock($this->pdf($workspace, 0)->fresh(), 1)['reason']);
         self::assertSame('ocr_required', app(PlanLimits::class)->ocrBlock($this->pdf($workspace, 8)->fresh(), null)['reason']);
         self::assertSame('ocr_required', app(PlanLimits::class)->ocrBlock($this->pdf($workspace, 8)->fresh(), 0)['reason']);
     }

@@ -29,7 +29,9 @@ class CreditEconomicsReportTest extends TestCase
         $plans = collect($this->report()['plans'])->keyBy(fn ($p) => $p['plan'].'.'.$p['interval']);
         $this->assertEqualsWithDelta(73.7, $plans['starter.monthly']['margin_at_cap'], 0.2);
         $this->assertTrue($plans['starter.monthly']['meets_target_at_cap']);
-        $this->assertEqualsWithDelta(72.0, $plans['professional.monthly']['margin_at_cap'], 0.2);
+        // Professional 300 credits (decision 2026-10-29): below the 70% target only at the per-credit cap; measured cost per charged credit is lower.
+        $this->assertEqualsWithDelta(67.1, $plans['professional.monthly']['margin_at_cap'], 0.2);
+        $this->assertFalse($plans['professional.monthly']['meets_target_at_cap']);
         // Annual plans at the same monthly credits fall under the 70% target (the audit's finding).
         $this->assertEqualsWithDelta(69.0, $plans['starter.annual']['margin_at_cap'], 0.3);
         $this->assertFalse($plans['starter.annual']['meets_target_at_cap']);
