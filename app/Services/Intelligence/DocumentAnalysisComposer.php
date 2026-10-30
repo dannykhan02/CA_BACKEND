@@ -46,15 +46,15 @@ class DocumentAnalysisComposer
 
     /** @return array<string,mixed> */
     public function compose(Document $document, ?\DateTimeImmutable $asOf = null,
-        ?string $visualPageFamily = null, int $visualPageOffset = 0): array
+        ?string $visualPageFamily = null, int $visualPageOffset = 0, ?array $publishedMetrics = null, ?Collection $publishedEvidence = null): array
     {
         $asOf ??= new \DateTimeImmutable;
         $document->loadMissing(['risks', 'deadlines', 'intelligenceSummary']);
         $summary = $document->intelligenceSummary;
-        $evidence = $this->evidence($document);
+        $evidence = $publishedEvidence?->where('kind', '!=', 'normal_source') ?? $this->evidence($document);
         $cited = $this->findings->citedSourceIds($summary);
 
-        $collected = $this->metrics->collect($document);
+        $collected = $publishedMetrics ?? $this->metrics->collect($document);
         $pdfTables = config('document_intelligence.pdf_table_structure') && $document->type === 'PDF';
         $sourceCurrent = true;
         if ($pdfTables) {

@@ -1,0 +1,59 @@
+{
+    "tier": "A",
+    "before": {
+        "deadlines": 1,
+        "entities": 1,
+        "risks": 1
+    },
+    "after": {
+        "entities": 1,
+        "kpis": 1,
+        "obligations": 1,
+        "risks": 1
+    },
+    "studio": {
+        "version": "published-intelligence-m3-v1",
+        "revision_id": "01a18e78-16e1-7096-acf4-f85b2e246fa1",
+        "counts": {
+            "kpis": 1,
+            "deadlines": 0,
+            "obligations": 1,
+            "risks": 1,
+            "entities": 1,
+            "summaries": 0,
+            "other_findings": 0
+        },
+        "unique_sources": 4,
+        "observations_with_validated_spans": 4,
+        "limitation_counts": {
+            "invalid_numeric_value": 1
+        },
+        "excluded": {
+            "missing_revision_bound_source_target": 0
+        },
+        "timeline_records": 1,
+        "eligible_kpis": 0,
+        "limitations": [
+            "Obligations share deadline source identities. Counts by category are disjoint; Timeline overlaps obligations.",
+            "Narratives and other prose are context, not verified substantive comparisons."
+        ]
+    },
+    "reviewed_comparisons_before": {
+        "supported_change": 1,
+        "insufficient_evidence": 1
+    },
+    "reviewed_comparisons_after": {
+        "potential_relationship": 1,
+        "insufficient_evidence": 1,
+        "supported_change": 2
+    },
+    "supported_categories_before": [
+        "deadlines"
+    ],
+    "supported_categories_after": [
+        "obligations",
+        "risks"
+    ],
+    "missing_observations_recovered": 1,
+    "obligation_reclassified_without_duplicate": 1
+}

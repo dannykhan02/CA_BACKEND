@@ -33,7 +33,7 @@ class ComparisonM2B1PersistenceTest extends TestCase
         $service->shouldReceive('snapshot')->andReturnUsing(fn ($doc) => $facts[$doc->id]);
         $comparison = $service->create($user, $a->id, $b->id);
         $before = $comparison->metadata;
-        $this->assertSame('structured-m2b1-v1', $before['algorithm_version']);
+        $this->assertSame(DocumentComparisonService::ALGORITHM, $before['algorithm_version']);
         $this->assertSame('explicit-financial-period-m2b1-v1', $before['interpretation_rules']);
         (new CompareDocumentsJob($comparison->id, $comparison->dispatch_token))->handle($service);
         $comparison->refresh();

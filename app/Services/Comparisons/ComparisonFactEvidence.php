@@ -5,6 +5,7 @@ namespace App\Services\Comparisons;
 use App\Models\Document;
 use App\Models\DocumentEvidence;
 use App\Services\Extraction\StructuredExtractionStore;
+use Illuminate\Support\Collection;
 
 /** Projection of existing pipeline evidence; does not extract new claims. */
 class ComparisonFactEvidence
@@ -19,7 +20,7 @@ class ComparisonFactEvidence
         return $consolidated && $standalone ? 'ambiguous' : ($consolidated ? 'consolidated' : ($standalone ? 'standalone' : null));
     }
 
-    public function read(Document $document): array
+    public function read(Document $document, ?Collection $publishedEvidence = null): array
     {
         $key = $document->ai_pipeline['key'] ?? null;
         if ($key === null) {
@@ -28,10 +29,14 @@ class ComparisonFactEvidence
         $out = [];
         $structured = $document->type === 'PDF' ? app(StructuredExtractionStore::class)->active($document) : null;
         $nodes = $structured === null ? [] : array_column($structured->nodes, null, 'id');
-        foreach (DocumentEvidence::where('workspace_id', $document->workspace_id)->where('document_id', $document->id)
-            ->where('pipeline_key', $key)->whereNotNull('source_id')->orderBy('id')->get() as $row) {
+        $rows = $publishedEvidence ?? DocumentEvidence::where('workspace_id', $document->workspace_id)->where('document_id', $document->id)
+            ->where('pipeline_key', $key)->orderBy('id')->get();
+        foreach ($rows as $row) {
+            $data = $row->data ?? [];
+            $sourceCurrent = (! isset($data['source_revision']) || $data['source_revision'] === hash('sha256', (string) $document->extracted_text))
+                && (! isset($data['source_file_hash']) || $data['source_file_hash'] === $document->file_hash);
             $spans = [];
-            foreach ($row->sources ?? [] as $source) {
+            foreach ($sourceCurrent ? ($row->sources ?? []) : [] as $source) {
                 $quote = $source['quote'] ?? null;
                 if (! is_string($quote) || trim($quote) === '') {
                     continue;
@@ -49,7 +54,7 @@ class ComparisonFactEvidence
             $cell = $nodes[$data['source_representation']['cell_id'] ?? ''] ?? null;
             $unit = $nodes[$cell['meta']['unit_heading_id'] ?? ''] ?? null;
             $entity = $nodes[$cell['meta']['entity_heading_id'] ?? ''] ?? null;
-            if (str_starts_with($row->source_id, 'pdf-cell:') && $cell !== null && $unit !== null && $entity !== null
+            if ($sourceCurrent && str_starts_with($row->source_id ?? '', 'pdf-cell:') && $cell !== null && $unit !== null && $entity !== null
                 && ($data['source_file_hash'] ?? null) === $document->file_hash
                 && ($cell['text'] ?? null) === ($data['value'] ?? null)
                 && ($unit['page'] ?? null) === ($entity['page'] ?? null)
@@ -65,7 +70,7 @@ class ComparisonFactEvidence
                     $data['comparison_statement'] = 'consolidated_income_statement';
                 }
             }
-            $out[$row->source_id][] = ['id' => $row->id, 'data' => $data, 'spans' => $spans];
+            $out[$row->source_id ?: 'evidence:'.$row->id][] = ['id' => $row->id, 'kind' => $row->kind, 'source_current' => $sourceCurrent, 'data' => $data, 'spans' => $spans];
         }
 
         return $out;
@@ -73,20 +78,23 @@ class ComparisonFactEvidence
 
     public function context(string $kind, array $evidence): array
     {
+        return $kind === 'deadlines' ? $this->supportedFields($evidence, ['subject' => 'responsible_party', 'reference' => 'obligation_reference']) : [];
+    }
+
+    public function supportedFields(array $evidence, array $fields): array
+    {
         $out = [];
-        if ($kind === 'deadlines') {
-            foreach (['subject' => 'responsible_party', 'reference' => 'obligation_reference'] as $field => $target) {
-                $values = [];
-                foreach ($evidence as $entry) {
-                    $value = trim((string) ($entry['data'][$field] ?? ''));
-                    if ($value !== '' && count(array_filter($entry['spans'], fn ($s) => str_contains($s['quote'], $value))) > 0) {
-                        $values[$value] = true;
-                    }
+        foreach ($fields as $field => $target) {
+            $values = [];
+            foreach ($evidence as $entry) {
+                $value = trim((string) ($entry['data'][$field] ?? ''));
+                if ($value !== '' && count(array_filter($entry['spans'], fn ($s) => str_contains($s['quote'], $value))) > 0) {
+                    $values[$value] = true;
                 }
-                $out[$target] = count($values) === 1 ? array_key_first($values) : null;
-                if (count($values) > 1) {
-                    $out['ambiguous_source_context'] = true;
-                }
+            }
+            $out[$target] = count($values) === 1 ? array_key_first($values) : null;
+            if (count($values) > 1) {
+                $out['ambiguous_source_context'] = true;
             }
         }
 

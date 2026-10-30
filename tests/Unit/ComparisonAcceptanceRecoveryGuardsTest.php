@@ -47,7 +47,7 @@ class ComparisonAcceptanceRecoveryGuardsTest extends TestCase
         require_once base_path('tests/Fixtures/ComparisonIdentity/run.php');
         $identity = evaluateComparisonIdentity();
         $this->assertSame(0, $identity['counts']['false_identity_matches']);
-        file_put_contents(base_path('tests/Fixtures/ComparisonRecovery/current-frozen-regression.json'), json_encode([
+        file_put_contents(base_path('tests/Fixtures/ComparisonM3/recovery-frozen-regression.json'), json_encode([
             'tier' => 1, 'fixture_sha256' => hash_file('sha256', $path), 'counts' => $counts,
             'results' => $results, 'identity_counts' => $identity['counts'],
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)."\n");

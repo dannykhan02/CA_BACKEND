@@ -29,6 +29,7 @@ class DocumentComparisonResource extends JsonResource
             'identity_usage' => $this->metadata['identity_usage'] ?? [],
             'identity_context_version' => $this->metadata['identity_context']['version'] ?? null,
             'identity_snapshot' => isset($this->metadata['identity_context']) ? app(ComparisonIdentityService::class)->digest($this->metadata['identity_context']) : null,
+            'published_coverage' => $this->metadata['published_coverage'] ?? null,
             'source_revisions' => $revisions, 'revision_status' => $revisionStatus,
         ];
     }

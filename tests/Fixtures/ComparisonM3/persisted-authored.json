@@ -1,0 +1,24 @@
+{
+    "tier": "A",
+    "note": "Authored structured records; no genuine completed-analysis acceptance claim.",
+    "candidate_count": 3,
+    "applied_identity_count": 2,
+    "unreviewed_outcomes": {
+        "potential_relationship": 3,
+        "insufficient_evidence": 1
+    },
+    "reviewed_outcomes": {
+        "potential_relationship": 1,
+        "insufficient_evidence": 1,
+        "supported_change": 2
+    },
+    "supported_categories": [
+        "obligations",
+        "risks"
+    ],
+    "supported_grounded_sides": 4,
+    "expected_supported_grounded_sides": 4,
+    "duplicate_delivery_immutable": true,
+    "history_immutable": true,
+    "both_source_authorization": true
+}

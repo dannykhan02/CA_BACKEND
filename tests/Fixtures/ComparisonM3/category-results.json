@@ -1,0 +1,2140 @@
+{
+    "tier": "A",
+    "limits": "Authored inputs and conditional explicit review, not extraction accuracy or a completed-analysis product pass.",
+    "counts": {
+        "cases": 16,
+        "correct": 16,
+        "false_substantive": 0,
+        "missed_supported": 0,
+        "unreviewed_identity_applied": 0
+    },
+    "by_category": {
+        "risks": {
+            "potential_relationship": 2,
+            "equivalent": 1,
+            "supported_change": 1,
+            "not_comparable": 2,
+            "insufficient_evidence": 4
+        },
+        "obligations": {
+            "potential_relationship": 2,
+            "equivalent": 1,
+            "not_comparable": 2,
+            "insufficient_evidence": 1
+        }
+    },
+    "results": [
+        {
+            "name": "equal unreviewed risks are not silently equivalent",
+            "category": "risks",
+            "state": "candidate",
+            "expected": "potential_relationship",
+            "actual": "potential_relationship",
+            "rows": [
+                {
+                    "category": "risks",
+                    "label": "Supply risk",
+                    "outcome": "potential_relationship",
+                    "reasons": [
+                        "risk_identity_requires_review"
+                    ],
+                    "identity_basis": "unresolved_correspondence",
+                    "method": "structured",
+                    "description": "Potential relationship requiring review: risk_identity_requires_review. No substantive difference is established.",
+                    "before": [
+                        {
+                            "category": "risks",
+                            "label": "Supply risk",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "relationship_candidate": {
+                                    "state": "candidate",
+                                    "key": "a960db020705ae3dff56777dccf186ec5b7f647dcc69326f7225fb9495c64d54",
+                                    "basis": "risk_subject_or_title_candidate"
+                                }
+                            },
+                            "value": {
+                                "description": "Supply exposure",
+                                "severity": "high"
+                            },
+                            "source": {
+                                "document_id": "a",
+                                "source_id": "risks:1",
+                                "intelligence_revision_id": "revision-a",
+                                "evidence_ids": [
+                                    "evidence-a"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Plant A has supply exposure.",
+                                        "start_offset": 0,
+                                        "end_offset": 28
+                                    }
+                                ],
+                                "evidence": "Plant A has supply exposure."
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "risks",
+                            "label": "Supply risk",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "relationship_candidate": {
+                                    "state": "candidate",
+                                    "key": "a960db020705ae3dff56777dccf186ec5b7f647dcc69326f7225fb9495c64d54",
+                                    "basis": "risk_subject_or_title_candidate"
+                                }
+                            },
+                            "value": {
+                                "description": "Supply exposure",
+                                "severity": "high"
+                            },
+                            "source": {
+                                "document_id": "b",
+                                "source_id": "risks:1",
+                                "intelligence_revision_id": "revision-b",
+                                "evidence_ids": [
+                                    "evidence-b"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Plant A has supply exposure.",
+                                        "start_offset": 0,
+                                        "end_offset": 28
+                                    }
+                                ],
+                                "evidence": "Plant A has supply exposure."
+                            }
+                        }
+                    ],
+                    "ruleset": "structured-m3-v1",
+                    "compatibility": {
+                        "decision": "unresolved",
+                        "reason": "risk_identity_requires_review"
+                    },
+                    "matching_basis": {
+                        "state": "candidate",
+                        "key": "a960db020705ae3dff56777dccf186ec5b7f647dcc69326f7225fb9495c64d54",
+                        "basis": "risk_subject_or_title_candidate"
+                    },
+                    "compared_fields": [
+                        "extracted_severity",
+                        "description"
+                    ],
+                    "limitations": []
+                }
+            ]
+        },
+        {
+            "name": "reviewed same risk and classification",
+            "category": "risks",
+            "state": "confirmed",
+            "expected": "equivalent",
+            "actual": "equivalent",
+            "rows": [
+                {
+                    "category": "risks",
+                    "label": "Supply risk",
+                    "outcome": "equivalent",
+                    "reasons": [
+                        "same_corresponding_risk_observation"
+                    ],
+                    "identity_basis": {
+                        "state": "confirmed",
+                        "basis": "risk_subject_or_title_candidate",
+                        "key": "a960db020705ae3dff56777dccf186ec5b7f647dcc69326f7225fb9495c64d54",
+                        "decision": {
+                            "state": "confirmed",
+                            "version": 1,
+                            "id": "authored-review"
+                        }
+                    },
+                    "method": "structured",
+                    "description": "Corresponding compatible observations have the same compared fields; no broader equivalence is established.",
+                    "before": [
+                        {
+                            "category": "risks",
+                            "label": "Supply risk",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "identity": {
+                                    "state": "confirmed",
+                                    "basis": "risk_subject_or_title_candidate",
+                                    "key": "a960db020705ae3dff56777dccf186ec5b7f647dcc69326f7225fb9495c64d54",
+                                    "decision": {
+                                        "state": "confirmed",
+                                        "version": 1,
+                                        "id": "authored-review"
+                                    }
+                                }
+                            },
+                            "value": {
+                                "description": "Supply exposure",
+                                "severity": "high"
+                            },
+                            "source": {
+                                "document_id": "a",
+                                "source_id": "risks:1",
+                                "intelligence_revision_id": "revision-a",
+                                "evidence_ids": [
+                                    "evidence-a"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Plant A has supply exposure.",
+                                        "start_offset": 0,
+                                        "end_offset": 28
+                                    }
+                                ],
+                                "evidence": "Plant A has supply exposure."
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "risks",
+                            "label": "Supply risk",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "identity": {
+                                    "state": "confirmed",
+                                    "basis": "risk_subject_or_title_candidate",
+                                    "key": "a960db020705ae3dff56777dccf186ec5b7f647dcc69326f7225fb9495c64d54",
+                                    "decision": {
+                                        "state": "confirmed",
+                                        "version": 1,
+                                        "id": "authored-review"
+                                    }
+                                }
+                            },
+                            "value": {
+                                "description": "Supply exposure",
+                                "severity": "high"
+                            },
+                            "source": {
+                                "document_id": "b",
+                                "source_id": "risks:1",
+                                "intelligence_revision_id": "revision-b",
+                                "evidence_ids": [
+                                    "evidence-b"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Plant A has supply exposure.",
+                                        "start_offset": 0,
+                                        "end_offset": 28
+                                    }
+                                ],
+                                "evidence": "Plant A has supply exposure."
+                            }
+                        }
+                    ],
+                    "ruleset": "structured-m3-v1",
+                    "compatibility": {
+                        "decision": "compatible",
+                        "reason": "same_corresponding_risk_observation"
+                    },
+                    "matching_basis": {
+                        "state": "confirmed",
+                        "basis": "risk_subject_or_title_candidate",
+                        "key": "a960db020705ae3dff56777dccf186ec5b7f647dcc69326f7225fb9495c64d54",
+                        "decision": {
+                            "state": "confirmed",
+                            "version": 1,
+                            "id": "authored-review"
+                        }
+                    },
+                    "compared_fields": [
+                        "extracted_severity",
+                        "description"
+                    ],
+                    "limitations": []
+                }
+            ]
+        },
+        {
+            "name": "reviewed extracted severity differs",
+            "category": "risks",
+            "state": "confirmed",
+            "expected": "supported_change",
+            "actual": "supported_change",
+            "rows": [
+                {
+                    "category": "risks",
+                    "label": "Supply risk",
+                    "outcome": "supported_change",
+                    "reasons": [
+                        "extracted_risk_classification_difference"
+                    ],
+                    "identity_basis": {
+                        "state": "confirmed",
+                        "basis": "risk_subject_or_title_candidate",
+                        "key": "4b742609a80730c996d030a6a5a6af4c084cf44ed3159abff795333f97ced358",
+                        "decision": {
+                            "state": "confirmed",
+                            "version": 1,
+                            "id": "authored-review"
+                        }
+                    },
+                    "method": "structured",
+                    "description": "The extracted risk classification differs between corresponding observations; a real-world risk change is not established.",
+                    "before": [
+                        {
+                            "category": "risks",
+                            "label": "Supply risk",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "identity": {
+                                    "state": "confirmed",
+                                    "basis": "risk_subject_or_title_candidate",
+                                    "key": "4b742609a80730c996d030a6a5a6af4c084cf44ed3159abff795333f97ced358",
+                                    "decision": {
+                                        "state": "confirmed",
+                                        "version": 1,
+                                        "id": "authored-review"
+                                    }
+                                }
+                            },
+                            "value": {
+                                "description": "Supply exposure",
+                                "severity": "high"
+                            },
+                            "source": {
+                                "document_id": "a",
+                                "source_id": "risks:1",
+                                "intelligence_revision_id": "revision-a",
+                                "evidence_ids": [
+                                    "evidence-a"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Plant A has supply exposure.",
+                                        "start_offset": 0,
+                                        "end_offset": 28
+                                    }
+                                ],
+                                "evidence": "Plant A has supply exposure."
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "risks",
+                            "label": "Supply risk",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "identity": {
+                                    "state": "confirmed",
+                                    "basis": "risk_subject_or_title_candidate",
+                                    "key": "4b742609a80730c996d030a6a5a6af4c084cf44ed3159abff795333f97ced358",
+                                    "decision": {
+                                        "state": "confirmed",
+                                        "version": 1,
+                                        "id": "authored-review"
+                                    }
+                                }
+                            },
+                            "value": {
+                                "description": "Supply exposure",
+                                "severity": "low"
+                            },
+                            "source": {
+                                "document_id": "b",
+                                "source_id": "risks:1",
+                                "intelligence_revision_id": "revision-b",
+                                "evidence_ids": [
+                                    "evidence-b"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Plant A has supply exposure.",
+                                        "start_offset": 0,
+                                        "end_offset": 28
+                                    }
+                                ],
+                                "evidence": "Plant A has supply exposure."
+                            }
+                        }
+                    ],
+                    "ruleset": "structured-m3-v1",
+                    "compatibility": {
+                        "decision": "compatible",
+                        "reason": "extracted_risk_classification_difference"
+                    },
+                    "matching_basis": {
+                        "state": "confirmed",
+                        "basis": "risk_subject_or_title_candidate",
+                        "key": "4b742609a80730c996d030a6a5a6af4c084cf44ed3159abff795333f97ced358",
+                        "decision": {
+                            "state": "confirmed",
+                            "version": 1,
+                            "id": "authored-review"
+                        }
+                    },
+                    "compared_fields": [
+                        "extracted_severity",
+                        "description"
+                    ],
+                    "limitations": []
+                }
+            ]
+        },
+        {
+            "name": "unknown risk severity scale",
+            "category": "risks",
+            "state": "confirmed",
+            "expected": "not_comparable",
+            "actual": "not_comparable",
+            "rows": [
+                {
+                    "category": "risks",
+                    "label": "Supply risk",
+                    "outcome": "not_comparable",
+                    "reasons": [
+                        "risk_severity_scale_unknown"
+                    ],
+                    "identity_basis": {
+                        "state": "confirmed",
+                        "basis": "risk_subject_or_title_candidate",
+                        "key": "26615787fa76875f02dc38f1bc9e32b2a5db065ddba9f087a5733bb73d4eead3",
+                        "decision": {
+                            "state": "confirmed",
+                            "version": 1,
+                            "id": "authored-review"
+                        }
+                    },
+                    "method": "structured",
+                    "description": "Not comparable: risk_severity_scale_unknown.",
+                    "before": [
+                        {
+                            "category": "risks",
+                            "label": "Supply risk",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "identity": {
+                                    "state": "confirmed",
+                                    "basis": "risk_subject_or_title_candidate",
+                                    "key": "26615787fa76875f02dc38f1bc9e32b2a5db065ddba9f087a5733bb73d4eead3",
+                                    "decision": {
+                                        "state": "confirmed",
+                                        "version": 1,
+                                        "id": "authored-review"
+                                    }
+                                }
+                            },
+                            "value": {
+                                "description": "Supply exposure",
+                                "severity": "high"
+                            },
+                            "source": {
+                                "document_id": "a",
+                                "source_id": "risks:1",
+                                "intelligence_revision_id": "revision-a",
+                                "evidence_ids": [
+                                    "evidence-a"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Plant A has supply exposure.",
+                                        "start_offset": 0,
+                                        "end_offset": 28
+                                    }
+                                ],
+                                "evidence": "Plant A has supply exposure."
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "risks",
+                            "label": "Supply risk",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "identity": {
+                                    "state": "confirmed",
+                                    "basis": "risk_subject_or_title_candidate",
+                                    "key": "26615787fa76875f02dc38f1bc9e32b2a5db065ddba9f087a5733bb73d4eead3",
+                                    "decision": {
+                                        "state": "confirmed",
+                                        "version": 1,
+                                        "id": "authored-review"
+                                    }
+                                }
+                            },
+                            "value": {
+                                "description": "Supply exposure",
+                                "severity": "7/10"
+                            },
+                            "source": {
+                                "document_id": "b",
+                                "source_id": "risks:1",
+                                "intelligence_revision_id": "revision-b",
+                                "evidence_ids": [
+                                    "evidence-b"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Plant A has supply exposure.",
+                                        "start_offset": 0,
+                                        "end_offset": 28
+                                    }
+                                ],
+                                "evidence": "Plant A has supply exposure."
+                            }
+                        }
+                    ],
+                    "ruleset": "structured-m3-v1",
+                    "compatibility": {
+                        "decision": "incompatible",
+                        "reason": "risk_severity_scale_unknown"
+                    },
+                    "matching_basis": {
+                        "state": "confirmed",
+                        "basis": "risk_subject_or_title_candidate",
+                        "key": "26615787fa76875f02dc38f1bc9e32b2a5db065ddba9f087a5733bb73d4eead3",
+                        "decision": {
+                            "state": "confirmed",
+                            "version": 1,
+                            "id": "authored-review"
+                        }
+                    },
+                    "compared_fields": [
+                        "extracted_severity",
+                        "description"
+                    ],
+                    "limitations": []
+                }
+            ]
+        },
+        {
+            "name": "different risk subjects",
+            "category": "risks",
+            "state": "confirmed",
+            "expected": "not_comparable",
+            "actual": "not_comparable",
+            "rows": [
+                {
+                    "category": "risks",
+                    "label": "Supply risk",
+                    "outcome": "not_comparable",
+                    "reasons": [
+                        "risk_subject_mismatch"
+                    ],
+                    "identity_basis": {
+                        "state": "confirmed",
+                        "basis": "risk_subject_or_title_candidate",
+                        "key": "c1d8ab59caa56cc4d01f15e317ba4140f4d5fab350bf42a1ab477815ea814bf8",
+                        "decision": {
+                            "state": "confirmed",
+                            "version": 1,
+                            "id": "authored-review"
+                        }
+                    },
+                    "method": "structured",
+                    "description": "Not comparable: risk_subject_mismatch.",
+                    "before": [
+                        {
+                            "category": "risks",
+                            "label": "Supply risk",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "identity": {
+                                    "state": "confirmed",
+                                    "basis": "risk_subject_or_title_candidate",
+                                    "key": "c1d8ab59caa56cc4d01f15e317ba4140f4d5fab350bf42a1ab477815ea814bf8",
+                                    "decision": {
+                                        "state": "confirmed",
+                                        "version": 1,
+                                        "id": "authored-review"
+                                    }
+                                }
+                            },
+                            "value": {
+                                "description": "Supply exposure",
+                                "severity": "high"
+                            },
+                            "source": {
+                                "document_id": "a",
+                                "source_id": "risks:1",
+                                "intelligence_revision_id": "revision-a",
+                                "evidence_ids": [
+                                    "evidence-a"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Plant A has supply exposure.",
+                                        "start_offset": 0,
+                                        "end_offset": 28
+                                    }
+                                ],
+                                "evidence": "Plant A has supply exposure."
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "risks",
+                            "label": "Supply risk",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant B",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "identity": {
+                                    "state": "confirmed",
+                                    "basis": "risk_subject_or_title_candidate",
+                                    "key": "c1d8ab59caa56cc4d01f15e317ba4140f4d5fab350bf42a1ab477815ea814bf8",
+                                    "decision": {
+                                        "state": "confirmed",
+                                        "version": 1,
+                                        "id": "authored-review"
+                                    }
+                                }
+                            },
+                            "value": {
+                                "description": "Supply exposure",
+                                "severity": "high"
+                            },
+                            "source": {
+                                "document_id": "b",
+                                "source_id": "risks:1",
+                                "intelligence_revision_id": "revision-b",
+                                "evidence_ids": [
+                                    "evidence-b"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Plant A has supply exposure.",
+                                        "start_offset": 0,
+                                        "end_offset": 28
+                                    }
+                                ],
+                                "evidence": "Plant A has supply exposure."
+                            }
+                        }
+                    ],
+                    "ruleset": "structured-m3-v1",
+                    "compatibility": {
+                        "decision": "incompatible",
+                        "reason": "risk_subject_mismatch"
+                    },
+                    "matching_basis": {
+                        "state": "confirmed",
+                        "basis": "risk_subject_or_title_candidate",
+                        "key": "c1d8ab59caa56cc4d01f15e317ba4140f4d5fab350bf42a1ab477815ea814bf8",
+                        "decision": {
+                            "state": "confirmed",
+                            "version": 1,
+                            "id": "authored-review"
+                        }
+                    },
+                    "compared_fields": [
+                        "extracted_severity",
+                        "description"
+                    ],
+                    "limitations": []
+                }
+            ]
+        },
+        {
+            "name": "same risk different narrative is interpretation",
+            "category": "risks",
+            "state": "confirmed",
+            "expected": "potential_relationship",
+            "actual": "potential_relationship",
+            "rows": [
+                {
+                    "category": "risks",
+                    "label": "Supply risk",
+                    "outcome": "potential_relationship",
+                    "reasons": [
+                        "risk_interpretation_differs"
+                    ],
+                    "identity_basis": {
+                        "state": "confirmed",
+                        "basis": "risk_subject_or_title_candidate",
+                        "key": "8439e49de438be07b88d204b1decaf31dccfac4a75c4d15f835c445d21f92761",
+                        "decision": {
+                            "state": "confirmed",
+                            "version": 1,
+                            "id": "authored-review"
+                        }
+                    },
+                    "method": "structured",
+                    "description": "Potential relationship requiring review: risk_interpretation_differs. No substantive difference is established.",
+                    "before": [
+                        {
+                            "category": "risks",
+                            "label": "Supply risk",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "identity": {
+                                    "state": "confirmed",
+                                    "basis": "risk_subject_or_title_candidate",
+                                    "key": "8439e49de438be07b88d204b1decaf31dccfac4a75c4d15f835c445d21f92761",
+                                    "decision": {
+                                        "state": "confirmed",
+                                        "version": 1,
+                                        "id": "authored-review"
+                                    }
+                                }
+                            },
+                            "value": {
+                                "description": "Supply exposure",
+                                "severity": "high"
+                            },
+                            "source": {
+                                "document_id": "a",
+                                "source_id": "risks:1",
+                                "intelligence_revision_id": "revision-a",
+                                "evidence_ids": [
+                                    "evidence-a"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Plant A has supply exposure.",
+                                        "start_offset": 0,
+                                        "end_offset": 28
+                                    }
+                                ],
+                                "evidence": "Plant A has supply exposure."
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "risks",
+                            "label": "Supply risk",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "identity": {
+                                    "state": "confirmed",
+                                    "basis": "risk_subject_or_title_candidate",
+                                    "key": "8439e49de438be07b88d204b1decaf31dccfac4a75c4d15f835c445d21f92761",
+                                    "decision": {
+                                        "state": "confirmed",
+                                        "version": 1,
+                                        "id": "authored-review"
+                                    }
+                                }
+                            },
+                            "value": {
+                                "description": "New paraphrase",
+                                "severity": "high"
+                            },
+                            "source": {
+                                "document_id": "b",
+                                "source_id": "risks:1",
+                                "intelligence_revision_id": "revision-b",
+                                "evidence_ids": [
+                                    "evidence-b"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Plant A has supply exposure.",
+                                        "start_offset": 0,
+                                        "end_offset": 28
+                                    }
+                                ],
+                                "evidence": "Plant A has supply exposure."
+                            }
+                        }
+                    ],
+                    "ruleset": "structured-m3-v1",
+                    "compatibility": {
+                        "decision": "unresolved",
+                        "reason": "risk_interpretation_differs"
+                    },
+                    "matching_basis": {
+                        "state": "confirmed",
+                        "basis": "risk_subject_or_title_candidate",
+                        "key": "8439e49de438be07b88d204b1decaf31dccfac4a75c4d15f835c445d21f92761",
+                        "decision": {
+                            "state": "confirmed",
+                            "version": 1,
+                            "id": "authored-review"
+                        }
+                    },
+                    "compared_fields": [
+                        "extracted_severity",
+                        "description"
+                    ],
+                    "limitations": []
+                }
+            ]
+        },
+        {
+            "name": "missing risk evidence",
+            "category": "risks",
+            "state": "confirmed",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence",
+            "rows": [
+                {
+                    "category": "risks",
+                    "label": "Supply risk",
+                    "outcome": "insufficient_evidence",
+                    "reasons": [
+                        "missing_risk_evidence"
+                    ],
+                    "identity_basis": {
+                        "state": "confirmed",
+                        "basis": "risk_subject_or_title_candidate",
+                        "key": "5af0afcde177b8dd95ae8a93d7b08dc37d76e9c937f00e8015a3a08514bd69a6",
+                        "decision": {
+                            "state": "confirmed",
+                            "version": 1,
+                            "id": "authored-review"
+                        }
+                    },
+                    "method": "structured",
+                    "description": "Insufficient evidence for a substantive comparison: missing_risk_evidence.",
+                    "before": [
+                        {
+                            "category": "risks",
+                            "label": "Supply risk",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "identity": {
+                                    "state": "confirmed",
+                                    "basis": "risk_subject_or_title_candidate",
+                                    "key": "5af0afcde177b8dd95ae8a93d7b08dc37d76e9c937f00e8015a3a08514bd69a6",
+                                    "decision": {
+                                        "state": "confirmed",
+                                        "version": 1,
+                                        "id": "authored-review"
+                                    }
+                                }
+                            },
+                            "value": {
+                                "description": "Supply exposure",
+                                "severity": "high"
+                            },
+                            "source": {
+                                "document_id": "a",
+                                "source_id": "risks:1",
+                                "intelligence_revision_id": "revision-a",
+                                "evidence_ids": [
+                                    "evidence-a"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Plant A has supply exposure.",
+                                        "start_offset": 0,
+                                        "end_offset": 28
+                                    }
+                                ],
+                                "evidence": "Plant A has supply exposure."
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "risks",
+                            "label": "Supply risk",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "identity": {
+                                    "state": "confirmed",
+                                    "basis": "risk_subject_or_title_candidate",
+                                    "key": "5af0afcde177b8dd95ae8a93d7b08dc37d76e9c937f00e8015a3a08514bd69a6",
+                                    "decision": {
+                                        "state": "confirmed",
+                                        "version": 1,
+                                        "id": "authored-review"
+                                    }
+                                }
+                            },
+                            "value": {
+                                "description": "Supply exposure",
+                                "severity": "high"
+                            },
+                            "source": {
+                                "document_id": "b",
+                                "source_id": "risks:1",
+                                "intelligence_revision_id": "revision-b",
+                                "evidence_ids": [
+                                    "evidence-b"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Plant A has supply exposure.",
+                                        "start_offset": 0,
+                                        "end_offset": 28
+                                    }
+                                ],
+                                "evidence": ""
+                            }
+                        }
+                    ],
+                    "ruleset": "structured-m3-v1",
+                    "compatibility": {
+                        "decision": "unresolved",
+                        "reason": "missing_risk_evidence"
+                    },
+                    "matching_basis": {
+                        "state": "confirmed",
+                        "basis": "risk_subject_or_title_candidate",
+                        "key": "5af0afcde177b8dd95ae8a93d7b08dc37d76e9c937f00e8015a3a08514bd69a6",
+                        "decision": {
+                            "state": "confirmed",
+                            "version": 1,
+                            "id": "authored-review"
+                        }
+                    },
+                    "compared_fields": [
+                        "extracted_severity",
+                        "description"
+                    ],
+                    "limitations": []
+                }
+            ]
+        },
+        {
+            "name": "risk missing subject",
+            "category": "risks",
+            "state": "confirmed",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence",
+            "rows": [
+                {
+                    "category": "risks",
+                    "label": "Supply risk",
+                    "outcome": "insufficient_evidence",
+                    "reasons": [
+                        "risk_subject_unknown"
+                    ],
+                    "identity_basis": {
+                        "state": "confirmed",
+                        "basis": "risk_subject_or_title_candidate",
+                        "key": "2f486f4b60d98f23e885802fba84e3e63e0bbb4afb31cdc577657c7ab8d2e681",
+                        "decision": {
+                            "state": "confirmed",
+                            "version": 1,
+                            "id": "authored-review"
+                        }
+                    },
+                    "method": "structured",
+                    "description": "Insufficient evidence for a substantive comparison: risk_subject_unknown.",
+                    "before": [
+                        {
+                            "category": "risks",
+                            "label": "Supply risk",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "identity": {
+                                    "state": "confirmed",
+                                    "basis": "risk_subject_or_title_candidate",
+                                    "key": "2f486f4b60d98f23e885802fba84e3e63e0bbb4afb31cdc577657c7ab8d2e681",
+                                    "decision": {
+                                        "state": "confirmed",
+                                        "version": 1,
+                                        "id": "authored-review"
+                                    }
+                                }
+                            },
+                            "value": {
+                                "description": "Supply exposure",
+                                "severity": "high"
+                            },
+                            "source": {
+                                "document_id": "a",
+                                "source_id": "risks:1",
+                                "intelligence_revision_id": "revision-a",
+                                "evidence_ids": [
+                                    "evidence-a"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Plant A has supply exposure.",
+                                        "start_offset": 0,
+                                        "end_offset": 28
+                                    }
+                                ],
+                                "evidence": "Plant A has supply exposure."
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "risks",
+                            "label": "Supply risk",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": null,
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "identity": {
+                                    "state": "confirmed",
+                                    "basis": "risk_subject_or_title_candidate",
+                                    "key": "2f486f4b60d98f23e885802fba84e3e63e0bbb4afb31cdc577657c7ab8d2e681",
+                                    "decision": {
+                                        "state": "confirmed",
+                                        "version": 1,
+                                        "id": "authored-review"
+                                    }
+                                }
+                            },
+                            "value": {
+                                "description": "Supply exposure",
+                                "severity": "high"
+                            },
+                            "source": {
+                                "document_id": "b",
+                                "source_id": "risks:1",
+                                "intelligence_revision_id": "revision-b",
+                                "evidence_ids": [
+                                    "evidence-b"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Plant A has supply exposure.",
+                                        "start_offset": 0,
+                                        "end_offset": 28
+                                    }
+                                ],
+                                "evidence": "Plant A has supply exposure."
+                            }
+                        }
+                    ],
+                    "ruleset": "structured-m3-v1",
+                    "compatibility": {
+                        "decision": "unresolved",
+                        "reason": "risk_subject_unknown"
+                    },
+                    "matching_basis": {
+                        "state": "confirmed",
+                        "basis": "risk_subject_or_title_candidate",
+                        "key": "2f486f4b60d98f23e885802fba84e3e63e0bbb4afb31cdc577657c7ab8d2e681",
+                        "decision": {
+                            "state": "confirmed",
+                            "version": 1,
+                            "id": "authored-review"
+                        }
+                    },
+                    "compared_fields": [
+                        "extracted_severity",
+                        "description"
+                    ],
+                    "limitations": []
+                }
+            ]
+        },
+        {
+            "name": "risk rejected correspondence",
+            "category": "risks",
+            "state": "rejected",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence",
+            "rows": [
+                {
+                    "category": "risks",
+                    "label": "Supply risk",
+                    "outcome": "insufficient_evidence",
+                    "reasons": [
+                        "identity_unresolved"
+                    ],
+                    "identity_basis": "unresolved_correspondence",
+                    "method": "structured",
+                    "description": "Insufficient evidence for a substantive comparison: identity_unresolved.",
+                    "before": [
+                        {
+                            "category": "risks",
+                            "label": "Supply risk",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "identity_blocked": "rejected",
+                                "owner": null
+                            },
+                            "value": {
+                                "description": "Supply exposure",
+                                "severity": "high"
+                            },
+                            "source": {
+                                "document_id": "a",
+                                "source_id": "risks:1",
+                                "intelligence_revision_id": "revision-a",
+                                "evidence_ids": [
+                                    "evidence-a"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Plant A has supply exposure.",
+                                        "start_offset": 0,
+                                        "end_offset": 28
+                                    }
+                                ],
+                                "evidence": "Plant A has supply exposure."
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "risks",
+                            "label": "Supply risk",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "identity_blocked": "rejected",
+                                "owner": null
+                            },
+                            "value": {
+                                "description": "Supply exposure",
+                                "severity": "high"
+                            },
+                            "source": {
+                                "document_id": "b",
+                                "source_id": "risks:1",
+                                "intelligence_revision_id": "revision-b",
+                                "evidence_ids": [
+                                    "evidence-b"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Plant A has supply exposure.",
+                                        "start_offset": 0,
+                                        "end_offset": 28
+                                    }
+                                ],
+                                "evidence": "Plant A has supply exposure."
+                            }
+                        }
+                    ],
+                    "ruleset": "structured-m3-v1",
+                    "compatibility": {
+                        "decision": "unresolved",
+                        "reason": "identity_unresolved"
+                    },
+                    "matching_basis": {
+                        "state": "unknown",
+                        "basis": "identity_unresolved"
+                    },
+                    "compared_fields": [
+                        "extracted_severity",
+                        "description"
+                    ],
+                    "limitations": []
+                }
+            ]
+        },
+        {
+            "name": "risk revoked correspondence",
+            "category": "risks",
+            "state": "revoked",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence",
+            "rows": [
+                {
+                    "category": "risks",
+                    "label": "Supply risk",
+                    "outcome": "insufficient_evidence",
+                    "reasons": [
+                        "identity_unresolved"
+                    ],
+                    "identity_basis": "unresolved_correspondence",
+                    "method": "structured",
+                    "description": "Insufficient evidence for a substantive comparison: identity_unresolved.",
+                    "before": [
+                        {
+                            "category": "risks",
+                            "label": "Supply risk",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "identity_blocked": "revoked",
+                                "owner": null
+                            },
+                            "value": {
+                                "description": "Supply exposure",
+                                "severity": "high"
+                            },
+                            "source": {
+                                "document_id": "a",
+                                "source_id": "risks:1",
+                                "intelligence_revision_id": "revision-a",
+                                "evidence_ids": [
+                                    "evidence-a"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Plant A has supply exposure.",
+                                        "start_offset": 0,
+                                        "end_offset": 28
+                                    }
+                                ],
+                                "evidence": "Plant A has supply exposure."
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "risks",
+                            "label": "Supply risk",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "identity_blocked": "revoked",
+                                "owner": null
+                            },
+                            "value": {
+                                "description": "Supply exposure",
+                                "severity": "high"
+                            },
+                            "source": {
+                                "document_id": "b",
+                                "source_id": "risks:1",
+                                "intelligence_revision_id": "revision-b",
+                                "evidence_ids": [
+                                    "evidence-b"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Plant A has supply exposure.",
+                                        "start_offset": 0,
+                                        "end_offset": 28
+                                    }
+                                ],
+                                "evidence": "Plant A has supply exposure."
+                            }
+                        }
+                    ],
+                    "ruleset": "structured-m3-v1",
+                    "compatibility": {
+                        "decision": "unresolved",
+                        "reason": "identity_unresolved"
+                    },
+                    "matching_basis": {
+                        "state": "unknown",
+                        "basis": "identity_unresolved"
+                    },
+                    "compared_fields": [
+                        "extracted_severity",
+                        "description"
+                    ],
+                    "limitations": []
+                }
+            ]
+        },
+        {
+            "name": "obligation unreviewed",
+            "category": "obligations",
+            "state": "candidate",
+            "expected": "potential_relationship",
+            "actual": "potential_relationship",
+            "rows": [
+                {
+                    "category": "obligations",
+                    "label": "Payment",
+                    "outcome": "potential_relationship",
+                    "reasons": [
+                        "provision_correspondence_requires_review"
+                    ],
+                    "identity_basis": "unresolved_correspondence",
+                    "method": "structured",
+                    "description": "Potential relationship requiring review: provision_correspondence_requires_review. No substantive difference is established.",
+                    "before": [
+                        {
+                            "category": "obligations",
+                            "label": "Payment",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "relationship_candidate": {
+                                    "state": "candidate",
+                                    "key": "5b9ca80bde660348aa42cf47530e68f499abf35459933e1efbc9b3d739bb0c78",
+                                    "basis": "title_or_reference_candidate"
+                                }
+                            },
+                            "value": {
+                                "description": "Buyer payment",
+                                "date_type": "relative",
+                                "relative_text": "within 45 days of invoice receipt",
+                                "due_date": null
+                            },
+                            "source": {
+                                "document_id": "a",
+                                "source_id": "obligations:1",
+                                "intelligence_revision_id": "revision-a",
+                                "evidence_ids": [
+                                    "evidence-a"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Clause 4. Buyer shall pay within 45 days of invoice receipt.",
+                                        "start_offset": 0,
+                                        "end_offset": 60
+                                    }
+                                ],
+                                "evidence": "Clause 4. Buyer shall pay within 45 days of invoice receipt."
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "obligations",
+                            "label": "Payment",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "relationship_candidate": {
+                                    "state": "candidate",
+                                    "key": "5b9ca80bde660348aa42cf47530e68f499abf35459933e1efbc9b3d739bb0c78",
+                                    "basis": "title_or_reference_candidate"
+                                }
+                            },
+                            "value": {
+                                "description": "Buyer payment",
+                                "date_type": "relative",
+                                "relative_text": "within 45 days of invoice receipt",
+                                "due_date": null
+                            },
+                            "source": {
+                                "document_id": "b",
+                                "source_id": "obligations:1",
+                                "intelligence_revision_id": "revision-b",
+                                "evidence_ids": [
+                                    "evidence-b"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Clause 4. Buyer shall pay within 45 days of invoice receipt.",
+                                        "start_offset": 0,
+                                        "end_offset": 60
+                                    }
+                                ],
+                                "evidence": "Clause 4. Buyer shall pay within 45 days of invoice receipt."
+                            }
+                        }
+                    ],
+                    "ruleset": "structured-m3-v1",
+                    "compatibility": {
+                        "decision": "unresolved",
+                        "reason": "provision_correspondence_requires_review"
+                    },
+                    "matching_basis": {
+                        "state": "candidate",
+                        "key": "5b9ca80bde660348aa42cf47530e68f499abf35459933e1efbc9b3d739bb0c78",
+                        "basis": "title_or_reference_candidate"
+                    },
+                    "compared_fields": [
+                        "timing"
+                    ],
+                    "limitations": [
+                        "Timing only; action, amount, beneficiary and conditions are not independently validated by this result. Workflow completion is excluded."
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "same obligation timing",
+            "category": "obligations",
+            "state": "confirmed",
+            "expected": "equivalent",
+            "actual": "equivalent",
+            "rows": [
+                {
+                    "category": "obligations",
+                    "label": "Payment",
+                    "outcome": "equivalent",
+                    "reasons": [
+                        "aligned_equal_obligation_observation"
+                    ],
+                    "identity_basis": {
+                        "state": "confirmed",
+                        "basis": "title_or_reference_candidate",
+                        "key": "5b9ca80bde660348aa42cf47530e68f499abf35459933e1efbc9b3d739bb0c78",
+                        "decision": {
+                            "state": "confirmed",
+                            "version": 1,
+                            "id": "authored-review"
+                        }
+                    },
+                    "method": "structured",
+                    "description": "Corresponding compatible observations have the same compared fields; no broader equivalence is established.",
+                    "before": [
+                        {
+                            "category": "obligations",
+                            "label": "Payment",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "identity": {
+                                    "state": "confirmed",
+                                    "basis": "title_or_reference_candidate",
+                                    "key": "5b9ca80bde660348aa42cf47530e68f499abf35459933e1efbc9b3d739bb0c78",
+                                    "decision": {
+                                        "state": "confirmed",
+                                        "version": 1,
+                                        "id": "authored-review"
+                                    }
+                                }
+                            },
+                            "value": {
+                                "description": "Buyer payment",
+                                "date_type": "relative",
+                                "relative_text": "within 45 days of invoice receipt",
+                                "due_date": null
+                            },
+                            "source": {
+                                "document_id": "a",
+                                "source_id": "obligations:1",
+                                "intelligence_revision_id": "revision-a",
+                                "evidence_ids": [
+                                    "evidence-a"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Clause 4. Buyer shall pay within 45 days of invoice receipt.",
+                                        "start_offset": 0,
+                                        "end_offset": 60
+                                    }
+                                ],
+                                "evidence": "Clause 4. Buyer shall pay within 45 days of invoice receipt."
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "obligations",
+                            "label": "Payment",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "identity": {
+                                    "state": "confirmed",
+                                    "basis": "title_or_reference_candidate",
+                                    "key": "5b9ca80bde660348aa42cf47530e68f499abf35459933e1efbc9b3d739bb0c78",
+                                    "decision": {
+                                        "state": "confirmed",
+                                        "version": 1,
+                                        "id": "authored-review"
+                                    }
+                                }
+                            },
+                            "value": {
+                                "description": "Buyer payment",
+                                "date_type": "relative",
+                                "relative_text": "within 45 days of invoice receipt",
+                                "due_date": null
+                            },
+                            "source": {
+                                "document_id": "b",
+                                "source_id": "obligations:1",
+                                "intelligence_revision_id": "revision-b",
+                                "evidence_ids": [
+                                    "evidence-b"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Clause 4. Buyer shall pay within 45 days of invoice receipt.",
+                                        "start_offset": 0,
+                                        "end_offset": 60
+                                    }
+                                ],
+                                "evidence": "Clause 4. Buyer shall pay within 45 days of invoice receipt."
+                            }
+                        }
+                    ],
+                    "ruleset": "structured-m3-v1",
+                    "compatibility": {
+                        "decision": "compatible",
+                        "reason": "aligned_equal_obligation_observation"
+                    },
+                    "matching_basis": {
+                        "state": "confirmed",
+                        "basis": "title_or_reference_candidate",
+                        "key": "5b9ca80bde660348aa42cf47530e68f499abf35459933e1efbc9b3d739bb0c78",
+                        "decision": {
+                            "state": "confirmed",
+                            "version": 1,
+                            "id": "authored-review"
+                        }
+                    },
+                    "compared_fields": [
+                        "timing"
+                    ],
+                    "limitations": [
+                        "Timing only; action, amount, beneficiary and conditions are not independently validated by this result. Workflow completion is excluded."
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "different prose same timing is qualified",
+            "category": "obligations",
+            "state": "confirmed",
+            "expected": "potential_relationship",
+            "actual": "potential_relationship",
+            "rows": [
+                {
+                    "category": "obligations",
+                    "label": "Payment",
+                    "outcome": "potential_relationship",
+                    "reasons": [
+                        "obligation_action_wording_requires_review"
+                    ],
+                    "identity_basis": {
+                        "state": "confirmed",
+                        "basis": "title_or_reference_candidate",
+                        "key": "a084a2e4177511d6aed4cb0f72f45248ad54bb406d4f6b7eef634235e888333a",
+                        "decision": {
+                            "state": "confirmed",
+                            "version": 1,
+                            "id": "authored-review"
+                        }
+                    },
+                    "method": "structured",
+                    "description": "Potential relationship requiring review: obligation_action_wording_requires_review. No substantive difference is established.",
+                    "before": [
+                        {
+                            "category": "obligations",
+                            "label": "Payment",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "identity": {
+                                    "state": "confirmed",
+                                    "basis": "title_or_reference_candidate",
+                                    "key": "a084a2e4177511d6aed4cb0f72f45248ad54bb406d4f6b7eef634235e888333a",
+                                    "decision": {
+                                        "state": "confirmed",
+                                        "version": 1,
+                                        "id": "authored-review"
+                                    }
+                                }
+                            },
+                            "value": {
+                                "description": "Buyer payment",
+                                "date_type": "relative",
+                                "relative_text": "within 45 days of invoice receipt",
+                                "due_date": null
+                            },
+                            "source": {
+                                "document_id": "a",
+                                "source_id": "obligations:1",
+                                "intelligence_revision_id": "revision-a",
+                                "evidence_ids": [
+                                    "evidence-a"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Clause 4. Buyer shall pay within 45 days of invoice receipt.",
+                                        "start_offset": 0,
+                                        "end_offset": 60
+                                    }
+                                ],
+                                "evidence": "Clause 4. Buyer shall pay within 45 days of invoice receipt."
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "obligations",
+                            "label": "Payment",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "identity": {
+                                    "state": "confirmed",
+                                    "basis": "title_or_reference_candidate",
+                                    "key": "a084a2e4177511d6aed4cb0f72f45248ad54bb406d4f6b7eef634235e888333a",
+                                    "decision": {
+                                        "state": "confirmed",
+                                        "version": 1,
+                                        "id": "authored-review"
+                                    }
+                                }
+                            },
+                            "value": {
+                                "description": "Different action wording",
+                                "date_type": "relative",
+                                "relative_text": "within 45 days of invoice receipt",
+                                "due_date": null
+                            },
+                            "source": {
+                                "document_id": "b",
+                                "source_id": "obligations:1",
+                                "intelligence_revision_id": "revision-b",
+                                "evidence_ids": [
+                                    "evidence-b"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Clause 4. Buyer shall pay within 45 days of invoice receipt.",
+                                        "start_offset": 0,
+                                        "end_offset": 60
+                                    }
+                                ],
+                                "evidence": "Clause 4. Buyer shall pay within 45 days of invoice receipt."
+                            }
+                        }
+                    ],
+                    "ruleset": "structured-m3-v1",
+                    "compatibility": {
+                        "decision": "unresolved",
+                        "reason": "obligation_action_wording_requires_review"
+                    },
+                    "matching_basis": {
+                        "state": "confirmed",
+                        "basis": "title_or_reference_candidate",
+                        "key": "a084a2e4177511d6aed4cb0f72f45248ad54bb406d4f6b7eef634235e888333a",
+                        "decision": {
+                            "state": "confirmed",
+                            "version": 1,
+                            "id": "authored-review"
+                        }
+                    },
+                    "compared_fields": [
+                        "timing"
+                    ],
+                    "limitations": [
+                        "Timing only; action, amount, beneficiary and conditions are not independently validated by this result. Workflow completion is excluded."
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "same title different actor",
+            "category": "obligations",
+            "state": "confirmed",
+            "expected": "not_comparable",
+            "actual": "not_comparable",
+            "rows": [
+                {
+                    "category": "obligations",
+                    "label": "Payment",
+                    "outcome": "not_comparable",
+                    "reasons": [
+                        "responsible_party_mismatch"
+                    ],
+                    "identity_basis": {
+                        "state": "confirmed",
+                        "basis": "title_or_reference_candidate",
+                        "key": "2771b3eb2ce72a88fb677746d0e326f2c2055f066cf8b97fdbe5a055771af687",
+                        "decision": {
+                            "state": "confirmed",
+                            "version": 1,
+                            "id": "authored-review"
+                        }
+                    },
+                    "method": "structured",
+                    "description": "Not comparable: responsible_party_mismatch.",
+                    "before": [
+                        {
+                            "category": "obligations",
+                            "label": "Payment",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "identity": {
+                                    "state": "confirmed",
+                                    "basis": "title_or_reference_candidate",
+                                    "key": "2771b3eb2ce72a88fb677746d0e326f2c2055f066cf8b97fdbe5a055771af687",
+                                    "decision": {
+                                        "state": "confirmed",
+                                        "version": 1,
+                                        "id": "authored-review"
+                                    }
+                                }
+                            },
+                            "value": {
+                                "description": "Buyer payment",
+                                "date_type": "relative",
+                                "relative_text": "within 45 days of invoice receipt",
+                                "due_date": null
+                            },
+                            "source": {
+                                "document_id": "a",
+                                "source_id": "obligations:1",
+                                "intelligence_revision_id": "revision-a",
+                                "evidence_ids": [
+                                    "evidence-a"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Clause 4. Buyer shall pay within 45 days of invoice receipt.",
+                                        "start_offset": 0,
+                                        "end_offset": 60
+                                    }
+                                ],
+                                "evidence": "Clause 4. Buyer shall pay within 45 days of invoice receipt."
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "obligations",
+                            "label": "Payment",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Seller",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "identity": {
+                                    "state": "confirmed",
+                                    "basis": "title_or_reference_candidate",
+                                    "key": "2771b3eb2ce72a88fb677746d0e326f2c2055f066cf8b97fdbe5a055771af687",
+                                    "decision": {
+                                        "state": "confirmed",
+                                        "version": 1,
+                                        "id": "authored-review"
+                                    }
+                                }
+                            },
+                            "value": {
+                                "description": "Buyer payment",
+                                "date_type": "relative",
+                                "relative_text": "within 45 days of invoice receipt",
+                                "due_date": null
+                            },
+                            "source": {
+                                "document_id": "b",
+                                "source_id": "obligations:1",
+                                "intelligence_revision_id": "revision-b",
+                                "evidence_ids": [
+                                    "evidence-b"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Clause 4. Buyer shall pay within 45 days of invoice receipt.",
+                                        "start_offset": 0,
+                                        "end_offset": 60
+                                    }
+                                ],
+                                "evidence": "Clause 4. Buyer shall pay within 45 days of invoice receipt."
+                            }
+                        }
+                    ],
+                    "ruleset": "structured-m3-v1",
+                    "compatibility": {
+                        "decision": "incompatible",
+                        "reason": "responsible_party_mismatch"
+                    },
+                    "matching_basis": {
+                        "state": "confirmed",
+                        "basis": "title_or_reference_candidate",
+                        "key": "2771b3eb2ce72a88fb677746d0e326f2c2055f066cf8b97fdbe5a055771af687",
+                        "decision": {
+                            "state": "confirmed",
+                            "version": 1,
+                            "id": "authored-review"
+                        }
+                    },
+                    "compared_fields": [
+                        "timing"
+                    ],
+                    "limitations": [
+                        "Timing only; action, amount, beneficiary and conditions are not independently validated by this result. Workflow completion is excluded."
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "missing actor",
+            "category": "obligations",
+            "state": "confirmed",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence",
+            "rows": [
+                {
+                    "category": "obligations",
+                    "label": "Payment",
+                    "outcome": "insufficient_evidence",
+                    "reasons": [
+                        "unverified_provision_context"
+                    ],
+                    "identity_basis": {
+                        "state": "confirmed",
+                        "basis": "title_or_reference_candidate",
+                        "key": "e909f3da041bcb9007996903aab5d5acd3a1f1d5e10f8c893e86cc0764cb5908",
+                        "decision": {
+                            "state": "confirmed",
+                            "version": 1,
+                            "id": "authored-review"
+                        }
+                    },
+                    "method": "structured",
+                    "description": "Insufficient evidence for a substantive comparison: unverified_provision_context.",
+                    "before": [
+                        {
+                            "category": "obligations",
+                            "label": "Payment",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "identity": {
+                                    "state": "confirmed",
+                                    "basis": "title_or_reference_candidate",
+                                    "key": "e909f3da041bcb9007996903aab5d5acd3a1f1d5e10f8c893e86cc0764cb5908",
+                                    "decision": {
+                                        "state": "confirmed",
+                                        "version": 1,
+                                        "id": "authored-review"
+                                    }
+                                }
+                            },
+                            "value": {
+                                "description": "Buyer payment",
+                                "date_type": "relative",
+                                "relative_text": "within 45 days of invoice receipt",
+                                "due_date": null
+                            },
+                            "source": {
+                                "document_id": "a",
+                                "source_id": "obligations:1",
+                                "intelligence_revision_id": "revision-a",
+                                "evidence_ids": [
+                                    "evidence-a"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Clause 4. Buyer shall pay within 45 days of invoice receipt.",
+                                        "start_offset": 0,
+                                        "end_offset": 60
+                                    }
+                                ],
+                                "evidence": "Clause 4. Buyer shall pay within 45 days of invoice receipt."
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "obligations",
+                            "label": "Payment",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": null,
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "identity": {
+                                    "state": "confirmed",
+                                    "basis": "title_or_reference_candidate",
+                                    "key": "e909f3da041bcb9007996903aab5d5acd3a1f1d5e10f8c893e86cc0764cb5908",
+                                    "decision": {
+                                        "state": "confirmed",
+                                        "version": 1,
+                                        "id": "authored-review"
+                                    }
+                                }
+                            },
+                            "value": {
+                                "description": "Buyer payment",
+                                "date_type": "relative",
+                                "relative_text": "within 45 days of invoice receipt",
+                                "due_date": null
+                            },
+                            "source": {
+                                "document_id": "b",
+                                "source_id": "obligations:1",
+                                "intelligence_revision_id": "revision-b",
+                                "evidence_ids": [
+                                    "evidence-b"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Clause 4. Buyer shall pay within 45 days of invoice receipt.",
+                                        "start_offset": 0,
+                                        "end_offset": 60
+                                    }
+                                ],
+                                "evidence": "Clause 4. Buyer shall pay within 45 days of invoice receipt."
+                            }
+                        }
+                    ],
+                    "ruleset": "structured-m3-v1",
+                    "compatibility": {
+                        "decision": "unresolved",
+                        "reason": "unverified_provision_context"
+                    },
+                    "matching_basis": {
+                        "state": "confirmed",
+                        "basis": "title_or_reference_candidate",
+                        "key": "e909f3da041bcb9007996903aab5d5acd3a1f1d5e10f8c893e86cc0764cb5908",
+                        "decision": {
+                            "state": "confirmed",
+                            "version": 1,
+                            "id": "authored-review"
+                        }
+                    },
+                    "compared_fields": [
+                        "timing"
+                    ],
+                    "limitations": [
+                        "Timing only; action, amount, beneficiary and conditions are not independently validated by this result. Workflow completion is excluded."
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "different relative basis",
+            "category": "obligations",
+            "state": "confirmed",
+            "expected": "not_comparable",
+            "actual": "not_comparable",
+            "rows": [
+                {
+                    "category": "obligations",
+                    "label": "Payment",
+                    "outcome": "not_comparable",
+                    "reasons": [
+                        "due_date_basis_mismatch"
+                    ],
+                    "identity_basis": {
+                        "state": "confirmed",
+                        "basis": "title_or_reference_candidate",
+                        "key": "2aeb03fbd1133224c12957ec2032aead3949acf0806dff7e64cc61bcc131563a",
+                        "decision": {
+                            "state": "confirmed",
+                            "version": 1,
+                            "id": "authored-review"
+                        }
+                    },
+                    "method": "structured",
+                    "description": "Not comparable: due_date_basis_mismatch.",
+                    "before": [
+                        {
+                            "category": "obligations",
+                            "label": "Payment",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "identity": {
+                                    "state": "confirmed",
+                                    "basis": "title_or_reference_candidate",
+                                    "key": "2aeb03fbd1133224c12957ec2032aead3949acf0806dff7e64cc61bcc131563a",
+                                    "decision": {
+                                        "state": "confirmed",
+                                        "version": 1,
+                                        "id": "authored-review"
+                                    }
+                                }
+                            },
+                            "value": {
+                                "description": "Buyer payment",
+                                "date_type": "relative",
+                                "relative_text": "within 45 days of invoice receipt",
+                                "due_date": null
+                            },
+                            "source": {
+                                "document_id": "a",
+                                "source_id": "obligations:1",
+                                "intelligence_revision_id": "revision-a",
+                                "evidence_ids": [
+                                    "evidence-a"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Clause 4. Buyer shall pay within 45 days of invoice receipt.",
+                                        "start_offset": 0,
+                                        "end_offset": 60
+                                    }
+                                ],
+                                "evidence": "Clause 4. Buyer shall pay within 45 days of invoice receipt."
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "obligations",
+                            "label": "Payment",
+                            "context": {
+                                "projection_version": "published-intelligence-m3-v1",
+                                "subject": "Plant A",
+                                "risk_type": "operational",
+                                "responsible_party": "Buyer",
+                                "obligation_reference": "Clause 4",
+                                "deadline_type": "obligation",
+                                "identity": {
+                                    "state": "confirmed",
+                                    "basis": "title_or_reference_candidate",
+                                    "key": "2aeb03fbd1133224c12957ec2032aead3949acf0806dff7e64cc61bcc131563a",
+                                    "decision": {
+                                        "state": "confirmed",
+                                        "version": 1,
+                                        "id": "authored-review"
+                                    }
+                                }
+                            },
+                            "value": {
+                                "description": "Buyer payment",
+                                "date_type": "relative",
+                                "relative_text": "within 45 days of delivery",
+                                "due_date": null
+                            },
+                            "source": {
+                                "document_id": "b",
+                                "source_id": "obligations:1",
+                                "intelligence_revision_id": "revision-b",
+                                "evidence_ids": [
+                                    "evidence-b"
+                                ],
+                                "spans": [
+                                    {
+                                        "quote": "Clause 4. Buyer shall pay within 45 days of invoice receipt.",
+                                        "start_offset": 0,
+                                        "end_offset": 60
+                                    }
+                                ],
+                                "evidence": "Clause 4. Buyer shall pay within 45 days of invoice receipt."
+                            }
+                        }
+                    ],
+                    "ruleset": "structured-m3-v1",
+                    "compatibility": {
+                        "decision": "incompatible",
+                        "reason": "due_date_basis_mismatch"
+                    },
+                    "matching_basis": {
+                        "state": "confirmed",
+                        "basis": "title_or_reference_candidate",
+                        "key": "2aeb03fbd1133224c12957ec2032aead3949acf0806dff7e64cc61bcc131563a",
+                        "decision": {
+                            "state": "confirmed",
+                            "version": 1,
+                            "id": "authored-review"
+                        }
+                    },
+                    "compared_fields": [
+                        "timing"
+                    ],
+                    "limitations": [
+                        "Timing only; action, amount, beneficiary and conditions are not independently validated by this result. Workflow completion is excluded."
+                    ]
+                }
+            ]
+        }
+    ]
+}

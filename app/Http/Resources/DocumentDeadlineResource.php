@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\DeadlineClassification;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -12,6 +13,7 @@ class DocumentDeadlineResource extends JsonResource
         return [
             'id' => $this->id,
             'deadlineType' => $this->deadline_type,
+            'classification' => DeadlineClassification::classify($this->deadline_type, $this->date_type, $this->due_date?->toDateString()),
             'title' => $this->title,
             'description' => $this->description,
             'dueDate' => $this->due_date?->toDateString(),

@@ -136,8 +136,8 @@ class ComparisonM2B1RealContentTest extends TestCase
             'reviewed_changes' => $reviewedChanges, 'reviewed_outcomes' => array_count_values(array_column($reviewedChanges, 'outcome'))];
         Http::assertNothingSent();
         $phase = 'current'; // Baseline artifacts are frozen; this test never rewrites them.
-        file_put_contents(base_path('tests/Fixtures/ComparisonM2B1/'.$phase.'-real.json'), json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)."\n");
-        file_put_contents(base_path('tests/Fixtures/ComparisonM2B1/'.$phase.'-extraction.json'), json_encode($extractions, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)."\n");
+        file_put_contents(base_path('tests/Fixtures/ComparisonM3/pdf-'.$phase.'-real.json'), json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)."\n");
+        file_put_contents(base_path('tests/Fixtures/ComparisonM3/pdf-'.$phase.'-extraction.json'), json_encode($extractions, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)."\n");
     }
 
     private function parsedMeasurement(array $value): ?array

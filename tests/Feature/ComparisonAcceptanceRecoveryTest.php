@@ -165,7 +165,7 @@ class ComparisonAcceptanceRecoveryTest extends TestCase
         $this->getJson('/api/document-comparisons/'.$comparison->id)->assertNotFound();
         $this->getJson('/api/document-comparisons/'.$comparison->id.'/identity')->assertNotFound();
         Http::assertNothingSent();
-        file_put_contents(base_path('tests/Fixtures/ComparisonRecovery/actual-pipeline.json'), json_encode([
+        file_put_contents(base_path('tests/Fixtures/ComparisonM3/pdf-contractual-pipeline.json'), json_encode([
             'tier' => 2, 'verdict' => 'blocked_missing_structured_contract_extraction',
             'publication' => 'Locally constructed pointers and stage records, not Tier 3 ingestion',
             'documents' => $reports, 'identity' => $identity, 'comparison_id' => $comparison->id,
