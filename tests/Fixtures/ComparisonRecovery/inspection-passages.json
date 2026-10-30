@@ -1,0 +1,77 @@
+{
+  "role": "Inspection-only passages into actual parser text, NOT published facts or extraction inputs",
+  "documents": [
+    {
+      "file": "1936-cooper-eagle-agmt.pdf",
+      "document_id": "01a18e16-5ddb-704f-a55b-1d23f01ef342",
+      "revision_id": "01a18e16-5e26-726c-ab6f-8c69c4e54b92",
+      "file_sha256": "e582a25b8356403a974a21b561c034f261623fa47eb2a393c0f9d4f6fed11bbc",
+      "text_sha256": "bc91f37cb282ec51f201b9592a61a8eb519dcd9039015da5d523ceb4e4248b40",
+      "passages": [
+        {
+          "reference": "2.3.D.i",
+          "page": 8,
+          "start_offset": 20882,
+          "end_offset": 21012,
+          "quote": "i. Starts on January 1, 2028, first complete Tax Year that begins after the date of \nthe commencement of Commercial Operation; and",
+          "offset_kind": "Unicode characters into exact stored Smalot extracted text",
+          "location_capability": "page and text offsets only; no PDF rectangle"
+        },
+        {
+          "reference": "2.3.D.ii",
+          "page": 8,
+          "start_offset": 21014,
+          "end_offset": 21143,
+          "quote": "ii. Ends on December 31, 2037, which is the year the Tax Limitation Period starts \nas identified in Section 2.3.D.i plus 9 years.",
+          "offset_kind": "Unicode characters into exact stored Smalot extracted text",
+          "location_capability": "page and text offsets only; no PDF rectangle"
+        },
+        {
+          "reference": "2.3.E",
+          "page": 8,
+          "start_offset": 21145,
+          "end_offset": 21314,
+          "quote": "E. The Final Termination Date for this Agreement is December 31, 2042; which is the last \nyear of the Tax Limitation Period as defined in Section 2.3.D.ii. plus 5 years.",
+          "offset_kind": "Unicode characters into exact stored Smalot extracted text",
+          "location_capability": "page and text offsets only; no PDF rectangle"
+        }
+      ]
+    },
+    {
+      "file": "1936-cooper-eagle-amendagmt1.pdf",
+      "document_id": "01a18e16-6ac9-7218-a142-a8fafcfffb91",
+      "revision_id": "01a18e16-6b04-72d5-8a89-309cf9afa33e",
+      "file_sha256": "2df9f12ace53e31030944155eadde508e13bb00b0e0ed35c4e961f392227804d",
+      "text_sha256": "9967edb17c67f3d05fd47c48b0644969ec13237f4054bf4b084ec9d92a5a52e7",
+      "passages": [
+        {
+          "reference": "2.3.D.i",
+          "page": 2,
+          "start_offset": 3798,
+          "end_offset": 3941,
+          "quote": "i. Starts on January 1, 2026, which is the first complete Tax Year that begins after \nthe date of the commencement of Commercial Operation; and",
+          "offset_kind": "Unicode characters into exact stored Smalot extracted text",
+          "location_capability": "page and text offsets only; no PDF rectangle"
+        },
+        {
+          "reference": "2.3.D.ii",
+          "page": 2,
+          "start_offset": 3943,
+          "end_offset": 4073,
+          "quote": "ii. Ends on December 31, 2035, which is the year the Tax Limitation Period starts \nas identified in Section 2.3.D.i. plus 9 years.",
+          "offset_kind": "Unicode characters into exact stored Smalot extracted text",
+          "location_capability": "page and text offsets only; no PDF rectangle"
+        },
+        {
+          "reference": "2.3.E",
+          "page": 2,
+          "start_offset": 4075,
+          "end_offset": 4244,
+          "quote": "E. The Final Termination Date for this Agreement is December 31, 2040, which is the last \nyear of the Tax Limitation Period as defined in Section 2.3.D.ii. plus 5 years.",
+          "offset_kind": "Unicode characters into exact stored Smalot extracted text",
+          "location_capability": "page and text offsets only; no PDF rectangle"
+        }
+      ]
+    }
+  ]
+}

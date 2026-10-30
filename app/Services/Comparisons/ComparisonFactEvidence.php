@@ -4,6 +4,7 @@ namespace App\Services\Comparisons;
 
 use App\Models\Document;
 use App\Models\DocumentEvidence;
+use App\Services\Extraction\StructuredExtractionStore;
 
 /** Projection of existing pipeline evidence; does not extract new claims. */
 class ComparisonFactEvidence
@@ -25,6 +26,8 @@ class ComparisonFactEvidence
             return [];
         }
         $out = [];
+        $structured = $document->type === 'PDF' ? app(StructuredExtractionStore::class)->active($document) : null;
+        $nodes = $structured === null ? [] : array_column($structured->nodes, null, 'id');
         foreach (DocumentEvidence::where('workspace_id', $document->workspace_id)->where('document_id', $document->id)
             ->where('pipeline_key', $key)->whereNotNull('source_id')->orderBy('id')->get() as $row) {
             $spans = [];
@@ -40,7 +43,29 @@ class ComparisonFactEvidence
                     $spans[] = array_intersect_key($source, array_flip(['span_id', 'chunk_id', 'page', 'start_offset', 'end_offset', 'quote', 'roles']));
                 }
             }
-            $out[$row->source_id][] = ['id' => $row->id, 'data' => $row->data ?? [], 'spans' => $spans];
+            // Preserve a literal statement heading omitted by the unit-only caption projection.
+            // This adds source context, never upgrades the existing field-verification verdict.
+            $data = $row->data ?? [];
+            $cell = $nodes[$data['source_representation']['cell_id'] ?? ''] ?? null;
+            $unit = $nodes[$cell['meta']['unit_heading_id'] ?? ''] ?? null;
+            $entity = $nodes[$cell['meta']['entity_heading_id'] ?? ''] ?? null;
+            if (str_starts_with($row->source_id, 'pdf-cell:') && $cell !== null && $unit !== null && $entity !== null
+                && ($data['source_file_hash'] ?? null) === $document->file_hash
+                && ($cell['text'] ?? null) === ($data['value'] ?? null)
+                && ($unit['page'] ?? null) === ($entity['page'] ?? null)
+                && isset($entity['end'], $unit['start']) && $unit['start'] > $entity['end']
+                && $unit['start'] - $entity['end'] < 300) {
+                $between = mb_substr($structured->text, $entity['end'], $unit['start'] - $entity['end']);
+                if (preg_match('/^\s*(?<heading>(?:CONDENSED\s+)?CONSOLIDATED\s+STATEMENTS\s+OF\s+(?:OPERATIONS|INCOME)(?:\s*\(Unaudited\))?)\s*$/iuD', $between, $match)) {
+                    $quote = $match['heading'];
+                    $start = $entity['end'] + mb_strpos($between, $quote);
+                    $spans[] = ['span_id' => 'statement-context:'.$start, 'quote' => $quote,
+                        'start_offset' => $start, 'end_offset' => $start + mb_strlen($quote),
+                        'page' => $unit['page'], 'roles' => ['statement_context']];
+                    $data['comparison_statement'] = 'consolidated_income_statement';
+                }
+            }
+            $out[$row->source_id][] = ['id' => $row->id, 'data' => $data, 'spans' => $spans];
         }
 
         return $out;

@@ -78,6 +78,9 @@ class ComparisonIdentityService
                 abort_unless($current !== null && $current['reviewable'], 409, 'Source revision, observation or evidence changed. Start a new comparison.');
                 abort_if($state === 'confirmed' && $current['state'] === 'contradictory', 422, 'Conflicting source identifiers cannot be overridden by correspondence review.');
                 abort_if($state === 'confirmed' && in_array($link?->state, ['rejected', 'revoked'], true), 409, 'Rejected or revoked correspondence cannot be silently reconfirmed.');
+                if ($state === 'candidate') {
+                    abort_unless(in_array($link?->state, ['rejected', 'revoked'], true), 409, 'Only rejected or revoked correspondence can be reopened for review.');
+                }
             }
             $sides = [$candidate['a'], $candidate['b']];
             usort($sides, fn ($a, $b) => strcmp($a['source']['document_id'], $b['source']['document_id']));

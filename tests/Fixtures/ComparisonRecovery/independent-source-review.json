@@ -1,0 +1,393 @@
+{
+  "role": "Independent expected observations; never structured extraction or engine output",
+  "reviewed_at_utc": "2026-10-30T18:33:54.384700+00:00",
+  "documents": [
+    {
+      "file": "sources/1936-cooper-eagle-agmt.pdf",
+      "url": "https://assets.comptroller.texas.gov/ch313/1936/1936-cooper-eagle-agmt.pdf",
+      "sha256": "e582a25b8356403a974a21b561c034f261623fa47eb2a393c0f9d4f6fed11bbc",
+      "bytes": 943481,
+      "pages": 41,
+      "review_method": "pdftotext -layout on acquired original bytes",
+      "poppler_diagnostics": "",
+      "terms": {
+        "2.3.D.i": {
+          "reported_text": "January 1, 2028",
+          "date": "2028-01-01",
+          "pdf_page": 8
+        },
+        "2.3.D.ii": {
+          "reported_text": "December 31, 2037",
+          "date": "2037-12-31",
+          "pdf_page": 8
+        },
+        "2.3.E": {
+          "reported_text": "December 31, 2042",
+          "date": "2042-12-31",
+          "pdf_page": 8
+        }
+      },
+      "section_6_3_pdf_page": 16,
+      "section_6_3_rows": [
+        {
+          "agreement_year": "Stub",
+          "school_year": "2025 \u2013 2026",
+          "tax_year": "2025",
+          "payment_due": "2026-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        },
+        {
+          "agreement_year": "QTP1",
+          "school_year": "2026 \u2013 2027",
+          "tax_year": "2026",
+          "payment_due": "2027-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        },
+        {
+          "agreement_year": "QTP2",
+          "school_year": "2027 \u2013 2028",
+          "tax_year": "2027",
+          "payment_due": "2028-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        },
+        {
+          "agreement_year": "L1",
+          "school_year": "2028 \u2013 2029",
+          "tax_year": "2028",
+          "payment_due": "2029-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        },
+        {
+          "agreement_year": "L2",
+          "school_year": "2029 \u2013 2030",
+          "tax_year": "2029",
+          "payment_due": "2030-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        },
+        {
+          "agreement_year": "L3",
+          "school_year": "2030 \u2013 2031",
+          "tax_year": "2030",
+          "payment_due": "2031-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        },
+        {
+          "agreement_year": "L4",
+          "school_year": "2031 \u2013 2032",
+          "tax_year": "2031",
+          "payment_due": "2032-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        },
+        {
+          "agreement_year": "L5",
+          "school_year": "2032 \u2013 2033",
+          "tax_year": "2032",
+          "payment_due": "2033-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        },
+        {
+          "agreement_year": "L6",
+          "school_year": "2033 \u2013 2034",
+          "tax_year": "2033",
+          "payment_due": "2034-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        },
+        {
+          "agreement_year": "L7",
+          "school_year": "2034 \u2013 2035",
+          "tax_year": "2034",
+          "payment_due": "2035-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        },
+        {
+          "agreement_year": "L8",
+          "school_year": "2035 \u2013 2036",
+          "tax_year": "2035",
+          "payment_due": "2036-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        },
+        {
+          "agreement_year": "L9",
+          "school_year": "2036 \u2013 2037",
+          "tax_year": "2036",
+          "payment_due": "2037-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        },
+        {
+          "agreement_year": "L10",
+          "school_year": "2037 \u2013 2038",
+          "tax_year": "2037",
+          "payment_due": "2038-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        },
+        {
+          "agreement_year": "MVP1",
+          "school_year": "2038 \u2013 2039",
+          "tax_year": "2038",
+          "payment_due": "2039-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        },
+        {
+          "agreement_year": "MVP2",
+          "school_year": "2039 \u2013 2040",
+          "tax_year": "2039",
+          "payment_due": "2040-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        },
+        {
+          "agreement_year": "MVP3",
+          "school_year": "2040 \u2013 2041",
+          "tax_year": "2040",
+          "payment_due": "2040-12-31",
+          "payment_formula": "$100 x prior-year ADA"
+        }
+      ]
+    },
+    {
+      "file": "sources/1936-cooper-eagle-amendagmt1.pdf",
+      "url": "https://assets.comptroller.texas.gov/ch313/1936/1936-cooper-eagle-amendagmt1.pdf",
+      "sha256": "2df9f12ace53e31030944155eadde508e13bb00b0e0ed35c4e961f392227804d",
+      "bytes": 1356208,
+      "pages": 49,
+      "review_method": "pdftotext -layout on acquired original bytes",
+      "poppler_diagnostics": "Syntax Error: Expected the optional content group list, but wasn't able to find it, or it isn't an Array",
+      "terms": {
+        "2.3.D.i": {
+          "reported_text": "January 1, 2026",
+          "date": "2026-01-01",
+          "pdf_page": 2
+        },
+        "2.3.D.ii": {
+          "reported_text": "December 31, 2035",
+          "date": "2035-12-31",
+          "pdf_page": 2
+        },
+        "2.3.E": {
+          "reported_text": "December 31, 2040",
+          "date": "2040-12-31",
+          "pdf_page": 2
+        }
+      },
+      "section_6_3_pdf_page": 2,
+      "section_6_3_rows": [
+        {
+          "agreement_year": "Stub",
+          "school_year": "2025 \u2013 2026",
+          "tax_year": "2025",
+          "payment_due": "2026-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        },
+        {
+          "agreement_year": "QTP1 / L1",
+          "school_year": "2026 \u2013 2027",
+          "tax_year": "2026",
+          "payment_due": "2027-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        },
+        {
+          "agreement_year": "QTP2 / L2",
+          "school_year": "2027 \u2013 2028",
+          "tax_year": "2027",
+          "payment_due": "2028-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        },
+        {
+          "agreement_year": "L3",
+          "school_year": "2028 \u2013 2029",
+          "tax_year": "2028",
+          "payment_due": "2029-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        },
+        {
+          "agreement_year": "L4",
+          "school_year": "2029 \u2013 2030",
+          "tax_year": "2029",
+          "payment_due": "2030-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        },
+        {
+          "agreement_year": "L5",
+          "school_year": "2030 \u2013 2031",
+          "tax_year": "2030",
+          "payment_due": "2031-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        },
+        {
+          "agreement_year": "L6",
+          "school_year": "2031 \u2013 2032",
+          "tax_year": "2031",
+          "payment_due": "2032-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        },
+        {
+          "agreement_year": "L7",
+          "school_year": "2032 \u2013 2033",
+          "tax_year": "2032",
+          "payment_due": "2033-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        },
+        {
+          "agreement_year": "L8",
+          "school_year": "2033 \u2013 2034",
+          "tax_year": "2033",
+          "payment_due": "2034-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        },
+        {
+          "agreement_year": "L9",
+          "school_year": "2034 \u2013 2035",
+          "tax_year": "2034",
+          "payment_due": "2035-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        },
+        {
+          "agreement_year": "L10",
+          "school_year": "2035 \u2013 2036",
+          "tax_year": "2035",
+          "payment_due": "2036-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        },
+        {
+          "agreement_year": "MVP1",
+          "school_year": "2036 \u2013 2037",
+          "tax_year": "2036",
+          "payment_due": "2037-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        },
+        {
+          "agreement_year": "MVP2",
+          "school_year": "2037 \u2013 2038",
+          "tax_year": "2037",
+          "payment_due": "2038-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        },
+        {
+          "agreement_year": "MVP3",
+          "school_year": "2038 \u2013 2039",
+          "tax_year": "2038",
+          "payment_due": "2039-01-31",
+          "payment_formula": "$100 x prior-year ADA"
+        }
+      ]
+    }
+  ],
+  "section_6_3_shared_tax_year_review": [
+    {
+      "tax_year": "2025",
+      "same_due_date": true,
+      "same_school_year": true,
+      "same_payment_formula": true,
+      "original_agreement_year": "Stub",
+      "replacement_agreement_year": "Stub"
+    },
+    {
+      "tax_year": "2026",
+      "same_due_date": true,
+      "same_school_year": true,
+      "same_payment_formula": true,
+      "original_agreement_year": "QTP1",
+      "replacement_agreement_year": "QTP1 / L1"
+    },
+    {
+      "tax_year": "2027",
+      "same_due_date": true,
+      "same_school_year": true,
+      "same_payment_formula": true,
+      "original_agreement_year": "QTP2",
+      "replacement_agreement_year": "QTP2 / L2"
+    },
+    {
+      "tax_year": "2028",
+      "same_due_date": true,
+      "same_school_year": true,
+      "same_payment_formula": true,
+      "original_agreement_year": "L1",
+      "replacement_agreement_year": "L3"
+    },
+    {
+      "tax_year": "2029",
+      "same_due_date": true,
+      "same_school_year": true,
+      "same_payment_formula": true,
+      "original_agreement_year": "L2",
+      "replacement_agreement_year": "L4"
+    },
+    {
+      "tax_year": "2030",
+      "same_due_date": true,
+      "same_school_year": true,
+      "same_payment_formula": true,
+      "original_agreement_year": "L3",
+      "replacement_agreement_year": "L5"
+    },
+    {
+      "tax_year": "2031",
+      "same_due_date": true,
+      "same_school_year": true,
+      "same_payment_formula": true,
+      "original_agreement_year": "L4",
+      "replacement_agreement_year": "L6"
+    },
+    {
+      "tax_year": "2032",
+      "same_due_date": true,
+      "same_school_year": true,
+      "same_payment_formula": true,
+      "original_agreement_year": "L5",
+      "replacement_agreement_year": "L7"
+    },
+    {
+      "tax_year": "2033",
+      "same_due_date": true,
+      "same_school_year": true,
+      "same_payment_formula": true,
+      "original_agreement_year": "L6",
+      "replacement_agreement_year": "L8"
+    },
+    {
+      "tax_year": "2034",
+      "same_due_date": true,
+      "same_school_year": true,
+      "same_payment_formula": true,
+      "original_agreement_year": "L7",
+      "replacement_agreement_year": "L9"
+    },
+    {
+      "tax_year": "2035",
+      "same_due_date": true,
+      "same_school_year": true,
+      "same_payment_formula": true,
+      "original_agreement_year": "L8",
+      "replacement_agreement_year": "L10"
+    },
+    {
+      "tax_year": "2036",
+      "same_due_date": true,
+      "same_school_year": true,
+      "same_payment_formula": true,
+      "original_agreement_year": "L9",
+      "replacement_agreement_year": "MVP1"
+    },
+    {
+      "tax_year": "2037",
+      "same_due_date": true,
+      "same_school_year": true,
+      "same_payment_formula": true,
+      "original_agreement_year": "L10",
+      "replacement_agreement_year": "MVP2"
+    },
+    {
+      "tax_year": "2038",
+      "same_due_date": true,
+      "same_school_year": true,
+      "same_payment_formula": true,
+      "original_agreement_year": "MVP1",
+      "replacement_agreement_year": "MVP3"
+    }
+  ],
+  "limits": [
+    "Row correspondence by tax year is a reviewer observation, not a DocIntel alignment.",
+    "Missing schedule rows do not establish legal deletion.",
+    "Layout text is independent of application Smalot text; its offsets must not be mixed."
+  ]
+}

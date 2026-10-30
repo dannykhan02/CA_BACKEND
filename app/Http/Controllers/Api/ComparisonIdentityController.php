@@ -23,7 +23,7 @@ class ComparisonIdentityController extends Controller
             $request->merge(['reason' => trim($request->input('reason'))]);
         }
         $input = $request->validate(['key' => ['required', 'string', 'size:64'],
-            'state' => ['required', 'in:confirmed,rejected,revoked'], 'version' => ['required', 'integer', 'min:0'],
+            'state' => ['required', 'in:confirmed,rejected,revoked,candidate'], 'version' => ['required', 'integer', 'min:0'],
             'reason' => ['required', 'string', 'min:3', 'max:1000']]);
         $item = DocumentComparison::where('workspace_id', $access->workspace($request->user(), true))->findOrFail($comparison);
 

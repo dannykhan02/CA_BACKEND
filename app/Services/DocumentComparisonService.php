@@ -12,6 +12,7 @@ use App\Services\Comparisons\ComparisonFactEvidence;
 use App\Services\Comparisons\ComparisonIdentityService;
 use App\Services\Comparisons\ComparisonRecovery;
 use App\Services\Comparisons\DeadlineDecision;
+use App\Services\Comparisons\FinancialPeriodDecision;
 use App\Services\Comparisons\IdentityCandidates;
 use App\Services\Comparisons\SourceIdentityIdentifier;
 use App\Services\Intelligence\CrossDocumentNumericDecision;
@@ -20,7 +21,7 @@ use Illuminate\Support\Facades\DB;
 
 class DocumentComparisonService
 {
-    public const ALGORITHM = 'structured-m2a-v1';
+    public const ALGORITHM = 'structured-m2b1-v1';
 
     public function __construct(private IntelligenceAccess $access) {}
 
@@ -111,6 +112,13 @@ class DocumentComparisonService
                 'metric_status' => $observation->valueStatus(), 'accounting_basis' => $data['accounting_basis'] ?? null,
                 'analytical_eligible' => $observation->integrity['analyticalEligible'] ?? false,
                 'verification' => ($observation->integrity['sourceVerification'] ?? null) === 'verified' ? 'source_verified' : 'unverified'];
+            $context['quantity_kind'] = $observation->quantityKind;
+            if (($data['comparison_statement'] ?? null) === 'consolidated_income_statement'
+                && $context['verification'] === 'source_verified' && $normalized === 'operating income') {
+                $context['measurement_nature'] = 'flow';
+                $context['aggregation'] = $context['aggregation'] ?: 'total';
+                $context['requires_accounting_basis'] = true;
+            }
             if ($owner !== null && $context['verification'] === 'source_verified') {
                 $identifier = app(SourceIdentityIdentifier::class)->forName($owner, $spans);
                 if ($identifier !== null) {
@@ -159,6 +167,7 @@ class DocumentComparisonService
             $after = $this->snapshot($views[1]);
             $identity = app(ComparisonIdentityService::class)->context($user, $base->id, $new->id, $before, $after);
             $metadata = ['algorithm_version' => self::ALGORITHM, 'method' => self::ALGORITHM, 'base' => $before, 'compared' => $after,
+                'interpretation_rules' => FinancialPeriodDecision::RULE,
                 'identity_context' => $identity,
                 'identity_usage' => app(IdentityCandidates::class)->usage($before, $after, $identity),
                 'source_revisions' => ['base' => $views[0]->published_intelligence_revision_id,
@@ -229,6 +238,7 @@ class DocumentComparisonService
         $after = $rekey($after);
         $changes = [];
         foreach (array_unique([...array_keys($before), ...array_keys($after)]) as $key) {
+            $interpretation = null;
             $old = $before[$key] ?? [];
             $new = $after[$key] ?? [];
             $reference = $new[0] ?? $old[0];
@@ -249,7 +259,9 @@ class DocumentComparisonService
                     // a statement of analytical equivalence or compatibility.
                     continue;
                 } else {
-                    [$outcome, $reason] = app(CrossDocumentNumericDecision::class)->decide($old[0], $new[0]);
+                    $decision = app(CrossDocumentNumericDecision::class)->decide($old[0], $new[0]);
+                    [$outcome, $reason] = $decision;
+                    $interpretation = $decision[2] ?? null;
                 }
             } elseif ($reference['category'] === 'deadlines') {
                 if (count($old) !== 1 || count($new) !== 1) {
@@ -284,11 +296,15 @@ class DocumentComparisonService
                 'only_b' => 'Observed only in Document B extraction; addition is not established.',
                 'not_comparable' => 'Not comparable: '.$reason.'.',
                 'insufficient_evidence' => 'Insufficient evidence for a substantive comparison: '.$reason.'.',
+                'period_comparison' => 'Reported performance across distinct periods; this does not establish a correction or contradiction. Difference is Document B minus Document A.',
                 default => 'Different compatible extracted values; selection order does not establish chronology.',
             };
             $changes[] = ['category' => $reference['category'], 'label' => $reference['label'],
                 'outcome' => $outcome, 'reasons' => [$reason], 'identity_basis' => $old[0]['context']['identity'] ?? $new[0]['context']['identity'] ?? 'canonical_definition_or_exact_label',
                 'method' => 'structured', 'description' => $description, 'before' => $old, 'after' => $new];
+            if ($interpretation !== null) {
+                $changes[array_key_last($changes)]['interpretation'] = $interpretation;
+            }
         }
 
         return $changes;

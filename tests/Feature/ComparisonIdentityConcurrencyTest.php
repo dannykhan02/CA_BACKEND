@@ -117,4 +117,25 @@ class ComparisonIdentityConcurrencyTest extends TestCase
         $this->assertSame(2, DocumentComparison::count());
         $this->assertSame(1, DocumentComparison::where('id', '!=', $comparison->id)->count());
     }
+
+    public function test_concurrent_reconsideration_has_one_winner_and_remains_unconfirmed(): void
+    {
+        [$user, $a, $b, $comparison] = $this->identityPair();
+        $key = $comparison->metadata['identity_context']['candidates'][0]['key'];
+        app(ComparisonIdentityService::class)->decide($user, $comparison, $key, 'rejected', 0, 'Initial review.');
+        $this->race(function () use ($user, $comparison, $key) {
+            try {
+                app(ComparisonIdentityService::class)->decide($user->fresh(), $comparison, $key, 'candidate', 1, 'Explicit reconsideration.');
+            } catch (HttpException $error) {
+                if ($error->getStatusCode() !== 409) {
+                    throw $error;
+                }
+            }
+        });
+        $this->assertSame(2, ComparisonIdentityLink::sole()->version);
+        $this->assertSame('candidate', ComparisonIdentityLink::sole()->state);
+        $this->assertSame(2, DB::table('comparison_identity_events')->count());
+        $next = app(DocumentComparisonService::class)->create($user, $a->id, $b->id);
+        $this->assertEmpty($next->metadata['identity_usage']);
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Services\Intelligence;
 
+use App\Services\Comparisons\FinancialPeriodDecision;
 use Brick\Math\BigDecimal;
 
 /** Candidate identity is supplied by the caller; compatibility is never inferred from it. */
@@ -24,13 +25,14 @@ class CrossDocumentNumericDecision
         if (! $ma->compatibleWith($mb)) {
             return ['not_comparable', 'measurement_mismatch'];
         }
-        $pa = $this->periods->parse($left['period'] ?? null);
-        $pb = $this->periods->parse($right['period'] ?? null);
+        $pa = $this->periods->explicitInterval($left['period'] ?? null) ?? $this->periods->parse($left['period'] ?? null);
+        $pb = $this->periods->explicitInterval($right['period'] ?? null) ?? $this->periods->parse($right['period'] ?? null);
         if (! $pa || ! $pb) {
             return ['insufficient_evidence', 'unknown_period'];
         }
-        if ($pa->label !== $pb->label || ! $pa->comparableWith($pb)
-            || mb_strtolower(trim($left['period'])) !== mb_strtolower(trim($right['period']))) {
+        $explicit = $pa->startDate !== null && $pb->startDate !== null;
+        if (! $explicit && ($pa->label !== $pb->label || ! $pa->comparableWith($pb)
+            || mb_strtolower(trim($left['period'])) !== mb_strtolower(trim($right['period'])))) {
             return ['not_comparable', 'period_mismatch'];
         }
         $ca = $a['context'] ?? [];
@@ -64,6 +66,11 @@ class CrossDocumentNumericDecision
                 }
             }
         }
+        if (($ca['requires_accounting_basis'] ?? false) || ($cb['requires_accounting_basis'] ?? false)) {
+            if (empty($ca['accounting_basis']) || empty($cb['accounting_basis'])) {
+                return ['insufficient_evidence', 'unknown_accounting_basis'];
+            }
+        }
         foreach ([$a, $b] as $fact) {
             $context = $fact['context'] ?? [];
             if (($context['superseded'] ?? false) || ! ($context['analytical_eligible'] ?? false)) {
@@ -72,6 +79,10 @@ class CrossDocumentNumericDecision
             if (! is_string($fact['source']['evidence'] ?? null) || trim($fact['source']['evidence']) === '' || ($context['verification'] ?? null) !== 'source_verified') {
                 return ['insufficient_evidence', 'missing_evidence'];
             }
+        }
+
+        if ($explicit) {
+            return app(FinancialPeriodDecision::class)->decide($a, $b, $ma, $mb, $pa, $pb);
         }
 
         return BigDecimal::of($ma->exactMagnitude)->isEqualTo($mb->exactMagnitude)

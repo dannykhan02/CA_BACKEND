@@ -83,7 +83,8 @@ class ComparisonRealContentTest extends TestCase
             'fresh_model_execution' => false, 'documents' => $documents, 'pair' => ['expected' => 'Different organizations and periods; no ordinary changed values',
                 'candidate_count' => count($identity['candidates']), 'false_identity_matches' => 0, 'correctly_established_matches' => 0,
                 'missed_supported_identity_matches' => 0, 'substantive_rows' => count($substantive), 'outcomes' => array_count_values(array_column($changes, 'outcome'))]];
-        file_put_contents(base_path('tests/Fixtures/ComparisonIdentity/real-content-results.json'), json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)."\n");
-        file_put_contents(base_path('tests/Fixtures/ComparisonIdentity/real-content-extraction.json'), json_encode($extractions, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)."\n");
+        // Preserve the frozen M2A artifacts; subsequent replays belong to the current audit.
+        file_put_contents(base_path('tests/Fixtures/ComparisonM2B1/negative-current-real.json'), json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)."\n");
+        file_put_contents(base_path('tests/Fixtures/ComparisonM2B1/negative-current-extraction.json'), json_encode($extractions, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)."\n");
     }
 }

@@ -18,6 +18,9 @@ class PeriodParser
 
     public function parse(?string $period): ?ReportingPeriod
     {
+        if (str_contains((string) $period, ' to ') && ($explicit = $this->explicitInterval($period))) {
+            return $explicit;
+        }
         $text = trim((string) $period);
         if ($text === '') {
             return null;
@@ -36,6 +39,51 @@ class PeriodParser
             ?? $this->half($text, $fiscal)
             ?? $this->month($text, $fiscal)
             ?? $this->year($text, $fiscal);
+    }
+
+    /** Only literal ISO intervals and explicitly labelled ISO stock dates supply boundaries.
+     * A fiscal label or a duration plus an end date never invents a start date.
+     */
+    public function explicitInterval(?string $period): ?ReportingPeriod
+    {
+        $text = trim((string) $period);
+        if (preg_match('/^as (?:of|at) (\d{4}-\d{2}-\d{2})$/iuD', $text, $match)) {
+            $start = $end = $match[1];
+            $granularity = 'point';
+        } elseif (preg_match('/^(\d{4}-\d{2}-\d{2})\s+to\s+(\d{4}-\d{2}-\d{2})$/uD', $text, $match)) {
+            [$start, $end] = [$match[1], $match[2]];
+            $granularity = '';
+        } else {
+            return null;
+        }
+        foreach ([$start, $end] as $date) {
+            [$year, $month, $day] = array_map('intval', explode('-', $date));
+            if (! $this->validYear($year) || ! checkdate($month, $day, $year)) {
+                return null;
+            }
+        }
+        if ($start > $end) {
+            return null;
+        }
+        if ($granularity === '') {
+            // Calendar-aligned whole months only; a 52/53-week fiscal interval needs a separate rule.
+            if (substr($start, 8) !== '01') {
+                return null;
+            }
+            $from = new \DateTimeImmutable($start);
+            foreach ([12 => 'year', 3 => 'quarter', 1 => 'month'] as $months => $kind) {
+                if (($kind !== 'quarter' || in_array((int) $from->format('n'), [1, 4, 7, 10], true))
+                    && $from->modify('+'.$months.' months')->modify('-1 day')->format('Y-m-d') === $end) {
+                    $granularity = $kind;
+                    break;
+                }
+            }
+            if ($granularity === '') {
+                return null;
+            }
+        }
+
+        return new ReportingPeriod($granularity, 'explicit', (float) str_replace('-', '', $end), $text, $start, $end);
     }
 
     /** A duration heading is part of the period identity; its end date alone is not. */
