@@ -12,6 +12,16 @@ class DocumentObserver
 {
     public function __construct(private AuditLogger $auditLogger) {}
 
+    public function deleting(Document $document): void
+    {
+        // A hard delete cascades comparison rows before deleted() runs. Release holds
+        // while their workspace/resource attribution still exists, for both delete modes.
+        \App\Models\DocumentComparison::where('base_document_id', $document->id)
+            ->orWhere('compared_document_id', $document->id)->each(function ($comparison) {
+                app(\App\Services\EntitlementService::class)->releaseComparison($comparison);
+            });
+    }
+
     public function deleted(Document $document): void
     {
         \App\Models\DocumentRelationship::where('from_document_id', $document->id)->orWhere('to_document_id', $document->id)->delete();

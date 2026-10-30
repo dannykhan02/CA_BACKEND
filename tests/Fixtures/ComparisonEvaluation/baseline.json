@@ -1,0 +1,2072 @@
+{
+    "phase": "baseline",
+    "fixture_sha256": "6ec1f478ac19d9dec9ddc69018c45314219c7119da37d8b41a3fd00db62b6294",
+    "counts": {
+        "cases": 55,
+        "correct_classifications": 11,
+        "false_substantive_changes": 27,
+        "missed_substantive_changes": 0,
+        "invalid_numeric_comparisons": 14,
+        "unmatched_rows": 4,
+        "duplicate_differences": 1,
+        "unsupported_evidence_claims": 0,
+        "incorrect_chronology_assumptions": 0
+    },
+    "results": [
+        {
+            "id": "n01",
+            "expected": "equivalent",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12,000,000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue: 12,000,000 KES; 2025.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "n02",
+            "expected": "equivalent",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000.00",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue: 12000000.00 KES; 2025.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "n03",
+            "expected": "equivalent",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000.0000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue: 12000000.0000 KES; 2025.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "n04",
+            "expected": "equivalent",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "-1234",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "(1,234)",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "n05",
+            "expected": "supported_change",
+            "actual": "supported_change",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "-12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue: -12000000 KES; 2025.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "n06",
+            "expected": "insufficient_evidence",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": null,
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue: None KES; 2025.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "n07",
+            "expected": "equivalent",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "0",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "0.00",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "n08",
+            "expected": "equivalent",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12",
+                                "unit": "KES million"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue: 12 KES million; 2025.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "n09",
+            "expected": "equivalent",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "0.012",
+                                "unit": "KES billion"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue: 0.012 KES billion; 2025.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "n10",
+            "expected": "equivalent",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000",
+                                "unit": "KES thousand"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue: 12000 KES thousand; 2025.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "n11",
+            "expected": "insufficient_evidence",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12,00,000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue: 12,00,000 KES; 2025.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "n12",
+            "expected": "insufficient_evidence",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12 of 20",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue: 12 of 20 KES; 2025.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "n13",
+            "expected": "not_comparable",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "25",
+                                "unit": "%"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "25",
+                                "unit": "percentage points"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "n14",
+            "expected": "supported_change",
+            "actual": "supported_change",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "9007199254740993.01",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "9007199254740993.02",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "u01",
+            "expected": "supported_change",
+            "actual": "supported_change",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12500000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue: 12500000 KES; 2025.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "u02",
+            "expected": "equivalent",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Length",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Length",
+                            "value": {
+                                "value": "1",
+                                "unit": "kilometres"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Length",
+                            "value": {
+                                "value": "1000",
+                                "unit": "metres"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "u03",
+            "expected": "equivalent",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Area",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Area",
+                            "value": {
+                                "value": "1",
+                                "unit": "hectares"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Area",
+                            "value": {
+                                "value": "10000",
+                                "unit": "square metres"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "u04",
+            "expected": "not_comparable",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12",
+                                "unit": "employees"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue: 12 employees; 2025.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "u05",
+            "expected": "insufficient_evidence",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12",
+                                "unit": ""
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue: 12 ; 2025.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "u06",
+            "expected": "insufficient_evidence",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12",
+                                "unit": "unknown"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue: 12 unknown; 2025.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "u07",
+            "expected": "not_comparable",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "USD"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue: 12000000 USD; 2025.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "u08",
+            "expected": "not_comparable",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "93000",
+                                "unit": "USD"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue: 93000 USD; 2025.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "p01",
+            "expected": "supported_change",
+            "actual": "supported_change",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12500000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue: 12500000 KES; 2025.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "p02",
+            "expected": "period_comparison",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12500000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue: 12500000 KES; 2026.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "p03",
+            "expected": "not_comparable",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12500000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue: 12500000 KES; Q2 2025.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "p04",
+            "expected": "not_comparable",
+            "actual": "equivalent",
+            "correct": false,
+            "output": []
+        },
+        {
+            "id": "p05",
+            "expected": "not_comparable",
+            "actual": "equivalent",
+            "correct": false,
+            "output": []
+        },
+        {
+            "id": "p06",
+            "expected": "not_comparable",
+            "actual": "equivalent",
+            "correct": false,
+            "output": []
+        },
+        {
+            "id": "p07",
+            "expected": "not_comparable",
+            "actual": "equivalent",
+            "correct": false,
+            "output": []
+        },
+        {
+            "id": "p08",
+            "expected": "insufficient_evidence",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue: 12 KES; first five months of 2025.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "p09",
+            "expected": "insufficient_evidence",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "13",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "p10",
+            "expected": "insufficient_evidence",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "13",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue: 13 KES; unknown.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "e01",
+            "expected": "equivalent",
+            "actual": "equivalent",
+            "correct": true,
+            "output": []
+        },
+        {
+            "id": "e02",
+            "expected": "insufficient_evidence",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "entities",
+                    "label": "organization",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "entities",
+                            "label": "organization",
+                            "value": {
+                                "value": "Example Ltd"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example Ltd",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "entities",
+                            "label": "organization",
+                            "value": {
+                                "value": "Example Limited"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example Limited",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "e03",
+            "expected": "not_comparable",
+            "actual": "equivalent",
+            "correct": false,
+            "output": []
+        },
+        {
+            "id": "e04",
+            "expected": "not_comparable",
+            "actual": "equivalent",
+            "correct": false,
+            "output": []
+        },
+        {
+            "id": "e05",
+            "expected": "not_comparable",
+            "actual": "equivalent",
+            "correct": false,
+            "output": []
+        },
+        {
+            "id": "e06",
+            "expected": "insufficient_evidence",
+            "actual": "equivalent",
+            "correct": false,
+            "output": []
+        },
+        {
+            "id": "c01",
+            "expected": "supported_change",
+            "actual": "supported_change",
+            "correct": true,
+            "output": [
+                {
+                    "category": "deadlines",
+                    "label": "Payment deadline",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "deadlines",
+                            "label": "Payment deadline",
+                            "value": {
+                                "description": "Buyer shall pay the invoice.",
+                                "due_date": null,
+                                "relative_text": "45 days",
+                                "date_type": "relative"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Buyer shall pay within 45 days.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "deadlines",
+                            "label": "Payment deadline",
+                            "value": {
+                                "description": "Buyer shall pay the invoice.",
+                                "due_date": null,
+                                "relative_text": "30 days",
+                                "date_type": "relative"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Buyer shall pay within 30 days.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "c02",
+            "expected": "supported_change",
+            "actual": "supported_change",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Contract amount",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Contract amount",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Contract amount",
+                            "value": {
+                                "value": "12500000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "c03",
+            "expected": "equivalent",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "deadlines",
+                    "label": "Payment deadline",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "deadlines",
+                            "label": "Payment deadline",
+                            "value": {
+                                "description": "Buyer shall pay the invoice.",
+                                "due_date": null,
+                                "relative_text": "45 days",
+                                "date_type": "relative"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Buyer shall pay within 45 days.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "deadlines",
+                            "label": "Payment deadline",
+                            "value": {
+                                "description": "Invoice is payable by the buyer.",
+                                "due_date": null,
+                                "relative_text": "45 days",
+                                "date_type": "relative"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Buyer shall pay within 45 days.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "c04",
+            "expected": "supported_change",
+            "actual": "supported_change",
+            "correct": true,
+            "output": [
+                {
+                    "category": "deadlines",
+                    "label": "Payment deadline",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "deadlines",
+                            "label": "Payment deadline",
+                            "value": {
+                                "description": "Buyer shall pay the invoice.",
+                                "due_date": null,
+                                "relative_text": "45 days",
+                                "date_type": "relative"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Buyer shall pay within 45 days.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "deadlines",
+                            "label": "Payment deadline",
+                            "value": {
+                                "description": "Buyer shall pay the invoice.",
+                                "due_date": null,
+                                "relative_text": "30 days",
+                                "date_type": "relative"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Clause payment is amended: Buyer shall pay within 30 days.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "c05",
+            "expected": "only_a",
+            "actual": "only_a",
+            "correct": true,
+            "output": [
+                {
+                    "category": "deadlines",
+                    "label": "Renewal notice",
+                    "description": "Not observed in compared extraction",
+                    "before": [
+                        {
+                            "category": "deadlines",
+                            "label": "Renewal notice",
+                            "value": {
+                                "description": "Buyer shall pay the invoice.",
+                                "due_date": null,
+                                "relative_text": "45 days",
+                                "date_type": "relative"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Buyer shall pay within 45 days.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": []
+                }
+            ]
+        },
+        {
+            "id": "c06",
+            "expected": "only_a",
+            "actual": "only_a",
+            "correct": true,
+            "output": [
+                {
+                    "category": "deadlines",
+                    "label": "Payment deadline",
+                    "description": "Not observed in compared extraction",
+                    "before": [
+                        {
+                            "category": "deadlines",
+                            "label": "Payment deadline",
+                            "value": {
+                                "description": "Buyer shall pay the invoice.",
+                                "due_date": null,
+                                "relative_text": "45 days",
+                                "date_type": "relative"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Buyer shall pay within 45 days.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": []
+                }
+            ]
+        },
+        {
+            "id": "c07",
+            "expected": "not_comparable",
+            "actual": "equivalent",
+            "correct": false,
+            "output": []
+        },
+        {
+            "id": "c08",
+            "expected": "not_comparable",
+            "actual": "equivalent",
+            "correct": false,
+            "output": []
+        },
+        {
+            "id": "c09",
+            "expected": "not_comparable",
+            "actual": "equivalent",
+            "correct": false,
+            "output": []
+        },
+        {
+            "id": "c10",
+            "expected": "potential_conflict",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "deadlines",
+                    "label": "Payment deadline",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "deadlines",
+                            "label": "Payment deadline",
+                            "value": {
+                                "description": "Buyer shall pay the invoice.",
+                                "due_date": null,
+                                "relative_text": "45 days",
+                                "date_type": "relative"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Buyer shall pay within 45 days.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "deadlines",
+                            "label": "Payment deadline",
+                            "value": {
+                                "description": "Buyer shall pay the invoice.",
+                                "due_date": null,
+                                "relative_text": "deleted",
+                                "date_type": "relative"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Clause payment is deleted in its entirety.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "c11",
+            "expected": "equivalent",
+            "actual": "mixed",
+            "correct": false,
+            "output": [
+                {
+                    "category": "deadlines",
+                    "label": "Renewal notice",
+                    "description": "Not observed in compared extraction",
+                    "before": [
+                        {
+                            "category": "deadlines",
+                            "label": "Renewal notice",
+                            "value": {
+                                "description": "Buyer shall pay the invoice.",
+                                "due_date": null,
+                                "relative_text": "45 days",
+                                "date_type": "relative"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Buyer shall pay within 45 days.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": []
+                },
+                {
+                    "category": "deadlines",
+                    "label": "Notice of renewal",
+                    "description": "Newly observed in extracted intelligence",
+                    "before": [],
+                    "after": [
+                        {
+                            "category": "deadlines",
+                            "label": "Notice of renewal",
+                            "value": {
+                                "description": "Buyer shall pay the invoice.",
+                                "due_date": null,
+                                "relative_text": "45 days",
+                                "date_type": "relative"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Buyer shall pay within 45 days.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "s01",
+            "expected": "insufficient_evidence",
+            "actual": "equivalent",
+            "correct": false,
+            "output": []
+        },
+        {
+            "id": "s02",
+            "expected": "equivalent",
+            "actual": "equivalent",
+            "correct": true,
+            "output": []
+        },
+        {
+            "id": "s03",
+            "expected": "insufficient_evidence",
+            "actual": "equivalent",
+            "correct": false,
+            "output": []
+        },
+        {
+            "id": "s04",
+            "expected": "equivalent",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        },
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "s05",
+            "expected": "insufficient_evidence",
+            "actual": "equivalent",
+            "correct": false,
+            "output": []
+        },
+        {
+            "id": "s06",
+            "expected": "insufficient_evidence",
+            "actual": "supported_change",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "description": "Changed extracted value or state",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        },
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "13",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "measurement_limits": [
+        "Chronology requires UI review; zero is not an engine-level chronology guarantee.",
+        "Identity and compatibility labels describe the full target; abstention may intentionally remain an M0 miss.",
+        "Integration cases are excluded from numeric denominators and run as feature tests."
+    ]
+}

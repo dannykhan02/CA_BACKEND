@@ -1,9 +1,11 @@
 <?php
 
 use App\Models\Document;
+use App\Models\DocumentComparison;
 use App\Models\ProcessingJob;
 use App\Models\Subscription;
 use App\Models\VerificationCode;
+use App\Services\Comparisons\ComparisonRecovery;
 use App\Services\Documents\UploadDispatchRecovery;
 use App\Services\EntitlementService;
 use App\Services\Pipeline\ProcessingStageReconciler;
@@ -110,3 +112,15 @@ Schedule::command('documents:recover-upload-dispatches')->everyFiveMinutes()->wi
 
 // Horizon's per-queue throughput/runtime metrics (and wait history) need periodic snapshots.
 Schedule::command('horizon:snapshot')->everyFiveMinutes();
+
+// Also triggered by authorized comparison reads; no scheduler-only correctness dependency.
+Artisan::command('comparisons:recover', function () {
+    DocumentComparison::whereIn('status', ['queued', 'processing'])->select('id')
+        ->chunkById(100, function ($items) {
+            foreach ($items as $item) {
+                app(ComparisonRecovery::class)->reconcile($item->id);
+            }
+        });
+    $this->info('Pending comparisons reconciled; active sessions were left running.');
+})->purpose('Redeliver unclaimed comparisons; block ambiguous paid attempts');
+Schedule::command('comparisons:recover')->everyFiveMinutes()->withoutOverlapping();

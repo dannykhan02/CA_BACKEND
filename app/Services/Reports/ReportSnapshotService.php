@@ -52,16 +52,17 @@ class ReportSnapshotService
             abort_if($documents->count() > self::MAX_DOCUMENTS, 422, 'Matter report exceeds the document limit.');
             $ids = $documents->pluck('id');
             $sections = [];
-            foreach (['summaries', 'entities', 'deadlines', 'risks', 'kpis', 'tracked'] as $kind) {
+            foreach (['summaries', 'entities', 'obligations', 'deadlines', 'risks', 'kpis', 'tracked'] as $kind) {
                 $rows = $this->matters->intelligence($user, $current, $kind)
                     ->limit(self::MAX_ROWS_PER_SECTION + 1)->get();
                 abort_if($rows->count() > self::MAX_ROWS_PER_SECTION, 422,
                     "Matter report exceeds the {$kind} limit.");
                 $sections[$kind] = $rows->toArray();
             }
+            $visibleIds = $this->access->documents($user)->select('id');
             $comparisons = DocumentComparison::where('workspace_id', $current->workspace_id)
                 ->where('matter_id', $current->id)
-                ->whereIn('base_document_id', $ids)->whereIn('compared_document_id', $ids)
+                ->whereIn('base_document_id', $visibleIds)->whereIn('compared_document_id', clone $visibleIds)
                 ->with(['baseDocument', 'comparedDocument'])->orderBy('id')
                 ->limit(self::MAX_ROWS_PER_SECTION + 1)->get();
             abort_if($comparisons->count() > self::MAX_ROWS_PER_SECTION, 422,
@@ -88,6 +89,8 @@ class ReportSnapshotService
                 'revisionSnapshot' => $documents->mapWithKeys(fn (Document $doc) => [$doc->id => $doc->published_intelligence_revision_id])->all(),
                 'complete' => $unavailable->isEmpty() && $partial->isEmpty(),
                 'limitations' => array_values(array_filter([
+                    $comparisons->contains(fn ($comparison) => ! $ids->contains($comparison->base_document_id) || ! $ids->contains($comparison->compared_document_id))
+                        ? 'Historical comparisons may cite authorized documents that have moved out of this Matter.' : null,
                     $unversioned->isNotEmpty() ? 'Some documents have legacy intelligence without immutable revision identity.' : null,
                     $unavailable->isNotEmpty() ? 'Some documents have no published intelligence.' : null,
                     $partial->isNotEmpty() ? 'Some document analysis is partial.' : null,

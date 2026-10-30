@@ -1,0 +1,3933 @@
+[
+  {
+    "id": "n01",
+    "scenario": "Comma versus no comma",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12,000,000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue: 12,000,000 KES; 2025.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "equivalent",
+      "identity": "same_concept",
+      "compatibility": "compatible",
+      "abstention": "none"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Comma versus no comma. Preserve both original representations and source references."
+  },
+  {
+    "id": "n02",
+    "scenario": "Decimal formatting",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000.00",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue: 12000000.00 KES; 2025.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "equivalent",
+      "identity": "same_concept",
+      "compatibility": "compatible",
+      "abstention": "none"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Decimal formatting. Preserve both original representations and source references."
+  },
+  {
+    "id": "n03",
+    "scenario": "Different precision with equal value",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000.0000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue: 12000000.0000 KES; 2025.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "equivalent",
+      "identity": "same_concept",
+      "compatibility": "compatible",
+      "abstention": "none"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Different precision with equal value. Preserve both original representations and source references."
+  },
+  {
+    "id": "n04",
+    "scenario": "Accounting parentheses equal a negative value",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "-1234",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "(1,234)",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "equivalent",
+      "identity": "same_concept",
+      "compatibility": "compatible",
+      "abstention": "none"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Accounting parentheses equal a negative value. Preserve both original representations and source references."
+  },
+  {
+    "id": "n05",
+    "scenario": "Negative and positive are different compatible values",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "-12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue: -12000000 KES; 2025.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "supported_change",
+      "identity": "same_concept",
+      "compatibility": "compatible",
+      "abstention": "none"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Negative and positive are different compatible values. Preserve both original representations and source references."
+  },
+  {
+    "id": "n06",
+    "scenario": "Zero versus null",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": null,
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue: None KES; 2025.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "insufficient_evidence",
+      "identity": "same_concept",
+      "compatibility": "unknown",
+      "abstention": "invalid_numeric"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Zero versus null. No substantive assertion is supported."
+  },
+  {
+    "id": "n07",
+    "scenario": "Exact zero versus decimal zero",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "0",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "0.00",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "equivalent",
+      "identity": "same_concept",
+      "compatibility": "compatible",
+      "abstention": "none"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Exact zero versus decimal zero. Preserve both original representations and source references."
+  },
+  {
+    "id": "n08",
+    "scenario": "Million scale equality",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12",
+            "unit": "KES million",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue: 12 KES million; 2025.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "equivalent",
+      "identity": "same_concept",
+      "compatibility": "compatible",
+      "abstention": "none"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Million scale equality. Preserve both original representations and source references."
+  },
+  {
+    "id": "n09",
+    "scenario": "Billion scale equality",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "0.012",
+            "unit": "KES billion",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue: 0.012 KES billion; 2025.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "equivalent",
+      "identity": "same_concept",
+      "compatibility": "compatible",
+      "abstention": "none"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Billion scale equality. Preserve both original representations and source references."
+  },
+  {
+    "id": "n10",
+    "scenario": "Thousand scale equality",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000",
+            "unit": "KES thousand",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue: 12000 KES thousand; 2025.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "equivalent",
+      "identity": "same_concept",
+      "compatibility": "compatible",
+      "abstention": "none"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Thousand scale equality. Preserve both original representations and source references."
+  },
+  {
+    "id": "n11",
+    "scenario": "Malformed grouping",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12,00,000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue: 12,00,000 KES; 2025.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "insufficient_evidence",
+      "identity": "same_concept",
+      "compatibility": "unknown",
+      "abstention": "invalid_numeric"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Malformed grouping. No substantive assertion is supported."
+  },
+  {
+    "id": "n12",
+    "scenario": "Malformed value contains multiple numbers",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12 of 20",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue: 12 of 20 KES; 2025.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "insufficient_evidence",
+      "identity": "same_concept",
+      "compatibility": "unknown",
+      "abstention": "invalid_numeric"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Malformed value contains multiple numbers. No substantive assertion is supported."
+  },
+  {
+    "id": "n13",
+    "scenario": "Percent versus percentage points",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "25",
+            "unit": "%",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "25",
+            "unit": "percentage points",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "not_comparable",
+      "identity": "same_concept",
+      "compatibility": "incompatible",
+      "abstention": "measurement_mismatch"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Percent versus percentage points. No substantive assertion is supported."
+  },
+  {
+    "id": "n14",
+    "scenario": "Decimal difference beyond float precision",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "9007199254740993.01",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "9007199254740993.02",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "supported_change",
+      "identity": "same_concept",
+      "compatibility": "compatible",
+      "abstention": "none"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Decimal difference beyond float precision. Preserve both original representations and source references."
+  },
+  {
+    "id": "u01",
+    "scenario": "Same currency and unit, substantive amount difference",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12500000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue: 12500000 KES; 2025.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "supported_change",
+      "identity": "same_concept",
+      "compatibility": "compatible",
+      "abstention": "none"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Same currency and unit, substantive amount difference. Preserve both original representations and source references."
+  },
+  {
+    "id": "u02",
+    "scenario": "Equivalent physical length units",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Length",
+          "value": {
+            "value": "1",
+            "unit": "kilometres",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Length",
+          "value": {
+            "value": "1000",
+            "unit": "metres",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "equivalent",
+      "identity": "same_concept",
+      "compatibility": "compatible",
+      "abstention": "none"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Equivalent physical length units. Preserve both original representations and source references."
+  },
+  {
+    "id": "u03",
+    "scenario": "Hectares versus square metres",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Area",
+          "value": {
+            "value": "1",
+            "unit": "hectares",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Area",
+          "value": {
+            "value": "10000",
+            "unit": "square metres",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "equivalent",
+      "identity": "same_concept",
+      "compatibility": "compatible",
+      "abstention": "none"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Hectares versus square metres. Preserve both original representations and source references."
+  },
+  {
+    "id": "u04",
+    "scenario": "Different measurement families",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12",
+            "unit": "employees",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue: 12 employees; 2025.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "not_comparable",
+      "identity": "same_concept",
+      "compatibility": "incompatible",
+      "abstention": "measurement_mismatch"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Different measurement families. No substantive assertion is supported."
+  },
+  {
+    "id": "u05",
+    "scenario": "Missing unit",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12",
+            "unit": "",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue: 12 ; 2025.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "insufficient_evidence",
+      "identity": "same_concept",
+      "compatibility": "unknown",
+      "abstention": "unknown_unit"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Missing unit. No substantive assertion is supported."
+  },
+  {
+    "id": "u06",
+    "scenario": "Unknown unit",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12",
+            "unit": "unknown",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue: 12 unknown; 2025.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "insufficient_evidence",
+      "identity": "same_concept",
+      "compatibility": "unknown",
+      "abstention": "unknown_unit"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Unknown unit. No substantive assertion is supported."
+  },
+  {
+    "id": "u07",
+    "scenario": "KES versus USD",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "USD",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue: 12000000 USD; 2025.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "not_comparable",
+      "identity": "same_concept",
+      "compatibility": "incompatible",
+      "abstention": "measurement_mismatch"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "KES versus USD. No substantive assertion is supported."
+  },
+  {
+    "id": "u08",
+    "scenario": "FX unavailable; do not invent exchange rate",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "93000",
+            "unit": "USD",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue: 93000 USD; 2025.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "not_comparable",
+      "identity": "same_concept",
+      "compatibility": "incompatible",
+      "abstention": "measurement_mismatch"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "FX unavailable; do not invent exchange rate. No substantive assertion is supported."
+  },
+  {
+    "id": "p01",
+    "scenario": "Same reporting period",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12500000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue: 12500000 KES; 2025.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "supported_change",
+      "identity": "same_concept",
+      "compatibility": "compatible",
+      "abstention": "none"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Same reporting period. Preserve both original representations and source references."
+  },
+  {
+    "id": "p02",
+    "scenario": "Comparable different calendar annual periods",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12500000",
+            "unit": "KES",
+            "period": "2026"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue: 12500000 KES; 2026.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "period_comparison",
+      "identity": "same_concept",
+      "compatibility": "period_comparable",
+      "abstention": "none"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Comparable different calendar annual periods. Preserve both original representations and source references."
+  },
+  {
+    "id": "p03",
+    "scenario": "Q2 versus full year",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12500000",
+            "unit": "KES",
+            "period": "Q2 2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue: 12500000 KES; Q2 2025.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "not_comparable",
+      "identity": "same_concept",
+      "compatibility": "incompatible",
+      "abstention": "period_mismatch"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Q2 versus full year. No substantive assertion is supported."
+  },
+  {
+    "id": "p04",
+    "scenario": "Different fiscal year ends",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "twelve months ended June 30, 2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "twelve months ended December 31, 2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "not_comparable",
+      "identity": "same_concept",
+      "compatibility": "incompatible",
+      "abstention": "period_mismatch"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Different fiscal year ends. No substantive assertion is supported."
+  },
+  {
+    "id": "p05",
+    "scenario": "Forecast versus actual",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "forecast",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "not_comparable",
+      "identity": "same_concept",
+      "compatibility": "incompatible",
+      "abstention": "basis_mismatch"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Forecast versus actual. No substantive assertion is supported."
+  },
+  {
+    "id": "p06",
+    "scenario": "Budget versus actual",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "budget",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "not_comparable",
+      "identity": "same_concept",
+      "compatibility": "incompatible",
+      "abstention": "basis_mismatch"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Budget versus actual. No substantive assertion is supported."
+  },
+  {
+    "id": "p07",
+    "scenario": "Original versus revised forecast",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "revised_forecast",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "not_comparable",
+      "identity": "same_concept",
+      "compatibility": "incompatible",
+      "abstention": "basis_mismatch"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Original versus revised forecast. No substantive assertion is supported."
+  },
+  {
+    "id": "p08",
+    "scenario": "Incomplete reporting period",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12",
+            "unit": "KES",
+            "period": "first five months of 2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue: 12 KES; first five months of 2025.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "insufficient_evidence",
+      "identity": "same_concept",
+      "compatibility": "unknown",
+      "abstention": "unknown_period"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Incomplete reporting period. No substantive assertion is supported."
+  },
+  {
+    "id": "p09",
+    "scenario": "Both reporting periods unknown",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": null
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "13",
+            "unit": "KES",
+            "period": null
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "insufficient_evidence",
+      "identity": "same_concept",
+      "compatibility": "unknown",
+      "abstention": "unknown_period"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Both reporting periods unknown. No substantive assertion is supported."
+  },
+  {
+    "id": "p10",
+    "scenario": "Unknown period on one side",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "13",
+            "unit": "KES",
+            "period": "unknown"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue: 13 KES; unknown.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "insufficient_evidence",
+      "identity": "same_concept",
+      "compatibility": "unknown",
+      "abstention": "unknown_period"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Unknown period on one side. No substantive assertion is supported."
+  },
+  {
+    "id": "e01",
+    "scenario": "Exact entity observation names",
+    "inputs": {
+      "a": [
+        {
+          "category": "entities",
+          "label": "organization",
+          "value": {
+            "value": "Example Ltd"
+          },
+          "context": {},
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example Ltd",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "entities",
+          "label": "organization",
+          "value": {
+            "value": "Example Ltd"
+          },
+          "context": {},
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example Ltd",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "equivalent",
+      "identity": "same_concept",
+      "compatibility": "compatible",
+      "abstention": "none"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Exact entity observation names. Preserve both original representations and source references."
+  },
+  {
+    "id": "e02",
+    "scenario": "Ltd versus Limited is not verified entity identity",
+    "inputs": {
+      "a": [
+        {
+          "category": "entities",
+          "label": "organization",
+          "value": {
+            "value": "Example Ltd"
+          },
+          "context": {},
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example Ltd",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "entities",
+          "label": "organization",
+          "value": {
+            "value": "Example Limited"
+          },
+          "context": {},
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example Limited",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "insufficient_evidence",
+      "identity": "unverified",
+      "compatibility": "unknown",
+      "abstention": "identity_unverified"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Ltd versus Limited is not verified entity identity. No substantive assertion is supported."
+  },
+  {
+    "id": "e03",
+    "scenario": "Similar names belong to different companies",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-002",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "not_comparable",
+      "identity": "same_concept",
+      "compatibility": "incompatible",
+      "abstention": "owner_mismatch"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Similar names belong to different companies. No substantive assertion is supported."
+  },
+  {
+    "id": "e04",
+    "scenario": "Parent and subsidiary have different identities",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:subsidiary-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "not_comparable",
+      "identity": "same_concept",
+      "compatibility": "incompatible",
+      "abstention": "owner_mismatch"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Parent and subsidiary have different identities. No substantive assertion is supported."
+  },
+  {
+    "id": "e05",
+    "scenario": "Multiple organizations share a label",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-003",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "not_comparable",
+      "identity": "same_concept",
+      "compatibility": "incompatible",
+      "abstention": "owner_mismatch"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Multiple organizations share a label. No substantive assertion is supported."
+  },
+  {
+    "id": "e06",
+    "scenario": "Unknown reporting entity identity",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": null,
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "insufficient_evidence",
+      "identity": "same_concept",
+      "compatibility": "unknown",
+      "abstention": "unknown_owner"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Unknown reporting entity identity. No substantive assertion is supported."
+  },
+  {
+    "id": "c01",
+    "scenario": "45 day versus 30 day payment deadline",
+    "inputs": {
+      "a": [
+        {
+          "category": "deadlines",
+          "label": "Payment deadline",
+          "value": {
+            "description": "Buyer shall pay the invoice.",
+            "due_date": null,
+            "relative_text": "45 days",
+            "date_type": "relative"
+          },
+          "context": {
+            "responsible_party": "Buyer",
+            "obligation_id": "agreement:payment"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Buyer shall pay within 45 days.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "deadlines",
+          "label": "Payment deadline",
+          "value": {
+            "description": "Buyer shall pay the invoice.",
+            "due_date": null,
+            "relative_text": "30 days",
+            "date_type": "relative"
+          },
+          "context": {
+            "responsible_party": "Buyer",
+            "obligation_id": "agreement:payment"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Buyer shall pay within 30 days.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "supported_change",
+      "identity": "same_concept",
+      "compatibility": "compatible",
+      "abstention": "none"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "45 day versus 30 day payment deadline. Preserve both original representations and source references."
+  },
+  {
+    "id": "c02",
+    "scenario": "Different payment amounts under established scope",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Contract amount",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Contract amount",
+          "value": {
+            "value": "12500000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "supported_change",
+      "identity": "same_concept",
+      "compatibility": "compatible",
+      "abstention": "none"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Different payment amounts under established scope. Preserve both original representations and source references."
+  },
+  {
+    "id": "c03",
+    "scenario": "Same obligation expressed with different description",
+    "inputs": {
+      "a": [
+        {
+          "category": "deadlines",
+          "label": "Payment deadline",
+          "value": {
+            "description": "Buyer shall pay the invoice.",
+            "due_date": null,
+            "relative_text": "45 days",
+            "date_type": "relative"
+          },
+          "context": {
+            "responsible_party": "Buyer",
+            "obligation_id": "agreement:payment"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Buyer shall pay within 45 days.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "deadlines",
+          "label": "Payment deadline",
+          "value": {
+            "description": "Invoice is payable by the buyer.",
+            "due_date": null,
+            "relative_text": "45 days",
+            "date_type": "relative"
+          },
+          "context": {
+            "responsible_party": "Buyer",
+            "obligation_id": "agreement:payment"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Buyer shall pay within 45 days.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "equivalent",
+      "identity": "same_concept",
+      "compatibility": "compatible",
+      "abstention": "none"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Same obligation expressed with different description. Preserve both original representations and source references."
+  },
+  {
+    "id": "c04",
+    "scenario": "Amendment explicitly changes one payment clause",
+    "inputs": {
+      "a": [
+        {
+          "category": "deadlines",
+          "label": "Payment deadline",
+          "value": {
+            "description": "Buyer shall pay the invoice.",
+            "due_date": null,
+            "relative_text": "45 days",
+            "date_type": "relative"
+          },
+          "context": {
+            "responsible_party": "Buyer",
+            "obligation_id": "agreement:payment"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Buyer shall pay within 45 days.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "deadlines",
+          "label": "Payment deadline",
+          "value": {
+            "description": "Buyer shall pay the invoice.",
+            "due_date": null,
+            "relative_text": "30 days",
+            "date_type": "relative"
+          },
+          "context": {
+            "responsible_party": "Buyer",
+            "obligation_id": "agreement:payment"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Clause payment is amended: Buyer shall pay within 30 days.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "supported_change",
+      "identity": "same_concept",
+      "compatibility": "compatible",
+      "abstention": "none"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Amendment explicitly changes one payment clause. Preserve both original representations and source references."
+  },
+  {
+    "id": "c05",
+    "scenario": "Amendment omits an unchanged provision",
+    "inputs": {
+      "a": [
+        {
+          "category": "deadlines",
+          "label": "Renewal notice",
+          "value": {
+            "description": "Buyer shall pay the invoice.",
+            "due_date": null,
+            "relative_text": "45 days",
+            "date_type": "relative"
+          },
+          "context": {
+            "responsible_party": "Buyer",
+            "obligation_id": "agreement:payment"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Buyer shall pay within 45 days.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": []
+    },
+    "expected": {
+      "outcome": "only_a",
+      "identity": "unmatched",
+      "compatibility": "not_applicable",
+      "abstention": "no_deletion"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Amendment omits an unchanged provision. Preserve both original representations and source references."
+  },
+  {
+    "id": "c06",
+    "scenario": "Missing extraction is not removed provision",
+    "inputs": {
+      "a": [
+        {
+          "category": "deadlines",
+          "label": "Payment deadline",
+          "value": {
+            "description": "Buyer shall pay the invoice.",
+            "due_date": null,
+            "relative_text": "45 days",
+            "date_type": "relative"
+          },
+          "context": {
+            "responsible_party": "Buyer",
+            "obligation_id": "agreement:payment"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Buyer shall pay within 45 days.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": []
+    },
+    "expected": {
+      "outcome": "only_a",
+      "identity": "unmatched",
+      "compatibility": "not_applicable",
+      "abstention": "no_deletion"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Missing extraction is not removed provision. Preserve both original representations and source references."
+  },
+  {
+    "id": "c07",
+    "scenario": "Same clause title with different responsible parties",
+    "inputs": {
+      "a": [
+        {
+          "category": "deadlines",
+          "label": "Payment deadline",
+          "value": {
+            "description": "Buyer shall pay the invoice.",
+            "due_date": null,
+            "relative_text": "45 days",
+            "date_type": "relative"
+          },
+          "context": {
+            "responsible_party": "Buyer",
+            "obligation_id": "agreement:payment"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Buyer shall pay within 45 days.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "deadlines",
+          "label": "Payment deadline",
+          "value": {
+            "description": "Buyer shall pay the invoice.",
+            "due_date": null,
+            "relative_text": "45 days",
+            "date_type": "relative"
+          },
+          "context": {
+            "responsible_party": "Supplier",
+            "obligation_id": "agreement:payment"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Buyer shall pay within 45 days.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "not_comparable",
+      "identity": "same_concept",
+      "compatibility": "incompatible",
+      "abstention": "party_mismatch"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Same clause title with different responsible parties. No substantive assertion is supported."
+  },
+  {
+    "id": "c08",
+    "scenario": "Payment schedule versus bank settlement",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "bank_settlement",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "not_comparable",
+      "identity": "same_concept",
+      "compatibility": "incompatible",
+      "abstention": "basis_mismatch"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Payment schedule versus bank settlement. No substantive assertion is supported."
+  },
+  {
+    "id": "c09",
+    "scenario": "Shared deadline title refers to different obligations",
+    "inputs": {
+      "a": [
+        {
+          "category": "deadlines",
+          "label": "Payment deadline",
+          "value": {
+            "description": "Buyer shall pay the invoice.",
+            "due_date": null,
+            "relative_text": "45 days",
+            "date_type": "relative"
+          },
+          "context": {
+            "responsible_party": "Buyer",
+            "obligation_id": "agreement:payment"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Buyer shall pay within 45 days.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "deadlines",
+          "label": "Payment deadline",
+          "value": {
+            "description": "Buyer shall pay the invoice.",
+            "due_date": null,
+            "relative_text": "45 days",
+            "date_type": "relative"
+          },
+          "context": {
+            "responsible_party": "Buyer",
+            "obligation_id": "agreement:delivery"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Buyer shall pay within 45 days.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "not_comparable",
+      "identity": "same_concept",
+      "compatibility": "incompatible",
+      "abstention": "obligation_mismatch"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Shared deadline title refers to different obligations. No substantive assertion is supported."
+  },
+  {
+    "id": "c10",
+    "scenario": "Explicit deletion has evidence but needs authority review",
+    "inputs": {
+      "a": [
+        {
+          "category": "deadlines",
+          "label": "Payment deadline",
+          "value": {
+            "description": "Buyer shall pay the invoice.",
+            "due_date": null,
+            "relative_text": "45 days",
+            "date_type": "relative"
+          },
+          "context": {
+            "responsible_party": "Buyer",
+            "obligation_id": "agreement:payment"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Buyer shall pay within 45 days.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "deadlines",
+          "label": "Payment deadline",
+          "value": {
+            "description": "Buyer shall pay the invoice.",
+            "due_date": null,
+            "relative_text": "deleted",
+            "date_type": "relative"
+          },
+          "context": {
+            "responsible_party": "Buyer",
+            "obligation_id": "agreement:payment"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Clause payment is deleted in its entirety.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "potential_conflict",
+      "identity": "same_concept",
+      "compatibility": "compatible",
+      "abstention": "no_automatic_legal_effect"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Explicit deletion has evidence but needs authority review. Preserve both original representations and source references."
+  },
+  {
+    "id": "c11",
+    "scenario": "Reworded titles require semantic candidate review",
+    "inputs": {
+      "a": [
+        {
+          "category": "deadlines",
+          "label": "Renewal notice",
+          "value": {
+            "description": "Buyer shall pay the invoice.",
+            "due_date": null,
+            "relative_text": "45 days",
+            "date_type": "relative"
+          },
+          "context": {
+            "responsible_party": "Buyer",
+            "obligation_id": "agreement:payment"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Buyer shall pay within 45 days.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "deadlines",
+          "label": "Notice of renewal",
+          "value": {
+            "description": "Buyer shall pay the invoice.",
+            "due_date": null,
+            "relative_text": "45 days",
+            "date_type": "relative"
+          },
+          "context": {
+            "responsible_party": "Buyer",
+            "obligation_id": "agreement:payment"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Buyer shall pay within 45 days.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "equivalent",
+      "identity": "semantic_candidate",
+      "compatibility": "compatible",
+      "abstention": "no_verified_semantic_identity"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Reworded titles require semantic candidate review. Preserve both original representations and source references."
+  },
+  {
+    "id": "s01",
+    "scenario": "Missing source passage",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": null,
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "insufficient_evidence",
+      "identity": "same_concept",
+      "compatibility": "unknown",
+      "abstention": "missing_evidence"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Missing source passage. No substantive assertion is supported."
+  },
+  {
+    "id": "s02",
+    "scenario": "Approximate passage location remains approximate",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "approximate",
+            "page_number": null
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "equivalent",
+      "identity": "same_concept",
+      "compatibility": "compatible",
+      "abstention": "no_exact_citation"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Approximate passage location remains approximate. Preserve both original representations and source references."
+  },
+  {
+    "id": "s03",
+    "scenario": "Analytically ineligible figure",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": false,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "insufficient_evidence",
+      "identity": "same_concept",
+      "compatibility": "unknown",
+      "abstention": "ineligible"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Analytically ineligible figure. No substantive assertion is supported."
+  },
+  {
+    "id": "s04",
+    "scenario": "Duplicate identical observations",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        },
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "equivalent",
+      "identity": "same_concept",
+      "compatibility": "compatible",
+      "abstention": "none"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Duplicate identical observations. Preserve both original representations and source references."
+  },
+  {
+    "id": "s05",
+    "scenario": "Superseded figure is excluded from substantive assertions",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified",
+            "superseded": true
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "insufficient_evidence",
+      "identity": "same_concept",
+      "compatibility": "unknown",
+      "abstention": "superseded"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Superseded figure is excluded from substantive assertions. No substantive assertion is supported."
+  },
+  {
+    "id": "s06",
+    "scenario": "Conflicting observations within one source",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        },
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "13",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "insufficient_evidence",
+      "identity": "same_concept",
+      "compatibility": "unknown",
+      "abstention": "ambiguous_candidates"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Conflicting observations within one source. No substantive assertion is supported."
+  },
+  {
+    "id": "s07",
+    "scenario": "Stale published revision remains readable and visibly outdated",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "historical",
+      "identity": "integration_boundary",
+      "compatibility": "not_applicable",
+      "abstention": "state_gate"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Stale published revision remains readable and visibly outdated. Preserve both original representations and source references.",
+    "layer": "integration"
+  },
+  {
+    "id": "s08",
+    "scenario": "Deleted source cannot expose evidence",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "denied",
+      "identity": "integration_boundary",
+      "compatibility": "not_applicable",
+      "abstention": "state_gate"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Deleted source cannot expose evidence. Preserve both original representations and source references.",
+    "layer": "integration"
+  },
+  {
+    "id": "s09",
+    "scenario": "Revoked access denies saved result and export",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "denied",
+      "identity": "integration_boundary",
+      "compatibility": "not_applicable",
+      "abstention": "state_gate"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Revoked access denies saved result and export. Preserve both original representations and source references.",
+    "layer": "integration"
+  },
+  {
+    "id": "s10",
+    "scenario": "Partially processed document cannot start comparison",
+    "inputs": {
+      "a": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "A",
+            "intelligence_revision_id": "revision-A",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ],
+      "b": [
+        {
+          "category": "kpis",
+          "label": "Revenue",
+          "value": {
+            "value": "12000000",
+            "unit": "KES",
+            "period": "2025"
+          },
+          "context": {
+            "subject": "Example reporting company",
+            "owner": "registry:synthetic-001",
+            "value_basis": "actual",
+            "aggregation": "total",
+            "analytical_eligible": true,
+            "verification": "source_verified"
+          },
+          "source": {
+            "document_id": "B",
+            "intelligence_revision_id": "revision-B",
+            "insight_id": "kpi-1",
+            "evidence": "Example reporting company revenue for calendar 2025: KES 12,000,000.",
+            "location_kind": "page",
+            "page_number": 1
+          }
+        }
+      ]
+    },
+    "expected": {
+      "outcome": "rejected",
+      "identity": "integration_boundary",
+      "compatibility": "not_applicable",
+      "abstention": "state_gate"
+    },
+    "supporting_evidence": "Synthetic passages and locations are attached to each input; they establish only the context stated in this case.",
+    "explanation": "Partially processed document cannot start comparison. Preserve both original representations and source references.",
+    "layer": "integration"
+  }
+]

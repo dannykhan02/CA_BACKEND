@@ -324,7 +324,7 @@ class ProviderGateTest extends TestCase
         $this->occupy(2);
         Http::fake();
         $ledger = DB::table('credit_ledger')->count();
-        (new CompareDocumentsJob($comparison->id))->handle(app(DocumentComparisonService::class));
+        (new CompareDocumentsJob($comparison->id, $comparison->dispatch_token))->handle(app(DocumentComparisonService::class));
         self::assertSame('queued', $comparison->fresh()->status);
         self::assertSame($ledger, DB::table('credit_ledger')->count());
         Http::assertNothingSent();

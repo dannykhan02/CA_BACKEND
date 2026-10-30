@@ -13,6 +13,7 @@ use App\Models\ProcessingJob;
 use App\Models\TrackedItem;
 use App\Models\User;
 use App\Services\Pipeline\ProcessingStageReconciler;
+use App\Support\DeadlineClassification;
 use Illuminate\Support\Facades\DB;
 
 class MatterService
@@ -47,12 +48,19 @@ class MatterService
             default => abort(422, 'Unknown intelligence section.'),
         };
 
-        $query = $model::whereIn('document_id', $ids)->with('document:id,name')->orderBy('id');
+        $query = $model::whereIn('document_id', $ids)->with('document:id,name');
         if ($kind !== 'tracked') {
             app(DocumentIntelligenceService::class)->publishedRows($query, (new $model)->getTable());
         }
 
-        return $query;
+        if ($kind === 'obligations') {
+            $query->whereIn(DB::raw(DeadlineClassification::normalizedSql()), DeadlineClassification::OBLIGATIONS);
+        }
+        if (in_array($kind, ['obligations', 'deadlines'], true)) {
+            $query->orderByRaw("CASE WHEN date_type = 'explicit' THEN due_date END ASC NULLS LAST");
+        }
+
+        return $query->orderBy('id');
     }
 
     public function overview(User $user, Matter $matter): array

@@ -9,9 +9,9 @@ class DocumentComparison extends Model
 {
     use HasUuids;
 
-    protected $fillable = ['workspace_id', 'matter_id', 'base_document_id', 'compared_document_id', 'created_by', 'fingerprint', 'status', 'summary', 'changes', 'metadata', 'error_message'];
+    protected $fillable = ['workspace_id', 'matter_id', 'base_document_id', 'compared_document_id', 'created_by', 'fingerprint', 'status', 'summary', 'changes', 'metadata', 'error_message', 'dispatch_token', 'dispatched_at', 'provider_started_at'];
 
-    protected $casts = ['changes' => 'array', 'metadata' => 'array'];
+    protected $casts = ['changes' => 'array', 'metadata' => 'array', 'dispatched_at' => 'datetime', 'provider_started_at' => 'datetime'];
 
     public function baseDocument()
     {
