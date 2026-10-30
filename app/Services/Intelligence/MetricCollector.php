@@ -8,6 +8,7 @@ use App\Models\DocumentKpi;
 use App\Services\AI\Incremental\EvidenceGrounding;
 use App\Services\Kpis\KpiIdentityProfile;
 use App\Services\Kpis\KpiLabelNormalizer;
+use Illuminate\Support\Collection;
 
 /**
  * Reads the metric findings a document already has and turns the chartable ones into
@@ -45,12 +46,12 @@ class MetricCollector
     /**
      * @return array{observations: list<MetricObservation>, stats: array<string,int>}
      */
-    public function collect(Document $document): array
+    public function collect(Document $document, ?Collection $publishedEvidence = null): array
     {
         $stats = ['metric_findings' => 0, 'parseable' => 0, 'chartable' => 0, 'unreadable_value' => 0, 'no_period' => 0];
         $observations = [];
         $rejected = [];
-        foreach ($this->records($document) as $record) {
+        foreach ($this->records($document, $publishedEvidence) as $record) {
             $stats['metric_findings']++;
             $observation = $this->observe($record);
             if ($observation === null) {
@@ -78,12 +79,12 @@ class MetricCollector
      *
      * @return list<array<string,mixed>>
      */
-    private function records(Document $document): array
+    private function records(Document $document, ?Collection $publishedEvidence = null): array
     {
         $records = [];
         $key = $document->ai_pipeline['key'] ?? null;
         if ($key !== null) {
-            $rows = DocumentEvidence::where('workspace_id', $document->workspace_id)
+            $rows = $publishedEvidence?->where('kind', 'metric') ?? DocumentEvidence::where('workspace_id', $document->workspace_id)
                 ->where('document_id', $document->id)->where('pipeline_key', $key)
                 ->where('kind', 'metric')->orderBy('identity')->get();
             foreach ($rows as $row) {

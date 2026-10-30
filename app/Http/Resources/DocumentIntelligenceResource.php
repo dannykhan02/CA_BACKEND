@@ -2,12 +2,12 @@
 
 namespace App\Http\Resources;
 
-use App\Models\DocumentEvidence;
 use App\Services\DocumentIntelligenceService;
 use App\Services\Documents\EvidencePageLocator;
 use App\Services\Intelligence\B2\BriefReadService;
 use App\Services\Intelligence\DocumentAnalysisComposer;
 use App\Services\Intelligence\ImportantFindingsBuilder;
+use App\Services\Intelligence\PublishedIntelligenceProjection;
 use App\Services\Intelligence\SourceReferenceResolver;
 use App\Services\Intelligence\VerifiedPdfChartReadModel;
 use Illuminate\Http\Request;
@@ -49,10 +49,11 @@ class DocumentIntelligenceResource extends JsonResource
             }
         }
 
+        $published = app(PublishedIntelligenceProjection::class)->read($this->resource);
         $composer = app(DocumentAnalysisComposer::class);
         $analysis = in_array($this->status, ['Ready', 'Needs Review'], true)
             && ($this->published_intelligence_revision_id !== null || (int) $this->intelligence_generation === 0)
-            ? $composer->compose($this->resource)
+            ? $composer->compose($this->resource, publishedMetrics: $published['metrics'], publishedEvidence: $published['evidenceRecords'])
             : null;
         $brief = $analysis === null ? null : app(BriefReadService::class)->forDocument($this->resource);
         $referenced = array_fill_keys($analysis === null ? [] : $composer->referencedSourceIds($analysis), true);
@@ -90,12 +91,13 @@ class DocumentIntelligenceResource extends JsonResource
         $evidence = [];
         if (isset($this->ai_pipeline['key'])) {
             $resolver = app(SourceReferenceResolver::class);
-            foreach (DocumentEvidence::where('document_id', $this->id)->where('workspace_id', $this->workspace_id)
-                ->where('pipeline_key', $this->ai_pipeline['key'])->cursor() as $item) {
+            $sourceGroups = $published['evidenceRecords']->groupBy('source_id');
+            $resolvedSources = [];
+            foreach ($published['evidenceRecords'] as $item) {
                 if ($item->source_id === null || ! isset($referenced[$item->source_id])) {
                     continue;
                 }
-                $resolved = $resolver->resolve($this->resource, $item->source_id);
+                $resolved = $resolvedSources[$item->source_id] ??= $resolver->resolve($this->resource, $item->source_id, $sourceGroups->get($item->source_id));
                 $storedSources = $item->sources ?? [];
                 $verifiedSources = array_values(array_filter($storedSources, fn ($source) => is_array($source) && is_int($source['start_offset'] ?? null)
                     && is_int($source['end_offset'] ?? null) && is_string($source['quote'] ?? null)
@@ -130,6 +132,7 @@ class DocumentIntelligenceResource extends JsonResource
         }
 
         return [
+            'publishedIntelligence' => $published['coverage'],
             'intelligenceRevisionId' => $this->published_intelligence_revision_id,
             'intelligenceRefreshInProgress' => $this->active_intelligence_revision_id !== null,
             'intelligenceProcessingStatus' => $this->getAttribute('intelligence_processing_status') ?? $this->status,

@@ -7,6 +7,8 @@ class IdentityCandidates
 {
     public const VERSION = 'identity-m2a-v1';
 
+    public const M3_VERSION = 'identity-m3-v1';
+
     public const MAX_FACTS = 2000;
 
     public const MAX_BUCKET = 8;
@@ -15,6 +17,15 @@ class IdentityCandidates
 
     public function build(array $before, array $after, array $decisions = []): array
     {
+        $version = self::VERSION;
+        foreach ([...array_values($before), ...array_values($after)] as $rows) {
+            foreach ($rows as $row) {
+                if (isset($row['context']['projection_version'])) {
+                    $version = self::M3_VERSION;
+                    break 2;
+                }
+            }
+        }
         $overflow = false;
         $buckets = [];
         foreach (['a' => $before, 'b' => $after] as $side => $snapshot) {
@@ -48,7 +59,7 @@ class IdentityCandidates
                 }
                 foreach ($a as $left) {
                     foreach ($b as $right) {
-                        $candidate = $this->candidate($kind, $left, $right);
+                        $candidate = $this->candidate($kind, $left, $right, $version);
                         $key = $candidate['key'];
                         $candidate['ambiguous'] = count($a) > 1 || count($b) > 1;
                         if (isset($candidates[$key])) {
@@ -83,7 +94,7 @@ class IdentityCandidates
             unset($candidate);
         }
 
-        return ['version' => self::VERSION, 'truncated' => $overflow, 'candidates' => array_values($candidates)];
+        return ['version' => $version, 'truncated' => $overflow, 'candidates' => array_values($candidates)];
     }
 
     public function apply(array $before, array $after, array $context): array
@@ -126,7 +137,19 @@ class IdentityCandidates
                 $bindings[$a] = $bindings[$b] = $candidate;
             }
         }
-        $project = function ($snapshot) use ($bindings, $blocked) {
+        $suggestions = [];
+        $suggestionDegrees = [];
+        foreach ($context['candidates'] ?? [] as $candidate) {
+            if (($context['truncated'] ?? false) || $candidate['state'] !== 'candidate') {
+                continue;
+            }
+            foreach (['a', 'b'] as $side) {
+                $id = $candidate['kind'].':'.$this->occurrence($candidate[$side]);
+                $suggestions[$id] = $candidate;
+                $suggestionDegrees[$id] = ($suggestionDegrees[$id] ?? 0) + 1;
+            }
+        }
+        $project = function ($snapshot) use ($bindings, $blocked, $suggestions, $suggestionDegrees) {
             $out = [];
             foreach ($snapshot as $key => $rows) {
                 foreach ($rows as $row) {
@@ -149,10 +172,22 @@ class IdentityCandidates
                                 $row['context']['subject'] = $token;
                             }
                         } elseif ($kind === 'provision') {
-                            $rowKey = 'deadlines:alignment:'.$candidate['key'];
+                            $rowKey = $row['category'].':alignment:'.$candidate['key'];
+                        } elseif ($kind === 'risk') {
+                            $rowKey = 'risks:alignment:'.$candidate['key'];
                         } elseif ($kind === 'entity') {
                             $row['context']['entity_identity'] = $token;
                             $rowKey = 'entities:alignment:'.$candidate['key'];
+                        }
+                    }
+                    if ($candidate === null && ! isset($blocked[$id]) && isset($row['context']['projection_version'], $suggestions[$id])) {
+                        $suggestion = $suggestions[$id];
+                        $sa = $suggestion['kind'].':'.$this->occurrence($suggestion['a']);
+                        $sb = $suggestion['kind'].':'.$this->occurrence($suggestion['b']);
+                        if (($suggestionDegrees[$sa] ?? 0) === 1 && ($suggestionDegrees[$sb] ?? 0) === 1
+                            && ! isset($bindings[$sa]) && ! isset($bindings[$sb]) && ! isset($blocked[$sa]) && ! isset($blocked[$sb])) {
+                            $row['context']['relationship_candidate'] = ['state' => 'candidate', 'key' => $suggestion['key'], 'basis' => $suggestion['basis']];
+                            $rowKey = $row['category'].':candidate:'.$suggestion['key'];
                         }
                     }
                     $out[$rowKey][] = $row;
@@ -191,7 +226,7 @@ class IdentityCandidates
     private function kind(array $row): string
     {
         return match ($row['category']) {
-            'kpis' => 'reporting_owner', 'entities' => 'entity', 'deadlines' => 'provision', default => ''
+            'kpis' => 'reporting_owner', 'entities' => 'entity', 'deadlines', 'obligations' => 'provision', 'risks' => isset($row['context']['projection_version']) ? 'risk' : '', default => ''
         };
     }
 
@@ -213,6 +248,14 @@ class IdentityCandidates
 
             return $keys;
         }
+        if ($kind === 'risk') {
+            $keys = [[$kind, 'title:'.$this->name($row['label'])]];
+            if (! empty($c['subject'])) {
+                $keys[] = [$kind, 'subject:'.$this->name($c['subject']).':'.($c['risk_type'] ?? '')];
+            }
+
+            return $keys;
+        }
         if ($kind === 'provision') {
             $keys = [[$kind, 'title:'.$this->name($row['label'])]];
             if (! empty($c['obligation_reference'])) {
@@ -225,19 +268,19 @@ class IdentityCandidates
         return [];
     }
 
-    private function candidate(string $kind, array $a, array $b): array
+    private function candidate(string $kind, array $a, array $b, string $version): array
     {
         $sides = [$a, $b];
         usort($sides, fn ($x, $y) => strcmp($this->occurrence($x), $this->occurrence($y)));
-        $key = hash('sha256', json_encode([self::VERSION, $kind, array_map($this->bindingFact(...), $sides)], JSON_THROW_ON_ERROR));
+        $key = hash('sha256', json_encode([$version, $kind, array_map($this->bindingFact(...), $sides)], JSON_THROW_ON_ERROR));
         $ia = $a['context']['organization_identifier'] ?? null;
         $ib = $b['context']['organization_identifier'] ?? null;
         $state = 'candidate';
-        $basis = $kind === 'reporting_owner' ? 'shared_metric_concept' : ($kind === 'entity' ? 'normalized_name_candidate' : 'title_or_reference_candidate');
+        $basis = $kind === 'reporting_owner' ? 'shared_metric_concept' : ($kind === 'entity' ? 'normalized_name_candidate' : ($kind === 'risk' ? 'risk_subject_or_title_candidate' : 'title_or_reference_candidate'));
         if (($ia['conflict'] ?? false) || ($ib['conflict'] ?? false)) {
             $state = 'contradictory';
             $basis = 'conflicting_source_bound_identifiers';
-        } elseif ($kind !== 'provision' && $ia !== null && $ib !== null
+        } elseif (in_array($kind, ['reporting_owner', 'entity'], true) && $ia !== null && $ib !== null
             && $ia['namespace'] === $ib['namespace'] && $ia['issuer'] === $ib['issuer'] && $ia['jurisdiction'] === $ib['jurisdiction']) {
             $state = $ia['value'] === $ib['value'] ? 'established' : 'contradictory';
             $basis = $state === 'established' ? 'matching_source_bound_identifier' : 'conflicting_source_bound_identifiers';

@@ -42,6 +42,10 @@ Thumbs.db
 
 # Local test fixtures - not for version control
 *.pdf
+!tests/Fixtures/ComparisonM2B1/sources/apple-fy26-q2.pdf
+!tests/Fixtures/ComparisonM2B1/sources/apple-fy24-q2.pdf
+!tests/Fixtures/ComparisonRecovery/sources/1936-cooper-eagle-agmt.pdf
+!tests/Fixtures/ComparisonRecovery/sources/1936-cooper-eagle-amendagmt1.pdf
 !tests/Fixtures/synthetic_single_period_costs.pdf
 !tests/Fixtures/synthetic_single_period_costs_conflict.pdf
 !tests/Fixtures/synthetic_single_period_costs_duplicate.pdf

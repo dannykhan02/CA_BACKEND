@@ -11,6 +11,7 @@ use App\Http\Resources\DocumentRiskResource;
 use App\Models\Document;
 use App\Services\DocumentIntelligenceService;
 use App\Services\Intelligence\DocumentAnalysisComposer;
+use App\Services\Intelligence\PublishedIntelligenceProjection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -60,7 +61,8 @@ class DocumentIntelligenceController extends Controller
 
         $family = $input['family'];
         $offset = (int) $input['offset'];
-        $analysis = $composer->compose($document, null, $family, $offset);
+        $published = app(PublishedIntelligenceProjection::class)->read($document);
+        $analysis = $composer->compose($document, null, $family, $offset, $published['metrics'], $published['evidenceRecords']);
         if ($family === 'charts') {
             $items = $analysis['visualAnalysis']['charts'];
             $eligible = $analysis['visualAnalysis']['diagnostics']['candidateVisualizations'];

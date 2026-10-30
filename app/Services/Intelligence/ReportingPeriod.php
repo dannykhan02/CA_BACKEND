@@ -17,6 +17,8 @@ readonly class ReportingPeriod
         public string $basis,
         public float $sortKey,
         public string $label,
+        public ?string $startDate = null,
+        public ?string $endDate = null,
     ) {}
 
     public function comparableWith(self $other): bool

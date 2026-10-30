@@ -1,0 +1,3515 @@
+{
+    "tier": 1,
+    "algorithm": "structured-m2b1-v1",
+    "case_source_sha256": "fff36bc7d5ce50eaa338720ee972f88f781c57a9717e99068ffb1ad04381ed6f",
+    "counts": {
+        "cases": 39,
+        "correct_classifications": 38,
+        "false_substantive_changes": 0,
+        "missed_supported_differences": 1,
+        "unsafe_compatibility_conclusions": 0,
+        "abstentions": 30
+    },
+    "results": [
+        {
+            "name": "annual performance",
+            "expected": "period_comparison",
+            "decision": [
+                "period_comparison",
+                "explicit_period_performance",
+                {
+                    "rule_id": "explicit-financial-period-m2b1-v1",
+                    "relationship": "different_periods",
+                    "direction": "document_b_minus_document_a",
+                    "measurement_nature": "flow",
+                    "period_a": {
+                        "original": "2024-01-01 to 2024-12-31",
+                        "start": "2024-01-01",
+                        "end": "2024-12-31"
+                    },
+                    "period_b": {
+                        "original": "2025-01-01 to 2025-12-31",
+                        "start": "2025-01-01",
+                        "end": "2025-12-31"
+                    },
+                    "original_a": {
+                        "value": "100",
+                        "unit": "USD million",
+                        "period": "2024-01-01 to 2024-12-31"
+                    },
+                    "original_b": {
+                        "value": "125",
+                        "unit": "USD million",
+                        "period": "2025-01-01 to 2025-12-31"
+                    },
+                    "canonical_unit": "USD",
+                    "currency": "USD",
+                    "canonical_a": "100000000",
+                    "canonical_b": "125000000",
+                    "absolute_difference": "25000000",
+                    "relative_percent": "25.000000",
+                    "relative_rounding": "6 decimal places, half up",
+                    "limitations": "Reported observations only. No revision, contradiction, legal authority or independent factual verification is established."
+                }
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "dollar formatting",
+            "expected": "period_comparison",
+            "decision": [
+                "not_comparable",
+                "measurement_mismatch"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "$ million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 $ million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 $ million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "per share amounts excluded",
+            "expected": "insufficient_evidence",
+            "decision": [
+                "insufficient_evidence",
+                "unsupported_period_measurement"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD per share",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD per share 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD per share 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD per share",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD per share 2025-01-01 to 2025-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD per share 2025-01-01 to 2025-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "same period difference",
+            "expected": "supported_change",
+            "decision": [
+                "supported_change",
+                "explicit_same_period_values",
+                {
+                    "rule_id": "explicit-financial-period-m2b1-v1",
+                    "relationship": "same_period",
+                    "direction": "document_b_minus_document_a",
+                    "measurement_nature": "flow",
+                    "period_a": {
+                        "original": "2024-01-01 to 2024-12-31",
+                        "start": "2024-01-01",
+                        "end": "2024-12-31"
+                    },
+                    "period_b": {
+                        "original": "2024-01-01 to 2024-12-31",
+                        "start": "2024-01-01",
+                        "end": "2024-12-31"
+                    },
+                    "original_a": {
+                        "value": "100",
+                        "unit": "USD million",
+                        "period": "2024-01-01 to 2024-12-31"
+                    },
+                    "original_b": {
+                        "value": "125",
+                        "unit": "USD million",
+                        "period": "2024-01-01 to 2024-12-31"
+                    },
+                    "canonical_unit": "USD",
+                    "currency": "USD",
+                    "canonical_a": "100000000",
+                    "canonical_b": "125000000",
+                    "absolute_difference": "25000000",
+                    "relative_percent": null,
+                    "relative_rounding": null,
+                    "limitations": "Reported observations only. No revision, contradiction, legal authority or independent factual verification is established. Relative change is withheld for same periods, nonpositive baselines or negative target values."
+                }
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "overlapping comparative agreement",
+            "expected": "equivalent",
+            "decision": [
+                "equivalent",
+                "explicit_same_period_values",
+                {
+                    "rule_id": "explicit-financial-period-m2b1-v1",
+                    "relationship": "same_period",
+                    "direction": "document_b_minus_document_a",
+                    "measurement_nature": "flow",
+                    "period_a": {
+                        "original": "2024-01-01 to 2024-12-31",
+                        "start": "2024-01-01",
+                        "end": "2024-12-31"
+                    },
+                    "period_b": {
+                        "original": "2024-01-01 to 2024-12-31",
+                        "start": "2024-01-01",
+                        "end": "2024-12-31"
+                    },
+                    "original_a": {
+                        "value": "100",
+                        "unit": "USD million",
+                        "period": "2024-01-01 to 2024-12-31"
+                    },
+                    "original_b": {
+                        "value": "100",
+                        "unit": "USD million",
+                        "period": "2024-01-01 to 2024-12-31"
+                    },
+                    "canonical_unit": "USD",
+                    "currency": "USD",
+                    "canonical_a": "100000000",
+                    "canonical_b": "100000000",
+                    "absolute_difference": "0",
+                    "relative_percent": null,
+                    "relative_rounding": null,
+                    "limitations": "Reported observations only. No revision, contradiction, legal authority or independent factual verification is established. Relative change is withheld for same periods, nonpositive baselines or negative target values."
+                }
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "different fiscal boundaries",
+            "expected": "not_comparable",
+            "decision": [
+                "not_comparable",
+                "period_boundaries_mismatch"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-07-01 to 2026-06-30"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million 2025-07-01 to 2026-06-30"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD million 2025-07-01 to 2026-06-30",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "annual versus quarter",
+            "expected": "not_comparable",
+            "decision": [
+                "not_comparable",
+                "period_granularity_mismatch"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-03-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-03-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-03-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "flow versus stock",
+            "expected": "not_comparable",
+            "decision": [
+                "not_comparable",
+                "measurement_nature_mismatch"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "stock",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "consolidated versus standalone",
+            "expected": "not_comparable",
+            "decision": [
+                "not_comparable",
+                "reporting_scope_mismatch"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "standalone",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "forecast versus actual",
+            "expected": "not_comparable",
+            "decision": [
+                "not_comparable",
+                "metric_status_mismatch"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "forecast",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "both forecast unsupported",
+            "expected": "insufficient_evidence",
+            "decision": [
+                "insufficient_evidence",
+                "unsupported_measurement_context"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "forecast",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "forecast",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "different entity",
+            "expected": "not_comparable",
+            "decision": [
+                "not_comparable",
+                "owner_mismatch"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": "other-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "different currency",
+            "expected": "not_comparable",
+            "decision": [
+                "not_comparable",
+                "measurement_mismatch"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "KES million",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 KES million 2025-01-01 to 2025-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 KES million 2025-01-01 to 2025-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "zero denominator",
+            "expected": "period_comparison",
+            "decision": [
+                "period_comparison",
+                "explicit_period_performance",
+                {
+                    "rule_id": "explicit-financial-period-m2b1-v1",
+                    "relationship": "different_periods",
+                    "direction": "document_b_minus_document_a",
+                    "measurement_nature": "flow",
+                    "period_a": {
+                        "original": "2024-01-01 to 2024-12-31",
+                        "start": "2024-01-01",
+                        "end": "2024-12-31"
+                    },
+                    "period_b": {
+                        "original": "2025-01-01 to 2025-12-31",
+                        "start": "2025-01-01",
+                        "end": "2025-12-31"
+                    },
+                    "original_a": {
+                        "value": "0",
+                        "unit": "USD million",
+                        "period": "2024-01-01 to 2024-12-31"
+                    },
+                    "original_b": {
+                        "value": "125",
+                        "unit": "USD million",
+                        "period": "2025-01-01 to 2025-12-31"
+                    },
+                    "canonical_unit": "USD",
+                    "currency": "USD",
+                    "canonical_a": "0",
+                    "canonical_b": "125000000",
+                    "absolute_difference": "125000000",
+                    "relative_percent": null,
+                    "relative_rounding": null,
+                    "limitations": "Reported observations only. No revision, contradiction, legal authority or independent factual verification is established. Relative change is withheld for same periods, nonpositive baselines or negative target values."
+                }
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "0",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 0 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 0 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "negative baseline",
+            "expected": "period_comparison",
+            "decision": [
+                "period_comparison",
+                "explicit_period_performance",
+                {
+                    "rule_id": "explicit-financial-period-m2b1-v1",
+                    "relationship": "different_periods",
+                    "direction": "document_b_minus_document_a",
+                    "measurement_nature": "flow",
+                    "period_a": {
+                        "original": "2024-01-01 to 2024-12-31",
+                        "start": "2024-01-01",
+                        "end": "2024-12-31"
+                    },
+                    "period_b": {
+                        "original": "2025-01-01 to 2025-12-31",
+                        "start": "2025-01-01",
+                        "end": "2025-12-31"
+                    },
+                    "original_a": {
+                        "value": "-10",
+                        "unit": "USD million",
+                        "period": "2024-01-01 to 2024-12-31"
+                    },
+                    "original_b": {
+                        "value": "125",
+                        "unit": "USD million",
+                        "period": "2025-01-01 to 2025-12-31"
+                    },
+                    "canonical_unit": "USD",
+                    "currency": "USD",
+                    "canonical_a": "-10000000",
+                    "canonical_b": "125000000",
+                    "absolute_difference": "135000000",
+                    "relative_percent": null,
+                    "relative_rounding": null,
+                    "limitations": "Reported observations only. No revision, contradiction, legal authority or independent factual verification is established. Relative change is withheld for same periods, nonpositive baselines or negative target values."
+                }
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "-10",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income -10 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income -10 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "negative target",
+            "expected": "period_comparison",
+            "decision": [
+                "period_comparison",
+                "explicit_period_performance",
+                {
+                    "rule_id": "explicit-financial-period-m2b1-v1",
+                    "relationship": "different_periods",
+                    "direction": "document_b_minus_document_a",
+                    "measurement_nature": "flow",
+                    "period_a": {
+                        "original": "2024-01-01 to 2024-12-31",
+                        "start": "2024-01-01",
+                        "end": "2024-12-31"
+                    },
+                    "period_b": {
+                        "original": "2025-01-01 to 2025-12-31",
+                        "start": "2025-01-01",
+                        "end": "2025-12-31"
+                    },
+                    "original_a": {
+                        "value": "100",
+                        "unit": "USD million",
+                        "period": "2024-01-01 to 2024-12-31"
+                    },
+                    "original_b": {
+                        "value": "-10",
+                        "unit": "USD million",
+                        "period": "2025-01-01 to 2025-12-31"
+                    },
+                    "canonical_unit": "USD",
+                    "currency": "USD",
+                    "canonical_a": "100000000",
+                    "canonical_b": "-10000000",
+                    "absolute_difference": "-110000000",
+                    "relative_percent": null,
+                    "relative_rounding": null,
+                    "limitations": "Reported observations only. No revision, contradiction, legal authority or independent factual verification is established. Relative change is withheld for same periods, nonpositive baselines or negative target values."
+                }
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "-10",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income -10 USD million 2025-01-01 to 2025-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income -10 USD million 2025-01-01 to 2025-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "missing owner",
+            "expected": "insufficient_evidence",
+            "decision": [
+                "insufficient_evidence",
+                "unknown_owner"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": null,
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "unknown owners not identities",
+            "expected": "insufficient_evidence",
+            "decision": [
+                "insufficient_evidence",
+                "unknown_owner"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "unknown",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": "unknown",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "unknown aggregation",
+            "expected": "insufficient_evidence",
+            "decision": [
+                "insufficient_evidence",
+                "unknown_aggregation"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "unknown",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "unknown",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "non GAAP definition unsupported",
+            "expected": "insufficient_evidence",
+            "decision": [
+                "insufficient_evidence",
+                "unsupported_accounting_basis"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "non-gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated non-gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated non-gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "non-gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated non-gaap Operating income 125 USD million 2025-01-01 to 2025-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated non-gaap Operating income 125 USD million 2025-01-01 to 2025-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "missing period",
+            "expected": "insufficient_evidence",
+            "decision": [
+                "insufficient_evidence",
+                "unknown_period"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": null
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million "
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD million ",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "annual labels no boundaries",
+            "expected": "not_comparable",
+            "decision": [
+                "not_comparable",
+                "period_mismatch"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "FY2024"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million FY2024"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million FY2024",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "FY2025"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million FY2025"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD million FY2025",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "Saturday fiscal starts unknown",
+            "expected": "not_comparable",
+            "decision": [
+                "not_comparable",
+                "period_mismatch"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "Three Months Ended March 29, 2025"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million Three Months Ended March 29, 2025"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million Three Months Ended March 29, 2025",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "Three Months Ended March 28, 2026"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million Three Months Ended March 28, 2026"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD million Three Months Ended March 28, 2026",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "missing accounting basis",
+            "expected": "insufficient_evidence",
+            "decision": [
+                "insufficient_evidence",
+                "unknown_accounting_basis"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": null,
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated  Operating income 125 USD million 2025-01-01 to 2025-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated  Operating income 125 USD million 2025-01-01 to 2025-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "accounting mismatch",
+            "expected": "not_comparable",
+            "decision": [
+                "not_comparable",
+                "accounting_basis_mismatch"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "ifrs",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated ifrs Operating income 125 USD million 2025-01-01 to 2025-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated ifrs Operating income 125 USD million 2025-01-01 to 2025-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "unproved accounting basis",
+            "expected": "insufficient_evidence",
+            "decision": [
+                "insufficient_evidence",
+                "accounting_basis_source_mismatch"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated non-gaap Operating income 125 USD million 2025-01-01 to 2025-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated non-gaap Operating income 125 USD million 2025-01-01 to 2025-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "unknown stock flow",
+            "expected": "insufficient_evidence",
+            "decision": [
+                "insufficient_evidence",
+                "unknown_measurement_nature"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": null,
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "missing evidence",
+            "expected": "insufficient_evidence",
+            "decision": [
+                "insufficient_evidence",
+                "missing_evidence"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31"
+                        }
+                    ],
+                    "evidence": "",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "unpublished source",
+            "expected": "insufficient_evidence",
+            "decision": [
+                "insufficient_evidence",
+                "missing_period_provenance"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": null,
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "missing span",
+            "expected": "insufficient_evidence",
+            "decision": [
+                "insufficient_evidence",
+                "missing_period_provenance"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [],
+                    "evidence": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "invalid period passage",
+            "expected": "insufficient_evidence",
+            "decision": [
+                "insufficient_evidence",
+                "period_source_mismatch"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million FY2025"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD million FY2025",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "ineligible parseable value",
+            "expected": "insufficient_evidence",
+            "decision": [
+                "insufficient_evidence",
+                "ineligible"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": false,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "different concept",
+            "expected": "not_comparable",
+            "decision": [
+                "not_comparable",
+                "concept_id_mismatch"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:revenue",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "unknown reporting scope",
+            "expected": "insufficient_evidence",
+            "decision": [
+                "insufficient_evidence",
+                "unknown_reporting_scope"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": null,
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "different value basis",
+            "expected": "not_comparable",
+            "decision": [
+                "not_comparable",
+                "basis_mismatch"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "budget",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "adjacent quarters",
+            "expected": "period_comparison",
+            "decision": [
+                "period_comparison",
+                "explicit_period_performance",
+                {
+                    "rule_id": "explicit-financial-period-m2b1-v1",
+                    "relationship": "different_periods",
+                    "direction": "document_b_minus_document_a",
+                    "measurement_nature": "flow",
+                    "period_a": {
+                        "original": "2025-01-01 to 2025-03-31",
+                        "start": "2025-01-01",
+                        "end": "2025-03-31"
+                    },
+                    "period_b": {
+                        "original": "2025-04-01 to 2025-06-30",
+                        "start": "2025-04-01",
+                        "end": "2025-06-30"
+                    },
+                    "original_a": {
+                        "value": "100",
+                        "unit": "USD million",
+                        "period": "2025-01-01 to 2025-03-31"
+                    },
+                    "original_b": {
+                        "value": "125",
+                        "unit": "USD million",
+                        "period": "2025-04-01 to 2025-06-30"
+                    },
+                    "canonical_unit": "USD",
+                    "currency": "USD",
+                    "canonical_a": "100000000",
+                    "canonical_b": "125000000",
+                    "absolute_difference": "25000000",
+                    "relative_percent": "25.000000",
+                    "relative_rounding": "6 decimal places, half up",
+                    "limitations": "Reported observations only. No revision, contradiction, legal authority or independent factual verification is established."
+                }
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-03-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2025-01-01 to 2025-03-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2025-01-01 to 2025-03-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-04-01 to 2025-06-30"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million 2025-04-01 to 2025-06-30"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD million 2025-04-01 to 2025-06-30",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "stock point comparison",
+            "expected": "period_comparison",
+            "decision": [
+                "period_comparison",
+                "explicit_period_performance",
+                {
+                    "rule_id": "explicit-financial-period-m2b1-v1",
+                    "relationship": "different_periods",
+                    "direction": "document_b_minus_document_a",
+                    "measurement_nature": "stock",
+                    "period_a": {
+                        "original": "As of 2024-12-31",
+                        "start": "2024-12-31",
+                        "end": "2024-12-31"
+                    },
+                    "period_b": {
+                        "original": "As of 2025-12-31",
+                        "start": "2025-12-31",
+                        "end": "2025-12-31"
+                    },
+                    "original_a": {
+                        "value": "100",
+                        "unit": "USD million",
+                        "period": "As of 2024-12-31"
+                    },
+                    "original_b": {
+                        "value": "125",
+                        "unit": "USD million",
+                        "period": "As of 2025-12-31"
+                    },
+                    "canonical_unit": "USD",
+                    "currency": "USD",
+                    "canonical_a": "100000000",
+                    "canonical_b": "125000000",
+                    "absolute_difference": "25000000",
+                    "relative_percent": "25.000000",
+                    "relative_rounding": "6 decimal places, half up",
+                    "limitations": "Reported observations only. No revision, contradiction, legal authority or independent factual verification is established."
+                }
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "As of 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "stock",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million As of 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million As of 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "As of 2025-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "stock",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million As of 2025-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD million As of 2025-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "stock using flow interval",
+            "expected": "not_comparable",
+            "decision": [
+                "not_comparable",
+                "stock_flow_period_mismatch"
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "100",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "stock",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 100 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "125",
+                    "unit": "USD million",
+                    "period": "2025-01-01 to 2025-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "stock",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 125 USD million 2025-01-01 to 2025-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        },
+        {
+            "name": "same unit different scale",
+            "expected": "equivalent",
+            "decision": [
+                "equivalent",
+                "explicit_same_period_values",
+                {
+                    "rule_id": "explicit-financial-period-m2b1-v1",
+                    "relationship": "same_period",
+                    "direction": "document_b_minus_document_a",
+                    "measurement_nature": "flow",
+                    "period_a": {
+                        "original": "2024-01-01 to 2024-12-31",
+                        "start": "2024-01-01",
+                        "end": "2024-12-31"
+                    },
+                    "period_b": {
+                        "original": "2024-01-01 to 2024-12-31",
+                        "start": "2024-01-01",
+                        "end": "2024-12-31"
+                    },
+                    "original_a": {
+                        "value": "1",
+                        "unit": "USD million",
+                        "period": "2024-01-01 to 2024-12-31"
+                    },
+                    "original_b": {
+                        "value": "1,000,000",
+                        "unit": "USD",
+                        "period": "2024-01-01 to 2024-12-31"
+                    },
+                    "canonical_unit": "USD",
+                    "currency": "USD",
+                    "canonical_a": "1000000",
+                    "canonical_b": "1000000",
+                    "absolute_difference": "0",
+                    "relative_percent": null,
+                    "relative_rounding": null,
+                    "limitations": "Reported observations only. No revision, contradiction, legal authority or independent factual verification is established. Relative change is withheld for same periods, nonpositive baselines or negative target values."
+                }
+            ],
+            "a": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "1",
+                    "unit": "USD million",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "a",
+                    "source_id": "metric-a",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 1 USD million 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 1 USD million 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            },
+            "b": {
+                "category": "kpis",
+                "label": "Operating income",
+                "value": {
+                    "value": "1,000,000",
+                    "unit": "USD",
+                    "period": "2024-01-01 to 2024-12-31"
+                },
+                "context": {
+                    "owner": "established:test-owner",
+                    "subject": "group",
+                    "concept_id": "label:operating income",
+                    "reporting_scope": "consolidated",
+                    "measurement_nature": "flow",
+                    "value_basis": "actual",
+                    "aggregation": "total",
+                    "metric_status": "actual",
+                    "accounting_basis": "gaap",
+                    "analytical_eligible": true,
+                    "verification": "source_verified"
+                },
+                "source": {
+                    "document_id": "b",
+                    "source_id": "metric-b",
+                    "intelligence_revision_id": "published-test-revision",
+                    "evidence_ids": [
+                        "test-evidence"
+                    ],
+                    "spans": [
+                        {
+                            "quote": "Consolidated gaap Operating income 1,000,000 USD 2024-01-01 to 2024-12-31"
+                        }
+                    ],
+                    "evidence": "Consolidated gaap Operating income 1,000,000 USD 2024-01-01 to 2024-12-31",
+                    "location_kind": "unknown"
+                }
+            }
+        }
+    ]
+}

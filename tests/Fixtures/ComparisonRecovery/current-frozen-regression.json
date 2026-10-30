@@ -1,0 +1,296 @@
+{
+    "tier": 1,
+    "fixture_sha256": "3c13268935d4a3cba89cdd27ed22f9bd715e5980629652f2d7d877dda84f2906",
+    "counts": {
+        "cases": 55,
+        "correct": 47,
+        "false_substantive": 0,
+        "missed_substantive": 4
+    },
+    "results": [
+        {
+            "id": "n01",
+            "expected": "equivalent",
+            "actual": "equivalent"
+        },
+        {
+            "id": "n02",
+            "expected": "equivalent",
+            "actual": "equivalent"
+        },
+        {
+            "id": "n03",
+            "expected": "equivalent",
+            "actual": "equivalent"
+        },
+        {
+            "id": "n04",
+            "expected": "equivalent",
+            "actual": "equivalent"
+        },
+        {
+            "id": "n05",
+            "expected": "supported_change",
+            "actual": "supported_change"
+        },
+        {
+            "id": "n06",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence"
+        },
+        {
+            "id": "n07",
+            "expected": "equivalent",
+            "actual": "equivalent"
+        },
+        {
+            "id": "n08",
+            "expected": "equivalent",
+            "actual": "equivalent"
+        },
+        {
+            "id": "n09",
+            "expected": "equivalent",
+            "actual": "equivalent"
+        },
+        {
+            "id": "n10",
+            "expected": "equivalent",
+            "actual": "equivalent"
+        },
+        {
+            "id": "n11",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence"
+        },
+        {
+            "id": "n12",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence"
+        },
+        {
+            "id": "n13",
+            "expected": "not_comparable",
+            "actual": "not_comparable"
+        },
+        {
+            "id": "n14",
+            "expected": "supported_change",
+            "actual": "supported_change"
+        },
+        {
+            "id": "u01",
+            "expected": "supported_change",
+            "actual": "supported_change"
+        },
+        {
+            "id": "u02",
+            "expected": "equivalent",
+            "actual": "not_comparable"
+        },
+        {
+            "id": "u03",
+            "expected": "equivalent",
+            "actual": "not_comparable"
+        },
+        {
+            "id": "u04",
+            "expected": "not_comparable",
+            "actual": "not_comparable"
+        },
+        {
+            "id": "u05",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence"
+        },
+        {
+            "id": "u06",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence"
+        },
+        {
+            "id": "u07",
+            "expected": "not_comparable",
+            "actual": "not_comparable"
+        },
+        {
+            "id": "u08",
+            "expected": "not_comparable",
+            "actual": "not_comparable"
+        },
+        {
+            "id": "p01",
+            "expected": "supported_change",
+            "actual": "supported_change"
+        },
+        {
+            "id": "p02",
+            "expected": "period_comparison",
+            "actual": "not_comparable"
+        },
+        {
+            "id": "p03",
+            "expected": "not_comparable",
+            "actual": "not_comparable"
+        },
+        {
+            "id": "p04",
+            "expected": "not_comparable",
+            "actual": "not_comparable"
+        },
+        {
+            "id": "p05",
+            "expected": "not_comparable",
+            "actual": "not_comparable"
+        },
+        {
+            "id": "p06",
+            "expected": "not_comparable",
+            "actual": "not_comparable"
+        },
+        {
+            "id": "p07",
+            "expected": "not_comparable",
+            "actual": "not_comparable"
+        },
+        {
+            "id": "p08",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence"
+        },
+        {
+            "id": "p09",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence"
+        },
+        {
+            "id": "p10",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence"
+        },
+        {
+            "id": "e01",
+            "expected": "equivalent",
+            "actual": "equivalent"
+        },
+        {
+            "id": "e02",
+            "expected": "insufficient_evidence",
+            "actual": "mixed"
+        },
+        {
+            "id": "e03",
+            "expected": "not_comparable",
+            "actual": "not_comparable"
+        },
+        {
+            "id": "e04",
+            "expected": "not_comparable",
+            "actual": "not_comparable"
+        },
+        {
+            "id": "e05",
+            "expected": "not_comparable",
+            "actual": "not_comparable"
+        },
+        {
+            "id": "e06",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence"
+        },
+        {
+            "id": "c01",
+            "expected": "supported_change",
+            "actual": "insufficient_evidence"
+        },
+        {
+            "id": "c02",
+            "expected": "supported_change",
+            "actual": "supported_change"
+        },
+        {
+            "id": "c03",
+            "expected": "equivalent",
+            "actual": "equivalent"
+        },
+        {
+            "id": "c04",
+            "expected": "supported_change",
+            "actual": "insufficient_evidence"
+        },
+        {
+            "id": "c05",
+            "expected": "only_a",
+            "actual": "only_a"
+        },
+        {
+            "id": "c06",
+            "expected": "only_a",
+            "actual": "only_a"
+        },
+        {
+            "id": "c07",
+            "expected": "not_comparable",
+            "actual": "not_comparable"
+        },
+        {
+            "id": "c08",
+            "expected": "not_comparable",
+            "actual": "not_comparable"
+        },
+        {
+            "id": "c09",
+            "expected": "not_comparable",
+            "actual": "not_comparable"
+        },
+        {
+            "id": "c10",
+            "expected": "potential_conflict",
+            "actual": "insufficient_evidence"
+        },
+        {
+            "id": "c11",
+            "expected": "equivalent",
+            "actual": "mixed"
+        },
+        {
+            "id": "s01",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence"
+        },
+        {
+            "id": "s02",
+            "expected": "equivalent",
+            "actual": "equivalent"
+        },
+        {
+            "id": "s03",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence"
+        },
+        {
+            "id": "s04",
+            "expected": "equivalent",
+            "actual": "equivalent"
+        },
+        {
+            "id": "s05",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence"
+        },
+        {
+            "id": "s06",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence"
+        }
+    ],
+    "identity_counts": {
+        "cases": 30,
+        "correct_classifications": 30,
+        "correct_identity_states": 30,
+        "false_substantive_rows": 0,
+        "false_identity_matches": 0,
+        "missed_supported_changes": 0,
+        "abstentions": 23
+    }
+}

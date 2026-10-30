@@ -1,0 +1,58 @@
+{
+    "tier": 2,
+    "method": "real PDF bytes through deterministic extraction, stored evidence, field verification and published snapshot adapter; publication pointer constructed locally for this replay",
+    "fresh_model_execution": false,
+    "documents": [
+        {
+            "file": "apple_fy25_q2_original.pdf",
+            "sha256": "e333dd821d9ef827e82d8e0b696493a127c4ee171ea63aca3a80dc1dfea60e89",
+            "parser_version": "smalot-page.v2+poppler-grid.v1",
+            "collected": {
+                "extracted": 132,
+                "candidates": 132
+            },
+            "field_verification": {
+                "verified": 18,
+                "rejected": 114
+            },
+            "snapshot_facts": 132,
+            "eligible_facts": 18,
+            "eligible_evidence_coverage": 18,
+            "reporting_owners": [
+                "Apple Inc"
+            ]
+        },
+        {
+            "file": "nasdaq_q3_2026_income_statement_page.pdf",
+            "sha256": "cece469e3d5b2bc932a503c11253ea893ac8dad2640d21f83c4d1e362fb36c66",
+            "parser_version": "smalot-page.v2+poppler-grid.v1",
+            "collected": {
+                "extracted": 128,
+                "candidates": 128
+            },
+            "field_verification": {
+                "verified": 44,
+                "rejected": 84
+            },
+            "snapshot_facts": 128,
+            "eligible_facts": 44,
+            "eligible_evidence_coverage": 44,
+            "reporting_owners": [
+                "Nasdaq, Inc"
+            ]
+        }
+    ],
+    "pair": {
+        "expected": "Different organizations and periods; no ordinary changed values",
+        "candidate_count": 56,
+        "false_identity_matches": 0,
+        "correctly_established_matches": 0,
+        "missed_supported_identity_matches": 0,
+        "substantive_rows": 0,
+        "outcomes": {
+            "only_a": 34,
+            "insufficient_evidence": 6,
+            "only_b": 26
+        }
+    }
+}

@@ -3,9 +3,11 @@
 namespace App\Services\Intelligence;
 
 use App\Models\Document;
-use App\Models\DocumentIntelligenceRevision;
 use App\Models\DocumentEvidence;
+use App\Models\DocumentIntelligenceRevision;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /** Bounded read of the exact provenance occurrence used by verification. */
 class SourceReferenceResolver
@@ -21,7 +23,7 @@ class SourceReferenceResolver
         private ImageRegionLocator $regions,
     ) {}
 
-    public function resolve(Document $document, string $sourceId): ?array
+    public function resolve(Document $document, string $sourceId, ?Collection $publishedEvidence = null): ?array
     {
         if (strlen($sourceId) > 200 || $sourceId === '') {
             return null;
@@ -42,9 +44,22 @@ class SourceReferenceResolver
         }
         $pipeline = (string) ($document->ai_pipeline['key'] ?? 'legacy');
         $owner = DB::table('document_evidence')->where('workspace_id', $document->workspace_id)
-            ->where('document_id', $document->id)->where('source_id', $sourceId);
-        $matches = (clone $owner)->where('pipeline_key', $pipeline)
-            ->limit(2)->get(['id', 'kind', 'source_id', 'sources', 'data']);
+            ->where('document_id', $document->id);
+        if (str_starts_with($sourceId, 'evidence:') && Str::isUuid(substr($sourceId, 9))) {
+            $owner->where(fn ($q) => $q->where('source_id', $sourceId)->orWhere(fn ($alias) => $alias->whereNull('source_id')->where('id', substr($sourceId, 9))));
+        } else {
+            $owner->where('source_id', $sourceId);
+        }
+        // The composite response already loaded this exact document/pipeline evidence set.
+        // Reuse it instead of fetching the same source row once per displayed finding.
+        $matches = $publishedEvidence === null
+            ? (clone $owner)->where('pipeline_key', $pipeline)->limit(2)->get(['id', 'kind', 'source_id', 'sources', 'data'])
+            : $publishedEvidence->filter(fn (DocumentEvidence $row) => $row->workspace_id === $document->workspace_id
+                && $row->document_id === $document->id && $row->pipeline_key === $pipeline
+                && ($row->source_id === $sourceId || ($row->source_id === null && $sourceId === 'evidence:'.$row->id)))
+                ->take(2)->map(fn (DocumentEvidence $row) => (object) ($row->only(['id', 'kind', 'source_id'])
+                    + ['data' => $row->getRawOriginal('data'), 'sources' => $row->getRawOriginal('sources')]));
+
         if ($matches->count() > 1) {
             return ['state' => 'SOURCE_AMBIGUOUS'];
         }
@@ -173,8 +188,7 @@ class SourceReferenceResolver
         // A field-grounded measurement can cite its value row plus governing headings.
         // Navigation chooses the single value occurrence; all field quotes remain visible.
         if ($fieldSources !== []) {
-            $untyped = array_values(array_filter($sources, static fn ($item) =>
-                ! is_array($item) || ! is_array($item['roles'] ?? null)));
+            $untyped = array_values(array_filter($sources, static fn ($item) => ! is_array($item) || ! is_array($item['roles'] ?? null)));
             $value = $valueSources[0] ?? null;
             $verifiedPdfRow = $document->type === 'PDF' && str_starts_with($sourceId, 'pdf-cell:')
                 && ($data['source_candidate'] ?? false) === true
