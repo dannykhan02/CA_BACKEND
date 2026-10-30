@@ -24,6 +24,7 @@ class DocumentObserver
 
     public function deleted(Document $document): void
     {
+        \App\Models\ComparisonIdentityLink::where('document_a_id', $document->id)->orWhere('document_b_id', $document->id)->delete();
         \App\Models\DocumentRelationship::where('from_document_id', $document->id)->orWhere('to_document_id', $document->id)->delete();
         \App\Models\DocumentComparison::where('base_document_id', $document->id)->orWhere('compared_document_id', $document->id)->delete();
         \App\Models\TrackedItem::where('document_id', $document->id)->delete();

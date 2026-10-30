@@ -157,7 +157,7 @@ class ComparisonTrustTest extends TestCase
         [$user, $a, $b, $item] = $this->pair();
         $original = $item->metadata;
         $service = \Mockery::mock(DocumentComparisonService::class);
-        $service->shouldReceive('changes')->once()->with($original['base'], $original['compared'])->andReturnUsing(function () use ($a) {
+        $service->shouldReceive('changes')->once()->with($original['base'], $original['compared'], $original['identity_context'])->andReturnUsing(function () use ($a) {
             $revision = DocumentIntelligenceRevision::create(['workspace_id' => $a->workspace_id,
                 'document_id' => $a->id, 'generation' => 1, 'state' => 'published', 'extracted_text' => '', 'extracted_text_hash' => hash('sha256', '')]);
             $a->forceFill(['published_intelligence_revision_id' => $revision->id, 'intelligence_generation' => 1])->save();

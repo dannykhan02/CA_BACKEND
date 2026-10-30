@@ -3,10 +3,11 @@
 require __DIR__.'/../../../vendor/autoload.php';
 $app = require __DIR__.'/../../../bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
-$phase = $argv[1] ?? 'post-m0';
-if (! in_array($phase, ['baseline', 'baseline-current', 'post-m0'], true)) { throw new RuntimeException('Unknown evaluation phase.'); }
+$phase = $argv[1] ?? 'post-m2a';
+if (! in_array($phase, ['baseline', 'baseline-current', 'post-m0', 'post-m2a'], true)) { throw new RuntimeException('Unknown evaluation phase.'); }
 if (str_starts_with($phase, 'baseline')) { require __DIR__.'/baseline-engine.php'; }
-$service = $app->make(str_starts_with($phase, 'baseline') ? App\Services\BaselineDocumentComparisonService::class : App\Services\DocumentComparisonService::class);
+if ($phase === 'post-m0') { require __DIR__.'/m0-engine.php'; }
+$service = $app->make($phase === 'post-m0' ? App\Services\M0DocumentComparisonService::class : (str_starts_with($phase, 'baseline') ? App\Services\BaselineDocumentComparisonService::class : App\Services\DocumentComparisonService::class));
 $fixtureFile = __DIR__.($phase === 'baseline' ? '/cases-v1.json' : '/cases.json');
 $cases = json_decode(file_get_contents($fixtureFile), true, flags: JSON_THROW_ON_ERROR);
 $results = []; $counts = ['cases' => 0, 'correct_classifications' => 0, 'false_substantive_changes' => 0, 'missed_substantive_changes' => 0, 'invalid_numeric_comparisons' => 0, 'unmatched_rows' => 0, 'duplicate_differences' => 0, 'unsupported_evidence_claims' => 0, 'incorrect_chronology_assumptions' => 0];
@@ -41,10 +42,10 @@ foreach ($cases as $case) {
     $results[] = ['id'=>$case['id'],'expected'=>$expected,'actual'=>$actual,'correct'=>$actual === $expected,'output'=>$output];
 }
 $report=['phase'=>$phase,'fixture_sha256'=>hash_file('sha256',$fixtureFile),'counts'=>$counts,'results'=>$results,'measurement_limits'=>['Chronology requires UI review; zero is not an engine-level chronology guarantee.','Identity and compatibility labels describe the full target; abstention may intentionally remain an M0 miss.','Integration cases are excluded from numeric denominators and run as feature tests.']];
-if ($phase === 'baseline' && file_exists(__DIR__.'/baseline.json')) {
-    $frozen = json_decode(file_get_contents(__DIR__.'/baseline.json'), true, flags: JSON_THROW_ON_ERROR);
+if (in_array($phase, ['baseline', 'post-m0']) && file_exists(__DIR__.'/'.$phase.'.json')) {
+    $frozen = json_decode(file_get_contents(__DIR__.'/'.$phase.'.json'), true, flags: JSON_THROW_ON_ERROR);
     if ($frozen !== $report) { throw new RuntimeException('Frozen baseline no longer reproduces; inspect fixtures and adapter.'); }
-    echo "Frozen c53d254 baseline reproduced exactly.\n";
+    echo "Frozen evaluation reproduced exactly.\n";
 } else {
     file_put_contents(__DIR__.'/'.$phase.'.json',json_encode($report,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES)."\n");
 }

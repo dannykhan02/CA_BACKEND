@@ -43,6 +43,27 @@ class CrossDocumentNumericDecision
                 return ['not_comparable', $field === 'value_basis' ? 'basis_mismatch' : $field.'_mismatch'];
             }
         }
+        if (array_key_exists('reporting_scope', $ca) || array_key_exists('reporting_scope', $cb)) {
+            if (empty($ca['reporting_scope']) || empty($cb['reporting_scope'])
+                || $ca['reporting_scope'] === 'ambiguous' || $cb['reporting_scope'] === 'ambiguous') {
+                return ['insufficient_evidence', 'unknown_reporting_scope'];
+            }
+            if ($ca['reporting_scope'] !== $cb['reporting_scope']) {
+                return ['not_comparable', 'reporting_scope_mismatch'];
+            }
+        }
+        foreach (['metric_status', 'accounting_basis'] as $field) {
+            $leftContext = trim((string) ($ca[$field] ?? ''));
+            $rightContext = trim((string) ($cb[$field] ?? ''));
+            if ($leftContext !== '' || $rightContext !== '') {
+                if ($leftContext === '' || $rightContext === '') {
+                    return ['insufficient_evidence', 'unknown_'.$field];
+                }
+                if ($this->normalized($leftContext) !== $this->normalized($rightContext)) {
+                    return ['not_comparable', $field.'_mismatch'];
+                }
+            }
+        }
         foreach ([$a, $b] as $fact) {
             $context = $fact['context'] ?? [];
             if (($context['superseded'] ?? false) || ! ($context['analytical_eligible'] ?? false)) {

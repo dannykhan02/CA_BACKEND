@@ -94,7 +94,7 @@ class CompareDocumentsJob implements ShouldQueue
                 return;
             }
             try {
-                $changes = $service->changes($item->metadata['base'], $item->metadata['compared']);
+                $changes = $service->changes($item->metadata['base'], $item->metadata['compared'], $item->metadata['identity_context'] ?? null);
                 $metadata = $item->metadata;
                 if (isset($metadata['ai_context'])) {
                     app(EntitlementService::class)->reserveComparison($item);

@@ -1,0 +1,21 @@
+{
+  "version": "m2a-real-v1",
+  "tiers": {
+    "1": "Synthetic structured facts; never an extraction-quality score.",
+    "2": "Real content through stored deterministic extraction/proof and comparison snapshot replay. No fresh model extraction. Local publication pointer constructed explicitly.",
+    "3": "Authorized real model extraction and application publication; blocked without authorized inference or suitable recorded execution."
+  },
+  "available_sources": [
+    {"file": "tests/Fixtures/apple_fy25_q2_original.pdf", "sha256": "e333dd821d9ef827e82d8e0b696493a127c4ee171ea63aca3a80dc1dfea60e89", "provenance": "Original public Apple results PDF, previously acquired and documented in docs/audits/docintel-pdf-phase7-release-gate-2026-10-24.md", "source_review": "Apple Inc.; consolidated operations; three and six months ended March 29, 2025 and March 30, 2024. Operating income includes 29,589 and 27,900 for three months. No issuer-qualified entity ID identified in the projected owner evidence."},
+    {"file": "tests/Fixtures/nasdaq_q3_2026_income_statement_page.pdf", "sha256": "cece469e3d5b2bc932a503c11253ea893ac8dad2640d21f83c4d1e362fb36c66", "provenance": "Existing public Nasdaq statement page fixture used by PdfTableIncrementalSafetyTest", "source_review": "Nasdaq, Inc.; consolidated income; three and nine months ended September 30, 2026 and 2025. Operating income includes 732 and 586 for three months. A different organization and incompatible periods from the Apple fixture."}
+  ],
+  "pairs": [
+    {"id": "r01", "kind": "agreement_and_amendment", "tier2": "blocked", "tier3": "blocked", "missing": "Licensed or authorized real agreement and amendment plus independently reviewed provision correspondence. Demo agreements are generated synthetic content."},
+    {"id": "r02", "kind": "comparable_financial_reports", "tier2": "blocked", "tier3": "blocked", "missing": "Two different real reports for the same entity and compatible period/scope; current PDFs describe different entities. No real recorded cross-document model extraction available."},
+    {"id": "r03", "kind": "incompatible_financial_periods_and_entities", "tier2": "evaluated", "tier3": "blocked", "sources": ["apple_fy25_q2_original.pdf", "nasdaq_q3_2026_income_statement_page.pdf"], "expected": "No established shared reporting-owner identity. No supported ordinary changed values; periods and entities differ. Candidate metric concepts alone must not confer owner identity.", "independent_review": "Read source statement headings, periods and printed Operating income rows with pdftotext -layout, independently of comparison outputs. Assertions reference the printed values; expected no substantive comparison follows the source headings.", "artifact": "real-content-results.json"},
+    {"id": "r04", "kind": "agreement_and_payment_schedule", "tier2": "blocked", "tier3": "blocked", "missing": "Authorized real agreement and corresponding schedule with inspectable governing agreement and party evidence."},
+    {"id": "r05", "kind": "shared_organization", "tier2": "blocked", "tier3": "blocked", "missing": "Two real documents with a source-supported shared issuer-qualified identifier or independently reviewable owner correspondence."},
+    {"id": "r06", "kind": "similar_names_different_entities", "tier2": "blocked", "tier3": "blocked", "missing": "Authorized real source pair with independent evidence that similarly named organizations are distinct. Synthetic adversarial fixtures remain Tier 1."}
+  ],
+  "prohibited_shortcuts": ["No customer data access", "No paid model calls", "Do not label mocked provider rows as real extraction", "Do not duplicate one PDF into two documents and claim independent financial report acceptance"]
+}

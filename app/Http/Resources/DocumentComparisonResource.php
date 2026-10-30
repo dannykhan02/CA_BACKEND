@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Services\Comparisons\ComparisonIdentityService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -25,6 +26,9 @@ class DocumentComparisonResource extends JsonResource
             'status' => $this->status, 'summary' => $this->summary, 'changes' => $this->changes,
             'error_message' => $this->error_message, 'created_at' => $this->created_at,
             'limitations' => $this->metadata['limitations'] ?? null,
+            'identity_usage' => $this->metadata['identity_usage'] ?? [],
+            'identity_context_version' => $this->metadata['identity_context']['version'] ?? null,
+            'identity_snapshot' => isset($this->metadata['identity_context']) ? app(ComparisonIdentityService::class)->digest($this->metadata['identity_context']) : null,
             'source_revisions' => $revisions, 'revision_status' => $revisionStatus,
         ];
     }

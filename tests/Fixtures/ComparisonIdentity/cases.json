@@ -1,0 +1,2558 @@
+[
+  {
+    "id": "i01",
+    "scenario": "Shared source-bound organization identifier",
+    "a": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "100",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Example Ltd (LEI: 123400ABCDEFGHIJKL55) reports consolidated actual Revenue 100 KES in 2025.",
+          "evidence_ids": [
+            "evidence-a"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd (LEI: 123400ABCDEFGHIJKL55) reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 92
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "200",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Example Ltd (LEI: 123400ABCDEFGHIJKL55) reports consolidated actual Revenue 200 KES in 2025.",
+          "evidence_ids": [
+            "evidence-b"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd (LEI: 123400ABCDEFGHIJKL55) reports consolidated actual Revenue 200 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 92
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "supported_change",
+    "expected_identity": "established",
+    "action": null
+  },
+  {
+    "id": "i02",
+    "scenario": "Same name without identity proof",
+    "a": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "100",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+          "evidence_ids": [
+            "evidence-a"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "200",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Example Ltd reports consolidated actual Revenue 200 KES in 2025.",
+          "evidence_ids": [
+            "evidence-b"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 200 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "insufficient_evidence",
+    "expected_identity": "candidate",
+    "action": null
+  },
+  {
+    "id": "i03",
+    "scenario": "Terminal legal suffix variant",
+    "a": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "100",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+          "evidence_ids": [
+            "evidence-a"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "200",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Limited",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Example Limited reports consolidated actual Revenue 200 KES in 2025.",
+          "evidence_ids": [
+            "evidence-b"
+          ],
+          "spans": [
+            {
+              "quote": "Example Limited reports consolidated actual Revenue 200 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 68
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "insufficient_evidence",
+    "expected_identity": "candidate",
+    "action": null
+  },
+  {
+    "id": "i04",
+    "scenario": "Different entities with similar names",
+    "a": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "100",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+          "evidence_ids": [
+            "evidence-a"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "200",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Holdings Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Example Holdings Ltd reports consolidated actual Revenue 200 KES in 2025.",
+          "evidence_ids": [
+            "evidence-b"
+          ],
+          "spans": [
+            {
+              "quote": "Example Holdings Ltd reports consolidated actual Revenue 200 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 73
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "insufficient_evidence",
+    "expected_identity": "candidate",
+    "action": null
+  },
+  {
+    "id": "i05",
+    "scenario": "Parent versus subsidiary",
+    "a": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "100",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Holdings Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Example Holdings Ltd (LEI: 123400ABCDEFGHIJKL55) reports consolidated actual Revenue 100 KES in 2025.",
+          "evidence_ids": [
+            "evidence-a"
+          ],
+          "spans": [
+            {
+              "quote": "Example Holdings Ltd (LEI: 123400ABCDEFGHIJKL55) reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 101
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "200",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Subsidiary Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Example Subsidiary Ltd (LEI: 567800ABCDEFGHIJKL80) reports consolidated actual Revenue 200 KES in 2025.",
+          "evidence_ids": [
+            "evidence-b"
+          ],
+          "spans": [
+            {
+              "quote": "Example Subsidiary Ltd (LEI: 567800ABCDEFGHIJKL80) reports consolidated actual Revenue 200 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 103
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "insufficient_evidence",
+    "expected_identity": "contradictory",
+    "action": null
+  },
+  {
+    "id": "i06",
+    "scenario": "Mentioned lender is not reporting owner",
+    "a": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "100",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+          "evidence_ids": [
+            "evidence-a"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "200",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": null,
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Example Ltd reports consolidated actual Revenue 200 KES in 2025.",
+          "evidence_ids": [
+            "evidence-b"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 200 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "insufficient_evidence",
+    "expected_identity": "unknown",
+    "action": null
+  },
+  {
+    "id": "i07",
+    "scenario": "Multiple identical-name candidates",
+    "a": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "100",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Example Ltd (LEI: 123400ABCDEFGHIJKL55) reports consolidated actual Revenue 100 KES in 2025.",
+          "evidence_ids": [
+            "evidence-a"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd (LEI: 123400ABCDEFGHIJKL55) reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 92
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "100",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Example Ltd (LEI: 123400ABCDEFGHIJKL55) reports consolidated actual Revenue 100 KES in 2025.",
+          "evidence_ids": [
+            "evidence-b"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd (LEI: 123400ABCDEFGHIJKL55) reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 92
+            }
+          ]
+        }
+      },
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "100",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "kpi:2",
+          "insight_id": 2,
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Example Ltd (LEI: 123400ABCDEFGHIJKL55) reports consolidated actual Revenue 100 KES in 2025.",
+          "evidence_ids": [
+            "evidence-b"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd (LEI: 123400ABCDEFGHIJKL55) reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 92
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "insufficient_evidence",
+    "expected_identity": "established",
+    "action": null
+  },
+  {
+    "id": "i08",
+    "scenario": "Explicit user-reviewed owner correspondence",
+    "a": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "100",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+          "evidence_ids": [
+            "evidence-a"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "200",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Example Ltd reports consolidated actual Revenue 200 KES in 2025.",
+          "evidence_ids": [
+            "evidence-b"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 200 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "supported_change",
+    "expected_identity": "confirmed",
+    "action": "confirmed"
+  },
+  {
+    "id": "i09",
+    "scenario": "Rejected owner candidate",
+    "a": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "100",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+          "evidence_ids": [
+            "evidence-a"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "200",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Example Ltd reports consolidated actual Revenue 200 KES in 2025.",
+          "evidence_ids": [
+            "evidence-b"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 200 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "insufficient_evidence",
+    "expected_identity": "rejected",
+    "action": "rejected"
+  },
+  {
+    "id": "i10",
+    "scenario": "Revoked correspondence",
+    "a": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "100",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+          "evidence_ids": [
+            "evidence-a"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "200",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Example Ltd reports consolidated actual Revenue 200 KES in 2025.",
+          "evidence_ids": [
+            "evidence-b"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 200 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "insufficient_evidence",
+    "expected_identity": "revoked",
+    "action": "revoked"
+  },
+  {
+    "id": "i11",
+    "scenario": "Revision changed since review",
+    "a": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "100",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+          "evidence_ids": [
+            "evidence-a"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "200",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Example Ltd reports consolidated actual Revenue 200 KES in 2025.",
+          "evidence_ids": [
+            "evidence-b"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 200 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "insufficient_evidence",
+    "expected_identity": "candidate",
+    "action": "confirmed",
+    "stale_revision": true
+  },
+  {
+    "id": "i12",
+    "scenario": "Conflicting source identifiers",
+    "a": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "100",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Example Ltd (LEI: 123400ABCDEFGHIJKL55) reports consolidated actual Revenue 100 KES in 2025.",
+          "evidence_ids": [
+            "evidence-a"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd (LEI: 123400ABCDEFGHIJKL55) reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 92
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "200",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Example Ltd (LEI: 567800ABCDEFGHIJKL80) reports consolidated actual Revenue 200 KES in 2025.",
+          "evidence_ids": [
+            "evidence-b"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd (LEI: 567800ABCDEFGHIJKL80) reports consolidated actual Revenue 200 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 92
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "insufficient_evidence",
+    "expected_identity": "contradictory",
+    "action": null
+  },
+  {
+    "id": "i13",
+    "scenario": "Same KPI, different known owner",
+    "a": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "100",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "First Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-a",
+          "evidence": "First Ltd (LEI: 123400ABCDEFGHIJKL55) reports consolidated actual Revenue 100 KES in 2025.",
+          "evidence_ids": [
+            "evidence-a"
+          ],
+          "spans": [
+            {
+              "quote": "First Ltd (LEI: 123400ABCDEFGHIJKL55) reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 90
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "200",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Second Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Second Ltd (LEI: 567800ABCDEFGHIJKL80) reports consolidated actual Revenue 200 KES in 2025.",
+          "evidence_ids": [
+            "evidence-b"
+          ],
+          "spans": [
+            {
+              "quote": "Second Ltd (LEI: 567800ABCDEFGHIJKL80) reports consolidated actual Revenue 200 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 91
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "insufficient_evidence",
+    "expected_identity": "contradictory",
+    "action": null
+  },
+  {
+    "id": "i14",
+    "scenario": "Same owner, different KPI",
+    "a": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "100",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+          "evidence_ids": [
+            "evidence-a"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "kpis",
+        "label": "Profit",
+        "value": {
+          "value": "200",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:profit",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Example Ltd reports consolidated actual Profit 200 KES in 2025.",
+          "evidence_ids": [
+            "evidence-b"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Profit 200 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 63
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "mixed",
+    "expected_identity": "unknown",
+    "action": "confirmed"
+  },
+  {
+    "id": "i15",
+    "scenario": "Confirmed owner, incompatible period",
+    "a": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "100",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+          "evidence_ids": [
+            "evidence-a"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "200",
+          "unit": "KES",
+          "period": "2026"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Example Ltd reports consolidated actual Revenue 200 KES in 2026.",
+          "evidence_ids": [
+            "evidence-b"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 200 KES in 2026.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "not_comparable",
+    "expected_identity": "confirmed",
+    "action": "confirmed"
+  },
+  {
+    "id": "i16",
+    "scenario": "Confirmed owner, compatible context",
+    "a": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "100",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+          "evidence_ids": [
+            "evidence-a"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "200",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Example Ltd reports consolidated actual Revenue 200 KES in 2025.",
+          "evidence_ids": [
+            "evidence-b"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 200 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "supported_change",
+    "expected_identity": "confirmed",
+    "action": "confirmed"
+  },
+  {
+    "id": "i17",
+    "scenario": "Same title, different underlying obligation",
+    "a": [
+      {
+        "category": "deadlines",
+        "label": "Payment",
+        "value": {
+          "description": "Pay invoice",
+          "relative_text": "within 45 days of invoice receipt",
+          "date_type": "relative",
+          "due_date": null
+        },
+        "context": {
+          "responsible_party": "Buyer",
+          "deadline_type": "obligation",
+          "obligation_reference": "Agreement X Clause 4"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "deadline:1",
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Buyer shall pay under Agreement X Clause 4: within 45 days of invoice receipt.",
+          "evidence_ids": [
+            "ev-a"
+          ],
+          "spans": [
+            {
+              "quote": "Buyer shall pay under Agreement X Clause 4: within 45 days of invoice receipt.",
+              "start_offset": 0,
+              "end_offset": 78
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "deadlines",
+        "label": "Payment",
+        "value": {
+          "description": "Pay invoice",
+          "relative_text": "within 45 days of invoice receipt",
+          "date_type": "relative",
+          "due_date": null
+        },
+        "context": {
+          "responsible_party": "Buyer",
+          "deadline_type": "obligation",
+          "obligation_reference": "Agreement Y Clause 5"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "deadline:1",
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Buyer shall pay under Agreement Y Clause 5: within 45 days of invoice receipt.",
+          "evidence_ids": [
+            "ev-b"
+          ],
+          "spans": [
+            {
+              "quote": "Buyer shall pay under Agreement Y Clause 5: within 45 days of invoice receipt.",
+              "start_offset": 0,
+              "end_offset": 78
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "not_comparable",
+    "expected_identity": "candidate",
+    "action": null
+  },
+  {
+    "id": "i18",
+    "scenario": "Same deadline, different responsible party",
+    "a": [
+      {
+        "category": "deadlines",
+        "label": "Payment",
+        "value": {
+          "description": "Pay invoice",
+          "relative_text": "within 45 days of invoice receipt",
+          "date_type": "relative",
+          "due_date": null
+        },
+        "context": {
+          "responsible_party": "Buyer",
+          "deadline_type": "obligation",
+          "obligation_reference": "Agreement X Clause 4"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "deadline:1",
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Buyer shall pay under Agreement X Clause 4: within 45 days of invoice receipt.",
+          "evidence_ids": [
+            "ev-a"
+          ],
+          "spans": [
+            {
+              "quote": "Buyer shall pay under Agreement X Clause 4: within 45 days of invoice receipt.",
+              "start_offset": 0,
+              "end_offset": 78
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "deadlines",
+        "label": "Payment",
+        "value": {
+          "description": "Pay invoice",
+          "relative_text": "within 45 days of invoice receipt",
+          "date_type": "relative",
+          "due_date": null
+        },
+        "context": {
+          "responsible_party": "Supplier",
+          "deadline_type": "obligation",
+          "obligation_reference": "Agreement X Clause 4"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "deadline:1",
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Supplier shall pay under Agreement X Clause 4: within 45 days of invoice receipt.",
+          "evidence_ids": [
+            "ev-b"
+          ],
+          "spans": [
+            {
+              "quote": "Supplier shall pay under Agreement X Clause 4: within 45 days of invoice receipt.",
+              "start_offset": 0,
+              "end_offset": 81
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "not_comparable",
+    "expected_identity": "candidate",
+    "action": null
+  },
+  {
+    "id": "i19",
+    "scenario": "Explicit reviewed individual clause alignment",
+    "a": [
+      {
+        "category": "deadlines",
+        "label": "Payment",
+        "value": {
+          "description": "Pay invoice",
+          "relative_text": "within 45 days of invoice receipt",
+          "date_type": "relative",
+          "due_date": null
+        },
+        "context": {
+          "responsible_party": "Buyer",
+          "deadline_type": "obligation",
+          "obligation_reference": "Agreement X Clause 4"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "deadline:1",
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Buyer shall pay under Agreement X Clause 4: within 45 days of invoice receipt.",
+          "evidence_ids": [
+            "ev-a"
+          ],
+          "spans": [
+            {
+              "quote": "Buyer shall pay under Agreement X Clause 4: within 45 days of invoice receipt.",
+              "start_offset": 0,
+              "end_offset": 78
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "deadlines",
+        "label": "Invoice payment",
+        "value": {
+          "description": "Pay invoice",
+          "relative_text": "within 30 days of invoice receipt",
+          "date_type": "relative",
+          "due_date": null
+        },
+        "context": {
+          "responsible_party": "Buyer",
+          "deadline_type": "obligation",
+          "obligation_reference": "Agreement X Clause 4"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "deadline:1",
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Buyer shall pay under Agreement X Clause 4: within 30 days of invoice receipt.",
+          "evidence_ids": [
+            "ev-b"
+          ],
+          "spans": [
+            {
+              "quote": "Buyer shall pay under Agreement X Clause 4: within 30 days of invoice receipt.",
+              "start_offset": 0,
+              "end_offset": 78
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "supported_change",
+    "expected_identity": "confirmed",
+    "action": "confirmed"
+  },
+  {
+    "id": "i20",
+    "scenario": "Amendment omission is not deletion",
+    "a": [
+      {
+        "category": "deadlines",
+        "label": "Payment",
+        "value": {
+          "description": "Pay invoice",
+          "relative_text": "within 45 days of invoice receipt",
+          "date_type": "relative",
+          "due_date": null
+        },
+        "context": {
+          "responsible_party": "Buyer",
+          "deadline_type": "obligation",
+          "obligation_reference": "Agreement X Clause 4"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "deadline:1",
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Buyer shall pay under Agreement X Clause 4: within 45 days of invoice receipt.",
+          "evidence_ids": [
+            "ev-a"
+          ],
+          "spans": [
+            {
+              "quote": "Buyer shall pay under Agreement X Clause 4: within 45 days of invoice receipt.",
+              "start_offset": 0,
+              "end_offset": 78
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "deadlines",
+        "label": "Another provision",
+        "value": {
+          "description": "Pay invoice",
+          "relative_text": "within 45 days of invoice receipt",
+          "date_type": "relative",
+          "due_date": null
+        },
+        "context": {
+          "responsible_party": "Buyer",
+          "deadline_type": "obligation",
+          "obligation_reference": "Clause 8"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "deadline:1",
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Buyer shall pay under Clause 8: within 45 days of invoice receipt.",
+          "evidence_ids": [
+            "ev-b"
+          ],
+          "spans": [
+            {
+              "quote": "Buyer shall pay under Clause 8: within 45 days of invoice receipt.",
+              "start_offset": 0,
+              "end_offset": 66
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "mixed",
+    "expected_identity": "unknown",
+    "action": null
+  },
+  {
+    "id": "i21",
+    "scenario": "Missing source passage despite confirmation",
+    "a": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "100",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+          "evidence_ids": [
+            "evidence-a"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "200",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-b",
+          "evidence": null,
+          "evidence_ids": [
+            "evidence-b"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "insufficient_evidence",
+    "expected_identity": "confirmed",
+    "action": "confirmed"
+  },
+  {
+    "id": "i22",
+    "scenario": "Duplicate fact candidates are not arbitrarily zipped",
+    "a": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "100",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+          "evidence_ids": [
+            "evidence-a"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "100",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+          "evidence_ids": [
+            "evidence-b"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      },
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "100",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "kpi:2",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+          "evidence_ids": [
+            "evidence-b"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "insufficient_evidence",
+    "expected_identity": "confirmed",
+    "action": "confirmed"
+  },
+  {
+    "id": "i23",
+    "scenario": "Confirmed owner, different reporting scope",
+    "a": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "100",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+          "evidence_ids": [
+            "evidence-a"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "200",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "standalone",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Example Ltd reports consolidated actual Revenue 200 KES in 2025.",
+          "evidence_ids": [
+            "evidence-b"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 200 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "not_comparable",
+    "expected_identity": "confirmed",
+    "action": "confirmed"
+  },
+  {
+    "id": "i24",
+    "scenario": "Confirmed owner, different currency",
+    "a": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "100",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+          "evidence_ids": [
+            "evidence-a"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "200",
+          "unit": "USD",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Example Ltd reports consolidated actual Revenue 200 USD in 2025.",
+          "evidence_ids": [
+            "evidence-b"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 200 USD in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "not_comparable",
+    "expected_identity": "confirmed",
+    "action": "confirmed"
+  },
+  {
+    "id": "i25",
+    "scenario": "Confirmed owner, actual versus forecast",
+    "a": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "100",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+          "evidence_ids": [
+            "evidence-a"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "200",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "forecast",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Example Ltd reports consolidated actual Revenue 200 KES in 2025.",
+          "evidence_ids": [
+            "evidence-b"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 200 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "not_comparable",
+    "expected_identity": "confirmed",
+    "action": "confirmed"
+  },
+  {
+    "id": "i26",
+    "scenario": "Confirmed owner does not cure ineligibility",
+    "a": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "100",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+          "evidence_ids": [
+            "evidence-a"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "200",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": false,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Example Ltd reports consolidated actual Revenue 200 KES in 2025.",
+          "evidence_ids": [
+            "evidence-b"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 200 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "insufficient_evidence",
+    "expected_identity": "confirmed",
+    "action": "confirmed"
+  },
+  {
+    "id": "i27",
+    "scenario": "Aligned explicit deletion still needs interpretation",
+    "a": [
+      {
+        "category": "deadlines",
+        "label": "Payment",
+        "value": {
+          "description": "Pay invoice",
+          "relative_text": "within 45 days of invoice receipt",
+          "date_type": "relative",
+          "due_date": null
+        },
+        "context": {
+          "responsible_party": "Buyer",
+          "deadline_type": "obligation",
+          "obligation_reference": "Agreement X Clause 4"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "deadline:1",
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Buyer shall pay under Agreement X Clause 4: within 45 days of invoice receipt.",
+          "evidence_ids": [
+            "ev-a"
+          ],
+          "spans": [
+            {
+              "quote": "Buyer shall pay under Agreement X Clause 4: within 45 days of invoice receipt.",
+              "start_offset": 0,
+              "end_offset": 78
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "deadlines",
+        "label": "Payment",
+        "value": {
+          "description": "Pay invoice",
+          "relative_text": "deleted",
+          "date_type": "relative",
+          "due_date": null
+        },
+        "context": {
+          "responsible_party": "Buyer",
+          "deadline_type": "obligation",
+          "obligation_reference": "Agreement X Clause 4"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "deadline:1",
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Buyer shall pay under Agreement X Clause 4: deleted.",
+          "evidence_ids": [
+            "ev-b"
+          ],
+          "spans": [
+            {
+              "quote": "Buyer shall pay under Agreement X Clause 4: deleted.",
+              "start_offset": 0,
+              "end_offset": 52
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "insufficient_evidence",
+    "expected_identity": "confirmed",
+    "action": "confirmed"
+  },
+  {
+    "id": "i28",
+    "scenario": "Reworded provision with explicit reference and review",
+    "a": [
+      {
+        "category": "deadlines",
+        "label": "Payment",
+        "value": {
+          "description": "Pay invoice",
+          "relative_text": "within 45 days of invoice receipt",
+          "date_type": "relative",
+          "due_date": null
+        },
+        "context": {
+          "responsible_party": "Buyer",
+          "deadline_type": "obligation",
+          "obligation_reference": "Agreement X Clause 4"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "deadline:1",
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Buyer shall pay under Agreement X Clause 4: within 45 days of invoice receipt.",
+          "evidence_ids": [
+            "ev-a"
+          ],
+          "spans": [
+            {
+              "quote": "Buyer shall pay under Agreement X Clause 4: within 45 days of invoice receipt.",
+              "start_offset": 0,
+              "end_offset": 78
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "deadlines",
+        "label": "Reworded payment provision",
+        "value": {
+          "description": "Pay invoice",
+          "relative_text": "within 45 days of invoice receipt",
+          "date_type": "relative",
+          "due_date": null
+        },
+        "context": {
+          "responsible_party": "Buyer",
+          "deadline_type": "obligation",
+          "obligation_reference": "Agreement X Clause 4"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "deadline:1",
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Buyer shall pay under Agreement X Clause 4: within 45 days of invoice receipt.",
+          "evidence_ids": [
+            "ev-b"
+          ],
+          "spans": [
+            {
+              "quote": "Buyer shall pay under Agreement X Clause 4: within 45 days of invoice receipt.",
+              "start_offset": 0,
+              "end_offset": 78
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "equivalent",
+    "expected_identity": "confirmed",
+    "action": "confirmed"
+  },
+  {
+    "id": "i29",
+    "scenario": "Separate actual status survives equal measurement basis",
+    "a": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "100",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified",
+          "metric_status": "actual"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+          "evidence_ids": [
+            "evidence-a"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "200",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified",
+          "metric_status": "forecast"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-b",
+          "evidence": "Example Ltd reports consolidated actual Revenue 200 KES in 2025.",
+          "evidence_ids": [
+            "evidence-b"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 200 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "not_comparable",
+    "expected_identity": "confirmed",
+    "action": "confirmed"
+  },
+  {
+    "id": "i30",
+    "scenario": "Unpublished revision cannot inherit reviewed binding",
+    "a": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "100",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "a",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "rev-a",
+          "evidence": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+          "evidence_ids": [
+            "evidence-a"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 100 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "b": [
+      {
+        "category": "kpis",
+        "label": "Revenue",
+        "value": {
+          "value": "200",
+          "unit": "KES",
+          "period": "2025"
+        },
+        "context": {
+          "concept_id": "definition:revenue",
+          "reported_owner": "Example Ltd",
+          "owner": null,
+          "subject": "consolidated",
+          "value_basis": "actual",
+          "aggregation": "total",
+          "analytical_eligible": true,
+          "verification": "source_verified"
+        },
+        "source": {
+          "document_id": "b",
+          "source_id": "kpi:1",
+          "insight_id": 1,
+          "intelligence_revision_id": "unpublished-revision",
+          "evidence": "Example Ltd reports consolidated actual Revenue 200 KES in 2025.",
+          "evidence_ids": [
+            "evidence-b"
+          ],
+          "spans": [
+            {
+              "quote": "Example Ltd reports consolidated actual Revenue 200 KES in 2025.",
+              "span_id": "E001",
+              "start_offset": 0,
+              "end_offset": 64
+            }
+          ]
+        }
+      }
+    ],
+    "expected_outcome": "insufficient_evidence",
+    "expected_identity": "candidate",
+    "action": "confirmed",
+    "stale_revision": true
+  }
+]
