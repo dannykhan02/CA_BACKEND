@@ -12,6 +12,7 @@ use App\Models\Workspace;
 use App\Models\WorkspaceCredit;
 use App\Services\AiCredits\CreditAccountant;
 use App\Services\AiCredits\QuoteService;
+use App\Services\Comparisons\ComparisonExecutionLock;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -163,7 +164,11 @@ class EntitlementService
                 ->get();
             foreach ($stale as $operation) {
                 if ($operation->kind === 'comparison') {
-                    app(CreditAccountant::class)->release('comparison', $operation->resource_id, 'reservation_expired');
+                    // A time cutoff is not proof an execution died. The worker uses the same
+                    // session exclusion; do not expire its hold while it is running.
+                    app(ComparisonExecutionLock::class)->run($operation->resource_id, function () use ($operation) {
+                        app(CreditAccountant::class)->release('comparison', $operation->resource_id, 'reservation_expired');
+                    });
 
                     continue;
                 }
@@ -339,7 +344,7 @@ class EntitlementService
                 return;
             }
             $operation = DB::table('billing_operations')->where('kind', 'comparison')->where('resource_id', $comparison->id)->first();
-            if ($operation && ! $newRequest && CarbonImmutable::parse($operation->updated_at)->addHours(config('billing.pipeline_hours'))->isFuture()) {
+            if ($operation && $operation->status !== 'released' && ! $newRequest && CarbonImmutable::parse($operation->updated_at)->addHours(config('billing.pipeline_hours'))->isFuture()) {
                 return;
             }
             $sub = $this->subscription($comparison->workspace_id);

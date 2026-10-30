@@ -332,7 +332,7 @@ class SubscriptionBillingTest extends TestCase
         $service->reserveComparison($comparison, true);
         $service->reserveComparison($comparison);
         $this->assertSame(1, $service->summary($workspace->id)['usage']['comparisons_used']);
-        $job = new CompareDocumentsJob($comparison->id);
+        $job = new CompareDocumentsJob($comparison->id, $comparison->dispatch_token);
         $job->failed(new \RuntimeException('provider secret response'));
         $job->failed(new \RuntimeException('duplicate failure'));
         $this->assertSame(0, $service->summary($workspace->id)['usage']['comparisons_used']);

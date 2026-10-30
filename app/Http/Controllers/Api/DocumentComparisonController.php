@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\DocumentComparisonResource;
 use App\Models\DocumentComparison;
+use App\Services\Comparisons\ComparisonRecovery;
 use App\Services\DocumentComparisonService;
 use App\Services\IntelligenceAccess;
 use Illuminate\Http\Request;
@@ -29,7 +30,13 @@ class DocumentComparisonController extends Controller
             $q->where(fn ($q) => $q->where('base_document_id', $doc->id)->orWhere('compared_document_id', $doc->id));
         }
 
-        return DocumentComparisonResource::collection($q->latest()->paginate(20));
+        $page = $q->latest()->paginate(20);
+        foreach ($page as $item) {
+            app(ComparisonRecovery::class)->reconcile($item->id);
+            $item->refresh();
+        }
+
+        return DocumentComparisonResource::collection($page);
     }
 
     public function store(Request $r)
@@ -46,7 +53,9 @@ class DocumentComparisonController extends Controller
         $this->access->document($r->user(), $item->base_document_id);
         $this->access->document($r->user(), $item->compared_document_id);
 
-        return new DocumentComparisonResource($item->load(['baseDocument:id,name,published_intelligence_revision_id',
+        app(ComparisonRecovery::class)->reconcile($item->id);
+
+        return new DocumentComparisonResource($item->refresh()->load(['baseDocument:id,name,published_intelligence_revision_id',
             'comparedDocument:id,name,published_intelligence_revision_id']));
     }
 }

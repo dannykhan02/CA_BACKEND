@@ -7,11 +7,11 @@ use App\Jobs\CompareDocumentsJob;
 use App\Jobs\DetectDocumentRisksJob;
 use App\Jobs\GenerateInsightsJob;
 use App\Jobs\SendTrackedDeadlineReminder;
+use App\Models\AiPrompt;
 use App\Models\Document;
 use App\Models\DocumentComparison;
 use App\Models\DocumentDeadline;
 use App\Models\DocumentRelationship;
-use App\Models\AiPrompt;
 use App\Models\Matter;
 use App\Models\ProcessingJob;
 use App\Models\Subscription;
@@ -47,7 +47,7 @@ class MatterIntelligenceTest extends TestCase
         $this->seed(DocumentComparisonPromptSeeder::class);
         $this->seed(DocumentComparisonPromptSeeder::class);
         $this->assertSame('document_comparison', AiPrompt::active('document_comparison')->name);
-        $this->assertSame(1, AiPrompt::where('name', 'document_comparison')->count());
+        $this->assertSame(1, AiPrompt::where('name', 'document_comparison')->where('version', 2)->count());
     }
 
     public function test_matter_kpis_expose_canonical_identity_without_collapsing_source_observations(): void
@@ -156,6 +156,7 @@ class MatterIntelligenceTest extends TestCase
         $new = $this->document($user, ['matter_id' => $matter->id]);
         $comparison = app(DocumentComparisonService::class)->create($user, $base->id, $new->id);
         $new->update(['matter_id' => null]);
+        $this->getJson("/api/matters/{$matter->id}/report-snapshot")->assertOk()->assertJsonPath('data.comparisons.0.id', $comparison->id);
         $this->getJson("/api/document-comparisons?matter_id={$matter->id}")->assertOk()->assertJsonPath('data.0.id', $comparison->id);
     }
 
@@ -237,7 +238,7 @@ class MatterIntelligenceTest extends TestCase
         $id = $this->postJson('/api/document-comparisons', $data)->assertAccepted()->json('data.id');
         $this->postJson('/api/document-comparisons', $data)->assertAccepted()->assertJsonPath('data.id', $id);
         Bus::assertDispatchedTimes(CompareDocumentsJob::class, 1);
-        (new CompareDocumentsJob($id))->handle(app(DocumentComparisonService::class));
+        (new CompareDocumentsJob($id, DocumentComparison::findOrFail($id)->dispatch_token))->handle(app(DocumentComparisonService::class));
         $this->getJson("/api/document-comparisons/$id")->assertOk()->assertJsonPath('data.status', 'completed')
             ->assertJsonPath('data.changes.0.before.0.value.value', '500')->assertJsonPath('data.changes.0.after.0.value.value', '800')
             ->assertJsonPath('data.changes.0.before.0.source.document_id', $a->id);
@@ -334,6 +335,7 @@ class MatterIntelligenceTest extends TestCase
             $doc = $this->document($u);
             $item = app(TrackingService::class)->track($u, $doc->id, $this->deadline($doc)->id);
             $item->update(['due_date' => $dueDate, 'status' => $status]);
+
             return $item;
         };
 
@@ -368,11 +370,14 @@ class MatterIntelligenceTest extends TestCase
             'content' => [['type' => 'text', 'text' => json_encode($answer)]], 'usage' => ['input_tokens' => 100, 'output_tokens' => 50],
         ])]);
         $id = $this->postJson('/api/document-comparisons', ['base_document_id' => $a->id, 'compared_document_id' => $b->id, 'include_terms' => true])->assertAccepted()->json('data.id');
-        (new CompareDocumentsJob($id))->handle(app(DocumentComparisonService::class));
+        (new CompareDocumentsJob($id, DocumentComparison::findOrFail($id)->dispatch_token))->handle(app(DocumentComparisonService::class));
         $this->getJson("/api/document-comparisons/$id")->assertOk()->assertJsonPath('data.status', 'completed')
             ->assertJsonPath('data.changes.0.before.0.source.evidence', 'Payment is due Net 45.')
             ->assertJsonPath('data.changes.0.after.0.source.document_id', $b->id);
         $this->assertDatabaseHas('document_ai_runs', ['document_id' => $a->id, 'purpose' => 'document_comparison']);
+        Http::assertSentCount(1);
+        Http::assertSent(fn ($request) => str_contains($request['messages'][0]['content'], 'No structured metric values are supplied.')
+            && ! str_contains($request['messages'][0]['content'], '{{comparison_context}}'));
         $answer['changes'][0]['after']['quote'] = 'An invented clause';
         $this->expectException(\RuntimeException::class);
         app(ResponseValidator::class)->validateComparison($answer, DocumentComparison::find($id)->metadata['ai_context']);
@@ -386,7 +391,7 @@ class MatterIntelligenceTest extends TestCase
         $a = $this->document($u);
         $b = $this->document($u);
         $item = app(DocumentComparisonService::class)->create($u, $a->id, $b->id);
-        (new CompareDocumentsJob($item->id))->failed(new \RuntimeException('Private provider detail'));
+        (new CompareDocumentsJob($item->id, $item->dispatch_token))->failed(new \RuntimeException('Private provider detail'));
         $this->getJson("/api/document-comparisons/{$item->id}")->assertOk()->assertJsonPath('data.status', 'failed')->assertDontSee('Private provider detail');
         $b->processingJobs()->where('stage', 'risks')->update(['status' => 'failed']);
         $this->postJson('/api/document-comparisons', ['base_document_id' => $a->id, 'compared_document_id' => $b->id])->assertUnprocessable();
@@ -443,13 +448,15 @@ class MatterIntelligenceTest extends TestCase
         Bus::fake();
         $u = $this->actor(false, 'Analyst');
         Sanctum::actingAs($u);
-        $a = $this->document($u);
-        $b = $this->document($u);
+        $matter = Matter::create(['workspace_id' => $u->current_workspace_id, 'created_by' => $u->id, 'name' => 'Access test']);
+        $a = $this->document($u, ['matter_id' => $matter->id]);
+        $b = $this->document($u, ['matter_id' => $matter->id]);
         $comparison = app(DocumentComparisonService::class)->create($u, $a->id, $b->id);
         $this->getJson("/api/document-comparisons/{$comparison->id}")->assertOk();
         $b->update(['classification' => 'Restricted']);
         $this->getJson("/api/document-comparisons/{$comparison->id}")->assertNotFound();
         $this->getJson('/api/document-comparisons')->assertOk()->assertJsonCount(0, 'data');
+        $this->getJson("/api/matters/{$matter->id}/report-snapshot")->assertOk()->assertJsonCount(0, 'data.comparisons');
     }
 
     public function test_missing_intelligence_can_be_retried_without_rebuilding_kpis_or_upload(): void

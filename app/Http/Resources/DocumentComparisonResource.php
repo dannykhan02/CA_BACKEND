@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Services\Comparisons\ComparisonIdentityService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -11,19 +12,23 @@ class DocumentComparisonResource extends JsonResource
     {
         $revisions = $this->metadata['source_revisions'] ?? null;
         $provenance = $this->metadata['source_provenance'] ?? 'unknown_historical';
-        $revisionStatus = $provenance === 'revision_pinned'
-            ? (($this->baseDocument?->published_intelligence_revision_id === ($revisions['base'] ?? null)
-                && $this->comparedDocument?->published_intelligence_revision_id === ($revisions['compared'] ?? null))
-                ? 'current' : 'outdated')
-            : $provenance;
+        $changed = $revisions !== null && ($this->baseDocument?->published_intelligence_revision_id !== ($revisions['base'] ?? null)
+            || $this->comparedDocument?->published_intelligence_revision_id !== ($revisions['compared'] ?? null));
+        $revisionStatus = $changed ? 'outdated' : ($provenance === 'revision_pinned' ? 'current' : $provenance);
 
         return [
             'id' => $this->id, 'include_terms' => isset($this->metadata['ai_context']), 'base_document_id' => $this->base_document_id,
             'compared_document_id' => $this->compared_document_id,
             'base_document' => $this->whenLoaded('baseDocument'), 'compared_document' => $this->whenLoaded('comparedDocument'),
+            'method' => $this->metadata['method'] ?? 'unknown_historical',
+            'algorithm_version' => $this->metadata['algorithm_version'] ?? 'structured-v1',
+            'retry_allowed' => $this->status === 'failed' && $this->provider_started_at === null,
             'status' => $this->status, 'summary' => $this->summary, 'changes' => $this->changes,
             'error_message' => $this->error_message, 'created_at' => $this->created_at,
             'limitations' => $this->metadata['limitations'] ?? null,
+            'identity_usage' => $this->metadata['identity_usage'] ?? [],
+            'identity_context_version' => $this->metadata['identity_context']['version'] ?? null,
+            'identity_snapshot' => isset($this->metadata['identity_context']) ? app(ComparisonIdentityService::class)->digest($this->metadata['identity_context']) : null,
             'source_revisions' => $revisions, 'revision_status' => $revisionStatus,
         ];
     }

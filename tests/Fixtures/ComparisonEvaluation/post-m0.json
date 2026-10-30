@@ -1,0 +1,3065 @@
+{
+    "phase": "post-m0",
+    "fixture_sha256": "3c13268935d4a3cba89cdd27ed22f9bd715e5980629652f2d7d877dda84f2906",
+    "counts": {
+        "cases": 55,
+        "correct_classifications": 45,
+        "false_substantive_changes": 0,
+        "missed_substantive_changes": 4,
+        "invalid_numeric_comparisons": 0,
+        "unmatched_rows": 6,
+        "duplicate_differences": 1,
+        "unsupported_evidence_claims": 0,
+        "incorrect_chronology_assumptions": 0
+    },
+    "results": [
+        {
+            "id": "n01",
+            "expected": "equivalent",
+            "actual": "equivalent",
+            "correct": true,
+            "output": []
+        },
+        {
+            "id": "n02",
+            "expected": "equivalent",
+            "actual": "equivalent",
+            "correct": true,
+            "output": []
+        },
+        {
+            "id": "n03",
+            "expected": "equivalent",
+            "actual": "equivalent",
+            "correct": true,
+            "output": []
+        },
+        {
+            "id": "n04",
+            "expected": "equivalent",
+            "actual": "equivalent",
+            "correct": true,
+            "output": []
+        },
+        {
+            "id": "n05",
+            "expected": "supported_change",
+            "actual": "supported_change",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "supported_change",
+                    "reasons": [
+                        "different_compatible_values"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Different compatible extracted values; selection order does not establish chronology.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "-12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"-12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "n06",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "insufficient_evidence",
+                    "reasons": [
+                        "invalid_numeric"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Insufficient evidence for a substantive comparison: invalid_numeric.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": null,
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": null, \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "n07",
+            "expected": "equivalent",
+            "actual": "equivalent",
+            "correct": true,
+            "output": []
+        },
+        {
+            "id": "n08",
+            "expected": "equivalent",
+            "actual": "equivalent",
+            "correct": true,
+            "output": []
+        },
+        {
+            "id": "n09",
+            "expected": "equivalent",
+            "actual": "equivalent",
+            "correct": true,
+            "output": []
+        },
+        {
+            "id": "n10",
+            "expected": "equivalent",
+            "actual": "equivalent",
+            "correct": true,
+            "output": []
+        },
+        {
+            "id": "n11",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "insufficient_evidence",
+                    "reasons": [
+                        "invalid_numeric"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Insufficient evidence for a substantive comparison: invalid_numeric.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12,00,000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12,00,000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "n12",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "insufficient_evidence",
+                    "reasons": [
+                        "invalid_numeric"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Insufficient evidence for a substantive comparison: invalid_numeric.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12 of 20",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12 of 20\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "n13",
+            "expected": "not_comparable",
+            "actual": "not_comparable",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "not_comparable",
+                    "reasons": [
+                        "measurement_mismatch"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Not comparable: measurement_mismatch.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "25",
+                                "unit": "%",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"25\", \"unit\": \"%\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "25",
+                                "unit": "percentage points",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"25\", \"unit\": \"percentage points\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "n14",
+            "expected": "supported_change",
+            "actual": "supported_change",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "supported_change",
+                    "reasons": [
+                        "different_compatible_values"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Different compatible extracted values; selection order does not establish chronology.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "9007199254740993.01",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"9007199254740993.01\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "9007199254740993.02",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"9007199254740993.02\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "u01",
+            "expected": "supported_change",
+            "actual": "supported_change",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "supported_change",
+                    "reasons": [
+                        "different_compatible_values"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Different compatible extracted values; selection order does not establish chronology.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12500000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12500000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "u02",
+            "expected": "equivalent",
+            "actual": "not_comparable",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Length",
+                    "outcome": "not_comparable",
+                    "reasons": [
+                        "measurement_mismatch"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Not comparable: measurement_mismatch.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Length",
+                            "value": {
+                                "value": "1",
+                                "unit": "kilometres",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Length\", \"value\": \"1\", \"unit\": \"kilometres\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Length",
+                            "value": {
+                                "value": "1000",
+                                "unit": "metres",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Length\", \"value\": \"1000\", \"unit\": \"metres\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "u03",
+            "expected": "equivalent",
+            "actual": "not_comparable",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Area",
+                    "outcome": "not_comparable",
+                    "reasons": [
+                        "measurement_mismatch"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Not comparable: measurement_mismatch.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Area",
+                            "value": {
+                                "value": "1",
+                                "unit": "hectares",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Area\", \"value\": \"1\", \"unit\": \"hectares\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Area",
+                            "value": {
+                                "value": "10000",
+                                "unit": "square metres",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Area\", \"value\": \"10000\", \"unit\": \"square metres\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "u04",
+            "expected": "not_comparable",
+            "actual": "not_comparable",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "not_comparable",
+                    "reasons": [
+                        "measurement_mismatch"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Not comparable: measurement_mismatch.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12",
+                                "unit": "employees",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12\", \"unit\": \"employees\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "u05",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "insufficient_evidence",
+                    "reasons": [
+                        "unknown_unit"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Insufficient evidence for a substantive comparison: unknown_unit.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12",
+                                "unit": "",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12\", \"unit\": \"\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "u06",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "insufficient_evidence",
+                    "reasons": [
+                        "unknown_unit"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Insufficient evidence for a substantive comparison: unknown_unit.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12",
+                                "unit": "unknown",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12\", \"unit\": \"unknown\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "u07",
+            "expected": "not_comparable",
+            "actual": "not_comparable",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "not_comparable",
+                    "reasons": [
+                        "measurement_mismatch"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Not comparable: measurement_mismatch.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "USD",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"USD\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "u08",
+            "expected": "not_comparable",
+            "actual": "not_comparable",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "not_comparable",
+                    "reasons": [
+                        "measurement_mismatch"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Not comparable: measurement_mismatch.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "93000",
+                                "unit": "USD",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"93000\", \"unit\": \"USD\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "p01",
+            "expected": "supported_change",
+            "actual": "supported_change",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "supported_change",
+                    "reasons": [
+                        "different_compatible_values"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Different compatible extracted values; selection order does not establish chronology.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12500000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12500000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "p02",
+            "expected": "period_comparison",
+            "actual": "not_comparable",
+            "correct": false,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "not_comparable",
+                    "reasons": [
+                        "period_mismatch"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Not comparable: period_mismatch.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12500000",
+                                "unit": "KES",
+                                "period": "2026"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12500000\", \"unit\": \"KES\", \"period\": \"2026\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "p03",
+            "expected": "not_comparable",
+            "actual": "not_comparable",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "not_comparable",
+                    "reasons": [
+                        "period_mismatch"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Not comparable: period_mismatch.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12500000",
+                                "unit": "KES",
+                                "period": "Q2 2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12500000\", \"unit\": \"KES\", \"period\": \"Q2 2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "p04",
+            "expected": "not_comparable",
+            "actual": "not_comparable",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "not_comparable",
+                    "reasons": [
+                        "period_mismatch"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Not comparable: period_mismatch.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "twelve months ended June 30, 2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"twelve months ended June 30, 2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "twelve months ended December 31, 2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"twelve months ended December 31, 2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "p05",
+            "expected": "not_comparable",
+            "actual": "not_comparable",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "not_comparable",
+                    "reasons": [
+                        "basis_mismatch"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Not comparable: basis_mismatch.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "forecast",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"forecast\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "p06",
+            "expected": "not_comparable",
+            "actual": "not_comparable",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "not_comparable",
+                    "reasons": [
+                        "basis_mismatch"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Not comparable: basis_mismatch.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "budget",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"budget\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "p07",
+            "expected": "not_comparable",
+            "actual": "not_comparable",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "not_comparable",
+                    "reasons": [
+                        "basis_mismatch"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Not comparable: basis_mismatch.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "revised_forecast",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"revised_forecast\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "p08",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "insufficient_evidence",
+                    "reasons": [
+                        "unknown_period"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Insufficient evidence for a substantive comparison: unknown_period.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12",
+                                "unit": "KES",
+                                "period": "first five months of 2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12\", \"unit\": \"KES\", \"period\": \"first five months of 2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "p09",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "insufficient_evidence",
+                    "reasons": [
+                        "unknown_period"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Insufficient evidence for a substantive comparison: unknown_period.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": null
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": null, \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "13",
+                                "unit": "KES",
+                                "period": null
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"13\", \"unit\": \"KES\", \"period\": null, \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "p10",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "insufficient_evidence",
+                    "reasons": [
+                        "unknown_period"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Insufficient evidence for a substantive comparison: unknown_period.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "13",
+                                "unit": "KES",
+                                "period": "unknown"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"13\", \"unit\": \"KES\", \"period\": \"unknown\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "e01",
+            "expected": "equivalent",
+            "actual": "equivalent",
+            "correct": true,
+            "output": []
+        },
+        {
+            "id": "e02",
+            "expected": "insufficient_evidence",
+            "actual": "mixed",
+            "correct": false,
+            "output": [
+                {
+                    "category": "entities",
+                    "label": "organization",
+                    "outcome": "only_a",
+                    "reasons": [
+                        "exact_label_candidate"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Observed only in Document A extraction; removal is not established.",
+                    "before": [
+                        {
+                            "category": "entities",
+                            "label": "organization",
+                            "value": {
+                                "value": "Example Ltd"
+                            },
+                            "context": [],
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example Ltd",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": []
+                },
+                {
+                    "category": "entities",
+                    "label": "organization",
+                    "outcome": "only_b",
+                    "reasons": [
+                        "exact_label_candidate"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Observed only in Document B extraction; addition is not established.",
+                    "before": [],
+                    "after": [
+                        {
+                            "category": "entities",
+                            "label": "organization",
+                            "value": {
+                                "value": "Example Limited"
+                            },
+                            "context": [],
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Example Limited",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "e03",
+            "expected": "not_comparable",
+            "actual": "not_comparable",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "not_comparable",
+                    "reasons": [
+                        "owner_mismatch"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Not comparable: owner_mismatch.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-002",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-002\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "e04",
+            "expected": "not_comparable",
+            "actual": "not_comparable",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "not_comparable",
+                    "reasons": [
+                        "owner_mismatch"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Not comparable: owner_mismatch.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:subsidiary-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:subsidiary-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "e05",
+            "expected": "not_comparable",
+            "actual": "not_comparable",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "not_comparable",
+                    "reasons": [
+                        "owner_mismatch"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Not comparable: owner_mismatch.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-003",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-003\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "e06",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "insufficient_evidence",
+                    "reasons": [
+                        "unknown_owner"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Insufficient evidence for a substantive comparison: unknown_owner.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": null,
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": null, \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "c01",
+            "expected": "supported_change",
+            "actual": "insufficient_evidence",
+            "correct": false,
+            "output": [
+                {
+                    "category": "deadlines",
+                    "label": "Payment deadline",
+                    "outcome": "insufficient_evidence",
+                    "reasons": [
+                        "unverified_context"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Insufficient evidence for a substantive comparison: unverified_context.",
+                    "before": [
+                        {
+                            "category": "deadlines",
+                            "label": "Payment deadline",
+                            "value": {
+                                "description": "Buyer shall pay the invoice.",
+                                "due_date": null,
+                                "relative_text": "45 days",
+                                "date_type": "relative"
+                            },
+                            "context": {
+                                "responsible_party": "Buyer",
+                                "obligation_id": "agreement:payment"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Buyer shall pay within 45 days. Synthetic clause context: {\"description\": \"Buyer shall pay the invoice.\", \"due_date\": null, \"relative_text\": \"45 days\", \"date_type\": \"relative\", \"responsible_party\": \"Buyer\", \"obligation_id\": \"agreement:payment\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "deadlines",
+                            "label": "Payment deadline",
+                            "value": {
+                                "description": "Buyer shall pay the invoice.",
+                                "due_date": null,
+                                "relative_text": "30 days",
+                                "date_type": "relative"
+                            },
+                            "context": {
+                                "responsible_party": "Buyer",
+                                "obligation_id": "agreement:payment"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Buyer shall pay within 30 days. Synthetic clause context: {\"description\": \"Buyer shall pay the invoice.\", \"due_date\": null, \"relative_text\": \"30 days\", \"date_type\": \"relative\", \"responsible_party\": \"Buyer\", \"obligation_id\": \"agreement:payment\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "c02",
+            "expected": "supported_change",
+            "actual": "supported_change",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Contract amount",
+                    "outcome": "supported_change",
+                    "reasons": [
+                        "different_compatible_values"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Different compatible extracted values; selection order does not establish chronology.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Contract amount",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Contract amount\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Contract amount",
+                            "value": {
+                                "value": "12500000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Contract amount\", \"value\": \"12500000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "c03",
+            "expected": "equivalent",
+            "actual": "equivalent",
+            "correct": true,
+            "output": []
+        },
+        {
+            "id": "c04",
+            "expected": "supported_change",
+            "actual": "insufficient_evidence",
+            "correct": false,
+            "output": [
+                {
+                    "category": "deadlines",
+                    "label": "Payment deadline",
+                    "outcome": "insufficient_evidence",
+                    "reasons": [
+                        "unverified_context"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Insufficient evidence for a substantive comparison: unverified_context.",
+                    "before": [
+                        {
+                            "category": "deadlines",
+                            "label": "Payment deadline",
+                            "value": {
+                                "description": "Buyer shall pay the invoice.",
+                                "due_date": null,
+                                "relative_text": "45 days",
+                                "date_type": "relative"
+                            },
+                            "context": {
+                                "responsible_party": "Buyer",
+                                "obligation_id": "agreement:payment"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Buyer shall pay within 45 days. Synthetic clause context: {\"description\": \"Buyer shall pay the invoice.\", \"due_date\": null, \"relative_text\": \"45 days\", \"date_type\": \"relative\", \"responsible_party\": \"Buyer\", \"obligation_id\": \"agreement:payment\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "deadlines",
+                            "label": "Payment deadline",
+                            "value": {
+                                "description": "Buyer shall pay the invoice.",
+                                "due_date": null,
+                                "relative_text": "30 days",
+                                "date_type": "relative"
+                            },
+                            "context": {
+                                "responsible_party": "Buyer",
+                                "obligation_id": "agreement:payment"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Clause payment is amended: Buyer shall pay within 30 days. Synthetic clause context: {\"description\": \"Buyer shall pay the invoice.\", \"due_date\": null, \"relative_text\": \"30 days\", \"date_type\": \"relative\", \"responsible_party\": \"Buyer\", \"obligation_id\": \"agreement:payment\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "c05",
+            "expected": "only_a",
+            "actual": "only_a",
+            "correct": true,
+            "output": [
+                {
+                    "category": "deadlines",
+                    "label": "Renewal notice",
+                    "outcome": "only_a",
+                    "reasons": [
+                        "exact_label_candidate"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Observed only in Document A extraction; removal is not established.",
+                    "before": [
+                        {
+                            "category": "deadlines",
+                            "label": "Renewal notice",
+                            "value": {
+                                "description": "Buyer shall pay the invoice.",
+                                "due_date": null,
+                                "relative_text": "45 days",
+                                "date_type": "relative"
+                            },
+                            "context": {
+                                "responsible_party": "Buyer",
+                                "obligation_id": "agreement:payment"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Buyer shall pay within 45 days. Synthetic clause context: {\"description\": \"Buyer shall pay the invoice.\", \"due_date\": null, \"relative_text\": \"45 days\", \"date_type\": \"relative\", \"responsible_party\": \"Buyer\", \"obligation_id\": \"agreement:payment\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": []
+                }
+            ]
+        },
+        {
+            "id": "c06",
+            "expected": "only_a",
+            "actual": "only_a",
+            "correct": true,
+            "output": [
+                {
+                    "category": "deadlines",
+                    "label": "Payment deadline",
+                    "outcome": "only_a",
+                    "reasons": [
+                        "exact_label_candidate"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Observed only in Document A extraction; removal is not established.",
+                    "before": [
+                        {
+                            "category": "deadlines",
+                            "label": "Payment deadline",
+                            "value": {
+                                "description": "Buyer shall pay the invoice.",
+                                "due_date": null,
+                                "relative_text": "45 days",
+                                "date_type": "relative"
+                            },
+                            "context": {
+                                "responsible_party": "Buyer",
+                                "obligation_id": "agreement:payment"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Buyer shall pay within 45 days. Synthetic clause context: {\"description\": \"Buyer shall pay the invoice.\", \"due_date\": null, \"relative_text\": \"45 days\", \"date_type\": \"relative\", \"responsible_party\": \"Buyer\", \"obligation_id\": \"agreement:payment\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": []
+                }
+            ]
+        },
+        {
+            "id": "c07",
+            "expected": "not_comparable",
+            "actual": "equivalent",
+            "correct": false,
+            "output": []
+        },
+        {
+            "id": "c08",
+            "expected": "not_comparable",
+            "actual": "not_comparable",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "not_comparable",
+                    "reasons": [
+                        "basis_mismatch"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Not comparable: basis_mismatch.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "bank_settlement",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"bank_settlement\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "c09",
+            "expected": "not_comparable",
+            "actual": "equivalent",
+            "correct": false,
+            "output": []
+        },
+        {
+            "id": "c10",
+            "expected": "potential_conflict",
+            "actual": "insufficient_evidence",
+            "correct": false,
+            "output": [
+                {
+                    "category": "deadlines",
+                    "label": "Payment deadline",
+                    "outcome": "insufficient_evidence",
+                    "reasons": [
+                        "unverified_context"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Insufficient evidence for a substantive comparison: unverified_context.",
+                    "before": [
+                        {
+                            "category": "deadlines",
+                            "label": "Payment deadline",
+                            "value": {
+                                "description": "Buyer shall pay the invoice.",
+                                "due_date": null,
+                                "relative_text": "45 days",
+                                "date_type": "relative"
+                            },
+                            "context": {
+                                "responsible_party": "Buyer",
+                                "obligation_id": "agreement:payment"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Buyer shall pay within 45 days. Synthetic clause context: {\"description\": \"Buyer shall pay the invoice.\", \"due_date\": null, \"relative_text\": \"45 days\", \"date_type\": \"relative\", \"responsible_party\": \"Buyer\", \"obligation_id\": \"agreement:payment\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "deadlines",
+                            "label": "Payment deadline",
+                            "value": {
+                                "description": "Buyer shall pay the invoice.",
+                                "due_date": null,
+                                "relative_text": "deleted",
+                                "date_type": "relative"
+                            },
+                            "context": {
+                                "responsible_party": "Buyer",
+                                "obligation_id": "agreement:payment"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Clause payment is deleted in its entirety. Synthetic clause context: {\"description\": \"Buyer shall pay the invoice.\", \"due_date\": null, \"relative_text\": \"deleted\", \"date_type\": \"relative\", \"responsible_party\": \"Buyer\", \"obligation_id\": \"agreement:payment\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "c11",
+            "expected": "equivalent",
+            "actual": "mixed",
+            "correct": false,
+            "output": [
+                {
+                    "category": "deadlines",
+                    "label": "Renewal notice",
+                    "outcome": "only_a",
+                    "reasons": [
+                        "exact_label_candidate"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Observed only in Document A extraction; removal is not established.",
+                    "before": [
+                        {
+                            "category": "deadlines",
+                            "label": "Renewal notice",
+                            "value": {
+                                "description": "Buyer shall pay the invoice.",
+                                "due_date": null,
+                                "relative_text": "45 days",
+                                "date_type": "relative"
+                            },
+                            "context": {
+                                "responsible_party": "Buyer",
+                                "obligation_id": "agreement:payment"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Buyer shall pay within 45 days. Synthetic clause context: {\"description\": \"Buyer shall pay the invoice.\", \"due_date\": null, \"relative_text\": \"45 days\", \"date_type\": \"relative\", \"responsible_party\": \"Buyer\", \"obligation_id\": \"agreement:payment\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": []
+                },
+                {
+                    "category": "deadlines",
+                    "label": "Notice of renewal",
+                    "outcome": "only_b",
+                    "reasons": [
+                        "exact_label_candidate"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Observed only in Document B extraction; addition is not established.",
+                    "before": [],
+                    "after": [
+                        {
+                            "category": "deadlines",
+                            "label": "Notice of renewal",
+                            "value": {
+                                "description": "Buyer shall pay the invoice.",
+                                "due_date": null,
+                                "relative_text": "45 days",
+                                "date_type": "relative"
+                            },
+                            "context": {
+                                "responsible_party": "Buyer",
+                                "obligation_id": "agreement:payment"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Buyer shall pay within 45 days. Synthetic clause context: {\"description\": \"Buyer shall pay the invoice.\", \"due_date\": null, \"relative_text\": \"45 days\", \"date_type\": \"relative\", \"responsible_party\": \"Buyer\", \"obligation_id\": \"agreement:payment\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "s01",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "insufficient_evidence",
+                    "reasons": [
+                        "missing_evidence"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Insufficient evidence for a substantive comparison: missing_evidence.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": null,
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "s02",
+            "expected": "equivalent",
+            "actual": "equivalent",
+            "correct": true,
+            "output": []
+        },
+        {
+            "id": "s03",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "insufficient_evidence",
+                    "reasons": [
+                        "ineligible"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Insufficient evidence for a substantive comparison: ineligible.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": false,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": false, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "s04",
+            "expected": "equivalent",
+            "actual": "equivalent",
+            "correct": true,
+            "output": []
+        },
+        {
+            "id": "s05",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "insufficient_evidence",
+                    "reasons": [
+                        "superseded"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Insufficient evidence for a substantive comparison: superseded.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified",
+                                "superseded": true
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\", \"superseded\": true}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "s06",
+            "expected": "insufficient_evidence",
+            "actual": "insufficient_evidence",
+            "correct": true,
+            "output": [
+                {
+                    "category": "kpis",
+                    "label": "Revenue",
+                    "outcome": "insufficient_evidence",
+                    "reasons": [
+                        "ambiguous_candidates"
+                    ],
+                    "identity_basis": "canonical_definition_or_exact_label",
+                    "method": "structured",
+                    "description": "Insufficient evidence for a substantive comparison: ambiguous_candidates.",
+                    "before": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        },
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "13",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "A",
+                                "intelligence_revision_id": "revision-A",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"13\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ],
+                    "after": [
+                        {
+                            "category": "kpis",
+                            "label": "Revenue",
+                            "value": {
+                                "value": "12000000",
+                                "unit": "KES",
+                                "period": "2025"
+                            },
+                            "context": {
+                                "subject": "Example reporting company",
+                                "owner": "registry:synthetic-001",
+                                "value_basis": "actual",
+                                "aggregation": "total",
+                                "analytical_eligible": true,
+                                "verification": "source_verified"
+                            },
+                            "source": {
+                                "document_id": "B",
+                                "intelligence_revision_id": "revision-B",
+                                "insight_id": "kpi-1",
+                                "evidence": "Synthetic source statement: {\"concept\": \"Revenue\", \"value\": \"12000000\", \"unit\": \"KES\", \"period\": \"2025\", \"subject\": \"Example reporting company\", \"owner\": \"registry:synthetic-001\", \"value_basis\": \"actual\", \"aggregation\": \"total\", \"analytical_eligible\": true, \"verification\": \"source_verified\"}",
+                                "location_kind": "page",
+                                "page_number": 1
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "measurement_limits": [
+        "Chronology requires UI review; zero is not an engine-level chronology guarantee.",
+        "Identity and compatibility labels describe the full target; abstention may intentionally remain an M0 miss.",
+        "Integration cases are excluded from numeric denominators and run as feature tests."
+    ]
+}

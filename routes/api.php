@@ -253,6 +253,8 @@ Route::middleware(['auth:sanctum', EnsureEmailIsVerified::class])->group(functio
     Route::get('/document-comparisons', [$comparisons, 'index']);
     Route::post('/document-comparisons', [$comparisons, 'store'])->middleware('throttle:20,1');
     Route::get('/document-comparisons/{comparison}', [$comparisons, 'show']);
+    Route::get('/document-comparisons/{comparison}/identity', [\App\Http\Controllers\Api\ComparisonIdentityController::class, 'show']);
+    Route::patch('/document-comparisons/{comparison}/identity', [\App\Http\Controllers\Api\ComparisonIdentityController::class, 'update'])->middleware('throttle:30,1');
     Route::patch('/documents/{document}/risks/{risk}', [DocumentRiskReviewController::class, 'update']);
     Route::get('/documents/{document}/context', [DocumentContextController::class, 'show']);
     Route::post('/documents/{document}/suggestions/{related}/dismiss', [DocumentContextController::class, 'dismiss']);

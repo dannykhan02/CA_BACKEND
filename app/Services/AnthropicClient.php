@@ -6,6 +6,7 @@ use App\Exceptions\AiProcessingException;
 use App\Exceptions\AnthropicRateLimitException;
 use App\Exceptions\AnthropicStructuredOutputException;
 use App\Exceptions\ProviderBusyException;
+use App\Models\AiPrompt;
 use App\Models\Document;
 use App\Models\DocumentAiRun;
 use App\Models\DocumentChunk;
@@ -400,16 +401,20 @@ PROMPT;
         return $this->structuredCall($prompt, $document, 'deadlines', $this->parseDeadlinesResponse(...));
     }
 
-    public function compareDocumentIntelligence(array $context, Document $document): array
+    public function compareDocumentIntelligence(array $context, Document $document, ?int $promptVersion = null, ?string $promptHash = null, ?string $pinnedModel = null): array
     {
         $this->currentOperation = 'document_comparison';
         $this->activeDocument = $document;
         $this->throttle();
         $manager = app(PromptManager::class);
-        $prompt = $manager->resolve('document_comparison');
+        $prompt = $promptVersion === null ? $manager->resolve('document_comparison')
+            : AiPrompt::where('name', 'document_comparison')->where('version', $promptVersion)->firstOrFail();
+        if ($promptHash !== null && ! hash_equals($promptHash, hash('sha256', $prompt->template))) {
+            throw new \RuntimeException('Comparison prompt changed after the snapshot was created.');
+        }
         $this->lastResolvedPromptVersion = $prompt->version;
         $rendered = $manager->render($prompt, ['{{comparison_context}}' => json_encode($context, JSON_THROW_ON_ERROR)]);
-        $response = $this->callWithRetry([['role' => 'user', 'content' => $rendered]]);
+        $response = $this->callWithRetry([['role' => 'user', 'content' => $rendered]], options: ['max_attempts' => 1, 'model' => $pinnedModel ?? $this->modelFor('document_comparison')]);
         $parsed = $this->parseAndRecord($document, 'document_comparison', $response, fn ($response) => app(ResponseValidator::class)->validateComparison($this->decodeJsonContent($response), $context));
 
         return $parsed + ['model' => $response['model'] ?? $this->modelFor('document_comparison'), 'prompt_version' => $prompt->version];

@@ -134,7 +134,8 @@ class ResponseValidator
             if (! in_array($change['category'], ['terms', 'requirements', 'amounts', 'obligations', 'dates', 'potential_conflict'], true)) {
                 throw new \RuntimeException('Invalid comparison category.');
             }
-            $normalized = ['label' => $change['label'], 'category' => $change['category'], 'description' => $change['description'], 'method' => 'ai'];
+            $normalized = ['label' => $change['label'], 'category' => $change['category'], 'description' => $change['description'], 'method' => 'ai',
+                'outcome' => 'potential_conflict', 'reasons' => ['ai_suggestion_requires_review']];
             foreach (['before' => 'base', 'after' => 'compared'] as $side => $key) {
                 if (! array_key_exists($side, $change)) {
                     throw new \RuntimeException('Missing comparison side.');
@@ -155,14 +156,18 @@ class ResponseValidator
                 $normalized[$side][] = ['value' => ['state' => $value['value']], 'source' => [
                     'document_id' => $context[$key]['document_id'], 'document_name' => $context[$key]['document_name'],
                     'chunk_reference' => $value['chunk_id'], 'evidence' => $value['quote'],
+                    'intelligence_revision_id' => $context[$key]['intelligence_revision_id'] ?? null,
+                    'location_kind' => 'unknown',
                 ]];
             }
             if (! $normalized['before'] && ! $normalized['after']) {
                 throw new \RuntimeException('Comparison change has no evidence.');
             }
             if (! $normalized['before']) {
+                $normalized['outcome'] = 'only_b';
                 $normalized['description'] = 'Newly observed in selected excerpts; verify in both originals.';
             } elseif (! $normalized['after']) {
+                $normalized['outcome'] = 'only_a';
                 $normalized['description'] = 'Not observed in compared excerpts; removal is not confirmed.';
             } else {
                 $normalized['description'] = 'Potential change: '.$normalized['description'];
