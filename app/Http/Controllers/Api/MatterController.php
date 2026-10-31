@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\DocumentComparison;
 use App\Models\Matter;
 use App\Services\AuditLogger;
 use App\Services\IntelligenceAccess;
@@ -21,6 +22,16 @@ class MatterController extends Controller
         if (! empty($data['q'])) {
             $query->where('name', 'ilike', '%'.addcslashes($data['q'], '%_\\').'%');
         }
+        // Counts use the same document and both-source scopes as the Matter and comparison lists.
+        $documents = $this->access->documents($r->user());
+        $query->select('matters.*')->addSelect([
+            'accessible_documents_count' => (clone $documents)->whereColumn('documents.matter_id', 'matters.id')->selectRaw('count(*)'),
+            'saved_comparisons_count' => DocumentComparison::whereColumn('document_comparisons.matter_id', 'matters.id')
+                ->where('document_comparisons.workspace_id', $r->user()->current_workspace_id)
+                ->whereIn('base_document_id', (clone $documents)->select('id'))
+                ->whereIn('compared_document_id', (clone $documents)->select('id'))
+                ->selectRaw('count(*)'),
+        ]);
 
         return $query->latest()->paginate(20);
     }

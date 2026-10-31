@@ -146,6 +146,30 @@ class MatterIntelligenceTest extends TestCase
         $this->getJson('/api/matters?page=1&q[]=contract')->assertUnprocessable()->assertJsonValidationErrors('q');
     }
 
+    public function test_matter_index_counts_only_documents_and_comparisons_the_reader_can_access(): void
+    {
+        Bus::fake();
+        $user = $this->actor(false, 'Analyst');
+        Sanctum::actingAs($user);
+        $matter = Matter::create(['workspace_id' => $user->current_workspace_id, 'created_by' => $user->id, 'name' => 'Counted']);
+        $empty = Matter::create(['workspace_id' => $user->current_workspace_id, 'created_by' => $user->id, 'name' => 'Empty']);
+        $a = $this->document($user, ['matter_id' => $matter->id]);
+        $b = $this->document($user, ['matter_id' => $matter->id]);
+        $c = $this->document($user, ['matter_id' => $matter->id]);
+        $comparison = app(DocumentComparisonService::class)->create($user, $a->id, $b->id);
+        $counts = fn () => collect($this->getJson('/api/matters')->assertOk()->json('data'))
+            ->mapWithKeys(fn ($row) => [$row['id'] => [$row['accessible_documents_count'], $row['saved_comparisons_count']]]);
+        $this->assertSame([3, 1], $counts()[$matter->id]);
+        $this->assertSame([0, 0], $counts()[$empty->id]);
+
+        $b->update(['classification' => 'Restricted']);
+        $this->assertSame([2, 0], $counts()[$matter->id], 'A reclassified source leaves both counts, matching the Matter and comparison lists.');
+        $b->update(['classification' => 'Internal']);
+        $this->getJson("/api/document-comparisons/{$comparison->id}")->assertOk()->assertJsonPath('data.matter_id', $matter->id);
+        $this->assertSame(1, $this->getJson('/api/matters?q=Counted')->assertOk()->json('total'));
+        $this->assertNotNull($c->fresh());
+    }
+
     public function test_comparison_remains_in_its_matter_history_after_a_document_moves(): void
     {
         Bus::fake();

@@ -17,7 +17,7 @@ class DocumentComparisonResource extends JsonResource
         $revisionStatus = $changed ? 'outdated' : ($provenance === 'revision_pinned' ? 'current' : $provenance);
 
         return [
-            'id' => $this->id, 'include_terms' => isset($this->metadata['ai_context']), 'base_document_id' => $this->base_document_id,
+            'id' => $this->id, 'matter_id' => $this->matter_id, 'include_terms' => isset($this->metadata['ai_context']), 'base_document_id' => $this->base_document_id,
             'compared_document_id' => $this->compared_document_id,
             'base_document' => $this->whenLoaded('baseDocument'), 'compared_document' => $this->whenLoaded('comparedDocument'),
             'method' => $this->metadata['method'] ?? 'unknown_historical',
